@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Domains Database — Address Marker</title>
+  <desc id="desc">A location marker shaped around D suggests finding the right web address.</desc>
+<g id="address-marker-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path id="address-pin" d="M138 40c-53 0-89 39-89 89 0 62 89 117 89 117s89-55 89-117c0-50-36-89-89-89Z" stroke="#2558A3" stroke-width="11"/>
+  <path id="pin-letter-d" d="M104 91h28c34 0 54 19 54 47s-20 47-54 47h-28V91Z" stroke="#F08A3B" stroke-width="10"/>
+  <circle id="domain-point" cx="185" cy="64" r="10" fill="#F08A3B" stroke="none"/>
+</g>
+<g id="address-marker-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+  <text x="281" y="130" fill="#1D3D73" font-size="66" font-weight="800" letter-spacing="-3">Domains</text>
+  <text x="281" y="198" fill="#1D3D73" font-size="66" font-weight="800" letter-spacing="-3">Database</text>
+  <text x="285" y="235" fill="#D56E27" font-size="15" font-weight="750" letter-spacing="4">THE WEB, INDEXED</text>
+</g>
+</svg>

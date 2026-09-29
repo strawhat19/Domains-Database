@@ -1,0 +1,18 @@
+<svg id="domains-database-v4-teal-record-stack" xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="teal-stack-title teal-stack-description">
+  <title id="teal-stack-title">Domains Database — teal record stack</title>
+  <desc id="teal-stack-description">Three tabbed records retain the record stack geometry in the navy and teal palette of Domain Nodes.</desc>
+  <g id="teal-stack-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path id="teal-stack-record-one" d="M47 51h141l22 24v35H47V51Z" stroke="#133B50" stroke-width="10" />
+    <path id="teal-stack-record-two" d="M47 116h141l22 24v35H47v-59Z" stroke="#133B50" stroke-width="10" />
+    <path id="teal-stack-record-three" d="M47 181h141l22 24v35H47v-59Z" stroke="#133B50" stroke-width="10" />
+    <path id="teal-stack-record-lines" d="M70 81h77M70 146h77M70 211h77" stroke="#19AEAB" stroke-width="7" />
+    <circle id="teal-stack-dot-one" cx="178" cy="81" r="8" fill="#19AEAB" stroke="none" />
+    <circle id="teal-stack-dot-two" cx="178" cy="146" r="8" fill="#19AEAB" stroke="none" />
+    <circle id="teal-stack-dot-three" cx="178" cy="211" r="8" fill="#19AEAB" stroke="none" />
+  </g>
+  <g id="teal-stack-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+    <text id="teal-stack-domains-word" x="273" y="130" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Domains</text>
+    <text id="teal-stack-database-word" x="273" y="198" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Database</text>
+    <text id="teal-stack-tagline" x="278" y="234" fill="#138B8B" font-size="15" font-weight="750" letter-spacing="4">EVERY ADDRESS IN ORDER</text>
+  </g>
+</svg>

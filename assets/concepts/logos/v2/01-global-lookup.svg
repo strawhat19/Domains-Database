@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Domains Database — Global Lookup</title>
+  <desc id="desc">A longitude globe with an orange search lens connects domains to the wider web.</desc>
+<g id="global-lookup-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <circle id="globe-outline" cx="118" cy="140" r="78" stroke="#2558A3" stroke-width="10"/>
+  <path id="globe-latitudes" d="M46 110h143M46 170h143M118 62v156M118 62c-28 28-41 54-41 78s13 50 41 78m0-156c28 28 41 54 41 78s-13 50-41 78" stroke="#6A9FE3" stroke-width="5"/>
+  <circle id="lookup-lens" cx="185" cy="186" r="34" fill="#FFFFFF" stroke="#F08A3B" stroke-width="11"/>
+  <path id="lookup-handle" d="m210 211 31 31" stroke="#F08A3B" stroke-width="13"/>
+  <circle id="search-hit" cx="185" cy="186" r="7" fill="#F08A3B" stroke="none"/>
+</g>
+<g id="global-lookup-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+  <text x="281" y="132" fill="#1D3D73" font-size="67" font-weight="800" letter-spacing="-3">Domains</text>
+  <text x="281" y="200" fill="#1D3D73" font-size="67" font-weight="800" letter-spacing="-3">Database</text>
+  <path id="global-lookup-rule" d="M284 221h280" stroke="#F08A3B" stroke-width="7"/>
+</g>
+</svg>

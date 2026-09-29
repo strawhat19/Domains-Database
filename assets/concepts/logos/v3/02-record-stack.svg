@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Domains Database — Record Stack</title>
+  <desc id="desc">Three stacked database records use small right tabs to make a compact index symbol.</desc>
+<g id="record-stack-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path id="record-one" d="M47 51h141l22 24v35H47V51Z" stroke="#6544A4" stroke-width="10"/>
+  <path id="record-two" d="M47 116h141l22 24v35H47v-59Z" stroke="#6544A4" stroke-width="10"/>
+  <path id="record-three" d="M47 181h141l22 24v35H47v-59Z" stroke="#6544A4" stroke-width="10"/>
+  <path id="record-lines" d="M70 81h77M70 146h77M70 211h77" stroke="#B094E3" stroke-width="7"/>
+  <circle id="record-dot-one" cx="178" cy="81" r="8" fill="#F3B666" stroke="none"/>
+  <circle id="record-dot-two" cx="178" cy="146" r="8" fill="#F3B666" stroke="none"/>
+  <circle id="record-dot-three" cx="178" cy="211" r="8" fill="#F3B666" stroke="none"/>
+</g>
+<g id="record-stack-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+  <text x="273" y="130" fill="#443269" font-size="66" font-weight="800" letter-spacing="-3">Domains</text>
+  <text x="273" y="198" fill="#443269" font-size="66" font-weight="800" letter-spacing="-3">Database</text>
+  <text x="278" y="234" fill="#7954AE" font-size="15" font-weight="750" letter-spacing="4">EVERY ADDRESS IN ORDER</text>
+</g>
+</svg>

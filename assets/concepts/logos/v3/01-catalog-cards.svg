@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Domains Database — Catalog Cards</title>
+  <desc id="desc">Layered index cards show an organized, expanding domain catalog.</desc>
+<g id="catalog-cards-mark" stroke-linejoin="round">
+  <path id="back-card" d="M73 51h125v153H73Z" fill="#DFD7F8" stroke="#6544A4" stroke-width="8"/>
+  <path id="middle-card" d="M54 68h124v153H54Z" fill="#B7A3E7" stroke="#6544A4" stroke-width="8"/>
+  <path id="front-card" d="M34 85h125v153H34Z" fill="#FFFFFF" stroke="#6544A4" stroke-width="8"/>
+  <path id="card-tab" d="M34 85V66h55l16 19" fill="#F3B666" stroke="#6544A4" stroke-width="8"/>
+  <path id="card-records" d="M59 124h68M59 151h68M59 178h43" fill="none" stroke="#6544A4" stroke-width="8" stroke-linecap="round"/>
+  <circle id="catalog-status" cx="123" cy="199" r="10" fill="#F3B666"/>
+</g>
+<g id="catalog-cards-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+  <text x="272" y="131" fill="#443269" font-size="67" font-weight="800" letter-spacing="-3">Domains</text>
+  <text x="272" y="199" fill="#443269" font-size="67" font-weight="800" letter-spacing="-3">Database</text>
+  <path id="catalog-rule" d="M276 222h291" stroke="#E99D4F" stroke-width="7"/>
+</g>
+</svg>

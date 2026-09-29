@@ -1,0 +1,23 @@
+<svg id="domains-database-v4-offset-records" xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="offset-records-title offset-records-description">
+  <title id="offset-records-title">Domains Database — offset records</title>
+  <desc id="offset-records-description">Three navy domain records step diagonally, with teal corner tabs and record markers.</desc>
+  <g id="offset-records-mark" stroke-linejoin="round">
+    <path id="offset-records-back" d="M32 36h136l22 22v50H32V36Z" fill="#133B50" />
+    <path id="offset-records-back-tab" d="M168 36v22h22Z" fill="#19AEAB" />
+    <path id="offset-records-back-line" d="M57 75h65" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" />
+    <circle id="offset-records-back-dot" cx="153" cy="75" r="8" fill="#19AEAB" />
+    <path id="offset-records-middle" d="M47 102h136l22 22v50H47v-72Z" fill="#133B50" />
+    <path id="offset-records-middle-tab" d="M183 102v22h22Z" fill="#19AEAB" />
+    <path id="offset-records-middle-line" d="M72 141h65" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" />
+    <circle id="offset-records-middle-dot" cx="168" cy="141" r="8" fill="#19AEAB" />
+    <path id="offset-records-front" d="M62 168h136l22 22v50H62v-72Z" fill="#133B50" />
+    <path id="offset-records-front-tab" d="M198 168v22h22Z" fill="#19AEAB" />
+    <path id="offset-records-front-line" d="M87 207h65" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" />
+    <circle id="offset-records-front-dot" cx="183" cy="207" r="8" fill="#19AEAB" />
+  </g>
+  <g id="offset-records-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+    <text id="offset-records-domains-word" x="280" y="130" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Domains</text>
+    <text id="offset-records-database-word" x="280" y="198" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Database</text>
+    <text id="offset-records-tagline" x="285" y="234" fill="#138B8B" font-size="15" font-weight="750" letter-spacing="4">INDEX EVERY ADDRESS</text>
+  </g>
+</svg>

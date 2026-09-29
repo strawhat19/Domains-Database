@@ -1,0 +1,22 @@
+<svg id="domains-database-v5-record-stack-fill" xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="fill-title fill-description">
+  <title id="fill-title">Domains Database — labeled record stack fill</title>
+  <desc id="fill-description">Three solid navy tabbed records labeled .Com, .Org, and .Net from top to bottom, beside the Domains Database wordmark.</desc>
+  <g id="fill-record-mark" fill="#133B50">
+    <path id="fill-com-record" d="M47 51h141l22 24v35H47V51Z" />
+    <path id="fill-org-record" d="M47 116h141l22 24v35H47v-59Z" />
+    <path id="fill-net-record" d="M47 181h141l22 24v35H47v-59Z" />
+    <circle id="fill-com-dot" cx="178" cy="81" r="8" fill="#19AEAB" />
+    <circle id="fill-org-dot" cx="178" cy="146" r="8" fill="#19AEAB" />
+    <circle id="fill-net-dot" cx="178" cy="211" r="8" fill="#19AEAB" />
+  </g>
+  <g id="fill-domain-labels" fill="#FFFFFF" font-family="Avenir Next, Inter, Arial, sans-serif" font-size="24" font-weight="800" letter-spacing="-0.8">
+    <text id="fill-com-label" x="70" y="90">.Com</text>
+    <text id="fill-org-label" x="70" y="155">.Org</text>
+    <text id="fill-net-label" x="70" y="220">.Net</text>
+  </g>
+  <g id="fill-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+    <text id="fill-domains-word" x="273" y="130" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Domains</text>
+    <text id="fill-database-word" x="273" y="198" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Database</text>
+    <text id="fill-tagline" x="278" y="234" fill="#138B8B" font-size="15" font-weight="750" letter-spacing="4">EVERY ADDRESS IN ORDER</text>
+  </g>
+</svg>

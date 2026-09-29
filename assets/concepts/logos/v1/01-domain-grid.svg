@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Domains Database — Domain Grid</title>
+  <desc id="desc">An open D encloses an organized grid of domain records.</desc>
+<g id="domain-grid-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path id="open-letter-d" d="M49 62h72c61 0 104 33 104 78s-43 78-104 78H49V62Z" stroke="#133B50" stroke-width="12"/>
+  <path id="grid-lines" d="M88 101h87M88 140h87M88 179h87M88 101v78m43-78v78m44-78v78" stroke="#19AEAB" stroke-width="5"/>
+  <circle id="active-record" cx="175" cy="140" r="12" fill="#19AEAB" stroke="none"/>
+</g>
+<g id="domain-grid-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+  <text x="280" y="131" fill="#133B50" font-size="68" font-weight="800" letter-spacing="-3">Domains</text>
+  <text x="280" y="198" fill="#133B50" font-size="68" font-weight="800" letter-spacing="-3">Database</text>
+  <path id="record-accent" d="M280 219h242" stroke="#19AEAB" stroke-width="7"/>
+</g>
+</svg>

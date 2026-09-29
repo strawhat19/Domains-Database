@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="title desc">
+  <title id="title">Domains Database — Domain Nodes</title>
+  <desc id="desc">Connected domain records fan out from one searchable hub.</desc>
+<g id="domain-nodes-mark" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path id="node-spokes" d="M135 140 67 70m68 70 74-64m-74 64 82 69m-82-69-72 74" stroke="#19AEAB" stroke-width="9"/>
+  <circle id="node-hub" cx="135" cy="140" r="39" fill="#133B50" stroke="none"/>
+  <circle id="node-one" cx="57" cy="61" r="19" fill="#19AEAB" stroke="none"/>
+  <circle id="node-two" cx="218" cy="68" r="19" fill="#19AEAB" stroke="none"/>
+  <circle id="node-three" cx="226" cy="217" r="19" fill="#19AEAB" stroke="none"/>
+  <circle id="node-four" cx="55" cy="222" r="19" fill="#19AEAB" stroke="none"/>
+  <text id="hub-letter" x="135" y="153" fill="#FFFFFF" font-family="Avenir Next, Inter, Arial, sans-serif" font-size="41" font-weight="800" text-anchor="middle">D</text>
+</g>
+<g id="domain-nodes-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif">
+  <text x="279" y="128" fill="#133B50" font-size="67" font-weight="800" letter-spacing="-3">Domains</text>
+  <text x="279" y="196" fill="#133B50" font-size="67" font-weight="800" letter-spacing="-3">Database</text>
+  <text x="283" y="233" fill="#138B8B" font-size="15" font-weight="750" letter-spacing="4">FIND THE CONNECTION</text>
+</g>
+</svg>
