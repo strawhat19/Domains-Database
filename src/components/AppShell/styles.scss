@@ -88,7 +88,7 @@
 
 .footer-copyright { margin: 0; font-size: 11px; color: var(--muted); }
 .footer-piratechs { gap: 3px; display: inline-flex; align-items: center; color: var(--ink); }
-.footer-navigation { gap: 24px; display: flex; align-items: center; }
+.footer-navigation { gap: 12px 24px; display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .footer-link { gap: 6px; display: inline-flex; align-items: center; font-size: 11px; color: var(--muted); transition: color .22s ease; }
 .footer-link:hover { color: var(--accent); }
 
@@ -109,10 +109,11 @@
     visibility: hidden;
     align-items: stretch;
     grid-template-rows: 0fr;
-    transition: grid-template-rows .28s ease, opacity .22s ease, visibility 0s linear .28s;
+    transition: grid-template-rows .32s cubic-bezier(.22, 1, .36, 1), opacity .24s ease, visibility 0s linear .32s;
   }
   .header-navigation-open { opacity: 1; visibility: visible; transition-delay: 0s; grid-template-rows: 1fr; }
-  .header-navigation-content { display: block; min-width: 0; min-height: 0; overflow: hidden; }
+  .header-navigation-content { display: block; min-width: 0; min-height: 0; overflow: hidden; transform: translateY(-8px); transition: transform .32s cubic-bezier(.22, 1, .36, 1); }
+  .header-navigation-open .header-navigation-content { transform: translateY(0); }
   .header-navigation-links,
   .header-mobile-footer-links { gap: 4px; display: flex; min-width: 0; flex-direction: column; border-top: 1px solid var(--line); }
   .header-navigation-links { margin-top: 6px; padding: 12px 0 6px; }
@@ -126,6 +127,8 @@
   .header-logo { max-width: 185px; }
   .header-link { padding: 9px 11px; }
   .footer-inner { gap: 18px; padding: 24px var(--shell-gutter); align-items: flex-start; flex-direction: column; }
+  .footer-navigation { gap: 4px 20px; justify-content: flex-start; }
+  .footer-link { min-height: 44px; }
 }
 
 @media (max-width: 480px) {
@@ -143,5 +146,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .header-navigation { transition-delay: 0s; }
+  .header-navigation,
+  .header-navigation-content { transition: none; }
 }

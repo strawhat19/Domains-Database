@@ -139,13 +139,14 @@ const AppShell = ({ children }: PropsWithChildren) => {
             </a>
           </p>
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>
-            {footerLinks.map(item => {
-              const Icon = { Info, Mail, FileText, ShieldCheck }[item.icon];
+            {[...navigation, ...footerLinks].map(item => {
+              const Icon = { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck }[item.icon];
               return (
                 <Link key={item.label} href={item.href} asChild>
                   <RouterAnchor
                     className={`footer-link`}
                     id={`footer-link-${item.label.toLowerCase()}`}
+                    aria-current={pathname === item.href ? `page` : undefined}
                   >
                     <Icon id={`footer-link-icon-${item.label.toLowerCase()}`} className={`footer-link-icon`} size={12} aria-hidden />
                     {item.label}
