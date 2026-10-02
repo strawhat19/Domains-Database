@@ -43,33 +43,66 @@ const AppShell = ({ children }: PropsWithChildren) => {
             aria-label={`Main Navigation`}
             onClick={mobileNavigation.close}
             ref={mobileNavigation.navigationRef}
+            inert={mobileNavigation.compact && !mobileNavigation.open}
+            aria-hidden={mobileNavigation.compact && !mobileNavigation.open ? true : undefined}
             className={`header-navigation${mobileNavigation.open ? ` header-navigation-open` : ``}`}
           >
-            {navigation.map(item => {
-              const Icon = { House, Search, Globe2, UsersRound }[item.icon];
-              return (
-              <Link key={item.label} href={item.href} asChild>
-                <RouterAnchor
-                  id={`header-link-${item.label.toLowerCase()}`}
-                  className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
-                  aria-current={pathname === item.href ? `page` : undefined}
-                >
-                  <Icon
-                    size={14}
-                    aria-hidden={`true`}
-                    className={`header-link-icon`}
-                    id={`header-link-icon-${item.label.toLowerCase()}`}
-                  />
-                  <span
-                    className={`header-link-text`}
-                    id={`header-link-text-${item.label.toLowerCase()}`}
-                  >
-                    {item.label}
-                  </span>
-                </RouterAnchor>
-              </Link>
-              );
-            })}
+            <div id={`header-navigation-content`} className={`header-navigation-content`}>
+              <div id={`header-navigation-links`} className={`header-navigation-links`}>
+                {navigation.map(item => {
+                  const Icon = { House, Search, Globe2, UsersRound }[item.icon];
+                  return (
+                    <Link key={item.label} href={item.href} asChild>
+                      <RouterAnchor
+                        id={`header-link-${item.label.toLowerCase()}`}
+                        className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
+                        aria-current={pathname === item.href ? `page` : undefined}
+                      >
+                        <Icon
+                          size={14}
+                          aria-hidden={`true`}
+                          className={`header-link-icon`}
+                          id={`header-link-icon-${item.label.toLowerCase()}`}
+                        />
+                        <span
+                          className={`header-link-text`}
+                          id={`header-link-text-${item.label.toLowerCase()}`}
+                        >
+                          {item.label}
+                        </span>
+                      </RouterAnchor>
+                    </Link>
+                  );
+                })}
+              </div>
+              <div id={`header-mobile-footer-links`} className={`header-mobile-footer-links`}>
+                {footerLinks.map(item => {
+                  const Icon = { Info, Mail, FileText, ShieldCheck }[item.icon];
+                  return (
+                    <Link key={item.label} href={item.href} asChild>
+                      <RouterAnchor
+                        id={`header-mobile-link-${item.label.toLowerCase()}`}
+                        aria-current={pathname === item.href ? `page` : undefined}
+                        className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
+                      >
+                        <Icon
+                          size={14}
+                          aria-hidden={`true`}
+                          className={`header-link-icon`}
+                          id={`header-mobile-link-icon-${item.label.toLowerCase()}`}
+                        />
+                        <span
+                          className={`header-link-text`}
+                          id={`header-mobile-link-text-${item.label.toLowerCase()}`}
+                        >
+                          {item.label}
+                        </span>
+                      </RouterAnchor>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </nav>
           <div id={`header-actions`} className={`header-actions`}>
             <ThemeToggle />
