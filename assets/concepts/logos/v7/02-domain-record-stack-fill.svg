@@ -1,0 +1,28 @@
+<svg id="domains-database-v7-record-stack-fill" class="domains-database-record-stack-fill" xmlns="http://www.w3.org/2000/svg" width="960" height="280" viewBox="0 0 960 280" role="img" aria-labelledby="fill-title fill-description">
+  <title id="fill-title" class="fill-title">Domains Database — continuous labeled record stack</title>
+  <desc id="fill-description" class="fill-description">Three continuous solid navy tabbed records beside the Domains Database wordmark. Each row pairs two lowercase domain labels: .com and .net, .org and .app, then .dev and .io from top to bottom.</desc>
+  <g id="fill-record-mark" class="fill-record-mark" fill="#133B50">
+    <path id="fill-com-net-record" class="fill-record" d="M47 51h304l22 24v35H47V51Z" />
+    <path id="fill-org-app-record" class="fill-record" d="M47 116h304l22 24v35H47v-59Z" />
+    <path id="fill-dev-io-record" class="fill-record" d="M47 181h304l22 24v35H47v-59Z" />
+    <circle id="fill-com-dot" class="fill-record-dot" cx="178" cy="81" r="8" fill="#19AEAB" />
+    <circle id="fill-net-dot" class="fill-record-dot" cx="341" cy="81" r="8" fill="#19AEAB" />
+    <circle id="fill-org-dot" class="fill-record-dot" cx="178" cy="146" r="8" fill="#19AEAB" />
+    <circle id="fill-app-dot" class="fill-record-dot" cx="341" cy="146" r="8" fill="#19AEAB" />
+    <circle id="fill-dev-dot" class="fill-record-dot" cx="178" cy="211" r="8" fill="#19AEAB" />
+    <circle id="fill-io-dot" class="fill-record-dot" cx="341" cy="211" r="8" fill="#19AEAB" />
+  </g>
+  <g id="fill-domain-labels" class="fill-domain-labels" fill="#FFFFFF" font-family="Avenir Next, Inter, Arial, sans-serif" font-size="24" font-weight="800" letter-spacing="-0.8">
+    <text id="fill-com-label" class="fill-domain-label" x="70" y="90">.com</text>
+    <text id="fill-net-label" class="fill-domain-label" x="233" y="90">.net</text>
+    <text id="fill-org-label" class="fill-domain-label" x="70" y="155">.org</text>
+    <text id="fill-app-label" class="fill-domain-label" x="233" y="155">.app</text>
+    <text id="fill-dev-label" class="fill-domain-label" x="70" y="220">.dev</text>
+    <text id="fill-io-label" class="fill-domain-label" x="233" y="220">.io</text>
+  </g>
+  <g id="fill-wordmark" class="fill-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif" transform="translate(163 0)">
+    <text id="fill-domains-word" class="fill-wordmark-word" x="273" y="130" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Domains</text>
+    <text id="fill-database-word" class="fill-wordmark-word" x="273" y="198" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Database</text>
+    <text id="fill-tagline" class="fill-tagline" x="278" y="234" fill="#138B8B" font-size="15" font-weight="750" letter-spacing="4">EVERY ADDRESS IN ORDER</text>
+  </g>
+</svg>
