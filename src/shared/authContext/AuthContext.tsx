@@ -12,6 +12,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState, type 
 interface AuthContextValue {
   busy: boolean;
   loading: boolean;
+  loginRevision: number;
   user: User | null;
   error: string | null;
   notice: string | null;
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queue = useRef(createOperationQueue()).current;
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loginRevision, setLoginRevision] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionCreated = true;
       const authenticatedUser = await applySession(result);
       if (!authenticatedUser) throw new Error(`Sign In To Access Your Saved Data`);
-      if (mounted.current) setNotice(message);
+      if (mounted.current) { setNotice(message); setLoginRevision(current => current + 1); }
       return authenticatedUser;
     } catch (failure) {
       if (sessionCreated) {
@@ -163,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearError = useCallback(() => setError(null), []);
   const clearNotice = useCallback(() => setNotice(null), []);
-  const value = useMemo(() => ({ user, busy, error, notice, loading, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [user, busy, error, notice, loading, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
+  const value = useMemo(() => ({ user, busy, error, notice, loading, loginRevision, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [user, busy, error, notice, loading, loginRevision, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

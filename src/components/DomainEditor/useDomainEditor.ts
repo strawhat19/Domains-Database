@@ -3,6 +3,7 @@ import type { FormEvent, RefObject } from 'react';
 import { REGISTRARS } from '../../shared/config';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
+import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
 
 export const useModalFocus = (container: RefObject<HTMLDivElement | null>, open: boolean, onClose: () => void) => {
   const closeHandler = useRef(onClose);
@@ -54,6 +55,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
   nextYear.setFullYear(nextYear.getFullYear() + 1);
   const expiresAt = `${nextYear.getFullYear()}-${String(nextYear.getMonth() + 1).padStart(2, `0`)}-${String(nextYear.getDate()).padStart(2, `0`)}`;
   return {
+    meta: domain?.meta,
     name: domain?.name ?? ``,
     notes: domain?.notes ?? ``,
     owner: domain?.owner ?? ``,
@@ -74,7 +76,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   useModalFocus(modalRef, true, close);
   const setField = <Key extends keyof DomainInput>(field: Key, value: DomainInput[Key]) => {
     setError(``);
-    setInput(previous => ({ ...previous, [field]: value }));
+    setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

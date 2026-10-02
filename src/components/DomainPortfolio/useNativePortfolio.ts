@@ -7,6 +7,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { getDomainStatus } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
+import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
 import type { DomainInput, DomainRecord, Registrar } from '../../shared/types';
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : `Something Went Wrong`;
@@ -34,7 +35,7 @@ export const useNativePortfolio = (compact = false) => {
   const [formError, setFormError] = useState(``);
   const [editorOpen, setEditorOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
-  const [renewalPrice, setRenewalPrice] = useState(``);
+  const [renewalPrice, updateRenewalPrice] = useState(``);
   const [editingId, setEditingId] = useState<string>();
   const [input, setInput] = useState<DomainInput>(newDomain);
   const [sortByName, setSortByName] = useState(true);
@@ -59,8 +60,9 @@ export const useNativePortfolio = (compact = false) => {
     context.clearNotice();
     setFormError(``);
     setEditingId(domain?.id);
-    setRenewalPrice(domain ? String(domain.renewalPrice) : ``);
+    updateRenewalPrice(domain ? String(domain.renewalPrice) : ``);
     setInput(domain ? {
+      meta: domain.meta,
       name: domain.name,
       owner: domain.owner,
       notes: domain.notes,
@@ -76,7 +78,13 @@ export const useNativePortfolio = (compact = false) => {
     if (!saving) setEditorOpen(false);
   };
 
-  const updateInput = <K extends keyof DomainInput>(field: K, value: DomainInput[K]) => setInput(current => ({ ...current, [field]: value }));
+  const setRenewalPrice = (value: string) => {
+    updateRenewalPrice(value);
+    setInput(current => markDomainFieldsKnown(current, [`renewalPrice`]));
+  };
+  const updateInput = <K extends keyof DomainInput>(field: K, value: DomainInput[K]) => setInput(current => (
+    markDomainFieldsKnown({ ...current, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : [])
+  ));
 
   const saveDomain = async () => {
     if (saving) return;

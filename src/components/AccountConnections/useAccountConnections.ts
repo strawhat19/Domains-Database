@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { connectionsAPI } from '../../api/connections';
 import { useAuth } from '../../shared/authContext/useAuth';
+import { useDomains } from '../../shared/domainContext/useDomains';
 import { EMPTY_CONNECTIONS, type ConnectionProvider } from '../../shared/connections/types';
 
 export const useAccountConnections = () => {
   const { user } = useAuth();
+  const { syncing, syncConnections, connectionStatuses, resetConnectionSync } = useDomains();
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(``);
@@ -38,7 +40,10 @@ export const useAccountConnections = () => {
     try {
       const snapshot = await connectionsAPI.saveConnections(values, user.id);
       setValues(snapshot.values);
-      setNotice(`Connections Saved`);
+      setNotice(`Connections Saved — Checking Domains…`);
+      const result = await syncConnections(snapshot);
+      setNotice(`Connections Saved — ${result.count} Domain(s) Synced${result.warnings.length ? ` — ${result.warnings.join(`; `)}` : ``}`);
+      setError(result.errors.join(`; `));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : `Could Not Save Connections`);
     } finally { setBusy(false); }
@@ -50,6 +55,7 @@ export const useAccountConnections = () => {
     setNotice(``);
     try {
       await connectionsAPI.clearConnections(user.id);
+      resetConnectionSync();
       setValues({ ...EMPTY_CONNECTIONS });
       setVisible(true);
       setNotice(`Connections Removed`);
@@ -57,5 +63,5 @@ export const useAccountConnections = () => {
     finally { setBusy(false); }
   };
   const dismiss = () => { setError(``); setNotice(``); };
-  return { busy, error, notice, values, loading, visible, change, save, clear, dismiss, setVisible };
+  return { busy, error, notice, values, loading, visible, syncing, change, save, clear, dismiss, setVisible, connectionStatuses };
 };

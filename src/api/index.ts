@@ -5,6 +5,7 @@ import { createSampleDomains } from '../shared/sampleDomains';
 import { createOperationQueue } from '../shared/common/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { accountStorageKey } from '../shared/authentication/userScope';
+import type { RegistrarDomain } from '../shared/registrarSync/types';
 import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
 import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared/config';
 
@@ -201,6 +202,41 @@ const assertUnique = (name: string, domains: DomainRecord[], id?: string) => {
   if (domains.some(domain => domain.id !== id && domain.name.toLowerCase() === name)) throw new Error(`${name} Is Already In Your Portfolio`);
 };
 
+type RegistrarPatch = Partial<DomainInput> & Pick<DomainInput, `name` | `registrar`>;
+const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): RegistrarPatch => {
+  if (!input || typeof input !== `object` || Array.isArray(input)) throw new Error(`Registrar Domain Must Be An Object`);
+  if (typeof input.name !== `string` || typeof input.registrar !== `string` || !input.registrar) throw new Error(`Registrar Domain Must Include A Name And Registrar`);
+  for (const field of [`status`, `expiresAt`, `createdAt`, `providerId`] as const) {
+    if (input[field] !== undefined && typeof input[field] !== `string`) throw new Error(`${field} Must Be Text`);
+  }
+  for (const field of [`locked`, `privacy`, `autoRenew`] as const) {
+    if (input[field] !== undefined && typeof input[field] !== `boolean`) throw new Error(`${field} Must Be True Or False`);
+  }
+  const validated = validateDomainInput({
+    owner,
+    notes: ``,
+    renewalPrice: 0,
+    name: input.name,
+    status: input.status,
+    locked: input.locked,
+    privacy: input.privacy,
+    registrar: input.registrar,
+    createdAt: input.createdAt,
+    providerId: input.providerId,
+    expiresAt: input.expiresAt ?? ``,
+    autoRenew: input.autoRenew ?? false,
+  });
+  const patch: RegistrarPatch = { name: validated.name, registrar: validated.registrar };
+  for (const field of [`status`, `expiresAt`, `createdAt`, `providerId`] as const) {
+    const value = validated[field];
+    if (value) patch[field] = value;
+  }
+  for (const field of [`locked`, `privacy`, `autoRenew`] as const) {
+    if (input[field] !== undefined) patch[field] = validated[field];
+  }
+  return patch;
+};
+
 export const API_ROUTES = [
   `/api`,
   `/api/health`,
@@ -216,6 +252,7 @@ export const API_ROUTES = [
   `/api/notifications`,
   `/api/domains/import`,
   `/api/domains/export`,
+  `/api/registrars/sync`,
   `/api/notifications/:id`,
   ...(useSampleData ? [`/api/domains/sample`] : []),
 ];
@@ -273,6 +310,16 @@ export const api = {
     if (!original) throw new Error(`Domain Could Not Be Found`);
     const validated = validateDomainInput({ ...original, ...input, meta: { ...original.meta, ...input.meta } });
     assertUnique(validated.name, current.domains, id);
+    const previous = original.meta?.registrarSync;
+    const incoming = validated.meta?.registrarSync;
+    const previousSync = previous && typeof previous === `object` && !Array.isArray(previous) ? previous : undefined;
+    const incomingSync = incoming && typeof incoming === `object` && !Array.isArray(incoming) ? incoming : undefined;
+    if (previousSync || incomingSync) validated.meta = { ...validated.meta, registrarSync: {
+      ...previousSync,
+      ...incomingSync,
+      ...(validated.autoRenew !== original.autoRenew ? { autoRenewKnown: true } : {}),
+      ...(validated.renewalPrice !== original.renewalPrice ? { renewalPriceKnown: true } : {}),
+    } };
     const domain = new Domain({
       ...original,
       ...validated,
@@ -336,6 +383,53 @@ export const api = {
     });
     await saveSnapshot({ version: 1, domains, nextNumber });
     return inputs.length;
+  }),
+  syncRegistrarDomains: (inputs: RegistrarDomain[], expectedUserId: string, owner: string): Promise<number> => serializePortfolioMutation(async () => {
+    if (typeof expectedUserId !== `string` || !userScope || expectedUserId !== userScope) throw new Error(`Sign In To Sync Registrar Domains`);
+    await requireScopeSession(expectedUserId);
+    if (!Array.isArray(inputs) || inputs.length > 10000) throw new Error(`Sync Up To 10000 Registrar Domains At A Time`);
+    const domainOwner = typeof owner === `string` ? owner.trim() : ``;
+    if (!domainOwner || domainOwner.length > 120) throw new Error(`Enter A Domain Owner Of 1 To 120 Characters`);
+    const patches = Array.from(inputs, (input, index) => {
+      try { return normalizeRegistrarDomain(input, domainOwner); }
+      catch (error) { throw new Error(`Domain ${index + 1}: ${error instanceof Error ? error.message : `Invalid Registrar Domain`}`); }
+    });
+    if (!patches.length) return 0;
+    const current = await readSnapshot();
+    const domains = copyDomains(current.domains);
+    const indexes = new Map(domains.map((domain, index) => [domain.name, index]));
+    const syncedNames = new Set<string>();
+    const syncedAt = new Date().toISOString();
+    let nextNumber = current.nextNumber;
+    for (const patch of patches) {
+      const index = indexes.get(patch.name);
+      const original = index !== undefined ? domains[index] : undefined;
+      const previous = original?.meta?.registrarSync;
+      const previousSync = previous && typeof previous === `object` && !Array.isArray(previous) ? previous : {};
+      const registrar = original?.registrar === `GoDaddy Auctions` && patch.registrar === `GoDaddy` ? original.registrar : patch.registrar;
+      const domain = new Domain({
+        ...(original ?? { owner: domainOwner, notes: ``, renewalPrice: 0, autoRenew: false, expiresAt: `` }),
+        ...patch,
+        registrar,
+        isSample: false,
+        uid: expectedUserId,
+        updated: syncedAt,
+        firstImportedAt: original?.firstImportedAt ?? syncedAt,
+        number: original?.number ?? nextNumber,
+        meta: { ...original?.meta, registrarSync: {
+          ...previousSync,
+          source: patch.registrar,
+          syncedAt,
+          ...(patch.autoRenew !== undefined ? { autoRenewKnown: true } : original ? {} : { autoRenewKnown: false }),
+          ...(!original ? { renewalPriceKnown: false } : {}),
+        } },
+      });
+      if (index !== undefined) domains[index] = domain;
+      else { indexes.set(patch.name, domains.length); domains.push(domain); nextNumber += 1; }
+      syncedNames.add(patch.name);
+    }
+    await saveSnapshot({ version: 1, domains, nextNumber });
+    return syncedNames.size;
   }),
   resetSampleData: () => serializePortfolioMutation(async () => {
     if (!useSampleData) throw new Error(`Sample Data Is Disabled`);

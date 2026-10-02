@@ -1,14 +1,21 @@
 import { api } from '../../api';
 import type { PropsWithChildren } from 'react';
 import type { DomainInput, DomainRecord } from '../types';
+import type { ConnectionSnapshot } from '../connections/types';
+import { useRegistrarSync } from '../registrarSync/useRegistrarSync';
+import type { ConnectionSyncResult, ConnectionSyncStatuses } from '../registrarSync/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface DomainContextValue {
   error: string;
   notice: string;
   loading: boolean;
+  syncing: boolean;
   domains: DomainRecord[];
   clearNotice: () => void;
+  resetConnectionSync: () => void;
+  connectionStatuses: ConnectionSyncStatuses;
+  syncConnections: (snapshot?: ConnectionSnapshot) => Promise<ConnectionSyncResult>;
   resetSampleData: () => Promise<void>;
   prepareExport: () => Promise<DomainRecord[]>;
   deleteDomain: (id: string) => Promise<void>;
@@ -39,7 +46,12 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
     return () => { mounted = false; active.current = false; };
   }, []);
 
-  const clearNotice = useCallback(() => setNotice(``), []);
+  const refreshDomains = useCallback(async () => {
+    const records = await api.getDomains();
+    if (active.current) setDomains(records);
+  }, []);
+  const sync = useRegistrarSync(refreshDomains);
+  const clearNotice = useCallback(() => { setNotice(``); sync.clearSyncNotice(); }, [sync.clearSyncNotice]);
 
   const mutate = useCallback(async <T,>(operation: () => Promise<T>, message: string): Promise<T> => {
     if (!active.current) throw new Error(`Portfolio Changed, Please Try Again`);
@@ -65,10 +77,11 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
   const resetSampleData = useCallback(async () => { await mutate(() => api.resetSampleData(), `Sample Portfolio Restored`); }, [mutate]);
 
   const value = useMemo(() => ({
-    error,
-    notice,
+    error: error || sync.syncError,
+    notice: notice || sync.syncNotice,
     loading,
     domains,
+    syncing: sync.syncing,
     addDomain,
     clearNotice,
     deleteDomain,
@@ -76,7 +89,10 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
     importDomains,
     prepareExport,
     resetSampleData,
-  }), [error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData]);
+    syncConnections: sync.syncConnections,
+    connectionStatuses: sync.connectionStatuses,
+    resetConnectionSync: sync.resetConnectionSync,
+  }), [error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync]);
 
   return (
     <DomainContext.Provider value={value}>

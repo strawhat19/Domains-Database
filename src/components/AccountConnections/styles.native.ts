@@ -2,6 +2,11 @@ import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  actionsCell: { minHeight: 20 },
+  statusDotWrap: { width: 12, alignItems: `center` },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  rowStatus: { gap: 6, flexDirection: `row`, alignItems: `center` },
+  statusText: { flex: 1, color: palette.muted, fontSize: 11, lineHeight: 18, fontFamily: `DMSans_500Medium` },
   panel: { gap: 22, padding: 24, borderRadius: 12, borderWidth: 1, borderColor: palette.line, backgroundColor: palette.paper },
   row: { gap: 12, flexDirection: `row`, flexWrap: `wrap`, alignItems: `center` },
   title: { flex: 1, minWidth: 150, color: palette.ink, fontSize: 15, fontFamily: `DMSans_700Bold` },

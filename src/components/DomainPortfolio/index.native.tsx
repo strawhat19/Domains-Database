@@ -53,7 +53,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             {compact ? `Portfolio overview` : `Your portfolio`}
           </Text>
           <Text {...elementProps(`native-portfolio-description`)} style={styles.description}>
-            {`Your domain records, sorted and searchable.`}
+            {state.syncing ? `Checking Connected Registrars…` : `Your domain records, sorted and searchable.`}
           </Text>
         </View>
         <View {...elementProps(`native-portfolio-heading-bottom`)} style={styles.headingBottom}>

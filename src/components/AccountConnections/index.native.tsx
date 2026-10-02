@@ -23,7 +23,7 @@ const AccountConnections = () => {
         </Pressable>
       </View>
       <Text {...elementProps(`connections-description`)} style={styles.copy}>
-        {`Paste .env-style values into the three fields below. They are saved privately for your account on this device. Saving prepares your connections; automatic registrar sync is not connected yet.`}
+        {`Save your registrar values to check each connection and import its domains. Saved connections are checked again whenever you sign in. Renewal costs are entered manually; unavailable provider fields appear as —.`}
       </Text>
       {connectionFields.map(field => (
         <View key={field.id} {...elementProps(`connection-field`, field.id)} style={styles.field}>
@@ -46,13 +46,27 @@ const AccountConnections = () => {
             />
           )}
           <Text {...elementProps(`connection-hint`, field.id)} style={styles.copy}>{field.hint}</Text>
+          <View {...elementProps(`actionsCell`, `connection-${field.id}`)} style={styles.actionsCell}>
+            <View {...elementProps(`rowStatus`, `connection-${field.id}`)} style={styles.rowStatus}>
+              <View {...elementProps(`statusDotWrap`, `connection-${field.id}`)} style={styles.statusDotWrap}>
+                <View
+                  {...elementProps(`statusDot`, `connection-${field.id}`)}
+                  style={[styles.statusDot, { backgroundColor: state.connectionStatuses[field.id].state === `connected`
+                    ? palette.success : state.connectionStatuses[field.id].state === `error` ? palette.danger : palette.muted }]}
+                />
+              </View>
+              <Text {...elementProps(`statusText`, `connection-${field.id}`)} style={styles.statusText} accessibilityLiveRegion={`polite`}>
+                {state.connectionStatuses[field.id].message}
+              </Text>
+            </View>
+          </View>
         </View>
       ))}
       {!state.visible && <Text {...elementProps(`connections-edit-hint`)} style={styles.copy}>{`Choose Show values to edit your saved connections`}</Text>}
       <View {...elementProps(`connections-actions`)} style={styles.row}>
         <Pressable {...elementProps(`connections-save`)} style={[styles.button, styles.primary]} disabled={state.busy || state.loading} onPress={() => void state.save()}>
           <Save {...elementProps(`connections-save-icon`)} size={16} color={palette.contrast} />
-          <Text {...elementProps(`connections-save-text`)} style={[styles.buttonText, styles.primaryText]}>{state.busy ? `Saving…` : `Save connections`}</Text>
+          <Text {...elementProps(`connections-save-text`)} style={[styles.buttonText, styles.primaryText]}>{state.busy ? state.syncing ? `Checking Domains…` : `Saving…` : `Save connections`}</Text>
         </Pressable>
         <Pressable {...elementProps(`connections-clear`)} style={styles.button} disabled={state.busy || state.loading} onPress={() => void state.clear()}>
           <Trash2 {...elementProps(`connections-clear-icon`)} size={16} color={palette.danger} />
@@ -61,7 +75,7 @@ const AccountConnections = () => {
       </View>
       <View {...elementProps(`connections-private-note`)} style={styles.note}>
         <ShieldCheck {...elementProps(`connections-private-icon`)} size={16} color={palette.accent} />
-        <Text {...elementProps(`connections-private-copy`)} style={styles.noteText}>{`These values never appear in your public profile or Community. Local storage can be read by someone with access to this device; use a private backend for production credentials.`}</Text>
+        <Text {...elementProps(`connections-private-copy`)} style={styles.noteText}>{`Values stay in your private account settings and are sent through the app's server to the selected registrar for read-only domain checks. They never appear in public profiles, Community, or exports. Local storage is readable by someone with access to this device.`}</Text>
       </View>
       <Toast id={`connections-feedback`} message={state.error || state.notice} kind={state.error ? `error` : `success`} onDismiss={state.dismiss} />
     </View>

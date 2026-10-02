@@ -15,7 +15,7 @@ export const useUserMenu = () => {
   useEffect(() => {
     if (!open || typeof document === `undefined`) return;
     const dismiss = (event: MouseEvent) => {
-      if (event.target instanceof Element && !event.target.closest(`.user-menu`)) setOpen(false);
+      if (event.target instanceof Element && !event.target.closest(`#user-menu`)) setOpen(false);
     };
     const escape = (event: KeyboardEvent) => { if (event.key === `Escape`) setOpen(false); };
     document.addEventListener(`mousedown`, dismiss);

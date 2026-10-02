@@ -96,6 +96,10 @@ const readMetaValue = (domain: DomainRecord, column: keyof typeof EXTRA_HEADERS)
 };
 
 export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioColumn): PortfolioColumnValue => {
+  const sync = domain.meta?.registrarSync;
+  const registrarSync = sync && typeof sync === `object` && !Array.isArray(sync) ? sync : undefined;
+  if (column === `autoRenew` && registrarSync?.autoRenewKnown === false) return undefined;
+  if ((column === `renewalPrice` || column === `monthlyCost`) && registrarSync?.renewalPriceKnown === false && domain.renewalPrice === 0) return undefined;
   switch (column) {
     case `monthlyCost`: return Number.isFinite(domain.renewalPrice) ? domain.renewalPrice / 12 : undefined;
     case `registrantName`: return domain.registrant?.name;

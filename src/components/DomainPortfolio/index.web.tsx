@@ -48,7 +48,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             {`THE REGISTRY`}
           </span>
           <h2 id={`portfolio-title`} className={`portfolio-title`}>
-            {`Domain portfolio`}
+            {`Domain Portfolio`}
           </h2>
           <div id={`portfolio-summary`} className={`portfolio-summary`}>
             <span id={`portfolio-domain-total`} className={`portfolio-summary-item`}>
@@ -70,7 +70,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   {`·`}
                 </span>
                 <span id={`portfolio-annual-spend`} className={`portfolio-summary-item`}>
-                  {`${formatCurrency(portfolio.summary.annualCost)} / year`}
+                  {portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost)} / year`}
                 </span>
                 {showMonthlySpend && (
                   <>
@@ -78,7 +78,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       {`·`}
                     </span>
                     <span id={`portfolio-monthly-spend`} className={`portfolio-summary-item`}>
-                      {`${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
+                      {portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
                     </span>
                   </>
                 )}
@@ -112,6 +112,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </button>
         </div>
       </div>
+      {portfolio.syncing && (
+        <p role={`status`} id={`portfolio-sync-status`} className={`portfolio-sync-status`}>
+          {`Checking Connected Registrars…`}
+        </p>
+      )}
       {displayedError && (
         <div role={`alert`} id={`portfolio-error`} className={`portfolio-message portfolio-message-error`}>
           <p id={`portfolio-error-text`} className={`portfolio-message-text`}>
@@ -151,31 +156,34 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               onChange={event => portfolio.setQuery(event.target.value)}
             />
           </div>
-          <div id={`portfolio-registrar-filter-wrap`} className={`portfolio-registrar-filter-wrap`}>
-            <label id={`portfolio-registrar-filter-label`} className={`portfolio-sr-only`} htmlFor={`portfolio-registrar-filter`}>
-              {`Filter By Registrar`}
-            </label>
-            <select
-              id={`portfolio-registrar-filter`}
-              className={`portfolio-registrar-filter`}
-              value={portfolio.registrarFilter}
-              onChange={event => portfolio.setRegistrarFilter(event.target.value)}
-            >
-              <option id={`portfolio-registrar-option-all`} className={`portfolio-registrar-option`} value={`All Registrars`}>
-                {`All Registrars`}
-              </option>
-              {REGISTRARS.map(registrar => (
-                <option
-                  key={registrar}
-                  value={registrar}
-                  className={`portfolio-registrar-option`}
-                  id={`portfolio-registrar-option-${registrar.toLowerCase().replaceAll(` `, `-`)}`}
-                >
-                  {registrar}
+          <div id={`portfolio-registrar-controls`} className={`portfolio-registrar-controls`}>
+            <div id={`portfolio-registrar-filter-wrap`} className={`portfolio-registrar-filter-wrap`}>
+              <label id={`portfolio-registrar-filter-label`} className={`portfolio-sr-only`} htmlFor={`portfolio-registrar-filter`}>
+                {`Filter By Registrar`}
+              </label>
+              <select
+                id={`portfolio-registrar-filter`}
+                className={`portfolio-registrar-filter`}
+                value={portfolio.registrarFilter}
+                onChange={event => portfolio.setRegistrarFilter(event.target.value)}
+              >
+                <option id={`portfolio-registrar-option-all`} className={`portfolio-registrar-option`} value={`All Registrars`}>
+                  {`All Registrars`}
                 </option>
-              ))}
-            </select>
-            <ChevronDown size={13} aria-hidden={`true`} id={`portfolio-registrar-filter-icon`} className={`portfolio-registrar-filter-icon`} />
+                {REGISTRARS.map(registrar => (
+                  <option
+                    key={registrar}
+                    value={registrar}
+                    className={`portfolio-registrar-option`}
+                    id={`portfolio-registrar-option-${registrar.toLowerCase().replaceAll(` `, `-`)}`}
+                  >
+                    {registrar}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={13} aria-hidden={`true`} id={`portfolio-registrar-filter-icon`} className={`portfolio-registrar-filter-icon`} />
+            </div>
+            <PortfolioSelection count={selection.visibleSelectedCount} />
           </div>
           <div id={`portfolio-toolbar-meta`} className={`portfolio-toolbar-meta`}>
             {useSampleData && portfolio.summary.hasSampleData && (
@@ -222,13 +230,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {portfolio.sortField ? `Manual order` : `Sort A–Z`}
             </span>
           </button>
-          <PortfolioSelection
-            total={visibleIds.length}
-            allSelected={selection.allSelected}
-            count={selection.visibleSelectedCount}
-            disabled={portfolio.loading}
-            onSelectAll={selection.selectAll}
-          />
         </div>
         <div id={`portfolio-scroll-hint`} className={`portfolio-scroll-hint${preferences.view === `grid` ? ` portfolio-scroll-hint-hidden` : ``}`}>
           <span id={`portfolio-scroll-hint-text`} className={`portfolio-scroll-hint-text`}>

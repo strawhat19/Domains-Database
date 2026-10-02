@@ -6,7 +6,8 @@ import { Square, CheckSquare, Globe2, Pencil, RefreshCw, Trash2 } from 'lucide-r
 import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { formatDate, formatCurrency, getDaysUntil, getDomainStatus } from '../../shared/domainUtils';
+import { formatDate, getDaysUntil, getDomainStatus } from '../../shared/domainUtils';
+import { getPortfolioColumnValue, getPortfolioColumnDisplay } from '../../shared/portfolioColumns';
 
 interface DomainCardProps {
   index?: number;
@@ -61,6 +62,10 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
   const status = getDomainStatus(domain);
   const colors = statusColors[status];
   const days = getDaysUntil(domain.expiresAt);
+  const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
+  const annualPrice = getPortfolioColumnDisplay(domain, `renewalPrice`);
+  const monthlyPrice = getPortfolioColumnDisplay(domain, `monthlyCost`);
+  const autoRenewLabel = getPortfolioColumnDisplay(domain, `autoRenew`).toLowerCase();
   const daysLabel = !Number.isFinite(days)
     ? `Expiry unknown`
     : days < 0 ? `${Math.abs(days)} day(s) ago` : days === 0 ? `Expires today` : `In ${days} day(s)`;
@@ -144,17 +149,17 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
         </View>
         <View {...elementProps(`native-domain-renewal`, domain.id)} style={styles.renewal}>
           <Text {...elementProps(`native-domain-renewal-price`, domain.id)} style={styles.renewalPrice}>
-            {`${formatCurrency(domain.renewalPrice)} / year`}
+            {annualPrice === `—` ? annualPrice : `${annualPrice} / year`}
           </Text>
           {visibleColumns.includes(`monthlyCost`) && (
             <Text {...elementProps(`native-domain-monthly-cost`, domain.id)} style={styles.renewalPrice}>
-              {`${formatCurrency(domain.renewalPrice / 12)} / month`}
+              {monthlyPrice === `—` ? monthlyPrice : `${monthlyPrice} / month`}
             </Text>
           )}
           <View {...elementProps(`native-domain-auto-renew`, domain.id)} style={styles.autoRenew}>
-            <RefreshCw {...elementProps(`native-domain-auto-renew-icon`, domain.id)} size={10} color={domain.autoRenew ? palette.accent : palette.muted} />
+            <RefreshCw {...elementProps(`native-domain-auto-renew-icon`, domain.id)} size={10} color={autoRenew === true ? palette.accent : palette.muted} />
             <Text {...elementProps(`native-domain-auto-renew-text`, domain.id)} style={styles.autoRenewText}>
-              {`Auto-renew ${domain.autoRenew ? `on` : `off`}`}
+              {`Auto-renew ${autoRenewLabel}`}
             </Text>
           </View>
         </View>

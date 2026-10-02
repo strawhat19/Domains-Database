@@ -1,6 +1,6 @@
 # Domains Database
 
-Domains Database is a frontend domain inventory built with Expo, React Native, TypeScript, and Sass. The landing page uses the v8 logo and opens with a compact portfolio. The full portfolio brings records from Hostinger, GoDaddy, GoDaddy Auctions, and Namecheap into one device-local list.
+Domains Database is a domain inventory built with Expo, React Native, TypeScript, and Sass, with a read-only server relay for registrar APIs. The landing page uses the v8 logo and opens with a compact portfolio. The full portfolio brings records from Hostinger, GoDaddy, GoDaddy Auctions, and Namecheap into one device-local list.
 
 ## Run locally
 
@@ -31,15 +31,16 @@ For mobile, run `npm start` and open the project with an Expo Go version support
 - Private-by-default profiles, opt-in domain sharing, posts, follows, and audience-filtered local feeds
 - A Markdown editor with bold, italic, code blocks, previews, and public HTTPS image URLs; no image uploads
 - Three private account-scoped fields for GoDaddy, Hostinger, and Namecheap connection values
+- Automatic connection checks and domain imports after saving connections, signing in, and restoring a session
 - An Owner-only Dashboard showing real device-local account counts and your own portfolio statistics
 
-No registrar accounts, external domain discovery, or remote backend are connected. Local accounts are device-only demos. Auto-renew controls update inventory records only; change the actual setting in your registrar account. GoDaddy Auctions is a source label you can use for auction acquisitions; the app does not infer which account currently holds those names.
+Registrar connections use the credentials saved in your account to read domains through the Expo server. Local accounts and inventories remain device-only demos, with no remote account database. Auto-renew controls update inventory records only; change the actual setting in your registrar account. GoDaddy Auctions is a source label retained on existing records; GoDaddy's domain portfolio does not identify auction acquisitions separately.
 
 ## Local data and future API
 
 `src/shared/config.ts` contains the master `useLocalStorage` flag, set to `true`. AsyncStorage uses browser storage on web and device storage on mobile. Setting the flag to `false` keeps the auth screens but submission asks you to connect a backend; it does not enable one. The existing domain service retains its session-only mode for a future authenticated integration.
 
-`src/api/index.ts` provides asynchronous local domain operations and a route directory. The `/api` page documents this interface; it is not an HTTP API endpoint. `src/shared/domainContext/` owns shared state. Domain records receive an app-owned ID and a monotonic integer `number`.
+`src/api/index.ts` provides asynchronous local domain operations and a route directory. The `/api` page documents this interface; most listed operations remain local services. `POST /api/registrars/sync` is an actual Expo HTTP endpoint, backed by server-only connectors in `src/server/registrars/`. `src/shared/domainContext/` owns shared state. Domain records receive an app-owned ID and a monotonic integer `number`.
 
 `useSampleData` defaults to `false`, so the portfolio starts empty and saved sample rows are removed while your own records remain. Your portfolio is not synchronized across devices. Export a CSV before clearing browser data or uninstalling the app.
 
@@ -53,7 +54,7 @@ Domains start in alphabetical order. The button beside Columns switches between 
 
 Dark mode is the default. The saved theme is applied in the document head before the page paints. Search controls and table headings use CSS sticky positioning, with header widths and horizontal scrolling kept aligned with the table.
 
-Use Group to organize domains by a field or create custom groups and assign their members. Manual order clears the active column sort and enables dragging and move buttons within each group. Column sorting disables manual reordering; clicking a heading cycles ascending, descending, and manual order. Group membership and manual ordering are saved locally and restored when Manual order is active. Position numbers reflect the current filtered display. Check all and Uncheck all affect the visible domains, and selection carries between table and cards.
+Use Group to organize domains by a field or create custom groups and assign their members. Manual order clears the active column sort and enables dragging and move buttons within each group. Column sorting disables manual reordering; clicking a heading cycles ascending, descending, and manual order. Group membership and manual ordering are saved locally and restored when Manual order is active. Position numbers reflect the current filtered display. The table's column-header checkbox selects or clears visible domains, the selected count sits beside the registrar filter, and selection carries between table and cards.
 
 ## CSV format
 
@@ -72,9 +73,13 @@ Create your local account at `/signup`, then sign in at `/signin`. Password veri
 
 The first local account adopts the existing portfolio, columns, and grouping preferences. Original storage keys remain as a backup; later accounts start with their own records. Sessions expire after thirty days. Local storage is editable by someone with access to the device, so this flow is not a production security boundary or a cloud login.
 
-Add Domain includes Connect Registrar. Guests can sign in or sign up; signed-in users open Profile → Connections. Its three fields accept `.env`-style values for GoDaddy, Hostinger, and Namecheap. Values persist separately for the current account, can be revealed, edited, or removed, and never appear in public profiles, Community, domain notes, or CSV exports. Saving these values prepares a connection; it does not call a registrar or enable automatic sync.
+Add Domain includes Connect Registrar. Guests can sign in or sign up; signed-in users open Profile → Connections. Its three fields accept `.env`-style values for GoDaddy, Hostinger, and Namecheap. Values persist separately for the current account, can be revealed, edited, or removed, and never appear in public profiles, Community, domain notes, or CSV exports. Saving starts a read-only portfolio request for each configured registrar; the same check runs on sign-in and session restoration. Each successful result updates the current account's table immediately. Connection statuses show counts or actionable failures, while errors at one registrar do not discard successful results from another.
 
-`.env.example` lists the same private variables for a future backend. Credentials saved through Connections remain in local browser or device storage; the frontend does not write a `.env` file. Local storage is readable by someone with access to the device. For production integration, move credentials into a private backend's environment or secret store. Never prefix registrar secrets with `EXPO_PUBLIC_`.
+`.env.example` lists the private variable names and setup instructions to paste into Connections. The relay uses only the current request's credentials; it never falls back to the machine's `.env`, stores secrets, or returns raw provider responses. Credentials saved through Connections remain in local browser or device storage; the frontend does not write a `.env` file. Local storage is readable by someone with access to the device. Before offering this to other users, replace local demo authentication and credential storage with authenticated server accounts and a private secret store. Never prefix registrar secrets with `EXPO_PUBLIC_`.
+
+GoDaddy accepts a PAT with domain-read scope or a production key/secret pair. Hostinger accepts an API token. Namecheap requires API-enabled credentials and the relay server's outbound public IPv4 in the account's whitelist; `NAMECHEAP_CLIENT_IP` must match that address, not a private LAN IP. See the [GoDaddy auth guide](https://developer.godaddy.com/en/docs/api-users/auth), [Hostinger API overview](https://docs.hostinger.com/api-reference/overview), and [Namecheap global parameters](https://www.namecheap.com/support/api/global-parameters/).
+
+Sync is an upsert by normalized domain name. It preserves app IDs, numbers, owner labels, notes, manually entered costs, and fields the provider does not supply. It never deletes a row because it is absent from a later response. Hostinger does not supply auto-renew in its portfolio response, and these portfolio APIs do not supply renewal purchase costs; unknown values appear as `—` until supplied or edited manually. The relay rejects incomplete pagination and malformed results instead of importing a truncated or empty success response. Requests are bounded to 10,000 domains per provider; timeouts, rate limits, expired tokens, and eligibility or IP restrictions appear as errors.
 
 ## Local Community
 
@@ -88,8 +93,8 @@ Guest domains use their own storage. The first local account can adopt guest rec
 
 ## Web and mobile publishing
 
-The web app is configured for static export. When you are ready to package it, `npm run export:web` writes the web deployment files to `dist/`. Serve those files with a static host or your own Apache setup; the TypeScript source is not directly executable by Apache.
+The web app uses Expo server output so registrar API routes can run. Restart `npm start` after changing this configuration. When you are ready to package it, `npm run export:web` writes client and server artifacts to `dist/`. Deploy the Expo server with an appropriate runtime; serving only static files from Apache cannot run the registrar relay. Production native builds need the deployed HTTPS server URL in the `expo-router` plugin's `origin` setting. See [Expo API route deployment](https://docs.expo.dev/router/web/api-routes/).
 
 `eas.json` supplies preview and production profiles for a future Expo EAS mobile build. Store publication still needs your Expo project, signing credentials, final app icons, and store details.
 
-The social and account-connections update passed TypeScript checking and 23 focused checks against the actual local services using an isolated in-memory storage adapter. No browser UI verification or build commands were run.
+The earlier social and account-storage update passed TypeScript checking and 23 focused local-service checks. The registrar sync implementation has not been tested, built, or exercised with real credentials, per AGENTS.md.

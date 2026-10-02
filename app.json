@@ -10,7 +10,7 @@
     "plugins": ["expo-router", "expo-font", "expo-document-picker"],
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "server",
       "favicon": "./public/favicon.png"
     },
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.piratechs.domainsdatabase" },

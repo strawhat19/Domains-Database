@@ -68,6 +68,7 @@ export const usePortfolio = () => {
   }, [sortedDomains, query, registrarFilter]);
   const summary = useMemo(() => ({
     count: data.domains.length,
+    knownCostCount: data.domains.filter(domain => typeof getPortfolioColumnValue(domain, `renewalPrice`) === `number`).length,
     annualCost: data.domains.reduce((total, domain) => total + domain.renewalPrice, 0),
     attention: data.domains.filter(domain => getDomainStatus(domain) !== `Active`).length,
     hasSampleData: data.domains.some(domain => domain.isSample),
