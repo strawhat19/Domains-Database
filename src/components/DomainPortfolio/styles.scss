@@ -163,8 +163,8 @@
 @media (max-width: 720px) {
   .portfolio-title { font-size: 28px; }
   .portfolio-heading-row { gap: 18px; align-items: flex-start; flex-direction: column; }
-  .portfolio-primary-actions { width: 100%; }
-  .portfolio-primary-actions .portfolio-button { flex: 1; }
+  .portfolio-primary-actions { width: 100%; align-items: stretch; flex-direction: column; }
+  .portfolio-primary-actions .portfolio-button { width: 100%; }
   .portfolio-toolbar { gap: 12px; padding: 16px; flex-wrap: wrap; }
   .portfolio-search-wrap { flex-basis: 100%; max-width: none; }
   .portfolio-toolbar-meta { margin-left: auto; }
