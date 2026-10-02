@@ -1,5 +1,6 @@
 import { Link } from 'expo-router';
 import RegistrarSetup from '../RegistrarSetup';
+import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { useEffect, useMemo, useState } from 'react';
 import { createStyles } from './styles.native';
 import DomainCard from '../DomainCard/index.native';
@@ -269,6 +270,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 </Pressable>
               </View>
               <ScrollView {...elementProps(`native-domain-editor-scroll`)} style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps={`handled`}>
+                <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />
                 {!!state.formError && (
                   <View {...elementProps(`native-domain-editor-error`)} style={styles.error} accessibilityRole={`alert`}>
                     <Text {...elementProps(`native-domain-editor-error-text`)} style={styles.errorText}>

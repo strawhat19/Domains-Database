@@ -1,19 +1,32 @@
-import { Platform } from 'react-native';
 import { useLocalStorage } from '../config';
 import type { PortfolioPreferences } from './types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLUMN_STORAGE_KEY } from '../portfolioColumns';
+import { accountStorageKey } from '../authentication/userScope';
+import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 
 export const PREFERENCES_STORAGE_KEY = `domains-database:preferences:v1`;
+const migrationQueue = createOperationQueue();
+export const portfolioStorageKey = (baseKey: string, userId: string | null = null) => userId
+  ? accountStorageKey(baseKey, userId)
+  : `${baseKey}:guest`;
 
-export const readPortfolioPreferences = async () => {
-  if (!useLocalStorage) return null;
-  if (Platform.OS !== `web`) return AsyncStorage.getItem(PREFERENCES_STORAGE_KEY);
-  return typeof window === `undefined` ? null : window.localStorage.getItem(PREFERENCES_STORAGE_KEY);
+export const readPortfolioPreferences = (userId: string | null = null) => {
+  if (!useLocalStorage) return Promise.resolve(null);
+  return readStorage(portfolioStorageKey(PREFERENCES_STORAGE_KEY, userId));
 };
 
-export const savePortfolioPreferences = async (preferences: PortfolioPreferences) => {
+export const savePortfolioPreferences = (preferences: PortfolioPreferences, userId: string | null = null) => {
+  if (!useLocalStorage) return Promise.resolve();
+  return writeStorage(portfolioStorageKey(PREFERENCES_STORAGE_KEY, userId), JSON.stringify(preferences));
+};
+
+export const claimLegacyPortfolioPreferences = (userId: string) => migrationQueue(async () => {
   if (!useLocalStorage) return;
-  const value = JSON.stringify(preferences);
-  if (Platform.OS !== `web`) return AsyncStorage.setItem(PREFERENCES_STORAGE_KEY, value);
-  if (typeof window !== `undefined`) window.localStorage.setItem(PREFERENCES_STORAGE_KEY, value);
-};
+  const capturedUserId = userId;
+  for (const baseKey of [PREFERENCES_STORAGE_KEY, COLUMN_STORAGE_KEY]) {
+    const key = accountStorageKey(baseKey, capturedUserId);
+    if (await readStorage(key) !== null) continue;
+    const legacy = await readStorage(baseKey);
+    if (legacy !== null) await writeStorage(key, legacy);
+  }
+});

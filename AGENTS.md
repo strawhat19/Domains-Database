@@ -1,144 +1,42 @@
 # AI Instructions
 
-1. When making code changes,
-dont verify or test or build the code, 
-just make minimal code changes and let the user look at the code diff and verify themselves before they commit.
+Apply these preferences across projects and workspaces for the strawhat19 GitHub/Codex setup, within the requested task's scope.
 
-2. Always try your best to structure code and imports like this:
+1. Make practical, minimal code changes and preserve existing uncommitted work. Do not verify, test, build, or run UI checks unless I ask; let me review the diff and verify before committing. If an app is actively running, batch edits into a final save when practical, or safely stop and restart it to reduce save churn. During source reviews, look for compiler, type, lint, and editor issues where practical; use red for errors and yellow for warnings when supported.
 
-code line 1
-code line 2 - A
-code line 3 - ABC
+2. Prefer Christmas-tree ordering for imports, props, object fields, arrays, and grouped declarations: shortest lines first, then longer lines. Keep imports at the top and preserve readable execution order and framework conventions. Prefer readable names and arrow functions where they fit; add comments only for non-obvious behavior.
 
-^ should be like a christmas tree where shortest line length is at the top going down to longest line length.
+3. Prefer SCSS over CSS where supported. Use the platform's supported style objects for native views.
 
-^ try your best to keep this structure its ok if it differs sometimes.
+4. Give HTML, JSX, and TSX elements descriptive classes and IDs. For repeated elements, include the record ID or index in the ID so I can inspect and reference each element. Use nativeID or the app's equivalent helper for native elements.
 
-3. try to use SCSS over CSS whenever possible
+5. Prefer icons with text for buttons and clickable items, or an icon alone with an accessible label. Keep navigation icons consistent. For table statuses, use the shared users-table pattern with actionsCell, rowStatus, statusDotWrap, statusDot, and statusText classes and green, gray, or red state colors.
 
-4. in html or tsx or jsx, all elements should have a descriptive className and ID, especially if its rendered in a for loop or map. the ID can be like the Class but with the id or index of the element.
-User should be able to inspect any element and see its class and then give that back to AI as reference.
+6. Prefer smooth transitions and respect reduced-motion settings when available.
 
-5. when making buttons or clickable items, try your best to put icon text together. or icon only.
+7. Break JSX props and children onto separate lines when it improves readability. Keep simple code compact, for example:
 
-6. when making transitions, always prefer smooth transitions over flat static transitions.
-
-7. prefer to break things out to make them more readable, like instead of:
-
-<Text style={[styles.tabLabel, { color: timelineMode === value ? palette.blue : palette.muted }]} {...elementProps(`analytics-timeline-tab-label`, `${scope}-${value}`)}>{label}</Text>
-
-or 
-
-<Label className={`intro-eyebrow`} style={styles.eyebrow}>{`A LITTLE CLARITY GOES A LONG WAY`}</Label>
-
-or
-
-<Label className={`reset-confirmation-title`} style={styles.resetTitle}>{`Start fresh?`}</Label>
-
-prefer like this
-
-<Text 
-    {...elementProps(`analytics-timeline-tab-label`, `${scope}-${value}`)} 
-    style={[styles.tabLabel, { color: timelineMode === value ? palette.blue : palette.muted }]}
+```tsx
+<Text
+  {...elementProps(`action-label`, item.id)}
+  style={[styles.label, { color: active ? palette.blue : palette.muted }]}
 >
-    {label}
+  {label}
 </Text>
+```
 
-or this 
+8. In JavaScript, TypeScript, JSX, and TSX, prefer backticks, then single quotes, with double quotes as a last resort. Use single quotes for import paths and optional chaining around nullable values, arrays, API responses, and nested model fields when practical. Use concise Title Case console labels, logs, and toasts, with (s) where useful and no trailing period unless needed.
 
-<Label className={`intro-eyebrow`} style={styles.eyebrow}>
-    {`A LITTLE CLARITY GOES A LONG WAY`}
-</Label>
+9. For new apps, prefer Expo, React Native, TypeScript, and Sass for web and mobile unless I choose another framework. Follow the existing framework when editing an app. Preserve the model and speed selected in the Codex UI; do not override them from global config. If none is explicitly selected, prefer gpt-5.4-mini with medium reasoning. Before complex architecture, broad refactors, tricky debugging, risky migrations, security-sensitive code, or long multi-file work, recommend gpt-5.5 fast when its capability is worth the cost.
 
-or this
+10. Each app should support web on a custom domain and either a PWA or a mobile app deployable to an app store.
 
-<Label className={`reset-confirmation-title`} style={styles.resetTitle}>
-    {`Start fresh?`}
-</Label>
+11. Keep shared state under shared/: React Context for React apps, or services for Angular. Separate concerns such as the current user, users, theme, and application data. Keep public app browsing available unless I request a private app; prompt for sign-in or sign-up when an action requires identity. Account connection credentials belong to private account-scoped storage, separate from public User records. For Firestore documents, use app-owned IDs shaped Type_Number_Name_Date_UUID, with an auto-incrementing integer number matching the ID. Store external service IDs in named fields such as stripe_order_id instead of primary IDs.
 
-8. in javascript or typescript or tsx or jsx, always use backticks whenever possible, if not then use single quotes, and double quotes as a last resort.
+12. Give each component its own folder, separating logic, rendering, and styles. Share behavior across web and native views where practical.
 
-9. make apps with expo react native typescript sass with web and mobile, unless instructed to do otherwise (like angular or vue or next)
+13. Footers must include copyright with the current year and a link to https://piratechs.com/.
 
-10. each app should either be a PWA or mobile app deployable to app store along with web so it can be put on a website with one of my custom domains
+14. Before publishing a completed landing page, include About, Terms, Contact, and Privacy Policy pages. Menu links should navigate to internal pages instead of section anchors; include common aliases such as about-us to about and contact-us to contact.
 
-11. shared state should be managed either through context api for react or services with angular inside a shared/ folder, each app can have users, user, theme, etc. for example
-
-12. each component should have its own folder, with logic, structure, and styles separated
-
-13. footers should always include copyright with dynamic year and link to https://piratechs.com/
-
-14. when an apps landing page is done being designed, and before the app is about to be published, it should have an About, Terms, Contact and Privacy Policy page, the menu links should lead to new pages, not # anchors, remove all those and replace with internal page links and include common redirects like about-us to about, contact-us to contact, etc.
-
-15. before back end is hooked up, use local storage or device storage for CRUD operations to mock them or demo them, with one master variable called useLocalStorage true or false, set to true by default
-
-16. every app should have sample data and an api/ with base route like this that lists the other routes import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import process from 'process';
-import { NextResponse } from 'next/server';
-
-export const GET = async () => {
-  try {
-    const uptime = process.uptime();
-    const uptimeHours = Math.floor(uptime / 3600);
-    const uptimeMinutes = Math.floor((uptime % 3600) / 60);
-
-    const totalMem = os.totalmem() / (1024 * 1024 * 1024);
-    const freeMem = os.freemem() / (1024 * 1024 * 1024);
-    const usedMem = totalMem - freeMem;
-    const cpuLoad = os.loadavg()[0];
-
-    const getApiRoutes = (): string[] => {
-      let routes: string[] = [];
-      const apiDir = path.join(process.cwd(), `src`, `app`, `api`);
-
-      const walk = (dir: string, baseRoute = ``) => {
-        const files = fs.readdirSync(dir);
-        files.forEach(file => {
-          const fullPath = path.join(dir, file);
-          const stat = fs.statSync(fullPath);
-
-          if (stat.isDirectory()) {
-            walk(fullPath, `${baseRoute}/${file}`);
-          } else if (file.endsWith(`.ts`) || file.endsWith(`.js`)) {
-            const srtRoute = `${baseRoute}/${file.replace(/\.ts$|\.js$/, ``)}`;
-            const noIndexRoute = srtRoute.replaceAll(`index`, ``);
-            const noidxrt = noIndexRoute;
-            let apiRoute = noIndexRoute.replace(/^/, `/api${noidxrt == `` ? `` : ``}`);
-            apiRoute = apiRoute?.replaceAll(`route`, ``);
-            routes.push(apiRoute);
-            routes?.sort();
-          }
-        });
-      };
-
-      if (process.env.NODE_ENV == `development`) walk(apiDir);
-      return routes;
-    };
-
-    let defaultTitle = `Piratechs`;
-    let defaultMessage = `API Server Connected`;
-
-    return NextResponse.json({
-      ok: true,
-      status: 200,
-      success: true,
-      statusText: `ok`,
-      title: defaultTitle,
-      message: defaultMessage,
-      datetime: new Date().toLocaleString(),
-      stats: {
-        cpuLoad: `${(cpuLoad ?? 0)?.toFixed(2)}`,
-        uptime: `${uptimeHours} hours, ${uptimeMinutes} minutes`,
-        memoryUsage: `${(usedMem ?? 0)?.toFixed(2)} GB of ${(totalMem ?? 0)?.toFixed(2)} GB`,
-      },
-      ...(process.env.NODE_ENV == `development` && { routes: getApiRoutes() }),
-    });
-
-  } catch (error) {
-    return NextResponse.json({ error: `Server is in Error State` }, { status: 500 });
-  }
-};
-
-17. when back end is hooked up and datbase is hooked up, or when using json from local storage device storage or json files or variables, and using those data to load elements like cards in the ui, each card should be a component, and have skeleton loading and a fetch to the internal app api equivalent for that data, then once the data is loaded remove the skeleton loading
+15. Before implementation, read the applicable guidance in this order: ai/skills/structure/structure.md, ai/skills/database/database.md, ai/skills/api/api.md, ai/skills/authentication/authentication.md when authentication is involved, ai/skills/social/social.md when profiles, posts, followers, messaging, or social privacy are involved, then ai/skills/routes/routes.md. Read only what the requested work needs, preserve the existing architecture where practical, and do not run premature validation.

@@ -1,0 +1,5 @@
+.connect-registrar-button, .connect-registrar-signin, .connect-registrar-signup { cursor: pointer; transition: opacity 220ms ease, transform 220ms ease; }
+.connect-registrar-button:hover:not([aria-disabled=true]) { opacity: .8; transform: translateY(-1px); }
+.connect-registrar-signin:hover:not([aria-disabled=true]), .connect-registrar-signup:hover:not([aria-disabled=true]) { opacity: .75; }
+.connect-registrar-button:focus-visible, .connect-registrar-signin:focus-visible, .connect-registrar-signup:focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .connect-registrar-button, .connect-registrar-signin, .connect-registrar-signup { transition: none; } }

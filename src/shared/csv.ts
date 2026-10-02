@@ -38,9 +38,9 @@ const parseAutoRenew = (value: string) => {
   throw new Error(`Auto-Renew Must Be Yes Or No`);
 };
 
-const normalizeCsvDate = (value: string) => {
+const normalizeCsvDate = (value: string, preserveTime = false) => {
   const iso = value.match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
-  if (iso) return iso[1];
+  if (iso) return preserveTime ? value : iso[1];
   const date = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
   if (!date) return value;
   const [, month, day, year] = date;
@@ -72,6 +72,7 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
   const rows = readCsvRows(text);
   const headers = rows[0]?.map(headerKey);
   if (!headers?.length || rows.length < 2) throw new Error(`Add A Header And At Least One Domain To The CSV`);
+  const isPortfolioExport = [`id`, `number`, `uuid`].every(header => headers.includes(header));
   const isGoDaddyExport = [`internationaldomainname`, `expirationprotection`, `foldermemberships`].every(header => headers.includes(header));
   const detectedRegistrar = isGoDaddyExport ? `GoDaddy` : undefined;
   const registrarDefault = detectedRegistrar ?? defaults.registrar;
@@ -92,7 +93,7 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
     const optional = (...aliases: string[]) => get(getIndex(...aliases)) || undefined;
     const optionalDate = (...aliases: string[]) => {
       const value = optional(...aliases);
-      return value ? normalizeCsvDate(value) : undefined;
+      return value ? normalizeCsvDate(value, true) : undefined;
     };
     try {
       const registrarName = get(registrarIndex);
@@ -106,6 +107,16 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
       const metaText = get(getIndex(`meta`));
       const savedMeta = metaText ? JSON.parse(metaText) : {};
       if (!savedMeta || typeof savedMeta !== `object` || Array.isArray(savedMeta)) throw new Error(`Meta Must Be A JSON Object`);
+      const savedCsv = savedMeta.csv && typeof savedMeta.csv === `object` && !Array.isArray(savedMeta.csv) ? savedMeta.csv : {};
+      const commonColumns = [`id`, `number`, `uuid`, `type`, `created`, `updated`];
+      const commonInfo = Object.fromEntries(rows[0].flatMap((header, column) => commonColumns.includes(headerKey(header)) ? [[header, get(column)]] : []));
+      const csvInfo = !metaText ? Object.fromEntries(rows[0].map((header, column) => [header, get(column)])) : {};
+      const colorText = optional(`color`);
+      let color: DomainInput[`color`];
+      if (colorText) {
+        try { color = JSON.parse(colorText) as DomainInput[`color`]; }
+        catch { throw new Error(`Color Must Be A JSON Object`); }
+      }
       const normalizedMeta = savedMeta.normalized && typeof savedMeta.normalized === `object` && !Array.isArray(savedMeta.normalized) ? savedMeta.normalized : {};
       const forwardingUrl = optional(`forwardingurl`, `forwarding`);
       const protectionPlan = optional(`protectionplan`, `protection`);
@@ -116,16 +127,19 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
       return validateDomainInput({
         registrar,
         name: get(nameIndex),
+        title: optional(`title`),
+        color,
+        description: optional(`description`),
         notes: get(notesIndex),
         expiresAt: normalizeCsvDate(get(dateIndex)),
         renewalPrice: Number(price || 0),
         owner: get(ownerIndex) || defaults.owner || `My Portfolio`,
         autoRenew: parseAutoRenew(get(autoRenewIndex)),
-        providerId: optional(`providerid`, `domainid`, `id`),
+        providerId: optional(`providerid`, `domainid`, ...(!isPortfolioExport ? [`id`] : [])),
         internationalName: optional(`internationalname`, `internationaldomainname`, `unicodename`),
         tld: optional(`tld`, `extension`),
         status: optional(`status`, `domainstatus`),
-        createdAt: optionalDate(`createdat`, `created`, `createdate`, `creationdate`, `registrationdate`),
+        createdAt: optionalDate(`createdat`, ...(!isPortfolioExport ? [`created`] : []), `createdate`, `creationdate`, `registrationdate`),
         updatedAt: optionalDate(`updatedat`, `updateddate`, `modifiedat`, `modifieddate`),
         ownershipAt: optionalDate(`ownershipat`, `ownershipdate`),
         firstImportedAt: optional(`firstimportedat`),
@@ -143,7 +157,7 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
         },
         meta: {
           ...savedMeta,
-          ...(!metaText ? { csv: Object.fromEntries(rows[0].map((header, column) => [header, get(column)])) } : {}),
+          ...(!metaText || Object.keys(commonInfo).length ? { csv: { ...savedCsv, ...csvInfo, ...commonInfo } } : {}),
           normalized: {
             ...normalizedMeta,
             ...(forwardingUrl ? { forwardingUrl } : {}),
@@ -166,7 +180,7 @@ const csvField = (value: string | number | boolean) => {
 };
 
 export const exportDomainCsv = (domains: DomainRecord[]) => {
-  const headers = [`domain`, `registrar`, `expiry`, `owner`, `auto_renew`, `renewal_price`, `notes`, `provider_id`, `international_name`, `tld`, `status`, `created_at`, `updated_at`, `ownership_at`, `first_imported_at`, `first_exported_at`, `locked`, `privacy`, `dnssec`, `nameservers`, `currency`, `registrant_name`, `registrant_email`, `registrant_organization`, `registrant_country`, `meta`];
+  const headers = [`domain`, `registrar`, `expiry`, `owner`, `auto_renew`, `renewal_price`, `notes`, `provider_id`, `international_name`, `tld`, `status`, `created_at`, `updated_at`, `ownership_at`, `first_imported_at`, `first_exported_at`, `locked`, `privacy`, `dnssec`, `nameservers`, `currency`, `registrant_name`, `registrant_email`, `registrant_organization`, `registrant_country`, `meta`, `title`, `description`, `color`, `id`, `number`, `uuid`, `type`, `created`, `updated`];
   const rows = domains.map(domain => [
     domain.name, domain.registrar, domain.expiresAt, domain.owner, domain.autoRenew, domain.renewalPrice, domain.notes,
     domain.providerId ?? ``, domain.internationalName ?? ``, domain.tld ?? ``, domain.status ?? ``,
@@ -175,6 +189,8 @@ export const exportDomainCsv = (domains: DomainRecord[]) => {
     domain.locked ?? ``, domain.privacy ?? ``, domain.dnssec ?? ``, (domain.nameservers ?? []).join(` `), domain.currency ?? ``,
     domain.registrant?.name ?? ``, domain.registrant?.email ?? ``, domain.registrant?.organization ?? ``, domain.registrant?.country ?? ``,
     JSON.stringify(domain.meta ?? {}),
+    domain.title, domain.description, JSON.stringify(domain.color),
+    domain.id, domain.number, domain.uuid, domain.type, domain.created, domain.updated,
   ]);
   return [headers, ...rows].map(row => row.map(csvField).join(`,`)).join(`\r\n`);
 };

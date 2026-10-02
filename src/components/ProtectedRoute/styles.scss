@@ -1,0 +1,10 @@
+.protected-route-page, .protected-route-loading { box-sizing: border-box; }
+.protected-route-primary-link, .protected-route-signup-link { cursor: pointer; transition: transform 220ms ease, opacity 220ms ease; }
+.protected-route-primary-link:hover:not([aria-disabled=true]), .protected-route-signup-link:hover:not([aria-disabled=true]) { transform: translateY(-1px); opacity: .85; }
+.protected-route-primary-link:focus-visible, .protected-route-signup-link:focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
+.protected-route-skeleton-title, .protected-route-skeleton-line, .protected-route-skeleton-action { animation: protected-route-pulse 1.3s ease-in-out infinite alternate; }
+@keyframes protected-route-pulse { from { opacity: .45; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .protected-route-primary-link, .protected-route-signup-link { transition: none; }
+  .protected-route-skeleton-title, .protected-route-skeleton-line, .protected-route-skeleton-action { animation: none; }
+}

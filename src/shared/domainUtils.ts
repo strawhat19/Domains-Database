@@ -1,4 +1,6 @@
+import { genID } from './common/ids';
 import { REGISTRARS } from './config';
+import { Types } from '../types/types';
 import type { JSONValue, DomainInput, DomainRecord, DomainStatus, DomainRegistrant } from './types';
 
 const DAY_IN_MS = 86_400_000;
@@ -94,9 +96,20 @@ const normalizeJsonValue = (value: unknown, ancestors = new WeakSet<object>()): 
 
 export const normalizeDomainExtras = (input: Partial<DomainInput>): Partial<DomainInput> => {
   const extras: Partial<DomainInput> = {};
-  for (const field of [`status`, `providerId`, `internationalName`] as const) {
+  for (const field of [`title`, `status`, `providerId`, `internationalName`] as const) {
     const value = normalizeOptionalText(input[field], field);
     if (value !== undefined) extras[field] = value;
+  }
+  if (input.description != null) {
+    if (typeof input.description !== `string`) throw new Error(`Description Must Be Text`);
+    extras.description = input.description.trim();
+  }
+  if (input.color != null) {
+    const color = input.color;
+    if (typeof color !== `object` || typeof color.name !== `string` || typeof color.color !== `string` || ![`dark`, `light`].includes(color.type)) {
+      throw new Error(`Choose A Valid Record Color`);
+    }
+    extras.color = { name: color.name.trim(), color: color.color.trim(), type: color.type };
   }
   for (const field of [`createdAt`, `updatedAt`, `ownershipAt`, `firstImportedAt`, `firstExportedAt`] as const) {
     const value = normalizeDomainDate(input[field], field);
@@ -153,12 +166,4 @@ export const validateDomainInput = (input: DomainInput): DomainInput => {
   return { ...normalizeDomainExtras(input), name, owner, notes, expiresAt, renewalPrice, registrar, autoRenew: input.autoRenew };
 };
 
-export const createDomainId = (number: number, name: string) => {
-  const now = new Date();
-  const hours = now.getHours();
-  const period = hours >= 12 ? `PM` : `AM`;
-  const readableName = name.replace(/[^a-z0-9]/g, `_`);
-  const timestamp = `${hours % 12 || 12}_${String(now.getMinutes()).padStart(2, `0`)}_${period}_${now.getMonth() + 1}_${now.getDate()}_${String(now.getFullYear()).slice(-2)}`;
-  const uuid = globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
-  return `Domain_${number}_${readableName}_${timestamp}_${uuid}`;
-};
+export const createDomainId = (number: number, name: string) => genID(Types.Domain, number, name).id;

@@ -1,26 +1,17 @@
 import { useMemo } from 'react';
 import { Image } from 'expo-image';
+import UserMenu from '../UserMenu';
 import type { ReactNode } from 'react';
 import ThemeToggle from '../ThemeToggle';
+import AuthFeedback from '../AuthFeedback';
 import { createStyles } from './styles.native';
 import { Link, usePathname } from 'expo-router';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { Grid2X2, Layers3, ShieldCheck } from 'lucide-react-native';
+import { navigation, footerLinks } from '../../shared/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Info, Mail, House, Globe2, FileText, UsersRound, ShieldCheck } from 'lucide-react-native';
 import { Alert, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
-
-const navigation = [
-  { label: `Overview`, href: `/`, Icon: Grid2X2 },
-  { label: `Portfolio`, href: `/domains`, Icon: Layers3 },
-] as const;
-
-const footerLinks = [
-  { label: `About`, href: `/about` },
-  { label: `Terms`, href: `/terms` },
-  { label: `Contact`, href: `/contact` },
-  { label: `Privacy`, href: `/privacy` },
-] as const;
 
 const AppShell = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -45,7 +36,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               <Image
                 {...elementProps(`native-brand-logo`)}
                 contentFit={`contain`}
-                style={[styles.logo, { width: Math.min(194, width - 152) }]}
+                style={[styles.logo, { width: Math.max(70, Math.min(194, width - 240)) }]}
                 accessibilityLabel={`Domains Database`}
                 source={isDark
                   ? require('../../../assets/icons/brand-logo-dark.svg')
@@ -63,10 +54,12 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               )}
             </View>
             <ThemeToggle />
+            <UserMenu />
           </View>
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
-          {navigation.map(({ label, href, Icon }) => {
+          {navigation.map(({ label, href, icon }) => {
+            const Icon = { House, Globe2, UsersRound }[icon];
             const active = pathname === href;
             return (
               <Link key={href} href={href} asChild>
@@ -104,15 +97,19 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </View>
           </View>
           <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>
-            {footerLinks.map(({ label, href }) => (
+            {footerLinks.map(({ label, href, icon }) => {
+              const Icon = { Info, Mail, FileText, ShieldCheck }[icon];
+              return (
               <Link key={href} href={href} asChild>
                 <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
+                  <Icon {...elementProps(`native-footer-link-icon`, label.toLowerCase())} size={12} color={palette.muted} />
                   <Text {...elementProps(`native-footer-link-text`, label.toLowerCase())} style={styles.footerLinkText}>
                     {label}
                   </Text>
                 </Pressable>
               </Link>
-            ))}
+              );
+            })}
           </View>
           <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
             {`© ${new Date().getFullYear()} Domains Database. Made by `}
@@ -122,6 +119,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           </Text>
         </View>
       </ScrollView>
+      <AuthFeedback />
     </View>
   );
 };

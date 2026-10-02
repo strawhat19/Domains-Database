@@ -2,7 +2,7 @@ import './styles.scss';
 import { useMemo } from 'react';
 import ColumnControls from '../ColumnControls';
 import DomainEditor from '../DomainEditor';
-import RegistrarSetup from '../RegistrarSetup';
+import RegistrarSetup from '../RegistrarSetup/index.web';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnCounts } from '../../shared/portfolioColumns';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { REGISTRARS, useSampleData } from '../../shared/config';
@@ -323,7 +323,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       {portfolio.editorOpen && (
         <DomainEditor domain={portfolio.editingDomain} onClose={() => portfolio.setEditorOpen(false)} />
       )}
-      {portfolio.setupOpen && <RegistrarSetup onClose={portfolio.closeSetup} />}
+      {portfolio.setupOpen && (
+        <RegistrarSetup onClose={portfolio.closeSetup} onManual={() => portfolio.openEditor()} />
+      )}
       {portfolio.deletingDomain && (
         <div
           role={`presentation`}

@@ -1,73 +1,200 @@
+import { authAPI } from './auth';
+import { Domain } from '../shared/models/domains/Domain';
+import { validateDomainInput } from '../shared/domainUtils';
 import { createSampleDomains } from '../shared/sampleDomains';
+import { createOperationQueue } from '../shared/common/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared/config';
-import { createDomainId, validateDomainInput } from '../shared/domainUtils';
+import { accountStorageKey } from '../shared/authentication/userScope';
 import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
+import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared/config';
 
-let snapshot: PortfolioSnapshot | null = null;
-let operationQueue: Promise<unknown> = Promise.resolve();
+let userScope: string | null = null;
+const snapshots = new Map<string, PortfolioSnapshot>();
+const LEGACY_OWNER_KEY = `${PORTFOLIO_STORAGE_KEY}:legacy-owner`;
+const GUEST_STORAGE_KEY = `${PORTFOLIO_STORAGE_KEY}:guest`;
+const GUEST_OWNER_KEY = `${PORTFOLIO_STORAGE_KEY}:guest-owner`;
 
-const serialize = <T,>(operation: () => Promise<T>): Promise<T> => {
-  const result = operationQueue.then(operation, operation);
-  operationQueue = result.then(() => undefined, () => undefined);
-  return result;
+const serialize = createOperationQueue(PORTFOLIO_STORAGE_KEY);
+
+const serializePortfolioMutation = <T,>(operation: () => Promise<T>): Promise<T> => {
+  const scope = userScope;
+  return serialize(async () => {
+    if (userScope !== scope) throw new Error(`Portfolio Changed, Please Try Again`);
+    return operation();
+  });
 };
 
-const copyDomains = (domains: DomainRecord[]): DomainRecord[] => JSON.parse(JSON.stringify(domains));
+const copyDomains = (domains: DomainRecord[]): DomainRecord[] => domains.map(domain => new Domain(JSON.parse(JSON.stringify(domain))));
+
+const getScope = () => userScope ?? `guest`;
+const getScopeUid = () => userScope ?? ``;
+const getStorageKey = () => userScope ? accountStorageKey(PORTFOLIO_STORAGE_KEY, userScope) : GUEST_STORAGE_KEY;
+
+const requireScopeSession = async (userId: string) => {
+  const session = await authAPI.restoreSession();
+  if (session?.user.id !== userId) throw new Error(`Sign In To Manage Domains`);
+  return session;
+};
 
 const saveSnapshot = async (next: PortfolioSnapshot) => {
+  const scope = getScope();
+  if (userScope) await requireScopeSession(userScope);
   if (useLocalStorage) {
     try {
-      await AsyncStorage.setItem(PORTFOLIO_STORAGE_KEY, JSON.stringify(next));
+      await AsyncStorage.setItem(getStorageKey(), JSON.stringify(next));
     } catch {
       throw new Error(`Could Not Save Your Portfolio On This Device`);
     }
   }
-  snapshot = next;
+  snapshots.set(scope, next);
 };
 
-const readSnapshot = async () => {
-  if (snapshot) {
-    const domains = useSampleData ? snapshot.domains : snapshot.domains.filter(domain => !domain.isSample);
-    if (domains.length !== snapshot.domains.length) await saveSnapshot({ ...snapshot, domains });
-    return snapshot;
+const restoreSnapshot = (parsed: PortfolioSnapshot, uid = getScopeUid()): PortfolioSnapshot => {
+  if (parsed?.version !== 1 || !Array.isArray(parsed?.domains) || !Number.isInteger(parsed?.nextNumber)) throw new Error(`Saved Portfolio Data Could Not Be Read`);
+  const ids = new Set<string>();
+  const names = new Set<string>();
+  const numbers = new Set<number>();
+  const storedDomains = useSampleData ? parsed.domains : parsed.domains.filter(domain => !domain?.isSample);
+  const domains = storedDomains.map(domain => {
+    const input = validateDomainInput(domain);
+    if (!domain?.id || !Number.isInteger(domain?.number) || domain.number < 1 || ids.has(domain.id) || numbers.has(domain.number) || names.has(input.name)) throw new Error(`Saved Portfolio Data Could Not Be Read`);
+    const restored = new Domain({ ...domain, ...input, uid, isSample: domain.isSample === true });
+    ids.add(restored.id);
+    numbers.add(restored.number);
+    names.add(restored.name);
+    return restored;
+  });
+  return { version: 1, domains, nextNumber: Math.max(parsed.nextNumber, ...domains.map(domain => domain.number + 1), 1) };
+};
+
+const readSnapshot = async (): Promise<PortfolioSnapshot> => {
+  const scope = getScope();
+  if (userScope) await requireScopeSession(userScope);
+  const cached = snapshots.get(scope);
+  if (cached && !useLocalStorage) {
+    const domains = useSampleData ? cached.domains : cached.domains.filter(domain => !domain.isSample);
+    if (domains.length !== cached.domains.length) {
+      const filtered = { ...cached, domains };
+      await saveSnapshot(filtered);
+      return filtered;
+    }
+    return cached;
   }
   let saved: string | null = null;
   if (useLocalStorage) {
     try {
-      saved = await AsyncStorage.getItem(PORTFOLIO_STORAGE_KEY);
+      saved = await AsyncStorage.getItem(getStorageKey());
     } catch {
       throw new Error(`Could Not Load Your Portfolio From This Device`);
     }
   }
   if (saved !== null) {
+    let restored: PortfolioSnapshot;
     try {
-      const parsed = JSON.parse(saved) as PortfolioSnapshot;
-      if (parsed?.version !== 1 || !Array.isArray(parsed?.domains) || !Number.isInteger(parsed?.nextNumber)) throw new Error();
-      const names = new Set<string>();
-      const ids = new Set<string>();
-      const numbers = new Set<number>();
-      const storedDomains = useSampleData ? parsed.domains : parsed.domains.filter(domain => !domain?.isSample);
-      const domains = storedDomains.map(domain => {
-        const input = validateDomainInput(domain);
-        if (!domain?.id || !Number.isInteger(domain?.number) || domain.number < 1 || ids.has(domain.id) || numbers.has(domain.number) || names.has(input.name)) throw new Error();
-        ids.add(domain.id);
-        numbers.add(domain.number);
-        names.add(input.name);
-        return { ...input, id: domain.id, number: domain.number, isSample: domain.isSample === true };
-      });
-      const restored: PortfolioSnapshot = { version: 1, domains, nextNumber: Math.max(parsed.nextNumber, ...domains.map(domain => domain.number + 1), 1) };
-      if (storedDomains.length !== parsed.domains.length) await saveSnapshot(restored);
-      else snapshot = restored;
-      return snapshot;
+      restored = restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot);
     } catch {
       throw new Error(`Saved Portfolio Data Could Not Be Read`);
     }
+    if (JSON.stringify(restored) !== saved) await saveSnapshot(restored);
+    else snapshots.set(scope, restored);
+    return restored;
   }
-  const domains = useSampleData ? createSampleDomains() : [];
+  const domains = useSampleData ? createSampleDomains().map(domain => new Domain({ ...domain, uid: getScopeUid() })) : [];
   const initial: PortfolioSnapshot = { version: 1, domains, nextNumber: domains.length + 1 };
   await saveSnapshot(initial);
   return initial;
+};
+
+const claimLegacyPortfolio = async () => {
+  if (!useLocalStorage || !userScope) return;
+  const userId = userScope;
+  let saved: string | null;
+  try {
+    const current = await AsyncStorage.getItem(accountStorageKey(PORTFOLIO_STORAGE_KEY, userId));
+    if (current !== null) return;
+    const legacyOwner = await AsyncStorage.getItem(LEGACY_OWNER_KEY);
+    if (legacyOwner && legacyOwner !== userId) return;
+    saved = await AsyncStorage.getItem(PORTFOLIO_STORAGE_KEY);
+  } catch {
+    throw new Error(`Could Not Load Your Existing Portfolio`);
+  }
+  if (saved === null) return;
+  let restored: PortfolioSnapshot;
+  try {
+    restored = restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot);
+  } catch {
+    throw new Error(`Existing Portfolio Data Could Not Be Read`);
+  }
+  try {
+    await AsyncStorage.setItem(LEGACY_OWNER_KEY, userId);
+  } catch {
+    throw new Error(`Could Not Assign Your Existing Portfolio`);
+  }
+  await saveSnapshot(restored);
+};
+
+const adoptGuestPortfolio = async () => {
+  if (!userScope) return;
+  const session = await authAPI.restoreSession();
+  if (session?.user.id !== userScope || session.user.number !== 1) return;
+  const userId = userScope;
+  let guest = snapshots.get(`guest`);
+  if (useLocalStorage) {
+    try {
+      const owner = await AsyncStorage.getItem(GUEST_OWNER_KEY);
+      if (owner && owner !== userId) return;
+      await AsyncStorage.setItem(GUEST_OWNER_KEY, userId);
+      const saved = await AsyncStorage.getItem(GUEST_STORAGE_KEY);
+      guest = saved !== null ? restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot, ``) : undefined;
+    } catch {
+      throw new Error(`Could Not Load Your Guest Portfolio`);
+    }
+  }
+  if (!guest?.domains.length) return;
+  const current = await readSnapshot();
+  const names = new Set(current.domains.map(domain => domain.name));
+  const domains = copyDomains(current.domains);
+  let nextNumber = current.nextNumber;
+  for (const record of guest.domains) {
+    if (names.has(record.name)) continue;
+    domains.push(new Domain({ ...record, id: undefined, uuid: undefined, uid: userId, number: nextNumber }));
+    names.add(record.name);
+    nextNumber += 1;
+  }
+  await saveSnapshot({ version: 1, domains, nextNumber });
+  const cleared: PortfolioSnapshot = { ...guest, domains: [] };
+  if (useLocalStorage) {
+    try { await AsyncStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(cleared)); }
+    catch { throw new Error(`Could Not Clear Your Adopted Guest Portfolio`); }
+  }
+  snapshots.set(`guest`, cleared);
+};
+
+export interface PublicDomainSummary {
+  id: string;
+  name: string;
+  userId: string;
+  tld?: string;
+  registrar: DomainRecord[`registrar`];
+}
+
+const getPublicDomainSummaries = async (userIds: string[]): Promise<PublicDomainSummary[]> => {
+  const requested = new Set(userIds);
+  const profiles = await authAPI.getPublicProfiles();
+  const eligible = profiles.filter(profile => requested.has(profile.id) && profile.publicDomains && profile.profilePrivacy === `public`);
+  const summaries: PublicDomainSummary[] = [];
+  for (const profile of eligible) {
+    const saved = useLocalStorage
+      ? await AsyncStorage.getItem(accountStorageKey(PORTFOLIO_STORAGE_KEY, profile.id))
+      : null;
+    const portfolio = useLocalStorage
+      ? saved !== null ? restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot, profile.id) : undefined
+      : snapshots.get(profile.id);
+    for (const domain of portfolio?.domains ?? []) {
+      if (!domain.isSample) summaries.push({ id: domain.id, userId: profile.id, name: domain.name, registrar: domain.registrar, tld: domain.tld });
+    }
+  }
+  return summaries;
 };
 
 const assertUnique = (name: string, domains: DomainRecord[], id?: string) => {
@@ -76,15 +203,24 @@ const assertUnique = (name: string, domains: DomainRecord[], id?: string) => {
 
 export const API_ROUTES = [
   `/api`,
+  `/api/health`,
+  `/api/status`,
+  `/api/users`,
   `/api/domains`,
+  `/api/domains/public`,
+  `/api/auth/session`,
+  `/api/auth/sign-in`,
+  `/api/auth/sign-up`,
+  `/api/auth/sign-out`,
   `/api/domains/:id`,
+  `/api/notifications`,
   `/api/domains/import`,
   `/api/domains/export`,
+  `/api/notifications/:id`,
   ...(useSampleData ? [`/api/domains/sample`] : []),
 ];
 
-export const api = {
-  getRoutes: async () => ({
+const getStatus = async () => ({
     ok: true,
     status: 200,
     success: true,
@@ -93,49 +229,69 @@ export const api = {
     datetime: new Date().toISOString(),
     mode: useLocalStorage ? `Device Storage` : `Session Storage`,
     message: `Local Portfolio API Ready`,
+});
+
+export const api = {
+  getStatus,
+  getHealth: getStatus,
+  getRoutes: getStatus,
+  setUserScope: (userId: string | null, options: { claimLegacy?: boolean; adoptGuest?: boolean } = {}) => serialize(async () => {
+    const nextScope = userId?.trim() || null;
+    const session = nextScope ? await requireScopeSession(nextScope) : null;
+    userScope = nextScope;
+    if (session?.user.number === 1) {
+      if (options.claimLegacy) await claimLegacyPortfolio();
+      if (options.adoptGuest) await adoptGuestPortfolio();
+    }
   }),
   getDomains: () => serialize(async () => copyDomains((await readSnapshot()).domains)),
-  prepareExport: () => serialize(async () => {
+  getPublicDomainSummaries: (userIds: string[]) => serialize(() => getPublicDomainSummaries(userIds)),
+  getSharedDomainSummaries: (userId: string) => serialize(() => getPublicDomainSummaries([userId])),
+  prepareExport: () => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
     const exportedAt = new Date().toISOString();
-    const domains = current.domains.map(domain => ({
+    const domains = current.domains.map(domain => domain.firstExportedAt ? domain : new Domain({
       ...domain,
-      firstExportedAt: domain.firstExportedAt ?? exportedAt,
+      updated: exportedAt,
+      firstExportedAt: exportedAt,
     }));
     if (current.domains.some(domain => !domain.firstExportedAt)) await saveSnapshot({ ...current, domains });
     return copyDomains(domains);
   }),
-  createDomain: (input: DomainInput) => serialize(async () => {
+  createDomain: (input: DomainInput) => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
     const validated = validateDomainInput(input);
     assertUnique(validated.name, current.domains);
     const number = current.nextNumber;
-    const domain: DomainRecord = { ...validated, number, id: createDomainId(number, validated.name) };
+    const domain = new Domain({ ...validated, number, uid: getScopeUid() });
     await saveSnapshot({ version: 1, nextNumber: number + 1, domains: [...current.domains, domain] });
-    return { ...domain };
+    return copyDomains([domain])[0];
   }),
-  updateDomain: (id: string, input: DomainInput) => serialize(async () => {
+  updateDomain: (id: string, input: DomainInput) => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
     const original = current.domains.find(domain => domain.id === id);
     if (!original) throw new Error(`Domain Could Not Be Found`);
     const validated = validateDomainInput({ ...original, ...input, meta: { ...original.meta, ...input.meta } });
     assertUnique(validated.name, current.domains, id);
-    const domain: DomainRecord = {
+    const domain = new Domain({
+      ...original,
       ...validated,
       id,
+      isSample: false,
       number: original.number,
+      updated: new Date().toISOString(),
       firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt,
       firstExportedAt: original.firstExportedAt ?? validated.firstExportedAt,
-    };
+    });
     await saveSnapshot({ ...current, domains: current.domains.map(record => record.id === id ? domain : record) });
-    return { ...domain };
+    return copyDomains([domain])[0];
   }),
-  deleteDomain: (id: string) => serialize(async () => {
+  deleteDomain: (id: string) => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
     if (!current.domains.some(domain => domain.id === id)) throw new Error(`Domain Could Not Be Found`);
     await saveSnapshot({ ...current, domains: current.domains.filter(domain => domain.id !== id) });
   }),
-  importDomains: (inputs: DomainInput[]) => serialize(async () => {
+  importDomains: (inputs: DomainInput[]) => serializePortfolioMutation(async () => {
     if (!inputs?.length) throw new Error(`No Domain(s) Found In The File`);
     const current = await readSnapshot();
     const domains = copyDomains(current.domains);
@@ -150,9 +306,11 @@ export const api = {
         const existingIndex = domains.findIndex(domain => domain.name.toLowerCase() === validated.name);
         if (existingIndex >= 0) {
           const original = domains[existingIndex];
-          domains[existingIndex] = {
+          domains[existingIndex] = new Domain({
             ...original,
             ...validated,
+            isSample: false,
+            updated: importedAt,
             id: original.id,
             number: original.number,
             notes: validated.notes || original.notes,
@@ -162,14 +320,14 @@ export const api = {
             meta: { ...original.meta, ...validated.meta },
             firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt ?? importedAt,
             firstExportedAt: original.firstExportedAt ?? validated.firstExportedAt,
-          };
+          });
         } else {
-          domains.push({
+          domains.push(new Domain({
             ...validated,
             number: nextNumber,
-            id: createDomainId(nextNumber, validated.name),
+            uid: getScopeUid(),
             firstImportedAt: validated.firstImportedAt ?? importedAt,
-          });
+          }));
           nextNumber += 1;
         }
       } catch (error) {
@@ -179,13 +337,16 @@ export const api = {
     await saveSnapshot({ version: 1, domains, nextNumber });
     return inputs.length;
   }),
-  resetSampleData: () => serialize(async () => {
+  resetSampleData: () => serializePortfolioMutation(async () => {
     if (!useSampleData) throw new Error(`Sample Data Is Disabled`);
     const current = await readSnapshot();
-    const domains = createSampleDomains().map((domain, index) => {
-      const number = current.nextNumber + index;
-      return { ...domain, number, id: createDomainId(number, domain.name) };
-    });
+    const domains = createSampleDomains().map((domain, index) => new Domain({
+      ...domain,
+      id: undefined,
+      uuid: undefined,
+      uid: getScopeUid(),
+      number: current.nextNumber + index,
+    }));
     await saveSnapshot({ version: 1, domains, nextNumber: current.nextNumber + domains.length });
     return copyDomains(domains);
   }),

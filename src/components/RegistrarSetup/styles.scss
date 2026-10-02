@@ -1,4 +1,6 @@
 .registrar-setup-dialog { max-width: 700px; }
+.registrar-setup-entry-actions { gap: 12px; display: flex; align-items: flex-start; justify-content: space-between; }
+.registrar-setup-manual-button { flex-shrink: 0; }
 .registrar-setup-progress {
   gap: 14px;
   padding: 0;
@@ -95,6 +97,7 @@
 .registrar-setup-review-note { margin-top: 17px; }
 
 @media (max-width: 560px) {
+  .registrar-setup-entry-actions { gap: 0; margin-bottom: 18px; flex-direction: column; }
   .registrar-setup-progress { gap: 8px; }
   .registrar-setup-step { gap: 5px; font-size: 10px; align-items: flex-start; }
   .registrar-setup-step-label { padding-top: 3px; }

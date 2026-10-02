@@ -82,7 +82,7 @@ const PortfolioRecords = ({
     </div>
   );
 
-  if (preferences.view === `grid`) return (
+  if (preferences.view === `grid` && !empty) return (
     <div id={`portfolio-grid-view`} className={`portfolio-grid-view`} aria-busy={loading}>
       {loading ? (
         <div id={`portfolio-grid-loading`} className={`portfolio-domain-grid`}>

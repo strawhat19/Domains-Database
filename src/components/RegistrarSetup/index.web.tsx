@@ -1,17 +1,18 @@
 import './styles.scss';
 import { useRef, useState } from 'react';
 import '../DomainEditor/styles.scss';
+import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import CsvDropZone from '../CsvDropZone/index.web';
 import { getCsvFile } from '../../shared/csvFiles.web';
 import { useRegistrarSetup } from './useRegistrarSetup';
 import { formatCurrency } from '../../shared/domainUtils';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { SETUP_REGISTRARS, registrarGuides } from '../../shared/registrars';
-import { X, Check, Globe2, ArrowLeft, ArrowRight, ExternalLink, ShieldCheck } from 'lucide-react';
+import { X, Check, Globe2, PencilLine, ArrowLeft, ArrowRight, ExternalLink, ShieldCheck } from 'lucide-react';
 
 const stepLabels = [`Choose registrar`, `Import details`, `Review & save`];
 
-const RegistrarSetup = ({ onClose }: { onClose: () => void }) => {
+const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?: () => void }) => {
   const setup = useRegistrarSetup(onClose, true);
   const readingFileRef = useRef(false);
   const [readingFile, setReadingFile] = useState(false);
@@ -82,6 +83,23 @@ const RegistrarSetup = ({ onClose }: { onClose: () => void }) => {
               ? `Upload your domain CSV export, then review the records before saving them on this device.`
               : `Check the details below. Save to add these domains to your table.`}
         </p>
+        <div id={`registrar-setup-entry-actions`} className={`registrar-setup-entry-actions`}>
+          <ConnectRegistrar onClose={close} disabled={busy} scope={`registrar-setup`} />
+          {onManual && (
+            <button
+              type={`button`}
+              disabled={busy}
+              id={`registrar-setup-manual-button`}
+              className={`portfolio-button portfolio-button-secondary registrar-setup-manual-button`}
+              onClick={() => { if (!busy) { close(); onManual(); } }}
+            >
+              <PencilLine size={14} aria-hidden={`true`} id={`registrar-setup-manual-icon`} className={`registrar-setup-manual-icon`} />
+              <span id={`registrar-setup-manual-text`} className={`registrar-setup-manual-text`}>
+                {`Enter Manually`}
+              </span>
+            </button>
+          )}
+        </div>
         <ol id={`registrar-setup-progress`} className={`registrar-setup-progress`} aria-label={`Import progress`}>
           {stepLabels.map((label, index) => (
             <li

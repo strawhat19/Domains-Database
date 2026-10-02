@@ -1,4 +1,5 @@
 import './styles.scss';
+import ConnectRegistrar from './ConnectRegistrar';
 import { REGISTRARS } from '../../shared/config';
 import { useDomainEditor } from './useDomainEditor';
 import type { DomainRecord } from '../../shared/types';
@@ -52,6 +53,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
         <p id={`domain-editor-description`} className={`domain-dialog-description`}>
           {`A little detail now. A lot less searching later.`}
         </p>
+        <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />
         <form id={`domain-editor-form`} className={`domain-editor-form`} onSubmit={handleSubmit}>
           <div id={`domain-editor-fields`} className={`domain-editor-fields`}>
             <div id={`domain-name-field`} className={`domain-editor-field`}>

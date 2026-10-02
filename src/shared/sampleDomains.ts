@@ -1,5 +1,5 @@
-import { createDomainId } from './domainUtils';
 import { useSampleData } from './config';
+import { Domain } from './models/domains/Domain';
 import type { DomainRecord, Registrar } from './types';
 
 const expiryAfter = (days: number) => {
@@ -20,7 +20,7 @@ export const createSampleDomains = (): DomainRecord[] => {
     [`northstarstudio.net`, `Hostinger`, 305, 15.99, true],
     [`oldharbor.co`, `GoDaddy Auctions`, -4, 34.99, false],
   ];
-  return examples.map(([name, registrar, days, renewalPrice, autoRenew], index) => ({
+  return examples.map(([name, registrar, days, renewalPrice, autoRenew], index) => new Domain({
     name,
     registrar,
     autoRenew,
@@ -29,7 +29,6 @@ export const createSampleDomains = (): DomainRecord[] => {
     number: index + 1,
     owner: `Alex Morgan`,
     expiresAt: expiryAfter(days),
-    id: createDomainId(index + 1, name),
     notes: `Fictional Sample Data For The Demo Portfolio`,
   }));
 };

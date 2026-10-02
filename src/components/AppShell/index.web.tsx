@@ -1,12 +1,14 @@
 import './styles.scss';
-import { Link } from 'expo-router';
 import '../../styles/global.scss';
-import RouterAnchor from '../RouterAnchor';
+import { Link } from 'expo-router';
+import UserMenu from '../UserMenu';
 import ThemeToggle from '../ThemeToggle';
+import RouterAnchor from '../RouterAnchor';
+import AuthFeedback from '../AuthFeedback';
 import type { PropsWithChildren } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { Layers3, Grid2X2, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { useAppShell, navigation, footerLinks } from './useAppShell';
+import { Info, Mail, House, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children }: PropsWithChildren) => {
   const { pathname, year } = useAppShell();
@@ -23,8 +25,8 @@ const AppShell = ({ children }: PropsWithChildren) => {
               aria-label={`Domains Database Home`}
             >
               <img
-                height={70}
-                width={240}
+                height={280}
+                width={1080}
                 id={`header-logo`}
                 src={isDark ? `/brand-logo-dark.svg` : `/brand-logo.svg`}
                 alt={`Domains Database`}
@@ -33,28 +35,21 @@ const AppShell = ({ children }: PropsWithChildren) => {
             </RouterAnchor>
           </Link>
           <nav id={`header-navigation`} className={`header-navigation`} aria-label={`Main Navigation`}>
-            {navigation.map(item => (
+            {navigation.map(item => {
+              const Icon = { House, Globe2, UsersRound }[item.icon];
+              return (
               <Link key={item.label} href={item.href} asChild>
                 <RouterAnchor
                   id={`header-link-${item.label.toLowerCase()}`}
                   className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
                   aria-current={pathname === item.href ? `page` : undefined}
                 >
-                  {item.href === `/` ? (
-                    <Grid2X2
-                      size={14}
-                      aria-hidden={`true`}
-                      className={`header-link-icon`}
-                      id={`header-link-icon-${item.label.toLowerCase()}`}
-                    />
-                  ) : (
-                    <Layers3
-                      size={14}
-                      aria-hidden={`true`}
-                      className={`header-link-icon`}
-                      id={`header-link-icon-${item.label.toLowerCase()}`}
-                    />
-                  )}
+                  <Icon
+                    size={14}
+                    aria-hidden={`true`}
+                    className={`header-link-icon`}
+                    id={`header-link-icon-${item.label.toLowerCase()}`}
+                  />
                   <span
                     className={`header-link-text`}
                     id={`header-link-text-${item.label.toLowerCase()}`}
@@ -63,25 +58,19 @@ const AppShell = ({ children }: PropsWithChildren) => {
                   </span>
                 </RouterAnchor>
               </Link>
-            ))}
+              );
+            })}
           </nav>
           <div id={`header-actions`} className={`header-actions`}>
-            <Link href={`/domains`} asChild>
-              <RouterAnchor
-                id={`header-portfolio-action`}
-                className={`header-portfolio-action`}
-              >
-                {`Your portfolio`}
-                <ArrowRight id={`header-portfolio-icon`} className={`header-portfolio-icon`} size={16} aria-hidden />
-              </RouterAnchor>
-            </Link>
             <ThemeToggle />
+            <UserMenu />
           </div>
         </div>
       </header>
       <main id={`main-content`} className={`main-content`}>
         {children}
       </main>
+      <AuthFeedback />
       <footer id={`site-footer`} className={`site-footer`}>
         <div id={`footer-inner`} className={`footer-inner`}>
           <p id={`footer-copyright`} className={`footer-copyright`}>
@@ -92,16 +81,20 @@ const AppShell = ({ children }: PropsWithChildren) => {
             </a>
           </p>
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>
-            {footerLinks.map(item => (
-              <Link key={item.label} href={item.href} asChild>
-                <RouterAnchor
-                  className={`footer-link`}
-                  id={`footer-link-${item.label.toLowerCase()}`}
-                >
-                  {item.label}
-                </RouterAnchor>
-              </Link>
-            ))}
+            {footerLinks.map(item => {
+              const Icon = { Info, Mail, FileText, ShieldCheck }[item.icon];
+              return (
+                <Link key={item.label} href={item.href} asChild>
+                  <RouterAnchor
+                    className={`footer-link`}
+                    id={`footer-link-${item.label.toLowerCase()}`}
+                  >
+                    <Icon id={`footer-link-icon-${item.label.toLowerCase()}`} className={`footer-link-icon`} size={12} aria-hidden />
+                    {item.label}
+                  </RouterAnchor>
+                </Link>
+              );
+            })}
           </nav>
         </div>
       </footer>

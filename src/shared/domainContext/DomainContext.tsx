@@ -1,7 +1,7 @@
 import { api } from '../../api';
 import type { PropsWithChildren } from 'react';
 import type { DomainInput, DomainRecord } from '../types';
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface DomainContextValue {
   error: string;
@@ -20,6 +20,7 @@ export interface DomainContextValue {
 export const DomainContext = createContext<DomainContextValue | undefined>(undefined);
 
 export const DomainProvider = ({ children }: PropsWithChildren) => {
+  const active = useRef(false);
   const [error, setError] = useState(``);
   const [notice, setNotice] = useState(``);
   const [loading, setLoading] = useState(true);
@@ -27,6 +28,7 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     let mounted = true;
+    active.current = true;
     api.getDomains().then(records => {
       if (mounted) setDomains(records);
     }).catch(reason => {
@@ -34,12 +36,13 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
     }).finally(() => {
       if (mounted) setLoading(false);
     });
-    return () => { mounted = false; };
+    return () => { mounted = false; active.current = false; };
   }, []);
 
   const clearNotice = useCallback(() => setNotice(``), []);
 
   const mutate = useCallback(async <T,>(operation: () => Promise<T>, message: string): Promise<T> => {
+    if (!active.current) throw new Error(`Portfolio Changed, Please Try Again`);
     try {
       const result = await operation();
       const records = await api.getDomains();

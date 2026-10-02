@@ -1,6 +1,6 @@
-import { Platform } from 'react-native';
 import type { PropsWithChildren } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { portfolioStorageKey } from '../portfolioPreferences/storage';
+import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { COLUMN_STORAGE_KEY, DEFAULT_VISIBLE_COLUMNS, PORTFOLIO_COLUMNS, type PortfolioColumn } from '../portfolioColumns';
 
@@ -10,28 +10,24 @@ interface ColumnContextValue {
   toggleColumn: (column: PortfolioColumn) => void;
 }
 
-const readColumns = async () => {
-  if (Platform.OS !== `web`) return AsyncStorage.getItem(COLUMN_STORAGE_KEY);
-  return typeof window === `undefined` ? null : window.localStorage.getItem(COLUMN_STORAGE_KEY);
-};
-
-const saveColumns = async (columns: PortfolioColumn[]) => {
-  const value = JSON.stringify(columns);
-  if (Platform.OS !== `web`) return AsyncStorage.setItem(COLUMN_STORAGE_KEY, value);
-  if (typeof window !== `undefined`) window.localStorage.setItem(COLUMN_STORAGE_KEY, value);
-};
-
 export const ColumnContext = createContext<ColumnContextValue | undefined>(undefined);
 
-export const ColumnProvider = ({ children }: PropsWithChildren) => {
+export const ColumnProvider = ({ children, userId = null }: PropsWithChildren<{ userId?: string | null }>) => {
   const [ready, setReady] = useState(false);
   const preferenceChanged = useRef(false);
-  const storageQueue = useRef<Promise<void>>(Promise.resolve());
+  const loadedUserId = useRef<string | null>(null);
+  const storageQueue = useRef(createOperationQueue()).current;
   const [visibleColumns, setVisibleColumns] = useState<PortfolioColumn[]>(DEFAULT_VISIBLE_COLUMNS);
 
   useEffect(() => {
     let mounted = true;
-    readColumns().then(saved => {
+    const capturedUserId = userId;
+    setReady(false);
+    loadedUserId.current = null;
+    preferenceChanged.current = false;
+    setVisibleColumns([...DEFAULT_VISIBLE_COLUMNS]);
+    const read = readStorage(portfolioStorageKey(COLUMN_STORAGE_KEY, capturedUserId));
+    read.then(saved => {
       if (!mounted || preferenceChanged.current || !saved) return;
       const parsed: unknown = JSON.parse(saved);
       if (!Array.isArray(parsed)) return;
@@ -39,17 +35,17 @@ export const ColumnProvider = ({ children }: PropsWithChildren) => {
         .filter(column => column.field === `name` || parsed.includes(column.field))
         .map(column => column.field));
     }).catch(() => undefined).finally(() => {
-      if (mounted) setReady(true);
+      if (mounted) { loadedUserId.current = capturedUserId; setReady(true); }
     });
     return () => { mounted = false; };
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    if (!ready) return;
-    storageQueue.current = storageQueue.current
-      .then(() => saveColumns(visibleColumns))
-      .catch(() => undefined);
-  }, [ready, visibleColumns]);
+    if (!ready || loadedUserId.current !== userId) return;
+    const capturedUserId = userId;
+    const columns = JSON.stringify(visibleColumns);
+    void storageQueue(() => writeStorage(portfolioStorageKey(COLUMN_STORAGE_KEY, capturedUserId), columns)).catch(() => undefined);
+  }, [ready, userId, visibleColumns, storageQueue]);
 
   const resetColumns = useCallback(() => {
     preferenceChanged.current = true;

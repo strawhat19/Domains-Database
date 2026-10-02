@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { File } from 'expo-file-system';
 import { createStyles } from './styles.native';
+import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRegistrarSetup } from './useRegistrarSetup';
 import { elementProps } from '../../shared/elementProps';
@@ -118,6 +119,7 @@ const RegistrarSetup = ({ onClose }: { onClose: () => void }) => {
               contentContainerStyle={styles.content}
               {...elementProps(`native-registrar-setup-content`)}
             >
+              <ConnectRegistrar onClose={close} disabled={busy} scope={`native-registrar-setup`} />
               {!!state.error && (
                 <Text
                   style={styles.error}

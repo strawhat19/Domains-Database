@@ -1,7 +1,8 @@
-import type { PropsWithChildren } from 'react';
 import { GROUPABLE_COLUMNS } from './groups';
-import type { PortfolioPreferences, PortfolioPreferencesContextValue } from './types';
+import type { PropsWithChildren } from 'react';
+import { createOperationQueue } from '../common/storage';
 import { readPortfolioPreferences, savePortfolioPreferences } from './storage';
+import type { PortfolioPreferences, PortfolioPreferencesContextValue } from './types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const DEFAULT_PREFERENCES: PortfolioPreferences = { view: `table`, groupBy: `none`, customGroups: [], orders: {} };
@@ -37,28 +38,39 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
 
 export const PortfolioPreferencesContext = createContext<PortfolioPreferencesContextValue | undefined>(undefined);
 
-export const PortfolioPreferencesProvider = ({ children }: PropsWithChildren) => {
+export const PortfolioPreferencesProvider = ({ children, userId = null }: PropsWithChildren<{ userId?: string | null }>) => {
   const [ready, setReady] = useState(false);
   const changed = useRef(false);
   const preferenceRef = useRef(DEFAULT_PREFERENCES);
-  const storageQueue = useRef<Promise<void>>(Promise.resolve());
+  const loadedUserId = useRef<string | null>(null);
+  const storageQueue = useRef(createOperationQueue()).current;
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
 
   useEffect(() => {
     let mounted = true;
-    readPortfolioPreferences().then(saved => {
+    const capturedUserId = userId;
+    setReady(false);
+    changed.current = false;
+    loadedUserId.current = null;
+    preferenceRef.current = DEFAULT_PREFERENCES;
+    setPreferences(DEFAULT_PREFERENCES);
+    readPortfolioPreferences(capturedUserId).then(saved => {
       if (!mounted || changed.current || !saved) return;
       const restored = restorePreferences(JSON.parse(saved));
       preferenceRef.current = restored;
       setPreferences(restored);
-    }).catch(() => undefined).finally(() => { if (mounted) setReady(true); });
+    }).catch(() => undefined).finally(() => {
+      if (mounted) { loadedUserId.current = capturedUserId; setReady(true); }
+    });
     return () => { mounted = false; };
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    if (!ready) return;
-    storageQueue.current = storageQueue.current.then(() => savePortfolioPreferences(preferences)).catch(() => undefined);
-  }, [ready, preferences]);
+    if (!ready || loadedUserId.current !== userId) return;
+    const capturedUserId = userId;
+    const capturedPreferences = preferences;
+    void storageQueue(() => savePortfolioPreferences(capturedPreferences, capturedUserId)).catch(() => undefined);
+  }, [ready, userId, preferences, storageQueue]);
 
   const change = useCallback((update: (current: PortfolioPreferences) => PortfolioPreferences) => {
     changed.current = true;

@@ -1,0 +1,6 @@
+.user-menu { z-index: 40; }
+.user-menu-options { animation: user-menu-enter .18s ease; }
+.user-menu-button:focus-visible { border-radius: 50%; }
+.user-menu-profile:hover, .user-menu-dashboard:hover, .user-menu-connections:hover { background: var(--subtle) !important; }
+.user-menu-signout:hover { background: var(--danger-bg) !important; }
+@keyframes user-menu-enter { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }

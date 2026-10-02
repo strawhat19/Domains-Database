@@ -1,0 +1,169 @@
+import { api } from '../../api';
+import { AppState } from 'react-native';
+import { authAPI } from '../../api/auth';
+import { useLocalStorage } from '../config';
+import type { User } from '../models/users/User';
+import { createOperationQueue } from '../common/storage';
+import { AUTH_SESSION_KEY } from '../authentication/service';
+import { claimLegacyPortfolioPreferences } from '../portfolioPreferences/storage';
+import type { SignInInput, SignUpInput, AuthenticationResult } from '../authentication/types';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+
+interface AuthContextValue {
+  busy: boolean;
+  loading: boolean;
+  user: User | null;
+  error: string | null;
+  notice: string | null;
+  clearError: () => void;
+  clearNotice: () => void;
+  signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  signIn: (input: SignInInput) => Promise<User>;
+  signUp: (input: SignUpInput) => Promise<User>;
+}
+
+export const AuthContext = createContext<AuthContextValue | null>(null);
+const messageFromError = (error: unknown) => error instanceof Error ? error.message : `Authentication Is Unavailable`;
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const mounted = useRef(false);
+  const initialized = useRef(false);
+  const currentUser = useRef<User | null>(null);
+  const queue = useRef(createOperationQueue()).current;
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const applySession = useCallback(async (result: AuthenticationResult | null) => {
+    const userId = result?.user ? String(result.user.id) : null;
+    const sameUser = userId && userId === currentUser.current?.id && !result?.claimLegacy;
+    if (sameUser && result) {
+      currentUser.current = result.user;
+      if (mounted.current) { setUser(result.user); setExpiresAt(result.expiresAt); }
+      return result.user;
+    }
+    currentUser.current = null;
+    if (mounted.current) { setUser(null); setExpiresAt(null); }
+    try {
+      await api.setUserScope(userId, { claimLegacy: result?.claimLegacy ?? false, adoptGuest: result?.user.number === 1 });
+      if (result?.claimLegacy && userId) {
+        await claimLegacyPortfolioPreferences(userId);
+        await authAPI.completeLegacyClaim(userId);
+      }
+      currentUser.current = result?.user ?? null;
+      if (mounted.current) { setUser(result?.user ?? null); setExpiresAt(result?.expiresAt ?? null); }
+      return result?.user ?? null;
+    } catch (failure) {
+      await api.setUserScope(null).catch(() => undefined);
+      throw failure;
+    }
+  }, []);
+
+  const refreshUser = useCallback((): Promise<void> => queue(async () => {
+    if (mounted.current && !initialized.current) setLoading(true);
+    try {
+      await applySession(await authAPI.restoreSession());
+      if (mounted.current) setError(null);
+    } catch (failure) {
+      currentUser.current = null;
+      if (mounted.current) { setUser(null); setExpiresAt(null); setError(messageFromError(failure)); }
+      await api.setUserScope(null).catch(() => undefined);
+      throw failure;
+    } finally {
+      initialized.current = true;
+      if (mounted.current) setLoading(false);
+    }
+  }), [queue, applySession]);
+
+  useEffect(() => {
+    mounted.current = true;
+    void refreshUser().catch(() => undefined);
+    const syncSession = (event: StorageEvent) => {
+      if (event.key === AUTH_SESSION_KEY || event.key === null) void refreshUser().catch(() => undefined);
+    };
+    const resumeSession = () => { void refreshUser().catch(() => undefined); };
+    const subscription = AppState.addEventListener(`change`, state => { if (state === `active`) resumeSession(); });
+    if (useLocalStorage && typeof window !== `undefined`) {
+      window.addEventListener(`focus`, resumeSession);
+      window.addEventListener(`storage`, syncSession);
+    }
+    return () => {
+      mounted.current = false;
+      subscription.remove();
+      if (typeof window !== `undefined`) {
+        window.removeEventListener(`focus`, resumeSession);
+        window.removeEventListener(`storage`, syncSession);
+      }
+    };
+  }, [refreshUser]);
+
+  useEffect(() => {
+    if (!user || expiresAt === null) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleExpiry = () => {
+      const remaining = expiresAt - Date.now();
+      if (remaining <= 0) { void refreshUser().catch(() => undefined); return; }
+      timer = setTimeout(scheduleExpiry, Math.min(remaining, 2_147_483_647));
+    };
+    scheduleExpiry();
+    return () => clearTimeout(timer);
+  }, [user?.id, expiresAt, refreshUser]);
+
+  const authenticate = useCallback((operation: () => Promise<AuthenticationResult>, message: string): Promise<User> => queue(async () => {
+    if (mounted.current) { setBusy(true); setError(null); setNotice(null); }
+    let sessionCreated = false;
+    try {
+      const result = await operation();
+      sessionCreated = true;
+      const authenticatedUser = await applySession(result);
+      if (!authenticatedUser) throw new Error(`Sign In To Access Your Saved Data`);
+      if (mounted.current) setNotice(message);
+      return authenticatedUser;
+    } catch (failure) {
+      if (sessionCreated) {
+        await authAPI.signOut().catch(() => undefined);
+        await api.setUserScope(null).catch(() => undefined);
+        currentUser.current = null;
+        if (mounted.current) { setUser(null); setExpiresAt(null); }
+      }
+      if (mounted.current) setError(messageFromError(failure));
+      throw failure;
+    } finally {
+      if (mounted.current) setBusy(false);
+    }
+  }), [queue, applySession]);
+
+  const signIn = useCallback((input: SignInInput) => authenticate(() => authAPI.signIn(input), `Signed In Successfully`), [authenticate]);
+  const signUp = useCallback((input: SignUpInput) => authenticate(() => authAPI.signUp(input), `Account Created Successfully`), [authenticate]);
+
+  const signOut = useCallback((): Promise<void> => queue(async () => {
+    if (mounted.current) { setBusy(true); setError(null); setNotice(null); }
+    try {
+      await authAPI.signOut();
+      await applySession(null);
+      if (mounted.current) setNotice(`Signed Out Successfully`);
+    } catch (failure) {
+      try {
+        await applySession(await authAPI.restoreSession());
+      } catch {
+        currentUser.current = null;
+        if (mounted.current) { setUser(null); setExpiresAt(null); }
+        await api.setUserScope(null).catch(() => undefined);
+      }
+      if (mounted.current) setError(messageFromError(failure));
+      throw failure;
+    } finally {
+      if (mounted.current) setBusy(false);
+    }
+  }), [queue, applySession]);
+
+  const clearError = useCallback(() => setError(null), []);
+  const clearNotice = useCallback(() => setNotice(null), []);
+  const value = useMemo(() => ({ user, busy, error, notice, loading, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [user, busy, error, notice, loading, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

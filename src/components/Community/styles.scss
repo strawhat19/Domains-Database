@@ -1,0 +1,18 @@
+.community-feed-tab, .community-follow, .community-refresh, .community-composer-audience, .community-post-delete, .community-post-delete-cancel {
+  transition: background-color .2s ease, color .2s ease, transform .2s ease;
+  &:hover { background: var(--subtle) !important; }
+}
+.community-publish {
+  transition: opacity .2s ease, transform .2s ease;
+  &:hover { opacity: .9; }
+  &:active { transform: translateY(1px); }
+}
+.community-profile-domain:hover { color: var(--accent); }
+.community-post-skeleton, .community-profile-skeleton { animation: community-pulse 1.4s ease-in-out infinite; }
+.community-post-card, .community-profile-card { overflow-wrap: anywhere; }
+@keyframes community-pulse { 50% { opacity: .45; } }
+@media (max-width: 600px) {
+  .community-page { padding: 28px 16px !important; }
+  .community-title { font-size: 29px !important; }
+  .community-composer, .community-post-card { padding: 17px !important; }
+}

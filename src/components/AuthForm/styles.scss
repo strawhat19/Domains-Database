@@ -1,0 +1,15 @@
+.auth-form-page { box-sizing: border-box; }
+.auth-form-input-frame { transition: border-color 220ms ease, box-shadow 220ms ease; }
+.auth-form-input-frame:focus-within { border-color: var(--accent, #138b8b) !important; box-shadow: 0 0 0 3px rgba(19, 139, 139, .1); }
+.auth-form-input { outline: none; min-width: 0; }
+.auth-form-submit, .auth-form-profile, .auth-form-switch-link, .auth-form-password-toggle { cursor: pointer; transition: opacity 220ms ease, transform 220ms ease, background-color 220ms ease; }
+.auth-form-submit:hover:not([aria-disabled=true]), .auth-form-profile:hover:not([aria-disabled=true]) { transform: translateY(-1px); opacity: .9; }
+.auth-form-switch-link:hover:not([aria-disabled=true]) { opacity: .75; }
+.auth-form-password-toggle:hover:not([aria-disabled=true]) { background: rgba(19, 139, 139, .08); }
+.auth-form-submit:focus-visible, .auth-form-profile:focus-visible, .auth-form-switch-link:focus-visible, .auth-form-password-toggle:focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
+.auth-form-skeleton-title, .auth-form-skeleton-copy, .auth-form-skeleton-field { animation: auth-form-pulse 1.3s ease-in-out infinite alternate; }
+@keyframes auth-form-pulse { from { opacity: .45; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .auth-form-input-frame, .auth-form-submit, .auth-form-profile, .auth-form-switch-link, .auth-form-password-toggle { transition: none; }
+  .auth-form-skeleton-title, .auth-form-skeleton-copy, .auth-form-skeleton-field { animation: none; }
+}

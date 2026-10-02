@@ -7,9 +7,9 @@
       "DOM"
     ],
     "moduleSuffixes": [
+      "",
       ".web",
-      ".native",
-      ""
+      ".native"
     ]
   },
   "include": [
