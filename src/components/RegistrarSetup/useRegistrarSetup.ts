@@ -39,6 +39,7 @@ export const useRegistrarSetup = (onClose: () => void, csvOnly = false) => {
   const reportError = (message: string) => setError(message);
   const close = () => { if (!savingRef.current) onClose(); };
   const selectRegistrar = (value: SetupRegistrar) => {
+    if (savingRef.current) return;
     if (csvOnly && value !== registrar) {
       setDrafts([]);
       setReview([]);
@@ -46,6 +47,7 @@ export const useRegistrarSetup = (onClose: () => void, csvOnly = false) => {
     }
     setRegistrar(value);
     setError(``);
+    setStep(1);
   };
   const updateDraft = <Key extends Exclude<keyof RegistrarDraft, `id`>>(id: string, field: Key, value: RegistrarDraft[Key]) => {
     setError(``);
