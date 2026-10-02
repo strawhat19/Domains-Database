@@ -139,8 +139,16 @@ Guest domains use their own storage. The first local account can adopt guest rec
 
 ## Web and mobile publishing
 
+The current web deployment is [domains-database.vercel.app](https://domains-database.vercel.app/) in the Piratechs Vercel team. `vercel.json` builds Expo's server output, serves client assets, and sends page/API requests through `api/index.ts` using the Expo Node adapter. The function has a 240-second limit for the existing bounded registrar requests. `.vercelignore` excludes local `.env` files from uploads; no registrar keys are configured in Vercel.
+
+To redeploy the current working tree, run `npx vercel deploy --prod --scope piratechs` after linking with `npx vercel link --project domains-database --scope piratechs`. The GitHub repository is connected; commit the deployment configuration before relying on deployments from future pushes. Use Node 22.13 or later for Expo. See [Expo's Vercel adapter guide](https://docs.expo.dev/router/web/api-routes/#vercel).
+
+Use the `development` branch for active iteration. Commit and push changes to `origin/development` for Vercel Preview deployments, or run `npx vercel deploy --scope piratechs` on that branch. Keep using the stable branch preview URL so browser storage persists across deployments at that address.
+
+Hosting does not change persistence: accounts, domains, and private connection values still live in this browser's storage. The Vercel origin has separate storage from localhost; use CSV import/export for portfolio migration and enter connection values again. This remains a device-only demo until the production authentication, database, and secret-storage work in `firestore-plan.md` is implemented. No custom-domain DNS changes were made.
+
 The web app uses Expo server output so registrar API routes can run. Restart `npm start` after changing this configuration. When you are ready to package it, `npm run export:web` writes client and server artifacts to `dist/`. Deploy the Expo server with an appropriate runtime; serving only static files from Apache cannot run the registrar relay. Production native builds need the deployed HTTPS server URL in the `expo-router` plugin's `origin` setting. See [Expo API route deployment](https://docs.expo.dev/router/web/api-routes/).
 
 `eas.json` supplies preview and production profiles for a future Expo EAS mobile build. Store publication still needs your Expo project, signing credentials, final app icons, and store details.
 
-The earlier social and account-storage update passed TypeScript checking and 23 focused local-service checks. The registrar sync implementation has not been tested, built, or exercised with real credentials, per AGENTS.md.
+The earlier social and account-storage update passed TypeScript checking and 23 focused local-service checks. The October 2, 2026 Vercel deployment passed the production export and server-entry compilation, HTTP checks for eight pages, invalid-input/no-store checks for all three API handlers, and a cross-origin rejection check. The landing and Search pages rendered in Chrome without console errors; Vercel reported no runtime errors. Live registrar credentials were not exercised during deployment. Existing worklets peer-dependency and Node engine-range warnings remain in the build log.
