@@ -11,7 +11,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { navigation, footerLinks } from '../../shared/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Info, Mail, House, Globe2, FileText, UsersRound, ShieldCheck } from 'lucide-react-native';
-import { Alert, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -68,7 +68,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                   accessibilityRole={`link`}
                   accessibilityLabel={label}
                   accessibilityState={{ selected: active }}
-                  style={[styles.navigationLink, active && styles.navigationLinkActive]}
+                  style={StyleSheet.flatten([styles.navigationLink, active && styles.navigationLinkActive])}
                 >
                   <Icon {...elementProps(`native-navigation-icon`, label.toLowerCase())} size={14} color={active ? `#ffffff` : palette.muted} />
                   <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>

@@ -1,0 +1,13 @@
+.app-loading-card { animation: loading-card-enter .35s cubic-bezier(.2, .8, .2, 1) both; }
+.app-loading-title { text-wrap: balance; }
+@keyframes loading-card-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 400px) {
+  .app-loading-card { padding: 26px !important; }
+  .app-loading-title { font-size: 22px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-loading-card { animation: none; }
+}

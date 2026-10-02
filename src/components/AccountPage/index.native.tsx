@@ -1,10 +1,10 @@
 import { Link } from 'expo-router';
 import { Roles } from '../../types/types';
 import { useAccountPage } from './useAccountPage';
-import { Text, Pressable, View } from 'react-native';
 import ProfileSettings from '../ProfileSettings';
 import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
+import { Text, Pressable, View, StyleSheet } from 'react-native';
 import { PlugZap, UserRound, LayoutDashboard, ShieldCheck } from 'lucide-react-native';
 
 const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | `dashboard` }) => {
@@ -27,20 +27,20 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
       <View {...elementProps(`account-sidebar`)} style={[styles.sidebar, state.compact && styles.compactSidebar]}>
         <Text {...elementProps(`account-sidebar-title`)} style={styles.eyebrow}>{`YOUR ACCOUNT`}</Text>
         <Link href={`/profile`} asChild>
-          <Pressable {...elementProps(`account-sidebar-profile`)} style={[styles.link, page === `profile` && styles.activeLink]}>
+          <Pressable {...elementProps(`account-sidebar-profile`)} style={StyleSheet.flatten([styles.link, page === `profile` && styles.activeLink])}>
             <UserRound {...elementProps(`account-profile-icon`)} size={16} color={page === `profile` ? palette.accent : palette.muted} />
             <Text {...elementProps(`account-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
           </Pressable>
         </Link>
         <Link href={`/profile/connections`} asChild>
-          <Pressable {...elementProps(`account-sidebar-connections`)} style={[styles.link, page === `connections` && styles.activeLink]}>
+          <Pressable {...elementProps(`account-sidebar-connections`)} style={StyleSheet.flatten([styles.link, page === `connections` && styles.activeLink])}>
             <PlugZap {...elementProps(`account-connections-icon`)} size={16} color={page === `connections` ? palette.accent : palette.muted} />
             <Text {...elementProps(`account-connections-text`)} style={styles.linkText}>{`Connections`}</Text>
           </Pressable>
         </Link>
         {user?.role === Roles.Owner && (
           <Link href={`/dashboard`} asChild>
-            <Pressable {...elementProps(`account-sidebar-dashboard`)} style={[styles.link, page === `dashboard` && styles.activeLink]}>
+            <Pressable {...elementProps(`account-sidebar-dashboard`)} style={StyleSheet.flatten([styles.link, page === `dashboard` && styles.activeLink])}>
               <LayoutDashboard {...elementProps(`account-dashboard-icon`)} size={16} color={page === `dashboard` ? palette.accent : palette.muted} />
               <Text {...elementProps(`account-dashboard-text`)} style={styles.linkText}>{`Dashboard`}</Text>
             </Pressable>
