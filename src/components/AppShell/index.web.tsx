@@ -6,21 +6,25 @@ import ThemeToggle from '../ThemeToggle';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
 import type { PropsWithChildren } from 'react';
+import { useMobileNavigation } from './useMobileNavigation';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, navigation, footerLinks } from './useAppShell';
-import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { X, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children }: PropsWithChildren) => {
   const { pathname, year } = useAppShell();
   const { isDark } = useTheme();
+  const mobileNavigation = useMobileNavigation(pathname);
+  const MenuIcon = mobileNavigation.open ? X : Menu;
 
   return (
     <div id={`app-shell`} className={`app-shell`}>
-      <header id={`site-header`} className={`site-header`}>
+      <header ref={mobileNavigation.headerRef} id={`site-header`} className={`site-header`}>
         <div id={`header-inner`} className={`header-inner`}>
           <Link href={`/`} asChild>
             <RouterAnchor
               id={`header-brand`}
+              onClick={mobileNavigation.close}
               className={`header-brand`}
               aria-label={`Domains Database Home`}
             >
@@ -34,7 +38,13 @@ const AppShell = ({ children }: PropsWithChildren) => {
               />
             </RouterAnchor>
           </Link>
-          <nav id={`header-navigation`} className={`header-navigation`} aria-label={`Main Navigation`}>
+          <nav
+            id={`header-navigation`}
+            aria-label={`Main Navigation`}
+            onClick={mobileNavigation.close}
+            ref={mobileNavigation.navigationRef}
+            className={`header-navigation${mobileNavigation.open ? ` header-navigation-open` : ``}`}
+          >
             {navigation.map(item => {
               const Icon = { House, Search, Globe2, UsersRound }[item.icon];
               return (
@@ -64,6 +74,21 @@ const AppShell = ({ children }: PropsWithChildren) => {
           <div id={`header-actions`} className={`header-actions`}>
             <ThemeToggle />
             <UserMenu />
+            <button
+              type={`button`}
+              id={`header-menu-toggle`}
+              className={`header-menu-toggle`}
+              ref={mobileNavigation.toggleRef}
+              onClick={mobileNavigation.toggle}
+              aria-controls={`header-navigation`}
+              aria-expanded={mobileNavigation.open}
+              aria-label={mobileNavigation.open ? `Collapse Navigation Menu` : `Expand Navigation Menu`}
+            >
+              <MenuIcon size={18} aria-hidden={`true`} id={`header-menu-icon`} className={`header-menu-icon`} />
+              <span id={`header-menu-text`} className={`header-menu-text`}>
+                {mobileNavigation.open ? `Close` : `Menu`}
+              </span>
+            </button>
           </div>
         </div>
       </header>

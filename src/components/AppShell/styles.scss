@@ -25,6 +25,27 @@
 .header-actions { gap: 12px; display: flex; flex-shrink: 0; align-items: center; }
 .header-navigation { gap: 4px; display: flex; align-items: center; margin-left: auto; }
 
+.header-menu-toggle {
+  gap: 7px;
+  height: 40px;
+  display: none;
+  padding: 0 12px;
+  flex-shrink: 0;
+  color: var(--ink);
+  font-size: 12px;
+  border-radius: 5px;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  font-family: 'DMSans_500Medium', sans-serif;
+
+  &:hover { color: var(--accent); background: var(--subtle); border-color: var(--accent); }
+  &[aria-expanded='true'] { color: var(--strong-text); background: var(--strong); border-color: var(--strong); }
+}
+
+.header-menu-icon { flex-shrink: 0; }
+
 .header-link {
   gap: 8px;
   display: flex;
@@ -72,8 +93,10 @@
   .header-inner { flex-wrap: wrap; padding: 10px var(--shell-gutter) 14px; gap: 6px; }
   .header-brand { order: 0; }
   .header-actions { order: 1; margin-left: auto; }
-  .header-navigation { order: 2; width: 100%; margin-left: 0; }
-  .header-link { flex: 1; justify-content: center; padding: 10px 12px; }
+  .header-menu-toggle { display: inline-flex; }
+  .header-navigation { order: 2; width: 100%; display: none; margin: 6px 0 0; padding-top: 12px; align-items: stretch; flex-direction: column; border-top: 1px solid var(--line); }
+  .header-navigation-open { display: flex; animation: header-menu-enter .18s ease; }
+  .header-link { min-height: 44px; justify-content: flex-start; padding: 10px 12px; }
 }
 
 @media (max-width: 760px) {
@@ -85,11 +108,20 @@
 }
 
 @media (max-width: 480px) {
-  .header-logo { width: min(180px, 42vw); }
-  .header-link { gap: 6px; font-size: 11px; padding: 10px 8px; }
+  .header-inner { gap: 8px; }
+  .header-actions { gap: 6px; }
+  .header-menu-text { display: none; }
+  .header-menu-toggle { width: 40px; padding: 0; }
+  .header-link { gap: 8px; font-size: 12px; padding: 11px 12px; }
+  .header-logo { width: min(180px, calc(100vw - var(--shell-gutter) - var(--shell-gutter) - 188px)); }
 }
 
 @media (max-width: 360px) {
   .app-shell { --shell-gutter: 14px; }
   .footer-navigation { gap: 20px; }
+}
+
+@keyframes header-menu-enter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
