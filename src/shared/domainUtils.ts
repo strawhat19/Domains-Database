@@ -20,6 +20,17 @@ export const getDomainStatus = (domain: DomainRecord): DomainStatus => {
   return days <= 30 ? `Renewing Soon` : `Active`;
 };
 
+export const getRegistrarCounts = (domains: DomainRecord[]) => {
+  const counts = new Map<string, number>();
+  for (const domain of domains) {
+    const registrar = domain.registrar?.trim() || `Unknown Registrar`;
+    counts.set(registrar, (counts.get(registrar) ?? 0) + 1);
+  }
+  return [...counts]
+    .sort(([first], [second]) => first.localeCompare(second))
+    .map(([registrar, count]) => ({ count, registrar }));
+};
+
 export const formatDate = (date: string) => {
   if (!date || !Number.isFinite(getDaysUntil(date))) return `—`;
   const [year, month, day] = date.slice(0, 10).split(`-`).map(Number);

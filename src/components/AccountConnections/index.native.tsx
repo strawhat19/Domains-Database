@@ -6,7 +6,55 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAccountConnections } from './useAccountConnections';
 import { connectionFields } from '../../shared/connections/types';
-import { Save, Trash2, Eye, EyeOff, ShieldCheck } from 'lucide-react-native';
+import type { RegistrarDomain } from '../../shared/registrarSync/types';
+import type { ThemePalette } from '../../shared/themeContext/theme';
+import { Save, Trash2, Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
+
+interface HostedDomainCandidateProps {
+  busy: boolean;
+  including: boolean;
+  palette: ThemePalette;
+  domain: RegistrarDomain;
+  onInclude: () => void;
+  styles: ReturnType<typeof createStyles>;
+}
+
+const HostedDomainCandidate = ({ busy, domain, styles, palette, including, onInclude }: HostedDomainCandidateProps) => {
+  const registrarName = typeof domain.meta?.registrarName === `string` ? domain.meta.registrarName : ``;
+  const registrar = domain.registrar || registrarName || `Registrar Not Identified`;
+  const source = typeof domain.meta?.registrarSource === `string` ? domain.meta.registrarSource : ``;
+  return (
+    <View {...elementProps(`hosted-domain-candidate`, domain.name)} style={styles.candidateRow}>
+      <View {...elementProps(`hosted-domain-copy`, domain.name)} style={styles.candidateCopy}>
+        <Text {...elementProps(`hosted-domain-name`, domain.name)} style={styles.candidateName}>
+          {domain.name}
+        </Text>
+        <Text {...elementProps(`hosted-domain-details`, domain.name)} style={styles.candidateDetails}>
+          {`Hostinger hosting · ${registrar === `Registrar Not Identified` ? registrar : `Registered with ${registrar}`}`}
+        </Text>
+        {!!source && (
+          <Text {...elementProps(`hosted-domain-source`, domain.name)} style={styles.candidateSource}>
+            {source}
+          </Text>
+        )}
+      </View>
+      <Pressable
+        {...elementProps(`hosted-domain-include`, domain.name)}
+        disabled={busy}
+        onPress={onInclude}
+        accessibilityRole={`button`}
+        accessibilityState={{ disabled: busy, busy: including }}
+        style={[styles.includeButton, busy && styles.disabled]}
+        accessibilityLabel={`Confirm I Own ${domain.name} And Include It In My Portfolio`}
+      >
+        <CheckCircle2 {...elementProps(`hosted-domain-include-icon`, domain.name)} size={15} color={palette.accent} />
+        <Text {...elementProps(`hosted-domain-include-text`, domain.name)} style={styles.includeText}>
+          {including ? `Confirming…` : `Include My Domain`}
+        </Text>
+      </Pressable>
+    </View>
+  );
+};
 
 const AccountConnections = () => {
   const state = useAccountConnections();
@@ -17,13 +65,19 @@ const AccountConnections = () => {
     <View {...elementProps(`account-connections`)} style={styles.panel}>
       <View {...elementProps(`connections-heading`)} style={styles.row}>
         <Text {...elementProps(`connections-title`)} style={styles.title}>{`Registrar values`}</Text>
-        <Pressable {...elementProps(`connections-reveal`)} style={styles.button} onPress={() => state.setVisible(current => !current)}>
+        <Pressable
+          {...elementProps(`connections-reveal`)}
+          style={styles.button}
+          accessibilityRole={`button`}
+          onPress={() => state.setVisible(current => !current)}
+          accessibilityLabel={state.visible ? `Hide Connection Values` : `Show Connection Values`}
+        >
           <RevealIcon {...elementProps(`connections-reveal-icon`)} size={16} color={palette.ink} />
           <Text {...elementProps(`connections-reveal-text`)} style={styles.buttonText}>{state.visible ? `Hide values` : `Show values`}</Text>
         </Pressable>
       </View>
       <Text {...elementProps(`connections-description`)} style={styles.copy}>
-        {`Save your registrar values to check each connection and import its domains. Saved connections are checked again whenever you sign in. Renewal costs are entered manually; unavailable provider fields appear as —.`}
+        {`Save your registrar values to check each connection and import its domains. Saved connections are checked again whenever you sign in. External names found through hosting need your ownership confirmation; unavailable provider fields appear as —.`}
       </Text>
       {connectionFields.map(field => (
         <View key={field.id} {...elementProps(`connection-field`, field.id)} style={styles.field}>
@@ -60,6 +114,30 @@ const AccountConnections = () => {
               </Text>
             </View>
           </View>
+          {field.id === `hostinger` && state.discoveredDomains.length > 0 && (
+            <View {...elementProps(`hosted-domain-review`)} style={styles.reviewSection}>
+              <View {...elementProps(`hosted-domain-review-heading`)} style={styles.reviewHeading}>
+                <ShieldCheck {...elementProps(`hosted-domain-review-icon`)} size={16} color={palette.accent} />
+                <Text {...elementProps(`hosted-domain-review-title`)} style={styles.label}>
+                  {`Review Hosted Domains (${state.discoveredDomains.length})`}
+                </Text>
+              </View>
+              <Text {...elementProps(`hosted-domain-review-description`)} style={styles.copy}>
+                {`These names use Hostinger hosting and may belong to clients or other people. Choose Include My Domain only for names you own. Your confirmation adds the name to your private Hostinger settings and checks it again.`}
+              </Text>
+              {state.discoveredDomains.map(domain => (
+                <HostedDomainCandidate
+                  key={domain.name}
+                  domain={domain}
+                  styles={styles}
+                  palette={palette}
+                  busy={state.busy || state.loading || state.syncing}
+                  including={state.includingName === domain.name}
+                  onInclude={() => void state.includeDomain(domain.name)}
+                />
+              ))}
+            </View>
+          )}
         </View>
       ))}
       {!state.visible && <Text {...elementProps(`connections-edit-hint`)} style={styles.copy}>{`Choose Show values to edit your saved connections`}</Text>}

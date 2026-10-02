@@ -1,6 +1,7 @@
 import './styles.scss';
 import { useConnections } from './useConnections';
 import { REGISTRARS } from '../../shared/config';
+import { connectionFields } from '../../shared/connections/types';
 import { X, Upload, Download, ArrowUpRight, LockKeyhole } from 'lucide-react';
 
 interface ConnectionsProps {
@@ -31,7 +32,7 @@ const Connections = ({ onClose, onImport, onDownloadTemplate }: ConnectionsProps
         <header id={`connections-header`} className={`domain-dialog-header`}>
           <div id={`connections-heading`} className={`domain-dialog-heading`}>
             <span id={`connections-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {`ONE COLLECTION, FOUR REGISTRARS`}
+              {`ONE COLLECTION, YOUR REGISTRARS`}
             </span>
             <h2 id={`connections-title`} className={`domain-dialog-title`}>
               {`Bring them together`}
@@ -48,12 +49,13 @@ const Connections = ({ onClose, onImport, onDownloadTemplate }: ConnectionsProps
           </button>
         </header>
         <p id={`connections-description`} className={`domain-dialog-description`}>
-          {`Gather the domains from each account. Add them by hand or use our CSV template to import them in one go.`}
+          {`Gather the domains from each account. Connect supported registrars from your account, add records by hand, or import them with our CSV template.`}
         </p>
         <ul id={`connections-registrar-list`} className={`connections-registrar-list`}>
           {REGISTRARS.map(registrar => {
             const scope = `connections-${registrar.toLowerCase().replaceAll(` `, `-`)}`;
             const registrarKey = registrar.toLowerCase().replaceAll(` `, `-`);
+            const supportsConnection = connectionFields.some(field => field.label === registrar);
             return (
               <li id={scope} key={registrar} className={`connections-registrar-row`}>
                 <span id={`${scope}-mark`} className={`registrar-mark connections-registrar-mark registrar-mark-${registrarKey}`} aria-hidden={`true`}>
@@ -64,7 +66,7 @@ const Connections = ({ onClose, onImport, onDownloadTemplate }: ConnectionsProps
                     {registrar}
                   </span>
                   <span id={`${scope}-status`} className={`connections-registrar-status`}>
-                    {`Manual Entry & CSV Import`}
+                    {supportsConnection ? `API Connection, Manual Entry & CSV` : `Manual Entry & CSV Import`}
                   </span>
                 </div>
                 <a
@@ -91,7 +93,7 @@ const Connections = ({ onClose, onImport, onDownloadTemplate }: ConnectionsProps
               {`Your portfolio stays on this device`}
             </span>
             <p id={`connections-private-description`} className={`connections-private-description`}>
-              {`Accounts aren't connected yet. No passwords or API keys are needed, and changes here don't change your registrar settings.`}
+              {`Manual entry and CSV import need no API keys. Save supported registrar connections in your private account settings for read-only domain checks. Portfolio edits do not change registrar settings.`}
             </p>
           </div>
         </div>

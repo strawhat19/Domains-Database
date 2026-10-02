@@ -1,7 +1,10 @@
 import type { DomainRecord } from './types';
+import { normalizeWebsiteInsights } from './websiteInsights/values';
 
 export type PortfolioColumn =
   | `name` | `registrar` | `expiresAt` | `autoRenew` | `renewalPrice` | `monthlyCost`
+  | `renewalEstimate`
+  | `trancoRank` | `websitePerformance` | `websiteInsightsCheckedAt`
   | `owner` | `tld` | `internationalName` | `providerId` | `status`
   | `createdAt` | `updatedAt` | `ownershipAt` | `locked` | `privacy`
   | `firstImportedAt` | `firstExportedAt`
@@ -24,6 +27,10 @@ export const PORTFOLIO_COLUMNS: PortfolioColumnDefinition[] = [
   { field: `autoRenew`, label: `Auto-renew` },
   { field: `renewalPrice`, label: `Annual cost`, price: true },
   { field: `monthlyCost`, label: `Monthly cost`, price: true },
+  { field: `renewalEstimate`, label: `Renewal estimate` },
+  { field: `trancoRank`, label: `Tranco rank` },
+  { field: `websitePerformance`, label: `Mobile performance` },
+  { field: `websiteInsightsCheckedAt`, label: `Insights checked` },
   { field: `owner`, label: `Owner` },
   { field: `tld`, label: `TLD` },
   { field: `internationalName`, label: `International name` },
@@ -50,7 +57,7 @@ export const PORTFOLIO_COLUMNS: PortfolioColumnDefinition[] = [
 ];
 
 export const DEFAULT_VISIBLE_COLUMNS: PortfolioColumn[] = [
-  `name`, `registrar`, `expiresAt`, `autoRenew`, `renewalPrice`,
+  `name`, `registrar`, `expiresAt`, `autoRenew`, `renewalPrice`, `renewalEstimate`, `websitePerformance`, `trancoRank`,
 ];
 export const COLUMN_STORAGE_KEY = `domains-database:columns:v1`;
 
@@ -61,8 +68,44 @@ const EXTRA_HEADERS = {
 };
 
 const DATE_COLUMNS: PortfolioColumn[] = [`expiresAt`, `createdAt`, `updatedAt`, `ownershipAt`];
-const TIMESTAMP_COLUMNS: PortfolioColumn[] = [`firstImportedAt`, `firstExportedAt`];
+const TIMESTAMP_COLUMNS: PortfolioColumn[] = [`firstImportedAt`, `firstExportedAt`, `websiteInsightsCheckedAt`];
 const MISSING_COLUMN_VALUES = new Set([`—`, `–`, `-`, `n/a`, `unknown`]);
+
+export const getRenewalEstimate = (domain: DomainRecord) => {
+  const sync = domain.meta?.registrarSync;
+  const estimate = sync && typeof sync === `object` && !Array.isArray(sync) ? sync.renewalEstimate : undefined;
+  if (!estimate || typeof estimate !== `object` || Array.isArray(estimate)) return undefined;
+  const amount = estimate.amount;
+  const currency = typeof estimate.currency === `string` ? estimate.currency.trim().toUpperCase() : ``;
+  if (typeof amount !== `number` || !Number.isFinite(amount) || amount < 0 || !/^[A-Z]{3}$/.test(currency)) return undefined;
+  const source = typeof estimate.source === `string` ? estimate.source.trim() : ``;
+  const checkedAt = typeof estimate.checkedAt === `string` && Number.isFinite(Date.parse(estimate.checkedAt)) ? estimate.checkedAt : undefined;
+  return { amount, source, currency, checkedAt };
+};
+
+export const getRenewalEstimateHint = (domain: DomainRecord) => {
+  const estimate = getRenewalEstimate(domain);
+  if (!estimate) return ``;
+  const checked = estimate.checkedAt ? ` · Checked ${new Intl.DateTimeFormat(`en-US`, { dateStyle: `medium` }).format(new Date(estimate.checkedAt))}` : ``;
+  return `${estimate.source || `Registrar API`}${checked} · Before taxes and fees · Renewal term not provided`;
+};
+
+const getDomainWebsiteInsights = (domain: DomainRecord) => {
+  if (!domain.meta?.websiteInsights) return undefined;
+  try { return normalizeWebsiteInsights(domain.meta.websiteInsights, domain.name); }
+  catch { return undefined; }
+};
+
+export const getWebsiteInsightsHint = (domain: DomainRecord, column: PortfolioColumn) => {
+  if (![`trancoRank`, `websitePerformance`, `websiteInsightsCheckedAt`].includes(column)) return ``;
+  const insights = getDomainWebsiteInsights(domain);
+  if (!insights) return `Refresh Website Info To Check This Domain`;
+  const timestamp = column === `websitePerformance` ? insights.performance?.checkedAt : column === `trancoRank` ? insights.trancoCheckedAt : insights.checkedAt;
+  const checked = timestamp ? ` · Checked ${new Intl.DateTimeFormat(`en-US`, { dateStyle: `medium`, timeStyle: `short` }).format(new Date(timestamp))}` : ``;
+  if (column === `websitePerformance`) return `Google PageSpeed Insights · Mobile lab score out of 100${checked} · Performance measures page speed; visitor counts are unknown${insights.performance ? `` : ` · ${insights.errors.find(message => message.startsWith(`PageSpeed:`)) || `Score unavailable`}`}`;
+  if (column === `trancoRank`) return `Tranco · Latest returned daily rank${insights.trancoDate ? ` from ${insights.trancoDate}` : ``}${checked} · Popularity rank is not a visitor count${insights.trancoListed === false ? ` · Not listed in returned rankings` : insights.trancoRank ? `` : ` · ${insights.errors.find(message => message.startsWith(`Tranco:`)) || `Rank unavailable`}`}`;
+  return `${insights.source}${checked} · ${insights.errors.length ? `Some insights unavailable` : `Check completed`} · Visitor counts are unknown`;
+};
 
 export const hasPortfolioColumnValue = (value: unknown, column?: PortfolioColumn): boolean => {
   if (typeof value === `number`) return Number.isFinite(value);
@@ -101,6 +144,13 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
   if (column === `autoRenew` && registrarSync?.autoRenewKnown === false) return undefined;
   if ((column === `renewalPrice` || column === `monthlyCost`) && registrarSync?.renewalPriceKnown === false && domain.renewalPrice === 0) return undefined;
   switch (column) {
+    case `websitePerformance`: return getDomainWebsiteInsights(domain)?.performance?.score;
+    case `websiteInsightsCheckedAt`: return getDomainWebsiteInsights(domain)?.checkedAt;
+    case `trancoRank`: {
+      const insights = getDomainWebsiteInsights(domain);
+      return insights?.trancoRank ?? (insights?.trancoListed === false ? `Not listed` : undefined);
+    }
+    case `renewalEstimate`: return getRenewalEstimate(domain)?.amount;
     case `monthlyCost`: return Number.isFinite(domain.renewalPrice) ? domain.renewalPrice / 12 : undefined;
     case `registrantName`: return domain.registrant?.name;
     case `registrantEmail`: return domain.registrant?.email;
@@ -117,6 +167,16 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
 export const getPortfolioColumnDisplay = (domain: DomainRecord, column: PortfolioColumn) => {
   const value = getPortfolioColumnValue(domain, column);
   if (!hasPortfolioColumnValue(value, column)) return `—`;
+  if (column === `websitePerformance` && typeof value === `number`) return `${value} / 100`;
+  if (column === `trancoRank` && typeof value === `number`) return `#${new Intl.NumberFormat(`en-US`).format(value)}`;
+  if (column === `renewalEstimate` && typeof value === `number`) {
+    const currency = getRenewalEstimate(domain)?.currency;
+    if (!currency) return `—`;
+    return new Intl.NumberFormat(`en-US`, {
+      style: `currency`,
+      currency,
+    }).format(value);
+  }
   if (Array.isArray(value)) return value.filter(entry => hasPortfolioColumnValue(entry)).join(`, `);
   if (typeof value === `boolean`) {
     if (column === `locked`) return value ? `Locked` : `Unlocked`;

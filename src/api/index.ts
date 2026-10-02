@@ -1,11 +1,13 @@
 import { authAPI } from './auth';
 import { Domain } from '../shared/models/domains/Domain';
+import type { WebsiteInsights } from '../shared/websiteInsights/types';
 import { validateDomainInput } from '../shared/domainUtils';
 import { createSampleDomains } from '../shared/sampleDomains';
 import { createOperationQueue } from '../shared/common/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { accountStorageKey } from '../shared/authentication/userScope';
 import type { RegistrarDomain } from '../shared/registrarSync/types';
+import { normalizeWebsiteInsights } from '../shared/websiteInsights/values';
 import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
 import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared/config';
 
@@ -202,10 +204,33 @@ const assertUnique = (name: string, domains: DomainRecord[], id?: string) => {
   if (domains.some(domain => domain.id !== id && domain.name.toLowerCase() === name)) throw new Error(`${name} Is Already In Your Portfolio`);
 };
 
-type RegistrarPatch = Partial<DomainInput> & Pick<DomainInput, `name` | `registrar`>;
+type RegistrarPatch = Partial<DomainInput> & Pick<DomainInput, `name` | `registrar`> & Pick<RegistrarDomain, `renewalEstimate`>;
 const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): RegistrarPatch => {
   if (!input || typeof input !== `object` || Array.isArray(input)) throw new Error(`Registrar Domain Must Be An Object`);
-  if (typeof input.name !== `string` || typeof input.registrar !== `string` || !input.registrar) throw new Error(`Registrar Domain Must Include A Name And Registrar`);
+  if (typeof input.name !== `string` || typeof input.registrar !== `string`) throw new Error(`Registrar Domain Must Include A Name And Registrar`);
+  if (!input.registrar && !(input.meta?.externalRegistration === true && input.meta?.ownershipConfirmed === true)) throw new Error(`Confirm External Domain Ownership Before Importing`);
+  const metadata: NonNullable<DomainInput[`meta`]> = {};
+  for (const field of [`source`, `registrarName`, `hostingProvider`, `registrarSource`, `registrarCheckedAt`] as const) {
+    const value = input.meta?.[field];
+    if (value !== undefined) {
+      if (typeof value !== `string` || value.length > 256) throw new Error(`Registrar Returned Invalid Source Metadata`);
+      metadata[field] = value;
+    }
+  }
+  for (const field of [`externalRegistration`, `ownershipConfirmed`] as const) {
+    const value = input.meta?.[field];
+    if (value !== undefined) {
+      if (typeof value !== `boolean`) throw new Error(`Registrar Returned Invalid Source Metadata`);
+      metadata[field] = value;
+    }
+  }
+  const registrarIanaId = input.meta?.registrarIanaId;
+  if (registrarIanaId !== undefined) {
+    const identifier = typeof registrarIanaId === `string` && /^\d{1,10}$/.test(registrarIanaId) ? Number(registrarIanaId) : registrarIanaId;
+    if (typeof identifier !== `number` || !Number.isSafeInteger(identifier) || identifier < 1) throw new Error(`Registrar Returned Invalid Registrar ID`);
+    metadata.registrarIanaId = identifier;
+  }
+  if (metadata.externalRegistration === true && metadata.ownershipConfirmed !== true) throw new Error(`Confirm External Domain Ownership Before Importing`);
   for (const field of [`status`, `expiresAt`, `createdAt`, `providerId`] as const) {
     if (input[field] !== undefined && typeof input[field] !== `string`) throw new Error(`${field} Must Be Text`);
   }
@@ -215,6 +240,7 @@ const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): Regist
   const validated = validateDomainInput({
     owner,
     notes: ``,
+    meta: metadata,
     renewalPrice: 0,
     name: input.name,
     status: input.status,
@@ -226,13 +252,21 @@ const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): Regist
     expiresAt: input.expiresAt ?? ``,
     autoRenew: input.autoRenew ?? false,
   });
-  const patch: RegistrarPatch = { name: validated.name, registrar: validated.registrar };
+  const patch: RegistrarPatch = { name: validated.name, registrar: validated.registrar, meta: validated.meta };
   for (const field of [`status`, `expiresAt`, `createdAt`, `providerId`] as const) {
     const value = validated[field];
     if (value) patch[field] = value;
   }
   for (const field of [`locked`, `privacy`, `autoRenew`] as const) {
     if (input[field] !== undefined) patch[field] = validated[field];
+  }
+  if (input.renewalEstimate !== undefined) {
+    const estimate = input.renewalEstimate;
+    if (!estimate || typeof estimate !== `object` || Array.isArray(estimate)
+      || input.registrar !== `GoDaddy` || typeof estimate.amount !== `number`
+      || !Number.isFinite(estimate.amount) || estimate.amount < 0 || typeof estimate.currency !== `string`
+      || !/^[A-Z]{3}$/.test(estimate.currency)) throw new Error(`Registrar Returned An Invalid Renewal Estimate`);
+    patch.renewalEstimate = { amount: estimate.amount, currency: estimate.currency };
   }
   return patch;
 };
@@ -253,6 +287,8 @@ export const API_ROUTES = [
   `/api/domains/import`,
   `/api/domains/export`,
   `/api/registrars/sync`,
+  `/api/website-insights`,
+  `/api/registrars/search`,
   `/api/notifications/:id`,
   ...(useSampleData ? [`/api/domains/sample`] : []),
 ];
@@ -284,6 +320,18 @@ export const api = {
   getDomains: () => serialize(async () => copyDomains((await readSnapshot()).domains)),
   getPublicDomainSummaries: (userIds: string[]) => serialize(() => getPublicDomainSummaries(userIds)),
   getSharedDomainSummaries: (userId: string) => serialize(() => getPublicDomainSummaries([userId])),
+  saveWebsiteInsights: (id: string, name: string, insights: WebsiteInsights, expectedUserId: string): Promise<void> => serializePortfolioMutation(async () => {
+    if (!userScope || expectedUserId !== userScope) throw new Error(`Sign In To Save Website Info`);
+    await requireScopeSession(expectedUserId);
+    const normalized = normalizeWebsiteInsights(insights, name);
+    const current = await readSnapshot();
+    const index = current.domains.findIndex(domain => domain.id === id && domain.name === name);
+    if (index < 0) throw new Error(`Domain Changed — Refresh Website Info Again`);
+    const domains = copyDomains(current.domains);
+    const original = domains[index];
+    domains[index] = new Domain({ ...original, meta: { ...original.meta, websiteInsights: JSON.parse(JSON.stringify(normalized)) } });
+    await saveSnapshot({ ...current, domains });
+  }),
   prepareExport: () => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
     const exportedAt = new Date().toISOString();
@@ -406,20 +454,22 @@ export const api = {
       const original = index !== undefined ? domains[index] : undefined;
       const previous = original?.meta?.registrarSync;
       const previousSync = previous && typeof previous === `object` && !Array.isArray(previous) ? previous : {};
-      const registrar = original?.registrar === `GoDaddy Auctions` && patch.registrar === `GoDaddy` ? original.registrar : patch.registrar;
+      const registrar = original?.registrar === `GoDaddy Auctions` && patch.registrar === `GoDaddy` ? original.registrar : patch.registrar || original?.registrar || ``;
+      const { meta, renewalEstimate, ...domainFields } = patch;
       const domain = new Domain({
         ...(original ?? { owner: domainOwner, notes: ``, renewalPrice: 0, autoRenew: false, expiresAt: `` }),
-        ...patch,
+        ...domainFields,
         registrar,
         isSample: false,
         uid: expectedUserId,
         updated: syncedAt,
         firstImportedAt: original?.firstImportedAt ?? syncedAt,
         number: original?.number ?? nextNumber,
-        meta: { ...original?.meta, registrarSync: {
+        meta: { ...original?.meta, ...meta, registrarSync: {
           ...previousSync,
           source: patch.registrar,
           syncedAt,
+          ...(renewalEstimate ? { renewalEstimate: { ...renewalEstimate, checkedAt: syncedAt, source: `GoDaddy v2` } } : {}),
           ...(patch.autoRenew !== undefined ? { autoRenewKnown: true } : original ? {} : { autoRenewKnown: false }),
           ...(!original ? { renewalPriceKnown: false } : {}),
         } },

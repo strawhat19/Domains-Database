@@ -7,6 +7,9 @@ import {
   PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
   getPortfolioColumnDisplay,
+  getPortfolioColumnValue,
+  getRenewalEstimateHint,
+  getWebsiteInsightsHint,
   type PortfolioColumn,
 } from '../../shared/portfolioColumns';
 
@@ -34,6 +37,7 @@ const DomainGridCard = ({
 }: DomainGridCardProps) => {
   const scope = `domain-grid-card-${domain.id}`;
   const { status, lastDot, statusKey } = getDomainRow(domain);
+  const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const columns = PORTFOLIO_COLUMNS.filter(column => (
     column.field !== `name` && visibleColumns.includes(column.field)
   ));
@@ -104,29 +108,30 @@ const DomainGridCard = ({
                 </dt>
                 <dd
                   id={`${scope}-${key}-value`}
+                  title={column.field === `renewalEstimate` ? getRenewalEstimateHint(domain) : getWebsiteInsightsHint(domain, column.field) || undefined}
                   className={`domain-grid-card-field-value${column.price ? ` domain-grid-card-field-price` : ``}`}
                 >
                   {column.field === `autoRenew` ? (
                     <button
                       type={`button`}
-                      role={`switch`}
+                      role={autoRenew === undefined ? `button` : `switch`}
                       disabled={busy}
-                      aria-checked={domain.autoRenew}
+                      aria-checked={autoRenew === undefined ? undefined : autoRenew === true}
                       id={`${scope}-auto-renew-toggle`}
                       onClick={() => onToggleAutoRenew(domain)}
-                      title={`This is a record of your registrar setting`}
+                      title={autoRenew === undefined ? `Registrar Auto-Renew Is Unknown — Click To Update Your Inventory Record` : `This is a record of your registrar setting`}
                       aria-label={`Mark Auto-Renew ${domain.autoRenew ? `Off` : `On`} For ${domain.name}`}
-                      className={`domain-grid-card-auto-renew domain-grid-card-auto-renew-${domain.autoRenew ? `on` : `off`}`}
+                      className={`domain-grid-card-auto-renew domain-grid-card-auto-renew-${autoRenew === true ? `on` : `off`}`}
                     >
-                      {domain.autoRenew
+                      {autoRenew === true
                         ? <Check size={12} aria-hidden={`true`} id={`${scope}-auto-renew-icon`} className={`domain-grid-card-auto-renew-icon`} />
                         : <Minus size={12} aria-hidden={`true`} id={`${scope}-auto-renew-icon`} className={`domain-grid-card-auto-renew-icon`} />}
                       <span id={`${scope}-auto-renew-text`} className={`domain-grid-card-auto-renew-text`}>
-                        {domain.autoRenew ? `On` : `Off`}
+                        {autoRenew === undefined ? `Unknown` : autoRenew ? `On` : `Off`}
                       </span>
                     </button>
                   ) : (
-                    <span title={value} id={`${scope}-${key}-text`} className={`domain-grid-card-field-text`}>
+                    <span title={getWebsiteInsightsHint(domain, column.field) || value} id={`${scope}-${key}-text`} className={`domain-grid-card-field-text`}>
                       {value}
                     </span>
                   )}

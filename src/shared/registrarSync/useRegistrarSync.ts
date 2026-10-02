@@ -8,6 +8,8 @@ import { connectionFields, type ConnectionSnapshot } from '../connections/types'
 
 const emptyStatuses = (): ConnectionSyncStatuses => ({
   godaddy: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
+  porkbun: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
+  namesilo: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   hostinger: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   namecheap: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
 });
@@ -72,6 +74,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>) => {
             count,
             state: `connected`,
             checkedAt: new Date().toISOString(),
+            discoveredDomains: result.discoveredDomains,
             message: warnings.length ? `${count} Domain(s) Synced — ${warnings.join(`; `)}` : `${count} Domain(s) Synced`,
           } }));
           return { count, warnings, errors: [] };

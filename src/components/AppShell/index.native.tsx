@@ -10,7 +10,7 @@ import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { navigation, footerLinks } from '../../shared/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Info, Mail, House, Globe2, FileText, UsersRound, ShieldCheck } from 'lucide-react-native';
+import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck } from 'lucide-react-native';
 import { Alert, Linking, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children }: { children: ReactNode }) => {
@@ -59,7 +59,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
           {navigation.map(({ label, href, icon }) => {
-            const Icon = { House, Globe2, UsersRound }[icon];
+            const Icon = { House, Search, Globe2, UsersRound }[icon];
             const active = pathname === href;
             return (
               <Link key={href} href={href} asChild>

@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import RegistrarSetup from '../RegistrarSetup';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { useEffect, useMemo, useState } from 'react';
@@ -6,11 +6,13 @@ import { createStyles } from './styles.native';
 import DomainCard from '../DomainCard/index.native';
 import { REGISTRARS, useSampleData } from '../../shared/config';
 import { elementProps } from '../../shared/elementProps';
+import { useAuth } from '../../shared/authContext/useAuth';
+import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { useNativePortfolio } from './useNativePortfolio';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Plus, RotateCcw, Save, Search, Upload, X } from 'lucide-react-native';
+import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Plus, RotateCcw, Save, Search, Upload, X, Gauge } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -22,6 +24,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const { palette, isDark } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const state = useNativePortfolio(compact);
+  const router = useRouter();
+  const { user } = useAuth();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const insets = useSafeAreaInsets();
   const sampleCount = useSampleData ? state.domains.filter(domain => domain.isSample).length : 0;
@@ -31,6 +35,15 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const selectDomain = (id: string) => setSelectedIds(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
   const selectVisible = () => setSelectedIds(current => [...new Set([...current, ...visibleIds])]);
   const clearVisible = () => setSelectedIds(current => current.filter(id => !visibleIds.includes(id)));
+  const insightFailed = !state.refreshing && Boolean(state.insightError);
+  const insightDomains = selectedIds.length
+    ? state.domains.filter(domain => selectedIds.includes(domain.id)) : state.filteredDomains;
+  const refreshWebsiteInfo = () => {
+    if (!user) { router.push(`/signin`); return; }
+    const records = [...insightDomains];
+    records.sort((first, second) => String(getPortfolioColumnValue(first, `websiteInsightsCheckedAt`) ?? ``).localeCompare(String(getPortfolioColumnValue(second, `websiteInsightsCheckedAt`) ?? ``)));
+    void state.refreshWebsiteInsights(records);
+  };
   useEffect(() => {
     const existing = new Set(state.domains.map(domain => domain.id));
     setSelectedIds(current => {
@@ -58,14 +71,39 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         </View>
         <View {...elementProps(`native-portfolio-heading-bottom`)} style={styles.headingBottom}>
           <View {...elementProps(`native-portfolio-counts`)} style={styles.counts}>
-            <Text {...elementProps(`native-portfolio-domain-count`)} style={styles.countText}>
-              {state.loading ? `Loading portfolio…` : `${state.domains.length} domain(s) · ${new Set(state.domains.map(domain => domain.registrar).filter(Boolean)).size} registrar(s)`}
-            </Text>
+            <View {...elementProps(`native-portfolio-count-summary`)} style={styles.countSummary}>
+              <Text {...elementProps(`native-portfolio-domain-count`)} style={styles.countText}>
+                {state.loading ? `Loading portfolio…` : `${state.domains.length} domain(s) · ${new Set(state.domains.map(domain => domain.registrar).filter(Boolean)).size} registrar(s)`}
+              </Text>
+              {!state.loading && state.registrarCounts.map(({ registrar, count }) => {
+                const slug = registrar.toLowerCase().replace(/\s+/g, `-`);
+                return (
+                  <View
+                    key={registrar}
+                    style={styles.registrarCount}
+                    {...elementProps(`native-portfolio-registrar-count`, slug)}
+                  >
+                    <Text
+                      style={styles.registrarCountLabel}
+                      {...elementProps(`native-portfolio-registrar-count-label`, slug)}
+                    >
+                      {registrar}
+                    </Text>
+                    <Text
+                      style={styles.registrarCountValue}
+                      {...elementProps(`native-portfolio-registrar-count-value`, slug)}
+                    >
+                      {count}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
             <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
               {`${state.dueSoon} need attention`}
             </Text>
           </View>
-          <Pressable {...elementProps(`native-portfolio-add`)} accessibilityRole={`button`} accessibilityLabel={`Add Domain`} disabled={state.loading} style={[styles.primaryButton, state.loading && styles.disabled]} onPress={state.openSetup}>
+          <Pressable {...elementProps(`native-portfolio-add`)} accessibilityRole={`button`} accessibilityLabel={`Add Domain`} disabled={state.loading} style={[styles.primaryButton, styles.addButton, state.loading && styles.disabled]} onPress={state.openSetup}>
             <Plus {...elementProps(`native-portfolio-add-icon`)} size={15} color={`#ffffff`} />
             <Text {...elementProps(`native-portfolio-add-text`)} style={styles.primaryButtonText}>
               {`Add Domain`}
@@ -73,6 +111,45 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Pressable>
         </View>
       </View>
+      <Pressable
+        onPress={refreshWebsiteInfo}
+        accessibilityRole={`button`}
+        style={styles.primaryButton}
+        {...elementProps(`native-refresh-website-info`)}
+        disabled={state.loading || state.refreshing || !insightDomains.length}
+        accessibilityLabel={`Check Up To 10 Selected Or Filtered Websites`}
+      >
+        <Gauge {...elementProps(`native-website-info-icon`)} size={15} color={palette.contrast} />
+        <Text {...elementProps(`native-website-info-text`)} style={styles.primaryButtonText}>
+          {state.refreshing ? `Checking Websites…` : user ? `Refresh Website Info` : `Sign In For Website Info`}
+        </Text>
+      </Pressable>
+      {(state.refreshing || state.insightNotice || state.insightError) && (
+        <View
+          {...elementProps(`native-website-info-feedback`)}
+          accessibilityLiveRegion={`polite`}
+          accessibilityRole={insightFailed ? `alert` : undefined}
+          style={[styles.notice, insightFailed && { backgroundColor: palette.dangerBackground }]}
+        >
+          <Text
+            {...elementProps(`native-website-info-feedback-text`)}
+            style={[styles.noticeText, insightFailed && { color: palette.danger }]}
+          >
+            {state.refreshing ? `Checking Up To 10 Domains — Performance And Rank Are Not Visitor Counts` : state.insightError || state.insightNotice}
+          </Text>
+          {!state.refreshing && (
+            <Pressable
+              {...elementProps(`native-website-info-dismiss`)}
+              style={styles.noticeDismiss}
+              accessibilityRole={`button`}
+              accessibilityLabel={`Dismiss Website Info`}
+              onPress={() => { state.clearInsightError(); state.clearInsightNotice(); }}
+            >
+              <X {...elementProps(`native-website-info-dismiss-icon`)} size={13} color={insightFailed ? palette.danger : palette.success} />
+            </Pressable>
+          )}
+        </View>
+      )}
       {!!state.notice && (
         <View {...elementProps(`native-portfolio-notice`)} style={styles.notice} accessibilityLiveRegion={`polite`}>
           <CheckCircle2 {...elementProps(`native-portfolio-notice-icon`)} size={15} color={palette.success} />
@@ -209,7 +286,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {state.domains.length ? `No matching domains` : `Add your first domain`}
             </Text>
             <Text {...elementProps(`native-portfolio-empty-description`)} style={styles.emptyDescription}>
-              {state.domains.length ? `Try a different search or choose another registrar.` : `Choose GoDaddy, Namecheap, or Hostinger and bring in the domains you own.`}
+              {state.domains.length ? `Try a different search or choose another registrar.` : `Connect a supported registrar, enter a domain, or import your records from CSV.`}
             </Text>
             <Pressable
               {...elementProps(`native-portfolio-empty-action`)}

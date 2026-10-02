@@ -2,6 +2,7 @@ import { api } from '../../api';
 import type { PropsWithChildren } from 'react';
 import type { DomainInput, DomainRecord } from '../types';
 import type { ConnectionSnapshot } from '../connections/types';
+import { useWebsiteInsights } from '../websiteInsights/useWebsiteInsights';
 import { useRegistrarSync } from '../registrarSync/useRegistrarSync';
 import type { ConnectionSyncResult, ConnectionSyncStatuses } from '../registrarSync/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -11,14 +12,20 @@ export interface DomainContextValue {
   notice: string;
   loading: boolean;
   syncing: boolean;
+  refreshing: boolean;
+  insightError: string;
+  insightNotice: string;
   domains: DomainRecord[];
   clearNotice: () => void;
+  clearInsightError: () => void;
+  clearInsightNotice: () => void;
   resetConnectionSync: () => void;
   connectionStatuses: ConnectionSyncStatuses;
   syncConnections: (snapshot?: ConnectionSnapshot) => Promise<ConnectionSyncResult>;
   resetSampleData: () => Promise<void>;
   prepareExport: () => Promise<DomainRecord[]>;
   deleteDomain: (id: string) => Promise<void>;
+  refreshWebsiteInsights: (domains: DomainRecord[]) => Promise<void>;
   importDomains: (inputs: DomainInput[]) => Promise<number>;
   addDomain: (input: DomainInput) => Promise<DomainRecord>;
   updateDomain: (id: string, input: DomainInput) => Promise<DomainRecord>;
@@ -51,6 +58,7 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
     if (active.current) setDomains(records);
   }, []);
   const sync = useRegistrarSync(refreshDomains);
+  const insights = useWebsiteInsights(refreshDomains);
   const clearNotice = useCallback(() => { setNotice(``); sync.clearSyncNotice(); }, [sync.clearSyncNotice]);
 
   const mutate = useCallback(async <T,>(operation: () => Promise<T>, message: string): Promise<T> => {
@@ -77,6 +85,7 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
   const resetSampleData = useCallback(async () => { await mutate(() => api.resetSampleData(), `Sample Portfolio Restored`); }, [mutate]);
 
   const value = useMemo(() => ({
+    ...insights,
     error: error || sync.syncError,
     notice: notice || sync.syncNotice,
     loading,
@@ -92,7 +101,7 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
     syncConnections: sync.syncConnections,
     connectionStatuses: sync.connectionStatuses,
     resetConnectionSync: sync.resetConnectionSync,
-  }), [error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync]);
+  }), [error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync]);
 
   return (
     <DomainContext.Provider value={value}>

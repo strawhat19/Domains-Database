@@ -11,8 +11,12 @@ export interface RegistrarRequestContext {
 const upstreamPaths = {
   godaddy: `https://api.godaddy.com/v1/domains`,
   namecheap: `https://api.namecheap.com/xml.response`,
+  namesilo: `https://www.namesilo.com/apibatch/listDomains`,
+  porkbun: `https://api.porkbun.com/api/json/v3/domain/listAll`,
   hostinger: `https://developers.hostinger.com/api/domains/v1/portfolio`,
 };
+
+const goDaddyDetailPath = /^\/v2\/customers\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\/domains\/[a-z0-9.-]+$/i;
 
 export const readLimitedText = async (
   body: ReadableStream<Uint8Array> | null,
@@ -52,7 +56,10 @@ export const readLimitedText = async (
 
 export const requestRegistrar = async (url: URL, headers: Record<string, string>, context: RegistrarRequestContext) => {
   const target = `${url.origin}${url.pathname}`;
-  if (target !== upstreamPaths[context.provider] || url.username || url.password || url.hash) {
+  const goDaddyRead = context.provider === `godaddy` && url.origin === `https://api.godaddy.com`
+    && (url.pathname === `/v1/shoppers/MY` || goDaddyDetailPath.test(url.pathname));
+  const hostingerRead = context.provider === `hostinger` && target === `https://developers.hostinger.com/api/hosting/v1/websites`;
+  if ((target !== upstreamPaths[context.provider] && !goDaddyRead && !hostingerRead) || url.username || url.password || url.hash) {
     throw new RegistrarRelayError(500, `Registrar Request Is Unavailable`);
   }
   const remaining = context.deadline - Date.now();

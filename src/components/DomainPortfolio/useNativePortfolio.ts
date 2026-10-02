@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { REGISTRARS } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
-import { getDomainStatus } from '../../shared/domainUtils';
+import { getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
@@ -29,6 +29,7 @@ const newDomain = (): DomainInput => {
 
 export const useNativePortfolio = (compact = false) => {
   const context = useDomains();
+  const registrarCounts = useMemo(() => getRegistrarCounts(context.domains), [context.domains]);
   const [search, setSearch] = useState(``);
   const [saving, setSaving] = useState(false);
   const [working, setWorking] = useState(false);
@@ -184,6 +185,7 @@ export const useNativePortfolio = (compact = false) => {
     sortByName,
     renewalPrice,
     visibleDomains,
+    registrarCounts,
     filteredDomains,
     openEditor,
     openSetup,

@@ -1,11 +1,14 @@
+import { providerName } from './validation';
 import { RegistrarRelayError } from './errors';
 import { normalizeConnections } from '../../shared/connections/values';
 import { EMPTY_CONNECTIONS, type ConnectionProvider } from '../../shared/connections/types';
 
 export type RegistrarCredentials =
-  | { provider: `godaddy`; authorization: string }
-  | { provider: `hostinger`; authorization: string }
-  | { provider: `namecheap`; apiKey: string; username: string; clientIp: string };
+  | { provider: `namesilo`; apiKey: string }
+  | { provider: `porkbun`; apiKey: string; secretKey: string }
+  | { provider: `hostinger`; authorization: string; externalDomains?: string[] }
+  | { provider: `namecheap`; apiKey: string; username: string; clientIp: string }
+  | { provider: `godaddy`; authorization: string; customerId?: string; lookupAuthorization?: string };
 
 export const parseCredentials = (provider: ConnectionProvider, input: string): RegistrarCredentials => {
   let normalized: string;
@@ -28,13 +31,31 @@ export const parseCredentials = (provider: ConnectionProvider, input: string): R
     const token = fields.GODADDY_PAT;
     const key = fields.GODADDY_API_KEY;
     const secret = fields.GODADDY_API_SECRET;
-    if (!token && (!key || !secret || key.includes(`:`) || secret.includes(`:`))) throw new RegistrarRelayError(400, `Enter A GoDaddy Token Or Key And Secret`);
-    return { provider, authorization: token ? `Bearer ${token}` : `sso-key ${key}:${secret}` };
+    const customerId = fields.GODADDY_CUSTOMER_ID;
+    if (!token && (!key || !secret)) throw new RegistrarRelayError(400, `Enter A GoDaddy Token Or Key And Secret`);
+    if (key?.includes(`:`) || secret?.includes(`:`)) throw new RegistrarRelayError(400, `Enter Valid GoDaddy API Key And Secret Values`);
+    if (customerId && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(customerId)) throw new RegistrarRelayError(400, `Enter GODADDY_CUSTOMER_ID As The Account UUID`);
+    const lookupAuthorization = key && secret ? `sso-key ${key}:${secret}` : undefined;
+    return { provider, customerId, lookupAuthorization, authorization: token ? `Bearer ${token}` : `sso-key ${key}:${secret}` };
   }
   if (provider === `hostinger`) {
     const token = fields.HOSTINGER_API_TOKEN;
     if (!token) throw new RegistrarRelayError(400, `Enter A Hostinger API Token`);
-    return { provider, authorization: `Bearer ${token}` };
+    let externalDomains: string[] | undefined;
+    try { externalDomains = fields.HOSTINGER_EXTERNAL_DOMAINS?.split(`,`).map(name => providerName(name, provider)); }
+    catch { throw new RegistrarRelayError(400, `Enter Confirmed External Domain Names Separated By Commas`); }
+    return { provider, externalDomains, authorization: `Bearer ${token}` };
+  }
+  if (provider === `namesilo`) {
+    const apiKey = fields.NAMESILO_API_KEY;
+    if (!apiKey || apiKey.length > 256) throw new RegistrarRelayError(400, `Enter A Valid NameSilo API Key`);
+    return { provider, apiKey };
+  }
+  if (provider === `porkbun`) {
+    const apiKey = fields.PORKBUN_API_KEY;
+    const secretKey = fields.PORKBUN_SECRET_API_KEY;
+    if (!apiKey || !secretKey || apiKey.length > 256 || secretKey.length > 256) throw new RegistrarRelayError(400, `Enter Both Valid Porkbun API Keys`);
+    return { provider, apiKey, secretKey };
   }
   const apiKey = fields.NAMECHEAP_API_KEY;
   const username = fields.NAMECHEAP_USERNAME;

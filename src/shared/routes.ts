@@ -2,6 +2,7 @@ import { Roles } from '../types/types';
 
 export const routes = {
   home: { href: `/`, label: `Home`, icon: `House` },
+  search: { href: `/search`, label: `Search`, icon: `Search` },
   domains: { href: `/domains`, label: `Domains`, icon: `Globe2` },
   community: { href: `/community`, label: `Community`, icon: `UsersRound` },
   connections: { href: `/profile/connections`, label: `Connections`, icon: `PlugZap`, minRole: Roles.Subscriber },
@@ -20,5 +21,5 @@ const authReturnPaths = Object.values(routes).map(route => route.href)
   .filter((href): href is AuthReturnPath => href !== routes.signin.href && href !== routes.signup.href);
 export const resolveAuthReturnTo = (value: unknown): AuthReturnPath => authReturnPaths.find(href => href === value) ?? routes.domains.href;
 
-export const navigation = [routes.home, routes.domains, routes.community];
+export const navigation = [routes.home, routes.domains, routes.search, routes.community];
 export const footerLinks = [routes.about, routes.terms, routes.contact, routes.privacy];

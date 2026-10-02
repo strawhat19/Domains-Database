@@ -5,14 +5,14 @@ import { MAX_REQUEST_BYTES } from './validation';
 import { parseCredentials } from './credentials';
 import type { ConnectionProvider } from '../../shared/connections/types';
 
-const responseHeaders = {
+export const responseHeaders = {
   Pragma: `no-cache`,
   'Referrer-Policy': `no-referrer`,
   'X-Content-Type-Options': `nosniff`,
   'Cache-Control': `no-store, private, max-age=0`,
 };
 
-const checkRequest = (request: Request) => {
+export const checkRequest = (request: Request) => {
   const site = request.headers.get(`sec-fetch-site`);
   const origin = request.headers.get(`origin`);
   if (site && ![`same-origin`, `none`].includes(site)) throw new RegistrarRelayError(403, `Cross-Site Registrar Requests Are Not Allowed`);
@@ -25,7 +25,7 @@ const checkRequest = (request: Request) => {
   if (size && (!/^\d+$/.test(size) || Number(size) > MAX_REQUEST_BYTES)) throw new RegistrarRelayError(413, `Registrar Request Exceeds The Size Limit`);
 };
 
-const readInput = async (request: Request): Promise<{ provider: ConnectionProvider; values: string }> => {
+export const readRequestRecord = async (request: Request): Promise<Record<string, unknown>> => {
   const controller = new AbortController();
   const abort = () => controller.abort();
   request.signal.addEventListener(`abort`, abort, { once: true });
@@ -41,13 +41,7 @@ const readInput = async (request: Request): Promise<{ provider: ConnectionProvid
       throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
     }
     if (!input || typeof input !== `object` || Array.isArray(input)) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
-    const record = input as Record<string, unknown>;
-    const provider = record.provider;
-    const values = record.values;
-    if (Object.keys(record).some(key => ![`provider`, `values`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
-    if (provider !== `godaddy` && provider !== `hostinger` && provider !== `namecheap`) throw new RegistrarRelayError(400, `Choose A Supported Registrar`);
-    if (typeof values !== `string` || !values.trim() || values.length > 12_000) throw new RegistrarRelayError(400, `Enter Valid Registrar Connection Values`);
-    return { provider, values };
+    return input as Record<string, unknown>;
   } catch (failure) {
     if (failure instanceof RegistrarRelayError) throw failure;
     throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
@@ -57,10 +51,22 @@ const readInput = async (request: Request): Promise<{ provider: ConnectionProvid
   }
 };
 
+export const readConnectionInput = (record: Record<string, unknown>) => {
+  const provider = record.provider;
+  const values = record.values;
+  if (provider !== `godaddy` && provider !== `hostinger` && provider !== `namecheap` && provider !== `porkbun` && provider !== `namesilo`) {
+    throw new RegistrarRelayError(400, `Choose A Supported Registrar`);
+  }
+  if (typeof values !== `string` || !values.trim() || values.length > 12_000) throw new RegistrarRelayError(400, `Enter Valid Registrar Connection Values`);
+  return { values, provider: provider as ConnectionProvider };
+};
+
 export const handleRegistrarSync = async (request: Request): Promise<Response> => {
   try {
     checkRequest(request);
-    const input = await readInput(request);
+    const record = await readRequestRecord(request);
+    if (Object.keys(record).some(key => ![`provider`, `values`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
+    const input = readConnectionInput(record);
     const credentials = parseCredentials(input.provider, input.values);
     const result = await syncRegistrar(credentials, request.signal);
     return Response.json(result, { headers: responseHeaders });

@@ -30,6 +30,11 @@ export const COLUMN_GROUPS: {
     fields: [`locked`, `privacy`, `dnssec`, `nameservers`, `forwardingUrl`, `protectionPlan`],
   },
   {
+    id: `insights`,
+    label: `Website insights`,
+    fields: [`trancoRank`, `websitePerformance`, `websiteInsightsCheckedAt`],
+  },
+  {
     id: `contact`,
     label: `Registrant contact`,
     fields: [`registrantName`, `registrantEmail`, `organization`, `country`],
@@ -37,6 +42,6 @@ export const COLUMN_GROUPS: {
   {
     id: `costs`,
     label: `Costs & notes`,
-    fields: [`renewalPrice`, `monthlyCost`, `currency`, `estimatedValue`, `notes`],
+    fields: [`renewalPrice`, `renewalEstimate`, `monthlyCost`, `currency`, `estimatedValue`, `notes`],
   },
 ];

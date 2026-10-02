@@ -8,7 +8,7 @@ import AuthFeedback from '../AuthFeedback';
 import type { PropsWithChildren } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, navigation, footerLinks } from './useAppShell';
-import { Info, Mail, House, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children }: PropsWithChildren) => {
   const { pathname, year } = useAppShell();
@@ -36,7 +36,7 @@ const AppShell = ({ children }: PropsWithChildren) => {
           </Link>
           <nav id={`header-navigation`} className={`header-navigation`} aria-label={`Main Navigation`}>
             {navigation.map(item => {
-              const Icon = { House, Globe2, UsersRound }[item.icon];
+              const Icon = { House, Search, Globe2, UsersRound }[item.icon];
               return (
               <Link key={item.label} href={item.href} asChild>
                 <RouterAnchor

@@ -4,7 +4,7 @@ import type { DomainRecord } from '../../shared/types';
 import { getCsvFile } from '../../shared/csvFiles.web';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { useDomains } from '../../shared/domainContext/useDomains';
-import { getDomainStatus } from '../../shared/domainUtils';
+import { getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnValue, type PortfolioColumn } from '../../shared/portfolioColumns';
 
@@ -68,6 +68,7 @@ export const usePortfolio = () => {
   }, [sortedDomains, query, registrarFilter]);
   const summary = useMemo(() => ({
     count: data.domains.length,
+    registrarCounts: getRegistrarCounts(data.domains),
     knownCostCount: data.domains.filter(domain => typeof getPortfolioColumnValue(domain, `renewalPrice`) === `number`).length,
     annualCost: data.domains.reduce((total, domain) => total + domain.renewalPrice, 0),
     attention: data.domains.filter(domain => getDomainStatus(domain) !== `Active`).length,

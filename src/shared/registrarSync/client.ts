@@ -18,7 +18,9 @@ export const getRegistrarDomains = async (provider: ConnectionProvider, values: 
     const result = await response.json().catch(() => null) as (RegistrarSyncResult & { error?: string }) | null;
     if (!response.ok) throw new Error(result?.error || `Registrar Sync Is Unavailable — Restart Expo And Try Again`);
     if (!Array.isArray(result?.domains) || result.domains.length > 10000) throw new Error(`Registrar Returned An Invalid Domain List`);
-    return { domains: result.domains, warnings: Array.isArray(result?.warnings) ? result.warnings.filter(message => typeof message === `string`) : [] };
+    if (result.discoveredDomains !== undefined && (!Array.isArray(result.discoveredDomains) || result.discoveredDomains.length > 10000)) throw new Error(`Registrar Returned Invalid Discovered Domains`);
+    return { domains: result.domains, discoveredDomains: result.discoveredDomains,
+      warnings: Array.isArray(result?.warnings) ? result.warnings.filter(message => typeof message === `string`) : [] };
   } catch (failure) {
     if (controller.signal.aborted) throw new Error(signal.aborted ? `Registrar Sync Cancelled` : `Registrar Request Timed Out`);
     if (failure instanceof TypeError) throw new Error(`Could Not Reach Registrar Sync — Restart Expo And Try Again`);

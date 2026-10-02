@@ -7,7 +7,7 @@ import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { formatDate, getDaysUntil, getDomainStatus } from '../../shared/domainUtils';
-import { getPortfolioColumnValue, getPortfolioColumnDisplay } from '../../shared/portfolioColumns';
+import { PORTFOLIO_COLUMNS, getWebsiteInsightsHint, getRenewalEstimateHint, getPortfolioColumnValue, getPortfolioColumnDisplay } from '../../shared/portfolioColumns';
 
 interface DomainCardProps {
   index?: number;
@@ -65,7 +65,9 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const annualPrice = getPortfolioColumnDisplay(domain, `renewalPrice`);
   const monthlyPrice = getPortfolioColumnDisplay(domain, `monthlyCost`);
-  const autoRenewLabel = getPortfolioColumnDisplay(domain, `autoRenew`).toLowerCase();
+  const renewalEstimate = getPortfolioColumnDisplay(domain, `renewalEstimate`);
+  const renewalEstimateHint = getRenewalEstimateHint(domain);
+  const autoRenewLabel = autoRenew === undefined ? `unknown` : getPortfolioColumnDisplay(domain, `autoRenew`).toLowerCase();
   const daysLabel = !Number.isFinite(days)
     ? `Expiry unknown`
     : days < 0 ? `${Math.abs(days)} day(s) ago` : days === 0 ? `Expires today` : `In ${days} day(s)`;
@@ -164,6 +166,67 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
           </View>
         </View>
       </View>
+      {visibleColumns.includes(`renewalEstimate`) && renewalEstimate !== `—` && (
+        <View
+          style={styles.renewalEstimate}
+          {...elementProps(`native-domain-renewal-estimate`, domain.id)}
+        >
+          <View
+            style={styles.renewalEstimateHeading}
+            {...elementProps(`native-domain-renewal-estimate-heading`, domain.id)}
+          >
+            <Text
+              style={styles.renewalEstimateLabel}
+              {...elementProps(`native-domain-renewal-estimate-label`, domain.id)}
+            >
+              {`Renewal estimate`}
+            </Text>
+            <Text
+              style={styles.renewalEstimatePrice}
+              {...elementProps(`native-domain-renewal-estimate-price`, domain.id)}
+            >
+              {renewalEstimate}
+            </Text>
+          </View>
+          <Text
+            style={styles.renewalEstimateHint}
+            {...elementProps(`native-domain-renewal-estimate-hint`, domain.id)}
+          >
+            {renewalEstimateHint}
+          </Text>
+        </View>
+      )}
+      {PORTFOLIO_COLUMNS.filter(column => [`websitePerformance`, `trancoRank`, `websiteInsightsCheckedAt`].includes(column.field) && visibleColumns.includes(column.field)).map(column => (
+        <View
+          key={column.field}
+          style={styles.renewalEstimate}
+          {...elementProps(`native-domain-insight-${column.field}`, domain.id)}
+        >
+          <View
+            style={styles.renewalEstimateHeading}
+            {...elementProps(`native-domain-insight-heading-${column.field}`, domain.id)}
+          >
+            <Text
+              style={styles.renewalEstimateLabel}
+              {...elementProps(`native-domain-insight-label-${column.field}`, domain.id)}
+            >
+              {column.label}
+            </Text>
+            <Text
+              style={styles.renewalEstimatePrice}
+              {...elementProps(`native-domain-insight-value-${column.field}`, domain.id)}
+            >
+              {getPortfolioColumnDisplay(domain, column.field)}
+            </Text>
+          </View>
+          <Text
+            style={styles.renewalEstimateHint}
+            {...elementProps(`native-domain-insight-hint-${column.field}`, domain.id)}
+          >
+            {getWebsiteInsightsHint(domain, column.field)}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 };

@@ -17,6 +17,8 @@
 .portfolio-title { margin: 8px 0 0; font-size: 30px; font-weight: 700; line-height: 1.15; letter-spacing: -.045em; font-family: var(--font-display); }
 .portfolio-summary { gap: 12px; display: flex; flex-wrap: wrap; margin-top: 12px; color: var(--muted); align-items: center; }
 .portfolio-summary-item { gap: 4px; display: inline-flex; font-size: 12px; align-items: center; }
+.portfolio-registrar-total { white-space: nowrap; }
+.portfolio-registrar-separator { margin-right: 8px; }
 .portfolio-summary-value { color: var(--ink); font-family: var(--font-bold); }
 .portfolio-summary-separator { font-size: 12px; color: var(--placeholder); }
 .portfolio-summary-attention { color: var(--warning); }

@@ -1,3 +1,7 @@
 .connections-save:hover { filter: brightness(1.06); }
 .connections-clear:hover { background: var(--danger-bg) !important; }
 .connection-input:focus { border-color: var(--accent) !important; }
+.hosted-domain-include { transition: background-color .22s ease, border-color .22s ease, opacity .22s ease; }
+.hosted-domain-include:hover { border-color: var(--accent) !important; }
+.hosted-domain-include:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .hosted-domain-include { transition: none; } }

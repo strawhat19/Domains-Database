@@ -1,9 +1,11 @@
 import './styles.scss';
 import { useMemo } from 'react';
+import { useRouter } from 'expo-router';
 import ColumnControls from '../ColumnControls';
 import DomainEditor from '../DomainEditor';
 import RegistrarSetup from '../RegistrarSetup/index.web';
-import { PORTFOLIO_COLUMNS, getPortfolioColumnCounts } from '../../shared/portfolioColumns';
+import { PORTFOLIO_COLUMNS, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
+import { useAuth } from '../../shared/authContext/useAuth';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { REGISTRARS, useSampleData } from '../../shared/config';
 import { formatCurrency } from '../../shared/domainUtils';
@@ -15,10 +17,12 @@ import { useDomainSelection } from './useDomainSelection';
 import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { useStickyPortfolio } from './useStickyPortfolio';
-import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDown, FlaskConical, ShieldCheck, LayoutGrid, List, ArrowDownAZ, GripVertical } from 'lucide-react';
+import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDown, FlaskConical, ShieldCheck, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
+  const router = useRouter();
+  const { user } = useAuth();
   const { visibleColumns, toggleColumn, resetColumns } = useColumns();
   const preferences = usePortfolioPreferences();
   const sticky = useStickyPortfolio(`${preferences.view}|${visibleColumns.join(`|`)}`);
@@ -34,7 +38,15 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   }, [portfolio.filteredDomains, preferences, compact, portfolio.sortField]);
   const selection = useDomainSelection(portfolio.domains, visibleIds);
   const ViewIcon = preferences.view === `table` ? LayoutGrid : List;
-  const displayedError = portfolio.localError || portfolio.error;
+  const displayedError = portfolio.localError || portfolio.insightError || portfolio.error;
+  const insightDomains = selection.selectedIds.size
+    ? portfolio.domains.filter(domain => selection.selectedIds.has(domain.id)) : portfolio.filteredDomains;
+  const refreshWebsiteInfo = () => {
+    if (!user) { router.push(`/signin`); return; }
+    const records = [...insightDomains];
+    records.sort((first, second) => String(getPortfolioColumnValue(first, `websiteInsightsCheckedAt`) ?? ``).localeCompare(String(getPortfolioColumnValue(second, `websiteInsightsCheckedAt`) ?? ``)));
+    void portfolio.refreshWebsiteInsights(records);
+  };
   const hasFilters = portfolio.domains.length > 0 && Boolean(portfolio.query || portfolio.registrarFilter !== `All Registrars`);
   return (
     <section
@@ -57,6 +69,30 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </span>
               {` ${portfolio.summary.count === 1 ? `domain` : `domains`}`}
             </span>
+            {!portfolio.loading && portfolio.summary.registrarCounts.map(({ count, registrar }) => {
+              const registrarId = registrar.toLowerCase().replace(/\s+/g, `-`);
+              return (
+                <span
+                  key={registrar}
+                  id={`portfolio-registrar-total-${registrarId}`}
+                  className={`portfolio-summary-item portfolio-registrar-total`}
+                >
+                  <span
+                    aria-hidden={`true`}
+                    id={`portfolio-registrar-separator-${registrarId}`}
+                    className={`portfolio-summary-separator portfolio-registrar-separator`}
+                  >
+                    {`·`}
+                  </span>
+                  <span id={`portfolio-registrar-label-${registrarId}`} className={`portfolio-registrar-label`}>
+                    {`${registrar}:`}
+                  </span>
+                  <span id={`portfolio-registrar-count-${registrarId}`} className={`portfolio-summary-value`}>
+                    {count}
+                  </span>
+                </span>
+              );
+            })}
             <span id={`portfolio-summary-separator-one`} className={`portfolio-summary-separator`} aria-hidden={`true`}>
               {`·`}
             </span>
@@ -89,6 +125,19 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         <div id={`portfolio-primary-actions`} className={`portfolio-primary-actions`}>
           <button
             type={`button`}
+            id={`portfolio-refresh-website-info`}
+            onClick={refreshWebsiteInfo}
+            className={`portfolio-button portfolio-button-secondary`}
+            disabled={portfolio.loading || portfolio.refreshing || !insightDomains.length}
+            title={`Check Up To 10 Selected Or Filtered Domains, Oldest First — Performance And Rank Are Not Visitor Counts`}
+          >
+            <Gauge size={15} aria-hidden={`true`} id={`portfolio-website-info-icon`} className={`portfolio-button-icon`} />
+            <span id={`portfolio-website-info-text`} className={`portfolio-button-text`}>
+              {portfolio.refreshing ? `Checking Websites…` : user ? `Refresh Website Info` : `Sign In For Website Info`}
+            </span>
+          </button>
+          <button
+            type={`button`}
             id={`portfolio-connections`}
             className={`portfolio-button portfolio-button-secondary`}
             onClick={portfolio.openSetup}
@@ -117,13 +166,31 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           {`Checking Connected Registrars…`}
         </p>
       )}
+      {(portfolio.refreshing || portfolio.insightNotice) && (
+        <div role={`status`} aria-live={`polite`} id={`portfolio-website-info-status`} className={`portfolio-message portfolio-message-success`}>
+          <p id={`portfolio-website-info-status-text`} className={`portfolio-message-text`}>
+            {portfolio.refreshing ? `Checking Website Performance And Rank — Up To 10 Domains Per Refresh` : portfolio.insightNotice}
+          </p>
+          {!portfolio.refreshing && (
+            <button
+              type={`button`}
+              id={`portfolio-website-info-dismiss`}
+              onClick={portfolio.clearInsightNotice}
+              aria-label={`Dismiss Website Info Notice`}
+              className={`portfolio-message-dismiss`}
+            >
+              <X size={15} aria-hidden={`true`} id={`portfolio-website-info-dismiss-icon`} className={`portfolio-message-dismiss-icon`} />
+            </button>
+          )}
+        </div>
+      )}
       {displayedError && (
         <div role={`alert`} id={`portfolio-error`} className={`portfolio-message portfolio-message-error`}>
           <p id={`portfolio-error-text`} className={`portfolio-message-text`}>
             {displayedError}
           </p>
-          {portfolio.localError && (
-            <button type={`button`} id={`portfolio-error-dismiss`} className={`portfolio-message-dismiss`} onClick={portfolio.clearError} aria-label={`Dismiss Error`}>
+          {(portfolio.localError || portfolio.insightError) && (
+            <button type={`button`} id={`portfolio-error-dismiss`} className={`portfolio-message-dismiss`} onClick={() => { portfolio.clearError(); portfolio.clearInsightError(); }} aria-label={`Dismiss Error`}>
               <X size={15} aria-hidden={`true`} id={`portfolio-error-dismiss-icon`} className={`portfolio-message-dismiss-icon`} />
             </button>
           )}

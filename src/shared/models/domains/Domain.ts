@@ -3,7 +3,7 @@ import type { JSONValue } from '../Data';
 import { Types } from '../../../types/types';
 import { isAppCollectionID } from '../../common/ids';
 
-export type Registrar = `Hostinger` | `GoDaddy` | `GoDaddy Auctions` | `Namecheap` | `Squarespace`;
+export type Registrar = `Porkbun` | `NameSilo` | `Hostinger` | `GoDaddy` | `GoDaddy Auctions` | `Namecheap` | `Squarespace`;
 export type { JSONValue } from '../Data';
 
 export interface DomainRegistrant {

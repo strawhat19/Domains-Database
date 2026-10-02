@@ -7,6 +7,9 @@ import {
   PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
   getPortfolioColumnDisplay,
+  getPortfolioColumnValue,
+  getRenewalEstimateHint,
+  getWebsiteInsightsHint,
   type PortfolioColumn,
 } from '../../shared/portfolioColumns';
 
@@ -33,6 +36,7 @@ const DomainRow = ({
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainRowProps) => {
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
+  const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const columns = PORTFOLIO_COLUMNS.filter(column => (
     column.field === `name` || visibleColumns.includes(column.field)
   ));
@@ -131,20 +135,20 @@ const DomainRow = ({
         return (
           <button
             type={`button`}
-            role={`switch`}
+            role={autoRenew === undefined ? `button` : `switch`}
             disabled={busy}
-            aria-checked={domain.autoRenew}
+            aria-checked={autoRenew === undefined ? undefined : autoRenew === true}
             id={`${scope}-auto-renew-toggle`}
             aria-label={`Mark Auto-Renew ${domain.autoRenew ? `Off` : `On`} For ${domain.name}`}
             onClick={() => onToggleAutoRenew(domain)}
-            title={`This is a record of your registrar setting`}
-            className={`domain-auto-renew domain-auto-renew-${domain.autoRenew ? `on` : `off`}`}
+            title={autoRenew === undefined ? `Registrar Auto-Renew Is Unknown — Click To Update Your Inventory Record` : `This is a record of your registrar setting`}
+            className={`domain-auto-renew domain-auto-renew-${autoRenew === true ? `on` : `off`}`}
           >
-            {domain.autoRenew
+            {autoRenew === true
               ? <Check size={13} aria-hidden={`true`} id={`${scope}-auto-renew-icon`} className={`domain-auto-renew-icon`} />
               : <Minus size={13} aria-hidden={`true`} id={`${scope}-auto-renew-icon`} className={`domain-auto-renew-icon`} />}
             <span id={`${scope}-auto-renew-text`} className={`domain-auto-renew-text`}>
-              {domain.autoRenew ? `On` : `Off`}
+              {autoRenew === undefined ? `Unknown` : autoRenew ? `On` : `Off`}
             </span>
           </button>
         );
@@ -154,12 +158,22 @@ const DomainRow = ({
             {getPortfolioColumnDisplay(domain, field)}
           </span>
         );
+      case `renewalEstimate`:
+        return (
+          <span
+            id={`${scope}-renewal-estimate`}
+            title={getRenewalEstimateHint(domain)}
+            className={`domain-renewal-estimate`}
+          >
+            {getPortfolioColumnDisplay(domain, field)}
+          </span>
+        );
       default: {
         const key = getDomainColumnKey(field);
         const value = getPortfolioColumnDisplay(domain, field);
         return (
           <span
-            title={value}
+            title={getWebsiteInsightsHint(domain, field) || value}
             id={`${scope}-${key}-value`}
             className={`domain-column-value domain-column-value-${key}`}
           >

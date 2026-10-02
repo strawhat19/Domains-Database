@@ -30,9 +30,14 @@ export const ColumnProvider = ({ children, userId = null }: PropsWithChildren<{ 
     read.then(saved => {
       if (!mounted || preferenceChanged.current || !saved) return;
       const parsed: unknown = JSON.parse(saved);
-      if (!Array.isArray(parsed)) return;
+      if (!parsed || typeof parsed !== `object`) return;
+      const insightColumns = [`websitePerformance`, `trancoRank`];
+      const savedColumns = Array.isArray(parsed) ? [...parsed, `renewalEstimate`, ...insightColumns]
+        : `version` in parsed && [2, 3].includes(Number(parsed.version)) && `columns` in parsed && Array.isArray(parsed.columns)
+          ? parsed.version === 2 ? [...parsed.columns, ...insightColumns] : parsed.columns : undefined;
+      if (!savedColumns) return;
       setVisibleColumns(PORTFOLIO_COLUMNS
-        .filter(column => column.field === `name` || parsed.includes(column.field))
+        .filter(column => column.field === `name` || savedColumns.includes(column.field))
         .map(column => column.field));
     }).catch(() => undefined).finally(() => {
       if (mounted) { loadedUserId.current = capturedUserId; setReady(true); }
@@ -43,7 +48,7 @@ export const ColumnProvider = ({ children, userId = null }: PropsWithChildren<{ 
   useEffect(() => {
     if (!ready || loadedUserId.current !== userId) return;
     const capturedUserId = userId;
-    const columns = JSON.stringify(visibleColumns);
+    const columns = JSON.stringify({ version: 3, columns: visibleColumns });
     void storageQueue(() => writeStorage(portfolioStorageKey(COLUMN_STORAGE_KEY, capturedUserId), columns)).catch(() => undefined);
   }, [ready, userId, visibleColumns, storageQueue]);
 

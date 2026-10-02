@@ -1,7 +1,9 @@
-export type SetupRegistrar = `GoDaddy` | `Namecheap` | `Hostinger`;
+export type SetupRegistrar = `GoDaddy` | `Porkbun` | `NameSilo` | `Namecheap` | `Hostinger`;
 
 export const SETUP_REGISTRARS: SetupRegistrar[] = [
   `GoDaddy`,
+  `Porkbun`,
+  `NameSilo`,
   `Namecheap`,
   `Hostinger`,
 ];
@@ -13,6 +15,28 @@ export const registrarGuides: Record<SetupRegistrar, {
   csvStep: string;
   sourceUrl: string;
 }> = {
+  Porkbun: {
+    label: `Porkbun Account`,
+    url: `https://porkbun.com/account/`,
+    sourceUrl: `https://porkbun.com/api/json/v3/documentation`,
+    csvStep: `Use the app CSV template for a manual import, then review and save your domain records.`,
+    steps: [
+      `For automatic sync, create an API key and secret at porkbun.com/account/api. Enable domain API access as needed.`,
+      `Save PORKBUN_API_KEY and PORKBUN_SECRET_API_KEY in Profile → Connections to import your registered domains.`,
+      `For manual entry, copy each domain's expiration date and renewal settings from your account. Confirm any annual renewal cost at Porkbun.`,
+    ],
+  },
+  NameSilo: {
+    label: `NameSilo Account`,
+    url: `https://www.namesilo.com/`,
+    sourceUrl: `https://www.namesilo.com/support/v2/articles/account-options/api-manager`,
+    csvStep: `Use the app CSV template for a manual import, then review and save your domain records.`,
+    steps: [
+      `Generate a free API key in your main account's API Manager. Subaccounts cannot use the API.`,
+      `Save NAMESILO_API_KEY in Profile → Connections. If you restrict API access by IP, permit the calling server's address.`,
+      `Automatic sync imports registered names and dates. Confirm auto-renew, transfer lock, privacy, and annual renewal cost in your account before entering those details manually.`,
+    ],
+  },
   GoDaddy: {
     label: `GoDaddy Domain Portfolio`,
     url: `https://dcc.godaddy.com/`,
