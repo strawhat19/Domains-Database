@@ -29,11 +29,11 @@
   margin-top: 12px;
   border-radius: 10px;
   align-items: flex-start;
-  background: #f0f5f0;
+  background: var(--success-bg);
 }
-.connections-private-icon { flex-shrink: 0; margin-top: 2px; color: #598074; }
-.connections-private-title { font-size: 11px; color: #476d61; }
-.connections-private-description { margin: 6px 0 0; font-size: 11px; line-height: 1.7; color: #7c8e85; }
+.connections-private-icon { flex-shrink: 0; margin-top: 2px; color: var(--success); }
+.connections-private-title { font-size: 11px; color: var(--success); }
+.connections-private-description { margin: 6px 0 0; font-size: 11px; line-height: 1.7; color: var(--muted); }
 .connections-footer { padding-top: 0; border: 0; }
 @media (max-width: 560px) {
   .connections-footer { flex-direction: row; }

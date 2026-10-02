@@ -1,11 +1,12 @@
 import { StyleSheet } from 'react-native';
+import type { ThemePalette } from '../../shared/themeContext/theme';
 
-export default StyleSheet.create({
-  hero: { paddingVertical: 30, gap: 8 },
-  promise: { gap: 8, marginTop: 12, alignItems: `center`, flexDirection: `row` },
-  title: { fontSize: 56, color: `#133b50`, lineHeight: 60, fontFamily: `InstrumentSerif_400Regular` },
-  accent: { fontSize: 56, color: `#138b8b`, lineHeight: 60, fontFamily: `InstrumentSerif_400Regular_Italic` },
-  eyebrow: { fontSize: 9, color: `#7b8586`, marginBottom: 12, letterSpacing: 2, fontFamily: `DMSans_500Medium` },
-  promiseText: { fontSize: 10, color: `#138b8b`, fontFamily: `DMSans_500Medium` },
-  description: { fontSize: 13, color: `#7b8586`, lineHeight: 23, marginTop: 12, fontFamily: `DMSans_400Regular` },
+export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  hero: { gap: 3, padding: 24, paddingTop: 42, paddingBottom: 34, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: palette.paper },
+  promise: { gap: 8, marginTop: 25, paddingTop: 18, borderTopWidth: 1, borderTopColor: palette.line, alignItems: `center`, flexDirection: `row` },
+  title: { fontSize: 48, color: palette.ink, lineHeight: 51, letterSpacing: -2, fontFamily: `DMSans_700Bold` },
+  accent: { fontSize: 48, color: palette.accent, lineHeight: 51, letterSpacing: -2, fontFamily: `DMSans_700Bold` },
+  eyebrow: { fontSize: 10, color: palette.ink, marginBottom: 22, letterSpacing: 1.6, fontFamily: `DMSans_700Bold` },
+  promiseText: { fontSize: 11, color: palette.ink, letterSpacing: .3, fontFamily: `DMSans_600SemiBold` },
+  description: { fontSize: 14, color: palette.muted, lineHeight: 23, marginTop: 20, fontFamily: `DMSans_400Regular` },
 });

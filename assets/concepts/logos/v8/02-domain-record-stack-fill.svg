@@ -26,8 +26,7 @@
     <text id="fill-io-label" class="fill-domain-label" x="239" y="220">.io</text>
   </g>
   <g id="fill-wordmark" class="fill-wordmark" font-family="Avenir Next, Inter, Arial, sans-serif" transform="translate(169 0)">
-    <text id="fill-domains-word" class="fill-wordmark-word" x="273" y="130" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Domains</text>
-    <text id="fill-database-word" class="fill-wordmark-word" x="273" y="198" fill="#133B50" font-size="66" font-weight="800" letter-spacing="-3">Database</text>
-    <text id="fill-tagline" class="fill-tagline" x="278" y="234" fill="#138B8B" font-size="15" font-weight="750" letter-spacing="4">EVERY ADDRESS IN ORDER</text>
+    <text id="fill-domains-word" class="fill-wordmark-word" x="273" y="134" fill="#133B50" font-size="112" font-weight="800" letter-spacing="-3">Domains</text>
+    <text id="fill-database-word" class="fill-wordmark-word" x="273" y="240" fill="#138B8B" font-size="112" font-weight="800" letter-spacing="-3">Database</text>
   </g>
 </svg>

@@ -1,4 +1,5 @@
 import { createDomainId } from './domainUtils';
+import { useSampleData } from './config';
 import type { DomainRecord, Registrar } from './types';
 
 const expiryAfter = (days: number) => {
@@ -8,6 +9,7 @@ const expiryAfter = (days: number) => {
 };
 
 export const createSampleDomains = (): DomainRecord[] => {
+  if (!useSampleData) return [];
   const examples: [string, Registrar, number, number, boolean][] = [
     [`atlasandco.com`, `GoDaddy`, 16, 21.99, true],
     [`goodfolks.org`, `Namecheap`, 243, 14.98, true],

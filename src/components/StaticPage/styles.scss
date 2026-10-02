@@ -6,6 +6,6 @@
 .static-page-sections { display: grid; gap: 32px; }
 .static-page-section { padding-top: 26px; border-top: 1px solid var(--line); }
 .static-page-section-title { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
-.static-page-paragraph { margin: 0; color: #6b7b79; font-size: 13px; line-height: 1.95; }
-.static-page-contact-link { display: inline-flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 7px; background: var(--ink); color: white; margin-top: 35px; font-size: 12px; transition: background .2s ease; }
-.static-page-contact-link:hover { background: var(--accent); }
+.static-page-paragraph { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.95; }
+.static-page-contact-link { display: inline-flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 7px; background: var(--strong); color: var(--strong-text); margin-top: 35px; font-size: 12px; transition: background .2s ease, color .2s ease; }
+.static-page-contact-link:hover { color: var(--contrast); background: var(--accent); }

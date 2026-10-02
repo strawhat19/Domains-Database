@@ -10,6 +10,7 @@ export interface DomainContextValue {
   domains: DomainRecord[];
   clearNotice: () => void;
   resetSampleData: () => Promise<void>;
+  prepareExport: () => Promise<DomainRecord[]>;
   deleteDomain: (id: string) => Promise<void>;
   importDomains: (inputs: DomainInput[]) => Promise<number>;
   addDomain: (input: DomainInput) => Promise<DomainRecord>;
@@ -57,6 +58,7 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
   const deleteDomain = useCallback((id: string) => mutate(() => api.deleteDomain(id), `Domain Removed`), [mutate]);
   const updateDomain = useCallback((id: string, input: DomainInput) => mutate(() => api.updateDomain(id, input), `Domain Updated`), [mutate]);
   const importDomains = useCallback((inputs: DomainInput[]) => mutate(() => api.importDomains(inputs), `${inputs.length} Domain(s) Imported`), [mutate]);
+  const prepareExport = useCallback(() => mutate(() => api.prepareExport(), `CSV Prepared`), [mutate]);
   const resetSampleData = useCallback(async () => { await mutate(() => api.resetSampleData(), `Sample Portfolio Restored`); }, [mutate]);
 
   const value = useMemo(() => ({
@@ -69,8 +71,9 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
     deleteDomain,
     updateDomain,
     importDomains,
+    prepareExport,
     resetSampleData,
-  }), [error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, resetSampleData]);
+  }), [error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData]);
 
   return (
     <DomainContext.Provider value={value}>

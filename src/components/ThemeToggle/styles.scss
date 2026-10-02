@@ -1,0 +1,23 @@
+.header-theme-toggle {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  flex-shrink: 0;
+  color: var(--ink);
+  border-radius: 5px;
+  place-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  transition: color .24s ease, background .24s ease, border-color .24s ease;
+
+  &:hover {
+    color: var(--accent);
+    background: var(--subtle);
+    border-color: var(--accent);
+
+    .header-theme-toggle-icon { transform: rotate(-15deg); }
+  }
+}
+
+.header-theme-toggle-icon { transition: transform .24s ease; }

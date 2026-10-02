@@ -1,20 +1,10 @@
-export type Registrar = `Hostinger` | `GoDaddy` | `GoDaddy Auctions` | `Namecheap`;
-export type DomainStatus = `Expired` | `Renewing Soon` | `Active`;
+import type { Domain } from './models/Domain';
 
-export interface DomainRecord {
-  id: string;
-  name: string;
-  owner: string;
-  notes: string;
-  number: number;
-  isSample?: boolean;
-  expiresAt: string;
-  autoRenew: boolean;
-  registrar: Registrar;
-  renewalPrice: number;
-}
+export type { Domain, Registrar, JSONValue, DomainRegistrant } from './models/Domain';
 
+export type DomainRecord = Domain;
 export type DomainInput = Omit<DomainRecord, `id` | `number` | `isSample`>;
+export type DomainStatus = `Expired` | `Renewing Soon` | `Active` | `Unknown`;
 
 export interface PortfolioSnapshot {
   version: 1;

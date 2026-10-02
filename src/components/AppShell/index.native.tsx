@@ -1,11 +1,14 @@
+import { useMemo } from 'react';
 import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
-import { styles } from './styles.native';
+import ThemeToggle from '../ThemeToggle';
+import { createStyles } from './styles.native';
 import { Link, usePathname } from 'expo-router';
 import { elementProps } from '../../shared/elementProps';
+import { useTheme } from '../../shared/themeContext/useTheme';
 import { Grid2X2, Layers3, ShieldCheck } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Alert, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 
 const navigation = [
   { label: `Overview`, href: `/`, Icon: Grid2X2 },
@@ -22,6 +25,9 @@ const footerLinks = [
 const AppShell = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const { isDark, palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const openPiratechs = async () => {
     try {
       await Linking.openURL(`https://piratechs.com/`);
@@ -39,17 +45,24 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               <Image
                 {...elementProps(`native-brand-logo`)}
                 contentFit={`contain`}
-                style={styles.logo}
-                accessibilityLabel={`Domains Database: Every Address In Order`}
-                source={require('../../../assets/concepts/logos/v8/02-domain-record-stack-fill.svg')}
+                style={[styles.logo, { width: Math.min(194, width - 152) }]}
+                accessibilityLabel={`Domains Database`}
+                source={isDark
+                  ? require('../../../assets/icons/brand-logo-dark.svg')
+                  : require('../../../assets/concepts/logos/v8/02-domain-record-stack-fill.svg')}
               />
             </Pressable>
           </Link>
-          <View {...elementProps(`native-device-badge`)} style={styles.deviceBadge}>
-            <ShieldCheck {...elementProps(`native-device-badge-icon`)} size={12} color={`#48615d`} />
-            <Text {...elementProps(`native-device-badge-text`)} style={styles.deviceBadgeText}>
-              {`ON DEVICE`}
-            </Text>
+          <View {...elementProps(`native-header-actions`)} style={styles.headerActions}>
+            <View {...elementProps(`native-device-badge`)} style={styles.deviceBadge}>
+              <ShieldCheck {...elementProps(`native-device-badge-icon`)} size={12} color={palette.accent} />
+              {width >= 400 && (
+                <Text {...elementProps(`native-device-badge-text`)} style={styles.deviceBadgeText}>
+                  {`ON DEVICE`}
+                </Text>
+              )}
+            </View>
+            <ThemeToggle />
           </View>
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
@@ -64,7 +77,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
                   accessibilityState={{ selected: active }}
                   style={[styles.navigationLink, active && styles.navigationLinkActive]}
                 >
-                  <Icon {...elementProps(`native-navigation-icon`, label.toLowerCase())} size={14} color={active ? `#ffffff` : `#6b7978`} />
+                  <Icon {...elementProps(`native-navigation-icon`, label.toLowerCase())} size={14} color={active ? `#ffffff` : palette.muted} />
                   <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>
                     {label}
                   </Text>
@@ -84,7 +97,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               {`Every address in order.`}
             </Text>
             <View {...elementProps(`native-footer-device`)} style={styles.footerDevice}>
-              <ShieldCheck {...elementProps(`native-footer-device-icon`)} size={12} color={`#6b7978`} />
+              <ShieldCheck {...elementProps(`native-footer-device-icon`)} size={12} color={palette.muted} />
               <Text {...elementProps(`native-footer-device-text`)} style={styles.footerDeviceText}>
                 {`Stored on this device`}
               </Text>

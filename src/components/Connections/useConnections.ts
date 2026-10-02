@@ -6,6 +6,7 @@ const registrarLinks: Record<Registrar, string> = {
   Hostinger: `https://www.hostinger.com/`,
   GoDaddy: `https://www.godaddy.com/`,
   Namecheap: `https://www.namecheap.com/`,
+  Squarespace: `https://account.squarespace.com/domains`,
   [`GoDaddy Auctions`]: `https://www.godaddy.com/`,
 };
 

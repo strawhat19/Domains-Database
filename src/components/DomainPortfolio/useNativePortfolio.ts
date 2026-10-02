@@ -33,10 +33,11 @@ export const useNativePortfolio = (compact = false) => {
   const [working, setWorking] = useState(false);
   const [formError, setFormError] = useState(``);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
   const [renewalPrice, setRenewalPrice] = useState(``);
   const [editingId, setEditingId] = useState<string>();
   const [input, setInput] = useState<DomainInput>(newDomain);
-  const [sortByName, setSortByName] = useState(false);
+  const [sortByName, setSortByName] = useState(true);
   const [registrar, setRegistrar] = useState<Registrar | `All`>(`All`);
   const filteredDomains = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -46,6 +47,13 @@ export const useNativePortfolio = (compact = false) => {
   }, [context.domains, search, registrar, sortByName]);
   const visibleDomains = compact ? filteredDomains.slice(0, 4) : filteredDomains;
   const dueSoon = context.domains.filter(domain => getDomainStatus(domain) !== `Active`).length;
+  const openSetup = () => {
+    context.clearNotice();
+    setSearch(``);
+    setRegistrar(`All`);
+    setSetupOpen(true);
+  };
+  const closeSetup = () => setSetupOpen(false);
 
   const openEditor = (domain?: DomainRecord) => {
     context.clearNotice();
@@ -57,7 +65,7 @@ export const useNativePortfolio = (compact = false) => {
       owner: domain.owner,
       notes: domain.notes,
       registrar: domain.registrar,
-      expiresAt: domain.expiresAt,
+      expiresAt: domain.expiresAt.slice(0, 10),
       autoRenew: domain.autoRenew,
       renewalPrice: domain.renewalPrice,
     } : newDomain());
@@ -112,6 +120,8 @@ export const useNativePortfolio = (compact = false) => {
       const file = new File(document.uri);
       const records = parseDomainCsv(await file.text());
       await context.importDomains(records);
+      setSearch(``);
+      setRegistrar(`All`);
     } catch (error) {
       Alert.alert(`Unable To Import CSV`, errorMessage(error));
     } finally {
@@ -126,7 +136,8 @@ export const useNativePortfolio = (compact = false) => {
       if (!await Sharing.isAvailableAsync()) throw new Error(`Sharing Is Unavailable On This Device`);
       const file = new File(Paths.cache, `domains-database-${new Date().toISOString().slice(0, 10)}.csv`);
       file.create({ overwrite: true });
-      file.write(exportDomainCsv(context.domains));
+      const domains = await context.prepareExport();
+      file.write(exportDomainCsv(domains));
       await Sharing.shareAsync(file.uri, {
         mimeType: `text/csv`,
         dialogTitle: `Export Domains`,
@@ -161,11 +172,14 @@ export const useNativePortfolio = (compact = false) => {
     formError,
     editingId,
     editorOpen,
+    setupOpen,
     sortByName,
     renewalPrice,
     visibleDomains,
     filteredDomains,
     openEditor,
+    openSetup,
+    closeSetup,
     closeEditor,
     updateInput,
     saveDomain,

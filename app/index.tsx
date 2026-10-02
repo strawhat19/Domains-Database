@@ -4,7 +4,10 @@ import DomainPortfolio from '../src/components/DomainPortfolio';
 
 const HomePage = () => (
   <>
-    <PageMeta title={`Every Domain, In Order`} description={`Your personal domain inventory, together across registrars. Keep track of renewals, ownership, and yearly costs.`} />
+    <PageMeta
+      title={`Your Domains. Under Control.`}
+      description={`Keep track of every name, registrar, renewal, and yearly cost in your personal domain registry.`}
+    />
     <Hero />
     <DomainPortfolio compact />
   </>

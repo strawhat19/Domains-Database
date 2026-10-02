@@ -1,0 +1,10 @@
+<svg id="domains-adaptive-icon" class="domains-adaptive-icon" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <g id="adaptive-icon-symbol" class="adaptive-icon-symbol" transform="translate(64 22) scale(14)">
+    <path id="adaptive-icon-top-record" class="adaptive-icon-record" d="M11 14h35l7 7v5H11Z" fill="#133b50" />
+    <path id="adaptive-icon-middle-record" class="adaptive-icon-record" d="M11 29h35l7 7v5H11Z" fill="#133b50" />
+    <path id="adaptive-icon-bottom-record" class="adaptive-icon-record" d="M11 44h35l7 7v5H11Z" fill="#133b50" />
+    <circle id="adaptive-icon-top-dot" class="adaptive-icon-dot" cx="43" cy="20" r="3" fill="#19aeab" />
+    <circle id="adaptive-icon-middle-dot" class="adaptive-icon-dot" cx="43" cy="35" r="3" fill="#19aeab" />
+    <circle id="adaptive-icon-bottom-dot" class="adaptive-icon-dot" cx="43" cy="50" r="3" fill="#19aeab" />
+  </g>
+</svg>

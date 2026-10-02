@@ -59,7 +59,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
     owner: domain?.owner ?? ``,
     autoRenew: domain?.autoRenew ?? true,
     renewalPrice: domain?.renewalPrice ?? 0,
-    expiresAt: domain?.expiresAt ?? expiresAt,
+    expiresAt: domain?.expiresAt?.slice(0, 10) ?? expiresAt,
     registrar: domain?.registrar ?? REGISTRARS?.[0] ?? `Namecheap`,
   };
 };

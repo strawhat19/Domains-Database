@@ -1,36 +1,49 @@
 import './styles.scss';
-import { Layers3, ArrowDownRight } from 'lucide-react';
+import ExtensionIndex from '../ExtensionIndex';
+import { ArrowUpRight } from 'lucide-react';
 
 const Hero = () => (
-  <section id={`landing-hero`} className={`landing-hero`} aria-labelledby={`hero-title`}>
+  <section
+    id={`landing-hero`}
+    className={`landing-hero`}
+    aria-labelledby={`hero-title`}
+  >
     <div id={`hero-heading-group`} className={`hero-heading-group`}>
       <p id={`hero-eyebrow`} className={`hero-eyebrow`}>
-        <span id={`hero-eyebrow-dot`} className={`hero-eyebrow-dot`} aria-hidden />
-        {`A HOME FOR EVERY DOMAIN`}
+        <span
+          aria-hidden={`true`}
+          id={`hero-eyebrow-marker`}
+          className={`hero-eyebrow-marker`}
+        />
+        {`PERSONAL DOMAIN REGISTRY`}
       </p>
       <h1 id={`hero-title`} className={`hero-title`}>
-        {`Every domain.`}
+        {`Your domains.`}
         <br id={`hero-title-break`} className={`hero-title-break`} />
-        <em id={`hero-title-accent`} className={`hero-title-accent`}>
-          {`One quiet place.`}
-        </em>
-      </h1>
-    </div>
-    <div id={`hero-aside`} className={`hero-aside`}>
-      <span id={`hero-index`} className={`hero-index`}>
-        {`01 / A LITTLE CLARITY`}
-      </span>
-      <p id={`hero-description`} className={`hero-description`}>
-        {`Your domains may live in different accounts. Your overview shouldn’t. Keep every name, renewal, and registrar beautifully in order.`}
-      </p>
-      <div id={`hero-promise`} className={`hero-promise`}>
-        <Layers3 id={`hero-promise-icon`} className={`hero-promise-icon`} size={16} strokeWidth={1.5} aria-hidden />
-        <span id={`hero-promise-text`} className={`hero-promise-text`}>
-          {`Different registrars. One clear view.`}
+        <span id={`hero-title-accent`} className={`hero-title-accent`}>
+          {`Under control.`}
         </span>
-        <ArrowDownRight id={`hero-promise-arrow`} className={`hero-promise-arrow`} size={20} strokeWidth={1.3} aria-hidden />
-      </div>
+      </h1>
+      <p id={`hero-description`} className={`hero-description`}>
+        {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
+      </p>
+      <a
+        href={`/domains`}
+        id={`hero-portfolio-link`}
+        className={`hero-portfolio-link`}
+      >
+        <span id={`hero-portfolio-text`} className={`hero-portfolio-text`}>
+          {`Browse your portfolio`}
+        </span>
+        <ArrowUpRight
+          size={18}
+          aria-hidden={`true`}
+          id={`hero-portfolio-icon`}
+          className={`hero-portfolio-icon`}
+        />
+      </a>
     </div>
+    <ExtensionIndex />
   </section>
 );
 

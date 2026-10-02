@@ -1,0 +1,9 @@
+<svg id="domains-app-icon" class="domains-app-icon" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 64 64">
+  <rect id="app-icon-background" class="app-icon-background" width="64" height="64" rx="0" fill="#f7f6f2" />
+  <path id="app-icon-top-record" class="app-icon-record" d="M11 14h35l7 7v5H11Z" fill="#133b50" />
+  <path id="app-icon-middle-record" class="app-icon-record" d="M11 29h35l7 7v5H11Z" fill="#133b50" />
+  <path id="app-icon-bottom-record" class="app-icon-record" d="M11 44h35l7 7v5H11Z" fill="#133b50" />
+  <circle id="app-icon-top-dot" class="app-icon-dot" cx="43" cy="20" r="3" fill="#19aeab" />
+  <circle id="app-icon-middle-dot" class="app-icon-dot" cx="43" cy="35" r="3" fill="#19aeab" />
+  <circle id="app-icon-bottom-dot" class="app-icon-dot" cx="43" cy="50" r="3" fill="#19aeab" />
+</svg>

@@ -1,31 +1,54 @@
 import './styles.scss';
-import Connections from '../Connections';
+import { useMemo } from 'react';
+import ColumnControls from '../ColumnControls';
 import DomainEditor from '../DomainEditor';
-import { REGISTRARS } from '../../shared/config';
+import RegistrarSetup from '../RegistrarSetup';
+import { PORTFOLIO_COLUMNS, getPortfolioColumnCounts } from '../../shared/portfolioColumns';
+import { useColumns } from '../../shared/columnContext/useColumns';
+import { REGISTRARS, useSampleData } from '../../shared/config';
 import { formatCurrency } from '../../shared/domainUtils';
-import DomainRow, { DomainRowSkeleton } from '../DomainRow';
-import { usePortfolio, type SortField } from './usePortfolio';
-import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowUp, ArrowDown, ArrowRight, ArrowUpDown, ChevronDown, FlaskConical, ShieldCheck, RotateCcw } from 'lucide-react';
-
-const columns: { field: SortField; label: string }[] = [
-  { field: `name`, label: `Domain` },
-  { field: `registrar`, label: `Registrar` },
-  { field: `expiresAt`, label: `Renewal date` },
-  { field: `autoRenew`, label: `Auto-renew` },
-  { field: `renewalPrice`, label: `Annual cost` },
-];
+import GroupControls from '../GroupControls/index.web';
+import PortfolioRecords from '../PortfolioRecords/index.web';
+import PortfolioSelection from '../PortfolioSelection/index.web';
+import { usePortfolio } from './usePortfolio';
+import { useDomainSelection } from './useDomainSelection';
+import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { useStickyPortfolio } from './useStickyPortfolio';
+import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDown, FlaskConical, ShieldCheck, LayoutGrid, List, ArrowDownAZ, GripVertical } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
-  const visibleDomains = compact ? portfolio.filteredDomains.slice(0, 4) : portfolio.filteredDomains;
+  const { visibleColumns, toggleColumn, resetColumns } = useColumns();
+  const preferences = usePortfolioPreferences();
+  const sticky = useStickyPortfolio(`${preferences.view}|${visibleColumns.join(`|`)}`);
+  const columns = PORTFOLIO_COLUMNS.filter(column => visibleColumns.includes(column.field));
+  const columnCounts = useMemo(() => getPortfolioColumnCounts(portfolio.domains), [portfolio.domains]);
+  const showAnnualSpend = columns.some(column => column.price);
+  const showMonthlySpend = visibleColumns.includes(`monthlyCost`);
+  const visibleIds = useMemo(() => {
+    const ordered = buildPortfolioGroups(portfolio.filteredDomains, portfolio.sortField
+      ? { ...preferences, orders: {} }
+      : preferences).flatMap(group => group.domains);
+    return (compact ? ordered.slice(0, 4) : ordered).map(domain => domain.id);
+  }, [portfolio.filteredDomains, preferences, compact, portfolio.sortField]);
+  const selection = useDomainSelection(portfolio.domains, visibleIds);
+  const ViewIcon = preferences.view === `table` ? LayoutGrid : List;
   const displayedError = portfolio.localError || portfolio.error;
-  const hasFilters = Boolean(portfolio.query || portfolio.registrarFilter !== `All Registrars`);
+  const hasFilters = portfolio.domains.length > 0 && Boolean(portfolio.query || portfolio.registrarFilter !== `All Registrars`);
   return (
-    <section id={`domain-portfolio`} className={`domain-portfolio`} aria-labelledby={`portfolio-title`}>
+    <section
+      id={`domain-portfolio`}
+      aria-labelledby={`portfolio-title`}
+      className={`domain-portfolio${compact ? `` : ` domain-portfolio-full`}`}
+    >
       <div id={`portfolio-heading-row`} className={`portfolio-heading-row`}>
         <div id={`portfolio-heading`} className={`portfolio-heading`}>
+          <span id={`portfolio-eyebrow`} className={`portfolio-eyebrow`}>
+            {`THE REGISTRY`}
+          </span>
           <h2 id={`portfolio-title`} className={`portfolio-title`}>
-            {`Your domain portfolio`}
+            {`Domain portfolio`}
           </h2>
           <div id={`portfolio-summary`} className={`portfolio-summary`}>
             <span id={`portfolio-domain-total`} className={`portfolio-summary-item`}>
@@ -41,12 +64,26 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <span id={`portfolio-attention-dot`} className={`portfolio-attention-dot`} aria-hidden={`true`} />
               {`${portfolio.summary.attention} need attention`}
             </span>
-            <span id={`portfolio-summary-separator-two`} className={`portfolio-summary-separator`} aria-hidden={`true`}>
-              {`·`}
-            </span>
-            <span id={`portfolio-annual-spend`} className={`portfolio-summary-item`}>
-              {`${formatCurrency(portfolio.summary.annualCost)} / year`}
-            </span>
+            {showAnnualSpend && (
+              <>
+                <span id={`portfolio-summary-separator-two`} className={`portfolio-summary-separator`} aria-hidden={`true`}>
+                  {`·`}
+                </span>
+                <span id={`portfolio-annual-spend`} className={`portfolio-summary-item`}>
+                  {`${formatCurrency(portfolio.summary.annualCost)} / year`}
+                </span>
+                {showMonthlySpend && (
+                  <>
+                    <span id={`portfolio-summary-separator-monthly`} className={`portfolio-summary-separator`} aria-hidden={`true`}>
+                      {`·`}
+                    </span>
+                    <span id={`portfolio-monthly-spend`} className={`portfolio-summary-item`}>
+                      {`${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
+                    </span>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
         <div id={`portfolio-primary-actions`} className={`portfolio-primary-actions`}>
@@ -54,7 +91,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             type={`button`}
             id={`portfolio-connections`}
             className={`portfolio-button portfolio-button-secondary`}
-            onClick={() => portfolio.setConnectionsOpen(true)}
+            onClick={portfolio.openSetup}
           >
             <Link2 size={15} aria-hidden={`true`} id={`portfolio-connections-icon`} className={`portfolio-button-icon`} />
             <span id={`portfolio-connections-text`} className={`portfolio-button-text`}>
@@ -65,7 +102,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             type={`button`}
             id={`portfolio-add-domain`}
             disabled={portfolio.loading}
-            onClick={() => portfolio.openEditor()}
+            onClick={portfolio.openSetup}
             className={`portfolio-button portfolio-button-primary`}
           >
             <Plus size={16} aria-hidden={`true`} id={`portfolio-add-domain-icon`} className={`portfolio-button-icon`} />
@@ -98,7 +135,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         </div>
       )}
       <div id={`portfolio-card`} className={`portfolio-card`}>
-        <div id={`portfolio-toolbar`} className={`portfolio-toolbar`}>
+        <div ref={sticky.toolbarRef} id={`portfolio-toolbar`} className={`portfolio-toolbar`}>
           <div id={`portfolio-search-wrap`} className={`portfolio-search-wrap`}>
             <label id={`portfolio-search-label`} className={`portfolio-sr-only`} htmlFor={`portfolio-search`}>
               {`Search Domains, Owners, Or Registrars`}
@@ -141,7 +178,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             <ChevronDown size={13} aria-hidden={`true`} id={`portfolio-registrar-filter-icon`} className={`portfolio-registrar-filter-icon`} />
           </div>
           <div id={`portfolio-toolbar-meta`} className={`portfolio-toolbar-meta`}>
-            {portfolio.summary.hasSampleData && (
+            {useSampleData && portfolio.summary.hasSampleData && (
               <span id={`portfolio-sample-label`} className={`portfolio-sample-label`} title={`Illustrative Records, Not Connected Accounts`}>
                 <FlaskConical size={12} aria-hidden={`true`} id={`portfolio-sample-icon`} className={`portfolio-sample-icon`} />
                 <span id={`portfolio-sample-text`} className={`portfolio-sample-text`}>
@@ -150,92 +187,80 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </span>
             )}
           </div>
+          <ColumnControls
+            onReset={resetColumns}
+            onToggle={toggleColumn}
+            columnCounts={columnCounts}
+            visibleColumns={visibleColumns}
+          />
+          <button
+            type={`button`}
+            id={`portfolio-view-toggle`}
+            className={`portfolio-button portfolio-button-secondary portfolio-view-toggle`}
+            title={preferences.view === `table` ? `Switch to cards` : `Switch to table`}
+            aria-label={preferences.view === `table` ? `Switch to cards` : `Switch to table`}
+            aria-pressed={preferences.view === `grid`}
+            onClick={() => preferences.setView(preferences.view === `table` ? `grid` : `table`)}
+          >
+            <ViewIcon size={16} aria-hidden={`true`} id={`portfolio-view-toggle-icon`} className={`portfolio-button-icon`} />
+          </button>
+          <GroupControls domains={portfolio.domains} />
+          <button
+            type={`button`}
+            id={`portfolio-manual-order`}
+            aria-pressed={!portfolio.sortField}
+            onClick={portfolio.toggleManualOrder}
+            className={`portfolio-button portfolio-button-secondary`}
+            title={portfolio.sortField ? `Clear column sorting to reorder domains manually` : `Return to alphabetical sorting`}
+          >
+            {portfolio.sortField ? (
+              <GripVertical size={15} aria-hidden={`true`} id={`portfolio-manual-order-icon`} className={`portfolio-button-icon`} />
+            ) : (
+              <ArrowDownAZ size={15} aria-hidden={`true`} id={`portfolio-manual-order-icon`} className={`portfolio-button-icon`} />
+            )}
+            <span id={`portfolio-manual-order-text`} className={`portfolio-button-text`}>
+              {portfolio.sortField ? `Manual order` : `Sort A–Z`}
+            </span>
+          </button>
+          <PortfolioSelection
+            total={visibleIds.length}
+            allSelected={selection.allSelected}
+            count={selection.visibleSelectedCount}
+            disabled={portfolio.loading}
+            onSelectAll={selection.selectAll}
+          />
         </div>
-        <div id={`portfolio-table-scroll`} className={`portfolio-table-scroll`}>
-          <table id={`portfolio-table`} className={`portfolio-table`} aria-busy={portfolio.loading}>
-            <caption id={`portfolio-table-caption`} className={`portfolio-sr-only`}>
-              {`Your saved domain records. Renewal costs are recorded in US dollars. Auto-renew settings are a record only and don't change registrar settings.`}
-            </caption>
-            <thead id={`portfolio-table-head`} className={`portfolio-table-head`}>
-              <tr id={`portfolio-table-heading-row`} className={`portfolio-table-heading-row`}>
-                {columns.map(column => (
-                  <th
-                    scope={`col`}
-                    key={column.field}
-                    id={`portfolio-heading-${column.field}`}
-                    className={`portfolio-table-heading portfolio-table-heading-${column.field}`}
-                    aria-sort={portfolio.sortField === column.field ? portfolio.sortDirection === `asc` ? `ascending` : `descending` : `none`}
-                  >
-                    <button
-                      type={`button`}
-                      id={`portfolio-sort-${column.field}`}
-                      className={`portfolio-sort-button`}
-                      onClick={() => portfolio.changeSort(column.field)}
-                      aria-label={`Sort By ${column.label}`}
-                    >
-                      <span id={`portfolio-sort-label-${column.field}`} className={`portfolio-sort-label`}>
-                        {column.label}
-                      </span>
-                      {portfolio.sortField === column.field
-                        ? portfolio.sortDirection === `asc`
-                          ? <ArrowUp size={11} aria-hidden={`true`} id={`portfolio-sort-icon-${column.field}`} className={`portfolio-sort-icon portfolio-sort-icon-active`} />
-                          : <ArrowDown size={11} aria-hidden={`true`} id={`portfolio-sort-icon-${column.field}`} className={`portfolio-sort-icon portfolio-sort-icon-active`} />
-                        : <ArrowUpDown size={11} aria-hidden={`true`} id={`portfolio-sort-icon-${column.field}`} className={`portfolio-sort-icon`} />}
-                    </button>
-                  </th>
-                ))}
-                <th scope={`col`} id={`portfolio-heading-actions`} className={`portfolio-table-heading portfolio-table-heading-actions`}>
-                  <span id={`portfolio-actions-label`} className={`portfolio-sr-only`}>
-                    {`Actions`}
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody id={`portfolio-table-body`} className={`portfolio-table-body`}>
-              {portfolio.loading ? [0, 1, 2, 3].map(index => <DomainRowSkeleton key={index} index={index} />) : visibleDomains.map(domain => (
-                <DomainRow
-                  key={domain.id}
-                  domain={domain}
-                  busy={Boolean(portfolio.pendingId)}
-                  onEdit={portfolio.openEditor}
-                  onDelete={portfolio.requestDelete}
-                  onToggleAutoRenew={portfolio.toggleAutoRenew}
-                />
-              ))}
-              {!portfolio.loading && !visibleDomains.length && (
-                <tr id={`portfolio-empty-row`} className={`portfolio-empty-row`}>
-                  <td colSpan={6} id={`portfolio-empty-cell`} className={`portfolio-empty-cell`}>
-                    <div id={`portfolio-empty-content`} className={`portfolio-empty-content`}>
-                      <Search size={23} strokeWidth={1.4} aria-hidden={`true`} id={`portfolio-empty-icon`} className={`portfolio-empty-icon`} />
-                      <h3 id={`portfolio-empty-title`} className={`portfolio-empty-title`}>
-                        {hasFilters ? `No domains found` : `A place for your next idea`}
-                      </h3>
-                      <p id={`portfolio-empty-description`} className={`portfolio-empty-description`}>
-                        {hasFilters ? `Try another name or a different registrar.` : `Add your first domain, or import a CSV to get started.`}
-                      </p>
-                      <button
-                        type={`button`}
-                        id={`portfolio-empty-action`}
-                        className={`portfolio-button portfolio-button-secondary`}
-                        onClick={() => {
-                          if (!hasFilters) portfolio.openEditor();
-                          else { portfolio.setQuery(``); portfolio.setRegistrarFilter(`All Registrars`); }
-                        }}
-                      >
-                        {hasFilters
-                          ? <RotateCcw size={14} aria-hidden={`true`} id={`portfolio-empty-action-icon`} className={`portfolio-button-icon`} />
-                          : <Plus size={14} aria-hidden={`true`} id={`portfolio-empty-action-icon`} className={`portfolio-button-icon`} />}
-                        <span id={`portfolio-empty-action-text`} className={`portfolio-button-text`}>
-                          {hasFilters ? `Clear Filters` : `Add Domain`}
-                        </span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div id={`portfolio-scroll-hint`} className={`portfolio-scroll-hint${preferences.view === `grid` ? ` portfolio-scroll-hint-hidden` : ``}`}>
+          <span id={`portfolio-scroll-hint-text`} className={`portfolio-scroll-hint-text`}>
+            {`Scroll to see all columns`}
+          </span>
+          <ArrowRight size={13} aria-hidden={`true`} id={`portfolio-scroll-hint-icon`} className={`portfolio-scroll-hint-icon`} />
         </div>
+        <PortfolioRecords
+          sticky={sticky}
+          compact={compact}
+          loading={portfolio.loading}
+          hasFilters={hasFilters}
+          onEdit={portfolio.openEditor}
+          onDelete={portfolio.requestDelete}
+          domains={portfolio.filteredDomains}
+          allDomains={portfolio.sortedDomains}
+          sortField={portfolio.sortField}
+          selectedIds={selection.selectedIds}
+          allSelected={selection.allSelected}
+          someSelected={selection.someSelected}
+          onSelect={selection.select}
+          onSelectAll={selection.selectAll}
+          visibleColumns={visibleColumns}
+          sortDirection={portfolio.sortDirection}
+          busy={Boolean(portfolio.pendingId)}
+          onToggleAutoRenew={portfolio.toggleAutoRenew}
+          onSort={portfolio.changeSort}
+          onEmptyAction={() => {
+            if (!hasFilters) portfolio.openSetup();
+            else { portfolio.setQuery(``); portfolio.setRegistrarFilter(`All Registrars`); }
+          }}
+        />
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
           <div id={`portfolio-storage-meta`} className={`portfolio-storage-meta`}>
             <ShieldCheck size={13} aria-hidden={`true`} id={`portfolio-storage-icon`} className={`portfolio-storage-icon`} />
@@ -246,7 +271,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {`·`}
             </span>
             <span id={`portfolio-visible-count`} className={`portfolio-visible-count`}>
-              {`Showing ${visibleDomains.length} Of ${portfolio.filteredDomains.length}`}
+              {`Showing ${visibleIds.length} Of ${portfolio.filteredDomains.length}`}
             </span>
           </div>
           <div id={`portfolio-secondary-actions`} className={`portfolio-secondary-actions`}>
@@ -266,12 +291,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               type={`button`}
               onClick={portfolio.exportDomains}
               id={`portfolio-export-csv`}
-              disabled={portfolio.loading || !portfolio.domains.length}
+              disabled={portfolio.loading || portfolio.exporting || !portfolio.domains.length}
               className={`portfolio-button portfolio-button-quiet`}
             >
               <Download size={13} aria-hidden={`true`} id={`portfolio-export-icon`} className={`portfolio-button-icon`} />
               <span id={`portfolio-export-text`} className={`portfolio-button-text`}>
-                {`Export CSV`}
+                {portfolio.exporting ? `Exporting…` : `Export CSV`}
               </span>
             </button>
           </div>
@@ -298,13 +323,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       {portfolio.editorOpen && (
         <DomainEditor domain={portfolio.editingDomain} onClose={() => portfolio.setEditorOpen(false)} />
       )}
-      {portfolio.connectionsOpen && (
-        <Connections
-          onImport={portfolio.requestImport}
-          onDownloadTemplate={portfolio.downloadTemplate}
-          onClose={() => portfolio.setConnectionsOpen(false)}
-        />
-      )}
+      {portfolio.setupOpen && <RegistrarSetup onClose={portfolio.closeSetup} />}
       {portfolio.deletingDomain && (
         <div
           role={`presentation`}

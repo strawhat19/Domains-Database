@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(7px);
-  background: rgba(13, 39, 51, .35);
+  background: var(--overlay);
   animation: domain-dialog-reveal .18s ease both;
 }
 .domain-dialog {
@@ -20,7 +20,7 @@
   background: var(--paper);
   max-height: calc(100dvh - 48px);
   overflow-y: auto;
-  box-shadow: 0 22px 100px rgba(13, 39, 51, .18);
+  box-shadow: 0 22px 100px var(--shadow);
   animation: domain-dialog-enter .25s cubic-bezier(.2, .8, .2, 1) both;
 }
 .domain-dialog-header {
@@ -53,7 +53,7 @@
   place-items: center;
   background: var(--canvas);
   transition: background .2s ease, color .2s ease, transform .2s ease;
-  &:hover { color: var(--ink); background: #e9eeea; transform: rotate(6deg); }
+  &:hover { color: var(--ink); background: var(--subtle); transform: rotate(6deg); }
 }
 .domain-dialog-description {
   font-size: 13px;
@@ -81,12 +81,12 @@
   padding: 11px 12px;
   color: var(--ink);
   border-radius: 8px;
-  background: #fcfcfa;
+  background: var(--input);
   font-family: var(--font-body);
   border: 1px solid var(--line);
-  transition: border-color .2s ease, box-shadow .2s ease;
-  &::placeholder { color: #9ba4a2; }
-  &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(19, 139, 139, .1); }
+  transition: color .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+  &::placeholder { color: var(--placeholder); }
+  &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 }
 .domain-editor-select { cursor: pointer; }
 .domain-editor-price-wrap { position: relative; }
@@ -105,7 +105,7 @@
 .domain-editor-renew-copy { gap: 4px; display: flex; flex-direction: column; }
 .domain-editor-renew-title { font-size: 12px; }
 .domain-editor-renew-help { font-size: 10px; line-height: 1.5; color: var(--muted); }
-.domain-dialog-error { font-size: 12px; color: #ad4a44; line-height: 1.5; margin: 16px 0 0; }
+.domain-dialog-error { font-size: 12px; color: var(--danger); line-height: 1.5; margin: 16px 0 0; }
 .domain-dialog-footer {
   gap: 15px;
   display: flex;

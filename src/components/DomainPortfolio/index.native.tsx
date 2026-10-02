@@ -1,12 +1,15 @@
 import { Link } from 'expo-router';
-import { styles } from './styles.native';
+import RegistrarSetup from '../RegistrarSetup';
+import { useEffect, useMemo, useState } from 'react';
+import { createStyles } from './styles.native';
 import DomainCard from '../DomainCard/index.native';
-import { REGISTRARS } from '../../shared/config';
+import { REGISTRARS, useSampleData } from '../../shared/config';
 import { elementProps } from '../../shared/elementProps';
 import { useNativePortfolio } from './useNativePortfolio';
+import { useTheme } from '../../shared/themeContext/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Plus, RotateCcw, Save, Search, Upload, X } from 'lucide-react-native';
+import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Plus, RotateCcw, Save, Search, Upload, X } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -15,51 +18,68 @@ const textFields = [
 ] as const;
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
+  const { palette, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const state = useNativePortfolio(compact);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const insets = useSafeAreaInsets();
-  const sampleCount = state.domains.filter(domain => domain.isSample).length;
+  const sampleCount = useSampleData ? state.domains.filter(domain => domain.isSample).length : 0;
   const sampleLabel = sampleCount ? `${sampleCount} sample domain(s) included` : `Your records, on this device`;
   const SortIcon = state.sortByName ? ArrowDownAZ : ArrowDownWideNarrow;
+  const visibleIds = state.visibleDomains.map(domain => domain.id);
+  const selectDomain = (id: string) => setSelectedIds(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
+  const selectVisible = () => setSelectedIds(current => [...new Set([...current, ...visibleIds])]);
+  const clearVisible = () => setSelectedIds(current => current.filter(id => !visibleIds.includes(id)));
+  useEffect(() => {
+    const existing = new Set(state.domains.map(domain => domain.id));
+    setSelectedIds(current => {
+      const remaining = current.filter(id => existing.has(id));
+      return remaining.length === current.length ? current : remaining;
+    });
+  }, [state.domains]);
 
   return (
-    <View {...elementProps(`native-domain-portfolio`)} style={styles.section}>
+    <View
+      {...elementProps(`native-domain-portfolio`)}
+      style={[styles.section, !compact && styles.fullSection]}
+    >
       <View {...elementProps(`native-portfolio-heading`)} style={styles.heading}>
         <View {...elementProps(`native-portfolio-heading-copy`)} style={styles.headingCopy}>
           <Text {...elementProps(`native-portfolio-eyebrow`)} style={styles.eyebrow}>
-            {`YOUR DIGITAL REAL ESTATE`}
+            {`DOMAIN REGISTRY`}
           </Text>
           <Text {...elementProps(`native-portfolio-title`)} style={styles.title}>
-            {compact ? `The whole portfolio.` : `Your portfolio.`}
+            {compact ? `Portfolio overview` : `Your portfolio`}
           </Text>
           <Text {...elementProps(`native-portfolio-description`)} style={styles.description}>
-            {`One quiet place for every domain you own.`}
+            {`Your domain records, sorted and searchable.`}
           </Text>
         </View>
         <View {...elementProps(`native-portfolio-heading-bottom`)} style={styles.headingBottom}>
           <View {...elementProps(`native-portfolio-counts`)} style={styles.counts}>
             <Text {...elementProps(`native-portfolio-domain-count`)} style={styles.countText}>
-              {state.loading ? `Loading portfolio…` : `${state.domains.length} domain(s) · ${new Set(state.domains.map(domain => domain.registrar)).size} registrar(s)`}
+              {state.loading ? `Loading portfolio…` : `${state.domains.length} domain(s) · ${new Set(state.domains.map(domain => domain.registrar).filter(Boolean)).size} registrar(s)`}
             </Text>
             <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
               {`${state.dueSoon} need attention`}
             </Text>
           </View>
-          <Pressable {...elementProps(`native-portfolio-add`)} accessibilityRole={`button`} accessibilityLabel={`Add Domain`} disabled={state.loading} style={[styles.primaryButton, state.loading && styles.disabled]} onPress={() => state.openEditor()}>
-            <Plus {...elementProps(`native-portfolio-add-icon`)} size={15} color={`#fffefa`} />
+          <Pressable {...elementProps(`native-portfolio-add`)} accessibilityRole={`button`} accessibilityLabel={`Add Domain`} disabled={state.loading} style={[styles.primaryButton, state.loading && styles.disabled]} onPress={state.openSetup}>
+            <Plus {...elementProps(`native-portfolio-add-icon`)} size={15} color={`#ffffff`} />
             <Text {...elementProps(`native-portfolio-add-text`)} style={styles.primaryButtonText}>
-              {`Add domain`}
+              {`Add Domain`}
             </Text>
           </Pressable>
         </View>
       </View>
       {!!state.notice && (
         <View {...elementProps(`native-portfolio-notice`)} style={styles.notice} accessibilityLiveRegion={`polite`}>
-          <CheckCircle2 {...elementProps(`native-portfolio-notice-icon`)} size={15} color={`#248477`} />
+          <CheckCircle2 {...elementProps(`native-portfolio-notice-icon`)} size={15} color={palette.success} />
           <Text {...elementProps(`native-portfolio-notice-text`)} style={styles.noticeText}>
             {state.notice}
           </Text>
           <Pressable {...elementProps(`native-portfolio-notice-dismiss`)} style={styles.noticeDismiss} onPress={state.clearNotice} accessibilityRole={`button`} accessibilityLabel={`Dismiss Notification`}>
-            <X {...elementProps(`native-portfolio-notice-dismiss-icon`)} size={13} color={`#248477`} />
+            <X {...elementProps(`native-portfolio-notice-dismiss-icon`)} size={13} color={palette.success} />
           </Pressable>
         </View>
       )}
@@ -73,7 +93,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       <View {...elementProps(`native-portfolio-tools`)} style={styles.tools}>
         <View {...elementProps(`native-portfolio-search-row`)} style={styles.searchRow}>
           <View {...elementProps(`native-portfolio-search`)} style={styles.search}>
-            <Search {...elementProps(`native-portfolio-search-icon`)} size={15} color={`#8a938d`} />
+            <Search {...elementProps(`native-portfolio-search-icon`)} size={15} color={palette.placeholder} />
             <TextInput
               {...elementProps(`native-portfolio-search-input`)}
               value={state.search}
@@ -82,12 +102,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               style={styles.searchInput}
               onChangeText={state.setSearch}
               placeholder={`Find a domain or owner…`}
-              placeholderTextColor={`#8a938d`}
+              placeholderTextColor={palette.placeholder}
               accessibilityLabel={`Search Domains`}
             />
           </View>
           <Pressable {...elementProps(`native-portfolio-sort`)} style={styles.sortButton} accessibilityRole={`button`} accessibilityLabel={state.sortByName ? `Sort By Soonest Expiry` : `Sort By Domain Name`} onPress={() => state.setSortByName(current => !current)}>
-            <SortIcon {...elementProps(`native-portfolio-sort-icon`)} size={17} color={`#61716f`} />
+            <SortIcon {...elementProps(`native-portfolio-sort-icon`)} size={17} color={palette.muted} />
           </Pressable>
         </View>
         <ScrollView {...elementProps(`native-portfolio-registrars`)} horizontal showsHorizontalScrollIndicator={false} style={styles.registrarScroll} contentContainerStyle={styles.registrarList}>
@@ -107,55 +127,102 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </Pressable>
           ))}
         </ScrollView>
+        <ScrollView
+          {...elementProps(`native-portfolio-selection-tools`)}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.registrarScroll}
+          contentContainerStyle={styles.registrarList}
+        >
+          <Pressable
+            {...elementProps(`native-portfolio-check-all`)}
+            style={[styles.secondaryButton, !visibleIds.length && styles.disabled]}
+            disabled={!visibleIds.length}
+            onPress={selectVisible}
+            accessibilityRole={`button`}
+            accessibilityLabel={`Select All Visible Domains`}
+          >
+            <CheckSquare {...elementProps(`native-portfolio-check-all-icon`)} size={13} color={palette.accent} />
+            <Text {...elementProps(`native-portfolio-check-all-text`)} style={styles.secondaryButtonText}>
+              {`Check all`}
+            </Text>
+          </Pressable>
+          <Pressable
+            {...elementProps(`native-portfolio-uncheck-all`)}
+            style={[styles.secondaryButton, !selectedIds.some(id => visibleIds.includes(id)) && styles.disabled]}
+            disabled={!selectedIds.some(id => visibleIds.includes(id))}
+            onPress={clearVisible}
+            accessibilityRole={`button`}
+            accessibilityLabel={`Unselect All Visible Domains`}
+          >
+            <Square {...elementProps(`native-portfolio-uncheck-all-icon`)} size={13} color={palette.muted} />
+            <Text {...elementProps(`native-portfolio-uncheck-all-text`)} style={styles.secondaryButtonText}>
+              {`Uncheck all`}
+            </Text>
+          </Pressable>
+          <View {...elementProps(`native-portfolio-selected-count`)} style={styles.secondaryButton} accessibilityLiveRegion={`polite`}>
+            <Text {...elementProps(`native-portfolio-selected-count-text`)} style={styles.secondaryButtonText}>
+              {`${selectedIds.length} selected`}
+            </Text>
+          </View>
+        </ScrollView>
         {!compact && (
           <>
             <View {...elementProps(`native-portfolio-csv-actions`)} style={styles.csvActions}>
               <Pressable {...elementProps(`native-portfolio-import`)} style={[styles.secondaryButton, (state.working || state.loading) && styles.disabled]} disabled={state.working || state.loading} onPress={() => void state.importCsv()} accessibilityRole={`button`} accessibilityLabel={`Import Domains From CSV`}>
-                <Upload {...elementProps(`native-portfolio-import-icon`)} size={13} color={`#61716f`} />
+                <Upload {...elementProps(`native-portfolio-import-icon`)} size={13} color={palette.muted} />
                 <Text {...elementProps(`native-portfolio-import-text`)} style={styles.secondaryButtonText}>
                   {`Import CSV`}
                 </Text>
               </Pressable>
               <Pressable {...elementProps(`native-portfolio-export`)} style={[styles.secondaryButton, (state.working || state.loading) && styles.disabled]} disabled={state.working || state.loading} onPress={() => void state.exportCsv()} accessibilityRole={`button`} accessibilityLabel={`Export All Domains To CSV`}>
-                <Download {...elementProps(`native-portfolio-export-icon`)} size={13} color={`#61716f`} />
+                <Download {...elementProps(`native-portfolio-export-icon`)} size={13} color={palette.muted} />
                 <Text {...elementProps(`native-portfolio-export-text`)} style={styles.secondaryButtonText}>
                   {`Export CSV`}
                 </Text>
               </Pressable>
-              {state.working && <ActivityIndicator {...elementProps(`native-portfolio-file-progress`)} size={`small`} color={`#138b8b`} />}
+              {state.working && <ActivityIndicator {...elementProps(`native-portfolio-file-progress`)} size={`small`} color={palette.accent} />}
             </View>
             <Text {...elementProps(`native-portfolio-csv-hint`)} style={styles.csvHint}>
-              {`CSV columns: domain, registrar, expiry (YYYY-MM-DD), owner, auto_renew, renewal_price, notes. Import merges matching domains.`}
+              {`CSV columns: domain, registrar, expiry, owner, auto_renew, renewal_price, notes. Re-importing a domain updates its saved details.`}
             </Text>
           </>
         )}
       </View>
       <View {...elementProps(`native-portfolio-records`)} style={styles.records}>
-        {state.loading ? [0, 1, 2].map(index => <DomainCard key={index} index={index} loading />) : state.visibleDomains.map(domain => (
-          <DomainCard key={domain.id} domain={domain} onEdit={state.openEditor} onDelete={state.deleteDomain} />
+        {state.loading ? [0, 1, 2].map(index => <DomainCard key={index} index={index} loading />) : state.visibleDomains.map((domain, index) => (
+          <DomainCard
+            key={domain.id}
+            index={index}
+            domain={domain}
+            onSelect={selectDomain}
+            onEdit={state.openEditor}
+            onDelete={state.deleteDomain}
+            selected={selectedIds.includes(domain.id)}
+          />
         ))}
         {!state.loading && !state.visibleDomains.length && (
           <View {...elementProps(`native-portfolio-empty`)} style={styles.empty}>
-            <Globe2 {...elementProps(`native-portfolio-empty-icon`)} size={26} color={`#138b8b`} />
+            <Globe2 {...elementProps(`native-portfolio-empty-icon`)} size={26} color={palette.accent} />
             <Text {...elementProps(`native-portfolio-empty-title`)} style={styles.emptyTitle}>
-              {state.domains.length ? `No matches, yet.` : `Room for your first domain.`}
+              {state.domains.length ? `No matching domains` : `Add your first domain`}
             </Text>
             <Text {...elementProps(`native-portfolio-empty-description`)} style={styles.emptyDescription}>
-              {state.domains.length ? `Try a different search or choose another registrar.` : `Add an address you own or import your portfolio from a CSV file.`}
+              {state.domains.length ? `Try a different search or choose another registrar.` : `Choose GoDaddy, Namecheap, or Hostinger and bring in the domains you own.`}
             </Text>
             <Pressable
               {...elementProps(`native-portfolio-empty-action`)}
               style={styles.secondaryButton}
               accessibilityRole={`button`}
-              accessibilityLabel={state.domains.length ? `Clear Filters` : `Add First Domain`}
+              accessibilityLabel={state.domains.length ? `Clear Filters` : `Add Domain`}
               onPress={() => {
-                if (!state.domains.length) state.openEditor();
+                if (!state.domains.length) state.openSetup();
                 else { state.setSearch(``); state.setRegistrar(`All`); }
               }}
             >
-              {state.domains.length ? <X {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={`#61716f`} /> : <Plus {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={`#61716f`} />}
+              {state.domains.length ? <X {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={palette.muted} /> : <Plus {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={palette.muted} />}
               <Text {...elementProps(`native-portfolio-empty-action-text`)} style={styles.secondaryButtonText}>
-                {state.domains.length ? `Clear filters` : `Add a domain`}
+                {state.domains.length ? `Clear filters` : `Add Domain`}
               </Text>
             </Pressable>
           </View>
@@ -171,18 +238,19 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <Text {...elementProps(`native-portfolio-view-all-text`)} style={styles.textButtonText}>
                 {`View all ${state.filteredDomains.length}`}
               </Text>
-              <ArrowRight {...elementProps(`native-portfolio-view-all-icon`)} size={12} color={`#138b8b`} />
+              <ArrowRight {...elementProps(`native-portfolio-view-all-icon`)} size={12} color={palette.accent} />
             </Pressable>
           </Link>
-        ) : (
+        ) : useSampleData ? (
           <Pressable {...elementProps(`native-portfolio-restore`)} style={[styles.textButton, state.loading && styles.disabled]} disabled={state.loading} accessibilityRole={`button`} accessibilityLabel={`Restore Sample Domains`} onPress={state.resetSamples}>
-            <RotateCcw {...elementProps(`native-portfolio-restore-icon`)} size={11} color={`#138b8b`} />
+            <RotateCcw {...elementProps(`native-portfolio-restore-icon`)} size={11} color={palette.accent} />
             <Text {...elementProps(`native-portfolio-restore-text`)} style={styles.textButtonText}>
               {`Restore samples`}
             </Text>
           </Pressable>
-        )}
+        ) : null}
       </View>
+      {state.setupOpen && <RegistrarSetup onClose={state.closeSetup} />}
       <Modal visible={state.editorOpen} transparent animationType={`fade`} onRequestClose={state.closeEditor}>
         <View {...elementProps(`native-domain-editor-overlay`)} style={[styles.overlay, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
           <KeyboardAvoidingView {...elementProps(`native-domain-editor-keyboard`)} style={styles.keyboard} behavior={Platform.OS === `ios` ? `padding` : `height`}>
@@ -190,14 +258,14 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <View {...elementProps(`native-domain-editor-header`)} style={styles.modalHeader}>
                 <View {...elementProps(`native-domain-editor-heading`)} style={styles.modalHeading}>
                   <Text {...elementProps(`native-domain-editor-eyebrow`)} style={styles.modalEyebrow}>
-                    {`MAKE A LITTLE ROOM`}
+                    {`DOMAIN RECORD`}
                   </Text>
                   <Text {...elementProps(`native-domain-editor-title`)} style={styles.modalTitle}>
-                    {state.editingId ? `Edit your domain.` : `Add an address.`}
+                    {state.editingId ? `Edit domain` : `Add domain`}
                   </Text>
                 </View>
                 <Pressable {...elementProps(`native-domain-editor-close`)} style={styles.modalClose} disabled={state.saving} onPress={state.closeEditor} accessibilityRole={`button`} accessibilityLabel={`Close Domain Editor`}>
-                  <X {...elementProps(`native-domain-editor-close-icon`)} size={17} color={`#61716f`} />
+                  <X {...elementProps(`native-domain-editor-close-icon`)} size={17} color={palette.muted} />
                 </Pressable>
               </View>
               <ScrollView {...elementProps(`native-domain-editor-scroll`)} style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps={`handled`}>
@@ -220,7 +288,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       placeholder={field.placeholder}
                       value={state.input[field.key]}
                       accessibilityLabel={field.label}
-                      placeholderTextColor={`#8a938d`}
+                      placeholderTextColor={palette.placeholder}
                       autoCorrect={field.key === `owner`}
                       autoCapitalize={field.key === `owner` ? `words` : `none`}
                       onChangeText={value => state.updateInput(field.key, value)}
@@ -259,7 +327,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   <Text {...elementProps(`native-domain-editor-price-label`)} style={styles.fieldLabel}>
                     {`Annual renewal price (USD)`}
                   </Text>
-                  <TextInput {...elementProps(`native-domain-editor-price-input`)} style={styles.fieldInput} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={`#8a938d`} keyboardType={`decimal-pad`} accessibilityLabel={`Annual Renewal Price In USD`} />
+                  <TextInput {...elementProps(`native-domain-editor-price-input`)} style={styles.fieldInput} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={palette.placeholder} keyboardType={`decimal-pad`} accessibilityLabel={`Annual Renewal Price In USD`} />
                 </View>
                 <View {...elementProps(`native-domain-editor-auto-renew`)} style={styles.toggle}>
                   <View {...elementProps(`native-domain-editor-auto-renew-copy`)} style={styles.toggleCopy}>
@@ -270,18 +338,18 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       {`Record the setting in your registrar account`}
                     </Text>
                   </View>
-                  <Switch {...elementProps(`native-domain-editor-auto-renew-switch`)} disabled={state.saving} value={state.input.autoRenew} onValueChange={value => state.updateInput(`autoRenew`, value)} trackColor={{ false: `#dce3d9`, true: `#138b8b` }} thumbColor={`#fffefa`} accessibilityLabel={`Auto-Renew Enabled In Registrar Account`} />
+                  <Switch {...elementProps(`native-domain-editor-auto-renew-switch`)} disabled={state.saving} value={state.input.autoRenew} onValueChange={value => state.updateInput(`autoRenew`, value)} trackColor={{ false: palette.line, true: palette.accent }} thumbColor={isDark ? palette.ink : `#ffffff`} ios_backgroundColor={palette.line} accessibilityLabel={`Auto-Renew Enabled In Registrar Account`} />
                 </View>
                 <View {...elementProps(`native-domain-editor-notes-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-notes-label`)} style={styles.fieldLabel}>
                     {`Notes (optional)`}
                   </Text>
-                  <TextInput {...elementProps(`native-domain-editor-notes-input`)} multiline style={[styles.fieldInput, styles.notesInput]} editable={!state.saving} value={state.input.notes} onChangeText={value => state.updateInput(`notes`, value)} placeholder={`What is this domain for?`} placeholderTextColor={`#8a938d`} accessibilityLabel={`Domain Notes`} />
+                  <TextInput {...elementProps(`native-domain-editor-notes-input`)} multiline style={[styles.fieldInput, styles.notesInput]} editable={!state.saving} value={state.input.notes} onChangeText={value => state.updateInput(`notes`, value)} placeholder={`What is this domain for?`} placeholderTextColor={palette.placeholder} accessibilityLabel={`Domain Notes`} />
                 </View>
               </ScrollView>
               <View {...elementProps(`native-domain-editor-footer`)} style={styles.modalFooter}>
                 <Pressable {...elementProps(`native-domain-editor-save`)} style={[styles.primaryButton, state.saving && styles.disabled]} disabled={state.saving} onPress={() => void state.saveDomain()} accessibilityRole={`button`} accessibilityLabel={`Save Domain`}>
-                  {state.saving ? <ActivityIndicator {...elementProps(`native-domain-editor-save-progress`)} size={`small`} color={`#fffefa`} /> : <Save {...elementProps(`native-domain-editor-save-icon`)} size={14} color={`#fffefa`} />}
+                  {state.saving ? <ActivityIndicator {...elementProps(`native-domain-editor-save-progress`)} size={`small`} color={`#ffffff`} /> : <Save {...elementProps(`native-domain-editor-save-icon`)} size={14} color={`#ffffff`} />}
                   <Text {...elementProps(`native-domain-editor-save-text`)} style={styles.primaryButtonText}>
                     {state.saving ? `Saving…` : `Save domain`}
                   </Text>

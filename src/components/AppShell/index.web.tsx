@@ -1,37 +1,82 @@
 import './styles.scss';
 import { Link } from 'expo-router';
 import '../../styles/global.scss';
+import RouterAnchor from '../RouterAnchor';
+import ThemeToggle from '../ThemeToggle';
 import type { PropsWithChildren } from 'react';
-import { ArrowUpRight, ArrowRight } from 'lucide-react';
+import { useTheme } from '../../shared/themeContext/useTheme';
+import { Layers3, Grid2X2, ArrowRight, ArrowUpRight } from 'lucide-react';
 import { useAppShell, navigation, footerLinks } from './useAppShell';
 
 const AppShell = ({ children }: PropsWithChildren) => {
   const { pathname, year } = useAppShell();
+  const { isDark } = useTheme();
 
   return (
     <div id={`app-shell`} className={`app-shell`}>
       <header id={`site-header`} className={`site-header`}>
         <div id={`header-inner`} className={`header-inner`}>
           <Link href={`/`} asChild>
-            <a id={`header-brand`} className={`header-brand`} aria-label={`Domains Database Home`}>
-              <img id={`header-logo`} className={`header-logo`} src={`/brand-logo.svg`} alt={`Domains Database — Every Address In Order`} width={240} height={70} />
-            </a>
+            <RouterAnchor
+              id={`header-brand`}
+              className={`header-brand`}
+              aria-label={`Domains Database Home`}
+            >
+              <img
+                height={70}
+                width={240}
+                id={`header-logo`}
+                src={isDark ? `/brand-logo-dark.svg` : `/brand-logo.svg`}
+                alt={`Domains Database`}
+                className={`header-logo`}
+              />
+            </RouterAnchor>
           </Link>
           <nav id={`header-navigation`} className={`header-navigation`} aria-label={`Main Navigation`}>
             {navigation.map(item => (
               <Link key={item.label} href={item.href} asChild>
-                <a id={`header-link-${item.label.toLowerCase()}`} className={`header-link${pathname === item.href ? ` header-link-active` : ``}`} aria-current={pathname === item.href ? `page` : undefined}>
-                  {item.label}
-                </a>
+                <RouterAnchor
+                  id={`header-link-${item.label.toLowerCase()}`}
+                  className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
+                  aria-current={pathname === item.href ? `page` : undefined}
+                >
+                  {item.href === `/` ? (
+                    <Grid2X2
+                      size={14}
+                      aria-hidden={`true`}
+                      className={`header-link-icon`}
+                      id={`header-link-icon-${item.label.toLowerCase()}`}
+                    />
+                  ) : (
+                    <Layers3
+                      size={14}
+                      aria-hidden={`true`}
+                      className={`header-link-icon`}
+                      id={`header-link-icon-${item.label.toLowerCase()}`}
+                    />
+                  )}
+                  <span
+                    className={`header-link-text`}
+                    id={`header-link-text-${item.label.toLowerCase()}`}
+                  >
+                    {item.label}
+                  </span>
+                </RouterAnchor>
               </Link>
             ))}
           </nav>
-          <Link href={`/domains`} asChild>
-            <a id={`header-portfolio-action`} className={`header-portfolio-action`}>
-              {`Your portfolio`}
-              <ArrowRight id={`header-portfolio-icon`} className={`header-portfolio-icon`} size={16} aria-hidden />
-            </a>
-          </Link>
+          <div id={`header-actions`} className={`header-actions`}>
+            <Link href={`/domains`} asChild>
+              <RouterAnchor
+                id={`header-portfolio-action`}
+                className={`header-portfolio-action`}
+              >
+                {`Your portfolio`}
+                <ArrowRight id={`header-portfolio-icon`} className={`header-portfolio-icon`} size={16} aria-hidden />
+              </RouterAnchor>
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <main id={`main-content`} className={`main-content`}>
@@ -49,9 +94,12 @@ const AppShell = ({ children }: PropsWithChildren) => {
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>
             {footerLinks.map(item => (
               <Link key={item.label} href={item.href} asChild>
-                <a id={`footer-link-${item.label.toLowerCase()}`} className={`footer-link`}>
+                <RouterAnchor
+                  className={`footer-link`}
+                  id={`footer-link-${item.label.toLowerCase()}`}
+                >
                   {item.label}
-                </a>
+                </RouterAnchor>
               </Link>
             ))}
           </nav>

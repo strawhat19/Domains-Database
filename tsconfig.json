@@ -2,8 +2,18 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "lib": ["ESNext", "DOM"],
-    "moduleSuffixes": [".web", ".native", ""]
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
+    "moduleSuffixes": [
+      ".web",
+      ".native",
+      ""
+    ]
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ]
 }

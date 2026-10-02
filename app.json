@@ -4,15 +4,22 @@
     "slug": "domains-database",
     "scheme": "domainsdatabase",
     "version": "1.0.0",
+    "icon": "./assets/icons/app-icon.png",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "plugins": ["expo-router", "expo-font", "expo-document-picker"],
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./public/favicon.svg"
+      "favicon": "./public/favicon.png"
     },
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.piratechs.domainsdatabase" },
-    "android": { "package": "com.piratechs.domainsdatabase" }
+    "android": {
+      "package": "com.piratechs.domainsdatabase",
+      "adaptiveIcon": {
+        "backgroundColor": "#f7f6f2",
+        "foregroundImage": "./assets/icons/adaptive-icon.png"
+      }
+    }
   }
 }

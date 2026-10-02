@@ -1,3 +1,5 @@
+import { useSampleData } from './config';
+
 export type PageName = `about` | `terms` | `contact` | `privacy` | `api`;
 export type PageSection = { title: string; body: string[] };
 export type PageContent = { title: string; eyebrow: string; description: string; sections: PageSection[] };
@@ -9,8 +11,8 @@ export const pageContent: Record<PageName, PageContent> = {
     description: `One place to keep track of the names you own, wherever you registered them.`,
     sections: [
       { title: `Your names, together`, body: [`Domains Database brings your personal domain inventory into one calm, readable view. Keep names, registrars, owners, renewal dates, and yearly costs together. Search your portfolio in seconds and see which renewals deserve attention.`] },
-      { title: `Start with what you know`, body: [`Add a domain by hand or import a CSV from your own records. Hostinger, GoDaddy, GoDaddy Auctions, and Namecheap are available as registrar labels. This first version uses sample data and records you enter; it does not discover or synchronize registrar accounts.`] },
-      { title: `Make it yours`, body: [`Sample domains are fictional and are never a claim of ownership. Add your own records, delete samples, and export a CSV whenever you need a portable copy. Your portfolio stays in this browser or device.`] },
+      { title: `Bring in your domains`, body: [`Choose GoDaddy, Namecheap, or Hostinger in Add Domain. Follow the account instructions, enter your actual domain details or import a registrar CSV, then review and save them. Your records stay in this browser or device; registrar accounts are not automatically synchronized.`] },
+      { title: `Make it yours`, body: [useSampleData ? `Sample domains are fictional. Add your own records and export a CSV whenever you need a portable copy.` : `Your portfolio starts empty. Add your own domains, edit their records, and export a CSV whenever you need a portable copy.`] },
     ],
   },
   privacy: {
@@ -30,7 +32,7 @@ export const pageContent: Record<PageName, PageContent> = {
     description: `These terms describe the current local portfolio MVP.`,
     sections: [
       { title: `An inventory, not a registrar`, body: [`Domains Database helps you organize information you provide. It does not register, renew, transfer, buy, or sell domains. Editing auto-renew here updates your inventory preference only; it does not change the setting in your registrar account.`] },
-      { title: `Keep registrar records authoritative`, body: [`Check your registrar account for actual ownership, expiration dates, pricing, and renewal settings. Status labels in this app are calculated from the dates in your inventory. Sample records are illustrative.`] },
+      { title: `Keep registrar records authoritative`, body: [`Check your registrar account for actual ownership, expiration dates, pricing, and renewal settings. Status labels in this app are calculated from the dates in your inventory.`] },
       { title: `Your responsibility`, body: [`Enter information you are authorized to use and keep your own backups. Browser or device storage can be cleared. This MVP is provided as-is; no guarantee is made that a reminder or renewal will occur.`] },
     ],
   },
@@ -54,7 +56,8 @@ export const pageContent: Record<PageName, PageContent> = {
       { title: `PATCH /api/domains/:id`, body: [`api.updateDomain(id, input) updates an inventory record.`] },
       { title: `DELETE /api/domains/:id`, body: [`api.deleteDomain(id) removes an inventory record.`] },
       { title: `POST /api/domains/import`, body: [`api.importDomains(inputs) imports normalized CSV records into the local inventory.`] },
-      { title: `POST /api/domains/sample`, body: [`api.resetSampleData() replaces the local inventory with the fictional sample portfolio.`] },
+      { title: `POST /api/domains/export`, body: [`api.prepareExport() records the first export time and returns the inventory for CSV creation.`] },
+      ...(useSampleData ? [{ title: `POST /api/domains/sample`, body: [`api.resetSampleData() replaces the local inventory with the fictional sample portfolio.`] }] : []),
     ],
   },
 };

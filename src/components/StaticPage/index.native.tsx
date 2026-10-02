@@ -1,20 +1,24 @@
+import { useMemo } from 'react';
 import { Link } from 'expo-router';
-import { styles } from './styles.native';
 import { ArrowLeft } from 'lucide-react-native';
+import { createStyles } from './styles.native';
 import { pageContent } from '../../shared/pages';
 import { Pressable, Text, View } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
+import { useTheme } from '../../shared/themeContext/useTheme';
 
 type Page = `about` | `terms` | `contact` | `privacy` | `api`;
 
 const StaticPage = ({ page }: { page: Page }) => {
   const content = pageContent[page];
+  const { palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
 
   return (
     <View {...elementProps(`native-static-page`, page)} style={styles.page}>
       <Link href={`/`} asChild>
         <Pressable {...elementProps(`native-static-back`, page)} style={styles.backLink} accessibilityLabel={`Back To Overview`}>
-          <ArrowLeft {...elementProps(`native-static-back-icon`, page)} size={14} color={`#6b7978`} />
+          <ArrowLeft {...elementProps(`native-static-back-icon`, page)} size={14} color={palette.muted} />
           <Text {...elementProps(`native-static-back-text`, page)} style={styles.backText}>
             {`Back to overview`}
           </Text>

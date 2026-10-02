@@ -1,6 +1,6 @@
 import { createSampleDomains } from '../shared/sampleDomains';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared/config';
+import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared/config';
 import { createDomainId, validateDomainInput } from '../shared/domainUtils';
 import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
 
@@ -13,7 +13,7 @@ const serialize = <T,>(operation: () => Promise<T>): Promise<T> => {
   return result;
 };
 
-const copyDomains = (domains: DomainRecord[]) => domains.map(domain => ({ ...domain }));
+const copyDomains = (domains: DomainRecord[]): DomainRecord[] => JSON.parse(JSON.stringify(domains));
 
 const saveSnapshot = async (next: PortfolioSnapshot) => {
   if (useLocalStorage) {
@@ -27,7 +27,11 @@ const saveSnapshot = async (next: PortfolioSnapshot) => {
 };
 
 const readSnapshot = async () => {
-  if (snapshot) return snapshot;
+  if (snapshot) {
+    const domains = useSampleData ? snapshot.domains : snapshot.domains.filter(domain => !domain.isSample);
+    if (domains.length !== snapshot.domains.length) await saveSnapshot({ ...snapshot, domains });
+    return snapshot;
+  }
   let saved: string | null = null;
   if (useLocalStorage) {
     try {
@@ -43,7 +47,8 @@ const readSnapshot = async () => {
       const names = new Set<string>();
       const ids = new Set<string>();
       const numbers = new Set<number>();
-      const domains = parsed.domains.map(domain => {
+      const storedDomains = useSampleData ? parsed.domains : parsed.domains.filter(domain => !domain?.isSample);
+      const domains = storedDomains.map(domain => {
         const input = validateDomainInput(domain);
         if (!domain?.id || !Number.isInteger(domain?.number) || domain.number < 1 || ids.has(domain.id) || numbers.has(domain.number) || names.has(input.name)) throw new Error();
         ids.add(domain.id);
@@ -51,13 +56,15 @@ const readSnapshot = async () => {
         names.add(input.name);
         return { ...input, id: domain.id, number: domain.number, isSample: domain.isSample === true };
       });
-      snapshot = { version: 1, domains, nextNumber: Math.max(parsed.nextNumber, ...domains.map(domain => domain.number + 1), 1) };
+      const restored: PortfolioSnapshot = { version: 1, domains, nextNumber: Math.max(parsed.nextNumber, ...domains.map(domain => domain.number + 1), 1) };
+      if (storedDomains.length !== parsed.domains.length) await saveSnapshot(restored);
+      else snapshot = restored;
       return snapshot;
     } catch {
       throw new Error(`Saved Portfolio Data Could Not Be Read`);
     }
   }
-  const domains = createSampleDomains();
+  const domains = useSampleData ? createSampleDomains() : [];
   const initial: PortfolioSnapshot = { version: 1, domains, nextNumber: domains.length + 1 };
   await saveSnapshot(initial);
   return initial;
@@ -72,7 +79,8 @@ export const API_ROUTES = [
   `/api/domains`,
   `/api/domains/:id`,
   `/api/domains/import`,
-  `/api/domains/sample`,
+  `/api/domains/export`,
+  ...(useSampleData ? [`/api/domains/sample`] : []),
 ];
 
 export const api = {
@@ -84,9 +92,19 @@ export const api = {
     routes: [...API_ROUTES],
     datetime: new Date().toISOString(),
     mode: useLocalStorage ? `Device Storage` : `Session Storage`,
-    message: `Local Demo API Ready`,
+    message: `Local Portfolio API Ready`,
   }),
   getDomains: () => serialize(async () => copyDomains((await readSnapshot()).domains)),
+  prepareExport: () => serialize(async () => {
+    const current = await readSnapshot();
+    const exportedAt = new Date().toISOString();
+    const domains = current.domains.map(domain => ({
+      ...domain,
+      firstExportedAt: domain.firstExportedAt ?? exportedAt,
+    }));
+    if (current.domains.some(domain => !domain.firstExportedAt)) await saveSnapshot({ ...current, domains });
+    return copyDomains(domains);
+  }),
   createDomain: (input: DomainInput) => serialize(async () => {
     const current = await readSnapshot();
     const validated = validateDomainInput(input);
@@ -100,9 +118,15 @@ export const api = {
     const current = await readSnapshot();
     const original = current.domains.find(domain => domain.id === id);
     if (!original) throw new Error(`Domain Could Not Be Found`);
-    const validated = validateDomainInput(input);
+    const validated = validateDomainInput({ ...original, ...input, meta: { ...original.meta, ...input.meta } });
     assertUnique(validated.name, current.domains, id);
-    const domain: DomainRecord = { ...validated, id, number: original.number };
+    const domain: DomainRecord = {
+      ...validated,
+      id,
+      number: original.number,
+      firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt,
+      firstExportedAt: original.firstExportedAt ?? validated.firstExportedAt,
+    };
     await saveSnapshot({ ...current, domains: current.domains.map(record => record.id === id ? domain : record) });
     return { ...domain };
   }),
@@ -115,13 +139,39 @@ export const api = {
     if (!inputs?.length) throw new Error(`No Domain(s) Found In The File`);
     const current = await readSnapshot();
     const domains = copyDomains(current.domains);
+    const importedNames = new Set<string>();
+    const importedAt = new Date().toISOString();
     let nextNumber = current.nextNumber;
     inputs.forEach((input, index) => {
       try {
         const validated = validateDomainInput(input);
-        assertUnique(validated.name, domains);
-        domains.push({ ...validated, number: nextNumber, id: createDomainId(nextNumber, validated.name) });
-        nextNumber += 1;
+        if (importedNames.has(validated.name)) throw new Error(`${validated.name} Appears More Than Once In The Import`);
+        importedNames.add(validated.name);
+        const existingIndex = domains.findIndex(domain => domain.name.toLowerCase() === validated.name);
+        if (existingIndex >= 0) {
+          const original = domains[existingIndex];
+          domains[existingIndex] = {
+            ...original,
+            ...validated,
+            id: original.id,
+            number: original.number,
+            notes: validated.notes || original.notes,
+            registrar: validated.registrar || original.registrar,
+            expiresAt: validated.expiresAt || original.expiresAt,
+            owner: validated.owner === `My Portfolio` ? original.owner : validated.owner,
+            meta: { ...original.meta, ...validated.meta },
+            firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt ?? importedAt,
+            firstExportedAt: original.firstExportedAt ?? validated.firstExportedAt,
+          };
+        } else {
+          domains.push({
+            ...validated,
+            number: nextNumber,
+            id: createDomainId(nextNumber, validated.name),
+            firstImportedAt: validated.firstImportedAt ?? importedAt,
+          });
+          nextNumber += 1;
+        }
       } catch (error) {
         throw new Error(`Row ${index + 2}: ${error instanceof Error ? error.message : `Invalid Domain`}`);
       }
@@ -130,6 +180,7 @@ export const api = {
     return inputs.length;
   }),
   resetSampleData: () => serialize(async () => {
+    if (!useSampleData) throw new Error(`Sample Data Is Disabled`);
     const current = await readSnapshot();
     const domains = createSampleDomains().map((domain, index) => {
       const number = current.nextNumber + index;

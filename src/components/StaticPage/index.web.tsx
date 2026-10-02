@@ -1,5 +1,6 @@
 import './styles.scss';
 import { Link } from 'expo-router';
+import RouterAnchor from '../RouterAnchor';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { pageContent, type PageName } from '../../shared/pages';
 
@@ -9,10 +10,13 @@ const StaticPage = ({ page }: { page: PageName }) => {
   return (
     <article id={`${page}-page`} className={`static-page`}>
       <Link href={`/`} asChild>
-        <a id={`${page}-back`} className={`static-page-back`}>
+        <RouterAnchor
+          id={`${page}-back`}
+          className={`static-page-back`}
+        >
           <ArrowLeft id={`${page}-back-icon`} className={`static-page-back-icon`} size={14} aria-hidden />
           {`Back to overview`}
-        </a>
+        </RouterAnchor>
       </Link>
       <p id={`${page}-eyebrow`} className={`static-page-eyebrow`}>
         {content.eyebrow}

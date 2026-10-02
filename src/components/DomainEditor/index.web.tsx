@@ -96,6 +96,9 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                 className={`domain-editor-input domain-editor-select`}
                 onChange={event => setField(`registrar`, event.target.value as typeof input.registrar)}
               >
+                <option value={``} id={`domain-registrar-option-unknown`} className={`domain-registrar-option`}>
+                  {`Unknown`}
+                </option>
                 {REGISTRARS.map(registrar => (
                   <option
                     key={registrar}
@@ -113,7 +116,6 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                 {`Renewal date`}
               </label>
               <input
-                required
                 type={`date`}
                 value={input.expiresAt}
                 id={`domain-expiry-input`}

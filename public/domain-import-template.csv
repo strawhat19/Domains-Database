@@ -1,2 +1,1 @@
-domain,owner,registrar,expiresAt,autoRenew,renewalPrice,notes
-example.com,Your Name,Namecheap,2027-10-01,true,14.98,Replace With Your Domain
+domain,registrar,expiry,owner,auto_renew,renewal_price,notes,provider_id,international_name,tld,status,created_at,updated_at,ownership_at,first_imported_at,first_exported_at,locked,privacy,dnssec,nameservers,currency,registrant_name,registrant_email,registrant_organization,registrant_country,meta

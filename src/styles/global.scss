@@ -1,14 +1,87 @@
 :root {
+  color-scheme: light;
   --ink: #133b50;
   --paper: #ffffff;
-  --muted: #7b8586;
-  --line: #e3e6df;
+  --muted: #61717b;
+  --line: #d8e0e3;
   --accent: #138b8b;
-  --canvas: #f7f6f2;
+  --canvas: #f1f3f3;
+  --input: #f7f9f9;
+  --subtle: #edf8f7;
+  --placeholder: #9ba4a2;
+  --skeleton: #edf1f3;
+  --skeleton-highlight: #f8fafa;
+  --success: #187565;
+  --success-bg: #e9f4ee;
+  --warning: #a65d31;
+  --warning-bg: #f7f3e8;
+  --danger: #a35047;
+  --danger-bg: #fbebe6;
+  --strong: #133b50;
+  --strong-text: #ffffff;
+  --contrast: #ffffff;
+  --accent-hover: #107474;
+  --line-strong: #9cb8c2;
+  --danger-button: #a8564e;
+  --danger-button-text: #ffffff;
+  --danger-button-hover: #96433b;
+  --selection: #bcece7;
+  --overlay: rgba(13, 39, 51, .35);
+  --shadow: rgba(13, 39, 51, .18);
+  --focus-ring: rgba(19, 139, 139, .1);
+  --registrar-hostinger: #7356a1;
+  --registrar-hostinger-bg: #f0eafb;
+  --registrar-namecheap: #bc6944;
+  --registrar-namecheap-bg: #fff0e6;
+  --registrar-godaddy: #387b74;
+  --registrar-godaddy-bg: #e7f4ee;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-bold: 'DMSans_700Bold', 'DM Sans', sans-serif;
   --font-body: 'DMSans_400Regular', 'DM Sans', sans-serif;
-  --font-display: 'InstrumentSerif_400Regular', Georgia, serif;
+  --font-display: 'DMSans_700Bold', 'DM Sans', sans-serif;
 }
-* { box-sizing: border-box; }
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ink: #e0edf4;
+  --paper: #14232d;
+  --muted: #a1b3bd;
+  --line: #2c414f;
+  --accent: #5acfc6;
+  --canvas: #0c1821;
+  --input: #10202b;
+  --subtle: #1b343d;
+  --placeholder: #849aa7;
+  --skeleton: #2b414e;
+  --skeleton-highlight: #354f5d;
+  --success: #71d9b7;
+  --success-bg: #153931;
+  --warning: #e7b987;
+  --warning-bg: #3a2d22;
+  --danger: #ff9f96;
+  --danger-bg: #3d2529;
+  --contrast: #082d2e;
+  --accent-hover: #77ded6;
+  --line-strong: #496676;
+  --danger-button: #ff9f96;
+  --danger-button-text: #3d2529;
+  --danger-button-hover: #ffb4ad;
+  --selection: #24535b;
+  --overlay: rgba(0, 0, 0, .6);
+  --shadow: rgba(0, 0, 0, .35);
+  --focus-ring: rgba(90, 207, 198, .15);
+  --registrar-hostinger: #c1a3ed;
+  --registrar-hostinger-bg: #302743;
+  --registrar-namecheap: #edb194;
+  --registrar-namecheap-bg: #3b2b22;
+  --registrar-godaddy: #8bd0c3;
+  --registrar-godaddy-bg: #183932;
+}
+
+* {
+  box-sizing: border-box;
+  transition: color .22s ease, background-color .22s ease, border-color .22s ease;
+}
 html { min-height: 100%; background: var(--canvas); scroll-behavior: smooth; }
 body { margin: 0; color: var(--ink); background: var(--canvas); font-family: var(--font-body); font-size: 14px; -webkit-font-smoothing: antialiased; }
 #root { min-height: 100%; }
@@ -18,7 +91,7 @@ button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .55; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-::selection { color: var(--ink); background: #bde6de; }
+::selection { color: var(--ink); background: var(--selection); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }

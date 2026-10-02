@@ -1,19 +1,82 @@
-.landing-hero { display: grid; grid-template-columns: 1.45fr 1fr; align-items: center; gap: 72px; padding: 48px 0 46px; }
-.hero-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 19px; color: #6f807c; font-size: 9px; letter-spacing: 2.1px; }
-.hero-eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
-.hero-title { margin: 0; font-family: var(--font-display); font-size: clamp(56px, 5.7vw, 76px); font-weight: 400; letter-spacing: -2.5px; line-height: 1.01; }
-.hero-title-accent { color: var(--accent); font-family: 'InstrumentSerif_400Regular_Italic', Georgia, serif; font-style: normal; }
-.hero-aside { justify-self: end; max-width: 330px; padding-top: 18px; }
-.hero-index { display: block; color: #a0aaa3; font-size: 8px; letter-spacing: 2px; margin-bottom: 18px; }
-.hero-description { margin: 0; color: #677876; font-size: 14px; line-height: 1.85; }
-.hero-promise { display: flex; align-items: center; gap: 10px; margin-top: 27px; font-size: 10px; color: var(--accent); }
-.hero-promise-arrow { margin-left: auto; color: var(--ink); }
+.landing-hero {
+  gap: 56px;
+  display: grid;
+  padding: 56px 0 54px;
+  align-items: center;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+}
+
+.hero-eyebrow {
+  gap: 10px;
+  display: flex;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 0 0 22px;
+  align-items: center;
+  letter-spacing: .12em;
+  font-family: var(--font-mono);
+}
+
+.hero-eyebrow-marker {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+}
+
+.hero-title {
+  margin: 0;
+  line-height: .98;
+  font-weight: 700;
+  letter-spacing: -.065em;
+  font-family: var(--font-bold);
+  font-size: clamp(54px, 5.6vw, 82px);
+}
+
+.hero-title-accent { color: var(--accent); }
+
+.hero-description {
+  margin: 25px 0 0;
+  max-width: 380px;
+  line-height: 1.75;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.hero-portfolio-link {
+  gap: 18px;
+  margin-top: 22px;
+  display: inline-flex;
+  padding-bottom: 8px;
+  align-items: center;
+  font-size: 12px;
+  font-family: var(--font-bold);
+  border-bottom: 1px solid var(--ink);
+  transition: color .24s ease, border-color .24s ease;
+
+  &:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+
+    .hero-portfolio-icon { transform: translate(2px, -2px); }
+  }
+}
+
+.hero-portfolio-icon { transition: transform .24s ease; }
+
+@media (max-width: 1000px) {
+  .landing-hero { gap: 30px; }
+  .hero-title { font-size: clamp(49px, 6.7vw, 72px); }
+}
 
 @media (max-width: 760px) {
-  .landing-hero { gap: 24px; padding: 35px 0; grid-template-columns: 1fr; }
-  .hero-title { font-size: 61px; }
-  .hero-aside { max-width: 450px; justify-self: start; padding-top: 0; }
-  .hero-index { display: none; }
-  .hero-description { font-size: 12px; }
-  .hero-promise { margin-top: 15px; }
+  .landing-hero {
+    gap: 30px;
+    padding: 36px 0;
+    grid-template-columns: 1fr;
+  }
+
+  .hero-title { font-size: clamp(46px, 10vw, 70px); }
+  .hero-eyebrow { margin-bottom: 18px; font-size: 9px; }
+  .hero-description { max-width: 420px; margin-top: 20px; }
+  .hero-portfolio-link { margin-top: 18px; }
 }
