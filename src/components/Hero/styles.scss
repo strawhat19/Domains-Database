@@ -1,0 +1,19 @@
+.landing-hero { display: grid; grid-template-columns: 1.45fr 1fr; align-items: center; gap: 72px; padding: 48px 0 46px; }
+.hero-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0 0 19px; color: #6f807c; font-size: 9px; letter-spacing: 2.1px; }
+.hero-eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.hero-title { margin: 0; font-family: var(--font-display); font-size: clamp(56px, 5.7vw, 76px); font-weight: 400; letter-spacing: -2.5px; line-height: 1.01; }
+.hero-title-accent { color: var(--accent); font-family: 'InstrumentSerif_400Regular_Italic', Georgia, serif; font-style: normal; }
+.hero-aside { justify-self: end; max-width: 330px; padding-top: 18px; }
+.hero-index { display: block; color: #a0aaa3; font-size: 8px; letter-spacing: 2px; margin-bottom: 18px; }
+.hero-description { margin: 0; color: #677876; font-size: 14px; line-height: 1.85; }
+.hero-promise { display: flex; align-items: center; gap: 10px; margin-top: 27px; font-size: 10px; color: var(--accent); }
+.hero-promise-arrow { margin-left: auto; color: var(--ink); }
+
+@media (max-width: 760px) {
+  .landing-hero { gap: 24px; padding: 35px 0; grid-template-columns: 1fr; }
+  .hero-title { font-size: 61px; }
+  .hero-aside { max-width: 450px; justify-self: start; padding-top: 0; }
+  .hero-index { display: none; }
+  .hero-description { font-size: 12px; }
+  .hero-promise { margin-top: 15px; }
+}

@@ -1,0 +1,133 @@
+.domain-dialog-backdrop {
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  padding: 24px;
+  position: fixed;
+  overflow-y: auto;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(7px);
+  background: rgba(13, 39, 51, .35);
+  animation: domain-dialog-reveal .18s ease both;
+}
+.domain-dialog {
+  width: 100%;
+  padding: 28px;
+  max-width: 570px;
+  color: var(--ink);
+  border-radius: 20px;
+  background: var(--paper);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  box-shadow: 0 22px 100px rgba(13, 39, 51, .18);
+  animation: domain-dialog-enter .25s cubic-bezier(.2, .8, .2, 1) both;
+}
+.domain-dialog-header {
+  gap: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.domain-dialog-eyebrow {
+  font-size: 10px;
+  letter-spacing: .15em;
+  color: var(--accent);
+}
+.domain-dialog-title {
+  margin: 7px 0 0;
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1.08;
+  font-family: var(--font-display);
+}
+.domain-dialog-close {
+  border: 0;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: grid;
+  cursor: pointer;
+  color: var(--muted);
+  border-radius: 50%;
+  place-items: center;
+  background: var(--canvas);
+  transition: background .2s ease, color .2s ease, transform .2s ease;
+  &:hover { color: var(--ink); background: #e9eeea; transform: rotate(6deg); }
+}
+.domain-dialog-description {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 14px 0 25px;
+  color: var(--muted);
+}
+.domain-editor-fields {
+  gap: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.domain-editor-field {
+  gap: 8px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.domain-editor-field-full { grid-column: 1 / -1; }
+.domain-editor-label { font-size: 12px; color: var(--ink); }
+.domain-editor-input {
+  width: 100%;
+  min-height: 43px;
+  font-size: 13px;
+  padding: 11px 12px;
+  color: var(--ink);
+  border-radius: 8px;
+  background: #fcfcfa;
+  font-family: var(--font-body);
+  border: 1px solid var(--line);
+  transition: border-color .2s ease, box-shadow .2s ease;
+  &::placeholder { color: #9ba4a2; }
+  &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(19, 139, 139, .1); }
+}
+.domain-editor-select { cursor: pointer; }
+.domain-editor-price-wrap { position: relative; }
+.domain-editor-price-prefix { top: 13px; left: 13px; font-size: 13px; position: absolute; color: var(--muted); }
+.domain-editor-price-input { padding-left: 27px; }
+.domain-editor-notes { resize: vertical; min-height: 76px; }
+.domain-editor-renew-field { justify-content: flex-end; }
+.domain-editor-renew-label {
+  gap: 10px;
+  display: flex;
+  cursor: pointer;
+  min-height: 43px;
+  align-items: center;
+}
+.domain-editor-renew-checkbox { width: 17px; height: 17px; cursor: pointer; accent-color: var(--accent); }
+.domain-editor-renew-copy { gap: 4px; display: flex; flex-direction: column; }
+.domain-editor-renew-title { font-size: 12px; }
+.domain-editor-renew-help { font-size: 10px; line-height: 1.5; color: var(--muted); }
+.domain-dialog-error { font-size: 12px; color: #ad4a44; line-height: 1.5; margin: 16px 0 0; }
+.domain-dialog-footer {
+  gap: 15px;
+  display: flex;
+  margin-top: 24px;
+  padding-top: 20px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+}
+.domain-dialog-storage-note { gap: 5px; display: flex; font-size: 10px; color: var(--muted); align-items: center; }
+.domain-dialog-actions { gap: 8px; display: flex; align-items: center; }
+@keyframes domain-dialog-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes domain-dialog-enter { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 560px) {
+  .domain-dialog-backdrop { padding: 16px; align-items: flex-start; }
+  .domain-dialog { margin-top: 35px; padding: 24px 20px; max-height: calc(100dvh - 82px); }
+  .domain-editor-fields { gap: 16px; grid-template-columns: 1fr; }
+  .domain-dialog-footer { gap: 12px; align-items: flex-start; flex-direction: column-reverse; }
+  .domain-dialog-actions { width: 100%; justify-content: flex-end; }
+  .domain-dialog-storage-note { align-self: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .domain-dialog, .domain-dialog-backdrop { animation: none; }
+  .domain-dialog-close, .domain-editor-input { transition: none; }
+}

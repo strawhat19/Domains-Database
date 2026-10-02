@@ -1,0 +1,38 @@
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.site-header { border-bottom: 1px solid var(--line); }
+.header-inner { max-width: 1220px; min-height: 92px; margin: 0 auto; padding: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.header-brand { display: flex; width: 240px; align-items: center; }
+.header-logo { width: 240px; height: 70px; object-fit: contain; }
+.header-navigation { display: flex; align-items: center; gap: 34px; margin-left: auto; }
+.header-link { color: var(--muted); padding: 14px 0; font-size: 13px; transition: color .22s ease; }
+.header-link:hover, .header-link-active { color: var(--ink); }
+.header-link-active { position: relative; }
+.header-link-active::after { content: ''; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+.header-portfolio-action { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 13px 19px; border: 1px solid #cdd5cf; border-radius: 7px; font-size: 12px; transition: background .22s ease, border-color .22s ease; }
+.header-portfolio-action:hover { background: #eeefea; border-color: var(--accent); }
+.main-content { flex: 1; width: 100%; max-width: 1220px; margin: 0 auto; padding-bottom: 36px; }
+.site-footer { margin-top: 30px; border-top: 1px solid var(--line); }
+.footer-inner { max-width: 1220px; min-height: 82px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.footer-copyright { margin: 0; color: var(--muted); font-size: 11px; }
+.footer-piratechs { display: inline-flex; align-items: center; gap: 2px; color: var(--ink); }
+.footer-navigation { display: flex; align-items: center; gap: 24px; }
+.footer-link { font-size: 11px; color: var(--muted); transition: color .2s ease; }
+.footer-link:hover { color: var(--ink); }
+
+@media (max-width: 1320px) {
+  .header-inner, .main-content, .footer-inner { width: calc(100% - 96px); }
+}
+@media (max-width: 760px) {
+  .header-inner, .main-content, .footer-inner { width: calc(100% - 40px); }
+  .header-inner { min-height: 80px; gap: 14px; }
+  .header-brand, .header-logo { width: 185px; }
+  .header-navigation { gap: 18px; }
+  .header-portfolio-action { display: none; }
+  .footer-inner { flex-direction: column; align-items: flex-start; justify-content: center; padding: 26px 0; gap: 18px; }
+}
+@media (max-width: 420px) {
+  .header-inner, .main-content, .footer-inner { width: calc(100% - 28px); }
+  .header-brand, .header-logo { width: 162px; }
+  .header-navigation { gap: 14px; }
+  .header-link { font-size: 11px; }
+}

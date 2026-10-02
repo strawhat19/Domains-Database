@@ -1,0 +1,28 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  shell: { flex: 1, backgroundColor: `#f7f6f2` },
+  scroll: { flex: 1 },
+  content: { flexGrow: 1 },
+  main: { width: `100%`, maxWidth: 1100, alignSelf: `center` },
+  header: { gap: 14, paddingBottom: 18, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: `#e5e7e1` },
+  headerRow: { gap: 20, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
+  logo: { width: 194, height: 58 },
+  deviceBadge: { gap: 6, padding: 9, borderRadius: 30, flexDirection: `row`, alignItems: `center`, backgroundColor: `#e8eeea` },
+  deviceBadgeText: { color: `#48615d`, fontSize: 10, fontFamily: `DMSans_600SemiBold` },
+  navigation: { gap: 6, flexDirection: `row` },
+  navigationLink: { gap: 7, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 24, flexDirection: `row`, alignItems: `center` },
+  navigationLinkActive: { backgroundColor: `#133b50` },
+  navigationText: { color: `#6b7978`, fontSize: 12, fontFamily: `DMSans_500Medium` },
+  navigationTextActive: { color: `#ffffff` },
+  footer: { gap: 22, marginTop: 30, paddingTop: 24, paddingHorizontal: 24, borderTopWidth: 1, borderTopColor: `#e0e4dc` },
+  footerTop: { gap: 16, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
+  footerLabel: { color: `#133b50`, fontSize: 13, fontFamily: `DMSans_600SemiBold` },
+  footerDevice: { gap: 6, flexDirection: `row`, alignItems: `center` },
+  footerDeviceText: { color: `#6b7978`, fontSize: 10, fontFamily: `DMSans_500Medium` },
+  footerLinks: { gap: 18, flexWrap: `wrap`, flexDirection: `row` },
+  footerLink: { paddingVertical: 4 },
+  footerLinkText: { color: `#61716f`, fontSize: 12, fontFamily: `DMSans_400Regular` },
+  copyright: { color: `#88918c`, fontSize: 11, lineHeight: 18, fontFamily: `DMSans_400Regular` },
+  piratechsLink: { color: `#138b8b`, fontFamily: `DMSans_500Medium` },
+});

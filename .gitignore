@@ -1,0 +1,8 @@
+.env
+dist/
+.expo/
+.env.*
+web-build/
+node_modules/
+expo-env.d.ts
+!.env.example

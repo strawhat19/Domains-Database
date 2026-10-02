@@ -1,0 +1,9 @@
+<svg id="domains-favicon" class="domains-favicon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect id="favicon-background" class="favicon-background" width="64" height="64" rx="15" fill="#f7f6f2" />
+  <path id="favicon-top-record" class="favicon-record" d="M11 14h35l7 7v5H11Z" fill="#133b50" />
+  <path id="favicon-middle-record" class="favicon-record" d="M11 29h35l7 7v5H11Z" fill="#133b50" />
+  <path id="favicon-bottom-record" class="favicon-record" d="M11 44h35l7 7v5H11Z" fill="#133b50" />
+  <circle id="favicon-top-dot" class="favicon-dot" cx="43" cy="20" r="3" fill="#19aeab" />
+  <circle id="favicon-middle-dot" class="favicon-dot" cx="43" cy="35" r="3" fill="#19aeab" />
+  <circle id="favicon-bottom-dot" class="favicon-dot" cx="43" cy="50" r="3" fill="#19aeab" />
+</svg>

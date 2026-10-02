@@ -1,0 +1,43 @@
+{
+  "name": "domains-database",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
+    "ios": "expo start --ios",
+    "android": "expo start --android",
+    "export:web": "expo export --platform web"
+  },
+  "dependencies": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "expo": "~57.0.26",
+    "expo-font": "~57.0.4",
+    "expo-image": "~57.0.5",
+    "expo-router": "~57.0.24",
+    "expo-linking": "~57.0.0",
+    "expo-sharing": "~57.0.22",
+    "expo-constants": "~57.0.0",
+    "react-native": "0.86.3",
+    "lucide-react": "^1.49.0",
+    "expo-status-bar": "~57.0.1",
+    "expo-file-system": "~57.0.7",
+    "react-native-web": "~0.21.0",
+    "react-native-svg": "15.15.4",
+    "lucide-react-native": "^1.49.0",
+    "react-native-screens": "~4.26.0",
+    "expo-document-picker": "~57.0.3",
+    "@expo-google-fonts/dm-sans": "^0.4.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "@expo-google-fonts/instrument-serif": "^0.4.1",
+    "@react-native-async-storage/async-storage": "2.2.0"
+  },
+  "devDependencies": {
+    "sass": "^1.93.0",
+    "typescript": "~5.9.2",
+    "@types/react": "~19.2.2"
+  }
+}

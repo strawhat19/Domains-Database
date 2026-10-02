@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Domains Database",
+    "slug": "domains-database",
+    "scheme": "domainsdatabase",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router", "expo-font", "expo-document-picker"],
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./public/favicon.svg"
+    },
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.piratechs.domainsdatabase" },
+    "android": { "package": "com.piratechs.domainsdatabase" }
+  }
+}

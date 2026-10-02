@@ -1,0 +1,134 @@
+.domain-portfolio {
+  width: 100%;
+  color: var(--ink);
+  margin: 0 auto;
+  font-family: var(--font-body);
+  :is(button, a, input, select, textarea):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+.portfolio-heading-row {
+  gap: 20px;
+  display: flex;
+  margin-bottom: 20px;
+  align-items: center;
+  justify-content: space-between;
+}
+.portfolio-title { margin: 0; font-size: 31px; font-weight: 400; letter-spacing: -.025em; font-family: var(--font-display); }
+.portfolio-summary { gap: 8px; display: flex; flex-wrap: wrap; margin-top: 9px; color: var(--muted); align-items: center; }
+.portfolio-summary-item { gap: 4px; display: inline-flex; font-size: 10px; align-items: center; }
+.portfolio-summary-value { color: var(--ink); }
+.portfolio-summary-separator { font-size: 12px; color: #b7c0bb; }
+.portfolio-summary-attention { color: #a76b55; }
+.portfolio-attention-dot { width: 4px; height: 4px; margin-right: 2px; border-radius: 50%; background: currentColor; }
+.portfolio-primary-actions { gap: 8px; display: flex; align-items: center; }
+.portfolio-button {
+  gap: 7px;
+  display: inline-flex;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 11px 15px;
+  border-radius: 7px;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  border: 1px solid transparent;
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+  &:active { transform: translateY(1px); }
+  &:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  &-primary { color: #fff; background: var(--ink); border-color: var(--ink); }
+  &-primary:hover:not(:disabled) { background: #21536a; border-color: #21536a; }
+  &-secondary { color: #657a7c; background: transparent; border-color: var(--line); }
+  &-secondary:hover:not(:disabled) { color: var(--ink); border-color: #b7c9c1; background: #f2f6ef; }
+  &-danger { color: #fff; background: #a8564e; border-color: #a8564e; }
+  &-danger:hover:not(:disabled) { background: #96433b; border-color: #96433b; }
+  &-quiet { color: #768984; padding: 5px 7px; font-size: 10px; background: transparent; }
+  &-quiet:hover:not(:disabled) { color: var(--ink); background: #eef3ed; }
+}
+.portfolio-card { overflow: hidden; border-radius: 14px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 10px 40px rgba(34, 65, 45, .025); }
+.portfolio-toolbar { gap: 16px; display: flex; min-height: 64px; padding: 13px 22px; align-items: center; }
+.portfolio-search-wrap { gap: 9px; flex: 1; display: flex; min-width: 0; max-width: 310px; align-items: center; }
+.portfolio-search-icon { flex-shrink: 0; color: #92a39b; }
+.portfolio-search { border: 0; padding: 7px 0; width: 100%; font-size: 12px; color: var(--ink); background: transparent; font-family: var(--font-body); }
+.portfolio-search::placeholder { color: #92a098; }
+.portfolio-search:focus { outline: none; }
+.portfolio-registrar-filter-wrap { width: 168px; position: relative; }
+.portfolio-registrar-filter {
+  width: 100%;
+  appearance: none;
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 8px 27px 8px 12px;
+  color: #6e827c;
+  background: #fff;
+  font-family: var(--font-body);
+  border: 1px solid #e9eee5;
+  transition: border-color .2s ease, background .2s ease;
+  &:hover { background: #f9fbf6; border-color: #cdd9cf; }
+}
+.portfolio-registrar-filter-icon { top: 10px; right: 10px; position: absolute; pointer-events: none; color: #8ca097; }
+.portfolio-toolbar-meta { display: flex; margin-left: auto; align-items: center; }
+.portfolio-sample-label { gap: 5px; display: flex; padding: 5px 8px; font-size: 9px; border-radius: 5px; color: #9a9179; background: #f6f3eb; align-items: center; white-space: nowrap; }
+.portfolio-table-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #c9d6ca transparent; }
+.portfolio-table { width: 100%; border-spacing: 0; border-collapse: collapse; }
+.portfolio-table-head { background: #f8faf5; }
+.portfolio-table-heading { padding: 11px 22px; text-align: left; font-weight: 400; white-space: nowrap; border-top: 1px solid #edf0e9; }
+.portfolio-table-heading-name { width: 30%; }
+.portfolio-table-heading-registrar { width: 19%; }
+.portfolio-table-heading-expiresAt { width: 18%; }
+.portfolio-table-heading-autoRenew { width: 12%; }
+.portfolio-table-heading-renewalPrice { width: 13%; text-align: right; }
+.portfolio-table-heading-actions { width: 8%; }
+.portfolio-sort-button { border: 0; gap: 6px; display: flex; padding: 0; cursor: pointer; font-size: 9px; letter-spacing: .04em; color: #89988f; align-items: center; background: transparent; font-family: var(--font-body); }
+.portfolio-table-heading-renewalPrice .portfolio-sort-button { margin-left: auto; }
+.portfolio-sort-icon { opacity: .35; transition: opacity .2s ease; }
+.portfolio-sort-icon-active, .portfolio-sort-button:hover .portfolio-sort-icon { opacity: 1; }
+.portfolio-sort-icon-active { color: #6f8e7e; }
+.portfolio-card-footer { gap: 12px; display: flex; min-height: 47px; padding: 10px 17px 10px 22px; align-items: center; justify-content: space-between; border-top: 1px solid #edf0e9; background: #fcfdfb; }
+.portfolio-storage-meta { gap: 6px; display: flex; font-size: 9px; color: #93a196; align-items: center; }
+.portfolio-storage-icon { color: #87a18b; }
+.portfolio-count-separator { margin: 0 3px; }
+.portfolio-secondary-actions { gap: 7px; display: flex; align-items: center; }
+.portfolio-view-all { gap: 6px; display: flex; margin-top: 14px; font-size: 10px; color: #68887e; align-items: center; justify-content: flex-end; text-decoration: none; transition: color .2s ease; }
+.portfolio-view-all-icon { transition: transform .2s ease; }
+.portfolio-view-all:hover { color: var(--ink); .portfolio-view-all-icon { transform: translateX(3px); } }
+.portfolio-message { gap: 10px; display: flex; padding: 10px 14px; font-size: 12px; margin-bottom: 14px; border-radius: 8px; align-items: center; justify-content: space-between; }
+.portfolio-message-text { margin: 0; line-height: 1.5; }
+.portfolio-message-success { color: #43775b; background: #eaf3e9; }
+.portfolio-message-error { color: #9b5147; background: #fbebe6; }
+.portfolio-message-dismiss { border: 0; padding: 3px; display: grid; cursor: pointer; color: inherit; place-items: center; background: transparent; }
+.portfolio-empty-cell { padding: 35px 20px; border-top: 1px solid #edf0e9; }
+.portfolio-empty-content { display: flex; min-height: 173px; align-items: center; flex-direction: column; justify-content: center; }
+.portfolio-empty-icon { color: #97aaa0; }
+.portfolio-empty-title { margin: 12px 0 0; font-size: 25px; font-weight: 400; font-family: var(--font-display); }
+.portfolio-empty-description { margin: 9px 0 18px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; }
+.portfolio-sr-only { border: 0; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; position: absolute; white-space: nowrap; clip: rect(0, 0, 0, 0); }
+.domain-delete-dialog { max-width: 460px; }
+.domain-delete-name { margin: 24px 0 0; font-size: 16px; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.domain-delete-footer { justify-content: flex-end; }
+@media (max-width: 1050px) {
+  .portfolio-table { min-width: 860px; }
+  .portfolio-table-heading { padding-left: 16px; padding-right: 16px; }
+}
+@media (max-width: 720px) {
+  .portfolio-title { font-size: 29px; }
+  .portfolio-heading-row { gap: 17px; align-items: flex-start; flex-direction: column; }
+  .portfolio-primary-actions { width: 100%; justify-content: flex-end; }
+  .portfolio-toolbar { gap: 14px; padding: 14px 16px; flex-wrap: wrap; }
+  .portfolio-search-wrap { flex-basis: 100%; max-width: none; }
+  .portfolio-toolbar-meta { margin-left: auto; }
+  .portfolio-registrar-filter-wrap { width: 164px; }
+  .portfolio-card-footer { gap: 9px; padding: 10px 10px 10px 16px; flex-wrap: wrap; }
+  .portfolio-storage-meta { font-size: 8px; }
+  .portfolio-secondary-actions { gap: 2px; margin-left: auto; }
+  .portfolio-count-separator, .portfolio-visible-count { display: none; }
+  .domain-delete-footer { align-items: stretch; flex-direction: row; }
+}
+@media (max-width: 380px) {
+  .portfolio-summary { gap: 6px; }
+  .portfolio-summary-item { font-size: 9px; }
+  .portfolio-storage-meta { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-button, .portfolio-sort-icon, .portfolio-view-all, .portfolio-view-all-icon, .portfolio-registrar-filter { transition: none; }
+}

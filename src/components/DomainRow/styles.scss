@@ -1,0 +1,98 @@
+.domain-row {
+  height: 70px;
+  transition: background .2s ease;
+  &:hover { background: #fbfcf9; }
+  td { font-size: 12px; padding: 12px 22px; vertical-align: middle; border-top: 1px solid #edf0e9; }
+}
+.domain-identity { gap: 12px; display: flex; align-items: center; }
+.domain-symbol {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex-shrink: 0;
+  border-radius: 10px;
+  place-items: center;
+  background: #f0f5f1;
+  color: #578078;
+}
+.domain-name-copy { gap: 6px; display: flex; flex-direction: column; }
+.domain-name { font-size: 14px; white-space: nowrap; letter-spacing: -.02em; }
+.domain-extension { color: #80918e; }
+.domain-owner { font-size: 10px; color: var(--muted); }
+.domain-registrar { gap: 8px; display: flex; align-items: center; white-space: nowrap; }
+.registrar-mark {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  font-size: 10px;
+  border-radius: 7px;
+  place-items: center;
+  font-family: DMSans_600SemiBold, sans-serif;
+  &-hostinger { color: #7356a1; background: #f0eafb; }
+  &-namecheap { color: #bc6944; background: #fff0e6; }
+  &-godaddy, &-godaddy-auctions { color: #387b74; background: #e7f4ee; }
+}
+.domain-renewal-date { display: block; white-space: nowrap; }
+.rowStatus { gap: 4px; display: flex; font-size: 9px; margin-top: 5px; align-items: center; color: #748783; }
+.statusDotWrap { width: 8px; height: 8px; display: grid; place-items: center; }
+.statusDot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+.rowStatus-active { color: #4e8977; }
+.rowStatus-expired, .rowStatus-renewing-soon { color: #ad6258; }
+.domain-auto-renew {
+  border: 0;
+  gap: 5px;
+  display: flex;
+  font-size: 11px;
+  padding: 5px 7px;
+  cursor: pointer;
+  align-items: center;
+  border-radius: 6px;
+  background: transparent;
+  font-family: var(--font-body);
+  transition: background .2s ease, color .2s ease;
+  &-on { color: #4e8977; }
+  &-off { color: #9aa5a2; }
+  &:hover { background: #eaf2ed; }
+  &:disabled { opacity: .4; cursor: wait; }
+}
+.domain-annual-cost-cell { text-align: right; font-variant-numeric: tabular-nums; }
+.domain-row .domain-actions-cell { width: 79px; padding-left: 4px; padding-right: 14px; }
+.domain-row-actions { gap: 3px; display: flex; align-items: center; justify-content: flex-end; }
+.domain-row-action {
+  border: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  cursor: pointer;
+  border-radius: 6px;
+  place-items: center;
+  color: #879894;
+  background: transparent;
+  transition: background .2s ease, color .2s ease;
+  &:hover { color: var(--ink); background: #eaf1ec; }
+  &-remove:hover { color: #a35047; background: #fcf0eb; }
+  &:disabled { opacity: .4; cursor: wait; }
+}
+.domain-row-skeleton:hover { background: transparent; }
+.domain-skeleton-line {
+  height: 11px;
+  width: 65%;
+  display: block;
+  border-radius: 4px;
+  background-size: 200% 100%;
+  background-image: linear-gradient(90deg, #eef1ea 25%, #f9faf7 50%, #eef1ea 75%);
+  animation: domain-skeleton-shimmer 1.5s ease infinite;
+  &-name { width: 76%; height: 26px; }
+  &-auto-renew { width: 35px; }
+  &-cost, &-actions { width: 35px; margin-left: auto; }
+}
+@keyframes domain-skeleton-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (max-width: 820px) {
+  .domain-row td { padding-left: 15px; padding-right: 15px; }
+  .domain-name { font-size: 13px; }
+  .domain-identity { gap: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .domain-row, .domain-row-action, .domain-auto-renew { transition: none; }
+  .domain-skeleton-line { animation: none; }
+}
