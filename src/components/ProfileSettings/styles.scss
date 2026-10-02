@@ -1,3 +1,10 @@
 .profile-settings-save:hover { filter: brightness(1.06); }
 .profile-privacy-option:hover { border-color: var(--accent) !important; }
 .profile-name-input:focus, .profile-bio-input:focus { border-color: var(--accent) !important; }
+.profile-name-input, .profile-bio-input, .profile-privacy-text, .profile-domains-sharing-text { min-width: 0; }
+@media (max-width: 560px) {
+  .profile-settings { padding: 16px !important; }
+  .profile-name-input, .profile-bio-input { font-size: 16px !important; }
+  .profile-privacy-option, .profile-domains-sharing { padding: 12px !important; }
+  .profile-settings-save { width: 100%; justify-content: center !important; }
+}

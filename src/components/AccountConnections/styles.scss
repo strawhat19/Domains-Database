@@ -4,4 +4,17 @@
 .hosted-domain-include { transition: background-color .22s ease, border-color .22s ease, opacity .22s ease; }
 .hosted-domain-include:hover { border-color: var(--accent) !important; }
 .hosted-domain-include:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.connection-input { width: 100%; min-width: 0; }
+.connection-hint, .account-connections .statusText, .hosted-domain-name, .hosted-domain-details, .hosted-domain-source { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .account-connections { padding: 16px !important; }
+  .connection-input { font-size: 16px !important; }
+  .connections-heading, .connections-actions { align-items: stretch !important; flex-direction: column !important; }
+  .connections-title { min-width: 0 !important; }
+  .connections-reveal, .connections-save, .connections-clear { width: 100%; justify-content: center !important; }
+  .hosted-domain-review { padding: 12px !important; }
+  .hosted-domain-review-title { flex: 1; min-width: 0; }
+  .hosted-domain-copy { min-width: 0 !important; flex-basis: 100% !important; }
+  .hosted-domain-include { width: 100%; justify-content: center !important; }
+}
 @media (prefers-reduced-motion: reduce) { .hosted-domain-include { transition: none; } }

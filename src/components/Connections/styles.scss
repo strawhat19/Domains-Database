@@ -7,13 +7,14 @@
   align-items: center;
   border-top: 1px solid var(--line);
 }
-.connections-registrar-mark { width: 37px; height: 37px; font-size: 15px; border-radius: 10px; }
-.connections-registrar-copy { gap: 5px; display: flex; flex: 1; flex-direction: column; }
+.connections-registrar-mark { width: 37px; height: 37px; flex-shrink: 0; font-size: 15px; border-radius: 10px; }
+.connections-registrar-copy { gap: 5px; display: flex; flex: 1; min-width: 0; overflow-wrap: anywhere; flex-direction: column; }
 .connections-registrar-name { font-size: 13px; }
 .connections-registrar-status { font-size: 10px; color: var(--muted); }
 .connections-registrar-link {
   gap: 4px;
   display: flex;
+  flex-shrink: 0;
   font-size: 11px;
   padding: 8px 0 8px 8px;
   color: var(--muted);
@@ -36,7 +37,8 @@
 .connections-private-description { margin: 6px 0 0; font-size: 11px; line-height: 1.7; color: var(--muted); }
 .connections-footer { padding-top: 0; border: 0; }
 @media (max-width: 560px) {
-  .connections-footer { flex-direction: row; }
+  .connections-footer { width: 100%; align-items: stretch; flex-direction: column; }
+  .connections-footer .portfolio-button { width: 100%; }
   .connections-private-note { padding: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {

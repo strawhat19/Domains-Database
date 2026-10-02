@@ -12,7 +12,15 @@
 .community-post-card, .community-profile-card { overflow-wrap: anywhere; }
 @keyframes community-pulse { 50% { opacity: .45; } }
 @media (max-width: 600px) {
-  .community-page { padding: 28px 16px !important; }
+  .community-page { padding: 28px 0 !important; }
   .community-title { font-size: 29px !important; }
   .community-composer, .community-post-card { padding: 17px !important; }
+  .community-feed-tabs { flex: 1 !important; min-width: 0; }
+  .community-refresh { flex-shrink: 0; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; }
+  .community-composer-footer { flex-direction: column !important; align-items: stretch !important; }
+  .community-composer-audiences { width: 100%; min-width: 0; }
+  .community-publish, .community-guest-signin, .community-feed-empty-signin, .community-follow, .community-follow-signin { min-height: 44px; justify-content: center; }
+  .community-composer-audience { min-height: 40px; }
+  .community-local-note-text, .community-composer-private-text, .community-profile-domain-more-label { min-width: 0; flex-shrink: 1; overflow-wrap: anywhere; }
+  .community-profile-domain-icon, .community-profile-domain-external, .community-local-note-icon, .community-composer-private-icon { flex-shrink: 0; }
 }

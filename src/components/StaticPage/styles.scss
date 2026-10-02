@@ -9,3 +9,11 @@
 .static-page-paragraph { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.95; }
 .static-page-contact-link { display: inline-flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 7px; background: var(--strong); color: var(--strong-text); margin-top: 35px; font-size: 12px; transition: background .2s ease, color .2s ease; }
 .static-page-contact-link:hover { color: var(--contrast); background: var(--accent); }
+@media (max-width: 600px) {
+  .static-page { padding: 28px 0 40px; overflow-wrap: anywhere; }
+  .static-page-back { min-height: 44px; margin-bottom: 28px; }
+  .static-page-title { font-size: 36px; letter-spacing: -.9px; line-height: 1.15; }
+  .static-page-description { margin-bottom: 32px; font-size: 14px; }
+  .static-page-contact-link { width: 100%; min-height: 44px; justify-content: center; }
+  .static-page-back-icon, .static-page-contact-icon { flex-shrink: 0; }
+}

@@ -8,3 +8,12 @@
 .rich-content-inline-code { font-family: var(--font-mono) !important; }
 .rich-content-inline-link { cursor: pointer; }
 .rich-content-image { object-fit: contain; }
+.rich-editor, .rich-content, .rich-editor-preview { min-width: 0; }
+.rich-content-paragraph, .rich-content-image-caption, .rich-content-inline-code, .rich-content-inline-link { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .rich-editor-tool { min-height: 40px; }
+  .rich-editor-image-row { align-items: stretch !important; flex-direction: column !important; }
+  .rich-editor-image-url { width: 100%; min-width: 0 !important; flex: none !important; }
+  .rich-editor-image-insert { min-height: 44px; justify-content: center; }
+  .rich-editor-input, .rich-editor-image-url { font-size: 16px !important; }
+}

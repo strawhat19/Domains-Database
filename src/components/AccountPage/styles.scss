@@ -1,3 +1,10 @@
 .account-sidebar-profile:hover, .account-sidebar-dashboard:hover, .account-sidebar-connections:hover { background: var(--subtle) !important; }
 .dashboard-stat-skeleton, .dashboard-users-skeleton, .dashboard-roles-skeleton { animation: account-pulse 1.4s ease-in-out infinite; }
+.profile-value, .dashboard-user-name, .dashboard-user-email { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  .account-page { padding-right: 16px !important; padding-left: 16px !important; }
+  .account-sidebar-title { flex-basis: 100%; }
+  .account-title { font-size: 32px !important; }
+  .profile-details, .dashboard-users, .dashboard-roles { padding: 16px !important; }
+}
 @keyframes account-pulse { 50% { opacity: .45; } }

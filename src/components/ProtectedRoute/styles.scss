@@ -4,6 +4,13 @@
 .protected-route-primary-link:focus-visible, .protected-route-signup-link:focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
 .protected-route-skeleton-title, .protected-route-skeleton-line, .protected-route-skeleton-action { animation: protected-route-pulse 1.3s ease-in-out infinite alternate; }
 @keyframes protected-route-pulse { from { opacity: .45; } to { opacity: 1; } }
+@media (max-width: 600px) {
+  .protected-route-page, .protected-route-loading { padding: 28px 0 !important; }
+  .protected-route-panel, .protected-route-skeleton { padding: 20px !important; }
+  .protected-route-title { font-size: 34px !important; line-height: 40px !important; }
+  .protected-route-actions { align-items: stretch; flex-direction: column !important; }
+  .protected-route-primary-link, .protected-route-signup-link { width: 100%; min-width: 0; min-height: 44px !important; }
+}
 @media (prefers-reduced-motion: reduce) {
   .protected-route-primary-link, .protected-route-signup-link { transition: none; }
   .protected-route-skeleton-title, .protected-route-skeleton-line, .protected-route-skeleton-action { animation: none; }
