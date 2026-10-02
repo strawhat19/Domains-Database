@@ -87,7 +87,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>) => {
       const errors = results.flatMap(result => result.errors);
       const warnings = results.flatMap(result => result.warnings);
       setSyncError(errors.join(`; `));
-      if (fields.length && results.some(result => !result.errors.length)) setSyncNotice(`${count} Domain(s) Synced${warnings.length ? ` — ${warnings.join(`; `)}` : ``}`);
+      if (fields.length && results.some(result => !result.errors.length)) setSyncNotice(`${errors.length ? `Partial Sync — ` : ``}${count} Domain(s) Synced${warnings.length ? ` — ${warnings.join(`; `)}` : ``}`);
       return { count, errors, warnings };
     } catch (failure) {
       if (!current()) return empty;

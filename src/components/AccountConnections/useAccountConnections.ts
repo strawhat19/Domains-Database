@@ -42,7 +42,7 @@ export const useAccountConnections = () => {
       setValues(snapshot.values);
       setNotice(`Connections Saved — Checking Domains…`);
       const result = await syncConnections(snapshot);
-      setNotice(`Connections Saved — ${result.count} Domain(s) Synced${result.warnings.length ? ` — ${result.warnings.join(`; `)}` : ``}`);
+      setNotice(`Connections Saved — ${result.errors.length ? `Sync Finished With Errors; ` : ``}${result.count} Domain(s) Synced${result.warnings.length ? ` — ${result.warnings.join(`; `)}` : ``}`);
       setError(result.errors.join(`; `));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : `Could Not Save Connections`);
