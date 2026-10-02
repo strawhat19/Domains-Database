@@ -1,12 +1,12 @@
-.user-menu { z-index: 40; }
-.user-menu-options { animation: user-menu-enter .18s ease; }
-.user-menu-button:focus-visible { border-radius: 50%; }
-.user-menu-profile:hover, .user-menu-dashboard:hover, .user-menu-connections:hover { background: var(--subtle) !important; }
-.user-menu-signout:hover { background: var(--danger-bg) !important; }
+:is(.user-menu, [data-class='user-menu']) { z-index: 40; }
+:is(.user-menu-options, [data-class='user-menu-options']) { animation: user-menu-enter .18s ease; }
+:is(.user-menu-button, [data-class='user-menu-button']):focus-visible { border-radius: 50%; }
+:is(.user-menu-profile, [data-class='user-menu-profile']):hover, :is(.user-menu-dashboard, [data-class='user-menu-dashboard']):hover, :is(.user-menu-connections, [data-class='user-menu-connections']):hover { background: var(--subtle) !important; }
+:is(.user-menu-signout, [data-class='user-menu-signout']):hover { background: var(--danger-bg) !important; }
 @keyframes user-menu-enter { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 600px) {
-  .user-menu-options { max-width: calc(100vw - 32px); }
-  .user-menu-button, .user-menu-signin { min-height: 44px; align-items: center; justify-content: center; }
-  .user-menu-profile, .user-menu-dashboard, .user-menu-connections, .user-menu-signout { min-height: 44px; }
-  .user-menu-error { overflow-wrap: anywhere; }
+  :is(.user-menu-options, [data-class='user-menu-options']) { max-width: calc(100vw - 32px); }
+  :is(.user-menu-button, [data-class='user-menu-button']), :is(.user-menu-signin, [data-class='user-menu-signin']) { min-height: 44px; align-items: center; justify-content: center; }
+  :is(.user-menu-profile, [data-class='user-menu-profile']), :is(.user-menu-dashboard, [data-class='user-menu-dashboard']), :is(.user-menu-connections, [data-class='user-menu-connections']), :is(.user-menu-signout, [data-class='user-menu-signout']) { min-height: 44px; }
+  :is(.user-menu-error, [data-class='user-menu-error']) { overflow-wrap: anywhere; }
 }
