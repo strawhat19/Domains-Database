@@ -1,6 +1,7 @@
 .env
 dist/
 .expo/
+.vercel/
 .env.*
 web-build/
 node_modules/

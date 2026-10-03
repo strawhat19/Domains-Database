@@ -1,15 +1,24 @@
-.auth-form-page { box-sizing: border-box; }
-.auth-form-input-frame { transition: border-color 220ms ease, box-shadow 220ms ease; }
-.auth-form-input-frame:focus-within { border-color: var(--accent, #138b8b) !important; box-shadow: 0 0 0 3px rgba(19, 139, 139, .1); }
-.auth-form-input { outline: none; min-width: 0; }
-.auth-form-submit, .auth-form-profile, .auth-form-switch-link, .auth-form-password-toggle { cursor: pointer; transition: opacity 220ms ease, transform 220ms ease, background-color 220ms ease; }
-.auth-form-submit:hover:not([aria-disabled=true]), .auth-form-profile:hover:not([aria-disabled=true]) { transform: translateY(-1px); opacity: .9; }
-.auth-form-switch-link:hover:not([aria-disabled=true]) { opacity: .75; }
-.auth-form-password-toggle:hover:not([aria-disabled=true]) { background: rgba(19, 139, 139, .08); }
-.auth-form-submit:focus-visible, .auth-form-profile:focus-visible, .auth-form-switch-link:focus-visible, .auth-form-password-toggle:focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
-.auth-form-skeleton-title, .auth-form-skeleton-copy, .auth-form-skeleton-field { animation: auth-form-pulse 1.3s ease-in-out infinite alternate; }
+:is(.auth-form-page, [data-class='auth-form-page']) { box-sizing: border-box; }
+:is(.auth-form-input-frame, [data-class='auth-form-input-frame']) { transition: border-color 220ms ease, box-shadow 220ms ease; }
+:is(.auth-form-input-frame, [data-class='auth-form-input-frame']):focus-within { border-color: var(--accent, #138b8b) !important; box-shadow: 0 0 0 3px rgba(19, 139, 139, .1); }
+:is(.auth-form-input, [data-class='auth-form-input']) { outline: none; min-width: 0 !important; }
+:is(.auth-form-submit, [data-class='auth-form-submit']), :is(.auth-form-profile, [data-class='auth-form-profile']), :is(.auth-form-switch-link, [data-class='auth-form-switch-link']), :is(.auth-form-password-toggle, [data-class='auth-form-password-toggle']) { cursor: pointer; transition: opacity 220ms ease, transform 220ms ease, background-color 220ms ease; }
+:is(.auth-form-submit, [data-class='auth-form-submit']):hover:not([aria-disabled=true]), :is(.auth-form-profile, [data-class='auth-form-profile']):hover:not([aria-disabled=true]) { transform: translateY(-1px); opacity: .9; }
+:is(.auth-form-switch-link, [data-class='auth-form-switch-link']):hover:not([aria-disabled=true]) { opacity: .75; }
+:is(.auth-form-password-toggle, [data-class='auth-form-password-toggle']):hover:not([aria-disabled=true]) { background: rgba(19, 139, 139, .08); }
+:is(.auth-form-submit, [data-class='auth-form-submit']):focus-visible, :is(.auth-form-profile, [data-class='auth-form-profile']):focus-visible, :is(.auth-form-switch-link, [data-class='auth-form-switch-link']):focus-visible, :is(.auth-form-password-toggle, [data-class='auth-form-password-toggle']):focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
+:is(.auth-form-skeleton-title, [data-class='auth-form-skeleton-title']), :is(.auth-form-skeleton-copy, [data-class='auth-form-skeleton-copy']), :is(.auth-form-skeleton-field, [data-class='auth-form-skeleton-field']) { animation: auth-form-pulse 1.3s ease-in-out infinite alternate; }
 @keyframes auth-form-pulse { from { opacity: .45; } to { opacity: 1; } }
+@media (max-width: 600px) {
+  :is(.auth-form-page, [data-class='auth-form-page']) { padding: 28px 0 !important; }
+  :is(.auth-form-panel, [data-class='auth-form-panel']), :is(.auth-form-signed-in, [data-class='auth-form-signed-in']), :is(.auth-form-loading, [data-class='auth-form-loading']) { gap: 20px !important; padding: 20px !important; }
+  :is(.auth-form-title, [data-class='auth-form-title']) { font-size: 36px !important; line-height: 41px !important; }
+  :is(.auth-form-description, [data-class='auth-form-description']), :is(.auth-form-local-note-copy, [data-class='auth-form-local-note-copy']), :is(.auth-form-notice-text, [data-class='auth-form-notice-text']) { min-width: 0; overflow-wrap: anywhere; }
+  :is(.auth-form-input, [data-class='auth-form-input']) { font-size: 16px !important; }
+  :is(.auth-form-input-icon, [data-class='auth-form-input-icon']), :is(.auth-form-submit-icon, [data-class='auth-form-submit-icon']), :is(.auth-form-profile-icon, [data-class='auth-form-profile-icon']), :is(.auth-form-local-note-icon, [data-class='auth-form-local-note-icon']) { flex-shrink: 0; }
+  :is(.auth-form-password-toggle, [data-class='auth-form-password-toggle']) { width: 44px; flex-shrink: 0; min-height: 44px; align-items: center; justify-content: center; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .auth-form-input-frame, .auth-form-submit, .auth-form-profile, .auth-form-switch-link, .auth-form-password-toggle { transition: none; }
-  .auth-form-skeleton-title, .auth-form-skeleton-copy, .auth-form-skeleton-field { animation: none; }
+  :is(.auth-form-input-frame, [data-class='auth-form-input-frame']), :is(.auth-form-submit, [data-class='auth-form-submit']), :is(.auth-form-profile, [data-class='auth-form-profile']), :is(.auth-form-switch-link, [data-class='auth-form-switch-link']), :is(.auth-form-password-toggle, [data-class='auth-form-password-toggle']) { transition: none; }
+  :is(.auth-form-skeleton-title, [data-class='auth-form-skeleton-title']), :is(.auth-form-skeleton-copy, [data-class='auth-form-skeleton-copy']), :is(.auth-form-skeleton-field, [data-class='auth-form-skeleton-field']) { animation: none; }
 }

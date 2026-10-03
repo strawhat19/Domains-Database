@@ -79,5 +79,5 @@
   .extension-index { padding: 20px 24px; }
   .extension-index-stacks { margin: 26px auto 32px; max-width: 360px; }
   .extension-record { height: 56px; }
-  .extension-record-label { font-size: 31px; }
+  .extension-record-label { font-size: clamp(24px, 8vw, 31px); }
 }

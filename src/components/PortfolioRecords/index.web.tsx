@@ -167,13 +167,7 @@ const PortfolioRecords = ({
           />
           {loading || empty ? (
             <tbody id={`portfolio-table-body`} className={`portfolio-table-body`}>
-              {loading ? [0, 1, 2, 3].map(index => <DomainRowSkeleton key={index} index={index} visibleColumns={visibleColumns} />) : (
-                <tr id={`portfolio-empty-row`} className={`portfolio-empty-row`}>
-                  <td colSpan={columns.length + 3} id={`portfolio-empty-cell`} className={`portfolio-empty-cell`}>
-                    <PortfolioEmptyState hasFilters={hasFilters} onAction={onEmptyAction} />
-                  </td>
-                </tr>
-              )}
+              {loading && [0, 1, 2, 3].map(index => <DomainRowSkeleton key={index} index={index} visibleColumns={visibleColumns} />)}
             </tbody>
           ) : groups.map(group => (
             <tbody key={group.key} id={`portfolio-table-group-${encodeURIComponent(group.key)}`} className={`portfolio-table-body`}>
@@ -210,7 +204,11 @@ const PortfolioRecords = ({
           ))}
         </table>
       </div>
-
+      {empty && (
+        <div id={`portfolio-records-empty`} className={`portfolio-records-empty`}>
+          <PortfolioEmptyState hasFilters={hasFilters} onAction={onEmptyAction} />
+        </div>
+      )}
     </div>
   );
 };

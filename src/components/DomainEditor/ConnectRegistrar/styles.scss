@@ -1,5 +1,10 @@
-.connect-registrar-button, .connect-registrar-signin, .connect-registrar-signup { cursor: pointer; transition: opacity 220ms ease, transform 220ms ease; }
-.connect-registrar-button:hover:not([aria-disabled=true]) { opacity: .8; transform: translateY(-1px); }
-.connect-registrar-signin:hover:not([aria-disabled=true]), .connect-registrar-signup:hover:not([aria-disabled=true]) { opacity: .75; }
-.connect-registrar-button:focus-visible, .connect-registrar-signin:focus-visible, .connect-registrar-signup:focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) { .connect-registrar-button, .connect-registrar-signin, .connect-registrar-signup { transition: none; } }
+:is(.connect-registrar-button, [data-class='connect-registrar-button']), :is(.connect-registrar-signin, [data-class='connect-registrar-signin']), :is(.connect-registrar-signup, [data-class='connect-registrar-signup']) { cursor: pointer; transition: opacity 220ms ease, transform 220ms ease; }
+:is(.connect-registrar-button, [data-class='connect-registrar-button']):hover:not([aria-disabled=true]) { opacity: .8; transform: translateY(-1px); }
+:is(.connect-registrar-signin, [data-class='connect-registrar-signin']):hover:not([aria-disabled=true]), :is(.connect-registrar-signup, [data-class='connect-registrar-signup']):hover:not([aria-disabled=true]) { opacity: .75; }
+:is(.connect-registrar-button, [data-class='connect-registrar-button']):focus-visible, :is(.connect-registrar-signin, [data-class='connect-registrar-signin']):focus-visible, :is(.connect-registrar-signup, [data-class='connect-registrar-signup']):focus-visible { outline: 2px solid var(--accent, #138b8b); outline-offset: 3px; }
+@media (max-width: 560px) {
+  :is(.connect-registrar-button, [data-class='connect-registrar-button']) { width: 100%; justify-content: center !important; }
+  :is(.connect-registrar-prompt-links, [data-class='connect-registrar-prompt-links']) { gap: 8px !important; align-items: stretch; flex-direction: column !important; }
+  :is(.connect-registrar-signin, [data-class='connect-registrar-signin']), :is(.connect-registrar-signup, [data-class='connect-registrar-signup']) { min-height: 44px !important; }
+}
+@media (prefers-reduced-motion: reduce) { :is(.connect-registrar-button, [data-class='connect-registrar-button']), :is(.connect-registrar-signin, [data-class='connect-registrar-signin']), :is(.connect-registrar-signup, [data-class='connect-registrar-signup']) { transition: none; } }

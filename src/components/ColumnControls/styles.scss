@@ -22,7 +22,7 @@
   overscroll-behavior: contain;
   max-height: min(50vh, 400px);
   scrollbar-gutter: stable;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
 }
 .column-controls-group { min-width: 0; }
 .column-controls-group-title {
@@ -48,10 +48,10 @@
 .column-controls-option:hover { background: var(--subtle); }
 .column-controls-option-required { cursor: default; }
 .column-controls-checkbox { margin: 0; width: 16px; height: 16px; flex-shrink: 0; cursor: inherit; accent-color: var(--accent); }
-.column-controls-option-text { overflow-wrap: anywhere; }
+.column-controls-option-text { min-width: 0; overflow-wrap: anywhere; }
 .column-controls-option-count { font-size: 11px; flex-shrink: 0; color: var(--muted); }
 .column-controls-required-text { font-size: 10px; color: var(--muted); margin-left: auto; }
-.column-controls-actions { gap: 8px; display: flex; margin-top: 14px; align-items: center; justify-content: flex-end; }
+.column-controls-actions { gap: 8px; display: flex; flex-wrap: wrap; margin-top: 14px; align-items: center; justify-content: flex-end; }
 
 @keyframes column-controls-enter {
   from { opacity: 0; transform: translateY(-5px); }

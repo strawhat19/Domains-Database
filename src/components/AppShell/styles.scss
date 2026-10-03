@@ -24,6 +24,30 @@
 .header-logo { display: block; width: 220px; height: auto; flex-shrink: 0; object-fit: contain; }
 .header-actions { gap: 12px; display: flex; flex-shrink: 0; align-items: center; }
 .header-navigation { gap: 4px; display: flex; align-items: center; margin-left: auto; }
+.header-mobile-footer-links { display: none; }
+.header-navigation-content,
+.header-navigation-links { display: contents; }
+
+.header-menu-toggle {
+  gap: 7px;
+  height: 40px;
+  display: none;
+  padding: 0 12px;
+  flex-shrink: 0;
+  color: var(--ink);
+  font-size: 12px;
+  border-radius: 5px;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  font-family: 'DMSans_500Medium', sans-serif;
+
+  &:hover { color: var(--accent); background: var(--subtle); border-color: var(--accent); }
+  &[aria-expanded='true'] { color: var(--strong-text); background: var(--strong); border-color: var(--strong); }
+}
+
+.header-menu-icon { flex-shrink: 0; }
 
 .header-link {
   gap: 8px;
@@ -64,32 +88,64 @@
 
 .footer-copyright { margin: 0; font-size: 11px; color: var(--muted); }
 .footer-piratechs { gap: 3px; display: inline-flex; align-items: center; color: var(--ink); }
-.footer-navigation { gap: 24px; display: flex; align-items: center; }
+.footer-navigation { gap: 12px 24px; display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .footer-link { gap: 6px; display: inline-flex; align-items: center; font-size: 11px; color: var(--muted); transition: color .22s ease; }
 .footer-link:hover { color: var(--accent); }
 
 @media (max-width: 900px) {
-  .header-inner { flex-wrap: wrap; padding: 10px var(--shell-gutter) 14px; gap: 6px; }
-  .header-brand { order: 0; }
+  .header-inner { flex-wrap: wrap; padding: 10px var(--shell-gutter) 14px; gap: 0 6px; }
+  .header-brand { flex: 1; order: 0; min-width: 0; max-width: 220px; }
+  .header-logo { width: 100%; }
   .header-actions { order: 1; margin-left: auto; }
-  .header-navigation { order: 2; width: 100%; margin-left: 0; }
-  .header-link { flex: 1; justify-content: center; padding: 10px 12px; }
+  .header-menu-toggle { display: inline-flex; }
+  .header-navigation {
+    gap: 0;
+    order: 2;
+    margin: 0;
+    width: 100%;
+    opacity: 0;
+    min-width: 0;
+    display: grid;
+    visibility: hidden;
+    align-items: stretch;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .32s cubic-bezier(.22, 1, .36, 1), opacity .24s ease, visibility 0s linear .32s;
+  }
+  .header-navigation-open { opacity: 1; visibility: visible; transition-delay: 0s; grid-template-rows: 1fr; }
+  .header-navigation-content { display: block; min-width: 0; min-height: 0; overflow: hidden; transform: translateY(-8px); transition: transform .32s cubic-bezier(.22, 1, .36, 1); }
+  .header-navigation-open .header-navigation-content { transform: translateY(0); }
+  .header-navigation-links,
+  .header-mobile-footer-links { gap: 4px; display: flex; min-width: 0; flex-direction: column; border-top: 1px solid var(--line); }
+  .header-navigation-links { margin-top: 6px; padding: 12px 0 6px; }
+  .header-mobile-footer-links { padding-top: 12px; }
+  .header-link { min-height: 44px; justify-content: flex-start; padding: 10px 12px; }
 }
 
 @media (max-width: 760px) {
   .app-shell { --shell-gutter: 20px; }
-  .header-inner { min-height: 78px; gap: 16px; }
-  .header-logo { width: 185px; }
+  .header-inner { min-height: 78px; gap: 0 16px; }
+  .header-logo { max-width: 185px; }
   .header-link { padding: 9px 11px; }
   .footer-inner { gap: 18px; padding: 24px var(--shell-gutter); align-items: flex-start; flex-direction: column; }
+  .footer-navigation { gap: 4px 20px; justify-content: flex-start; }
+  .footer-link { min-height: 44px; }
 }
 
 @media (max-width: 480px) {
-  .header-logo { width: min(180px, 42vw); }
-  .header-link { gap: 6px; font-size: 11px; padding: 10px 8px; }
+  .header-inner { gap: 0 8px; }
+  .header-actions { gap: 6px; }
+  .header-menu-text { display: none; }
+  .header-menu-toggle { width: 40px; padding: 0; }
+  .header-link { gap: 8px; font-size: 12px; padding: 11px 12px; }
+  .header-logo { max-width: 180px; }
 }
 
 @media (max-width: 360px) {
   .app-shell { --shell-gutter: 14px; }
   .footer-navigation { gap: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-navigation,
+  .header-navigation-content { transition: none; }
 }

@@ -1,0 +1,7 @@
+.env
+.env.*
+.expo/
+dist/
+ai/
+node_modules/
+firestore-plan.md

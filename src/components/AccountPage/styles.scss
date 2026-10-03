@@ -1,3 +1,10 @@
-.account-sidebar-profile:hover, .account-sidebar-dashboard:hover, .account-sidebar-connections:hover { background: var(--subtle) !important; }
-.dashboard-stat-skeleton, .dashboard-users-skeleton, .dashboard-roles-skeleton { animation: account-pulse 1.4s ease-in-out infinite; }
+:is(.account-sidebar-profile, [data-class='account-sidebar-profile']):hover, :is(.account-sidebar-dashboard, [data-class='account-sidebar-dashboard']):hover, :is(.account-sidebar-connections, [data-class='account-sidebar-connections']):hover { background: var(--subtle) !important; }
+:is(.dashboard-stat-skeleton, [data-class='dashboard-stat-skeleton']), :is(.dashboard-users-skeleton, [data-class='dashboard-users-skeleton']), :is(.dashboard-roles-skeleton, [data-class='dashboard-roles-skeleton']) { animation: account-pulse 1.4s ease-in-out infinite; }
+:is(.profile-value, [data-class='profile-value']), :is(.dashboard-user-name, [data-class='dashboard-user-name']), :is(.dashboard-user-email, [data-class='dashboard-user-email']) { overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  :is(.account-page, [data-class='account-page']) { padding-right: 16px !important; padding-left: 16px !important; }
+  :is(.account-sidebar-title, [data-class='account-sidebar-title']) { flex-basis: 100%; }
+  :is(.account-title, [data-class='account-title']) { font-size: 32px !important; }
+  :is(.profile-details, [data-class='profile-details']), :is(.dashboard-users, [data-class='dashboard-users']), :is(.dashboard-roles, [data-class='dashboard-roles']) { padding: 16px !important; }
+}
 @keyframes account-pulse { 50% { opacity: .45; } }

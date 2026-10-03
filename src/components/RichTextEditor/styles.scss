@@ -1,10 +1,19 @@
-.rich-editor-tool {
+:is(.rich-editor-tool, [data-class='rich-editor-tool']) {
   transition: background-color .2s ease, transform .2s ease;
   &:hover { background: var(--subtle) !important; }
   &:active { transform: translateY(1px); }
 }
-.rich-editor-input { resize: vertical; }
-.rich-content-code { font-family: var(--font-mono) !important; overflow-wrap: anywhere; }
-.rich-content-inline-code { font-family: var(--font-mono) !important; }
-.rich-content-inline-link { cursor: pointer; }
-.rich-content-image { object-fit: contain; }
+:is(.rich-editor-input, [data-class='rich-editor-input']) { resize: vertical; }
+:is(.rich-content-code, [data-class='rich-content-code']) { font-family: var(--font-mono) !important; overflow-wrap: anywhere; }
+:is(.rich-content-inline-code, [data-class='rich-content-inline-code']) { font-family: var(--font-mono) !important; }
+:is(.rich-content-inline-link, [data-class='rich-content-inline-link']) { cursor: pointer; }
+:is(.rich-content-image, [data-class='rich-content-image']) { object-fit: contain; }
+:is(.rich-editor, [data-class='rich-editor']), :is(.rich-content, [data-class='rich-content']), :is(.rich-editor-preview, [data-class='rich-editor-preview']) { min-width: 0; }
+:is(.rich-content-paragraph, [data-class='rich-content-paragraph']), :is(.rich-content-image-caption, [data-class='rich-content-image-caption']), :is(.rich-content-inline-code, [data-class='rich-content-inline-code']), :is(.rich-content-inline-link, [data-class='rich-content-inline-link']) { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  :is(.rich-editor-tool, [data-class='rich-editor-tool']) { min-height: 40px; }
+  :is(.rich-editor-image-row, [data-class='rich-editor-image-row']) { align-items: stretch !important; flex-direction: column !important; }
+  :is(.rich-editor-image-url, [data-class='rich-editor-image-url']) { width: 100%; min-width: 0 !important; flex: none !important; }
+  :is(.rich-editor-image-insert, [data-class='rich-editor-image-insert']) { min-height: 44px; justify-content: center; }
+  :is(.rich-editor-input, [data-class='rich-editor-input']), :is(.rich-editor-image-url, [data-class='rich-editor-image-url']) { font-size: 16px !important; }
+}

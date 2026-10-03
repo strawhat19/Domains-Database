@@ -97,8 +97,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </View>
           </View>
           <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>
-            {footerLinks.map(({ label, href, icon }) => {
-              const Icon = { Info, Mail, FileText, ShieldCheck }[icon];
+            {[...navigation, ...footerLinks].map(({ label, href, icon }) => {
+              const Icon = { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck }[icon];
               return (
               <Link key={href} href={href} asChild>
                 <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
