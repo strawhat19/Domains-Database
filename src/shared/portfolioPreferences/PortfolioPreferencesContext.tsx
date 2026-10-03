@@ -38,8 +38,11 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
 
 export const PortfolioPreferencesContext = createContext<PortfolioPreferencesContextValue | undefined>(undefined);
 
-export const PortfolioPreferencesProvider = ({ children, userId = null }: PropsWithChildren<{ userId?: string | null }>) => {
+export const PortfolioPreferencesProvider = ({ children, enabled = true, userId = null }: PropsWithChildren<{ enabled?: boolean; userId?: string | null }>) => {
   const [ready, setReady] = useState(false);
+  const revision = useRef(0);
+  const active = useRef(enabled);
+  active.current = enabled;
   const changed = useRef(false);
   const preferenceRef = useRef(DEFAULT_PREFERENCES);
   const loadedUserId = useRef<string | null>(null);
@@ -48,36 +51,44 @@ export const PortfolioPreferencesProvider = ({ children, userId = null }: PropsW
 
   useEffect(() => {
     let mounted = true;
+    const run = ++revision.current;
+    active.current = enabled;
     const capturedUserId = userId;
     setReady(false);
     changed.current = false;
     loadedUserId.current = null;
     preferenceRef.current = DEFAULT_PREFERENCES;
     setPreferences(DEFAULT_PREFERENCES);
+    if (!enabled) return () => { active.current = false; ++revision.current; };
+    const isCurrent = () => mounted && active.current && run === revision.current;
     readPortfolioPreferences(capturedUserId).then(saved => {
-      if (!mounted || changed.current || !saved) return;
+      if (!isCurrent() || changed.current || !saved) return;
       const restored = restorePreferences(JSON.parse(saved));
       preferenceRef.current = restored;
       setPreferences(restored);
     }).catch(() => undefined).finally(() => {
-      if (mounted) { loadedUserId.current = capturedUserId; setReady(true); }
+      if (isCurrent()) { loadedUserId.current = capturedUserId; setReady(true); }
     });
-    return () => { mounted = false; };
-  }, [userId]);
+    return () => { mounted = false; active.current = false; ++revision.current; };
+  }, [enabled, userId]);
 
   useEffect(() => {
-    if (!ready || loadedUserId.current !== userId) return;
+    if (!enabled || !ready || loadedUserId.current !== userId) return;
+    const run = revision.current;
     const capturedUserId = userId;
     const capturedPreferences = preferences;
-    void storageQueue(() => savePortfolioPreferences(capturedPreferences, capturedUserId)).catch(() => undefined);
-  }, [ready, userId, preferences, storageQueue]);
+    void storageQueue(() => active.current && run === revision.current
+      ? savePortfolioPreferences(capturedPreferences, capturedUserId)
+      : Promise.resolve()).catch(() => undefined);
+  }, [ready, enabled, userId, preferences, storageQueue]);
 
   const change = useCallback((update: (current: PortfolioPreferences) => PortfolioPreferences) => {
+    if (!enabled || !active.current) return;
     changed.current = true;
     const next = update(preferenceRef.current);
     preferenceRef.current = next;
     setPreferences(next);
-  }, []);
+  }, [enabled]);
 
   const setView = useCallback<PortfolioPreferencesContextValue[`setView`]>(view => {
     change(current => ({ ...current, view }));
@@ -88,19 +99,21 @@ export const PortfolioPreferencesProvider = ({ children, userId = null }: PropsW
   }, [change]);
 
   const createGroup = useCallback<PortfolioPreferencesContextValue[`createGroup`]>(value => {
+    if (!enabled || !active.current) return undefined;
     const name = value.trim();
     if (!name || preferenceRef.current.customGroups.some(group => group.name.toLowerCase() === name.toLowerCase())) return undefined;
     const id = `group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
     change(current => ({ ...current, groupBy: `custom`, customGroups: [...current.customGroups, { id, name, domainIds: [] }] }));
     return id;
-  }, [change]);
+  }, [change, enabled]);
 
   const renameGroup = useCallback<PortfolioPreferencesContextValue[`renameGroup`]>((id, value) => {
+    if (!enabled || !active.current) return false;
     const name = value.trim();
     if (!name || preferenceRef.current.customGroups.some(group => group.id !== id && group.name.toLowerCase() === name.toLowerCase())) return false;
     change(current => ({ ...current, customGroups: current.customGroups.map(group => group.id === id ? { ...group, name } : group) }));
     return true;
-  }, [change]);
+  }, [change, enabled]);
 
   const deleteGroup = useCallback<PortfolioPreferencesContextValue[`deleteGroup`]>(id => {
     change(current => ({
@@ -141,7 +154,7 @@ export const PortfolioPreferencesProvider = ({ children, userId = null }: PropsW
 
   const clearOrders = useCallback(() => change(current => ({ ...current, orders: {} })), [change]);
   const value = useMemo(() => ({
-    ...preferences,
+    ...(enabled && ready && loadedUserId.current === userId ? preferences : DEFAULT_PREFERENCES),
     setView,
     moveDomain,
     clearOrders,
@@ -151,7 +164,7 @@ export const PortfolioPreferencesProvider = ({ children, userId = null }: PropsW
     renameGroup,
     deleteGroup,
     assignDomain,
-  }), [preferences, setView, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, assignDomain]);
+  }), [ready, enabled, userId, preferences, setView, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, assignDomain]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

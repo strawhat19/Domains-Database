@@ -1,4 +1,5 @@
 import { Link, useRouter } from 'expo-router';
+import LoadingScreen from '../LoadingScreen';
 import RegistrarSetup from '../RegistrarSetup';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { useEffect, useMemo, useState } from 'react';
@@ -100,7 +101,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               })}
             </View>
             <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
-              {`${state.dueSoon} need attention`}
+              {state.loading ? `— need attention` : `${state.dueSoon} need attention`}
             </Text>
           </View>
           <Pressable {...elementProps(`native-portfolio-add`)} accessibilityRole={`button`} accessibilityLabel={`Add Domain`} disabled={state.loading} style={[styles.primaryButton, styles.addButton, state.loading && styles.disabled]} onPress={state.openSetup}>
@@ -111,6 +112,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Pressable>
         </View>
       </View>
+      {state.loading && <LoadingScreen compact suffix={`native-domain-portfolio`} label={`Loading your portfolio…`} />}
       <Pressable
         onPress={refreshWebsiteInfo}
         accessibilityRole={`button`}

@@ -33,8 +33,10 @@ export interface DomainContextValue {
 
 export const DomainContext = createContext<DomainContextValue | undefined>(undefined);
 
-export const DomainProvider = ({ children }: PropsWithChildren) => {
+export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{ enabled?: boolean }>) => {
   const active = useRef(false);
+  const revision = useRef(0);
+  if (!enabled) active.current = false;
   const [error, setError] = useState(``);
   const [notice, setNotice] = useState(``);
   const [loading, setLoading] = useState(true);
@@ -42,40 +44,57 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     let mounted = true;
-    active.current = true;
+    const run = ++revision.current;
+    active.current = enabled;
+    setLoading(true);
+    setDomains([]);
+    setError(``);
+    setNotice(``);
+    if (!enabled) return () => { active.current = false; ++revision.current; };
+    const isCurrent = () => mounted && active.current && run === revision.current;
     api.getDomains().then(records => {
-      if (mounted) setDomains(records);
+      if (isCurrent()) setDomains(records);
     }).catch(reason => {
-      if (mounted) setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio`);
+      if (isCurrent()) setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio`);
     }).finally(() => {
-      if (mounted) setLoading(false);
+      if (isCurrent()) setLoading(false);
     });
-    return () => { mounted = false; active.current = false; };
-  }, []);
+    return () => { mounted = false; active.current = false; ++revision.current; };
+  }, [enabled]);
 
   const refreshDomains = useCallback(async () => {
+    if (!enabled || !active.current) return;
+    const run = revision.current;
     const records = await api.getDomains();
-    if (active.current) setDomains(records);
-  }, []);
-  const sync = useRegistrarSync(refreshDomains);
-  const insights = useWebsiteInsights(refreshDomains);
+    if (active.current && run === revision.current) setDomains(records);
+  }, [enabled]);
+  const sync = useRegistrarSync(refreshDomains, enabled);
+  const insights = useWebsiteInsights(refreshDomains, enabled);
+  const refreshWebsiteInsights = useCallback(async (records: DomainRecord[]) => {
+    if (!enabled || !active.current) return;
+    await insights.refreshWebsiteInsights(records);
+  }, [enabled, insights.refreshWebsiteInsights]);
   const clearNotice = useCallback(() => { setNotice(``); sync.clearSyncNotice(); }, [sync.clearSyncNotice]);
 
   const mutate = useCallback(async <T,>(operation: () => Promise<T>, message: string): Promise<T> => {
-    if (!active.current) throw new Error(`Portfolio Changed, Please Try Again`);
+    if (!enabled || !active.current) throw new Error(`Portfolio Changed, Please Try Again`);
+    const run = revision.current;
+    const isCurrent = () => active.current && run === revision.current;
     try {
       const result = await operation();
+      if (!isCurrent()) throw new Error(`Portfolio Changed, Please Try Again`);
       const records = await api.getDomains();
+      if (!isCurrent()) throw new Error(`Portfolio Changed, Please Try Again`);
       setDomains(records);
       setError(``);
       setNotice(message);
       return result;
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : `Could Not Update Portfolio`;
-      setError(message);
+      if (isCurrent()) setError(message);
       throw new Error(message);
     }
-  }, []);
+  }, [enabled]);
 
   const addDomain = useCallback((input: DomainInput) => mutate(() => api.createDomain(input), `Domain Added`), [mutate]);
   const deleteDomain = useCallback((id: string) => mutate(() => api.deleteDomain(id), `Domain Removed`), [mutate]);
@@ -86,11 +105,14 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
 
   const value = useMemo(() => ({
     ...insights,
-    error: error || sync.syncError,
-    notice: notice || sync.syncNotice,
-    loading,
-    domains,
+    loading: !enabled || loading,
+    domains: enabled ? domains : [],
     syncing: sync.syncing,
+    refreshing: enabled && insights.refreshing,
+    error: enabled ? error || sync.syncError : ``,
+    notice: enabled ? notice || sync.syncNotice : ``,
+    insightError: enabled ? insights.insightError : ``,
+    insightNotice: enabled ? insights.insightNotice : ``,
     addDomain,
     clearNotice,
     deleteDomain,
@@ -98,10 +120,11 @@ export const DomainProvider = ({ children }: PropsWithChildren) => {
     importDomains,
     prepareExport,
     resetSampleData,
+    refreshWebsiteInsights,
     syncConnections: sync.syncConnections,
     connectionStatuses: sync.connectionStatuses,
     resetConnectionSync: sync.resetConnectionSync,
-  }), [error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync]);
+  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync]);
 
   return (
     <DomainContext.Provider value={value}>

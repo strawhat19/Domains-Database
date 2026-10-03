@@ -12,10 +12,11 @@ const pause = (signal: AbortSignal) => new Promise<void>(resolve => {
   if (signal.aborted) finish();
 });
 
-export const useWebsiteInsights = (refreshDomains: () => Promise<void>) => {
+export const useWebsiteInsights = (refreshDomains: () => Promise<void>, enabled = true) => {
   const { user } = useAuth();
   const userId = user?.id;
   const active = useRef(false);
+  if (!enabled) active.current = false;
   const revision = useRef(0);
   const controller = useRef<AbortController | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -25,16 +26,16 @@ export const useWebsiteInsights = (refreshDomains: () => Promise<void>) => {
   const clearInsightNotice = useCallback(() => setInsightNotice(``), []);
 
   useEffect(() => {
-    active.current = true;
+    active.current = enabled;
     revision.current += 1;
     setRefreshing(false);
     setInsightError(``);
     setInsightNotice(``);
     return () => { active.current = false; revision.current += 1; controller.current?.abort(); controller.current = null; };
-  }, [userId]);
+  }, [enabled, userId]);
 
   const refreshWebsiteInsights = useCallback(async (records: DomainRecord[]) => {
-    if (!userId || !active.current || controller.current) return;
+    if (!enabled || !userId || !active.current || controller.current) return;
     const currentController = new AbortController();
     const run = ++revision.current;
     const current = () => active.current && revision.current === run && !currentController.signal.aborted;
@@ -71,7 +72,7 @@ export const useWebsiteInsights = (refreshDomains: () => Promise<void>) => {
       if (controller.current === currentController) controller.current = null;
       if (current()) setRefreshing(false);
     }
-  }, [userId, refreshDomains]);
+  }, [enabled, userId, refreshDomains]);
 
   return { refreshing, insightError, insightNotice, clearInsightError, clearInsightNotice, refreshWebsiteInsights };
 };

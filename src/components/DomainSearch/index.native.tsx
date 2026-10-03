@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
+import LoadingScreen from '../LoadingScreen';
 import { createStyles } from './styles.native';
 import { useDomainSearch } from './useDomainSearch';
 import { routes } from '../../shared/routes';
@@ -21,7 +22,7 @@ const DomainSearch = () => {
 
   if (state.accessLoading) return (
     <View {...elementProps(`domain-search-access-loading`)} style={pageStyle} accessibilityLabel={`Loading Connections`}>
-      <ActivityIndicator {...elementProps(`domain-search-access-progress`)} color={palette.accent} />
+      <LoadingScreen compact suffix={`domain-search-access`} label={`Loading your connections…`} />
     </View>
   );
 

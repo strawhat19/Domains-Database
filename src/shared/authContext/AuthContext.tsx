@@ -42,14 +42,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const applySession = useCallback(async (result: AuthenticationResult | null) => {
     const userId = result?.user ? String(result.user.id) : null;
-    const sameUser = userId && userId === currentUser.current?.id && !result?.claimLegacy;
-    if (sameUser && result) {
-      currentUser.current = result.user;
-      if (mounted.current) { setUser(result.user); setExpiresAt(result.expiresAt); }
-      return result.user;
+    const sameActor = initialized.current && userId === (currentUser.current?.id ?? null) && !result?.claimLegacy;
+    if (sameActor) {
+      currentUser.current = result?.user ?? null;
+      if (mounted.current) { setUser(result?.user ?? null); setExpiresAt(result?.expiresAt ?? null); }
+      return result?.user ?? null;
     }
     currentUser.current = null;
-    if (mounted.current) { setUser(null); setExpiresAt(null); }
+    if (mounted.current) { setLoading(true); setUser(null); setExpiresAt(null); }
     try {
       await api.setUserScope(userId, { claimLegacy: result?.claimLegacy ?? false, adoptGuest: result?.user.number === 1 });
       if (result?.claimLegacy && userId) {
@@ -62,6 +62,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (failure) {
       await api.setUserScope(null).catch(() => undefined);
       throw failure;
+    } finally {
+      if (mounted.current) setLoading(false);
     }
   }, []);
 
@@ -72,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (mounted.current) setError(null);
     } catch (failure) {
       currentUser.current = null;
-      if (mounted.current) { setUser(null); setExpiresAt(null); setError(messageFromError(failure)); }
+      if (mounted.current) { setLoading(true); setUser(null); setExpiresAt(null); setError(messageFromError(failure)); }
       await api.setUserScope(null).catch(() => undefined);
       throw failure;
     } finally {
@@ -153,8 +155,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await applySession(await authAPI.restoreSession());
       } catch {
         currentUser.current = null;
-        if (mounted.current) { setUser(null); setExpiresAt(null); }
+        if (mounted.current) { setLoading(true); setUser(null); setExpiresAt(null); }
         await api.setUserScope(null).catch(() => undefined);
+        if (mounted.current) setLoading(false);
       }
       if (mounted.current) setError(messageFromError(failure));
       throw failure;

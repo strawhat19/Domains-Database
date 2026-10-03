@@ -25,6 +25,7 @@
 .header-logo { display: block; width: 220px; height: auto; flex-shrink: 0; object-fit: contain; }
 .header-actions { gap: var(--header-action-gap); display: flex; flex-shrink: 0; align-items: center; }
 .header-navigation { gap: 4px; display: flex; align-items: center; margin-left: auto; }
+.header-mobile-signin { display: none; }
 .header-navigation-content,
 .header-navigation-links { display: contents; }
 
@@ -97,6 +98,7 @@
   .header-brand { flex: 1; order: 0; min-width: 0; max-width: 220px; }
   .header-logo { width: 100%; }
   .header-actions { order: 1; margin-left: auto; }
+  .header-actions :is(.user-menu-signin, [data-class='user-menu-signin']) { display: none; }
   .header-menu-toggle { display: inline-flex; }
   .header-navigation {
     gap: 0;
@@ -116,6 +118,8 @@
   .header-navigation-open .header-navigation-content { transform: translateY(0); }
   .header-navigation-links { gap: 4px; display: flex; min-width: 0; flex-direction: column; border-top: 1px solid var(--line); }
   .header-navigation-links { margin-top: 6px; padding: 12px 0 6px; }
+  .header-mobile-signin { display: flex; padding: 12px 0 6px; border-top: 1px solid var(--line); }
+  .header-mobile-signin :is(.user-menu-signin, [data-class='user-menu-signin']) { width: 100%; justify-content: center; }
   .header-link { min-height: 44px; justify-content: flex-start; padding: 10px 12px; }
 }
 

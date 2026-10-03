@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Roles } from '../../types/types';
 import type { PropsWithChildren } from 'react';
+import LoadingScreen from '../LoadingScreen';
 import { createStyles } from './styles.native';
 import { Pressable, Text, View } from 'react-native';
 import { useProtectedRoute } from './useProtectedRoute';
@@ -17,11 +18,7 @@ const ProtectedRoute = ({ children, minRole = Roles.Subscriber }: ProtectedRoute
 
   if (state.auth.loading) return (
     <View {...elementProps(`protected-route-loading`)} style={styles.page} accessibilityLabel={`Loading Your Account`}>
-      <View {...elementProps(`protected-route-skeleton`)} style={styles.panel}>
-        <View {...elementProps(`protected-route-skeleton-title`)} style={styles.skeletonTitle} />
-        <View {...elementProps(`protected-route-skeleton-line`)} style={styles.skeletonLine} />
-        <View {...elementProps(`protected-route-skeleton-action`)} style={styles.skeletonAction} />
-      </View>
+      <LoadingScreen compact suffix={`protected-route`} label={`Loading your account…`} />
     </View>
   );
   if (state.allowed) return <>{children}</>;

@@ -14,10 +14,11 @@ const emptyStatuses = (): ConnectionSyncStatuses => ({
   namecheap: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
 });
 
-export const useRegistrarSync = (refreshDomains: () => Promise<void>) => {
+export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = true) => {
   const { user, loginRevision } = useAuth();
   const userId = user?.id;
   const active = useRef(false);
+  if (!enabled) active.current = false;
   const revision = useRef(0);
   const owner = useRef(user?.name ?? ``);
   const controllers = useRef<AbortController[]>([]);
@@ -45,7 +46,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>) => {
     const run = revision.current;
     const current = () => active.current && revision.current === run;
     const empty = { count: 0, errors: [], warnings: [] };
-    if (!userId || !current()) return empty;
+    if (!enabled || !userId || !current()) return empty;
     setSyncError(``);
     setSyncNotice(``);
     try {
@@ -98,14 +99,19 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>) => {
       setSyncError(message);
       return { count: 0, warnings: [], errors: [message] };
     }
-  }, [userId, cancelRequests, refreshDomains]);
+  }, [enabled, userId, cancelRequests, refreshDomains]);
 
   useEffect(() => {
-    active.current = true;
-    void syncConnections();
+    active.current = enabled;
+    if (enabled) void syncConnections();
+    else resetConnectionSync();
     return () => { active.current = false; cancelRequests(); };
-  }, [loginRevision, syncConnections, cancelRequests]);
+  }, [enabled, loginRevision, syncConnections, cancelRequests, resetConnectionSync]);
 
-  const syncing = Object.values(connectionStatuses).some(status => status.state === `checking`);
-  return { syncing, syncError, syncNotice, syncConnections, clearSyncNotice, connectionStatuses, resetConnectionSync };
+  const syncing = enabled && Object.values(connectionStatuses).some(status => status.state === `checking`);
+  return {
+    syncing, syncConnections, clearSyncNotice, resetConnectionSync,
+    syncError: enabled ? syncError : ``, syncNotice: enabled ? syncNotice : ``,
+    connectionStatuses: enabled ? connectionStatuses : emptyStatuses(),
+  };
 };

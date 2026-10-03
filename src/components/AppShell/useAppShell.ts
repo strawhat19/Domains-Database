@@ -12,5 +12,5 @@ export const useAppShell = () => {
   const visibleNavigation = navigation.filter(item =>
     (item.href !== routes.search.href || eligible)
     && (item.href !== routes.community.href || signedIn));
-  return { pathname, year: new Date().getFullYear(), navigation: visibleNavigation };
+  return { pathname, signedIn, year: new Date().getFullYear(), navigation: visibleNavigation };
 };

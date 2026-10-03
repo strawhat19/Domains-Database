@@ -13,9 +13,10 @@ import { useAppShell, footerLinks } from './useAppShell';
 import { X, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children }: PropsWithChildren) => {
-  const { pathname, year, navigation } = useAppShell();
+  const { pathname, year, signedIn, navigation } = useAppShell();
   const { isDark } = useTheme();
   const mobileNavigation = useMobileNavigation(pathname);
+  const mobileSignIn = mobileNavigation.compact && !signedIn;
   const MenuIcon = mobileNavigation.open ? X : Menu;
 
   return (
@@ -76,12 +77,17 @@ const AppShell = ({ children }: PropsWithChildren) => {
                   );
                 })}
               </div>
+              {mobileSignIn && (
+                <div id={`header-mobile-signin`} className={`header-mobile-signin`}>
+                  <UserMenu />
+                </div>
+              )}
             </div>
           </nav>
           <div id={`header-actions`} className={`header-actions`}>
             <ThemeToggle />
             <NotificationBell />
-            <UserMenu />
+            {!mobileSignIn && <UserMenu />}
             <button
               type={`button`}
               id={`header-menu-toggle`}

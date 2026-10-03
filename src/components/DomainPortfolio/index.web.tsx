@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import ColumnControls from '../ColumnControls';
 import DomainEditor from '../DomainEditor';
+import LoadingScreen from '../LoadingScreen';
 import RegistrarSetup from '../RegistrarSetup/index.web';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { useAuth } from '../../shared/authContext/useAuth';
@@ -98,7 +99,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </span>
             <span id={`portfolio-attention`} className={`portfolio-summary-item ${portfolio.summary.attention ? `portfolio-summary-attention` : ``}`}>
               <span id={`portfolio-attention-dot`} className={`portfolio-attention-dot`} aria-hidden={`true`} />
-              {`${portfolio.summary.attention} need attention`}
+              {portfolio.loading ? `— need attention` : `${portfolio.summary.attention} need attention`}
             </span>
             {showAnnualSpend && (
               <>
@@ -106,7 +107,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   {`·`}
                 </span>
                 <span id={`portfolio-annual-spend`} className={`portfolio-summary-item`}>
-                  {portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost)} / year`}
+                  {portfolio.loading ? `— / year` : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost)} / year`}
                 </span>
                 {showMonthlySpend && (
                   <>
@@ -114,7 +115,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       {`·`}
                     </span>
                     <span id={`portfolio-monthly-spend`} className={`portfolio-summary-item`}>
-                      {portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
+                      {portfolio.loading ? `— / month` : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
                     </span>
                   </>
                 )}
@@ -161,6 +162,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </button>
         </div>
       </div>
+      {portfolio.loading && <LoadingScreen compact suffix={`domain-portfolio`} label={`Loading your portfolio…`} />}
       {portfolio.syncing && (
         <p role={`status`} id={`portfolio-sync-status`} className={`portfolio-sync-status`}>
           {`Checking Connected Registrars…`}

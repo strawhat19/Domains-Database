@@ -15,7 +15,7 @@ import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck } 
 import { Alert, Linking, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children }: { children: ReactNode }) => {
-  const { pathname, year, navigation } = useAppShell();
+  const { pathname, year, signedIn, navigation } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isDark, palette } = useTheme();
@@ -56,7 +56,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </View>
             <ThemeToggle />
             <NotificationBell />
-            <UserMenu />
+            {signedIn && <UserMenu />}
           </View>
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
@@ -80,6 +80,11 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               </Link>
             );
           })}
+          {!signedIn && (
+            <View {...elementProps(`native-navigation-signin`)}>
+              <UserMenu />
+            </View>
+          )}
         </View>
       </View>
       <ScrollView {...elementProps(`native-app-scroll`)} style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps={`handled`}>

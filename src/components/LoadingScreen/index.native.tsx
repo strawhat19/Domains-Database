@@ -1,44 +1,83 @@
 import { Image } from 'expo-image';
+import { Text, View, Animated } from 'react-native';
 import { useLoadingScreen } from './useLoadingScreen';
 import { elementProps } from '../../shared/elementProps';
-import { ActivityIndicator, Text, View } from 'react-native';
 
-const LoadingScreen = () => {
-  const { height, styles, isDark, palette, reducedMotion } = useLoadingScreen();
+type LoadingScreenProps = { label?: string; suffix?: string; compact?: boolean };
+
+const LoadingScreen = ({ compact = false, suffix = `page`, label = `Loading your page…` }: LoadingScreenProps) => {
+  const { isDark, styles, logoMotion, skeletonMotion } = useLoadingScreen();
+
   return (
     <View
-      {...elementProps(`app-loading-screen`)}
+      {...elementProps(`app-loading-screen`, suffix)}
+      accessible
+      accessibilityRole={`progressbar`}
+      accessibilityLabel={label}
       accessibilityState={{ busy: true }}
-      style={[styles.screen, { minHeight: height }]}
+      style={[styles.screen, compact && styles.compactScreen]}
     >
-      <View {...elementProps(`app-loading-card`)} style={styles.card}>
-        <Image
-          {...elementProps(`app-loading-logo`)}
-          style={styles.logo}
-          contentFit={`contain`}
-          accessibilityLabel={`Domains Database`}
-          source={isDark
-            ? require('../../../assets/icons/brand-logo-dark.svg')
-            : require('../../../assets/concepts/logos/v8/02-domain-record-stack-fill.svg')}
-        />
-        <View {...elementProps(`app-loading-copy`)} style={styles.copy}>
-          <Text {...elementProps(`app-loading-title`)} style={styles.title}>
-            {`Your domains, together.`}
-          </Text>
-          <Text {...elementProps(`app-loading-description`)} style={styles.description}>
-            {`One clear view of every name you own.`}
+      <View {...elementProps(`app-loading-card`, suffix)} style={[styles.card, compact && styles.compactCard]}>
+        <View {...elementProps(`app-loading-heading`, suffix)} style={styles.heading}>
+          <Animated.View {...elementProps(`app-loading-brand`, suffix)} style={[styles.brand, logoMotion]}>
+            <Image
+              {...elementProps(`app-loading-logo`, suffix)}
+              style={styles.logo}
+              contentFit={`contain`}
+              accessibilityLabel={`Domains Database`}
+              source={isDark
+                ? require('../../../assets/icons/brand-logo-dark.svg')
+                : require('../../../assets/concepts/logos/v8/02-domain-record-stack-fill.svg')}
+            />
+          </Animated.View>
+          <View {...elementProps(`app-loading-record-dots`, suffix)} style={styles.dots} accessibilityElementsHidden>
+            {[0, 1, 2].map(index => (
+              <Animated.View
+                key={index}
+                {...elementProps(`app-loading-record-dot`, `${suffix}-${index}`)}
+                style={[styles.dot, skeletonMotion]}
+              />
+            ))}
+          </View>
+        </View>
+        <View {...elementProps(`app-loading-status`, suffix)} accessibilityLiveRegion={`polite`}>
+          <Text {...elementProps(`app-loading-label`, suffix)} style={styles.label}>
+            {label}
           </Text>
         </View>
-        <View {...elementProps(`app-loading-status`)} style={styles.status} accessibilityLiveRegion={`polite`}>
-          {reducedMotion ? (
-            <View {...elementProps(`app-loading-status-dot`)} style={styles.dot} />
+        <Animated.View
+          {...elementProps(`app-loading-preview`, suffix)}
+          style={[styles.preview, skeletonMotion]}
+          accessibilityElementsHidden
+          importantForAccessibility={`no-hide-descendants`}
+        >
+          <View {...elementProps(`app-loading-preview-heading`, suffix)} style={styles.previewHeading}>
+            <View {...elementProps(`app-loading-preview-title`, suffix)} style={[styles.bar, styles.headingBar]} />
+            <View {...elementProps(`app-loading-preview-action`, suffix)} style={[styles.bar, styles.actionBar]} />
+          </View>
+          {compact ? (
+            <View {...elementProps(`app-loading-preview-lines`, suffix)} style={styles.lines}>
+              {[0, 1].map(index => (
+                <View
+                  key={index}
+                  {...elementProps(`app-loading-preview-line`, `${suffix}-${index}`)}
+                  style={[styles.bar, index ? styles.shortBar : styles.longBar]}
+                />
+              ))}
+            </View>
           ) : (
-            <ActivityIndicator {...elementProps(`app-loading-spinner`)} color={palette.accent} size={`small`} />
+            <View {...elementProps(`app-loading-preview-cards`, suffix)} style={styles.previewCards}>
+              {[0, 1, 2].map(index => (
+                <View key={index} {...elementProps(`app-loading-preview-card`, `${suffix}-${index}`)} style={styles.previewCard}>
+                  <View {...elementProps(`app-loading-preview-card-marker`, `${suffix}-${index}`)} style={[styles.bar, styles.markerBar]} />
+                  <View {...elementProps(`app-loading-preview-card-title`, `${suffix}-${index}`)} style={[styles.bar, styles.titleBar]} />
+                  <View {...elementProps(`app-loading-preview-card-line`, `${suffix}-${index}`)} style={[styles.bar, styles.shortBar]} />
+                  <View {...elementProps(`app-loading-preview-card-footer`, `${suffix}-${index}`)} style={[styles.bar, styles.longBar]} />
+                </View>
+              ))}
+            </View>
           )}
-          <Text {...elementProps(`app-loading-label`)} style={styles.label}>
-            {`Opening your registry…`}
-          </Text>
-        </View>
+        </Animated.View>
       </View>
     </View>
   );
