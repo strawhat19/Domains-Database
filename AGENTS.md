@@ -35,8 +35,12 @@ Apply these preferences across projects and workspaces for the strawhat19 GitHub
 
 12. Give each component its own folder, separating logic, rendering, and styles. Share behavior across web and native views where practical.
 
-13. Footers must include copyright with the current year and a link to https://piratechs.com/.
+13. Headers should have component variable called 'sticky', default set to true, making the header top sticky so it follows user on scroll, and this includes any top bars or elements attached to the header, then when scrolling down, the header should become semi transparent with backdrop filter blur, make sure you put this backdrop filter blur after the webkit backdrop filter blur because thats how i noticed it worked. these should all be smooth transitions
 
-14. Before publishing a completed landing page, include About, Terms, Contact, and Privacy Policy pages. Menu links should navigate to internal pages instead of section anchors; include common aliases such as about-us to about and contact-us to contact.
+14. Every App should have a smooth scroll to top button that fades in and out when the user scrolls past the hero and matches the design of the app, preferably this scroll to top button should float in the bottom right corner of the app
 
-15. Before implementation, read the applicable guidance in this order: ai/skills/structure/structure.md, ai/skills/database/database.md, ai/skills/api/api.md, ai/skills/authentication/authentication.md when authentication is involved, ai/skills/social/social.md when profiles, posts, followers, messaging, or social privacy are involved, then ai/skills/routes/routes.md. Read only what the requested work needs, preserve the existing architecture where practical, and do not run premature validation.
+15. Footers must include copyright with the current year, and a link to https://piratechs.com/, the link to Piratechs should preferably be in the right or center of the footer, and towards the bottom.
+
+16. Before publishing a completed landing page, include About, Terms, Contact, and Privacy Policy pages. Menu links should navigate to internal pages instead of section anchors; include common aliases such as about-us to about and contact-us to contact.
+
+17. Before implementation, read the applicable guidance in this order: ai/skills/structure/structure.md, ai/skills/database/database.md, ai/skills/api/api.md, ai/skills/authentication/authentication.md when authentication is involved, ai/skills/social/social.md when profiles, posts, followers, messaging, or social privacy are involved, then ai/skills/routes/routes.md. Read only what the requested work needs, preserve the existing architecture where practical, and do not run premature validation.

@@ -80,8 +80,14 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) var(--canvas);
   transition: color .22s ease, background-color .22s ease, border-color .22s ease;
 }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: var(--canvas); }
+::-webkit-scrollbar-thumb { border-radius: 6px; background: var(--line-strong); border: 2px solid var(--canvas); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 html { min-height: 100%; background: var(--canvas); scroll-behavior: smooth; }
 body { margin: 0; color: var(--ink); background: var(--canvas); font-family: var(--font-body); font-size: 14px; -webkit-font-smoothing: antialiased; }
 #root { min-height: 100%; }

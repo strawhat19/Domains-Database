@@ -4,9 +4,9 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   root: { zIndex: 40, position: `relative` },
-  button: { borderRadius: 40, padding: 2 },
-  avatar: { width: 36, height: 36, borderRadius: 36, alignItems: `center`, justifyContent: `center` },
-  skeleton: { width: 36, height: 36, borderRadius: 36, backgroundColor: palette.skeleton },
+  button: { width: 40, height: 40, padding: 1, borderWidth: 1, borderRadius: Platform.OS === `web` ? 5 : 6, alignItems: `center`, justifyContent: `center`, borderColor: palette.line, backgroundColor: palette.paper },
+  avatar: { width: 36, height: 36, borderRadius: Platform.OS === `web` ? 4 : 5, alignItems: `center`, justifyContent: `center` },
+  skeleton: { width: 40, height: 40, borderRadius: Platform.OS === `web` ? 5 : 6, backgroundColor: palette.skeleton },
   initial: { fontSize: 16, fontFamily: `DMSans_700Bold` },
   linkText: { fontSize: 12, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
   signin: { gap: 7, padding: 10, borderRadius: 6, flexDirection: `row`, alignItems: `center`, borderWidth: 1, borderColor: palette.line },

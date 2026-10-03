@@ -1,5 +1,4 @@
 import { Link, useRouter } from 'expo-router';
-import LoadingScreen from '../LoadingScreen';
 import RegistrarSetup from '../RegistrarSetup';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,7 +12,7 @@ import { useNativePortfolio } from './useNativePortfolio';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Plus, RotateCcw, Save, Search, Upload, X, Gauge } from 'lucide-react-native';
+import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Plus, RotateCcw, Save, Search, Upload, X, Gauge, RefreshCw } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -32,6 +31,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const sampleCount = useSampleData ? state.domains.filter(domain => domain.isSample).length : 0;
   const sampleLabel = sampleCount ? `${sampleCount} sample domain(s) included` : `Your records, on this device`;
   const SortIcon = state.sortByName ? ArrowDownAZ : ArrowDownWideNarrow;
+  const manualSyncBlocked = state.loading || state.syncing || state.manualSyncWaitSeconds > 0;
+  const manualSyncLabel = state.syncing ? `Syncing…` : state.manualSyncWaitSeconds > 0
+    ? `Wait ${Math.floor(state.manualSyncWaitSeconds / 60)}:${String(state.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const visibleIds = state.visibleDomains.map(domain => domain.id);
   const selectDomain = (id: string) => setSelectedIds(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
   const selectVisible = () => setSelectedIds(current => [...new Set([...current, ...visibleIds])]);
@@ -67,7 +69,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             {compact ? `Portfolio overview` : `Your portfolio`}
           </Text>
           <Text {...elementProps(`native-portfolio-description`)} style={styles.description}>
-            {state.syncing ? `Checking Connected Registrars…` : `Your domain records, sorted and searchable.`}
+            {`Your domain records, sorted and searchable.`}
           </Text>
         </View>
         <View {...elementProps(`native-portfolio-heading-bottom`)} style={styles.headingBottom}>
@@ -104,15 +106,52 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {state.loading ? `— need attention` : `${state.dueSoon} need attention`}
             </Text>
           </View>
-          <Pressable {...elementProps(`native-portfolio-add`)} accessibilityRole={`button`} accessibilityLabel={`Add Domain`} disabled={state.loading} style={[styles.primaryButton, styles.addButton, state.loading && styles.disabled]} onPress={state.openSetup}>
-            <Plus {...elementProps(`native-portfolio-add-icon`)} size={15} color={`#ffffff`} />
-            <Text {...elementProps(`native-portfolio-add-text`)} style={styles.primaryButtonText}>
-              {`Add Domain`}
-            </Text>
-          </Pressable>
+          <View {...elementProps(`native-portfolio-primary-actions`)} style={styles.headingActions}>
+            {user && state.canSyncManually && (
+              <Pressable
+                {...elementProps(`native-portfolio-sync-domains`)}
+                disabled={manualSyncBlocked}
+                accessibilityRole={`button`}
+                onPress={() => void state.syncManually()}
+                accessibilityState={{ disabled: manualSyncBlocked, busy: state.syncing }}
+                accessibilityLabel={`Sync Domains From Connected Registrars, ${manualSyncLabel}`}
+                accessibilityHint={state.manualSyncMessage || `Refresh Your Domains From Connected Registrars`}
+                style={[styles.secondaryButton, styles.syncButton, manualSyncBlocked && styles.disabled]}
+              >
+                {state.syncing ? <ActivityIndicator {...elementProps(`native-portfolio-sync-button-progress`)} size={`small`} color={palette.accent} /> : <RefreshCw {...elementProps(`native-portfolio-sync-domains-icon`)} size={15} color={palette.accent} />}
+                <Text {...elementProps(`native-portfolio-sync-domains-text`)} style={styles.secondaryButtonText}>
+                  {manualSyncLabel}
+                </Text>
+              </Pressable>
+            )}
+            <Pressable {...elementProps(`native-portfolio-add`)} accessibilityRole={`button`} accessibilityLabel={`Add Domain`} disabled={state.loading} style={[styles.primaryButton, styles.addButton, state.loading && styles.disabled]} onPress={state.openSetup}>
+              <Plus {...elementProps(`native-portfolio-add-icon`)} size={15} color={`#ffffff`} />
+              <Text {...elementProps(`native-portfolio-add-text`)} style={styles.primaryButtonText}>
+                {`Add Domain`}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
-      {state.loading && <LoadingScreen compact suffix={`native-domain-portfolio`} label={`Loading your portfolio…`} />}
+      {user && !!state.manualSyncMessage && (
+        <Text {...elementProps(`native-portfolio-manual-sync-message`)} style={styles.manualSyncMessage} accessibilityLiveRegion={`polite`}>
+          {state.manualSyncMessage}
+        </Text>
+      )}
+      {state.syncing && (
+        <View
+          accessible
+          {...elementProps(`native-portfolio-sync-status`)}
+          style={styles.syncStatus}
+          accessibilityRole={`progressbar`}
+          accessibilityLiveRegion={`polite`}
+          accessibilityState={{ busy: true }}
+          accessibilityLabel={`Syncing Domains…`}
+        >
+          <ActivityIndicator {...elementProps(`native-portfolio-sync-spinner`)} size={`small`} color={palette.accent} />
+          <Text {...elementProps(`native-portfolio-sync-text`)} style={styles.description}>{`Syncing Domains…`}</Text>
+        </View>
+      )}
       <Pressable
         onPress={refreshWebsiteInfo}
         accessibilityRole={`button`}

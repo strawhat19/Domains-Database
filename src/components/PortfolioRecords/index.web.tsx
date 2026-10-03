@@ -123,7 +123,7 @@ const PortfolioRecords = ({
       <div
         id={`portfolio-sticky-head`}
         className={`portfolio-sticky-head`}
-        style={{ top: sticky.header.toolbarHeight, height: sticky.header.headHeight || undefined }}
+        style={{ height: sticky.header.headHeight || undefined, top: `calc(var(--site-header-offset, 0px) + ${sticky.header.toolbarHeight}px)` }}
       >
         <div id={`portfolio-sticky-head-clip`} className={`portfolio-sticky-head-clip`}>
           <table

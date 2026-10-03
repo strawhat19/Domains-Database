@@ -4,9 +4,11 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   shell: { flex: 1, backgroundColor: palette.canvas },
   scroll: { flex: 1 },
+  blurTarget: { flex: 1 },
   content: { flexGrow: 1 },
   main: { width: `100%`, alignSelf: `stretch` },
-  header: { gap: 8, zIndex: 40, paddingBottom: 16, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: palette.paper },
+  header: { gap: 8, zIndex: 40, paddingBottom: 16, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: `transparent` },
+  stickyHeader: { top: 0, left: 0, right: 0, position: `absolute` },
   headerRow: { gap: 12, flexDirection: `row`, flexWrap: `wrap`, alignItems: `center`, justifyContent: `space-between` },
   headerActions: { gap: 8, flexDirection: `row`, alignItems: `center` },
   logo: { width: 194, height: 58 },
@@ -25,6 +27,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   footerLinks: { gap: 18, flexWrap: `wrap`, flexDirection: `row` },
   footerLink: { gap: 6, paddingVertical: 4, flexDirection: `row`, alignItems: `center` },
   footerLinkText: { color: palette.muted, fontSize: 12, fontFamily: `DMSans_500Medium` },
-  copyright: { color: palette.muted, fontSize: 11, lineHeight: 18, fontFamily: `DMSans_400Regular` },
+  copyright: { color: palette.muted, fontSize: 11, lineHeight: 18, textAlign: `center`, fontFamily: `DMSans_400Regular` },
   piratechsLink: { color: palette.accent, fontFamily: `DMSans_500Medium` },
 });

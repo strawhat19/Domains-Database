@@ -41,7 +41,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
     justifyContent: `center`,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: palette.overlay,
   },
   panel: {

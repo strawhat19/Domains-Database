@@ -12,6 +12,10 @@ export interface DomainContextValue {
   notice: string;
   loading: boolean;
   syncing: boolean;
+  canSyncManually: boolean;
+  manualSyncMessage: string;
+  manualSyncWaitSeconds: number;
+  syncManually: () => Promise<void>;
   refreshing: boolean;
   insightError: string;
   insightNotice: string;
@@ -108,6 +112,10 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
     loading: !enabled || loading,
     domains: enabled ? domains : [],
     syncing: sync.syncing,
+    syncManually: sync.syncManually,
+    canSyncManually: sync.canSyncManually,
+    manualSyncMessage: sync.manualSyncMessage,
+    manualSyncWaitSeconds: sync.manualSyncWaitSeconds,
     refreshing: enabled && insights.refreshing,
     error: enabled ? error || sync.syncError : ``,
     notice: enabled ? notice || sync.syncNotice : ``,
@@ -124,7 +132,7 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
     syncConnections: sync.syncConnections,
     connectionStatuses: sync.connectionStatuses,
     resetConnectionSync: sync.resetConnectionSync,
-  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync]);
+  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
 
   return (
     <DomainContext.Provider value={value}>

@@ -4,22 +4,25 @@ import { useDomainSiteIcon } from './useDomainSiteIcon';
 
 interface DomainSiteIconProps {
   id: string;
-  domain: string;
   size?: number;
+  domain: string;
+  compact?: boolean;
 }
 
-const SiteIconContent = ({ id, domain, size = 28 }: DomainSiteIconProps) => {
+const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteIconProps) => {
   const { failed, loaded, onLoad, onError } = useDomainSiteIcon();
+  const imageSize = compact ? size : Math.min(20, size);
+  const fallbackSize = compact ? size : Math.min(16, size);
   return (
     <span
       id={id}
       aria-hidden={`true`}
-      className={`domain-site-icon`}
+      className={`domain-site-icon${compact ? ` domain-site-icon-compact` : ``}`}
       style={{ width: size, height: size }}
     >
       {(!loaded || failed) && (
         <Globe2
-          size={16}
+          size={fallbackSize}
           strokeWidth={1.4}
           id={`${id}-fallback`}
           className={`domain-site-icon-fallback`}
@@ -28,8 +31,8 @@ const SiteIconContent = ({ id, domain, size = 28 }: DomainSiteIconProps) => {
       {!failed && (
         <img
           alt={``}
-          width={20}
-          height={20}
+          width={imageSize}
+          height={imageSize}
           loading={`lazy`}
           draggable={false}
           onLoad={onLoad}

@@ -12,6 +12,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   title: { flex: 1, minWidth: 0, color: palette.ink, fontSize: 15, fontFamily: `DMSans_700Bold` },
   copy: { color: palette.muted, fontSize: 11, lineHeight: 19, fontFamily: `DMSans_400Regular` },
   field: { gap: 8 },
+  syncStatus: { gap: 8, flexDirection: `row`, alignItems: `center` },
   label: { flexShrink: 1, color: palette.ink, fontSize: 12, fontFamily: `DMSans_600SemiBold` },
   input: { minWidth: 0, minHeight: 56, maxHeight: 180, borderWidth: 1, borderRadius: 8, borderColor: palette.line, backgroundColor: palette.input, padding: 12, fontSize: 12, color: palette.ink, fontFamily: `monospace` },
   skeleton: { height: 56, borderRadius: 8, backgroundColor: palette.skeleton },

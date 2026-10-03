@@ -3,7 +3,6 @@ import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import ColumnControls from '../ColumnControls';
 import DomainEditor from '../DomainEditor';
-import LoadingScreen from '../LoadingScreen';
 import RegistrarSetup from '../RegistrarSetup/index.web';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { useAuth } from '../../shared/authContext/useAuth';
@@ -18,7 +17,7 @@ import { useDomainSelection } from './useDomainSelection';
 import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { useStickyPortfolio } from './useStickyPortfolio';
-import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDown, FlaskConical, ShieldCheck, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge } from 'lucide-react';
+import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDown, FlaskConical, ShieldCheck, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
@@ -39,6 +38,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   }, [portfolio.filteredDomains, preferences, compact, portfolio.sortField]);
   const selection = useDomainSelection(portfolio.domains, visibleIds);
   const ViewIcon = preferences.view === `table` ? LayoutGrid : List;
+  const manualSyncBlocked = portfolio.loading || portfolio.syncing || portfolio.manualSyncWaitSeconds > 0;
+  const manualSyncLabel = portfolio.syncing ? `Syncing…` : portfolio.manualSyncWaitSeconds > 0
+    ? `Wait ${Math.floor(portfolio.manualSyncWaitSeconds / 60)}:${String(portfolio.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const displayedError = portfolio.localError || portfolio.insightError || portfolio.error;
   const insightDomains = selection.selectedIds.size
     ? portfolio.domains.filter(domain => selection.selectedIds.has(domain.id)) : portfolio.filteredDomains;
@@ -148,25 +150,51 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {`Registrars`}
             </span>
           </button> */}
-          <button
-            type={`button`}
-            id={`portfolio-add-domain`}
-            disabled={portfolio.loading}
-            onClick={portfolio.openSetup}
-            className={`portfolio-button portfolio-button-primary`}
-          >
-            <Plus size={16} aria-hidden={`true`} id={`portfolio-add-domain-icon`} className={`portfolio-button-icon`} />
-            <span id={`portfolio-add-domain-text`} className={`portfolio-button-text`}>
-              {`Add Domain`}
-            </span>
-          </button>
+          <div id={`portfolio-domain-actions`} className={`portfolio-domain-actions`}>
+            {user && portfolio.canSyncManually && (
+              <button
+                type={`button`}
+                id={`portfolio-sync-domains`}
+                disabled={manualSyncBlocked}
+                onClick={() => void portfolio.syncManually()}
+                className={`portfolio-button portfolio-button-secondary`}
+                aria-label={`Sync Domains From Connected Registrars, ${manualSyncLabel}`}
+                aria-describedby={portfolio.manualSyncMessage ? `portfolio-manual-sync-message` : undefined}
+                title={portfolio.manualSyncMessage || `Sync Domains From Connected Registrars`}
+              >
+                {portfolio.syncing ? <span aria-hidden={`true`} id={`portfolio-sync-button-spinner`} className={`portfolio-sync-spinner`} /> : <RefreshCw size={15} aria-hidden={`true`} id={`portfolio-sync-domains-icon`} className={`portfolio-button-icon`} />}
+                <span id={`portfolio-sync-domains-text`} className={`portfolio-button-text`}>
+                  {manualSyncLabel}
+                </span>
+              </button>
+            )}
+            <button
+              type={`button`}
+              id={`portfolio-add-domain`}
+              disabled={portfolio.loading}
+              onClick={portfolio.openSetup}
+              className={`portfolio-button portfolio-button-primary`}
+            >
+              <Plus size={16} aria-hidden={`true`} id={`portfolio-add-domain-icon`} className={`portfolio-button-icon`} />
+              <span id={`portfolio-add-domain-text`} className={`portfolio-button-text`}>
+                {`Add Domain`}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
-      {portfolio.loading && <LoadingScreen compact suffix={`domain-portfolio`} label={`Loading your portfolio…`} />}
-      {portfolio.syncing && (
-        <p role={`status`} id={`portfolio-sync-status`} className={`portfolio-sync-status`}>
-          {`Checking Connected Registrars…`}
+      {user && portfolio.manualSyncMessage && (
+        <p role={`status`} aria-live={`polite`} id={`portfolio-manual-sync-message`} className={`portfolio-manual-sync-message`}>
+          {portfolio.manualSyncMessage}
         </p>
+      )}
+      {portfolio.syncing && (
+        <div role={`status`} aria-live={`polite`} id={`portfolio-sync-status`} className={`portfolio-sync-status`}>
+          <span aria-hidden={`true`} id={`portfolio-sync-spinner`} className={`portfolio-sync-spinner`} />
+          <span id={`portfolio-sync-text`} className={`portfolio-sync-text`}>
+            {`Syncing Domains…`}
+          </span>
+        </div>
       )}
       {(portfolio.refreshing || portfolio.insightNotice) && (
         <div role={`status`} aria-live={`polite`} id={`portfolio-website-info-status`} className={`portfolio-message portfolio-message-success`}>

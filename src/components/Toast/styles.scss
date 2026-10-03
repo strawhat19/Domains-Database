@@ -1,5 +1,5 @@
 :is(.toast, [data-class='toast']) { left: auto !important; position: fixed !important; width: min(460px, calc(100vw - 48px)); animation: toast-enter .22s ease; }
-:is(.toast-message, [data-class='toast-message']) { min-width: 0; overflow-wrap: anywhere; }
+:is(.toast-message, [data-class='toast-message']) { min-width: 0; white-space: pre-line; overflow-wrap: anywhere; }
 :is(.toast-icon, [data-class='toast-icon']), :is(.toast-dismiss, [data-class='toast-dismiss']) { flex-shrink: 0; }
 @keyframes toast-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 600px) {

@@ -87,8 +87,9 @@ export const getDomainRegistration = async (name: string, context: RegistrarRequ
   const card = Array.isArray(entity.vcardArray) ? entity.vcardArray[1] : undefined;
   const label = Array.isArray(card) ? card.find(value => Array.isArray(value) && value[0] === `fn`)?.[3] : undefined;
   const registrarName = typeof label === `string` && label.length <= 200 && !/[\u0000-\u001f\u007f]/.test(label) ? label.trim() : undefined;
-  const publicIds = Array.isArray(entity.publicIds) ? entity.publicIds : [];
-  const identifier = publicIds.find(value => value?.type === `IANA Registrar ID`)?.identifier;
+  const publicIds: unknown[] = Array.isArray(entity.publicIds) ? entity.publicIds : [];
+  const identifier = publicIds.find((value): value is { identifier?: unknown } => value !== null && typeof value === `object`
+    && `type` in value && value.type === `IANA Registrar ID`)?.identifier;
   const registrarIanaId = typeof identifier === `string` && /^\d{1,10}$/.test(identifier) ? identifier : undefined;
   const registrar = registrarName ? registrarNames.find(([pattern]) => pattern.test(registrarName))?.[1] ?? `` : ``;
   return { registrar, registrarName, registrarIanaId, registered: true };

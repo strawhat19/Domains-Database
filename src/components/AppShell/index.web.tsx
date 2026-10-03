@@ -3,25 +3,30 @@ import '../../styles/global.scss';
 import { Link } from 'expo-router';
 import UserMenu from '../UserMenu';
 import ThemeToggle from '../ThemeToggle';
+import ScrollToTop from '../ScrollToTop';
+import DomainMarquee from '../DomainMarquee';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
 import NotificationBell from '../NotificationBell';
-import type { PropsWithChildren } from 'react';
+import type { CSSProperties, PropsWithChildren } from 'react';
+import { useShellScroll } from './useShellScroll.web';
 import { useMobileNavigation } from './useMobileNavigation';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, footerLinks } from './useAppShell';
 import { X, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
-const AppShell = ({ children }: PropsWithChildren) => {
+const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
   const { pathname, year, signedIn, navigation } = useAppShell();
   const { isDark } = useTheme();
   const mobileNavigation = useMobileNavigation(pathname);
+  const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn;
   const MenuIcon = mobileNavigation.open ? X : Menu;
 
   return (
-    <div id={`app-shell`} className={`app-shell`}>
-      <header ref={mobileNavigation.headerRef} id={`site-header`} className={`site-header`}>
+    <div id={`app-shell`} className={`app-shell`} style={{ [`--site-header-offset`]: `${scroll.headerHeight}px` } as CSSProperties}>
+      <header ref={mobileNavigation.headerRef} id={`site-header`} className={`site-header`} data-sticky={sticky} data-scrolled={scroll.scrolled || undefined}>
+        <DomainMarquee />
         <div id={`header-inner`} className={`header-inner`}>
           <Link href={`/`} asChild>
             <RouterAnchor
@@ -110,15 +115,9 @@ const AppShell = ({ children }: PropsWithChildren) => {
         {children}
       </main>
       <AuthFeedback />
+      <ScrollToTop visible={scroll.showScrollTop} onPress={scroll.scrollToTop} bottomInset={scroll.bottomInset} />
       <footer id={`site-footer`} className={`site-footer`}>
         <div id={`footer-inner`} className={`footer-inner`}>
-          <p id={`footer-copyright`} className={`footer-copyright`}>
-            {`© ${year} Domains Database. Crafted by `}
-            <a id={`footer-piratechs`} className={`footer-piratechs`} href={`https://piratechs.com/`} target={`_blank`} rel={`noopener noreferrer`}>
-              {`Piratechs`}
-              <ArrowUpRight id={`footer-piratechs-icon`} className={`footer-piratechs-icon`} size={12} aria-hidden />
-            </a>
-          </p>
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>
             {footerLinks.map(item => {
               const Icon = { FileText, ShieldCheck }[item.icon];
@@ -136,6 +135,13 @@ const AppShell = ({ children }: PropsWithChildren) => {
               );
             })}
           </nav>
+          <p id={`footer-copyright`} className={`footer-copyright`}>
+            {`© ${year} Domains Database. Crafted by `}
+            <a id={`footer-piratechs`} className={`footer-piratechs`} href={`https://piratechs.com/`} target={`_blank`} rel={`noopener noreferrer`}>
+              {`Piratechs`}
+              <ArrowUpRight id={`footer-piratechs-icon`} className={`footer-piratechs-icon`} size={12} aria-hidden />
+            </a>
+          </p>
         </div>
       </footer>
     </div>

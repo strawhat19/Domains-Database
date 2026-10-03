@@ -1,16 +1,19 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect, useContext } from 'react';
 import { Text, View } from 'react-native';
 import { Layers3 } from 'lucide-react-native';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
+import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { useTheme } from '../../shared/themeContext/useTheme';
 
 const Hero = () => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
+  useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
 
   return (
-    <View {...elementProps(`landing-hero`)} style={styles.hero}>
+    <View {...elementProps(`landing-hero`)} style={styles.hero} onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}>
       <Text {...elementProps(`hero-eyebrow`)} style={styles.eyebrow}>
         {`PERSONAL DOMAIN REGISTRY`}
       </Text>

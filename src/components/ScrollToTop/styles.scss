@@ -1,0 +1,41 @@
+.scroll-to-top {
+  width: 44px;
+  height: 44px;
+  right: 20px;
+  padding: 0;
+  opacity: 0;
+  z-index: 35;
+  display: grid;
+  position: fixed;
+  cursor: pointer;
+  visibility: hidden;
+  border-radius: 5px;
+  pointer-events: none;
+  color: var(--accent);
+  place-items: center;
+  background: var(--paper);
+  transform: translateY(8px);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ink) 12%, transparent);
+  transition: opacity .24s ease, transform .24s ease, background .24s ease, border-color .24s ease, visibility 0s .24s;
+
+  &.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition-delay: 0s;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--subtle);
+    border-color: var(--accent);
+  }
+
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  &:disabled { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-to-top { transform: none; transition: none; }
+}

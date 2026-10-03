@@ -7,8 +7,21 @@
 }
 
 .site-header {
+  z-index: 60;
+  position: relative;
   background: var(--paper);
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
   border-bottom: 1px solid var(--line);
+  transition: background-color .24s ease, box-shadow .24s ease, -webkit-backdrop-filter .24s ease, backdrop-filter .24s ease;
+  &[data-sticky='true'] { top: 0; position: sticky; }
+  &[data-scrolled='true'] {
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    background: color-mix(in srgb, var(--paper) 86%, transparent);
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--shadow) 35%, transparent);
+    .domain-marquee { background: transparent; }
+  }
 }
 
 .header-inner {
@@ -78,16 +91,16 @@
 .site-footer { margin-top: 32px; border-top: 1px solid var(--line); }
 
 .footer-inner {
-  gap: 24px;
+  gap: 14px;
   width: 100%;
   display: flex;
   min-height: 84px;
   padding: 20px var(--shell-gutter);
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
-.footer-copyright { margin: 0; font-size: 11px; color: var(--muted); }
+.footer-copyright { margin: 0; font-size: 11px; color: var(--muted); text-align: right; }
 .footer-piratechs { gap: 3px; display: inline-flex; align-items: center; color: var(--ink); }
 .footer-navigation { gap: 12px 24px; display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
 .footer-link { gap: 6px; display: inline-flex; align-items: center; font-size: 11px; color: var(--muted); transition: color .22s ease; }
@@ -128,8 +141,9 @@
   .header-inner { min-height: 78px; }
   .header-logo { max-width: 185px; }
   .header-link { padding: 9px 11px; }
-  .footer-inner { gap: 18px; padding: 24px var(--shell-gutter); align-items: flex-start; flex-direction: column; }
-  .footer-navigation { gap: 4px 20px; justify-content: flex-start; }
+  .footer-inner { gap: 18px; padding: 24px var(--shell-gutter); align-items: center; }
+  .footer-copyright { text-align: center; }
+  .footer-navigation { gap: 4px 20px; justify-content: center; }
   .footer-link { min-height: 44px; }
 }
 

@@ -2,12 +2,12 @@ import Toast from '../Toast';
 import { useMemo } from 'react';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
-import { Pressable, Text, TextInput, View } from 'react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAccountConnections } from './useAccountConnections';
 import { connectionFields } from '../../shared/connections/types';
 import type { RegistrarDomain } from '../../shared/registrarSync/types';
 import type { ThemePalette } from '../../shared/themeContext/theme';
+import { Pressable, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { Save, Trash2, Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 
 interface HostedDomainCandidateProps {
@@ -77,8 +77,22 @@ const AccountConnections = () => {
         </Pressable>
       </View>
       <Text {...elementProps(`connections-description`)} style={styles.copy}>
-        {`Save your registrar values to check each connection and import its domains. Saved connections are checked again whenever you sign in. External names found through hosting need your ownership confirmation; unavailable provider fields appear as —.`}
+        {`Save your registrar values to check each connection and import its domains. Sign-in and refresh check saved connections when the last successful sync is at least 2 hours and 24 minutes old. External names found through hosting need your ownership confirmation; unavailable provider fields appear as —.`}
       </Text>
+      {state.syncing && (
+        <View
+          accessible
+          {...elementProps(`connections-sync-status`)}
+          style={styles.syncStatus}
+          accessibilityRole={`progressbar`}
+          accessibilityLiveRegion={`polite`}
+          accessibilityState={{ busy: true }}
+          accessibilityLabel={`Syncing Domains…`}
+        >
+          <ActivityIndicator {...elementProps(`connections-sync-spinner`)} size={`small`} color={palette.accent} />
+          <Text {...elementProps(`connections-sync-text`)} style={styles.copy}>{`Syncing Domains…`}</Text>
+        </View>
+      )}
       {connectionFields.map(field => (
         <View key={field.id} {...elementProps(`connection-field`, field.id)} style={styles.field}>
           <Text {...elementProps(`connection-label`, field.id)} style={styles.label}>{field.label}</Text>
@@ -143,7 +157,9 @@ const AccountConnections = () => {
       {!state.visible && <Text {...elementProps(`connections-edit-hint`)} style={styles.copy}>{`Choose Show values to edit your saved connections`}</Text>}
       <View {...elementProps(`connections-actions`)} style={styles.row}>
         <Pressable {...elementProps(`connections-save`)} style={[styles.button, styles.primary]} disabled={state.busy || state.loading} onPress={() => void state.save()}>
-          <Save {...elementProps(`connections-save-icon`)} size={16} color={palette.contrast} />
+          {state.busy
+            ? <ActivityIndicator {...elementProps(`connections-save-spinner`)} size={`small`} color={palette.contrast} />
+            : <Save {...elementProps(`connections-save-icon`)} size={16} color={palette.contrast} />}
           <Text {...elementProps(`connections-save-text`)} style={[styles.buttonText, styles.primaryText]}>{state.busy ? state.syncing ? `Checking Domains…` : `Saving…` : `Save connections`}</Text>
         </Pressable>
         <Pressable {...elementProps(`connections-clear`)} style={styles.button} disabled={state.busy || state.loading} onPress={() => void state.clear()}>

@@ -1,25 +1,37 @@
-import { useMemo } from 'react';
+import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import UserMenu from '../UserMenu';
+import { useRef, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import ThemeToggle from '../ThemeToggle';
+import ScrollToTop from '../ScrollToTop';
+import DomainMarquee from '../DomainMarquee';
 import AuthFeedback from '../AuthFeedback';
 import NotificationBell from '../NotificationBell';
 import { createStyles } from './styles.native';
-import { Link } from 'expo-router';
+import { BlurView, BlurTargetView } from 'expo-blur';
+import { useShellScroll } from './useShellScroll.native';
 import { useAppShell, footerLinks } from './useAppShell';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck } from 'lucide-react-native';
-import { Alert, Linking, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
-const AppShell = ({ children }: { children: ReactNode }) => {
+const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
   const { pathname, year, signedIn, navigation } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isDark, palette } = useTheme();
+  const blurTargetRef = useRef<View>(null);
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const scroll = useShellScroll(pathname, sticky);
+  const blurOpacity = useMemo(() => scroll.headerOpacity.interpolate({
+    inputRange: [.86, 1],
+    outputRange: [1, 0],
+  }), [scroll.headerOpacity]);
+  const heroContext = useMemo(() => ({ setHeroBottom: scroll.setHeroBottom }), [scroll.setHeroBottom]);
   const openPiratechs = async () => {
     try {
       await Linking.openURL(`https://piratechs.com/`);
@@ -28,9 +40,31 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  return (
-    <View {...elementProps(`native-app-shell`)} style={styles.shell}>
-      <View {...elementProps(`native-app-header`)} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+  const header = (
+      <View
+        onLayout={scroll.onHeaderLayout}
+        {...elementProps(`native-app-header`)}
+        style={[styles.header, sticky && styles.stickyHeader, { paddingTop: insets.top + 12 }]}
+      >
+        {sticky && (
+          <Animated.View
+            pointerEvents={`none`}
+            {...elementProps(`native-header-blur-layer`)}
+            style={[StyleSheet.absoluteFill, { opacity: blurOpacity }]}
+          >
+            <BlurView
+              intensity={40}
+              pointerEvents={`none`}
+              blurTarget={blurTargetRef}
+              tint={isDark ? `dark` : `light`}
+              style={StyleSheet.absoluteFill}
+              blurMethod={`dimezisBlurView`}
+              {...elementProps(`native-header-blur`)}
+            />
+          </Animated.View>
+        )}
+        <Animated.View pointerEvents={`none`} {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, { opacity: scroll.headerOpacity, backgroundColor: palette.paper }]} />
+        <DomainMarquee translucent={scroll.scrolled} />
         <View {...elementProps(`native-header-row`)} style={styles.headerRow}>
           <Link href={`/`} asChild>
             <Pressable {...elementProps(`native-brand-link`)} accessibilityLabel={`Domains Database Home`}>
@@ -87,47 +121,67 @@ const AppShell = ({ children }: { children: ReactNode }) => {
           )}
         </View>
       </View>
-      <ScrollView {...elementProps(`native-app-scroll`)} style={styles.scroll} contentContainerStyle={styles.content} keyboardShouldPersistTaps={`handled`}>
-        <View {...elementProps(`native-app-main`)} style={styles.main}>
-          {children}
-        </View>
-        <View {...elementProps(`native-app-footer`)} style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
-          <View {...elementProps(`native-footer-top`)} style={styles.footerTop}>
-            <Text {...elementProps(`native-footer-label`)} style={styles.footerLabel}>
-              {`Every address in order.`}
-            </Text>
-            <View {...elementProps(`native-footer-device`)} style={styles.footerDevice}>
-              <ShieldCheck {...elementProps(`native-footer-device-icon`)} size={12} color={palette.muted} />
-              <Text {...elementProps(`native-footer-device-text`)} style={styles.footerDeviceText}>
-                {`Stored on this device`}
+  );
+
+  return (
+    <ScrollContext.Provider value={heroContext}>
+      <View {...elementProps(`native-app-shell`)} style={styles.shell}>
+        <BlurTargetView ref={blurTargetRef} style={styles.blurTarget} {...elementProps(`native-app-blur-target`)}>
+          <ScrollView
+            ref={scroll.scrollRef}
+            onScroll={scroll.onScroll}
+            style={styles.scroll}
+            scrollEventThrottle={16}
+            {...elementProps(`native-app-scroll`)}
+            keyboardShouldPersistTaps={`handled`}
+            scrollIndicatorInsets={{ top: sticky ? scroll.headerHeight : 0 }}
+            contentContainerStyle={[styles.content, { paddingTop: sticky ? scroll.headerHeight : 0 }]}
+          >
+            {!sticky && header}
+            <View {...elementProps(`native-app-main`)} style={styles.main} onLayout={scroll.onMainLayout}>
+              {children}
+            </View>
+            <View {...elementProps(`native-app-footer`)} style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
+              <View {...elementProps(`native-footer-top`)} style={styles.footerTop}>
+                <Text {...elementProps(`native-footer-label`)} style={styles.footerLabel}>
+                  {`Every address in order.`}
+                </Text>
+                <View {...elementProps(`native-footer-device`)} style={styles.footerDevice}>
+                  <ShieldCheck {...elementProps(`native-footer-device-icon`)} size={12} color={palette.muted} />
+                  <Text {...elementProps(`native-footer-device-text`)} style={styles.footerDeviceText}>
+                    {`Stored on this device`}
+                  </Text>
+                </View>
+              </View>
+              <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>
+                {footerLinks.map(({ label, href, icon }) => {
+                  const Icon = { FileText, ShieldCheck }[icon];
+                  return (
+                    <Link key={href} href={href} asChild>
+                      <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
+                        <Icon {...elementProps(`native-footer-link-icon`, label.toLowerCase())} size={12} color={palette.muted} />
+                        <Text {...elementProps(`native-footer-link-text`, label.toLowerCase())} style={styles.footerLinkText}>
+                          {label}
+                        </Text>
+                      </Pressable>
+                    </Link>
+                  );
+                })}
+              </View>
+              <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
+                {`© ${year} Domains Database. Made by `}
+                <Text {...elementProps(`native-piratechs-link`)} style={styles.piratechsLink} accessibilityRole={`link`} onPress={() => void openPiratechs()}>
+                  {`Piratechs ↗`}
+                </Text>
               </Text>
             </View>
-          </View>
-          <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>
-            {footerLinks.map(({ label, href, icon }) => {
-              const Icon = { FileText, ShieldCheck }[icon];
-              return (
-              <Link key={href} href={href} asChild>
-                <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
-                  <Icon {...elementProps(`native-footer-link-icon`, label.toLowerCase())} size={12} color={palette.muted} />
-                  <Text {...elementProps(`native-footer-link-text`, label.toLowerCase())} style={styles.footerLinkText}>
-                    {label}
-                  </Text>
-                </Pressable>
-              </Link>
-              );
-            })}
-          </View>
-          <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
-            {`© ${year} Domains Database. Made by `}
-            <Text {...elementProps(`native-piratechs-link`)} style={styles.piratechsLink} accessibilityRole={`link`} onPress={() => void openPiratechs()}>
-              {`Piratechs ↗`}
-            </Text>
-          </Text>
-        </View>
-      </ScrollView>
-      <AuthFeedback />
-    </View>
+          </ScrollView>
+        </BlurTargetView>
+        {sticky && header}
+        <AuthFeedback />
+        <ScrollToTop visible={scroll.showScrollTop} onPress={scroll.scrollToTop} bottomInset={insets.bottom} />
+      </View>
+    </ScrollContext.Provider>
   );
 };
 

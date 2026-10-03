@@ -3,6 +3,7 @@ import { connectionsAPI } from '../../api/connections';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { normalizeDomainName } from '../../shared/domainUtils';
 import { useDomains } from '../../shared/domainContext/useDomains';
+import { formatSyncNotice } from '../../shared/registrarSync/messages';
 import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
 import { EMPTY_CONNECTIONS, type ConnectionProvider } from '../../shared/connections/types';
 
@@ -20,7 +21,7 @@ const includeExternalDomain = (values: string, name: string) => {
   return [...lines, `HOSTINGER_EXTERNAL_DOMAINS=${names.join(`,`)}`].filter(Boolean).join(`\n`);
 };
 const syncNotice = (label: string, result: ConnectionSyncResult) =>
-  `${label} — ${result.errors.length ? `Sync Finished With Errors; ` : ``}${result.count} Domain(s) Synced${result.warnings.length ? ` — ${result.warnings.join(`; `)}` : ``}`;
+  formatSyncNotice(result, `${label}${result.errors.length ? ` — Sync Finished With Errors` : ``}`);
 
 export const useAccountConnections = () => {
   const { user, loginRevision } = useAuth();
@@ -100,7 +101,7 @@ export const useAccountConnections = () => {
       const result = await syncConnections(snapshot);
       if (!isCurrent(operation)) return;
       setNotice(syncNotice(`Connections Saved`, result));
-      setError(result.errors.join(`; `));
+      setError(result.errors.join(`\n`));
     } catch (failure) {
       if (isCurrent(operation)) setError(failure instanceof Error ? failure.message : `Could Not Save Connections`);
     } finally { finishOperation(operation); }
@@ -143,7 +144,7 @@ export const useAccountConnections = () => {
       const result = await syncConnections(snapshot);
       if (!isCurrent(operation)) return;
       setNotice(syncNotice(`Ownership Confirmed`, result));
-      setError(result.errors.join(`; `));
+      setError(result.errors.join(`\n`));
     } catch (failure) {
       if (isCurrent(operation)) setError(failure instanceof Error ? failure.message : `Could Not Include Domain`);
     } finally { finishOperation(operation); }
