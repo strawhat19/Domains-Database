@@ -7,6 +7,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
     web: { boxShadow: `0px 4px 12px rgba(0, 0, 0, 0.15)` },
     default: { elevation: 8, shadowColor: `#000`, shadowOpacity: .15, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
   }) },
-  message: { flex: 1, fontSize: 12, lineHeight: 19, fontFamily: `DMSans_500Medium` },
+  content: { gap: 10, flex: 1, minWidth: 0 },
+  withAction: { alignItems: `flex-start` },
+  message: { fontSize: 12, lineHeight: 19, fontFamily: `DMSans_500Medium` },
   dismiss: { padding: 5 },
 });

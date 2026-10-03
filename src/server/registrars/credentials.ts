@@ -8,7 +8,7 @@ export type RegistrarCredentials =
   | { provider: `porkbun`; apiKey: string; secretKey: string }
   | { provider: `hostinger`; authorization: string; externalDomains?: string[] }
   | { provider: `namecheap`; apiKey: string; username: string; clientIp: string }
-  | { provider: `godaddy`; authorization: string; customerId?: string; lookupAuthorization?: string };
+  | { provider: `godaddy`; authorization: string; shopperId?: string; customerId?: string; lookupAuthorization?: string };
 
 export const parseCredentials = (provider: ConnectionProvider, input: string): RegistrarCredentials => {
   let normalized: string;
@@ -31,12 +31,15 @@ export const parseCredentials = (provider: ConnectionProvider, input: string): R
     const token = fields.GODADDY_PAT;
     const key = fields.GODADDY_API_KEY;
     const secret = fields.GODADDY_API_SECRET;
+    const shopperId = fields.GODADDY_SHOPPER_ID;
     const customerId = fields.GODADDY_CUSTOMER_ID;
     if (!token && (!key || !secret)) throw new RegistrarRelayError(400, `Enter A GoDaddy Token Or Key And Secret`);
     if (key?.includes(`:`) || secret?.includes(`:`)) throw new RegistrarRelayError(400, `Enter Valid GoDaddy API Key And Secret Values`);
     if (customerId && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(customerId)) throw new RegistrarRelayError(400, `Enter GODADDY_CUSTOMER_ID As The Account UUID`);
+    if (shopperId && !/^\d{1,10}$/.test(shopperId)) throw new RegistrarRelayError(400, `Enter GODADDY_SHOPPER_ID As Up To 10 Digits`);
+    if (customerId && shopperId) throw new RegistrarRelayError(400, `Enter A GoDaddy Customer UUID Or Shopper ID`);
     const lookupAuthorization = key && secret ? `sso-key ${key}:${secret}` : undefined;
-    return { provider, customerId, lookupAuthorization, authorization: token ? `Bearer ${token}` : `sso-key ${key}:${secret}` };
+    return { provider, shopperId, customerId, lookupAuthorization, authorization: token ? `Bearer ${token}` : `sso-key ${key}:${secret}` };
   }
   if (provider === `hostinger`) {
     const token = fields.HOSTINGER_API_TOKEN;

@@ -49,13 +49,14 @@ const enrichRenewalEstimates = async (
   context: RegistrarRequestContext,
   customerId?: string,
   lookupAuthorization?: string,
+  shopperId?: string,
 ): Promise<RegistrarSyncResult> => {
   if (!domains.length) return { domains };
   const warnings: string[] = [];
   let resolvedCustomerId = customerId;
   if (!resolvedCustomerId) {
     try {
-      const url = new URL(`https://api.godaddy.com/v1/shoppers/MY`);
+      const url = new URL(`https://api.godaddy.com/v1/shoppers/${shopperId ?? `MY`}`);
       url.searchParams.set(`includes`, `customerId`);
       const headers = { Accept: `application/json`, Authorization: lookupAuthorization ?? authorization };
       const text = await requestRegistrar(url, headers, context);
@@ -63,7 +64,7 @@ const enrichRenewalEstimates = async (
       if (typeof shopper.customerId !== `string` || !customerIdPattern.test(shopper.customerId)) throw invalidResponse(`godaddy`);
       resolvedCustomerId = shopper.customerId;
     } catch {
-      warnings.push(`${domains.length} GoDaddy Renewal Estimate(s) Unavailable — Customer ID Lookup Failed; Add GODADDY_CUSTOMER_ID Or Enable Shopper Read Access`);
+      warnings.push(`${domains.length} GoDaddy Renewal Estimate(s) Unavailable — Customer ID Lookup Failed; Check Your Customer UUID Or Shopper ID And Shopper Read Access`);
       return { domains, warnings };
     }
   }
@@ -113,6 +114,7 @@ export const getGoDaddyDomains = async (
   context: RegistrarRequestContext,
   customerId?: string,
   lookupAuthorization?: string,
+  shopperId?: string,
 ): Promise<RegistrarSyncResult> => {
   let marker = ``;
   const seen = new Set<string>();
@@ -126,7 +128,7 @@ export const getGoDaddyDomains = async (
     if (!Array.isArray(response) || response.length > PAGE_SIZE) throw invalidResponse(`godaddy`);
     const incoming = response.map(normalizeDomain);
     appendDomains(domains, incoming, `godaddy`, seen);
-    if (incoming.length < PAGE_SIZE) return enrichRenewalEstimates(domains, authorization, context, customerId, lookupAuthorization);
+    if (incoming.length < PAGE_SIZE) return enrichRenewalEstimates(domains, authorization, context, customerId, lookupAuthorization, shopperId);
     const nextMarker = incoming[incoming.length - 1]?.name;
     if (!nextMarker || nextMarker === marker) throw invalidResponse(`godaddy`);
     marker = nextMarker;

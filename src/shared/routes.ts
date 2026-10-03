@@ -2,7 +2,7 @@ import { Roles } from '../types/types';
 
 export const routes = {
   home: { href: `/`, label: `Home`, icon: `House` },
-  search: { href: `/search`, label: `Search`, icon: `Search`, minRole: Roles.Subscriber, requiresConnection: true },
+  search: { href: `/search`, label: `Search`, icon: `Search`, requiresConnection: true },
   domains: { href: `/domains`, label: `Domains`, icon: `Globe2` },
   community: { href: `/community`, label: `Community`, icon: `UsersRound`, minRole: Roles.Subscriber },
   connections: { href: `/profile/connections`, label: `Connections`, icon: `PlugZap`, minRole: Roles.Subscriber },

@@ -17,6 +17,7 @@ const upstreamPaths = {
 };
 
 const goDaddyDetailPath = /^\/v2\/customers\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\/domains\/[a-z0-9.-]+$/i;
+const goDaddyShopperPath = /^\/v1\/shoppers\/(?:MY|\d{1,10})$/;
 
 export const readLimitedText = async (
   body: ReadableStream<Uint8Array> | null,
@@ -57,7 +58,7 @@ export const readLimitedText = async (
 export const requestRegistrar = async (url: URL, headers: Record<string, string>, context: RegistrarRequestContext) => {
   const target = `${url.origin}${url.pathname}`;
   const goDaddyRead = context.provider === `godaddy` && url.origin === `https://api.godaddy.com`
-    && (url.pathname === `/v1/shoppers/MY` || goDaddyDetailPath.test(url.pathname));
+    && (goDaddyShopperPath.test(url.pathname) || goDaddyDetailPath.test(url.pathname));
   const hostingerRead = context.provider === `hostinger` && target === `https://developers.hostinger.com/api/hosting/v1/websites`;
   if ((target !== upstreamPaths[context.provider] && !goDaddyRead && !hostingerRead) || url.username || url.password || url.hash) {
     throw new RegistrarRelayError(500, `Registrar Request Is Unavailable`);

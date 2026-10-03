@@ -23,6 +23,8 @@ export const normalizeConnections = (input: ConnectionValues): ConnectionValues 
     if (!lines.length) continue;
     if (field.id === `godaddy` && !values.GODADDY_PAT && !(values.GODADDY_API_KEY && values.GODADDY_API_SECRET)) throw new Error(`Enter A GoDaddy Token Or Key And Secret`);
     if (values.GODADDY_CUSTOMER_ID && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(values.GODADDY_CUSTOMER_ID)) throw new Error(`Enter GODADDY_CUSTOMER_ID As The Account UUID`);
+    if (values.GODADDY_SHOPPER_ID && !/^\d{1,10}$/.test(values.GODADDY_SHOPPER_ID)) throw new Error(`Enter GODADDY_SHOPPER_ID As Up To 10 Digits`);
+    if (values.GODADDY_CUSTOMER_ID && values.GODADDY_SHOPPER_ID) throw new Error(`Enter A GoDaddy Customer UUID Or Shopper ID`);
     if (field.id === `hostinger` && !values.HOSTINGER_API_TOKEN) throw new Error(`Enter A Hostinger API Token`);
     if (values.HOSTINGER_EXTERNAL_DOMAINS) {
       const names = values.HOSTINGER_EXTERNAL_DOMAINS.split(`,`).map(name => name.trim().toLowerCase());

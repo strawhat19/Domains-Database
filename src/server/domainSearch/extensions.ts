@@ -1,11 +1,11 @@
 import { XMLParser } from 'fast-xml-parser';
 import { SyntaxValidator } from 'fast-xml-validator';
 import { readLimitedText } from '../registrars/request';
-import { parseCredentials } from '../registrars/credentials';
+import { readSearchCredentials } from './environment';
 import type { RegistrarCredentials } from '../registrars/credentials';
 import type { ConnectionProvider } from '../../shared/connections/types';
 import { providerLabels, upstreamError, RegistrarRelayError } from '../registrars/errors';
-import { checkRequest, responseHeaders, readRequestRecord, readConnectionInput } from '../registrars/http';
+import { checkRequest, responseHeaders, readRequestRecord } from '../registrars/http';
 
 interface ExtensionCatalog {
   note?: string;
@@ -177,8 +177,7 @@ export const handleDomainExtensions = async (request: Request): Promise<Response
     checkRequest(request);
     const input = await readRequestRecord(request);
     if (Object.keys(input).some(key => ![`values`, `provider`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
-    const connection = readConnectionInput(input);
-    const credentials = parseCredentials(connection.provider, connection.values);
+    const credentials = readSearchCredentials(input);
     const result = await listRegistrarExtensions(credentials, request.signal);
     return Response.json(result, { headers: responseHeaders });
   } catch (failure) {

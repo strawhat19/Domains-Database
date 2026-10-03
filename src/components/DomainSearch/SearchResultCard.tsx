@@ -4,7 +4,7 @@ import { ArrowUpRight, Globe2 } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
 import { Text, View, Platform, Pressable } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
-import { getSearchStatus, getDomainSearchStatus, formatSearchPrice, getPurchaseHref, type SearchResult, type SearchDomainResult } from './resultPresentation';
+import { getSearchStatus, getAvailableConnections, getDomainSearchStatus, formatSearchPrice, getPurchaseHref, type SearchResult, type SearchDomainResult } from './resultPresentation';
 
 type SearchStyles = ReturnType<typeof createStyles>;
 type ResultCardProps = { suffix: string; styles: SearchStyles; palette: ThemePalette; result: SearchDomainResult };
@@ -89,8 +89,11 @@ const ConnectionResult = ({ result, palette, styles, suffix }: ConnectionResultP
 };
 
 const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) => {
-  const status = getDomainSearchStatus(result);
+  const connections = getAvailableConnections(result);
+  const status = getDomainSearchStatus({ ...result, connections });
   const statusColor = status.state === `error` ? palette.danger : status.state === `available` ? palette.success : palette.muted;
+
+  if (!connections.length) return null;
 
   return (
     <View {...elementProps(`domain-search-result`, suffix)} style={styles.resultCard}>
@@ -113,7 +116,7 @@ const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) 
         {status.summary}
       </Text>
       <View {...elementProps(`domain-search-result-connections`, suffix)} style={styles.connections}>
-        {result.connections.map((connection, index) => (
+        {connections.map((connection, index) => (
           <ConnectionResult
             key={`${connection.provider}-${index}`}
             styles={styles}

@@ -4,6 +4,7 @@ import { useAuth } from '../authContext/useAuth';
 import { connectionsAPI } from '../../api/connections';
 import { CONNECTIONS_STORAGE_KEY } from './service';
 import { accountStorageKey } from '../authentication/userScope';
+import { getServerSearchProviders } from '../domainSearch/availability';
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react';
 
 interface ConnectionAvailability {
@@ -12,10 +13,18 @@ interface ConnectionAvailability {
   revision: number;
   eligible: boolean;
   hasConnections: boolean;
+  hasServerConnections: boolean;
 }
 
-interface AvailabilityState extends Omit<ConnectionAvailability, `eligible`> {
+interface AvailabilityState extends Omit<ConnectionAvailability, `eligible` | `hasServerConnections`> {
   actorKey: string;
+}
+
+interface ServerAvailabilityState {
+  error: string;
+  loading: boolean;
+  revision: number;
+  hasConnections: boolean;
 }
 
 export const ConnectionAvailabilityContext = createContext<ConnectionAvailability | null>(null);
@@ -32,6 +41,59 @@ export const ConnectionAvailabilityProvider = ({ children }: { children: ReactNo
     loading: true,
     hasConnections: false,
   });
+  const [serverState, setServerState] = useState<ServerAvailabilityState>({
+    error: ``,
+    revision: 0,
+    loading: true,
+    hasConnections: false,
+  });
+
+  useEffect(() => {
+    let active = true;
+    let operation = 0;
+    let snapshotVersion = ``;
+    let controller: AbortController | undefined;
+    const isCurrent = (request: number) => active && request === operation;
+    const refresh = () => {
+      const request = ++operation;
+      controller?.abort();
+      const requestController = new AbortController();
+      controller = requestController;
+      void getServerSearchProviders(requestController.signal).then(providers => {
+        if (!isCurrent(request) || requestController.signal.aborted) return;
+        const version = [...new Set(providers)].sort().join(`,`);
+        const changed = version !== snapshotVersion;
+        snapshotVersion = version;
+        setServerState(current => ({
+          error: ``,
+          loading: false,
+          hasConnections: providers.length > 0,
+          revision: current.revision + Number(changed),
+        }));
+      }).catch(failure => {
+        if (!isCurrent(request) || requestController.signal.aborted) return;
+        const error = failure instanceof Error ? failure.message : `Could Not Load Public Search Providers`;
+        const changed = snapshotVersion !== `error:${error}`;
+        snapshotVersion = `error:${error}`;
+        setServerState(current => ({
+          error,
+          loading: false,
+          hasConnections: false,
+          revision: current.revision + Number(changed),
+        }));
+      });
+    };
+
+    refresh();
+    const subscription = AppState.addEventListener(`change`, status => { if (status === `active`) refresh(); });
+    if (typeof window !== `undefined`) window.addEventListener(`focus`, refresh);
+    return () => {
+      active = false;
+      controller?.abort();
+      subscription.remove();
+      if (typeof window !== `undefined`) window.removeEventListener(`focus`, refresh);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -87,14 +149,21 @@ export const ConnectionAvailabilityProvider = ({ children }: { children: ReactNo
   }, [actorKey, authLoading]);
 
   const currentView = state.actorKey === actorKey;
-  const loading = authLoading || !currentView || state.loading;
+  const privateLoading = authLoading || !currentView || state.loading;
   const hasConnections = currentView && !!user?.id && state.hasConnections;
+  const hasServerConnections = serverState.hasConnections;
+  const eligible = hasServerConnections || (!privateLoading && hasConnections);
+  const loading = !eligible && (serverState.loading || privateLoading);
+  const error = !eligible && !loading
+    ? [serverState.error, currentView ? state.error : ``].filter(Boolean).join(`; `)
+    : ``;
   const value = {
+    error,
     loading,
+    eligible,
     hasConnections,
-    revision: state.revision,
-    eligible: !loading && hasConnections,
-    error: currentView ? state.error : ``,
+    hasServerConnections,
+    revision: state.revision + serverState.revision,
   };
 
   return <ConnectionAvailabilityContext.Provider value={value}>{children}</ConnectionAvailabilityContext.Provider>;

@@ -3,7 +3,7 @@ import DomainSearch from '../src/components/DomainSearch';
 
 const SearchRoute = () => (
   <>
-    <PageMeta title={`Domain Search`} description={`Compare domain availability and prices across your connected registrars`} />
+    <PageMeta title={`Domain Search`} description={`Compare domain availability and prices across available registrars`} />
     <DomainSearch />
   </>
 );

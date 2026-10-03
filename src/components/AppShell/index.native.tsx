@@ -1,7 +1,7 @@
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import UserMenu from '../UserMenu';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import ThemeToggle from '../ThemeToggle';
 import ScrollToTop from '../ScrollToTop';
@@ -16,13 +16,15 @@ import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
-import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck } from 'lucide-react-native';
+import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react-native';
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
-  const { pathname, year, signedIn, navigation } = useAppShell();
+  const { pathname, year, signedIn, navigation, fitViewport } = useAppShell();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const [viewportHeight, setViewportHeight] = useState(height);
+  const [footerHeight, setFooterHeight] = useState(insets.bottom + 64);
   const { isDark, palette } = useTheme();
   const blurTargetRef = useRef<View>(null);
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -31,7 +33,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
     inputRange: [.86, 1],
     outputRange: [1, 0],
   }), [scroll.headerOpacity]);
-  const heroContext = useMemo(() => ({ setHeroBottom: scroll.setHeroBottom }), [scroll.setHeroBottom]);
+  const pageContentHeight = fitViewport ? Math.max(0, viewportHeight - scroll.headerHeight - footerHeight) : undefined;
+  const heroContext = useMemo(() => ({ pageContentHeight, setHeroBottom: scroll.setHeroBottom }), [pageContentHeight, scroll.setHeroBottom]);
   const openPiratechs = async () => {
     try {
       await Linking.openURL(`https://piratechs.com/`);
@@ -130,6 +133,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
           <ScrollView
             ref={scroll.scrollRef}
             onScroll={scroll.onScroll}
+            onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
             style={styles.scroll}
             scrollEventThrottle={16}
             {...elementProps(`native-app-scroll`)}
@@ -138,20 +142,18 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             contentContainerStyle={[styles.content, { paddingTop: sticky ? scroll.headerHeight : 0 }]}
           >
             {!sticky && header}
-            <View {...elementProps(`native-app-main`)} style={styles.main} onLayout={scroll.onMainLayout}>
+            <View {...elementProps(`native-app-main`)} style={[styles.main, fitViewport && { minHeight: pageContentHeight }]} onLayout={scroll.onMainLayout}>
               {children}
             </View>
-            <View {...elementProps(`native-app-footer`)} style={[styles.footer, { paddingBottom: insets.bottom + 24 }]}>
-              <View {...elementProps(`native-footer-top`)} style={styles.footerTop}>
-                <Text {...elementProps(`native-footer-label`)} style={styles.footerLabel}>
-                  {`Every address in order.`}
+            <View
+              {...elementProps(`native-app-footer`)}
+              onLayout={({ nativeEvent }) => setFooterHeight(nativeEvent.layout.height)}
+              style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}
+            >
+              <View {...elementProps(`native-footer-copyright-column`)} style={styles.footerColumn}>
+                <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
+                  {width >= 760 ? `© ${year} Domains Database.` : `© ${year}`}
                 </Text>
-                <View {...elementProps(`native-footer-device`)} style={styles.footerDevice}>
-                  <ShieldCheck {...elementProps(`native-footer-device-icon`)} size={12} color={palette.muted} />
-                  <Text {...elementProps(`native-footer-device-text`)} style={styles.footerDeviceText}>
-                    {`Stored on this device`}
-                  </Text>
-                </View>
               </View>
               <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>
                 {footerLinks.map(({ label, href, icon }) => {
@@ -159,7 +161,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   return (
                     <Link key={href} href={href} asChild>
                       <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
-                        <Icon {...elementProps(`native-footer-link-icon`, label.toLowerCase())} size={12} color={palette.muted} />
+                        <Icon {...elementProps(`native-footer-link-icon`, label.toLowerCase())} size={10} color={palette.muted} />
                         <Text {...elementProps(`native-footer-link-text`, label.toLowerCase())} style={styles.footerLinkText}>
                           {label}
                         </Text>
@@ -168,12 +170,20 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   );
                 })}
               </View>
-              <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
-                {`© ${year} Domains Database. Made by `}
-                <Text {...elementProps(`native-piratechs-link`)} style={styles.piratechsLink} accessibilityRole={`link`} onPress={() => void openPiratechs()}>
-                  {`Piratechs ↗`}
-                </Text>
-              </Text>
+              <View {...elementProps(`native-footer-attribution`)} style={styles.footerAttribution}>
+                <Pressable
+                  style={styles.footerLink}
+                  accessibilityRole={`link`}
+                  accessibilityLabel={`Visit Piratechs`}
+                  {...elementProps(`native-piratechs-link`)}
+                  onPress={() => void openPiratechs()}
+                >
+                  <Text {...elementProps(`native-piratechs-link-text`)} style={[styles.copyright, styles.piratechsLink]}>
+                    {width >= 760 ? `Made by Piratechs` : `Piratechs`}
+                  </Text>
+                  <ArrowUpRight {...elementProps(`native-piratechs-link-icon`)} size={12} color={palette.accent} />
+                </Pressable>
+              </View>
             </View>
           </ScrollView>
         </BlurTargetView>

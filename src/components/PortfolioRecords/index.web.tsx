@@ -57,6 +57,7 @@ const PortfolioRecords = ({
   const positions = new Map(groups.flatMap(group => group.domains).map((domain, index) => [domain.id, index + 1]));
   const reorder = useDomainReorder(fullGroups, !sortField && !loading && !busy && !compact);
   const tableStyle = { [`--portfolio-table-width`]: `${Math.max(380, columns.length * 140 + 160)}px` } as CSSProperties;
+  const stickyHeaderReady = sticky.header.headHeight > 0 && sticky.header.columnWidths.length === columns.length + 3;
   const grouped = preferences.groupBy !== `none`;
   const empty = !loading && !domains.length;
   const groupHeading = (key: string, label: string, count: number) => (
@@ -121,6 +122,7 @@ const PortfolioRecords = ({
   return (
     <div id={`portfolio-records-table`} className={`portfolio-records-table`}>
       <div
+        hidden={!stickyHeaderReady}
         id={`portfolio-sticky-head`}
         className={`portfolio-sticky-head`}
         style={{ height: sticky.header.headHeight || undefined, top: `calc(var(--site-header-offset, 0px) + ${sticky.header.toolbarHeight}px)` }}
@@ -149,7 +151,7 @@ const PortfolioRecords = ({
           </table>
         </div>
       </div>
-      <div ref={sticky.scrollRef} id={`portfolio-table-scroll`} className={`portfolio-table-scroll`} style={{ marginTop: -sticky.header.headHeight }}>
+      <div ref={sticky.scrollRef} id={`portfolio-table-scroll`} className={`portfolio-table-scroll`} style={{ marginTop: stickyHeaderReady ? -sticky.header.headHeight : 0 }}>
         <table ref={sticky.tableRef} style={tableStyle} id={`portfolio-table`} className={`portfolio-table`} aria-busy={loading}>
           <caption id={`portfolio-table-caption`} className={`portfolio-sr-only`}>
             {`Your saved domain records. Monthly costs are annual costs divided by twelve. Auto-renew settings are a record only.`}
@@ -160,7 +162,7 @@ const PortfolioRecords = ({
             sortField={sortField}
             sortDirection={sortDirection}
             headRef={sticky.tableHeadRef}
-            inactive
+            inactive={stickyHeaderReady}
             allSelected={allSelected}
             someSelected={someSelected}
             onSelectAll={onSelectAll}

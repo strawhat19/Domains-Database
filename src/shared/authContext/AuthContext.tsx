@@ -4,7 +4,7 @@ import { authAPI } from '../../api/auth';
 import { useLocalStorage } from '../config';
 import type { User } from '../models/users/User';
 import { createOperationQueue } from '../common/storage';
-import { AUTH_SESSION_KEY } from '../authentication/service';
+import { AUTH_PRESENCE_KEYS } from '../authentication/accountPresence';
 import { claimLegacyPortfolioPreferences } from '../portfolioPreferences/storage';
 import type { SignInInput, SignUpInput, AuthenticationResult } from '../authentication/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -12,6 +12,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState, type 
 interface AuthContextValue {
   busy: boolean;
   loading: boolean;
+  hasSavedAccount: boolean;
   loginRevision: number;
   user: User | null;
   error: string | null;
@@ -39,11 +40,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [hasSavedAccount, setHasSavedAccount] = useState(true);
+
+  const refreshSavedAccount = useCallback(async (accountUser: User | null) => {
+    try {
+      const savedAccount = Boolean(accountUser) || await authAPI.hasSavedAccount();
+      if (mounted.current) setHasSavedAccount(savedAccount);
+    } catch (failure) {
+      if (mounted.current) setHasSavedAccount(true);
+      throw failure;
+    }
+  }, []);
 
   const applySession = useCallback(async (result: AuthenticationResult | null) => {
     const userId = result?.user ? String(result.user.id) : null;
     const sameActor = initialized.current && userId === (currentUser.current?.id ?? null) && !result?.claimLegacy;
     if (sameActor) {
+      await refreshSavedAccount(result?.user ?? null);
       currentUser.current = result?.user ?? null;
       if (mounted.current) { setUser(result?.user ?? null); setExpiresAt(result?.expiresAt ?? null); }
       return result?.user ?? null;
@@ -51,6 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     currentUser.current = null;
     if (mounted.current) { setLoading(true); setUser(null); setExpiresAt(null); }
     try {
+      await refreshSavedAccount(result?.user ?? null);
       await api.setUserScope(userId, { claimLegacy: result?.claimLegacy ?? false, adoptGuest: result?.user.number === 1 });
       if (result?.claimLegacy && userId) {
         await claimLegacyPortfolioPreferences(userId);
@@ -65,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       if (mounted.current) setLoading(false);
     }
-  }, []);
+  }, [refreshSavedAccount]);
 
   const refreshUser = useCallback((): Promise<void> => queue(async () => {
     if (mounted.current && !initialized.current) setLoading(true);
@@ -87,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     mounted.current = true;
     void refreshUser().catch(() => undefined);
     const syncSession = (event: StorageEvent) => {
-      if (event.key === AUTH_SESSION_KEY || event.key === null) void refreshUser().catch(() => undefined);
+      if (event.key === null || AUTH_PRESENCE_KEYS.includes(event.key)) void refreshUser().catch(() => undefined);
     };
     const resumeSession = () => { void refreshUser().catch(() => undefined); };
     const subscription = AppState.addEventListener(`change`, state => { if (state === `active`) resumeSession(); });
@@ -168,7 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearError = useCallback(() => setError(null), []);
   const clearNotice = useCallback(() => setNotice(null), []);
-  const value = useMemo(() => ({ user, busy, error, notice, loading, loginRevision, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [user, busy, error, notice, loading, loginRevision, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
+  const value = useMemo(() => ({ user, busy, error, notice, loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [user, busy, error, notice, loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

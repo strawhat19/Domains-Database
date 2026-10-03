@@ -12,13 +12,13 @@ export const responseHeaders = {
   'Cache-Control': `no-store, private, max-age=0`,
 };
 
-export const checkRequest = (request: Request) => {
+export const checkRequest = (request: Request, requireJson = true) => {
   const site = request.headers.get(`sec-fetch-site`);
   const origin = request.headers.get(`origin`);
   if (site && ![`same-origin`, `none`].includes(site)) throw new RegistrarRelayError(403, `Cross-Site Registrar Requests Are Not Allowed`);
   if (origin && origin !== new URL(request.url).origin) throw new RegistrarRelayError(403, `Cross-Origin Registrar Requests Are Not Allowed`);
   const contentType = request.headers.get(`content-type`)?.split(`;`)?.[0]?.trim()?.toLowerCase();
-  if (contentType !== `application/json`) throw new RegistrarRelayError(415, `Send Registrar Connection Values As JSON`);
+  if (requireJson && contentType !== `application/json`) throw new RegistrarRelayError(415, `Send Registrar Connection Values As JSON`);
   const encoding = request.headers.get(`content-encoding`);
   if (encoding && encoding.toLowerCase() !== `identity`) throw new RegistrarRelayError(415, `Compressed Registrar Requests Are Not Supported`);
   const size = request.headers.get(`content-length`);

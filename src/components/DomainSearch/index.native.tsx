@@ -13,21 +13,22 @@ import { ActivityIndicator, Pressable, Text, TextInput, View, useWindowDimension
 const DomainSearch = () => {
   const state = useDomainSearch();
   const { palette } = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const pageStyle = [styles.page, width < 600 && styles.compactPage];
+  const accessPageStyle = [...pageStyle, height <= 500 && styles.shortAccessPage];
   const signedIn = Boolean(state.user?.id);
   const busy = state.loading || state.loadingMore;
   const disabled = busy || !state.query.trim();
 
   if (state.accessLoading) return (
-    <View {...elementProps(`domain-search-access-loading`)} style={pageStyle} accessibilityLabel={`Loading Connections`}>
-      <LoadingScreen compact suffix={`domain-search-access`} label={`Loading your connections…`} />
+    <View {...elementProps(`domain-search-access-loading`)} style={accessPageStyle} accessibilityLabel={`Loading Domain Search`}>
+      <LoadingScreen compact suffix={`domain-search-access`} label={`Loading domain search…`} />
     </View>
   );
 
   if (!state.eligible) return (
-    <View {...elementProps(`domain-search-access-page`)} style={pageStyle}>
+    <View {...elementProps(`domain-search-access-page`)} style={accessPageStyle}>
       <View {...elementProps(`domain-search-access-prompt`)} style={styles.prompt}>
         <ShieldCheck {...elementProps(`domain-search-access-icon`)} size={22} color={palette.accent} />
         <View {...elementProps(`domain-search-access-copy`)} style={styles.promptCopy}>
@@ -75,7 +76,7 @@ const DomainSearch = () => {
           {`Find your next domain.`}
         </Text>
         <Text {...elementProps(`domain-search-description`)} style={styles.description}>
-          {`Start with a name. Explore extensions and compare your connected registrars in one place.`}
+          {`Start with a name. Explore extensions and compare available registrars in one place.`}
         </Text>
       </View>
       <View {...elementProps(`domain-search-form`)} style={styles.form}>
@@ -126,14 +127,16 @@ const DomainSearch = () => {
           <Text {...elementProps(`domain-search-form-hint`)} style={styles.formHint}>
             {`No extension needed. Popular extensions appear first. Enter a full domain to check one address.`}
           </Text>
-          <Link href={routes.connections.href} asChild>
-            <Pressable {...elementProps(`domain-search-connections-link`)} style={styles.textLink} accessibilityLabel={`Manage Registrar Connections`}>
-              <PlugZap {...elementProps(`domain-search-connections-icon`)} size={13} color={palette.accent} />
-              <Text {...elementProps(`domain-search-connections-text`)} style={styles.textLinkText}>
-                {`Manage connections`}
-              </Text>
-            </Pressable>
-          </Link>
+          {signedIn && (
+            <Link href={routes.connections.href} asChild>
+              <Pressable {...elementProps(`domain-search-connections-link`)} style={styles.textLink} accessibilityLabel={`Manage Registrar Connections`}>
+                <PlugZap {...elementProps(`domain-search-connections-icon`)} size={13} color={palette.accent} />
+                <Text {...elementProps(`domain-search-connections-text`)} style={styles.textLinkText}>
+                  {`Manage connections`}
+                </Text>
+              </Pressable>
+            </Link>
+          )}
         </View>
       </View>
       {!!state.error && (
@@ -148,7 +151,16 @@ const DomainSearch = () => {
           {state.note}
         </Text>
       )}
-      {(busy || !!state.results?.results.length) && (
+      {!!state.checkWarnings.length && (
+        <Text
+          {...elementProps(`domain-search-check-warnings`)}
+          accessibilityLiveRegion={`polite`}
+          style={[styles.disclaimer, { color: palette.warning }]}
+        >
+          {state.checkWarnings.join(`\n`)}
+        </Text>
+      )}
+      {(busy || !!state.results) && (
         <View {...elementProps(`domain-search-results-section`)} style={styles.resultsSection}>
           <View {...elementProps(`domain-search-results-heading`)} style={styles.resultsHeading}>
             <Text {...elementProps(`domain-search-results-title`)} style={styles.resultsTitle} accessibilityRole={`header`}>
@@ -156,23 +168,39 @@ const DomainSearch = () => {
             </Text>
             {!!state.results && (
               <Text {...elementProps(`domain-search-results-count`)} style={styles.resultsCount}>
-                {`Showing ${state.results.results.length} of ${state.totalVariants} domain(s) · ${state.results.results[0]?.connections.length ?? 0} connection(s)`}
+                {`${state.availableResults.length} available domain(s) · ${state.checkedVariants} of ${state.totalVariants} variant(s) checked`}
               </Text>
             )}
           </View>
           <View {...elementProps(`domain-search-results-grid`)} style={styles.resultsGrid} accessibilityLiveRegion={`polite`}>
-            {!state.results?.results.length && state.loading
-              ? [0, 1, 2].map(index => <SearchResultSkeleton key={index} styles={styles} suffix={String(index)} />)
-              : state.results?.results.map(result => (
-                <SearchResultCard
-                  key={result.domain}
-                  styles={styles}
-                  result={result}
-                  palette={palette}
-                  suffix={result.domain}
-                />
-              ))}
+            {state.availableResults.map(result => (
+              <SearchResultCard
+                key={result.domain}
+                styles={styles}
+                result={result}
+                palette={palette}
+                suffix={result.domain}
+              />
+            ))}
+            {busy && [0, 1, 2].map(index => <SearchResultSkeleton key={`pending-${index}`} styles={styles} suffix={String(index)} />)}
           </View>
+          {!!state.results && !busy && !state.availableResults.length && (
+            <View
+              {...elementProps(`domain-search-empty-results`)}
+              style={state.hasUnconfirmedResults ? styles.errorPanel : styles.readyNote}
+              accessibilityRole={state.hasUnconfirmedResults ? `alert` : undefined}
+              accessibilityLiveRegion={`polite`}
+            >
+              <Text
+                {...elementProps(`domain-search-empty-copy`)}
+                style={state.hasUnconfirmedResults ? styles.errorText : styles.readyCopy}
+              >
+                {state.hasUnconfirmedResults
+                  ? `No availability was confirmed. Some registrar checks failed or returned no availability status. Try searching again.`
+                  : `No available domains in the variants checked so far.`}
+              </Text>
+            </View>
+          )}
           {state.hasMore && (
             <Pressable
               {...elementProps(`domain-search-load-more`)}
@@ -199,7 +227,7 @@ const DomainSearch = () => {
         <View {...elementProps(`domain-search-ready-note`)} style={styles.readyNote}>
           <ShieldCheck {...elementProps(`domain-search-ready-icon`)} size={15} color={palette.muted} />
           <Text {...elementProps(`domain-search-ready-copy`)} style={styles.readyCopy}>
-            {`Searches use your saved connections. Purchase links open in a new tab on the web.`}
+            {`Compare availability and pricing across available registrars. Purchase links open in a new tab on the web.`}
           </Text>
         </View>
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../shared/authContext/useAuth';
+import { getAvailableConnections } from './resultPresentation';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 import { DOMAIN_SEARCH_PAGE_SIZE, normalizeDomainSearchQuery } from '../../shared/domainSearch/query';
 import type { DomainSearchResults, DomainSearchVariants } from '../../shared/domainSearch/types';
@@ -38,6 +39,22 @@ export const useDomainSearch = () => {
   const variants = visible ? state.variants : null;
   const loading = visible && state.loading;
   const loadingMore = visible && state.loadingMore;
+  const availableResults = results?.results.flatMap(result => {
+    const connections = getAvailableConnections(result);
+    return connections.length ? [{ ...result, connections }] : [];
+  }) ?? [];
+  const checkedVariants = results?.results.filter(result => (
+    result.connections.length > 0 && result.connections.every(connection => !connection.pending)
+  )).length ?? 0;
+  const hasUnconfirmedResults = results?.results.some(result => result.connections.some(connection => (
+    !connection.pending && connection.available !== false && (Boolean(connection.error) || connection.available === undefined)
+  ))) ?? false;
+  const checkWarnings = [...new Set(results?.results.flatMap(result => result.connections.flatMap(connection => {
+    if (connection.pending || connection.available === false || (!connection.error && connection.available !== undefined)) return [];
+    const message = connection.error || connection.note || `Availability Not Confirmed`;
+    const warning = `${connection.label}: ${message}`;
+    return error === message || error === warning ? [] : [warning];
+  })) ?? [])];
 
   useEffect(() => {
     mounted.current = availability.eligible;
@@ -64,7 +81,7 @@ export const useDomainSearch = () => {
   const clear = () => setQuery(``);
 
   const search = async (append: boolean) => {
-    if (!availability.eligible || loading || loadingMore || !user?.id || !mounted.current || currentActor.current !== actorKey) return;
+    if (!availability.eligible || loading || loadingMore || !mounted.current || currentActor.current !== actorKey) return;
     if (append && (!variants || !results || results.results.length >= variants.domains.length)) return;
     let name: string;
     try {
@@ -84,7 +101,7 @@ export const useDomainSearch = () => {
       ? { ...current, error: ``, loadingMore: true }
       : { ...emptyState(actorKey, name), loading: true });
     try {
-      const choices = append && variants ? variants : await getConnectedDomainVariants(name, request.signal, user.id);
+      const choices = append && variants ? variants : await getConnectedDomainVariants(name, request.signal, user?.id ?? null);
       if (!isCurrent()) return;
       setState(current => isCurrent() ? { ...current, variants: choices, note: choices.note ?? `` } : current);
       const offset = previous?.results.length ?? 0;
@@ -94,7 +111,7 @@ export const useDomainSearch = () => {
           ...current, results: { ...page, results: [...(previous?.results ?? []), ...page.results] },
         } : current);
       };
-      const result = await searchConnectedDomains(domains, request.signal, user.id, choices.connectionsUpdated, showResults);
+      const result = await searchConnectedDomains(domains, request.signal, user?.id ?? null, choices.connectionsUpdated, showResults);
       showResults(result);
     } catch (failure) {
       if (isCurrent()) setState(current => isCurrent() ? {
@@ -110,6 +127,7 @@ export const useDomainSearch = () => {
 
   return {
     user, note, query, error, results, loading, loadingMore, clear, setQuery,
+    checkWarnings, checkedVariants, availableResults, hasUnconfirmedResults,
     accessError: availability.error,
     eligible: availability.eligible,
     accessLoading: availability.loading,

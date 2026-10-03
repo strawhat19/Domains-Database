@@ -1,8 +1,19 @@
 import { searchRegistrar } from './providers';
-import { normalizeDomainName } from '../../shared/domainUtils';
-import { parseCredentials } from '../registrars/credentials';
 import { RegistrarRelayError } from '../registrars/errors';
-import { checkRequest, responseHeaders, readRequestRecord, readConnectionInput } from '../registrars/http';
+import { normalizeDomainName } from '../../shared/domainUtils';
+import { readSearchCredentials, getEnvironmentSearchProviders } from './environment';
+import { checkRequest, responseHeaders, readRequestRecord } from '../registrars/http';
+
+export const handleDomainSearchProviders = (request: Request): Response => {
+  try {
+    checkRequest(request, false);
+    return Response.json({ providers: getEnvironmentSearchProviders() }, { headers: responseHeaders });
+  } catch (failure) {
+    const error = failure instanceof RegistrarRelayError ? failure
+      : new RegistrarRelayError(502, `Domain Search Providers Could Not Be Loaded`);
+    return Response.json({ error: error.message }, { status: error.status, headers: responseHeaders });
+  }
+};
 
 export const handleDomainSearch = async (request: Request) => {
   const controller = new AbortController();
@@ -18,8 +29,7 @@ export const handleDomainSearch = async (request: Request) => {
     let domain: string;
     try { domain = normalizeDomainName(record.domain); }
     catch { throw new RegistrarRelayError(400, `Enter A Domain Name Without A Path Or Login`); }
-    const input = readConnectionInput(record);
-    const credentials = parseCredentials(input.provider, input.values);
+    const credentials = readSearchCredentials(record);
     const result = await searchRegistrar(credentials, domain, controller.signal);
     if (controller.signal.aborted) throw new RegistrarRelayError(504, `Domain Search Timed Out Or Cancelled`);
     return Response.json(result, { headers: responseHeaders });

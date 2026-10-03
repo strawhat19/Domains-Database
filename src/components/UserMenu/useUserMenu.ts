@@ -11,6 +11,9 @@ export const useUserMenu = () => {
   const { palette } = useTheme();
   const [open, setOpen] = useState(false);
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const guestAuth = auth.hasSavedAccount
+    ? { href: `/signin` as const, label: `Sign in` }
+    : { href: `/signup` as const, label: `Sign up` };
   useEffect(() => setOpen(false), [pathname, auth.user?.id]);
   useEffect(() => {
     if (!open || typeof document === `undefined`) return;
@@ -32,5 +35,5 @@ export const useUserMenu = () => {
       router.replace(`/`);
     } catch {}
   };
-  return { ...auth, open, styles, palette, signOut, toggle: () => setOpen(current => !current) };
+  return { ...auth, open, styles, palette, signOut, guestAuth, toggle: () => setOpen(current => !current) };
 };

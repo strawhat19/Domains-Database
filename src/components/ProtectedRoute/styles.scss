@@ -5,11 +5,26 @@
 :is(.protected-route-skeleton-title, [data-class='protected-route-skeleton-title']), :is(.protected-route-skeleton-line, [data-class='protected-route-skeleton-line']), :is(.protected-route-skeleton-action, [data-class='protected-route-skeleton-action']) { animation: protected-route-pulse 1.3s ease-in-out infinite alternate; }
 @keyframes protected-route-pulse { from { opacity: .45; } to { opacity: 1; } }
 @media (max-width: 600px) {
-  :is(.protected-route-page, [data-class='protected-route-page']), :is(.protected-route-loading, [data-class='protected-route-loading']) { padding: 28px 0 !important; }
+  :is(.protected-route-page, [data-class='protected-route-page']), :is(.protected-route-loading, [data-class='protected-route-loading']) { padding: 16px 0 !important; }
   :is(.protected-route-panel, [data-class='protected-route-panel']), :is(.protected-route-skeleton, [data-class='protected-route-skeleton']) { padding: 20px !important; }
-  :is(.protected-route-title, [data-class='protected-route-title']) { font-size: 34px !important; line-height: 40px !important; }
+  :is(.protected-route-title, [data-class='protected-route-title']) { font-size: 30px !important; line-height: 36px !important; }
   :is(.protected-route-actions, [data-class='protected-route-actions']) { align-items: stretch; flex-direction: column !important; }
   :is(.protected-route-primary-link, [data-class='protected-route-primary-link']), :is(.protected-route-signup-link, [data-class='protected-route-signup-link']) { width: 100%; min-width: 0; min-height: 44px !important; }
+}
+@media (max-width: 600px) and (max-height: 620px) {
+  :is(.protected-route-page, [data-class='protected-route-page']) { padding-block: 8px !important; }
+  :is(.protected-route-panel, [data-class='protected-route-panel']) { gap: 12px !important; padding: 16px !important; }
+  :is(.protected-route-title, [data-class='protected-route-title']) { font-size: 24px !important; line-height: 29px !important; }
+  :is(.protected-route-description, [data-class='protected-route-description']) { font-size: 12px !important; line-height: 18px !important; }
+  :is(.protected-route-actions, [data-class='protected-route-actions']) { gap: 8px !important; padding-top: 0 !important; }
+}
+@media (min-width: 601px) and (max-height: 500px) {
+  :is(.protected-route-page, [data-class='protected-route-page'], .protected-route-loading, [data-class='protected-route-loading']) { padding: 0 !important; }
+  :is(.protected-route-panel, [data-class='protected-route-panel']) { gap: 8px !important; padding: 12px 16px !important; flex-direction: row !important; align-items: center !important; }
+  :is(.protected-route-mark, [data-class='protected-route-mark']) { flex-shrink: 0; }
+  :is(.protected-route-title, [data-class='protected-route-title']) { max-width: 180px; font-size: 22px !important; line-height: 26px !important; }
+  :is(.protected-route-description, [data-class='protected-route-description']) { flex: 1; font-size: 12px !important; line-height: 18px !important; }
+  :is(.protected-route-actions, [data-class='protected-route-actions']) { padding-top: 0 !important; flex-direction: column !important; flex-wrap: nowrap !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   :is(.protected-route-primary-link, [data-class='protected-route-primary-link']), :is(.protected-route-signup-link, [data-class='protected-route-signup-link']) { transition: none; }

@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 
 interface ScrollContextValue {
+  pageContentHeight?: number;
   setHeroBottom: (bottom: number | null) => void;
 }
 

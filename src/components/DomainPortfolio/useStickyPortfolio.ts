@@ -36,7 +36,10 @@ export const useStickyPortfolio = (columnKey: string) => {
     const table = tableRef.current;
     const scroll = scrollRef.current;
     const toolbar = toolbarRef.current;
-    if (!head || !table || !scroll || !toolbar) return;
+    if (!head || !table || !scroll || !toolbar) {
+      setHeader(current => sameHeader(current, INITIAL_HEADER) ? current : INITIAL_HEADER);
+      return;
+    }
 
     let mounted = true;
     let frame: number | null = null;

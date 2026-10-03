@@ -6,19 +6,19 @@ export type PageContent = { title: string; eyebrow: string; description: string;
 
 export const pageContent: Record<PageName, PageContent> = {
   about: {
-    title: `A little order. A lot of clarity.`,
+    title: `Your domains, together.`,
     eyebrow: `ABOUT DOMAINS DATABASE`,
     description: `One place to keep track of the names you own, wherever you registered them.`,
     sections: [
       { title: `Your names, together`, body: [`Domains Database brings your personal domain inventory into one calm, readable view. Keep names, registrars, owners, renewal dates, and yearly costs together. Search your portfolio in seconds and see which renewals deserve attention.`] },
       { title: `Bring in your domains`, body: [`Save GoDaddy, Hostinger, Namecheap, Porkbun, or NameSilo values in Profile → Connections to check your accounts and import their registered domains. The same check runs when you sign in. Review externally hosted names before confirming ownership and including them. You can also enter records manually or import a CSV. Your combined inventory stays in this browser or device.`] },
-      { title: `Find your next name`, body: [`Sign in and save a registrar connection to unlock Search. Enter a name without an extension to explore your registrars' domain variants, with popular extensions first, or enter a full domain to check that address. Each domain has one card comparing all connected registrars, with purchase links that open in a new browser tab. Refresh Website Info adds public performance scores and popularity ranks to your portfolio; those values do not measure visitors.`] },
+      { title: `Find your next name`, body: [`Search available registrars without signing in when public search is enabled. Otherwise, sign in and save a registrar connection to unlock Search. Enter a name without an extension to explore domain variants, with popular extensions first, or enter a full domain to check that address. Each domain has one card comparing available registrars, with purchase links that open in a new browser tab. Refresh Website Info adds public performance scores and popularity ranks to your portfolio; those values do not measure visitors.`] },
       { title: `Make it yours`, body: [useSampleData ? `Start with a guest portfolio or create a local account to keep separate records. Sample domains are fictional. Add your own records and export a CSV whenever you need a portable copy.` : `Start with a guest portfolio or create a local account to keep separate records. Add your own domains, edit their records, and export a CSV whenever you need a portable copy.`] },
       { title: `A local Community`, body: [`Choose a public profile to share posts with other accounts on this device. Profiles start private, and sharing domain names is a separate choice. Community does not publish to the internet or sync between devices.`] },
     ],
   },
   privacy: {
-    title: `Your portfolio stays with you.`,
+    title: `Your data. Your control.`,
     eyebrow: `PRIVACY POLICY`,
     description: `How this local portfolio and its registrar connections handle your information.`,
     sections: [
@@ -41,7 +41,7 @@ export const pageContent: Record<PageName, PageContent> = {
     ],
   },
   contact: {
-    title: `Good things start with a conversation.`,
+    title: `Let's talk.`,
     eyebrow: `CONTACT`,
     description: `Ideas, feedback, or a detail you would like to improve?`,
     sections: [
@@ -50,7 +50,7 @@ export const pageContent: Record<PageName, PageContent> = {
     ],
   },
   api: {
-    title: `The local app interface.`,
+    title: `The app interface.`,
     eyebrow: `DEVELOPER DIRECTORY`,
     description: `Local asynchronous services and the read-only registrar relay. Account data uses device storage; registrar requests run on the Expo server.`,
     sections: [
@@ -63,8 +63,9 @@ export const pageContent: Record<PageName, PageContent> = {
       { title: `Profile privacy and sharing`, body: [`authAPI.updateProfile(input) edits the current user's allowed profile fields. authAPI.getPublicProfiles() projects eligible public profiles without emails or credentials. api.getPublicDomainSummaries(userIds) includes only opted-in public profiles' domain names and registrars.`] },
       { title: `Private account connections`, body: [`connectionsAPI.getConnections(), saveConnections(values), and clearConnections() restore the session and use account-private storage. The shared domain context checks configured connections after a save and on sign-in, then merges returned domains into the current account.`] },
       { title: `POST /api/registrars/sync`, body: [`Accepts a supported registrar and its connection values, authenticates a read-only portfolio request, and returns allowlisted domain fields. Secrets stay out of responses, public records, and exports. Valid results populate the local table through api.syncRegistrarDomains(). Failed providers leave existing rows intact.`] },
-      { title: `POST /api/registrars/search`, body: [`Accepts a domain and one supported connection, performs read-only availability and pricing lookups, and returns normalized results with a registrar purchase link. The Search page combines independently queried providers. It does not register a domain or charge an account.`] },
-      { title: `POST /api/registrars/extensions`, body: [`Accepts one supported connection and returns its registrar's domain extension catalog, including multi-part extensions. Name-only searches combine these catalogs, show popular extensions first, and check availability in batches as more variants are requested. Catalog failures are shown and common extensions provide a fallback.`] },
+      { title: `GET /api/registrars/search`, body: [`Lists supported registrars configured for public search, without returning credentials. Configured providers allow domain searches without signing in.`] },
+      { title: `POST /api/registrars/search`, body: [`Accepts a domain and a supported registrar. When connection values are omitted, the server uses that registrar's configured environment credentials; supplied values use the existing account connection. It performs read-only availability and pricing lookups and returns normalized results with a registrar purchase link. The Search page combines independently queried providers. It does not register a domain or charge an account.`] },
+      { title: `POST /api/registrars/extensions`, body: [`Accepts a supported registrar and optional connection values, using server environment credentials when values are omitted. Returns its domain extension catalog, including multi-part extensions. Name-only searches combine these catalogs, show popular extensions first, and check availability in batches as more variants are requested. Catalog failures are shown and common extensions provide a fallback.`] },
       { title: `POST /api/website-insights`, body: [`Accepts a public domain name and queries fixed Google PageSpeed Insights and Tranco endpoints. It returns dated performance/rank data and source-specific failures, without visitor estimates. api.saveWebsiteInsights() merges results into the current account's local domain metadata.`] },
       { title: `Local Community`, body: [`socialAPI.getCommunity(view) returns an audience-filtered feed; social mutations derive identity from the current session. Public, followers, and private audiences are enforced by the service rather than only by the screen.`] },
       { title: `POST /api/domains`, body: [`api.createDomain(input) adds a domain and assigns its app-owned ID and sequence number.`] },

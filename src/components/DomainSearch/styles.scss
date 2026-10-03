@@ -1,4 +1,5 @@
 :is(.domain-search-page, [data-class='domain-search-page']) { padding-inline: 0 !important; }
+:is(.domain-search-check-warnings, [data-class='domain-search-check-warnings']) { white-space: pre-line; overflow-wrap: anywhere; }
 :is(.domain-search-input, [data-class='domain-search-input']):focus { outline: none; }
 :is(.domain-search-input-wrap, [data-class='domain-search-input-wrap']):focus-within { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--focus-ring); }
 :is(.domain-search-submit, [data-class='domain-search-submit']) { transition: background .22s ease, opacity .22s ease, transform .22s ease; }
@@ -14,6 +15,10 @@
 :is(.domain-search-result-skeleton, [data-class='domain-search-result-skeleton']) { animation: domain-search-pulse 1.5s ease-in-out infinite; }
 
 @keyframes domain-search-pulse { 50% { opacity: .55; } }
+
+@media (max-height: 500px) {
+  :is(.domain-search-access-page, [data-class='domain-search-access-page'], .domain-search-access-loading, [data-class='domain-search-access-loading']) { padding-block: 0 !important; }
+}
 
 @media (max-width: 560px) {
   :is(.domain-search-input, [data-class='domain-search-input']) { min-width: 0 !important; font-size: 16px !important; }

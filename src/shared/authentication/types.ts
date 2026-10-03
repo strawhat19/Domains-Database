@@ -6,7 +6,7 @@ export interface SignInInput {
 }
 
 export interface SignUpInput extends SignInInput {
-  name: string;
+  name?: string;
 }
 
 export interface PasswordCredential {

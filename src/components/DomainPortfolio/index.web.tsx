@@ -25,7 +25,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const { user } = useAuth();
   const { visibleColumns, toggleColumn, resetColumns } = useColumns();
   const preferences = usePortfolioPreferences();
-  const sticky = useStickyPortfolio(`${preferences.view}|${visibleColumns.join(`|`)}`);
+  const tableVisible = preferences.view === `table` || (!portfolio.loading && !portfolio.filteredDomains.length);
+  const sticky = useStickyPortfolio(`${preferences.view}|${tableVisible}|${visibleColumns.join(`|`)}`);
   const columns = PORTFOLIO_COLUMNS.filter(column => visibleColumns.includes(column.field));
   const columnCounts = useMemo(() => getPortfolioColumnCounts(portfolio.domains), [portfolio.domains]);
   const showAnnualSpend = columns.some(column => column.price);

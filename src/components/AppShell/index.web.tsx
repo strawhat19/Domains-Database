@@ -16,7 +16,7 @@ import { useAppShell, footerLinks } from './useAppShell';
 import { X, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
-  const { pathname, year, signedIn, navigation } = useAppShell();
+  const { pathname, year, signedIn, navigation, fitViewport } = useAppShell();
   const { isDark } = useTheme();
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
@@ -24,7 +24,16 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
   const MenuIcon = mobileNavigation.open ? X : Menu;
 
   return (
-    <div id={`app-shell`} className={`app-shell`} style={{ [`--site-header-offset`]: `${scroll.headerHeight}px` } as CSSProperties}>
+    <div
+      id={`app-shell`}
+      className={`app-shell`}
+      data-fit-view={fitViewport || undefined}
+      style={{
+        [`--site-header-offset`]: `${scroll.headerHeight}px`,
+        [`--site-footer-height`]: scroll.footerHeight ? `${scroll.footerHeight}px` : undefined,
+        [`--shell-header-height`]: scroll.pageHeaderHeight ? `${scroll.pageHeaderHeight}px` : undefined,
+      } as CSSProperties}
+    >
       <header ref={mobileNavigation.headerRef} id={`site-header`} className={`site-header`} data-sticky={sticky} data-scrolled={scroll.scrolled || undefined}>
         <DomainMarquee />
         <div id={`header-inner`} className={`header-inner`}>
@@ -118,6 +127,12 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       <ScrollToTop visible={scroll.showScrollTop} onPress={scroll.scrollToTop} bottomInset={scroll.bottomInset} />
       <footer id={`site-footer`} className={`site-footer`}>
         <div id={`footer-inner`} className={`footer-inner`}>
+          <p id={`footer-copyright`} className={`footer-copyright`}>
+            {`© ${year}`}
+            <span id={`footer-copyright-name`} className={`footer-copyright-name`}>
+              {` Domains Database.`}
+            </span>
+          </p>
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>
             {footerLinks.map(item => {
               const Icon = { FileText, ShieldCheck }[item.icon];
@@ -135,8 +150,10 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
               );
             })}
           </nav>
-          <p id={`footer-copyright`} className={`footer-copyright`}>
-            {`© ${year} Domains Database. Crafted by `}
+          <p id={`footer-credit`} className={`footer-credit`}>
+            <span id={`footer-credit-label`} className={`footer-credit-label`}>
+              {`Crafted by `}
+            </span>
             <a id={`footer-piratechs`} className={`footer-piratechs`} href={`https://piratechs.com/`} target={`_blank`} rel={`noopener noreferrer`}>
               {`Piratechs`}
               <ArrowUpRight id={`footer-piratechs-icon`} className={`footer-piratechs-icon`} size={12} aria-hidden />

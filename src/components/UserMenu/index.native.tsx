@@ -3,17 +3,18 @@ import { Roles } from '../../types/types';
 import { useUserMenu } from './useUserMenu';
 import { elementProps } from '../../shared/elementProps';
 import { Image, Pressable, Text, View } from 'react-native';
-import { LogIn, LogOut, PlugZap, UserRound, LayoutDashboard } from 'lucide-react-native';
+import { LogIn, LogOut, PlugZap, UserRound, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
 
 const UserMenu = () => {
   const state = useUserMenu();
   const { user, styles, palette } = state;
+  const GuestIcon = state.hasSavedAccount ? LogIn : UserRoundPlus;
   if (state.loading) return <View {...elementProps(`user-menu-loading`)} style={styles.skeleton} />;
   if (!user) return (
-    <Link href={`/signin`} asChild>
+    <Link href={state.guestAuth.href} asChild>
       <Pressable {...elementProps(`user-menu-signin`)} style={styles.signin} accessibilityRole={`link`}>
-        <LogIn {...elementProps(`user-menu-signin-icon`)} size={16} color={palette.ink} />
-        <Text {...elementProps(`user-menu-signin-text`)} style={styles.linkText}>{`Sign in`}</Text>
+        <GuestIcon {...elementProps(`user-menu-signin-icon`)} size={16} color={palette.ink} />
+        <Text {...elementProps(`user-menu-signin-text`)} style={styles.linkText}>{state.guestAuth.label}</Text>
       </Pressable>
     </Link>
   );

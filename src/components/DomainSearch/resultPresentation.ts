@@ -4,6 +4,10 @@ export type SearchResult = DomainSearchResult;
 export type SearchDomainResult = DomainSearchDomainResult;
 type SearchStatus = { label: string; state: `available` | `unavailable` | `unknown` | `error` | `pending` };
 
+export const getAvailableConnections = (result: SearchDomainResult) => result.connections.filter(connection => (
+  connection.available === true && !connection.pending && !connection.error
+));
+
 export const getSearchStatus = (result: SearchResult): SearchStatus => {
   if (result.pending) return { label: `Checking…`, state: `pending` };
   if (result.error) return { label: `Check failed`, state: `error` };
@@ -19,7 +23,7 @@ export const getDomainSearchStatus = (result: SearchDomainResult): SearchStatus 
   const confirmed = statuses.filter(status => status.state === `available` || status.state === `unavailable`).length;
   const connections = total === 1 ? `connection` : `connections`;
 
-  if (available) return { label: `Available`, state: `available`, summary: `Available at ${available} of ${total} ${connections}` };
+  if (available) return { label: `Available`, state: `available`, summary: `Available at ${available} ${available === 1 ? `connection` : `connections`}` };
   if (statuses.some(status => status.state === `pending`)) return { label: `Checking…`, state: `pending`, summary: `${confirmed} of ${total} ${connections} confirmed` };
   if (total && confirmed === total) return { label: `Unavailable`, state: `unavailable`, summary: `Checked with ${total} ${connections}` };
   if (total && statuses.every(status => status.state === `error`)) return { label: `Check failed`, state: `error`, summary: `Could not check ${total} ${connections}` };

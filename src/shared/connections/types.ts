@@ -10,7 +10,7 @@ export interface ConnectionSnapshot {
 
 export const EMPTY_CONNECTIONS: ConnectionValues = { godaddy: ``, porkbun: ``, namesilo: ``, hostinger: ``, namecheap: `` };
 export const connectionFields = [
-  { id: `godaddy`, search: true, label: `GoDaddy`, placeholder: `GODADDY_PAT=your_token`, hint: `Use a PAT or API key/secret pair. Renewal estimates use your customer UUID; add GODADDY_CUSTOMER_ID if automatic lookup is unavailable`, keys: [`GODADDY_PAT`, `GODADDY_API_KEY`, `GODADDY_API_SECRET`, `GODADDY_CUSTOMER_ID`] },
+  { id: `godaddy`, search: true, label: `GoDaddy`, placeholder: `GODADDY_PAT=your_token`, hint: `Use a PAT or API key/secret pair`, keys: [`GODADDY_PAT`, `GODADDY_API_KEY`, `GODADDY_API_SECRET`, `GODADDY_SHOPPER_ID`, `GODADDY_CUSTOMER_ID`] },
   { id: `hostinger`, search: true, label: `Hostinger`, placeholder: `HOSTINGER_API_TOKEN=your_token`, hint: `Registered domains sync automatically. Review discovered external domains before including them; shared hosting access does not prove ownership`, keys: [`HOSTINGER_API_TOKEN`, `HOSTINGER_EXTERNAL_DOMAINS`] },
   { id: `namecheap`, search: true, label: `Namecheap`, placeholder: `NAMECHEAP_API_KEY=your_key\nNAMECHEAP_USERNAME=your_username\nNAMECHEAP_CLIENT_IP=your_server_public_ipv4`, hint: `Enter the API key, account username, and whitelisted server IPv4 on separate lines`, keys: [`NAMECHEAP_API_KEY`, `NAMECHEAP_USERNAME`, `NAMECHEAP_CLIENT_IP`] },
   { id: `porkbun`, search: true, label: `Porkbun`, placeholder: `PORKBUN_API_KEY=your_key\nPORKBUN_SECRET_API_KEY=your_secret`, hint: `Create account API keys at porkbun.com/account/api. API access is free; enable domain API access as needed`, keys: [`PORKBUN_API_KEY`, `PORKBUN_SECRET_API_KEY`] },

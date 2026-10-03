@@ -27,13 +27,12 @@ const requireLocalAuthentication = () => {
 
 export const normalizeEmail = (value: string) => {
   const email = value?.trim()?.toLowerCase();
-  if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error(`Enter A Valid Email Address`);
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error(`Enter A Valid Email Address`);
   return email;
 };
 
-const validatePassword = (password: string, signingUp = false) => {
-  if (typeof password !== `string` || !password || password.length > 128) throw new Error(`Enter A Password Of 8 To 128 Characters`);
-  if (signingUp && password.length < 8) throw new Error(`Use At Least 8 Characters For Your Password`);
+const validatePassword = (password: string) => {
+  if (typeof password !== `string` || !password) throw new Error(`Enter A Password`);
 };
 
 const publicUser = (user: User, signedIn = true) => new User({ ...user, signedIn });
@@ -114,9 +113,8 @@ const beginSession = async (snapshot: AccountSnapshot, account: LocalAccount) =>
 export const signUp = (input: SignUpInput): Promise<AuthenticationResult> => runOperation(async () => {
   requireLocalAuthentication();
   const email = normalizeEmail(input?.email);
-  const name = input?.name?.trim()?.replace(/\s+/g, ` `);
-  if (!name || name.length > 100) throw new Error(`Enter A Name Of 1 To 100 Characters`);
-  validatePassword(input?.password, true);
+  const name = (input?.name?.trim()?.replace(/\s+/g, ` `) || email.split(`@`)[0] || `Account`).slice(0, 100);
+  validatePassword(input?.password);
   const snapshot = await readAccounts();
   if (snapshot.accounts.some(account => account.user.email === email)) throw new Error(`An Account Already Uses This Email`);
   const credential = await createPasswordCredential(input.password);

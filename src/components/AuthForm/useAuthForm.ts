@@ -5,7 +5,7 @@ import { useAuth } from '../../shared/authContext/useAuth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 export type AuthMode = `signin` | `signup`;
-type Field = `name` | `email` | `password` | `confirmation`;
+type Field = `email` | `password`;
 
 export const useAuthForm = (mode: AuthMode) => {
   const auth = useAuth();
@@ -14,7 +14,7 @@ export const useAuthForm = (mode: AuthMode) => {
   const returnTo = resolveAuthReturnTo(params.returnTo);
   const [feedback, setFeedback] = useState(``);
   const [showPassword, setShowPassword] = useState(false);
-  const [fields, setFields] = useState({ name: ``, email: ``, password: ``, confirmation: `` });
+  const [fields, setFields] = useState({ email: ``, password: `` });
   const disabled = auth.loading || auth.busy;
   const signingUp = mode === `signup`;
 
@@ -31,15 +31,13 @@ export const useAuthForm = (mode: AuthMode) => {
     auth.clearError();
     auth.clearNotice();
     if (!useLocalStorage) { setFeedback(`Backend Is Not Connected`); return; }
-    if (signingUp && !fields.name.trim()) { setFeedback(`Enter Your Name`); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email.trim())) { setFeedback(`Enter A Valid Email Address`); return; }
-    if (fields.password.length < 8) { setFeedback(`Use At Least 8 Password Characters`); return; }
-    if (signingUp && fields.password !== fields.confirmation) { setFeedback(`Passwords Must Match`); return; }
+    if (!fields.password) { setFeedback(`Enter A Password`); return; }
     try {
       const input = { email: fields.email.trim(), password: fields.password };
-      if (signingUp) await auth.signUp({ ...input, name: fields.name.trim() });
+      if (signingUp) await auth.signUp(input);
       else await auth.signIn(input);
-      setFields({ name: ``, email: ``, password: ``, confirmation: `` });
+      setFields({ email: ``, password: `` });
       router.replace(returnTo);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : `Could Not Access Your Account`);

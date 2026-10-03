@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathname: string, sticky: boolean) => {
   const [scrolled, setScrolled] = useState(false);
   const [bottomInset, setBottomInset] = useState(0);
+  const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -20,10 +21,13 @@ export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathnam
         if (hero) observer?.observe(hero);
       }
       const scrollY = Math.max(0, window.scrollY);
-      const offset = sticky ? header?.getBoundingClientRect().height ?? 0 : 0;
-      const footerTop = document.getElementById(`site-footer`)?.getBoundingClientRect().top ?? window.innerHeight;
+      const height = header?.getBoundingClientRect().height ?? 0;
+      const offset = sticky ? height : 0;
+      const footer = document.getElementById(`site-footer`);
+      const footerTop = footer?.getBoundingClientRect().top ?? window.innerHeight;
       setBottomInset(Math.max(0, window.innerHeight - footerTop));
-      setHeaderHeight(offset);
+      setHeaderHeight(height);
+      setFooterHeight(footer?.getBoundingClientRect().height ?? 0);
       setScrolled(sticky && scrollY > 8);
       setShowScrollTop(scrollY > 0 && (hero
         ? hero.getBoundingClientRect().bottom <= offset
@@ -58,5 +62,5 @@ export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathnam
     window.scrollTo({ top: 0, behavior: reducedMotion ? `auto` : `smooth` });
   }, []);
 
-  return { bottomInset, scrollToTop, showScrollTop, scrolled: sticky && scrolled, headerHeight: sticky ? headerHeight : 0 };
+  return { bottomInset, scrollToTop, showScrollTop, footerHeight, pageHeaderHeight: headerHeight, scrolled: sticky && scrolled, headerHeight: sticky ? headerHeight : 0 };
 };

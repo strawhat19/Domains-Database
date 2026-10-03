@@ -4,6 +4,7 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   page: { gap: 28, width: `100%`, maxWidth: 1120, alignSelf: `center`, paddingTop: 52, paddingBottom: 44, paddingHorizontal: 24 },
   compactPage: { gap: 22, paddingTop: 30, paddingHorizontal: 20 },
+  shortAccessPage: { paddingTop: 8, paddingBottom: 8 },
   intro: { gap: 14 },
   eyebrow: { gap: 7, flexDirection: `row`, alignItems: `center` },
   eyebrowText: { fontSize: 10, letterSpacing: 1.5, color: palette.accent, fontFamily: `DMSans_700Bold` },
