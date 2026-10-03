@@ -4,17 +4,18 @@ import UserMenu from '../UserMenu';
 import type { ReactNode } from 'react';
 import ThemeToggle from '../ThemeToggle';
 import AuthFeedback from '../AuthFeedback';
+import NotificationBell from '../NotificationBell';
 import { createStyles } from './styles.native';
-import { Link, usePathname } from 'expo-router';
+import { Link } from 'expo-router';
+import { useAppShell, footerLinks } from './useAppShell';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { navigation, footerLinks } from '../../shared/routes';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck } from 'lucide-react-native';
 import { Alert, Linking, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children }: { children: ReactNode }) => {
-  const pathname = usePathname();
+  const { pathname, year, navigation } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { isDark, palette } = useTheme();
@@ -36,7 +37,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               <Image
                 {...elementProps(`native-brand-logo`)}
                 contentFit={`contain`}
-                style={[styles.logo, { width: Math.max(70, Math.min(194, width - 240)) }]}
+                style={[styles.logo, { width: Math.max(70, Math.min(194, width - 288)) }]}
                 accessibilityLabel={`Domains Database`}
                 source={isDark
                   ? require('../../../assets/icons/brand-logo-dark.svg')
@@ -54,12 +55,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
               )}
             </View>
             <ThemeToggle />
+            <NotificationBell />
             <UserMenu />
           </View>
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
           {navigation.map(({ label, href, icon }) => {
-            const Icon = { House, Search, Globe2, UsersRound }[icon];
+            const Icon = { Info, Mail, House, Search, Globe2, UsersRound }[icon];
             const active = pathname === href;
             return (
               <Link key={href} href={href} asChild>
@@ -97,8 +99,8 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             </View>
           </View>
           <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>
-            {[...navigation, ...footerLinks].map(({ label, href, icon }) => {
-              const Icon = { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck }[icon];
+            {footerLinks.map(({ label, href, icon }) => {
+              const Icon = { FileText, ShieldCheck }[icon];
               return (
               <Link key={href} href={href} asChild>
                 <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
@@ -112,7 +114,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
             })}
           </View>
           <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
-            {`© ${new Date().getFullYear()} Domains Database. Made by `}
+            {`© ${year} Domains Database. Made by `}
             <Text {...elementProps(`native-piratechs-link`)} style={styles.piratechsLink} accessibilityRole={`link`} onPress={() => void openPiratechs()}>
               {`Piratechs ↗`}
             </Text>

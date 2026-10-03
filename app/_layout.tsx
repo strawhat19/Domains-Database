@@ -11,6 +11,7 @@ import { AuthProvider } from '../src/shared/authContext/AuthContext';
 import { ThemeProvider } from '../src/shared/themeContext/ThemeContext';
 import { DomainProvider } from '../src/shared/domainContext/DomainContext';
 import { ColumnProvider } from '../src/shared/columnContext/ColumnContext';
+import { ConnectionAvailabilityProvider } from '../src/shared/connections/ConnectionAvailabilityContext';
 import { PortfolioPreferencesProvider } from '../src/shared/portfolioPreferences/PortfolioPreferencesContext';
 
 const RootContent = () => {
@@ -44,13 +45,15 @@ const AccountContent = () => {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   return (
-    <ColumnProvider key={user?.id || `guest`} userId={user?.id ?? null}>
-      <DomainProvider>
-        <PortfolioPreferencesProvider userId={user?.id ?? null}>
-          <RootContent />
-        </PortfolioPreferencesProvider>
-      </DomainProvider>
-    </ColumnProvider>
+    <ConnectionAvailabilityProvider>
+      <ColumnProvider key={user?.id || `guest`} userId={user?.id ?? null}>
+        <DomainProvider>
+          <PortfolioPreferencesProvider userId={user?.id ?? null}>
+            <RootContent />
+          </PortfolioPreferencesProvider>
+        </DomainProvider>
+      </ColumnProvider>
+    </ConnectionAvailabilityProvider>
   );
 };
 

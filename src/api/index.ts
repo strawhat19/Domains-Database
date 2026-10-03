@@ -289,6 +289,7 @@ export const API_ROUTES = [
   `/api/registrars/sync`,
   `/api/website-insights`,
   `/api/registrars/search`,
+  `/api/registrars/extensions`,
   `/api/notifications/:id`,
   ...(useSampleData ? [`/api/domains/sample`] : []),
 ];

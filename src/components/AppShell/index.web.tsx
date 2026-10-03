@@ -5,14 +5,15 @@ import UserMenu from '../UserMenu';
 import ThemeToggle from '../ThemeToggle';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
+import NotificationBell from '../NotificationBell';
 import type { PropsWithChildren } from 'react';
 import { useMobileNavigation } from './useMobileNavigation';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { useAppShell, navigation, footerLinks } from './useAppShell';
+import { useAppShell, footerLinks } from './useAppShell';
 import { X, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children }: PropsWithChildren) => {
-  const { pathname, year } = useAppShell();
+  const { pathname, year, navigation } = useAppShell();
   const { isDark } = useTheme();
   const mobileNavigation = useMobileNavigation(pathname);
   const MenuIcon = mobileNavigation.open ? X : Menu;
@@ -50,7 +51,7 @@ const AppShell = ({ children }: PropsWithChildren) => {
             <div id={`header-navigation-content`} className={`header-navigation-content`}>
               <div id={`header-navigation-links`} className={`header-navigation-links`}>
                 {navigation.map(item => {
-                  const Icon = { House, Search, Globe2, UsersRound }[item.icon];
+                  const Icon = { Info, Mail, House, Search, Globe2, UsersRound }[item.icon];
                   return (
                     <Link key={item.label} href={item.href} asChild>
                       <RouterAnchor
@@ -75,37 +76,11 @@ const AppShell = ({ children }: PropsWithChildren) => {
                   );
                 })}
               </div>
-              <div id={`header-mobile-footer-links`} className={`header-mobile-footer-links`}>
-                {footerLinks.map(item => {
-                  const Icon = { Info, Mail, FileText, ShieldCheck }[item.icon];
-                  return (
-                    <Link key={item.label} href={item.href} asChild>
-                      <RouterAnchor
-                        id={`header-mobile-link-${item.label.toLowerCase()}`}
-                        aria-current={pathname === item.href ? `page` : undefined}
-                        className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
-                      >
-                        <Icon
-                          size={14}
-                          aria-hidden={`true`}
-                          className={`header-link-icon`}
-                          id={`header-mobile-link-icon-${item.label.toLowerCase()}`}
-                        />
-                        <span
-                          className={`header-link-text`}
-                          id={`header-mobile-link-text-${item.label.toLowerCase()}`}
-                        >
-                          {item.label}
-                        </span>
-                      </RouterAnchor>
-                    </Link>
-                  );
-                })}
-              </div>
             </div>
           </nav>
           <div id={`header-actions`} className={`header-actions`}>
             <ThemeToggle />
+            <NotificationBell />
             <UserMenu />
             <button
               type={`button`}
@@ -139,8 +114,8 @@ const AppShell = ({ children }: PropsWithChildren) => {
             </a>
           </p>
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>
-            {[...navigation, ...footerLinks].map(item => {
-              const Icon = { Info, Mail, House, Search, Globe2, FileText, UsersRound, ShieldCheck }[item.icon];
+            {footerLinks.map(item => {
+              const Icon = { FileText, ShieldCheck }[item.icon];
               return (
                 <Link key={item.label} href={item.href} asChild>
                   <RouterAnchor

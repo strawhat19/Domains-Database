@@ -5,7 +5,7 @@ import { useDomainSearch } from './useDomainSearch';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { Search, LogIn, PlugZap, X, ShieldCheck } from 'lucide-react-native';
+import { Search, LogIn, PlugZap, X, ShieldCheck, Plus } from 'lucide-react-native';
 import SearchResultCard, { SearchResultSkeleton } from './SearchResultCard';
 import { ActivityIndicator, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
@@ -14,12 +14,55 @@ const DomainSearch = () => {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const pageStyle = [styles.page, width < 600 && styles.compactPage];
   const signedIn = Boolean(state.user?.id);
-  const noConnections = state.results?.results.length === 0;
-  const disabled = state.authLoading || state.loading || !state.query.trim();
+  const busy = state.loading || state.loadingMore;
+  const disabled = busy || !state.query.trim();
+
+  if (state.accessLoading) return (
+    <View {...elementProps(`domain-search-access-loading`)} style={pageStyle} accessibilityLabel={`Loading Connections`}>
+      <ActivityIndicator {...elementProps(`domain-search-access-progress`)} color={palette.accent} />
+    </View>
+  );
+
+  if (!state.eligible) return (
+    <View {...elementProps(`domain-search-access-page`)} style={pageStyle}>
+      <View {...elementProps(`domain-search-access-prompt`)} style={styles.prompt}>
+        <ShieldCheck {...elementProps(`domain-search-access-icon`)} size={22} color={palette.accent} />
+        <View {...elementProps(`domain-search-access-copy`)} style={styles.promptCopy}>
+          <Text {...elementProps(`domain-search-access-title`)} style={styles.promptTitle}>
+            {signedIn ? `Connect a registrar to search` : `Sign in to search domains`}
+          </Text>
+          <Text {...elementProps(`domain-search-access-description`)} style={[styles.promptDescription, !!state.accessError && { color: palette.danger }]}>
+            {state.accessError || (signedIn
+              ? `Add a registrar connection in your profile to unlock domain search.`
+              : `Domain search is available when you sign in and add a registrar connection.`)}
+          </Text>
+        </View>
+        <Link
+          asChild
+          href={signedIn ? routes.connections.href : { pathname: routes.signin.href, params: { returnTo: routes.search.href } }}
+        >
+          <Pressable
+            {...elementProps(`domain-search-access-link`)}
+            style={styles.secondaryButton}
+            accessibilityRole={`link`}
+            accessibilityLabel={signedIn ? `Add Registrar Connections` : `Sign In To Search Domains`}
+          >
+            {signedIn
+              ? <PlugZap {...elementProps(`domain-search-access-link-icon`)} size={15} color={palette.ink} />
+              : <LogIn {...elementProps(`domain-search-access-link-icon`)} size={15} color={palette.ink} />}
+            <Text {...elementProps(`domain-search-access-link-text`)} style={styles.secondaryButtonText}>
+              {signedIn ? `Connections` : `Sign in`}
+            </Text>
+          </Pressable>
+        </Link>
+      </View>
+    </View>
+  );
 
   return (
-    <View {...elementProps(`domain-search-page`)} style={[styles.page, width < 600 && styles.compactPage]}>
+    <View {...elementProps(`domain-search-page`)} style={pageStyle}>
       <View {...elementProps(`domain-search-intro`)} style={styles.intro}>
         <View {...elementProps(`domain-search-eyebrow`)} style={styles.eyebrow}>
           <Search {...elementProps(`domain-search-eyebrow-icon`)} size={14} color={palette.accent} />
@@ -31,12 +74,12 @@ const DomainSearch = () => {
           {`Find your next domain.`}
         </Text>
         <Text {...elementProps(`domain-search-description`)} style={styles.description}>
-          {`Check availability and compare prices across your connected registrars.`}
+          {`Start with a name. Explore extensions and compare your connected registrars in one place.`}
         </Text>
       </View>
       <View {...elementProps(`domain-search-form`)} style={styles.form}>
         <Text {...elementProps(`domain-search-input-label`)} style={styles.inputLabel}>
-          {`Domain name`}
+          {`Name or domain`}
         </Text>
         <View {...elementProps(`domain-search-form-row`)} style={styles.formRow}>
           <View {...elementProps(`domain-search-input-wrap`)} style={styles.inputWrap}>
@@ -46,14 +89,14 @@ const DomainSearch = () => {
               style={styles.input}
               value={state.query}
               autoCorrect={false}
-              autoCapitalize={`none`}
               autoComplete={`off`}
-              returnKeyType={`search`}
+              autoCapitalize={`none`}
               keyboardType={`url`}
-              placeholder={`your-next-idea.com`}
-              accessibilityLabel={`Domain Name To Search`}
-              placeholderTextColor={palette.placeholder}
+              returnKeyType={`search`}
+              placeholder={`your-next-idea`}
               onChangeText={state.setQuery}
+              placeholderTextColor={palette.placeholder}
+              accessibilityLabel={`Name Or Full Domain To Search`}
               onSubmitEditing={() => void state.submit()}
             />
             {!!state.query && (
@@ -67,7 +110,7 @@ const DomainSearch = () => {
             disabled={disabled}
             onPress={() => void state.submit()}
             accessibilityRole={`button`}
-            accessibilityState={{ disabled, busy: state.loading }}
+            accessibilityState={{ disabled, busy }}
             style={[styles.searchButton, disabled && styles.disabled]}
           >
             {state.loading
@@ -80,18 +123,16 @@ const DomainSearch = () => {
         </View>
         <View {...elementProps(`domain-search-form-footer`)} style={styles.formFooter}>
           <Text {...elementProps(`domain-search-form-hint`)} style={styles.formHint}>
-            {`Enter a complete address, including .com, .io, or another extension.`}
+            {`No extension needed. Popular extensions appear first. Enter a full domain to check one address.`}
           </Text>
-          {signedIn && (
-            <Link href={routes.connections.href} asChild>
-              <Pressable {...elementProps(`domain-search-connections-link`)} style={styles.textLink} accessibilityLabel={`Manage Registrar Connections`}>
-                <PlugZap {...elementProps(`domain-search-connections-icon`)} size={13} color={palette.accent} />
-                <Text {...elementProps(`domain-search-connections-text`)} style={styles.textLinkText}>
-                  {`Manage connections`}
-                </Text>
-              </Pressable>
-            </Link>
-          )}
+          <Link href={routes.connections.href} asChild>
+            <Pressable {...elementProps(`domain-search-connections-link`)} style={styles.textLink} accessibilityLabel={`Manage Registrar Connections`}>
+              <PlugZap {...elementProps(`domain-search-connections-icon`)} size={13} color={palette.accent} />
+              <Text {...elementProps(`domain-search-connections-text`)} style={styles.textLinkText}>
+                {`Manage connections`}
+              </Text>
+            </Pressable>
+          </Link>
         </View>
       </View>
       {!!state.error && (
@@ -101,83 +142,63 @@ const DomainSearch = () => {
           </Text>
         </View>
       )}
-      {!signedIn && (
-        <View {...elementProps(`domain-search-signin-prompt`)} style={styles.prompt}>
-          <ShieldCheck {...elementProps(`domain-search-signin-icon`)} size={22} color={palette.accent} />
-          <View {...elementProps(`domain-search-signin-copy`)} style={styles.promptCopy}>
-            <Text {...elementProps(`domain-search-signin-title`)} style={styles.promptTitle}>
-              {`Search with your registrars`}
-            </Text>
-            <Text {...elementProps(`domain-search-signin-description`)} style={styles.promptDescription}>
-              {`Sign in, then save a supported registrar connection to check its availability and prices.`}
-            </Text>
-          </View>
-          <Link href={{ pathname: routes.signin.href, params: { returnTo: routes.search.href } }} asChild>
-            <Pressable {...elementProps(`domain-search-signin-link`)} style={styles.secondaryButton} accessibilityLabel={`Sign In To Search Domains`}>
-              <LogIn {...elementProps(`domain-search-signin-link-icon`)} size={15} color={palette.ink} />
-              <Text {...elementProps(`domain-search-signin-link-text`)} style={styles.secondaryButtonText}>
-                {`Sign in`}
-              </Text>
-            </Pressable>
-          </Link>
-        </View>
+      {!!state.note && (
+        <Text {...elementProps(`domain-search-catalog-note`)} style={[styles.disclaimer, { color: palette.warning }]}>
+          {state.note}
+        </Text>
       )}
-      {signedIn && noConnections && (
-        <View {...elementProps(`domain-search-empty`)} style={styles.prompt}>
-          <PlugZap {...elementProps(`domain-search-empty-icon`)} size={22} color={palette.accent} />
-          <View {...elementProps(`domain-search-empty-copy`)} style={styles.promptCopy}>
-            <Text {...elementProps(`domain-search-empty-title`)} style={styles.promptTitle}>
-              {`Connect a registrar to search`}
-            </Text>
-            <Text {...elementProps(`domain-search-empty-description`)} style={styles.promptDescription}>
-              {`Add a supported connection in your profile, then search this name again.`}
-            </Text>
-          </View>
-          <Link href={routes.connections.href} asChild>
-            <Pressable {...elementProps(`domain-search-empty-link`)} style={styles.secondaryButton} accessibilityLabel={`Add Registrar Connections`}>
-              <PlugZap {...elementProps(`domain-search-empty-link-icon`)} size={15} color={palette.ink} />
-              <Text {...elementProps(`domain-search-empty-link-text`)} style={styles.secondaryButtonText}>
-                {`Connections`}
-              </Text>
-            </Pressable>
-          </Link>
-        </View>
-      )}
-      {(state.loading || !!state.results?.results.length) && (
+      {(busy || !!state.results?.results.length) && (
         <View {...elementProps(`domain-search-results-section`)} style={styles.resultsSection}>
           <View {...elementProps(`domain-search-results-heading`)} style={styles.resultsHeading}>
             <Text {...elementProps(`domain-search-results-title`)} style={styles.resultsTitle} accessibilityRole={`header`}>
-              {state.loading ? `Checking your connected registrars…` : `Registrar comparison`}
+              {state.totalVariants > 1 ? `Domain variants` : `Domain comparison`}
             </Text>
-            {!state.loading && (
+            {!!state.results && (
               <Text {...elementProps(`domain-search-results-count`)} style={styles.resultsCount}>
-                {`${state.results?.results.length ?? 0} registrar(s) checked`}
+                {`Showing ${state.results.results.length} of ${state.totalVariants} domain(s) · ${state.results.results[0]?.connections.length ?? 0} connection(s)`}
               </Text>
             )}
           </View>
           <View {...elementProps(`domain-search-results-grid`)} style={styles.resultsGrid} accessibilityLiveRegion={`polite`}>
-            {state.loading
+            {!state.results?.results.length && state.loading
               ? [0, 1, 2].map(index => <SearchResultSkeleton key={index} styles={styles} suffix={String(index)} />)
-              : state.results?.results.map((result, index) => (
+              : state.results?.results.map(result => (
                 <SearchResultCard
-                  key={`${result.provider}-${index}`}
+                  key={result.domain}
                   styles={styles}
                   result={result}
                   palette={palette}
-                  suffix={`${result.provider}-${index}`}
+                  suffix={result.domain}
                 />
               ))}
           </View>
+          {state.hasMore && (
+            <Pressable
+              {...elementProps(`domain-search-load-more`)}
+              disabled={busy}
+              onPress={() => void state.loadMore()}
+              accessibilityRole={`button`}
+              accessibilityState={{ disabled: busy, busy: state.loadingMore }}
+              style={[styles.secondaryButton, busy && styles.disabled]}
+            >
+              {state.loadingMore
+                ? <ActivityIndicator {...elementProps(`domain-search-load-more-progress`)} size={`small`} color={palette.ink} />
+                : <Plus {...elementProps(`domain-search-load-more-icon`)} size={15} color={palette.ink} />}
+              <Text {...elementProps(`domain-search-load-more-text`)} style={styles.secondaryButtonText}>
+                {state.loadingMore ? `Checking more variants…` : `Show more variants`}
+              </Text>
+            </Pressable>
+          )}
           <Text {...elementProps(`domain-search-price-disclaimer`)} style={styles.disclaimer}>
             {`Availability and prices can change. Confirm the final total, taxes, and renewal terms at the registrar.`}
           </Text>
         </View>
       )}
-      {signedIn && !state.results && !state.loading && !state.error && (
+      {!state.results && !state.loading && !state.error && (
         <View {...elementProps(`domain-search-ready-note`)} style={styles.readyNote}>
           <ShieldCheck {...elementProps(`domain-search-ready-icon`)} size={15} color={palette.muted} />
           <Text {...elementProps(`domain-search-ready-copy`)} style={styles.readyCopy}>
-            {`Searches use your saved supported connections. Purchase links open the registrar website.`}
+            {`Searches use your saved connections. Purchase links open in a new tab on the web.`}
           </Text>
         </View>
       )}

@@ -1,65 +1,74 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../shared/authContext/useAuth';
-import { normalizeDomainName } from '../../shared/domainUtils';
-import type { DomainSearchResults } from '../../shared/domainSearch/types';
-import { searchConnectedDomains } from '../../shared/domainSearch/client';
+import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
+import { DOMAIN_SEARCH_PAGE_SIZE, normalizeDomainSearchQuery } from '../../shared/domainSearch/query';
+import type { DomainSearchResults, DomainSearchVariants } from '../../shared/domainSearch/types';
+import { getConnectedDomainVariants, searchConnectedDomains } from '../../shared/domainSearch/client';
 
 interface SearchState {
+  note: string;
   query: string;
   error: string;
-  loading: boolean;
   actorKey: string;
+  loading: boolean;
+  loadingMore: boolean;
+  variants: DomainSearchVariants | null;
   results: DomainSearchResults | null;
 }
 
+const emptyState = (actorKey: string, query = ``): SearchState => ({
+  query, actorKey, note: ``, error: ``, loading: false, loadingMore: false, variants: null, results: null,
+});
+
 export const useDomainSearch = () => {
-  const { user, loginRevision, loading: authLoading } = useAuth();
-  const actorKey = `${user?.id ?? `guest`}:${loginRevision}`;
+  const availability = useConnectionAvailability();
+  const { user, loginRevision } = useAuth();
+  const actorKey = `${user?.id ?? `guest`}:${loginRevision}:${availability.revision}`;
   const currentActor = useRef(actorKey);
   const mounted = useRef(false);
   const revision = useRef(0);
   const controller = useRef<AbortController | null>(null);
-  const [state, setState] = useState<SearchState>({ actorKey, query: ``, error: ``, loading: false, results: null });
+  const [state, setState] = useState<SearchState>(() => emptyState(actorKey));
   currentActor.current = actorKey;
-  const visible = state.actorKey === actorKey;
+  const visible = state.actorKey === actorKey && availability.eligible;
   const query = visible ? state.query : ``;
   const error = visible ? state.error : ``;
+  const note = visible ? state.note : ``;
   const results = visible ? state.results : null;
+  const variants = visible ? state.variants : null;
   const loading = visible && state.loading;
+  const loadingMore = visible && state.loadingMore;
 
   useEffect(() => {
-    mounted.current = true;
+    mounted.current = availability.eligible;
     controller.current?.abort();
     controller.current = null;
     revision.current += 1;
-    setState({ actorKey, query: ``, error: ``, loading: false, results: null });
+    setState(emptyState(actorKey));
     return () => {
       mounted.current = false;
       revision.current += 1;
       controller.current?.abort();
       controller.current = null;
     };
-  }, [actorKey]);
+  }, [actorKey, availability.eligible]);
 
   const setQuery = (value: string) => {
     if (!mounted.current || currentActor.current !== actorKey) return;
     revision.current += 1;
     controller.current?.abort();
     controller.current = null;
-    setState({ actorKey, query: value, error: ``, loading: false, results: null });
+    setState(emptyState(actorKey, value));
   };
 
   const clear = () => setQuery(``);
 
-  const submit = async () => {
-    if (authLoading || loading || !mounted.current || currentActor.current !== actorKey) return;
-    if (!user?.id) {
-      setState(current => ({ ...current, actorKey, error: `Sign In To Search Your Connected Registrars` }));
-      return;
-    }
-    let domain: string;
+  const search = async (append: boolean) => {
+    if (!availability.eligible || loading || loadingMore || !user?.id || !mounted.current || currentActor.current !== actorKey) return;
+    if (append && (!variants || !results || results.results.length >= variants.domains.length)) return;
+    let name: string;
     try {
-      domain = normalizeDomainName(query);
+      name = normalizeDomainSearchQuery(query);
     } catch (failure) {
       setState(current => ({ ...current, actorKey, error: failure instanceof Error ? failure.message : `Enter A Valid Domain Name` }));
       return;
@@ -68,21 +77,45 @@ export const useDomainSearch = () => {
     const request = new AbortController();
     const requestRevision = ++revision.current;
     controller.current = request;
+    const previous = append ? results : null;
     const isCurrent = () => mounted.current && currentActor.current === actorKey
       && revision.current === requestRevision && !request.signal.aborted;
-    setState({ actorKey, query: domain, error: ``, loading: true, results: null });
+    setState(current => append
+      ? { ...current, error: ``, loadingMore: true }
+      : { ...emptyState(actorKey, name), loading: true });
     try {
-      const result = await searchConnectedDomains(domain, request.signal, user.id);
-      if (isCurrent()) setState(current => isCurrent() ? { ...current, results: result } : current);
+      const choices = append && variants ? variants : await getConnectedDomainVariants(name, request.signal, user.id);
+      if (!isCurrent()) return;
+      setState(current => isCurrent() ? { ...current, variants: choices, note: choices.note ?? `` } : current);
+      const offset = previous?.results.length ?? 0;
+      const domains = choices.domains.slice(offset, offset + DOMAIN_SEARCH_PAGE_SIZE);
+      const showResults = (page: DomainSearchResults) => {
+        if (isCurrent()) setState(current => isCurrent() ? {
+          ...current, results: { ...page, results: [...(previous?.results ?? []), ...page.results] },
+        } : current);
+      };
+      const result = await searchConnectedDomains(domains, request.signal, user.id, choices.connectionsUpdated, showResults);
+      showResults(result);
     } catch (failure) {
       if (isCurrent()) setState(current => isCurrent() ? {
-        ...current, error: failure instanceof Error ? failure.message : `Could Not Check Domain Availability`,
+        ...current,
+        results: previous,
+        error: failure instanceof Error ? failure.message : `Could Not Check Domain Availability`,
       } : current);
     } finally {
-      if (isCurrent()) setState(current => isCurrent() ? { ...current, loading: false } : current);
+      if (isCurrent()) setState(current => isCurrent() ? { ...current, loading: false, loadingMore: false } : current);
       if (controller.current === request) controller.current = null;
     }
   };
 
-  return { user, query, error, results, loading, authLoading, clear, submit, setQuery };
+  return {
+    user, note, query, error, results, loading, loadingMore, clear, setQuery,
+    accessError: availability.error,
+    eligible: availability.eligible,
+    accessLoading: availability.loading,
+    totalVariants: variants?.domains.length ?? 0,
+    hasMore: !!results && results.results.length < (variants?.domains.length ?? 0),
+    submit: () => search(false),
+    loadMore: () => search(true),
+  };
 };

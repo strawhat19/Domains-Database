@@ -6,7 +6,17 @@ import { EMPTY_CONNECTIONS, type ConnectionValues, type ConnectionSnapshot } fro
 import { readStorage, writeStorage, removeStorage, createOperationQueue } from '../common/storage';
 
 export const CONNECTIONS_STORAGE_KEY = `domains-database:connections:v1`;
+const listeners = new Set<(userId: string) => void>();
 const serialize = createOperationQueue(CONNECTIONS_STORAGE_KEY);
+export const subscribeConnections = (listener: (userId: string) => void) => {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+};
+const notifyConnections = (userId: string) => {
+  for (const listener of listeners) {
+    try { listener(userId); } catch { /* Saved connections are independent of subscribers. */ }
+  }
+};
 const sessionUser = async (expectedUserId?: string) => {
   if (!useLocalStorage) throw new Error(`Connect A Backend To Save Connections`);
   const session = await authAPI.restoreSession();
@@ -32,10 +42,12 @@ export const saveConnections = (values: ConnectionValues, expectedUserId?: strin
   const userId = await sessionUser(expectedUserId);
   const snapshot: ConnectionSnapshot = { userId, version: 1, updated: new Date().toISOString(), values: normalizeConnections(values) };
   await writeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), JSON.stringify(snapshot));
+  notifyConnections(userId);
   return snapshot;
 });
 
 export const clearConnections = (expectedUserId?: string): Promise<void> => serialize(async () => {
   const userId = await sessionUser(expectedUserId);
   await removeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId));
+  notifyConnections(userId);
 });

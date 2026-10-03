@@ -6,7 +6,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   scroll: { flex: 1 },
   content: { flexGrow: 1 },
   main: { width: `100%`, alignSelf: `stretch` },
-  header: { gap: 14, zIndex: 40, paddingBottom: 16, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: palette.paper },
+  header: { gap: 8, zIndex: 40, paddingBottom: 16, paddingHorizontal: 24, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: palette.paper },
   headerRow: { gap: 12, flexDirection: `row`, flexWrap: `wrap`, alignItems: `center`, justifyContent: `space-between` },
   headerActions: { gap: 8, flexDirection: `row`, alignItems: `center` },
   logo: { width: 194, height: 58 },

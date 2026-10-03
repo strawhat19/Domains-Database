@@ -1,25 +1,26 @@
 import { Link } from 'expo-router';
-import { Text, View, Pressable } from 'react-native';
 import { createStyles } from './styles.native';
 import { ArrowUpRight, Globe2 } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
+import { Text, View, Platform, Pressable } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
-import { formatSearchPrice, getPurchaseHref, type SearchResult } from './resultPresentation';
+import { getSearchStatus, getDomainSearchStatus, formatSearchPrice, getPurchaseHref, type SearchResult, type SearchDomainResult } from './resultPresentation';
 
 type SearchStyles = ReturnType<typeof createStyles>;
-type ResultCardProps = { result: SearchResult; palette: ThemePalette; styles: SearchStyles; suffix: string };
+type ResultCardProps = { suffix: string; styles: SearchStyles; palette: ThemePalette; result: SearchDomainResult };
+type ConnectionResultProps = { suffix: string; result: SearchResult; styles: SearchStyles; palette: ThemePalette };
 
-const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) => {
-  const registration = formatSearchPrice(result.registration);
+const ConnectionResult = ({ result, palette, styles, suffix }: ConnectionResultProps) => {
+  const status = getSearchStatus(result);
   const renewal = formatSearchPrice(result.renewal);
+  const registration = formatSearchPrice(result.registration);
   const purchaseHref = getPurchaseHref(result.purchaseUrl);
-  const status = result.error ? `Check failed` : result.available === true ? `Available` : result.available === false ? `Unavailable` : `Not confirmed`;
-  const statusColor = result.error ? palette.danger : result.available === true ? palette.success : palette.muted;
-  const action = result.available === true && !result.error ? `Buy at ${result.label}` : `View at ${result.label}`;
+  const statusColor = status.state === `error` ? palette.danger : status.state === `available` ? palette.success : palette.muted;
+  const action = status.state === `available` ? `Buy at ${result.label}` : `View at ${result.label}`;
 
   return (
-    <View {...elementProps(`domain-search-result`, suffix)} style={styles.resultCard}>
-      <View {...elementProps(`domain-search-result-heading`, suffix)} style={styles.resultHeading}>
+    <View {...elementProps(`domain-search-connection`, suffix)} style={styles.connection}>
+      <View {...elementProps(`domain-search-connection-heading`, suffix)} style={styles.resultHeading}>
         <View {...elementProps(`domain-search-registrar`, suffix)} style={styles.registrar}>
           <Globe2 {...elementProps(`domain-search-registrar-icon`, suffix)} size={16} color={palette.accent} />
           <Text {...elementProps(`domain-search-registrar-name`, suffix)} style={styles.registrarName}>
@@ -32,14 +33,11 @@ const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) 
               <View {...elementProps(`statusDot`, `search-${suffix}`)} style={[styles.statusDot, { backgroundColor: statusColor }]} />
             </View>
             <Text {...elementProps(`statusText`, `search-${suffix}`)} style={[styles.statusText, { color: statusColor }]}>
-              {status}
+              {status.label}
             </Text>
           </View>
         </View>
       </View>
-      <Text {...elementProps(`domain-search-result-domain`, suffix)} style={styles.resultDomain} numberOfLines={1}>
-        {result.domain}
-      </Text>
       <View {...elementProps(`domain-search-result-prices`, suffix)} style={styles.prices}>
         {[{ id: `registration`, label: `Registration`, price: registration }, { id: `renewal`, label: `Renewal`, price: renewal }].map(item => (
           <View key={item.id} {...elementProps(`domain-search-price`, `${suffix}-${item.id}`)} style={styles.price}>
@@ -74,9 +72,10 @@ const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) 
         <Link href={purchaseHref} asChild target={`_blank`} rel={`noopener noreferrer`}>
           <Pressable
             {...elementProps(`domain-search-purchase-link`, suffix)}
+            {...(Platform.OS === `web` ? { hrefAttrs: { target: `_blank`, rel: `noopener noreferrer` } } : {})}
             style={styles.purchaseLink}
             accessibilityRole={`link`}
-            accessibilityLabel={`${action} — Opens Registrar Website`}
+            accessibilityLabel={`${action} — ${Platform.OS === `web` ? `Opens In A New Tab` : `Opens Registrar Website`}`}
           >
             <Text {...elementProps(`domain-search-purchase-text`, suffix)} style={styles.purchaseText}>
               {action}
@@ -85,6 +84,45 @@ const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) 
           </Pressable>
         </Link>
       )}
+    </View>
+  );
+};
+
+const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) => {
+  const status = getDomainSearchStatus(result);
+  const statusColor = status.state === `error` ? palette.danger : status.state === `available` ? palette.success : palette.muted;
+
+  return (
+    <View {...elementProps(`domain-search-result`, suffix)} style={styles.resultCard}>
+      <View {...elementProps(`domain-search-result-heading`, suffix)} style={styles.resultHeading}>
+        <Text {...elementProps(`domain-search-result-domain`, suffix)} style={styles.resultDomain} numberOfLines={1}>
+          {result.domain}
+        </Text>
+        <View {...elementProps(`actionsCell`, `search-${suffix}`)} style={styles.actionsCell}>
+          <View {...elementProps(`rowStatus`, `search-${suffix}`)} style={styles.rowStatus}>
+            <View {...elementProps(`statusDotWrap`, `search-${suffix}`)} style={styles.statusDotWrap}>
+              <View {...elementProps(`statusDot`, `search-${suffix}`)} style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            </View>
+            <Text {...elementProps(`statusText`, `search-${suffix}`)} style={[styles.statusText, { color: statusColor }]}>
+              {status.label}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <Text {...elementProps(`domain-search-result-summary`, suffix)} style={styles.resultNote}>
+        {status.summary}
+      </Text>
+      <View {...elementProps(`domain-search-result-connections`, suffix)} style={styles.connections}>
+        {result.connections.map((connection, index) => (
+          <ConnectionResult
+            key={`${connection.provider}-${index}`}
+            styles={styles}
+            palette={palette}
+            result={connection}
+            suffix={`${suffix}-${connection.provider}-${index}`}
+          />
+        ))}
+      </View>
     </View>
   );
 };

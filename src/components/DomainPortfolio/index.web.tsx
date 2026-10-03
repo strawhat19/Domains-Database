@@ -123,7 +123,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </div>
         </div>
         <div id={`portfolio-primary-actions`} className={`portfolio-primary-actions`}>
-          <button
+          {/* <button
             type={`button`}
             id={`portfolio-refresh-website-info`}
             onClick={refreshWebsiteInfo}
@@ -146,7 +146,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             <span id={`portfolio-connections-text`} className={`portfolio-button-text`}>
               {`Registrars`}
             </span>
-          </button>
+          </button> */}
           <button
             type={`button`}
             id={`portfolio-add-domain`}

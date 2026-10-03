@@ -1,3 +1,3 @@
-import { getConnections, saveConnections, clearConnections } from '../shared/connections/service';
+import { getConnections, saveConnections, clearConnections, subscribeConnections } from '../shared/connections/service';
 
-export const connectionsAPI = { getConnections, saveConnections, clearConnections };
+export const connectionsAPI = { getConnections, saveConnections, clearConnections, subscribeConnections };

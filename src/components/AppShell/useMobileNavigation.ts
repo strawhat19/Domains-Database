@@ -11,7 +11,7 @@ export const useMobileNavigation = (pathname: string) => {
 
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
-    const mobileViewport = window.matchMedia(`(max-width: 900px)`);
+    const mobileViewport = window.matchMedia(`(max-width: 1200px)`);
     const handleViewportChange = () => {
       setCompact(mobileViewport.matches);
       if (!mobileViewport.matches) setOpen(false);

@@ -1,4 +1,5 @@
 import { authAPI } from './auth';
+import { sampleNotifications } from '../shared/sampleNotifications';
 import { createCollection } from '../shared/common/collection';
 import { Notification } from '../shared/models/notifications/Notification';
 
@@ -13,4 +14,5 @@ export const notificationsAPI = {
   createNotification: collection.create,
   updateNotification: collection.update,
   deleteNotification: collection.remove,
+  getSampleNotifications: async () => sampleNotifications.map(notification => ({ ...notification })),
 };

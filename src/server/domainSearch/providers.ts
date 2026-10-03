@@ -118,13 +118,31 @@ const porkbun = async (auth: Extract<RegistrarCredentials, { provider: `porkbun`
     headers: { 'Content-Type': `application/json` },
     body: JSON.stringify({ apikey: auth.apiKey, secretapikey: auth.secretKey }),
   })));
+  if (value.code === `RATE_LIMIT_EXCEEDED`) throw upstreamError(`porkbun`, 429);
   if (value.status !== `SUCCESS`) throw new RegistrarRelayError(502, `Porkbun Could Not Check This Domain — Check API Access Or Try Later`);
+  let retryAfterMs: number | undefined;
+  if (value.limits != null) {
+    const limits = record(value.limits);
+    const used = limits.used;
+    const limit = limits.limit;
+    const window = limits.TTL;
+    if (typeof used !== `number` || !Number.isSafeInteger(used) || used < 0
+      || typeof limit !== `number` || !Number.isSafeInteger(limit) || limit < 1
+      || typeof window !== `number` || !Number.isSafeInteger(window) || window < 1) throw invalid();
+    if (used >= limit) {
+      const remaining = value.ttlRemaining ?? window;
+      if (typeof remaining !== `number` || !Number.isSafeInteger(remaining) || remaining < 0 || remaining > window) throw invalid();
+      if (remaining > 300) throw upstreamError(`porkbun`, 429);
+      retryAfterMs = remaining * 1_000;
+    }
+  }
   const result = record(value.response);
   if (![`yes`, `no`].includes(String(result.avail))) throw invalid();
   const additional = result.additional == null ? undefined : record(result.additional);
   const renewal = additional?.renewal == null ? undefined : record(additional.renewal);
   const minimum = years(result.minDuration);
   return {
+    retryAfterMs,
     available: result.avail === `yes`,
     registration: price(result.price, `USD`, 1),
     renewal: price(renewal?.price, `USD`, 1),

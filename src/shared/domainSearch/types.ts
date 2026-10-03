@@ -11,16 +11,31 @@ export interface DomainSearchResult {
   error?: string;
   label: string;
   domain: string;
+  pending?: boolean;
   available?: boolean;
   purchaseUrl: string;
+  retryAfterMs?: number;
   provider: ConnectionProvider;
   renewal?: DomainSearchPrice;
   registration?: DomainSearchPrice;
 }
 
+export interface DomainSearchDomainResult {
+  domain: string;
+  connections: DomainSearchResult[];
+}
+
+export interface DomainSearchVariants {
+  note?: string;
+  query: string;
+  domains: string[];
+  connectionsUpdated: string;
+}
+
 export interface DomainSearchResults {
   searchedAt: string;
-  results: DomainSearchResult[];
+  connectionsUpdated: string;
+  results: DomainSearchDomainResult[];
 }
 
 export const registrarPurchaseUrl = (provider: ConnectionProvider, domain: string) => {

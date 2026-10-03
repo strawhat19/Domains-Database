@@ -1,0 +1,89 @@
+.header-notifications { flex-shrink: 0; position: relative; }
+.header-notifications-toggle {
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  position: relative;
+  color: var(--ink);
+  border-radius: 5px;
+  place-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  transition: color .24s ease, background .24s ease, border-color .24s ease;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    color: var(--accent);
+    background: var(--subtle);
+    border-color: var(--accent);
+  }
+}
+
+.header-notifications-badge {
+  top: -6px;
+  right: -6px;
+  height: 19px;
+  display: grid;
+  min-width: 19px;
+  font-size: 9px;
+  position: absolute;
+  border-radius: 50%;
+  place-items: center;
+  color: var(--contrast);
+  background: var(--accent);
+  font-family: var(--font-bold);
+  border: 2px solid var(--paper);
+}
+
+.header-notifications-panel {
+  right: 0;
+  z-index: 60;
+  width: 370px;
+  padding: 16px;
+  overflow-y: auto;
+  position: absolute;
+  border-radius: 10px;
+  color: var(--ink);
+  top: calc(100% + 12px);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 112px);
+  box-shadow: 0 12px 28px var(--shadow);
+  animation: header-notifications-enter .24s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.header-notifications-heading-row { gap: 8px; display: flex; align-items: center; }
+.header-notifications-heading { font-size: 14px; font-family: var(--font-bold); }
+.header-notifications-count { font-size: 11px; color: var(--accent); }
+.header-notifications-close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  border: none;
+  margin-left: auto;
+  color: var(--muted);
+  border-radius: 5px;
+  place-items: center;
+  background: transparent;
+
+  &:hover { color: var(--accent); background: var(--subtle); }
+}
+.header-notifications-list { gap: 10px; padding: 0; display: grid; list-style: none; margin: 14px 0 0; }
+
+@media (max-width: 600px) {
+  .header-inner { position: relative; }
+  .header-notifications { position: static; }
+  .header-notifications-panel { left: 16px; right: 16px; width: auto; top: calc(100% + 8px); }
+}
+
+@keyframes header-notifications-enter {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-notifications-panel { animation: none; }
+}
