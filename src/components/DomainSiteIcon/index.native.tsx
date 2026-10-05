@@ -5,15 +5,17 @@ import { Globe2 } from 'lucide-react-native';
 import { useDomainSiteIcon } from './useDomainSiteIcon';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 
 interface DomainSiteIconProps {
   id: string;
   size?: number;
   domain: string;
+  iconUrl?: string;
   compact?: boolean;
 }
 
-const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteIconProps) => {
+const SiteIconContent = ({ id, sourceUrl, size = 28, compact = false }: DomainSiteIconProps & { sourceUrl: string }) => {
   const { palette } = useTheme();
   const { failed, loaded, onLoad, onError } = useDomainSiteIcon();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -26,7 +28,7 @@ const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteI
       {...elementProps(`domain-site-icon`, id)}
       style={[styles.container, compact && styles.compact, { width: size, height: size }]}
     >
-      {(!loaded || failed) && (
+      {(!sourceUrl || !loaded || failed) && (
         <Globe2
           size={fallbackSize}
           strokeWidth={1.4}
@@ -34,13 +36,13 @@ const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteI
           {...elementProps(`domain-site-icon-fallback`, id)}
         />
       )}
-      {!failed && (
+      {!!sourceUrl && !failed && (
         <Image
           onLoad={onLoad}
           onError={onError}
           resizeMode={`contain`}
           accessibilityIgnoresInvertColors
-          source={{ uri: `https://${domain}/favicon.ico` }}
+          source={{ uri: sourceUrl }}
           {...elementProps(`domain-site-icon-image`, id)}
           style={[styles.image, { width: imageSize, height: imageSize, opacity: loaded ? 1 : 0 }]}
         />
@@ -49,8 +51,9 @@ const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteI
   );
 };
 
-const DomainSiteIcon = (props: DomainSiteIconProps) => (
-  <SiteIconContent key={props.domain} {...props} />
-);
+const DomainSiteIcon = (props: DomainSiteIconProps) => {
+  const sourceUrl = getDomainSiteIconUrl({ name: props.domain, meta: { siteIconUrl: props.iconUrl ?? `` } });
+  return <SiteIconContent key={sourceUrl} {...props} sourceUrl={sourceUrl} />;
+};
 
 export default DomainSiteIcon;

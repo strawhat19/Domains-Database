@@ -4,7 +4,7 @@ import { REGISTRARS, useLocalStorage } from '../config';
 import type { ConnectionProvider } from '../connections/types';
 import { accountStorageKey } from '../authentication/userScope';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
-import type { RegistrarDomain, ConnectionSyncStatus, ConnectionSyncStatuses } from './types';
+import type { RegistrarDomain, AccountSyncStatuses, ConnectionSyncStatus, ConnectionSyncStatuses } from './types';
 
 export const MANUAL_SYNC_LIMIT = 3;
 export const AUTO_SYNC_INTERVAL_MS = 144 * 60 * 1000;
@@ -19,6 +19,7 @@ export interface RegistrarSyncPolicy {
   connectionsUpdated: string;
   manualCooldownUntil: number;
   statuses: ConnectionSyncStatuses;
+  accountStatuses?: AccountSyncStatuses;
   successfulProviders: ConnectionProvider[];
 }
 
@@ -66,7 +67,8 @@ const isPolicy = (value: unknown, userId: string): value is RegistrarSyncPolicy 
   if (!Array.isArray(value.successfulProviders) || new Set(value.successfulProviders).size !== value.successfulProviders.length) return false;
   if (!value.successfulProviders.every(provider => providers.includes(provider as ConnectionProvider))) return false;
   const statuses = value.statuses;
-  return isRecord(statuses) && providers.every(provider => isStatus(statuses[provider]));
+  return isRecord(statuses) && providers.every(provider => isStatus(statuses[provider]))
+    && (value.accountStatuses === undefined || (isRecord(value.accountStatuses) && Object.values(value.accountStatuses).every(isStatus)));
 };
 const emptyStatuses = (): ConnectionSyncStatuses => ({
   godaddy: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
@@ -118,16 +120,17 @@ export const getSyncPolicy = (userId: string): Promise<RegistrarSyncPolicy> => s
 export const isSyncCacheFresh = (policy: RegistrarSyncPolicy, connectionsUpdated: string, now = Date.now()) => policy.lastSyncedAt > 0
   && policy.connectionsUpdated === connectionsUpdated && now >= policy.lastSyncedAt && now - policy.lastSyncedAt < AUTO_SYNC_INTERVAL_MS;
 
-export const saveSyncCache = (userId: string, connectionsUpdated: string, statuses: ConnectionSyncStatuses, lastSyncedAt: number, current: () => boolean): Promise<RegistrarSyncPolicy> => serialize(async () => {
+export const saveSyncCache = (userId: string, connectionsUpdated: string, statuses: ConnectionSyncStatuses, lastSyncedAt: number, current: () => boolean, accountStatuses?: AccountSyncStatuses): Promise<RegistrarSyncPolicy> => serialize(async () => {
   const previous = await readPolicy(userId);
   const latest = await connectionsAPI.getConnections(userId);
   if (!current()) throw new Error(`Sync Changed — Please Try Again`);
   if (latest.updated !== connectionsUpdated) throw new Error(`Connections Changed — Save Again To Sync`);
   const sameConnections = previous.connectionsUpdated === connectionsUpdated;
   const successful = sameConnections ? previous.successfulProviders : [];
-  const connected = providers.filter(provider => statuses[provider]?.state === `connected`);
+  const connected = providers.filter(provider => statuses[provider]?.state === `connected`
+    || latest.accounts.some(account => account.provider === provider && accountStatuses?.[account.id]?.state === `connected`));
   const syncedAt = lastSyncedAt || (sameConnections ? previous.lastSyncedAt : 0);
-  return writePolicy({ ...previous, statuses, connectionsUpdated, lastSyncedAt: syncedAt, successfulProviders: [...new Set([...successful, ...connected])] }, current);
+  return writePolicy({ ...previous, statuses, accountStatuses, connectionsUpdated, lastSyncedAt: syncedAt, successfulProviders: [...new Set([...successful, ...connected])] }, current);
 });
 
 export const reserveManualSync = (userId: string): Promise<ManualSyncReservation> => serialize(async () => {
@@ -148,5 +151,5 @@ export const reserveManualSync = (userId: string): Promise<ManualSyncReservation
 
 export const clearSyncCache = (userId: string): Promise<RegistrarSyncPolicy> => serialize(async () => {
   const previous = await readPolicy(userId);
-  return writePolicy({ ...previous, lastSyncedAt: 0, connectionsUpdated: ``, statuses: emptyStatuses(), successfulProviders: [] });
+  return writePolicy({ ...previous, lastSyncedAt: 0, connectionsUpdated: ``, accountStatuses: {}, statuses: emptyStatuses(), successfulProviders: [] });
 });

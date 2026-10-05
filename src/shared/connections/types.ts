@@ -1,10 +1,26 @@
 export type ConnectionProvider = `godaddy` | `hostinger` | `namecheap` | `porkbun` | `namesilo`;
 export type ConnectionValues = Record<ConnectionProvider, string>;
 
+export interface ConnectionAccount {
+  id: string;
+  number: number;
+  values: string;
+  provider: ConnectionProvider;
+}
+
+export interface AccountConnectionsProps {
+  scope?: string;
+  embedded?: boolean;
+  providers?: readonly ConnectionProvider[];
+  onBusyChange?: (busy: boolean) => void;
+}
+
 export interface ConnectionSnapshot {
-  version: 1;
+  version: 2;
   userId: string;
   updated: string;
+  nextNumber: number;
+  accounts: ConnectionAccount[];
   values: ConnectionValues;
 }
 

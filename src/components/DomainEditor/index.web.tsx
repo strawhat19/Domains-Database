@@ -1,8 +1,11 @@
 import './styles.scss';
 import ConnectRegistrar from './ConnectRegistrar';
+import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import { REGISTRARS } from '../../shared/config';
 import { useDomainEditor } from './useDomainEditor';
 import type { DomainRecord } from '../../shared/types';
+import { getDomainSource } from '../../shared/domainUtils';
+import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { Check, Plus, X, ShieldCheck } from 'lucide-react';
 
 interface DomainEditorProps {
@@ -13,6 +16,7 @@ interface DomainEditorProps {
 const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
   const { error, input, close, saving, setField, modalRef, handleSubmit } = useDomainEditor(domain, onClose);
   const isEditing = Boolean(domain?.id);
+  const isSynced = domain && getDomainSource(domain) === `registrar`;
   return (
     <div
       role={`presentation`}
@@ -36,7 +40,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               {`YOUR PORTFOLIO`}
             </span>
             <h2 id={`domain-editor-title`} className={`domain-dialog-title`}>
-              {isEditing ? `Edit your domain` : `Add a domain`}
+              {isEditing ? `Edit ${domain?.name ?? input.name}` : `Add a domain`}
             </h2>
           </div>
           <button
@@ -51,123 +55,183 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
           </button>
         </header>
         <p id={`domain-editor-description`} className={`domain-dialog-description`}>
-          {`A little detail now. A lot less searching later.`}
+          {isSynced ? `Edit your icon, notes, and description. Domain details are managed by registrar sync.` : `A little detail now. A lot less searching later.`}
         </p>
-        <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />
+        {!isSynced && <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />}
         <form id={`domain-editor-form`} className={`domain-editor-form`} onSubmit={handleSubmit}>
           <div id={`domain-editor-fields`} className={`domain-editor-fields`}>
-            <div id={`domain-name-field`} className={`domain-editor-field`}>
-              <label id={`domain-name-label`} className={`domain-editor-label`} htmlFor={`domain-name-input`}>
-                {`Domain name`}
-              </label>
-              <input
-                required
-                data-autofocus
-                spellCheck={false}
-                value={input.name}
-                maxLength={253}
-                autoComplete={`off`}
-                id={`domain-name-input`}
-                placeholder={`your-next-idea.com`}
-                className={`domain-editor-input`}
-                onChange={event => setField(`name`, event.target.value)}
-              />
-            </div>
-            <div id={`domain-owner-field`} className={`domain-editor-field`}>
-              <label id={`domain-owner-label`} className={`domain-editor-label`} htmlFor={`domain-owner-input`}>
-                {`Registered to`}
-              </label>
-              <input
-                required
-                maxLength={120}
-                value={input.owner}
-                autoComplete={`name`}
-                id={`domain-owner-input`}
-                placeholder={`Your name or company`}
-                className={`domain-editor-input`}
-                onChange={event => setField(`owner`, event.target.value)}
-              />
-            </div>
-            <div id={`domain-registrar-field`} className={`domain-editor-field`}>
-              <label id={`domain-registrar-label`} className={`domain-editor-label`} htmlFor={`domain-registrar-input`}>
-                {`Registrar`}
-              </label>
-              <select
-                value={input.registrar}
-                id={`domain-registrar-input`}
-                className={`domain-editor-input domain-editor-select`}
-                onChange={event => setField(`registrar`, event.target.value as typeof input.registrar)}
-              >
-                <option value={``} id={`domain-registrar-option-unknown`} className={`domain-registrar-option`}>
-                  {`Unknown`}
-                </option>
-                {REGISTRARS.map(registrar => (
-                  <option
-                    key={registrar}
-                    value={registrar}
-                    className={`domain-editor-option`}
-                    id={`domain-registrar-option-${registrar.toLowerCase().replaceAll(` `, `-`)}`}
+            {!isSynced && (
+              <>
+                <div id={`domain-name-field`} className={`domain-editor-field`}>
+                  <label id={`domain-name-label`} className={`domain-editor-label`} htmlFor={`domain-name-input`}>
+                    {`Domain name`}
+                  </label>
+                  <input
+                    required
+                    data-autofocus
+                    spellCheck={false}
+                    value={input.name}
+                    maxLength={253}
+                    autoComplete={`off`}
+                    id={`domain-name-input`}
+                    placeholder={`your-next-idea.com`}
+                    className={`domain-editor-input`}
+                    onChange={event => setField(`name`, event.target.value)}
+                  />
+                </div>
+                <div id={`domain-owner-field`} className={`domain-editor-field`}>
+                  <label id={`domain-owner-label`} className={`domain-editor-label`} htmlFor={`domain-owner-input`}>
+                    {`Registered to`}
+                  </label>
+                  <input
+                    required
+                    maxLength={120}
+                    value={input.owner}
+                    autoComplete={`name`}
+                    id={`domain-owner-input`}
+                    placeholder={`Your name or company`}
+                    className={`domain-editor-input`}
+                    onChange={event => setField(`owner`, event.target.value)}
+                  />
+                </div>
+                <div id={`domain-registrar-field`} className={`domain-editor-field`}>
+                  <label id={`domain-registrar-label`} className={`domain-editor-label`} htmlFor={`domain-registrar-input`}>
+                    {`Registrar`}
+                  </label>
+                  <select
+                    value={input.registrar}
+                    id={`domain-registrar-input`}
+                    className={`domain-editor-input domain-editor-select`}
+                    onChange={event => setField(`registrar`, event.target.value as typeof input.registrar)}
                   >
-                    {registrar}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div id={`domain-expiry-field`} className={`domain-editor-field`}>
-              <label id={`domain-expiry-label`} className={`domain-editor-label`} htmlFor={`domain-expiry-input`}>
-                {`Renewal date`}
+                    <option value={``} id={`domain-registrar-option-unknown`} className={`domain-registrar-option`}>
+                      {`Unknown`}
+                    </option>
+                    {REGISTRARS.map(registrar => (
+                      <option
+                        key={registrar}
+                        value={registrar}
+                        className={`domain-editor-option`}
+                        id={`domain-registrar-option-${registrar.toLowerCase().replaceAll(` `, `-`)}`}
+                      >
+                        {registrar}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div id={`domain-expiry-field`} className={`domain-editor-field`}>
+                  <label id={`domain-expiry-label`} className={`domain-editor-label`} htmlFor={`domain-expiry-input`}>
+                    {`Renewal date`}
+                  </label>
+                  <input
+                    type={`date`}
+                    value={input.expiresAt}
+                    id={`domain-expiry-input`}
+                    className={`domain-editor-input`}
+                    onChange={event => setField(`expiresAt`, event.target.value)}
+                  />
+                </div>
+                <div id={`domain-price-field`} className={`domain-editor-field`}>
+                  <label id={`domain-price-label`} className={`domain-editor-label`} htmlFor={`domain-price-input`}>
+                    {`Annual renewal · USD`}
+                  </label>
+                  <div id={`domain-price-input-wrap`} className={`domain-editor-price-wrap`}>
+                    <span id={`domain-price-prefix`} className={`domain-editor-price-prefix`} aria-hidden={`true`}>
+                      {`$`}
+                    </span>
+                    <input
+                      min={0}
+                      required
+                      step={0.01}
+                      type={`number`}
+                      inputMode={`decimal`}
+                      value={input.renewalPrice}
+                      id={`domain-price-input`}
+                      className={`domain-editor-input domain-editor-price-input`}
+                      onChange={event => setField(`renewalPrice`, Number(event.target.value))}
+                    />
+                  </div>
+                </div>
+                <div id={`domain-auto-renew-field`} className={`domain-editor-field domain-editor-renew-field`}>
+                  <label id={`domain-auto-renew-label`} className={`domain-editor-renew-label`} htmlFor={`domain-auto-renew-input`}>
+                    <input
+                      type={`checkbox`}
+                      checked={input.autoRenew}
+                      id={`domain-auto-renew-input`}
+                      className={`domain-editor-renew-checkbox`}
+                      onChange={event => setField(`autoRenew`, event.target.checked)}
+                    />
+                    <span id={`domain-auto-renew-copy`} className={`domain-editor-renew-copy`}>
+                      <span id={`domain-auto-renew-title`} className={`domain-editor-renew-title`}>
+                        {`Auto-renew is enabled`}
+                      </span>
+                      <span id={`domain-auto-renew-help`} className={`domain-editor-renew-help`}>
+                        {`Match the setting at your registrar`}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </>
+            )}
+            <div id={`domain-site-icon-field`} className={`domain-editor-field domain-editor-field-full`}>
+              <label id={`domain-site-icon-label`} className={`domain-editor-label`} htmlFor={`domain-site-icon-input`}>
+                {`Site icon URL`}
               </label>
-              <input
-                type={`date`}
-                value={input.expiresAt}
-                id={`domain-expiry-input`}
-                className={`domain-editor-input`}
-                onChange={event => setField(`expiresAt`, event.target.value)}
-              />
-            </div>
-            <div id={`domain-price-field`} className={`domain-editor-field`}>
-              <label id={`domain-price-label`} className={`domain-editor-label`} htmlFor={`domain-price-input`}>
-                {`Annual renewal · USD`}
-              </label>
-              <div id={`domain-price-input-wrap`} className={`domain-editor-price-wrap`}>
-                <span id={`domain-price-prefix`} className={`domain-editor-price-prefix`} aria-hidden={`true`}>
-                  {`$`}
-                </span>
-                <input
-                  min={0}
-                  required
-                  step={0.01}
-                  type={`number`}
-                  inputMode={`decimal`}
-                  value={input.renewalPrice}
-                  id={`domain-price-input`}
-                  className={`domain-editor-input domain-editor-price-input`}
-                  onChange={event => setField(`renewalPrice`, Number(event.target.value))}
-                />
+              <div id={`domain-site-icon-row`} className={`domain-editor-icon-row`}>
+                <div
+                  role={`img`}
+                  id={`domain-site-icon-preview`}
+                  aria-label={`Site Icon Preview`}
+                  className={`domain-editor-icon-preview`}
+                >
+                  <DomainSiteIcon
+                    compact
+                    size={40}
+                    domain={input.name}
+                    id={`domain-editor-site-icon`}
+                    iconUrl={getCustomSiteIconUrl(input)}
+                  />
+                </div>
+                <div id={`domain-site-icon-copy`} className={`domain-editor-icon-copy`}>
+                  <input
+                    type={`url`}
+                    data-autofocus={isSynced || undefined}
+                    maxLength={2048}
+                    inputMode={`url`}
+                    autoComplete={`off`}
+                    spellCheck={false}
+                    id={`domain-site-icon-input`}
+                    value={getCustomSiteIconUrl(input)}
+                    className={`domain-editor-input`}
+                    aria-describedby={`domain-site-icon-help`}
+                    placeholder={`https://example.com/icon.png`}
+                    onChange={event => setField(`meta`, { ...input.meta, siteIconUrl: event.target.value })}
+                  />
+                  <p id={`domain-site-icon-help`} className={`domain-editor-icon-help`}>
+                    {`Use a public image URL. Leave blank to use the website's default icon.`}
+                  </p>
+                </div>
               </div>
             </div>
-            <div id={`domain-auto-renew-field`} className={`domain-editor-field domain-editor-renew-field`}>
-              <label id={`domain-auto-renew-label`} className={`domain-editor-renew-label`} htmlFor={`domain-auto-renew-input`}>
-                <input
-                  type={`checkbox`}
-                  checked={input.autoRenew}
-                  id={`domain-auto-renew-input`}
-                  className={`domain-editor-renew-checkbox`}
-                  onChange={event => setField(`autoRenew`, event.target.checked)}
+            {isSynced && (
+              <div id={`domain-description-field`} className={`domain-editor-field domain-editor-field-full`}>
+                <label id={`domain-description-label`} className={`domain-editor-label`} htmlFor={`domain-description-input`}>
+                  {`Description (optional)`}
+                </label>
+                <textarea
+                  rows={2}
+                  maxLength={2000}
+                  id={`domain-description-input`}
+                  value={input.description ?? ``}
+                  placeholder={`What is this domain for?`}
+                  className={`domain-editor-input domain-editor-notes`}
+                  onChange={event => setField(`description`, event.target.value)}
                 />
-                <span id={`domain-auto-renew-copy`} className={`domain-editor-renew-copy`}>
-                  <span id={`domain-auto-renew-title`} className={`domain-editor-renew-title`}>
-                    {`Auto-renew is enabled`}
-                  </span>
-                  <span id={`domain-auto-renew-help`} className={`domain-editor-renew-help`}>
-                    {`Match the setting at your registrar`}
-                  </span>
-                </span>
-              </label>
-            </div>
+              </div>
+            )}
             <div id={`domain-notes-field`} className={`domain-editor-field domain-editor-field-full`}>
               <label id={`domain-notes-label`} className={`domain-editor-label`} htmlFor={`domain-notes-input`}>
-                {`A note, if you like`}
+                {`Notes (optional)`}
               </label>
               <textarea
                 rows={2}

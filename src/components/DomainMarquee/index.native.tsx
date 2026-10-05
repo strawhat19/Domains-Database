@@ -83,7 +83,13 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
                   />
                 )}
                 {item.domain ? (
-                  <DomainSiteIcon compact size={14} domain={item.domain} id={`native-domain-marquee-pill-icon-${suffix}`} />
+                  <DomainSiteIcon
+                    compact
+                    size={14}
+                    domain={item.domain}
+                    iconUrl={item.iconUrl}
+                    id={`native-domain-marquee-pill-icon-${suffix}`}
+                  />
                 ) : (
                   <Icon
                     size={14}

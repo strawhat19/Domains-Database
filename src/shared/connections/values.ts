@@ -1,4 +1,30 @@
-import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues } from './types';
+import { generateID } from '../common/ids';
+import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues, type ConnectionAccount, type ConnectionProvider } from './types';
+
+export const createConnectionDraft = (provider: ConnectionProvider): ConnectionAccount => ({
+  number: 0, values: ``, provider, id: `draft-${generateID()}`,
+});
+
+export const connectionValues = (accounts: readonly ConnectionAccount[]): ConnectionValues => {
+  const values = { ...EMPTY_CONNECTIONS };
+  for (const account of accounts) {
+    if (!values[account.provider] && account.values.trim()) values[account.provider] = account.values;
+  }
+  return values;
+};
+
+export const normalizeConnectionAccounts = (input: readonly ConnectionAccount[]): ConnectionAccount[] => {
+  if (!Array.isArray(input)) throw new Error(`Enter Valid Connection Accounts`);
+  const ids = new Set<string>();
+  return input.map(account => {
+    if (!account || typeof account.id !== `string` || !account.id || ids.has(account.id)
+      || !Number.isSafeInteger(account.number) || account.number < 0
+      || !connectionFields.some(field => field.id === account.provider)) throw new Error(`Enter Valid Connection Accounts`);
+    ids.add(account.id);
+    const values = normalizeConnections({ ...EMPTY_CONNECTIONS, [account.provider]: account.values })[account.provider];
+    return { id: account.id, number: account.number, provider: account.provider, values };
+  }).filter(account => account.values.trim());
+};
 
 export const normalizeConnections = (input: ConnectionValues): ConnectionValues => {
   const result: ConnectionValues = { ...EMPTY_CONNECTIONS };

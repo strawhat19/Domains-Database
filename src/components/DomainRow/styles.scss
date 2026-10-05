@@ -76,6 +76,7 @@
   &-notes, &-nameservers { min-width: 160px; white-space: normal; overflow-wrap: anywhere; }
 }
 .domain-registrar { gap: 9px; display: flex; align-items: center; white-space: nowrap; }
+.domain-registrar-copy { gap: 3px; display: flex; align-items: flex-start; flex-direction: column; }
 .registrar-mark {
   width: 25px;
   height: 25px;

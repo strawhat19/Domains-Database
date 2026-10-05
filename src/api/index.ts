@@ -1,7 +1,7 @@
 import { authAPI } from './auth';
 import { Domain } from '../shared/models/domains/Domain';
 import type { WebsiteInsights } from '../shared/websiteInsights/types';
-import { validateDomainInput } from '../shared/domainUtils';
+import { getDomainSource, validateDomainInput } from '../shared/domainUtils';
 import { createSampleDomains } from '../shared/sampleDomains';
 import { createOperationQueue } from '../shared/common/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -210,7 +210,7 @@ const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): Regist
   if (typeof input.name !== `string` || typeof input.registrar !== `string`) throw new Error(`Registrar Domain Must Include A Name And Registrar`);
   if (!input.registrar && !(input.meta?.externalRegistration === true && input.meta?.ownershipConfirmed === true)) throw new Error(`Confirm External Domain Ownership Before Importing`);
   const metadata: NonNullable<DomainInput[`meta`]> = {};
-  for (const field of [`source`, `registrarName`, `hostingProvider`, `registrarSource`, `registrarCheckedAt`] as const) {
+  for (const field of [`source`, `registrarName`, `hostingProvider`, `registrarSource`, `registrarProvider`, `registrarCheckedAt`, `registrarConnectionId`] as const) {
     const value = input.meta?.[field];
     if (value !== undefined) {
       if (typeof value !== `string` || value.length > 256) throw new Error(`Registrar Returned Invalid Source Metadata`);
@@ -349,7 +349,7 @@ export const api = {
     const validated = validateDomainInput(input);
     assertUnique(validated.name, current.domains);
     const number = current.nextNumber;
-    const domain = new Domain({ ...validated, number, uid: getScopeUid() });
+    const domain = new Domain({ ...validated, number, uid: getScopeUid(), meta: { ...validated.meta, domainSource: `manual` } });
     await saveSnapshot({ version: 1, nextNumber: number + 1, domains: [...current.domains, domain] });
     return copyDomains([domain])[0];
   }),
@@ -357,7 +357,16 @@ export const api = {
     const current = await readSnapshot();
     const original = current.domains.find(domain => domain.id === id);
     if (!original) throw new Error(`Domain Could Not Be Found`);
-    const validated = validateDomainInput({ ...original, ...input, meta: { ...original.meta, ...input.meta } });
+    const registrarManaged = getDomainSource(original) === `registrar`;
+    const changes: Partial<DomainInput> = registrarManaged ? {
+      notes: input?.notes ?? original.notes,
+      description: input?.description ?? original.description,
+      meta: {
+        ...original.meta,
+        ...(input?.meta?.siteIconUrl !== undefined ? { siteIconUrl: input.meta.siteIconUrl } : {}),
+      },
+    } : input;
+    const validated = validateDomainInput({ ...original, ...changes, meta: { ...original.meta, ...changes.meta } });
     assertUnique(validated.name, current.domains, id);
     const previous = original.meta?.registrarSync;
     const incoming = validated.meta?.registrarSync;
@@ -375,6 +384,7 @@ export const api = {
       id,
       isSample: false,
       number: original.number,
+      meta: { ...validated.meta, domainSource: getDomainSource(original) },
       updated: new Date().toISOString(),
       firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt,
       firstExportedAt: original.firstExportedAt ?? validated.firstExportedAt,
@@ -413,7 +423,7 @@ export const api = {
             registrar: validated.registrar || original.registrar,
             expiresAt: validated.expiresAt || original.expiresAt,
             owner: validated.owner === `My Portfolio` ? original.owner : validated.owner,
-            meta: { ...original.meta, ...validated.meta },
+            meta: { ...original.meta, ...validated.meta, domainSource: `csv` },
             firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt ?? importedAt,
             firstExportedAt: original.firstExportedAt ?? validated.firstExportedAt,
           });
@@ -422,6 +432,7 @@ export const api = {
             ...validated,
             number: nextNumber,
             uid: getScopeUid(),
+            meta: { ...validated.meta, domainSource: `csv` },
             firstImportedAt: validated.firstImportedAt ?? importedAt,
           }));
           nextNumber += 1;
@@ -466,7 +477,7 @@ export const api = {
         updated: syncedAt,
         firstImportedAt: original?.firstImportedAt ?? syncedAt,
         number: original?.number ?? nextNumber,
-        meta: { ...original?.meta, ...meta, registrarSync: {
+        meta: { ...original?.meta, ...meta, domainSource: `registrar`, registrarSync: {
           ...previousSync,
           source: patch.registrar,
           syncedAt,

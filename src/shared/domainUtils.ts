@@ -1,7 +1,8 @@
 import { genID } from './common/ids';
 import { REGISTRARS } from './config';
 import { Types } from '../types/types';
-import type { JSONValue, DomainInput, DomainRecord, DomainStatus, DomainRegistrant } from './types';
+import { normalizeSiteIconUrl } from './domainSiteIcon';
+import type { JSONValue, DomainInput, DomainRecord, DomainSource, DomainStatus, DomainRegistrant } from './types';
 
 const DAY_IN_MS = 86_400_000;
 
@@ -18,6 +19,15 @@ export const getDomainStatus = (domain: DomainRecord): DomainStatus => {
   if (!Number.isFinite(days)) return `Unknown`;
   if (days < 0) return `Expired`;
   return days <= 30 ? `Renewing Soon` : `Active`;
+};
+
+export const getDomainSource = (domain: DomainRecord): DomainSource => {
+  const source = domain.meta?.domainSource;
+  if (source === `csv` || source === `manual` || source === `registrar`) return source;
+  const sync = domain.meta?.registrarSync;
+  if (sync && typeof sync === `object` && !Array.isArray(sync) && typeof sync.syncedAt === `string` && sync.syncedAt) return `registrar`;
+  if (domain.meta?.csv || domain.firstImportedAt) return `csv`;
+  return `manual`;
 };
 
 export const getRegistrarCounts = (domains: DomainRecord[]) => {
@@ -159,6 +169,7 @@ export const normalizeDomainExtras = (input: Partial<DomainInput>): Partial<Doma
   if (input.meta != null) {
     if (typeof input.meta !== `object` || Array.isArray(input.meta)) throw new Error(`Domain Metadata Must Be An Object`);
     extras.meta = normalizeJsonValue(input.meta) as Record<string, JSONValue>;
+    if (`siteIconUrl` in input.meta) extras.meta.siteIconUrl = normalizeSiteIconUrl(input.meta.siteIconUrl);
   }
   return extras;
 };

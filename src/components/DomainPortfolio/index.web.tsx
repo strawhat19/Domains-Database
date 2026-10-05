@@ -1,5 +1,5 @@
 import './styles.scss';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import ColumnControls from '../ColumnControls';
 import DomainEditor from '../DomainEditor';
@@ -23,6 +23,7 @@ import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDo
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
+  const [toolsTab, setToolsTab] = useState<`connect` | `csv`>(`connect`);
   const router = useRouter();
   const { user } = useAuth();
   const { visibleColumns, toggleColumn, resetColumns } = useColumns();
@@ -424,31 +425,84 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {`Showing ${visibleIds.length} Of ${portfolio.filteredDomains.length}`}
             </span>
           </div>
-          <div id={`portfolio-secondary-actions`} className={`portfolio-secondary-actions`}>
-            <button
-              type={`button`}
-              onClick={portfolio.requestImport}
-              id={`portfolio-import-csv`}
-              disabled={portfolio.loading || portfolio.importing}
-              className={`portfolio-button portfolio-button-quiet`}
+          <div id={`portfolio-transfer-tools`} className={`portfolio-transfer-tools`}>
+            <div role={`tablist`} aria-label={`Add Or Transfer Domains`} id={`portfolio-tools-tabs`} className={`portfolio-tools-tabs`}>
+              {([`connect`, `csv`] as const).map(tab => {
+                const TabIcon = tab === `connect` ? Link2 : Upload;
+                return (
+                  <button
+                    key={tab}
+                    role={`tab`}
+                    type={`button`}
+                    id={`portfolio-tools-tab-${tab}`}
+                    aria-selected={toolsTab === tab}
+                    tabIndex={toolsTab === tab ? 0 : -1}
+                    aria-controls={`portfolio-tools-panel-${tab}`}
+                    className={`portfolio-tools-tab${toolsTab === tab ? ` portfolio-tools-tab-active` : ``}`}
+                    onClick={() => setToolsTab(tab)}
+                    onKeyDown={event => {
+                      if (![ `ArrowLeft`, `ArrowRight`, `Home`, `End` ].includes(event.key)) return;
+                      event.preventDefault();
+                      const next = event.key === `Home` ? `connect` : event.key === `End` ? `csv` : tab === `connect` ? `csv` : `connect`;
+                      setToolsTab(next);
+                      event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`#portfolio-tools-tab-${next}`)?.focus();
+                    }}
+                  >
+                    <TabIcon size={13} aria-hidden={`true`} id={`portfolio-tools-tab-icon-${tab}`} className={`portfolio-button-icon`} />
+                    <span id={`portfolio-tools-tab-text-${tab}`} className={`portfolio-button-text`}>
+                      {tab === `connect` ? `Connect Registrar` : `Import / Export CSV`}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div
+              role={`tabpanel`}
+              id={`portfolio-tools-panel-connect`}
+              hidden={toolsTab !== `connect`}
+              aria-labelledby={`portfolio-tools-tab-connect`}
+              className={`portfolio-tools-panel`}
             >
-              <Upload size={13} aria-hidden={`true`} id={`portfolio-import-icon`} className={`portfolio-button-icon`} />
-              <span id={`portfolio-import-text`} className={`portfolio-button-text`}>
-                {portfolio.importing ? `Importing…` : `Import CSV`}
+              <span id={`portfolio-connect-recommendation`} className={`portfolio-connect-recommendation`}>
+                {`Recommended: connect a registrar to sync your domains automatically.`}
               </span>
-            </button>
-            <button
-              type={`button`}
-              onClick={portfolio.exportDomains}
-              id={`portfolio-export-csv`}
-              disabled={portfolio.loading || portfolio.exporting || !portfolio.domains.length}
-              className={`portfolio-button portfolio-button-quiet`}
+              <button type={`button`} disabled={portfolio.loading} onClick={portfolio.openSetup} id={`portfolio-connect-registrar`} className={`portfolio-button portfolio-button-quiet`}>
+                <Link2 size={13} aria-hidden={`true`} id={`portfolio-connect-registrar-icon`} className={`portfolio-button-icon`} />
+                <span id={`portfolio-connect-registrar-text`} className={`portfolio-button-text`}>{`Connect Registrar`}</span>
+              </button>
+            </div>
+            <div
+              role={`tabpanel`}
+              id={`portfolio-tools-panel-csv`}
+              hidden={toolsTab !== `csv`}
+              aria-labelledby={`portfolio-tools-tab-csv`}
+              className={`portfolio-tools-panel portfolio-secondary-actions`}
             >
-              <Download size={13} aria-hidden={`true`} id={`portfolio-export-icon`} className={`portfolio-button-icon`} />
-              <span id={`portfolio-export-text`} className={`portfolio-button-text`}>
-                {portfolio.exporting ? `Exporting…` : `Export CSV`}
-              </span>
-            </button>
+              <button
+                type={`button`}
+                onClick={portfolio.requestImport}
+                id={`portfolio-import-csv`}
+                disabled={portfolio.loading || portfolio.importing}
+                className={`portfolio-button portfolio-button-quiet`}
+              >
+                <Upload size={13} aria-hidden={`true`} id={`portfolio-import-icon`} className={`portfolio-button-icon`} />
+                <span id={`portfolio-import-text`} className={`portfolio-button-text`}>
+                  {portfolio.importing ? `Importing…` : `Import CSV`}
+                </span>
+              </button>
+              <button
+                type={`button`}
+                onClick={portfolio.exportDomains}
+                id={`portfolio-export-csv`}
+                disabled={portfolio.loading || portfolio.exporting || !portfolio.domains.length}
+                className={`portfolio-button portfolio-button-quiet`}
+              >
+                <Download size={13} aria-hidden={`true`} id={`portfolio-export-icon`} className={`portfolio-button-icon`} />
+                <span id={`portfolio-export-text`} className={`portfolio-button-text`}>
+                  {portfolio.exporting ? `Exporting…` : `Export CSV`}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

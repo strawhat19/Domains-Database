@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { notificationsAPI } from '../../api/notifications';
 import { useDomains } from '../../shared/domainContext/useDomains';
+import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import type { HeaderNotification } from '../../shared/sampleNotifications';
 
 export interface DomainMarqueeItem {
@@ -11,6 +12,7 @@ export interface DomainMarqueeItem {
   label: string;
   title: string;
   domain?: string;
+  iconUrl?: string;
   external: boolean;
   icon: `Globe2` | `Info` | `Sparkles`;
 }
@@ -43,6 +45,7 @@ export const useDomainMarquee = () => {
         title: domain.name,
         domain: domain.name,
         href: `https://${domain.name}`,
+        iconUrl: getCustomSiteIconUrl(domain),
       }))
       : notifications.map(notification => ({
         external: false,

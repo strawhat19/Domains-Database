@@ -24,5 +24,6 @@ export interface ConnectionSyncStatus {
 }
 
 export type ConnectionSyncStatuses = Record<ConnectionProvider, ConnectionSyncStatus>;
+export type AccountSyncStatuses = Record<string, ConnectionSyncStatus>;
 export interface RegistrarSyncResult { domains: RegistrarDomain[]; warnings?: string[]; discoveredDomains?: RegistrarDomain[] }
 export interface ConnectionSyncResult { count: number; errors: string[]; warnings: string[] }

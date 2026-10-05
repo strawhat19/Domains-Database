@@ -18,6 +18,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   actionsCell: { gap: 3, flexDirection: `row` },
   actionButton: { padding: 7, borderRadius: 8, backgroundColor: palette.input },
   middle: { gap: 10, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
+  registrarGroup: { gap: 3, flex: 1, alignItems: `flex-start` },
   registrar: { color: palette.muted, fontSize: 11, fontFamily: `DMSans_500Medium` },
   rowStatus: { gap: 6, flexDirection: `row`, alignItems: `center` },
   statusDotWrap: { width: 12, height: 12, borderRadius: 6, alignItems: `center`, justifyContent: `center` },

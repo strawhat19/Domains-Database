@@ -6,8 +6,8 @@ import { connectionsAPI } from '../../api/connections';
 import { CONNECTIONS_STORAGE_KEY } from '../connections/service';
 import { accountStorageKey } from '../authentication/userScope';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ConnectionSyncResult, ConnectionSyncStatuses } from './types';
-import { connectionFields, type ConnectionSnapshot } from '../connections/types';
+import type { AccountSyncStatuses, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
+import { connectionFields, type ConnectionAccount, type ConnectionSnapshot } from '../connections/types';
 import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
 
 const emptyStatuses = (): ConnectionSyncStatuses => ({
@@ -17,6 +17,27 @@ const emptyStatuses = (): ConnectionSyncStatuses => ({
   hostinger: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   namecheap: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
 });
+
+const aggregateStatuses = (accounts: readonly ConnectionAccount[], statuses: AccountSyncStatuses): ConnectionSyncStatuses => {
+  const result = emptyStatuses();
+  for (const field of connectionFields) {
+    const entries = accounts.filter(account => account.provider === field.id).map(account => statuses[account.id]).filter(Boolean);
+    if (!entries.length) continue;
+    const count = entries.reduce((total, status) => total + status.count, 0);
+    const checking = entries.some(status => status.state === `checking`);
+    const errors = entries.filter(status => status.state === `error`);
+    const connected = entries.some(status => status.state === `connected`);
+    result[field.id] = {
+      count,
+      checkedAt: entries.map(status => status.checkedAt).sort().at(-1) ?? ``,
+      discoveredDomains: entries.flatMap(status => status.discoveredDomains ?? []),
+      state: checking ? `checking` : errors.length ? `error` : connected ? `connected` : `idle`,
+      message: checking ? `Checking Connection(s)…` : errors.length ? errors.map(status => status.message).join(`\n`)
+        : connected ? formatSyncNotice({ count }) : `Not Connected`,
+    };
+  }
+  return result;
+};
 
 export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = true) => {
   const { user, loginRevision } = useAuth();
@@ -37,6 +58,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
   const [syncError, setSyncError] = useState(``);
   const [syncNotice, setSyncNotice] = useState(``);
   const [connectionStatuses, setConnectionStatuses] = useState(emptyStatuses);
+  const [accountStatuses, setAccountStatuses] = useState<AccountSyncStatuses>({});
   owner.current = user?.name ?? ``;
 
   const cancelRequests = useCallback(() => {
@@ -57,6 +79,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
     setSyncError(``);
     setSyncNotice(``);
     setConnectionStatuses(emptyStatuses());
+    setAccountStatuses({});
   }, [cancelRequests]);
   const resetConnectionSync = useCallback(() => {
     resetSyncState();
@@ -73,7 +96,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       && policy.successfulProviders.some(provider => Boolean(snapshot.values[provider]?.trim())));
   }, []);
 
-  const syncConnections = useCallback(async (saved?: ConnectionSnapshot, automatic = false): Promise<ConnectionSyncResult> => {
+  const runSync = useCallback(async (saved?: ConnectionSnapshot, automatic = false, connectionIds?: readonly string[]): Promise<ConnectionSyncResult> => {
     cancelRequests();
     const run = revision.current;
     const current = () => active.current && revision.current === run;
@@ -93,60 +116,77 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (!current()) return empty;
       if (snapshot.userId !== userId) throw new Error(`Sign In To Sync Your Domains`);
       applyPolicy(policy, snapshot);
-      if (automatic && isSyncCacheFresh(policy, snapshot.updated)) {
+      if (automatic && isSyncCacheFresh(policy, snapshot.updated)
+        && snapshot.accounts.every(account => {
+          const status = policy.accountStatuses?.[account.id];
+          return status && ![`idle`, `checking`].includes(status.state);
+        })) {
         setConnectionStatuses(policy.statuses);
+        setAccountStatuses(policy.accountStatuses ?? {});
         return empty;
       }
-      const fields = connectionFields.filter(field => snapshot.values[field.id]?.trim());
-      setSyncing(Boolean(fields.length));
-      const next = emptyStatuses();
-      fields.forEach(field => { next[field.id] = { count: 0, message: `Checking Connection…`, checkedAt: ``, state: `checking` }; });
-      setConnectionStatuses({ ...next });
-      const results = await Promise.all(fields.map(async field => {
+      const accounts = snapshot.accounts.filter(account => !connectionIds || connectionIds.includes(account.id));
+      setSyncing(Boolean(accounts.length));
+      const accountNext: AccountSyncStatuses = Object.fromEntries(snapshot.accounts.flatMap(account => {
+        const status = policy.accountStatuses?.[account.id];
+        return status ? [[account.id, status]] : [];
+      }));
+      accounts.forEach(account => { accountNext[account.id] = { count: 0, message: `Checking Connection…`, checkedAt: ``, state: `checking` }; });
+      const updateStatuses = () => {
+        setAccountStatuses({ ...accountNext });
+        setConnectionStatuses(aggregateStatuses(snapshot.accounts, accountNext));
+      };
+      updateStatuses();
+      const results: ConnectionSyncResult[] = [];
+      for (const account of accounts) {
+        const field = connectionFields.find(value => value.id === account.provider)!;
+        const label = `${field.label} ${account.number}`;
         const controller = new AbortController();
         controllers.current.push(controller);
         try {
-          const result = await getRegistrarDomains(field.id, snapshot.values[field.id], controller.signal);
+          const result = await getRegistrarDomains(account.provider, account.values, controller.signal);
           if (!current()) return empty;
           const latest = await connectionsAPI.getConnections(userId);
           if (!current()) return empty;
-          if (latest.updated !== snapshot.updated || latest.values[field.id] !== snapshot.values[field.id]) throw new Error(`Connections Changed — Save Again To Sync`);
-          const count = await api.syncRegistrarDomains(result.domains, userId, owner.current);
+          if (latest.updated !== snapshot.updated || latest.accounts.find(value => value.id === account.id)?.values !== account.values) throw new Error(`Connections Changed — Save Again To Sync`);
+          const annotate = (domain: typeof result.domains[number]) => ({
+            ...domain, meta: { ...domain.meta, registrarConnectionId: account.id, registrarProvider: account.provider },
+          });
+          const count = await api.syncRegistrarDomains(result.domains.map(annotate), userId, owner.current);
           if (!current()) return empty;
           await refreshDomains();
           if (!current()) return empty;
-          const warnings = result.warnings?.map(message => `${field.label}: ${message}`) ?? [];
-          const status = {
+          const warnings = result.warnings?.map(message => `${label}: ${message}`) ?? [];
+          accountNext[account.id] = {
             count,
-            state: `connected` as const,
+            state: `connected`,
             checkedAt: new Date().toISOString(),
-            discoveredDomains: result.discoveredDomains,
+            discoveredDomains: result.discoveredDomains?.map(annotate),
             message: formatSyncNotice({ count, warnings }),
           };
-          next[field.id] = status;
-          setConnectionStatuses(previous => ({ ...previous, [field.id]: status }));
-          return { count, warnings, errors: [] };
+          updateStatuses();
+          results.push({ count, warnings, errors: [] });
         } catch (failure) {
           if (!current()) return empty;
           const message = failure instanceof Error ? failure.message : `Could Not Check Connection`;
-          const status = { count: 0, message, state: `error` as const, checkedAt: new Date().toISOString() };
-          next[field.id] = status;
-          setConnectionStatuses(previous => ({ ...previous, [field.id]: status }));
-          return { count: 0, warnings: [], errors: [`${field.label}: ${message}`] };
+          accountNext[account.id] = { count: 0, message, state: `error`, checkedAt: new Date().toISOString() };
+          updateStatuses();
+          results.push({ count: 0, warnings: [], errors: [`${label}: ${message}`] });
         }
-      }));
+      }
+      const next = aggregateStatuses(snapshot.accounts, accountNext);
       if (!current()) return empty;
       const count = results.reduce((total, result) => total + result.count, 0);
       const errors = results.flatMap(result => result.errors);
       const warnings = results.flatMap(result => result.warnings);
       const successful = results.some(result => !result.errors.length);
-      if (fields.length) {
-        const cached = await saveSyncCache(userId, snapshot.updated, next, successful ? Date.now() : 0, current);
+      if (accounts.length) {
+        const cached = await saveSyncCache(userId, snapshot.updated, next, successful ? Date.now() : 0, current, accountNext);
         if (!current()) return empty;
         applyPolicy(cached, snapshot);
       }
       setSyncError(errors.join(`\n`));
-      if (fields.length && successful) setSyncNotice(formatSyncNotice({ count, warnings }, errors.length ? `Partial Sync` : ``));
+      if (accounts.length && successful) setSyncNotice(formatSyncNotice({ count, warnings }, errors.length ? `Partial Sync` : ``));
       return { count, errors, warnings };
     } catch (failure) {
       if (!current()) return empty;
@@ -183,7 +223,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (!current()) return;
       applyPolicy(reservation.policy, snapshot);
       if (!reservation.allowed) return;
-      await syncConnections(snapshot);
+      await runSync(snapshot);
     } catch (failure) {
       if (current()) setManualNotice(failure instanceof Error ? failure.message : `Could Not Sync Domains`);
     } finally {
@@ -192,7 +232,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
         if (active.current) setManualPending(false);
       }
     }
-  }, [enabled, userId, canSyncManually, applyPolicy, syncConnections]);
+  }, [enabled, userId, canSyncManually, applyPolicy, runSync]);
 
   useEffect(() => {
     if (!enabled || !syncNotice) return;
@@ -252,11 +292,12 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
 
   useEffect(() => {
     active.current = enabled;
-    if (enabled) void syncConnections(undefined, true);
+    if (enabled) void runSync(undefined, true);
     else resetSyncState();
     return () => { active.current = false; cancelRequests(); };
-  }, [enabled, loginRevision, syncConnections, cancelRequests, resetSyncState]);
+  }, [enabled, loginRevision, runSync, cancelRequests, resetSyncState]);
 
+  const syncConnections = useCallback((snapshot?: ConnectionSnapshot, connectionIds?: readonly string[]) => runSync(snapshot, false, connectionIds), [runSync]);
   const manualSyncWaitSeconds = enabled && canSyncManually ? Math.max(0, Math.ceil((cooldownUntil - clock) / 1000)) : 0;
   const wait = `${Math.floor(manualSyncWaitSeconds / 60)}:${String(manualSyncWaitSeconds % 60).padStart(2, `0`)}`;
   return {
@@ -268,6 +309,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       ? `Manual Sync Limit Reached — Wait ${wait} Before Syncing Again` : manualNotice : ``,
     syncConnections, clearSyncNotice, resetConnectionSync,
     syncError: enabled ? syncError : ``, syncNotice: enabled ? syncNotice : ``,
+    accountStatuses: enabled ? accountStatuses : {},
     connectionStatuses: enabled ? connectionStatuses : emptyStatuses(),
   };
 };

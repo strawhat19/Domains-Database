@@ -1,9 +1,10 @@
 import { authAPI } from '../../api/auth';
 import { useLocalStorage } from '../config';
-import { normalizeConnections } from './values';
+import { genID, isAppCollectionID } from '../common/ids';
 import { accountStorageKey } from '../authentication/userScope';
-import { EMPTY_CONNECTIONS, type ConnectionValues, type ConnectionSnapshot } from './types';
-import { readStorage, writeStorage, removeStorage, createOperationQueue } from '../common/storage';
+import { connectionValues, normalizeConnections, normalizeConnectionAccounts } from './values';
+import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues, type ConnectionAccount, type ConnectionSnapshot } from './types';
+import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 
 export const CONNECTIONS_STORAGE_KEY = `domains-database:connections:v1`;
 const listeners = new Set<(userId: string) => void>();
@@ -24,30 +25,77 @@ const sessionUser = async (expectedUserId?: string) => {
   if (!userId || (expectedUserId && userId !== expectedUserId)) throw new Error(`Sign In To Manage Connections`);
   return userId;
 };
-
-export const getConnections = (expectedUserId?: string): Promise<ConnectionSnapshot> => serialize(async () => {
-  const userId = await sessionUser(expectedUserId);
+const emptySnapshot = (userId: string): ConnectionSnapshot => ({
+  userId, version: 2, updated: ``, nextNumber: 1, accounts: [], values: { ...EMPTY_CONNECTIONS },
+});
+const storedSnapshot = ({ values: _values, ...snapshot }: ConnectionSnapshot) => JSON.stringify(snapshot);
+const readConnections = async (userId: string): Promise<ConnectionSnapshot> => {
   const saved = await readStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId));
-  if (!saved) return { userId, version: 1, updated: ``, values: { ...EMPTY_CONNECTIONS } };
+  if (!saved) return emptySnapshot(userId);
   try {
-    const snapshot = JSON.parse(saved) as ConnectionSnapshot;
-    if (snapshot?.version !== 1 || snapshot.userId !== userId || typeof snapshot.updated !== `string`) throw new Error();
-    return { userId, version: 1, updated: snapshot.updated, values: normalizeConnections(snapshot.values) };
+    const snapshot = JSON.parse(saved) as ConnectionSnapshot | (Omit<ConnectionSnapshot, `version` | `accounts` | `nextNumber`> & { version: 1 });
+    if (snapshot?.userId !== userId || typeof snapshot.updated !== `string`) throw new Error();
+    if (snapshot.version === 1) {
+      const values = normalizeConnections(snapshot.values);
+      const accounts = connectionFields.filter(field => values[field.id]).map((field, index) => {
+        const number = index + 1;
+        return { number, provider: field.id, values: values[field.id], id: genID(`Connection`, number, field.label).id };
+      });
+      const migrated: ConnectionSnapshot = { ...emptySnapshot(userId), updated: snapshot.updated, nextNumber: accounts.length + 1, accounts, values };
+      await sessionUser(userId);
+      await writeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), storedSnapshot(migrated));
+      return migrated;
+    }
+    if (snapshot.version !== 2 || !Array.isArray(snapshot.accounts)
+      || !Number.isSafeInteger(snapshot.nextNumber) || snapshot.nextNumber < 1) throw new Error();
+    const accounts = normalizeConnectionAccounts(snapshot.accounts);
+    const numbers = new Set<number>();
+    if (accounts.length !== snapshot.accounts.length || accounts.some(account => {
+      const duplicate = numbers.has(account.number);
+      numbers.add(account.number);
+      return duplicate || account.number < 1 || account.number >= snapshot.nextNumber
+        || !isAppCollectionID(account.id, `Connection`) || !account.id.startsWith(`Connection_${account.number}_`);
+    })) throw new Error();
+    return { userId, version: 2, updated: snapshot.updated, nextNumber: snapshot.nextNumber, accounts, values: connectionValues(accounts) };
   } catch {
     throw new Error(`Saved Connections Could Not Be Read`);
   }
+};
+
+export const getConnections = (expectedUserId?: string): Promise<ConnectionSnapshot> => serialize(async () => {
+  const userId = await sessionUser(expectedUserId);
+  const snapshot = await readConnections(userId);
+  await sessionUser(userId);
+  return snapshot;
 });
 
-export const saveConnections = (values: ConnectionValues, expectedUserId?: string): Promise<ConnectionSnapshot> => serialize(async () => {
+export const saveConnections = (input: ConnectionValues | readonly ConnectionAccount[], expectedUserId?: string): Promise<ConnectionSnapshot> => serialize(async () => {
   const userId = await sessionUser(expectedUserId);
-  const snapshot: ConnectionSnapshot = { userId, version: 1, updated: new Date().toISOString(), values: normalizeConnections(values) };
-  await writeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), JSON.stringify(snapshot));
+  const previous = await readConnections(userId);
+  const source = Array.isArray(input) ? input : connectionFields.map(field => {
+    const existing = previous.accounts.find(account => account.provider === field.id);
+    return { provider: field.id, values: (input as ConnectionValues)[field.id], id: existing?.id ?? `draft-${field.id}`, number: existing?.number ?? 0 };
+  });
+  let nextNumber = previous.nextNumber;
+  const accounts = normalizeConnectionAccounts(source).map(account => {
+    const existing = previous.accounts.find(value => value.id === account.id);
+    if (existing) return { ...account, number: existing.number };
+    const number = nextNumber++;
+    const label = connectionFields.find(field => field.id === account.provider)?.label ?? account.provider;
+    return { ...account, number, id: genID(`Connection`, number, label).id };
+  });
+  const snapshot: ConnectionSnapshot = { userId, version: 2, nextNumber, accounts, updated: new Date().toISOString(), values: connectionValues(accounts) };
+  await sessionUser(userId);
+  await writeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), storedSnapshot(snapshot));
   notifyConnections(userId);
   return snapshot;
 });
 
 export const clearConnections = (expectedUserId?: string): Promise<void> => serialize(async () => {
   const userId = await sessionUser(expectedUserId);
-  await removeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId));
+  const previous = await readConnections(userId);
+  const snapshot = { ...emptySnapshot(userId), nextNumber: previous.nextNumber, updated: new Date().toISOString() };
+  await sessionUser(userId);
+  await writeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), storedSnapshot(snapshot));
   notifyConnections(userId);
 });

@@ -4,7 +4,7 @@ import type { DomainRecord } from '../../shared/types';
 import { getCsvFile } from '../../shared/csvFiles.web';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { useDomains } from '../../shared/domainContext/useDomains';
-import { getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
+import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { sortPortfolioDomains } from '../../shared/portfolioPreferences/groups';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnValue, type PortfolioColumn } from '../../shared/portfolioColumns';
@@ -132,7 +132,7 @@ export const usePortfolio = () => {
   };
   const downloadTemplate = () => downloadCsv(exportDomainCsv([]), `domains-template.csv`);
   const toggleAutoRenew = async (domain: DomainRecord) => {
-    if (pendingId) return;
+    if (pendingId || getDomainSource(domain) === `registrar`) return;
     setPendingId(domain.id);
     setLocalError(``);
     try {

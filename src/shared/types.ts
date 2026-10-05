@@ -5,6 +5,7 @@ export type { JSONValue } from './models/Data';
 export type { Domain, Registrar, DomainRegistrant } from './models/domains/Domain';
 
 export type DomainRecord = Domain;
+export type DomainSource = `csv` | `manual` | `registrar`;
 export interface DomainInput extends Omit<DomainRecord, keyof Data | `isSample`> {
   name: string;
   title?: string;

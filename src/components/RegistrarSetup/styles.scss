@@ -1,6 +1,29 @@
-.registrar-setup-dialog { max-width: 700px; }
-.registrar-setup-entry-actions { gap: 12px; display: flex; align-items: flex-start; justify-content: space-between; }
+.domain-dialog.registrar-setup-dialog { max-width: 700px; }
+.registrar-setup-entry-actions { gap: 12px; display: flex; margin-bottom: 18px; align-items: flex-start; justify-content: flex-end; }
 .registrar-setup-manual-button { flex-shrink: 0; }
+.registrar-setup-tabs { gap: 8px; display: flex; margin: 0 0 20px; border-bottom: 1px solid var(--line); }
+.registrar-setup-tab {
+  gap: 7px;
+  border: 0;
+  display: flex;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--muted);
+  align-items: center;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+  &:hover { color: var(--accent); background: var(--subtle); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+.registrar-setup-tab-active { color: var(--accent); border-bottom-color: var(--accent); }
+.registrar-setup-tab-label { font-size: 12px; font-family: var(--font-bold); }
+.registrar-setup-tab-icon { flex-shrink: 0; }
+.registrar-setup-recommended { font-size: 9px; padding: 4px 6px; border-radius: 5px; background: var(--subtle); }
+.registrar-setup-auth-prompt { gap: 12px; display: flex; padding: 24px; border-radius: 12px; flex-direction: column; background: var(--canvas); }
+.registrar-setup-auth-icon { color: var(--accent); }
+.registrar-setup-auth-actions, .registrar-setup-csv-tools { gap: 10px; display: flex; flex-wrap: wrap; }
+.registrar-setup-csv-tools { margin: 18px 0; }
 .registrar-setup-progress {
   gap: 14px;
   padding: 0;
@@ -97,10 +120,24 @@
 .registrar-setup-review-detail { min-width: 0; font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
 .registrar-setup-review-note { margin-top: 17px; }
 
+@media (min-width: 900px) {
+  .domain-dialog.registrar-setup-dialog { max-width: 1040px; }
+  .registrar-setup-connection-panel :is(.account-connections, [data-class='account-connections']) {
+    display: grid !important;
+    align-items: start;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    > :not(.connection-provider, [data-class='connection-provider']) { grid-column: 1 / -1; }
+  }
+  .registrar-setup-connection-panel :is(.connection-provider, [data-class='connection-provider']) { min-width: 0; }
+}
+
 @media (max-width: 560px) {
   .registrar-setup-entry-actions { gap: 0; margin-bottom: 18px; align-items: stretch; flex-direction: column; }
   .registrar-setup-manual-button { width: 100%; }
   .registrar-setup-progress { gap: 8px; }
+  .registrar-setup-tabs { gap: 0; }
+  .registrar-setup-tab { flex: 1; flex-wrap: wrap; justify-content: center; }
+  .registrar-setup-recommended { flex-basis: 100%; }
   .registrar-setup-step { gap: 6px; font-size: 10px; text-align: center; flex-direction: column; }
   .registrar-setup-step-label { min-width: 0; overflow-wrap: anywhere; }
   .registrar-setup-guide-heading, .registrar-setup-csv-row { align-items: flex-start; flex-direction: column; }
@@ -108,4 +145,9 @@
   .registrar-domain-fields { padding: 16px; grid-template-columns: 1fr; }
   .registrar-setup-review-domain { grid-template-columns: 1fr; }
   .registrar-setup-review-price { text-align: left; grid-row: auto; grid-column: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .registrar-setup-tab, .registrar-setup-input, .registrar-setup-option { transition: none; }
+  .registrar-setup-option:hover { transform: none; }
 }

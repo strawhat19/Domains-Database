@@ -1,15 +1,17 @@
 import './styles.scss';
 import { Globe2 } from 'lucide-react';
 import { useDomainSiteIcon } from './useDomainSiteIcon';
+import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 
 interface DomainSiteIconProps {
   id: string;
   size?: number;
   domain: string;
+  iconUrl?: string;
   compact?: boolean;
 }
 
-const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteIconProps) => {
+const SiteIconContent = ({ id, iconUrl, size = 28, compact = false }: DomainSiteIconProps) => {
   const { failed, loaded, onLoad, onError } = useDomainSiteIcon();
   const imageSize = compact ? size : Math.min(20, size);
   const fallbackSize = compact ? size : Math.min(16, size);
@@ -28,7 +30,7 @@ const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteI
           className={`domain-site-icon-fallback`}
         />
       )}
-      {!failed && (
+      {!!iconUrl && !failed && (
         <img
           alt={``}
           width={imageSize}
@@ -39,7 +41,7 @@ const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteI
           onError={onError}
           id={`${id}-image`}
           referrerPolicy={`no-referrer`}
-          src={`https://${domain}/favicon.ico`}
+          src={iconUrl}
           className={`domain-site-icon-image${loaded ? ` domain-site-icon-image-loaded` : ``}`}
         />
       )}
@@ -47,8 +49,9 @@ const SiteIconContent = ({ id, domain, size = 28, compact = false }: DomainSiteI
   );
 };
 
-const DomainSiteIcon = (props: DomainSiteIconProps) => (
-  <SiteIconContent key={props.domain} {...props} />
-);
+const DomainSiteIcon = (props: DomainSiteIconProps) => {
+  const source = getDomainSiteIconUrl({ name: props.domain, meta: { siteIconUrl: props.iconUrl ?? `` } });
+  return <SiteIconContent {...props} key={source} iconUrl={source} />;
+};
 
 export default DomainSiteIcon;

@@ -10,9 +10,10 @@ import { useAuth } from '../../shared/authContext/useAuth';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { useNativePortfolio } from './useNativePortfolio';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Plus, RotateCcw, Save, Search, Upload, X, Gauge, RefreshCw } from 'lucide-react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Link2, Plus, RotateCcw, Save, Search, Upload, X, Gauge, RefreshCw } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -26,6 +27,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const state = useNativePortfolio(compact);
   const router = useRouter();
   const { user } = useAuth();
+  const [toolsTab, setToolsTab] = useState<`connect` | `csv`>(`connect`);
+  const [editorIconFailed, setEditorIconFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const insets = useSafeAreaInsets();
   const sampleCount = useSampleData ? state.domains.filter(domain => domain.isSample).length : 0;
@@ -35,6 +38,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const manualSyncLabel = state.syncing ? `Syncing…` : state.manualSyncWaitSeconds > 0
     ? `Wait ${Math.floor(state.manualSyncWaitSeconds / 60)}:${String(state.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const visibleIds = state.visibleDomains.map(domain => domain.id);
+  const editorSiteIconUrl = getDomainSiteIconUrl(state.input);
+  const editingSyncedDomain = state.editingSyncedDomain;
   const selectDomain = (id: string) => setSelectedIds(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
   const selectVisible = () => setSelectedIds(current => [...new Set([...current, ...visibleIds])]);
   const clearVisible = () => setSelectedIds(current => current.filter(id => !visibleIds.includes(id)));
@@ -54,6 +59,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       return remaining.length === current.length ? current : remaining;
     });
   }, [state.domains]);
+  useEffect(() => setEditorIconFailed(false), [editorSiteIconUrl, state.editorOpen]);
 
   return (
     <View
@@ -287,24 +293,59 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         </ScrollView>
         {!compact && (
           <>
-            <View {...elementProps(`native-portfolio-csv-actions`)} style={styles.csvActions}>
-              <Pressable {...elementProps(`native-portfolio-import`)} style={[styles.secondaryButton, (state.working || state.loading) && styles.disabled]} disabled={state.working || state.loading} onPress={() => void state.importCsv()} accessibilityRole={`button`} accessibilityLabel={`Import Domains From CSV`}>
-                <Upload {...elementProps(`native-portfolio-import-icon`)} size={13} color={palette.muted} />
-                <Text {...elementProps(`native-portfolio-import-text`)} style={styles.secondaryButtonText}>
-                  {`Import CSV`}
-                </Text>
-              </Pressable>
-              <Pressable {...elementProps(`native-portfolio-export`)} style={[styles.secondaryButton, (state.working || state.loading) && styles.disabled]} disabled={state.working || state.loading} onPress={() => void state.exportCsv()} accessibilityRole={`button`} accessibilityLabel={`Export All Domains To CSV`}>
-                <Download {...elementProps(`native-portfolio-export-icon`)} size={13} color={palette.muted} />
-                <Text {...elementProps(`native-portfolio-export-text`)} style={styles.secondaryButtonText}>
-                  {`Export CSV`}
-                </Text>
-              </Pressable>
-              {state.working && <ActivityIndicator {...elementProps(`native-portfolio-file-progress`)} size={`small`} color={palette.accent} />}
+            <View {...elementProps(`native-portfolio-tools-tabs`)} style={styles.toolsTabs} accessibilityRole={`tablist`} accessibilityLabel={`Add Or Transfer Domains`}>
+              {([`connect`, `csv`] as const).map(tab => {
+                const TabIcon = tab === `connect` ? Link2 : Upload;
+                const selected = toolsTab === tab;
+                return (
+                  <Pressable
+                    key={tab}
+                    accessibilityRole={`tab`}
+                    onPress={() => setToolsTab(tab)}
+                    accessibilityState={{ selected }}
+                    {...elementProps(`native-portfolio-tools-tab`, tab)}
+                    style={[styles.toolsTab, selected && styles.toolsTabActive]}
+                  >
+                    <TabIcon {...elementProps(`native-portfolio-tools-tab-icon`, tab)} size={13} color={selected ? palette.accent : palette.muted} />
+                    <Text {...elementProps(`native-portfolio-tools-tab-text`, tab)} style={[styles.toolsTabText, selected && styles.toolsTabTextActive]}>
+                      {tab === `connect` ? `Connect Registrar` : `Import / Export CSV`}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-            <Text {...elementProps(`native-portfolio-csv-hint`)} style={styles.csvHint}>
-              {`CSV columns: domain, registrar, expiry, owner, auto_renew, renewal_price, notes. Re-importing a domain updates its saved details.`}
-            </Text>
+            {toolsTab === `connect` ? (
+              <View {...elementProps(`native-portfolio-tools-panel-connect`)} style={styles.toolsPanel}>
+                <Text {...elementProps(`native-portfolio-connect-recommendation`)} style={styles.csvHint}>
+                  {`Recommended: connect a registrar to sync your domains automatically.`}
+                </Text>
+                <Pressable {...elementProps(`native-portfolio-connect-registrar`)} style={[styles.secondaryButton, state.loading && styles.disabled]} disabled={state.loading} onPress={state.openSetup} accessibilityRole={`button`}>
+                  <Link2 {...elementProps(`native-portfolio-connect-registrar-icon`)} size={13} color={palette.accent} />
+                  <Text {...elementProps(`native-portfolio-connect-registrar-text`)} style={styles.secondaryButtonText}>{`Connect Registrar`}</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View {...elementProps(`native-portfolio-tools-panel-csv`)} style={styles.toolsPanel}>
+                <View {...elementProps(`native-portfolio-csv-actions`)} style={styles.csvActions}>
+                  <Pressable {...elementProps(`native-portfolio-import`)} style={[styles.secondaryButton, (state.working || state.loading) && styles.disabled]} disabled={state.working || state.loading} onPress={() => void state.importCsv()} accessibilityRole={`button`} accessibilityLabel={`Import Domains From CSV`}>
+                    <Upload {...elementProps(`native-portfolio-import-icon`)} size={13} color={palette.muted} />
+                    <Text {...elementProps(`native-portfolio-import-text`)} style={styles.secondaryButtonText}>
+                      {`Import CSV`}
+                    </Text>
+                  </Pressable>
+                  <Pressable {...elementProps(`native-portfolio-export`)} style={[styles.secondaryButton, (state.working || state.loading || !state.domains.length) && styles.disabled]} disabled={state.working || state.loading || !state.domains.length} onPress={() => void state.exportCsv()} accessibilityRole={`button`} accessibilityLabel={`Export All Domains To CSV`}>
+                    <Download {...elementProps(`native-portfolio-export-icon`)} size={13} color={palette.muted} />
+                    <Text {...elementProps(`native-portfolio-export-text`)} style={styles.secondaryButtonText}>
+                      {`Export CSV`}
+                    </Text>
+                  </Pressable>
+                  {state.working && <ActivityIndicator {...elementProps(`native-portfolio-file-progress`)} size={`small`} color={palette.accent} />}
+                </View>
+                <Text {...elementProps(`native-portfolio-csv-hint`)} style={styles.csvHint}>
+                  {`CSV columns: domain, registrar, expiry, owner, auto_renew, renewal_price, notes. Re-importing a domain updates its saved details.`}
+                </Text>
+              </View>
+            )}
           </>
         )}
       </View>
@@ -327,7 +368,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {state.domains.length ? `No matching domains` : `Add your first domain`}
             </Text>
             <Text {...elementProps(`native-portfolio-empty-description`)} style={styles.emptyDescription}>
-              {state.domains.length ? `Try a different search or choose another registrar.` : `Connect a supported registrar, enter a domain, or import your records from CSV.`}
+              {state.domains.length ? `Try a different search or choose another registrar.` : `Connect your registrar to sync domains automatically. Manual entry and CSV import are also available in Add Domain.`}
             </Text>
             <Pressable
               {...elementProps(`native-portfolio-empty-action`)}
@@ -369,7 +410,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Pressable>
         ) : null}
       </View>
-      {state.setupOpen && <RegistrarSetup onClose={state.closeSetup} />}
+      {state.setupOpen && <RegistrarSetup onClose={state.closeSetup} onManual={() => state.openEditor()} />}
       <Modal visible={state.editorOpen} transparent animationType={`fade`} onRequestClose={state.closeEditor}>
         <View {...elementProps(`native-domain-editor-overlay`)} style={[styles.overlay, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
           <KeyboardAvoidingView {...elementProps(`native-domain-editor-keyboard`)} style={styles.keyboard} behavior={Platform.OS === `ios` ? `padding` : `height`}>
@@ -380,7 +421,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     {`DOMAIN RECORD`}
                   </Text>
                   <Text {...elementProps(`native-domain-editor-title`)} style={styles.modalTitle}>
-                    {state.editingId ? `Edit domain` : `Add domain`}
+                    {state.editingDomain ? `Edit ${state.editingDomain.name}` : `Add domain`}
                   </Text>
                 </View>
                 <Pressable {...elementProps(`native-domain-editor-close`)} style={styles.modalClose} disabled={state.saving} onPress={state.closeEditor} accessibilityRole={`button`} accessibilityLabel={`Close Domain Editor`}>
@@ -388,7 +429,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 </Pressable>
               </View>
               <ScrollView {...elementProps(`native-domain-editor-scroll`)} style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps={`handled`}>
-                <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />
+                {!editingSyncedDomain && <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />}
                 {!!state.formError && (
                   <View {...elementProps(`native-domain-editor-error`)} style={styles.error} accessibilityRole={`alert`}>
                     <Text {...elementProps(`native-domain-editor-error-text`)} style={styles.errorText}>
@@ -396,7 +437,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     </Text>
                   </View>
                 )}
-                {textFields.map(field => (
+                {!editingSyncedDomain && textFields.map(field => (
                   <View {...elementProps(`native-domain-editor-field`, field.key)} key={field.key} style={styles.field}>
                     <Text {...elementProps(`native-domain-editor-field-label`, field.key)} style={styles.fieldLabel}>
                       {field.label}
@@ -420,7 +461,46 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     )}
                   </View>
                 ))}
-                <View {...elementProps(`native-domain-editor-registrar-field`)} style={styles.field}>
+                <View {...elementProps(`native-domain-editor-site-icon-field`)} style={styles.field}>
+                  <Text {...elementProps(`native-domain-editor-site-icon-label`)} style={styles.fieldLabel}>
+                    {`Site Icon URL`}
+                  </Text>
+                  <View {...elementProps(`native-domain-editor-site-icon-row`)} style={styles.siteIconRow}>
+                    <View {...elementProps(`native-domain-editor-site-icon-preview`)} style={styles.siteIconPreview}>
+                      {editorSiteIconUrl && !editorIconFailed ? (
+                        <Image
+                          key={editorSiteIconUrl}
+                          style={styles.siteIconImage}
+                          source={{ uri: editorSiteIconUrl }}
+                          accessibilityIgnoresInvertColors
+                          onError={() => setEditorIconFailed(true)}
+                          {...elementProps(`native-domain-editor-site-icon-image`)}
+                          accessibilityLabel={`Site Icon Preview For ${state.input.name || `New Domain`}`}
+                        />
+                      ) : (
+                        <Globe2 {...elementProps(`native-domain-editor-site-icon-fallback`)} size={22} color={palette.muted} />
+                      )}
+                    </View>
+                    <TextInput
+                      autoCorrect={false}
+                      autoComplete={`off`}
+                      autoCapitalize={`none`}
+                      keyboardType={`url`}
+                      editable={!state.saving}
+                      accessibilityLabel={`Site Icon URL`}
+                      value={getCustomSiteIconUrl(state.input)}
+                      placeholder={`https://example.com/icon.png`}
+                      placeholderTextColor={palette.placeholder}
+                      {...elementProps(`native-domain-editor-site-icon-url`)}
+                      style={[styles.fieldInput, styles.siteIconInput]}
+                      onChangeText={value => state.updateInput(`meta`, { ...state.input.meta, siteIconUrl: value })}
+                    />
+                  </View>
+                  <Text {...elementProps(`native-domain-editor-site-icon-hint`)} style={styles.fieldHint}>
+                    {`Use a public HTTP or HTTPS image URL. Leave blank to use the domain's favicon.`}
+                  </Text>
+                </View>
+                {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-registrar-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-registrar-label`)} style={styles.fieldLabel}>
                     {`Registrar`}
                   </Text>
@@ -442,14 +522,14 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       </Pressable>
                     ))}
                   </View>
-                </View>
-                <View {...elementProps(`native-domain-editor-price-field`)} style={styles.field}>
+                </View>}
+                {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-price-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-price-label`)} style={styles.fieldLabel}>
                     {`Annual renewal price (USD)`}
                   </Text>
                   <TextInput {...elementProps(`native-domain-editor-price-input`)} style={styles.fieldInput} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={palette.placeholder} keyboardType={`decimal-pad`} accessibilityLabel={`Annual Renewal Price In USD`} />
-                </View>
-                <View {...elementProps(`native-domain-editor-auto-renew`)} style={styles.toggle}>
+                </View>}
+                {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-auto-renew`)} style={styles.toggle}>
                   <View {...elementProps(`native-domain-editor-auto-renew-copy`)} style={styles.toggleCopy}>
                     <Text {...elementProps(`native-domain-editor-auto-renew-label`)} style={styles.fieldLabel}>
                       {`Auto-renew`}
@@ -459,13 +539,31 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     </Text>
                   </View>
                   <Switch {...elementProps(`native-domain-editor-auto-renew-switch`)} disabled={state.saving} value={state.input.autoRenew} onValueChange={value => state.updateInput(`autoRenew`, value)} trackColor={{ false: palette.line, true: palette.accent }} thumbColor={isDark ? palette.ink : `#ffffff`} ios_backgroundColor={palette.line} accessibilityLabel={`Auto-Renew Enabled In Registrar Account`} />
-                </View>
+                </View>}
                 <View {...elementProps(`native-domain-editor-notes-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-notes-label`)} style={styles.fieldLabel}>
                     {`Notes (optional)`}
                   </Text>
                   <TextInput {...elementProps(`native-domain-editor-notes-input`)} multiline style={[styles.fieldInput, styles.notesInput]} editable={!state.saving} value={state.input.notes} onChangeText={value => state.updateInput(`notes`, value)} placeholder={`What is this domain for?`} placeholderTextColor={palette.placeholder} accessibilityLabel={`Domain Notes`} />
                 </View>
+                {editingSyncedDomain && (
+                  <View {...elementProps(`native-domain-editor-description-field`)} style={styles.field}>
+                    <Text {...elementProps(`native-domain-editor-description-label`)} style={styles.fieldLabel}>
+                      {`Description (optional)`}
+                    </Text>
+                    <TextInput
+                      multiline
+                      editable={!state.saving}
+                      value={state.input.description ?? ``}
+                      accessibilityLabel={`Domain Description`}
+                      placeholder={`Describe this domain's purpose`}
+                      placeholderTextColor={palette.placeholder}
+                      style={[styles.fieldInput, styles.notesInput]}
+                      {...elementProps(`native-domain-editor-description-input`)}
+                      onChangeText={value => state.updateInput(`description`, value)}
+                    />
+                  </View>
+                )}
               </ScrollView>
               <View {...elementProps(`native-domain-editor-footer`)} style={styles.modalFooter}>
                 <Pressable {...elementProps(`native-domain-editor-save`)} style={[styles.primaryButton, state.saving && styles.disabled]} disabled={state.saving} onPress={() => void state.saveDomain()} accessibilityRole={`button`} accessibilityLabel={`Save Domain`}>

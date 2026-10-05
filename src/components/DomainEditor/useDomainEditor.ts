@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, RefObject } from 'react';
 import { REGISTRARS } from '../../shared/config';
+import { getDomainSource } from '../../shared/domainUtils';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
@@ -59,6 +60,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
     name: domain?.name ?? ``,
     notes: domain?.notes ?? ``,
     owner: domain?.owner ?? ``,
+    description: domain?.description ?? ``,
     autoRenew: domain?.autoRenew ?? true,
     renewalPrice: domain?.renewalPrice ?? 0,
     expiresAt: domain?.expiresAt?.slice(0, 10) ?? expiresAt,
@@ -68,6 +70,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
 
 export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose: () => void) => {
   const { addDomain, updateDomain } = useDomains();
+  const isSynced = domain && getDomainSource(domain) === `registrar`;
   const [error, setError] = useState(``);
   const [saving, setSaving] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -75,6 +78,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const close = () => { if (!saving) onClose(); };
   useModalFocus(modalRef, true, close);
   const setField = <Key extends keyof DomainInput>(field: Key, value: DomainInput[Key]) => {
+    if (isSynced && field !== `meta` && field !== `notes` && field !== `description`) return;
     setError(``);
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };
@@ -83,7 +87,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     if (saving) return;
     setError(``);
     setSaving(true);
-    const domainInput = { ...input, name: input.name.trim().toLowerCase(), owner: input.owner.trim(), notes: input.notes.trim() };
+    const domainInput = { ...input, name: input.name.trim().toLowerCase(), owner: input.owner.trim(), notes: input.notes.trim(), description: input.description?.trim() ?? `` };
     try {
       if (domain?.id) await updateDomain(domain.id, domainInput);
       else await addDomain(domainInput);

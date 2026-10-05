@@ -1,5 +1,8 @@
 import './styles.scss';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainSourceBadge from '../DomainSourceBadge/index.web';
+import { getDomainSource } from '../../shared/domainUtils';
+import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { getDomainRow, getDomainColumnKey, getDomainSelectionHandlers } from '../DomainRow/domainRow';
 import type { DomainItemProps, DomainDragProps } from '../DomainRow/domainRow';
 import { Check, Minus, Pencil, Trash2, ArrowUp, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
@@ -40,6 +43,7 @@ const DomainGridCard = ({
   const scope = `domain-grid-card-${domain.id}`;
   const { status, lastDot, statusKey } = getDomainRow(domain);
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
+  const registrarManaged = getDomainSource(domain) === `registrar`;
   const columns = PORTFOLIO_COLUMNS.filter(column => (
     column.field !== `name` && visibleColumns.includes(column.field)
   ));
@@ -71,7 +75,12 @@ const DomainGridCard = ({
           aria-label={`Select ${domain.name}`}
           aria-describedby={selectionDescriptionId}
         />
-        <DomainSiteIcon size={32} domain={domain.name} id={`${scope}-symbol`} />
+        <DomainSiteIcon
+          size={32}
+          domain={domain.name}
+          id={`${scope}-symbol`}
+          iconUrl={getCustomSiteIconUrl(domain)}
+        />
         <a
           target={`_blank`}
           draggable={false}
@@ -118,12 +127,12 @@ const DomainGridCard = ({
                     <button
                       type={`button`}
                       role={autoRenew === undefined ? `button` : `switch`}
-                      disabled={busy}
+                      disabled={busy || registrarManaged}
                       aria-checked={autoRenew === undefined ? undefined : autoRenew === true}
                       id={`${scope}-auto-renew-toggle`}
-                      onClick={() => onToggleAutoRenew(domain)}
-                      title={autoRenew === undefined ? `Registrar Auto-Renew Is Unknown — Click To Update Your Inventory Record` : `This is a record of your registrar setting`}
-                      aria-label={`Mark Auto-Renew ${domain.autoRenew ? `Off` : `On`} For ${domain.name}`}
+                      onClick={registrarManaged ? undefined : () => onToggleAutoRenew(domain)}
+                      title={registrarManaged ? `Managed By Your Connected Registrar` : autoRenew === undefined ? `Registrar Auto-Renew Is Unknown — Click To Update Your Inventory Record` : `This is a record of your registrar setting`}
+                      aria-label={registrarManaged ? `Auto-Renew For ${domain.name}, Managed By Your Registrar` : `Mark Auto-Renew ${domain.autoRenew ? `Off` : `On`} For ${domain.name}`}
                       className={`domain-grid-card-auto-renew domain-grid-card-auto-renew-${autoRenew === true ? `on` : `off`}`}
                     >
                       {autoRenew === true
@@ -145,6 +154,9 @@ const DomainGridCard = ({
                         {status}
                       </span>
                     </span>
+                  )}
+                  {column.field === `registrar` && (
+                    <DomainSourceBadge domain={domain} id={`${scope}-source-status`} />
                   )}
                 </dd>
               </div>

@@ -1,18 +1,19 @@
 import Toast from '../Toast';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Link } from 'expo-router';
 import { createStyles } from './styles.native';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAccountConnections } from './useAccountConnections';
-import { connectionFields } from '../../shared/connections/types';
+import { connectionFields, type AccountConnectionsProps } from '../../shared/connections/types';
 import type { RegistrarDomain } from '../../shared/registrarSync/types';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 import { Pressable, Text, TextInput, View, ActivityIndicator } from 'react-native';
-import { Eye, Save, EyeOff, Trash2, Globe2, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
+import { Eye, Plus, Save, EyeOff, Trash2, Globe2, UserPlus, LogIn, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 
 interface HostedDomainCandidateProps {
+  scope: string;
   busy: boolean;
   including: boolean;
   palette: ThemePalette;
@@ -73,27 +74,28 @@ const ConnectionInput = ({ busy, value, label, fieldId, styles, palette, loading
   );
 };
 
-const HostedDomainCandidate = ({ busy, domain, styles, palette, including, onInclude }: HostedDomainCandidateProps) => {
+const HostedDomainCandidate = ({ busy, scope, domain, styles, palette, including, onInclude }: HostedDomainCandidateProps) => {
+  const domainId = `${scope}-${domain.name}`;
   const registrarName = typeof domain.meta?.registrarName === `string` ? domain.meta.registrarName : ``;
   const registrar = domain.registrar || registrarName || `Registrar Not Identified`;
   const source = typeof domain.meta?.registrarSource === `string` ? domain.meta.registrarSource : ``;
   return (
-    <View {...elementProps(`hosted-domain-candidate`, domain.name)} style={styles.candidateRow}>
-      <View {...elementProps(`hosted-domain-copy`, domain.name)} style={styles.candidateCopy}>
-        <Text {...elementProps(`hosted-domain-name`, domain.name)} style={styles.candidateName}>
+    <View {...elementProps(`hosted-domain-candidate`, domainId)} style={styles.candidateRow}>
+      <View {...elementProps(`hosted-domain-copy`, domainId)} style={styles.candidateCopy}>
+        <Text {...elementProps(`hosted-domain-name`, domainId)} style={styles.candidateName}>
           {domain.name}
         </Text>
-        <Text {...elementProps(`hosted-domain-details`, domain.name)} style={styles.candidateDetails}>
+        <Text {...elementProps(`hosted-domain-details`, domainId)} style={styles.candidateDetails}>
           {`Hostinger hosting · ${registrar === `Registrar Not Identified` ? registrar : `Registered with ${registrar}`}`}
         </Text>
         {!!source && (
-          <Text {...elementProps(`hosted-domain-source`, domain.name)} style={styles.candidateSource}>
+          <Text {...elementProps(`hosted-domain-source`, domainId)} style={styles.candidateSource}>
             {source}
           </Text>
         )}
       </View>
       <Pressable
-        {...elementProps(`hosted-domain-include`, domain.name)}
+        {...elementProps(`hosted-domain-include`, domainId)}
         disabled={busy}
         onPress={onInclude}
         accessibilityRole={`button`}
@@ -101,8 +103,8 @@ const HostedDomainCandidate = ({ busy, domain, styles, palette, including, onInc
         style={[styles.includeButton, busy && styles.disabled]}
         accessibilityLabel={`Confirm I Own ${domain.name} And Include It In My Portfolio`}
       >
-        <CheckCircle2 {...elementProps(`hosted-domain-include-icon`, domain.name)} size={15} color={palette.accent} />
-        <Text {...elementProps(`hosted-domain-include-text`, domain.name)} style={styles.includeText}>
+        <CheckCircle2 {...elementProps(`hosted-domain-include-icon`, domainId)} size={15} color={palette.accent} />
+        <Text {...elementProps(`hosted-domain-include-text`, domainId)} style={styles.includeText}>
           {including ? `Confirming…` : `Include My Domain`}
         </Text>
       </Pressable>
@@ -110,146 +112,229 @@ const HostedDomainCandidate = ({ busy, domain, styles, palette, including, onInc
   );
 };
 
-const AccountConnections = () => {
-  const state = useAccountConnections();
+const AccountConnections = ({ scope = `profile-connections`, embedded = false, providers, onBusyChange }: AccountConnectionsProps) => {
+  const state = useAccountConnections({ providers });
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  return (
-    <View {...elementProps(`account-connections`)} style={styles.panel}>
-      <View {...elementProps(`connections-heading`)} style={styles.row}>
-        <Text {...elementProps(`connections-title`)} style={styles.title}>{`Registrar values`}</Text>
+  const disabled = state.busy || state.loading || state.syncing;
+  const fields = connectionFields.filter(field => !providers || providers.includes(field.id));
+  useEffect(() => { onBusyChange?.(disabled); }, [disabled, onBusyChange]);
+  useEffect(() => () => { onBusyChange?.(false); }, [onBusyChange]);
+  if (!state.signedIn) return (
+    <View {...elementProps(`connections-signup-prompt`, scope)} style={styles.field}>
+      <Text {...elementProps(`connections-signup-title`, scope)} style={styles.title}>{`Sign Up To Connect Registrars`}</Text>
+      <Text {...elementProps(`connections-signup-copy`, scope)} style={styles.copy}>{`Create an account to securely manage your registrar connections and sync your domains.`}</Text>
+      <View {...elementProps(`connections-signup-actions`, scope)} style={styles.row}>
+        <Link asChild href={routes.signup.href}>
+          <Pressable {...elementProps(`connections-signup`, scope)} style={[styles.button, styles.primary]}>
+            <UserPlus {...elementProps(`connections-signup-icon`, scope)} size={16} color={palette.contrast} />
+            <Text {...elementProps(`connections-signup-text`, scope)} style={[styles.buttonText, styles.primaryText]}>{`Sign Up`}</Text>
+          </Pressable>
+        </Link>
+        <Link asChild href={routes.signin.href}>
+          <Pressable {...elementProps(`connections-signin`, scope)} style={styles.button}>
+            <LogIn {...elementProps(`connections-signin-icon`, scope)} size={16} color={palette.ink} />
+            <Text {...elementProps(`connections-signin-text`, scope)} style={styles.buttonText}>{`Sign In`}</Text>
+          </Pressable>
+        </Link>
       </View>
-      <Text {...elementProps(`connections-description`)} style={styles.copy}>
-        {`Save your registrar values to check each connection and import its domains. Sign-in and refresh check saved connections when the last successful sync is at least 2 hours and 24 minutes old. External names found through hosting need your ownership confirmation; unavailable provider fields appear as —.`}
+    </View>
+  );
+  return (
+    <View {...elementProps(`account-connections`, scope)} style={[styles.panel, embedded && styles.embedded]}>
+      <View {...elementProps(`connections-heading`, scope)} style={styles.row}>
+        <Text {...elementProps(`connections-title`, scope)} style={styles.title}>{`Registrar Connections`}</Text>
+      </View>
+      <Text {...elementProps(`connections-description`, scope)} style={styles.copy}>
+        {`Connect a registrar to sync its domains. Add as many GoDaddy or Hostinger accounts as you need. Saved connections are checked on sign-in and refresh after 2 hours and 24 minutes. Review external domains found through hosting before including them.`}
       </Text>
       {state.syncing && (
         <View
           accessible
-          {...elementProps(`connections-sync-status`)}
+          {...elementProps(`connections-sync-status`, scope)}
           style={styles.syncStatus}
           accessibilityRole={`progressbar`}
           accessibilityLiveRegion={`polite`}
           accessibilityState={{ busy: true }}
           accessibilityLabel={`Syncing Domains…`}
         >
-          <ActivityIndicator {...elementProps(`connections-sync-spinner`)} size={`small`} color={palette.accent} />
-          <Text {...elementProps(`connections-sync-text`)} style={styles.copy}>{`Syncing Domains…`}</Text>
+          <ActivityIndicator {...elementProps(`connections-sync-spinner`, scope)} size={`small`} color={palette.accent} />
+          <Text {...elementProps(`connections-sync-text`, scope)} style={styles.copy}>{`Syncing Domains…`}</Text>
         </View>
       )}
-      {connectionFields.map(field => (
-        <View key={field.id} {...elementProps(`connection-field`, field.id)} style={styles.field}>
-          <Text {...elementProps(`connection-label`, field.id)} style={styles.label}>{field.label}</Text>
-          <ConnectionInput
-            fieldId={field.id}
-            styles={styles}
-            palette={palette}
-            busy={state.busy}
-            label={field.label}
-            loading={state.loading}
-            placeholder={field.placeholder}
-            value={state.inputValues[field.id]}
-            revealed={state.isVisible(field.id)}
-            onToggle={() => state.toggleVisibility(field.id)}
-            onChange={value => state.change(field.id, value)}
-          />
-          <Text {...elementProps(`connection-hint`, field.id)} style={styles.copy}>{field.hint}</Text>
-          {field.id === `godaddy` && (
-            <View {...elementProps(`connection-account-field`, field.id)} style={styles.field}>
-              <Text {...elementProps(`connection-label`, `godaddyAccountId`)} style={styles.label}>
-                {`Customer UUID or Shopper ID`}
-              </Text>
-              <ConnectionInput
-                multiline={false}
-                styles={styles}
-                palette={palette}
-                busy={state.busy}
-                loading={state.loading}
-                fieldId={`godaddyAccountId`}
-                onChange={state.changeGodaddyAccountId}
-                value={state.godaddyAccountId}
-                label={`GoDaddy Customer UUID or Shopper ID`}
-                placeholder={`Customer UUID or numeric shopper ID`}
-                revealed={state.isVisible(`godaddyAccountId`)}
-                onToggle={() => state.toggleVisibility(`godaddyAccountId`)}
-              />
-              <Text {...elementProps(`connection-hint`, `godaddyAccountId`)} style={styles.copy}>
-                {`Optional: customer UUID or numeric shopper ID for renewal estimates. Leave blank for automatic lookup.`}
-              </Text>
+      {fields.map(field => {
+        const accounts = state.accounts.filter(account => account.provider === field.id);
+        const providerScope = `${scope}-${field.id}`;
+        return (
+          <View key={field.id} {...elementProps(`connection-provider`, providerScope)} style={styles.provider}>
+            <View {...elementProps(`connection-provider-heading`, providerScope)} style={styles.row}>
+              <Text {...elementProps(`connection-provider-label`, providerScope)} style={styles.title}>{field.label}</Text>
+              {(field.id === `godaddy` || field.id === `hostinger`) && (
+                <Pressable
+                  {...elementProps(`connection-add`, providerScope)}
+                  disabled={disabled}
+                  accessibilityRole={`button`}
+                  onPress={() => state.add(field.id)}
+                  style={[styles.button, disabled && styles.disabled]}
+                  accessibilityLabel={`Add Another ${field.label} Connection`}
+                >
+                  <Plus {...elementProps(`connection-add-icon`, providerScope)} size={15} color={palette.accent} />
+                  <Text {...elementProps(`connection-add-text`, providerScope)} style={styles.buttonText}>{`Add Connection`}</Text>
+                </Pressable>
+              )}
             </View>
-          )}
-          <View {...elementProps(`actionsCell`, `connection-${field.id}`)} style={styles.actionsCell}>
-            <View {...elementProps(`rowStatus`, `connection-${field.id}`)} style={styles.rowStatus}>
-              <View {...elementProps(`statusDotWrap`, `connection-${field.id}`)} style={styles.statusDotWrap}>
-                <View
-                  {...elementProps(`statusDot`, `connection-${field.id}`)}
-                  style={[styles.statusDot, { backgroundColor: state.connectionStatuses[field.id].state === `connected`
-                    ? palette.success : state.connectionStatuses[field.id].state === `error` ? palette.danger : palette.muted }]}
-                />
-              </View>
-              <Text {...elementProps(`statusText`, `connection-${field.id}`)} style={styles.statusText} accessibilityLiveRegion={`polite`}>
-                {state.connectionStatuses[field.id].message}
-              </Text>
-            </View>
+            {state.loading && <View {...elementProps(`connection-skeleton`, providerScope)} style={styles.skeleton} />}
+            {accounts.map((account, index) => {
+              const accountScope = `${scope}-${account.id}`;
+              const status = state.accountStatuses[account.id];
+              const discovered = state.discoveredDomains(account);
+              return (
+                <View key={account.id} {...elementProps(`connection-field`, accountScope)} style={styles.account}>
+                  <View {...elementProps(`connection-account-heading`, accountScope)} style={styles.row}>
+                    <Text {...elementProps(`connection-account-title`, accountScope)} style={styles.label}>{`${field.label} Connection ${index + 1}`}</Text>
+                  </View>
+                  <Text {...elementProps(`connection-label`, accountScope)} style={styles.label}>{`API Credentials`}</Text>
+                  <ConnectionInput
+                    styles={styles}
+                    palette={palette}
+                    busy={disabled}
+                    label={field.label}
+                    loading={state.loading}
+                    fieldId={accountScope}
+                    placeholder={field.placeholder}
+                    value={state.inputValue(account)}
+                    revealed={state.isVisible(account)}
+                    onToggle={() => state.toggleVisibility(account)}
+                    onChange={value => state.change(account.id, value)}
+                  />
+                  <Text {...elementProps(`connection-hint`, accountScope)} style={styles.copy}>{field.hint}</Text>
+                  {field.id === `godaddy` && (
+                    <View {...elementProps(`connection-account-field`, accountScope)} style={styles.field}>
+                      <Text {...elementProps(`connection-label`, `${accountScope}-godaddy-account-id`)} style={styles.label}>
+                        {`Customer UUID or Shopper ID`}
+                      </Text>
+                      <ConnectionInput
+                        multiline={false}
+                        styles={styles}
+                        palette={palette}
+                        busy={disabled}
+                        loading={state.loading}
+                        fieldId={`${accountScope}-godaddy-account-id`}
+                        value={state.inputValue(account, `godaddyAccountId`)}
+                        label={`GoDaddy Customer UUID or Shopper ID`}
+                        placeholder={`Customer UUID or numeric shopper ID`}
+                        revealed={state.isVisible(account, `godaddyAccountId`)}
+                        onToggle={() => state.toggleVisibility(account, `godaddyAccountId`)}
+                        onChange={value => state.changeGodaddyAccountId(account.id, value)}
+                      />
+                      <Text {...elementProps(`connection-hint`, `${accountScope}-godaddy-account-id`)} style={styles.copy}>
+                        {`Optional: customer UUID or numeric shopper ID for this account's renewal estimates. Leave blank for automatic lookup.`}
+                      </Text>
+                    </View>
+                  )}
+                  <View {...elementProps(`actionsCell`, accountScope)} style={styles.actionsCell}>
+                    <View {...elementProps(`rowStatus`, accountScope)} style={styles.rowStatus}>
+                      <View {...elementProps(`statusDotWrap`, accountScope)} style={styles.statusDotWrap}>
+                        <View
+                          {...elementProps(`statusDot`, accountScope)}
+                          style={[styles.statusDot, { backgroundColor: status?.state === `connected`
+                            ? palette.success : status?.state === `error` ? palette.danger : palette.muted }]}
+                        />
+                      </View>
+                      <Text {...elementProps(`statusText`, accountScope)} style={styles.statusText} accessibilityLiveRegion={`polite`}>
+                        {status?.message ?? `Not Connected`}
+                      </Text>
+                    </View>
+                  </View>
+                  <View {...elementProps(`connection-account-actions`, accountScope)} style={styles.row}>
+                    <Pressable
+                      {...elementProps(`connection-save`, accountScope)}
+                      disabled={disabled}
+                      accessibilityRole={`button`}
+                      onPress={() => void state.save(account.id)}
+                      style={[styles.button, styles.primary, disabled && styles.disabled]}
+                    >
+                      <Save {...elementProps(`connection-save-icon`, accountScope)} size={16} color={palette.contrast} />
+                      <Text {...elementProps(`connection-save-text`, accountScope)} style={[styles.buttonText, styles.primaryText]}>{account.number ? `Save & Sync` : `Connect & Sync`}</Text>
+                    </Pressable>
+                    {(!!account.number || accounts.length > 1 || !!account.values.trim()) && (
+                      <Pressable
+                        {...elementProps(`connection-remove`, accountScope)}
+                        disabled={disabled}
+                        accessibilityRole={`button`}
+                        onPress={() => void state.remove(account.id)}
+                        style={[styles.button, disabled && styles.disabled]}
+                        accessibilityLabel={`Remove ${field.label} Connection ${index + 1}`}
+                      >
+                        <Trash2 {...elementProps(`connection-remove-icon`, accountScope)} size={16} color={palette.danger} />
+                        <Text {...elementProps(`connection-remove-text`, accountScope)} style={styles.buttonText}>{`Remove`}</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                  {field.id === `hostinger` && discovered.length > 0 && (
+                    <View {...elementProps(`hosted-domain-review`, accountScope)} style={styles.reviewSection}>
+                      <View {...elementProps(`hosted-domain-review-heading`, accountScope)} style={styles.reviewHeading}>
+                        <ShieldCheck {...elementProps(`hosted-domain-review-icon`, accountScope)} size={16} color={palette.accent} />
+                        <Text {...elementProps(`hosted-domain-review-title`, accountScope)} style={styles.label}>
+                          {`Review Hosted Domains (${discovered.length})`}
+                        </Text>
+                      </View>
+                      <Text {...elementProps(`hosted-domain-review-description`, accountScope)} style={styles.copy}>
+                        {`These names use this account's Hostinger hosting and may belong to clients or other people. Choose Include My Domain for names you own.`}
+                      </Text>
+                      {discovered.map(domain => (
+                        <HostedDomainCandidate
+                          key={domain.name}
+                          domain={domain}
+                          styles={styles}
+                          palette={palette}
+                          busy={disabled}
+                          scope={accountScope}
+                          including={state.includingKey === `${account.id}:${domain.name}`}
+                          onInclude={() => void state.includeDomain(account.id, domain.name)}
+                        />
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
           </View>
-          {field.id === `hostinger` && state.discoveredDomains.length > 0 && (
-            <View {...elementProps(`hosted-domain-review`)} style={styles.reviewSection}>
-              <View {...elementProps(`hosted-domain-review-heading`)} style={styles.reviewHeading}>
-                <ShieldCheck {...elementProps(`hosted-domain-review-icon`)} size={16} color={palette.accent} />
-                <Text {...elementProps(`hosted-domain-review-title`)} style={styles.label}>
-                  {`Review Hosted Domains (${state.discoveredDomains.length})`}
-                </Text>
-              </View>
-              <Text {...elementProps(`hosted-domain-review-description`)} style={styles.copy}>
-                {`These names use Hostinger hosting and may belong to clients or other people. Choose Include My Domain only for names you own. Your confirmation adds the name to your private Hostinger settings and checks it again.`}
-              </Text>
-              {state.discoveredDomains.map(domain => (
-                <HostedDomainCandidate
-                  key={domain.name}
-                  domain={domain}
-                  styles={styles}
-                  palette={palette}
-                  busy={state.busy || state.loading || state.syncing}
-                  including={state.includingName === domain.name}
-                  onInclude={() => void state.includeDomain(domain.name)}
-                />
-              ))}
-            </View>
-          )}
+        );
+      })}
+      {(!embedded || state.accounts.length > 1) && (
+        <View {...elementProps(`connections-actions`, scope)} style={styles.row}>
+          <Pressable {...elementProps(`connections-save`, scope)} style={[styles.button, styles.primary, disabled && styles.disabled]} disabled={disabled} onPress={() => void state.save()}>
+            {state.busy
+              ? <ActivityIndicator {...elementProps(`connections-save-spinner`, scope)} size={`small`} color={palette.contrast} />
+              : <Save {...elementProps(`connections-save-icon`, scope)} size={16} color={palette.contrast} />}
+            <Text {...elementProps(`connections-save-text`, scope)} style={[styles.buttonText, styles.primaryText]}>{state.busy ? state.syncing ? `Checking Domains…` : `Saving…` : `Save All Connections`}</Text>
+          </Pressable>
+          <Pressable {...elementProps(`connections-clear`, scope)} style={[styles.button, disabled && styles.disabled]} disabled={disabled} onPress={() => void state.clear()}>
+            <Trash2 {...elementProps(`connections-clear-icon`, scope)} size={16} color={palette.danger} />
+            <Text {...elementProps(`connections-clear-text`, scope)} style={styles.buttonText}>{`Remove Saved Connections`}</Text>
+          </Pressable>
         </View>
-      ))}
-      <View {...elementProps(`connections-actions`)} style={styles.row}>
-        <Pressable {...elementProps(`connections-save`)} style={[styles.button, styles.primary]} disabled={state.busy || state.loading} onPress={() => void state.save()}>
-          {state.busy
-            ? <ActivityIndicator {...elementProps(`connections-save-spinner`)} size={`small`} color={palette.contrast} />
-            : <Save {...elementProps(`connections-save-icon`)} size={16} color={palette.contrast} />}
-          <Text {...elementProps(`connections-save-text`)} style={[styles.buttonText, styles.primaryText]}>{state.busy ? state.syncing ? `Checking Domains…` : `Saving…` : `Save connections`}</Text>
-        </Pressable>
-        <Pressable {...elementProps(`connections-clear`)} style={styles.button} disabled={state.busy || state.loading} onPress={() => void state.clear()}>
-          <Trash2 {...elementProps(`connections-clear-icon`)} size={16} color={palette.danger} />
-          <Text {...elementProps(`connections-clear-text`)} style={styles.buttonText}>{`Remove saved values`}</Text>
-        </Pressable>
-      </View>
-      <View {...elementProps(`connections-private-note`)} style={styles.note}>
-        <ShieldCheck {...elementProps(`connections-private-icon`)} size={16} color={palette.accent} />
-        <Text {...elementProps(`connections-private-copy`)} style={styles.noteText}>{`Values stay in your private account settings and are sent through the app's server to the selected registrar for read-only domain checks. They never appear in public profiles, Community, or exports. Local storage is readable by someone with access to this device.`}</Text>
+      )}
+      <View {...elementProps(`connections-private-note`, scope)} style={styles.note}>
+        <ShieldCheck {...elementProps(`connections-private-icon`, scope)} size={16} color={palette.accent} />
+        <Text {...elementProps(`connections-private-copy`, scope)} style={styles.noteText}>{`Values stay in your private account settings and are sent through the app's server to the selected registrar for read-only domain checks. They never appear in public profiles, Community, or exports. Local storage is readable by someone with access to this device.`}</Text>
       </View>
       <Toast
-        id={`connections-feedback`}
+        id={`${scope}-feedback`}
         onDismiss={state.dismiss}
         message={state.error || state.notice}
         kind={state.error ? `error` : `success`}
         action={state.showDomainsLink ? (
           <Link asChild href={routes.domains.href}>
             <Pressable
-              {...elementProps(`connections-view-domains`)}
+              {...elementProps(`connections-view-domains`, scope)}
               style={styles.viewDomainsButton}
               accessibilityRole={`link`}
               accessibilityLabel={`View Synced Domains`}
             >
-              <Globe2 {...elementProps(`connections-view-domains-icon`)} size={16} color={palette.success} />
-              <Text {...elementProps(`connections-view-domains-text`)} style={styles.viewDomainsText}>
-                {`View Domains`}
-              </Text>
+              <Globe2 {...elementProps(`connections-view-domains-icon`, scope)} size={16} color={palette.success} />
+              <Text {...elementProps(`connections-view-domains-text`, scope)} style={styles.viewDomainsText}>{`View Domains`}</Text>
             </Pressable>
           </Link>
         ) : undefined}

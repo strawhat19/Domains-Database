@@ -1,7 +1,10 @@
 import './styles.scss';
 import type { MouseEventHandler } from 'react';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
+import { getDomainSource } from '../../shared/domainUtils';
+import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { Check, Minus, Pencil, Trash2, ArrowUp, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
 import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
@@ -43,6 +46,7 @@ const DomainRow = ({
 }: DomainRowProps) => {
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
+  const registrarManaged = getDomainSource(domain) === `registrar`;
   const columns = PORTFOLIO_COLUMNS.filter(column => (
     column.field === `name` || visibleColumns.includes(column.field)
   ));
@@ -95,7 +99,11 @@ const DomainRow = ({
                 </div>
               </div>
             )}
-            <DomainSiteIcon domain={domain.name} id={`${scope}-symbol`} />
+            <DomainSiteIcon
+              domain={domain.name}
+              id={`${scope}-symbol`}
+              iconUrl={getCustomSiteIconUrl(domain)}
+            />
             <div id={`${scope}-name-copy`} className={`domain-name-copy`}>
               <a
                 target={`_blank`}
@@ -128,9 +136,12 @@ const DomainRow = ({
             <span id={`${scope}-registrar-mark`} className={`registrar-mark registrar-mark-${registrarKey}`} aria-hidden={`true`}>
               {domain.registrar.charAt(0) || `?`}
             </span>
-            <span id={`${scope}-registrar-name`} className={`domain-registrar-name`}>
-              {domain.registrar || `—`}
-            </span>
+            <div id={`${scope}-registrar-copy`} className={`domain-registrar-copy`}>
+              <span id={`${scope}-registrar-name`} className={`domain-registrar-name`}>
+                {domain.registrar || `—`}
+              </span>
+              <DomainSourceBadge domain={domain} id={`${scope}-source-status`} />
+            </div>
           </div>
         );
       case `expiresAt`:
@@ -154,12 +165,12 @@ const DomainRow = ({
           <button
             type={`button`}
             role={autoRenew === undefined ? `button` : `switch`}
-            disabled={busy}
+            disabled={busy || registrarManaged}
             aria-checked={autoRenew === undefined ? undefined : autoRenew === true}
             id={`${scope}-auto-renew-toggle`}
-            aria-label={`Mark Auto-Renew ${domain.autoRenew ? `Off` : `On`} For ${domain.name}`}
-            onClick={() => onToggleAutoRenew(domain)}
-            title={autoRenew === undefined ? `Registrar Auto-Renew Is Unknown — Click To Update Your Inventory Record` : `This is a record of your registrar setting`}
+            aria-label={registrarManaged ? `Auto-Renew For ${domain.name}, Managed By Your Registrar` : `Mark Auto-Renew ${domain.autoRenew ? `Off` : `On`} For ${domain.name}`}
+            onClick={registrarManaged ? undefined : () => onToggleAutoRenew(domain)}
+            title={registrarManaged ? `Managed By Your Connected Registrar` : autoRenew === undefined ? `Registrar Auto-Renew Is Unknown — Click To Update Your Inventory Record` : `This is a record of your registrar setting`}
             className={`domain-auto-renew domain-auto-renew-${autoRenew === true ? `on` : `off`}`}
           >
             {autoRenew === true

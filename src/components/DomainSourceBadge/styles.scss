@@ -1,0 +1,20 @@
+.rowStatus.domain-source-status {
+  gap: 4px;
+  margin: 0;
+  font-size: 9px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+
+  .statusText { font-size: inherit; }
+  &-csv { color: #7356a1; }
+  &-manual { color: #286ab3; }
+  &-registrar { color: var(--success); }
+}
+.domain-source-icon { flex-shrink: 0; }
+
+:root[data-theme='dark'] {
+  .domain-source-status-csv { color: #c1a3ed; }
+  .domain-source-status-manual { color: #80b7f3; }
+}

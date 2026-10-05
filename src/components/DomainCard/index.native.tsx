@@ -1,8 +1,10 @@
 import { createStyles } from './styles.native';
+import DomainSourceBadge from '../DomainSourceBadge/index.native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { elementProps } from '../../shared/elementProps';
+import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { Globe2, Pencil, RefreshCw, Trash2 } from 'lucide-react-native';
 import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
@@ -26,7 +28,8 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
   const [iconFailed, setIconFailed] = useState(false);
   const styles = useMemo(() => createStyles(palette), [palette]);
   const opacity = useRef(new Animated.Value(.45)).current;
-  useEffect(() => setIconFailed(false), [domain?.name]);
+  const siteIconUrl = domain ? getDomainSiteIconUrl(domain) : ``;
+  useEffect(() => setIconFailed(false), [siteIconUrl]);
   const statusColors = {
     Active: { foreground: palette.success, background: palette.successBackground },
     Unknown: { foreground: palette.muted, background: palette.subtle },
@@ -125,15 +128,16 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
           </Text>
         </View>
         <View {...elementProps(`native-domain-monogram`, domain.id)} style={styles.monogram}>
-          {iconFailed ? (
+          {iconFailed || !siteIconUrl ? (
             <Globe2 {...elementProps(`native-domain-icon-fallback`, domain.id)} size={20} color={palette.accent} />
           ) : (
             <Image
+              key={siteIconUrl}
               {...elementProps(`native-domain-site-icon`, domain.id)}
               style={styles.siteIcon}
               accessibilityIgnoresInvertColors
               onError={() => setIconFailed(true)}
-              source={{ uri: `https://${domain.name}/favicon.ico` }}
+              source={{ uri: siteIconUrl }}
             />
           )}
         </View>
@@ -159,9 +163,12 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
         </View>
       </View>
       <View {...elementProps(`native-domain-card-middle`, domain.id)} style={styles.middle}>
-        <Text {...elementProps(`native-domain-registrar`, domain.id)} style={styles.registrar}>
-          {domain.registrar || `—`}
-        </Text>
+        <View {...elementProps(`native-domain-registrar-group`, domain.id)} style={styles.registrarGroup}>
+          <Text {...elementProps(`native-domain-registrar`, domain.id)} style={styles.registrar}>
+            {domain.registrar || `—`}
+          </Text>
+          <DomainSourceBadge domain={domain} id={`native-domain-source-${domain.id}`} />
+        </View>
         <View {...elementProps(`rowStatus`, domain.id)} style={styles.rowStatus}>
           <View {...elementProps(`statusDotWrap`, domain.id)} style={[styles.statusDotWrap, { backgroundColor: colors.background }]}>
             <View {...elementProps(`statusDot`, domain.id)} style={[styles.statusDot, { backgroundColor: colors.foreground }]} />

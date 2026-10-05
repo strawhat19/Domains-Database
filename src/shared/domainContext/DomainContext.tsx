@@ -4,7 +4,7 @@ import type { DomainInput, DomainRecord } from '../types';
 import type { ConnectionSnapshot } from '../connections/types';
 import { useWebsiteInsights } from '../websiteInsights/useWebsiteInsights';
 import { useRegistrarSync } from '../registrarSync/useRegistrarSync';
-import type { ConnectionSyncResult, ConnectionSyncStatuses } from '../registrarSync/types';
+import type { AccountSyncStatuses, ConnectionSyncResult, ConnectionSyncStatuses } from '../registrarSync/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface DomainContextValue {
@@ -25,7 +25,8 @@ export interface DomainContextValue {
   clearInsightNotice: () => void;
   resetConnectionSync: () => void;
   connectionStatuses: ConnectionSyncStatuses;
-  syncConnections: (snapshot?: ConnectionSnapshot) => Promise<ConnectionSyncResult>;
+  accountStatuses: AccountSyncStatuses;
+  syncConnections: (snapshot?: ConnectionSnapshot, connectionIds?: readonly string[]) => Promise<ConnectionSyncResult>;
   resetSampleData: () => Promise<void>;
   prepareExport: () => Promise<DomainRecord[]>;
   deleteDomain: (id: string) => Promise<void>;
@@ -130,9 +131,10 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
     resetSampleData,
     refreshWebsiteInsights,
     syncConnections: sync.syncConnections,
+    accountStatuses: sync.accountStatuses,
     connectionStatuses: sync.connectionStatuses,
     resetConnectionSync: sync.resetConnectionSync,
-  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
+  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.accountStatuses, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
 
   return (
     <DomainContext.Provider value={value}>

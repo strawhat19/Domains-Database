@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { REGISTRARS } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
-import { getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
+import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
+import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
@@ -20,6 +21,7 @@ const newDomain = (): DomainInput => {
     name: ``,
     notes: ``,
     autoRenew: true,
+    description: ``,
     renewalPrice: 0,
     owner: `My Portfolio`,
     registrar: REGISTRARS[0],
@@ -38,9 +40,11 @@ export const useNativePortfolio = (compact = false) => {
   const [setupOpen, setSetupOpen] = useState(false);
   const [renewalPrice, updateRenewalPrice] = useState(``);
   const [editingId, setEditingId] = useState<string>();
+  const [editingDomain, setEditingDomain] = useState<DomainRecord | null>(null);
   const [input, setInput] = useState<DomainInput>(newDomain);
   const [sortByName, setSortByName] = useState(true);
   const [registrar, setRegistrar] = useState<Registrar | `All`>(`All`);
+  const editingSyncedDomain = Boolean(editingDomain && getDomainSource(editingDomain) === `registrar`);
   const filteredDomains = useMemo(() => {
     const query = search.trim().toLowerCase();
     return context.domains
@@ -61,6 +65,7 @@ export const useNativePortfolio = (compact = false) => {
     context.clearNotice();
     setFormError(``);
     setEditingId(domain?.id);
+    setEditingDomain(domain ?? null);
     updateRenewalPrice(domain ? String(domain.renewalPrice) : ``);
     setInput(domain ? {
       meta: domain.meta,
@@ -71,6 +76,7 @@ export const useNativePortfolio = (compact = false) => {
       expiresAt: domain.expiresAt.slice(0, 10),
       autoRenew: domain.autoRenew,
       renewalPrice: domain.renewalPrice,
+      description: domain.description ?? ``,
     } : newDomain());
     setEditorOpen(true);
   };
@@ -80,19 +86,33 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const setRenewalPrice = (value: string) => {
+    if (editingSyncedDomain) return;
     updateRenewalPrice(value);
     setInput(current => markDomainFieldsKnown(current, [`renewalPrice`]));
   };
-  const updateInput = <K extends keyof DomainInput>(field: K, value: DomainInput[K]) => setInput(current => (
-    markDomainFieldsKnown({ ...current, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : [])
-  ));
+  const updateInput = <K extends keyof DomainInput>(field: K, value: DomainInput[K]) => {
+    if (editingSyncedDomain && ![`meta`, `notes`, `description`].includes(field)) return;
+    setInput(current => {
+      if (editingSyncedDomain && field === `meta`) {
+        return { ...current, meta: { ...current.meta, siteIconUrl: getCustomSiteIconUrl({ meta: value as DomainInput[`meta`] }) } };
+      }
+      return markDomainFieldsKnown({ ...current, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []);
+    });
+  };
 
   const saveDomain = async () => {
     if (saving) return;
     setSaving(true);
     setFormError(``);
     try {
-      const record = { ...input, renewalPrice: Number(renewalPrice || 0) };
+      const syncedDomain = editingSyncedDomain && editingDomain
+        ? context.domains.find(domain => domain.id === editingDomain.id) ?? editingDomain : null;
+      const record: DomainInput = syncedDomain ? {
+        ...syncedDomain,
+        notes: input.notes,
+        description: input.description ?? ``,
+        meta: { ...syncedDomain.meta, siteIconUrl: getCustomSiteIconUrl(input) },
+      } : { ...input, renewalPrice: Number(renewalPrice || 0) };
       if (editingId) await context.updateDomain(editingId, record);
       else await context.addDomain(record);
       setEditorOpen(false);
@@ -184,6 +204,8 @@ export const useNativePortfolio = (compact = false) => {
     setupOpen,
     sortByName,
     renewalPrice,
+    editingDomain,
+    editingSyncedDomain,
     visibleDomains,
     registrarCounts,
     filteredDomains,

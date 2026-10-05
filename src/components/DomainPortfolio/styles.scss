@@ -165,6 +165,27 @@
 .portfolio-count-separator { margin: 0 3px; }
 .portfolio-visible-count { font-variant-numeric: tabular-nums; }
 .portfolio-secondary-actions { gap: 7px; display: flex; align-items: center; }
+.portfolio-transfer-tools { gap: 6px; display: flex; min-width: 0; align-items: flex-end; flex-direction: column; }
+.portfolio-tools-tabs { gap: 4px; display: flex; flex-wrap: wrap; }
+.portfolio-tools-tab {
+  gap: 6px;
+  border: 0;
+  display: flex;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 7px 9px;
+  border-radius: 4px;
+  color: var(--muted);
+  align-items: center;
+  background: transparent;
+  font-family: var(--font-bold);
+  transition: color .2s ease, background .2s ease;
+  &:hover { color: var(--ink); background: var(--subtle); }
+}
+.portfolio-tools-tab-active { color: var(--accent); background: var(--paper); }
+.portfolio-tools-panel { gap: 7px; display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: flex-end; }
+.portfolio-tools-panel[hidden] { display: none; }
+.portfolio-connect-recommendation { font-size: 10px; color: var(--muted); line-height: 1.5; }
 .portfolio-view-all { gap: 7px; display: flex; margin-top: 18px; font-size: 12px; color: var(--ink); align-items: center; justify-content: flex-end; text-decoration: none; font-family: var(--font-bold); transition: color .2s ease; }
 .portfolio-view-all-icon { transition: transform .2s ease; }
 .portfolio-view-all:hover { color: var(--accent); .portfolio-view-all-icon { transform: translateX(3px); } }
@@ -210,6 +231,8 @@
   .portfolio-scroll-hint { padding-left: 16px; }
   .portfolio-card-footer { gap: 9px; padding: 10px 10px 10px 16px; flex-wrap: wrap; }
   .portfolio-secondary-actions { gap: 2px; max-width: 100%; flex-wrap: wrap; margin-left: auto; }
+  .portfolio-transfer-tools { width: 100%; align-items: flex-start; }
+  .portfolio-tools-panel { justify-content: flex-start; }
   .portfolio-count-separator, .portfolio-visible-count { display: none; }
   .domain-delete-footer { align-items: stretch; flex-direction: column; }
 }
@@ -220,5 +243,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .portfolio-sync-spinner { animation: none; }
-  .portfolio-button, .portfolio-sort-icon, .portfolio-search-wrap, .portfolio-view-all, .portfolio-view-all-icon, .portfolio-registrar-filter, .portfolio-main-database-heading { transition: none; }
+  .portfolio-button, .portfolio-sort-icon, .portfolio-search-wrap, .portfolio-view-all, .portfolio-view-all-icon, .portfolio-registrar-filter, .portfolio-main-database-heading, .portfolio-tools-tab { transition: none; }
 }

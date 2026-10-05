@@ -46,6 +46,7 @@
 .domain-grid-card-status { gap: 4px; display: flex; font-size: 9px; margin-top: 4px; align-items: center; color: var(--muted); }
 .domain-grid-card-status-dot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
 .domain-grid-card-status-active { color: var(--success); }
+.domain-grid-card-field-registrar .domain-grid-card-field-value { gap: 4px; display: flex; align-items: flex-start; flex-direction: column; }
 .domain-grid-card-status-expired, .domain-grid-card-status-renewing-soon { color: var(--warning); }
 .domain-grid-card-auto-renew {
   gap: 4px;

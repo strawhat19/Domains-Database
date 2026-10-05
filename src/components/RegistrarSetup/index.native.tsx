@@ -1,41 +1,46 @@
-import { useMemo, useState } from 'react';
 import { File } from 'expo-file-system';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { createStyles } from './styles.native';
-import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
+import { routes } from '../../shared/routes';
+import AccountConnections from '../AccountConnections';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRegistrarSetup } from './useRegistrarSetup';
 import { elementProps } from '../../shared/elementProps';
 import { formatCurrency } from '../../shared/domainUtils';
+import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { SETUP_REGISTRARS, registrarGuides } from '../../shared/registrars';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { X, Plus, Check, Upload, Trash2, ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react-native';
-import { ActivityIndicator, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { X, Check, Link2, LogIn, Pencil, Upload, Download, UserPlus, FileDown } from 'lucide-react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 
-const steps = [`Choose registrar`, `Add domains`, `Review`];
-const fields = [
-  { key: `name`, label: `Domain name`, placeholder: `yourdomain.com` },
-  { key: `expiresAt`, label: `Expiry date`, placeholder: `YYYY-MM-DD` },
-  { key: `renewalPrice`, label: `Annual cost in USD (optional)`, placeholder: `0.00` },
-] as const;
+interface RegistrarSetupProps {
+  onClose: () => void;
+  onManual?: () => void;
+}
 
-const RegistrarSetup = ({ onClose }: { onClose: () => void }) => {
+const RegistrarSetup = ({ onClose, onManual }: RegistrarSetupProps) => {
+  const auth = useAuth();
+  const router = useRouter();
   const state = useRegistrarSetup(onClose);
-  const { theme, palette } = useTheme();
-  const styles = useMemo(() => createStyles(palette), [palette]);
+  const { palette } = useTheme();
+  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [readingCsv, setReadingCsv] = useState(false);
-  const busy = state.saving || readingCsv;
-  const guide = state.registrar ? registrarGuides[state.registrar] : null;
+  const [connectionBusy, setConnectionBusy] = useState(false);
+  const styles = useMemo(() => createStyles(palette), [palette]);
+  const busy = state.saving || state.exporting || readingCsv || connectionBusy;
+  const connecting = state.entryTab === `connect`;
   const close = () => { if (!busy) state.close(); };
-
-  const openAccount = async () => {
-    if (!guide) return;
-    try {
-      await Linking.openURL(guide.url);
-    } catch {
-      state.reportError(`Unable To Open Your Registrar. Open Its Website In Your Browser.`);
-    }
+  const addManually = () => {
+    if (busy || !onManual) return;
+    state.close();
+    onManual();
+  };
+  const authenticate = (pathname: `/signin` | `/signup`) => {
+    if (busy || auth.busy || auth.loading) return;
+    state.close();
+    router.push({ pathname, params: { returnTo: routes.connections.href } });
   };
   const importCsv = async () => {
     if (busy) return;
@@ -56,14 +61,11 @@ const RegistrarSetup = ({ onClose }: { onClose: () => void }) => {
       setReadingCsv(false);
     }
   };
+  const saveDisabled = busy || (!connecting && !state.canReview);
+  const saveLabel = state.saving ? `Saving…` : connecting ? `Done` : `Save Domains`;
 
   return (
-    <Modal
-      visible
-      transparent
-      animationType={`fade`}
-      onRequestClose={close}
-    >
+    <Modal visible transparent animationType={`fade`} onRequestClose={close}>
       <View
         {...elementProps(`native-registrar-setup-overlay`)}
         style={[styles.overlay, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}
@@ -74,22 +76,14 @@ const RegistrarSetup = ({ onClose }: { onClose: () => void }) => {
           behavior={Platform.OS === `ios` ? `padding` : `height`}
         >
           <View
-            style={styles.dialog}
             accessibilityViewIsModal
             {...elementProps(`native-registrar-setup-dialog`)}
+            style={[styles.dialog, width >= 900 && styles.wideDialog]}
           >
             <View {...elementProps(`native-registrar-setup-header`)} style={styles.header}>
               <View {...elementProps(`native-registrar-setup-heading`)} style={styles.heading}>
-                <Text {...elementProps(`native-registrar-setup-eyebrow`)} style={styles.eyebrow}>
-                  {`YOUR REGISTRAR, YOUR DOMAINS`}
-                </Text>
-                <Text
-                  style={styles.title}
-                  accessibilityRole={`header`}
-                  {...elementProps(`native-registrar-setup-title`)}
-                >
-                  {`Add Domain`}
-                </Text>
+                <Text {...elementProps(`native-registrar-setup-eyebrow`)} style={styles.eyebrow}>{`YOUR REGISTRAR, YOUR DOMAINS`}</Text>
+                <Text style={styles.title} accessibilityRole={`header`} {...elementProps(`native-registrar-setup-title`)}>{`Add Domain`}</Text>
               </View>
               <Pressable
                 disabled={busy}
@@ -102,264 +96,128 @@ const RegistrarSetup = ({ onClose }: { onClose: () => void }) => {
                 <X size={18} color={palette.muted} {...elementProps(`native-registrar-setup-close-icon`)} />
               </Pressable>
             </View>
-            <View {...elementProps(`native-registrar-setup-steps`)} style={styles.steps}>
-              {steps.map((label, index) => (
-                <Text
-                  key={label}
-                  {...elementProps(`native-registrar-setup-step`, String(index))}
-                  style={[styles.step, state.step === index && styles.activeStep]}
-                >
-                  {`${index + 1}. ${label}`}
-                </Text>
-              ))}
-            </View>
             <ScrollView
               style={styles.scroll}
               keyboardShouldPersistTaps={`handled`}
               contentContainerStyle={styles.content}
               {...elementProps(`native-registrar-setup-content`)}
             >
-              <ConnectRegistrar onClose={close} disabled={busy} scope={`native-registrar-setup`} />
               {!!state.error && (
-                <Text
-                  style={styles.error}
-                  accessibilityRole={`alert`}
-                  {...elementProps(`native-registrar-setup-error`)}
-                >
-                  {state.error}
-                </Text>
+                <Text style={styles.error} accessibilityRole={`alert`} {...elementProps(`native-registrar-setup-error`)}>{state.error}</Text>
               )}
-              {state.step === 0 && (
-                <View {...elementProps(`native-registrar-setup-choices`)} style={styles.group}>
-                  <Text {...elementProps(`native-registrar-setup-intro`)} style={styles.description}>
-                    {`Choose the account holding your domains. We'll guide you through bringing in your records.`}
-                  </Text>
-                  {SETUP_REGISTRARS.map(registrar => {
-                    const selected = state.registrar === registrar;
-                    const suffix = registrar.toLowerCase();
-                    return (
-                      <Pressable
-                        key={registrar}
-                        accessibilityRole={`radio`}
-                        accessibilityLabel={registrar}
-                        accessibilityState={{ checked: selected }}
-                        {...elementProps(`native-registrar-choice`, suffix)}
-                        onPress={() => state.selectRegistrar(registrar)}
-                        style={[styles.choice, selected && styles.selectedChoice]}
-                      >
-                        <Text {...elementProps(`native-registrar-choice-label`, suffix)} style={styles.choiceLabel}>
-                          {registrar}
-                        </Text>
-                        {selected
-                          ? <Check size={18} color={palette.accent} {...elementProps(`native-registrar-choice-icon`, suffix)} />
-                          : <ArrowRight size={18} color={palette.muted} {...elementProps(`native-registrar-choice-icon`, suffix)} />}
-                      </Pressable>
-                    );
-                  })}
-                  <Text {...elementProps(`native-registrar-setup-local-note`)} style={styles.description}>
-                    {`This imports records you provide and saves them on this device. No passwords or API keys are needed.`}
-                  </Text>
-                </View>
-              )}
-              {state.step === 1 && guide && (
-                <View {...elementProps(`native-registrar-setup-records`)} style={styles.group}>
-                  <View {...elementProps(`native-registrar-account-guide`)} style={styles.guide}>
-                    <Text {...elementProps(`native-registrar-account-guide-title`)} style={styles.label}>
-                      {`Get your ${state.registrar} records`}
-                    </Text>
-                    {guide.steps.map((instruction, index) => (
-                      <Text
-                        key={index}
-                        style={styles.description}
-                        {...elementProps(`native-registrar-account-step`, String(index))}
-                      >
-                        {`${index + 1}. ${instruction}`}
-                      </Text>
-                    ))}
+              <View {...elementProps(`native-registrar-entry-tabs`)} style={styles.tabs} accessibilityRole={`tablist`} accessibilityLabel={`Add Domains Method`}>
+                {([`connect`, `csv`] as const).map(tab => {
+                  const selected = state.entryTab === tab;
+                  const TabIcon = tab === `connect` ? Link2 : Upload;
+                  return (
                     <Pressable
-                      onPress={openAccount}
-                      style={styles.textButton}
-                      accessibilityRole={`link`}
-                      {...elementProps(`native-registrar-open-account`)}
-                      accessibilityLabel={`Open ${state.registrar} Account`}
+                      key={tab}
+                      disabled={busy}
+                      accessibilityRole={`tab`}
+                      accessibilityState={{ selected, disabled: busy }}
+                      onPress={() => state.setEntryTab(tab)}
+                      {...elementProps(`native-registrar-entry-tab`, tab)}
+                      style={[styles.tab, selected && styles.activeTab, busy && styles.disabled]}
                     >
-                      <Text {...elementProps(`native-registrar-open-account-text`)} style={styles.linkText}>
-                        {`Open ${state.registrar}`}
+                      <TabIcon size={15} color={selected ? palette.accent : palette.muted} {...elementProps(`native-registrar-entry-tab-icon`, tab)} />
+                      <Text {...elementProps(`native-registrar-entry-tab-text`, tab)} style={[styles.tabText, selected && styles.activeTabText]}>
+                        {tab === `connect` ? `Connect Registrars` : `Import / Export CSV`}
                       </Text>
-                      <ArrowUpRight size={15} color={palette.accent} {...elementProps(`native-registrar-open-account-icon`)} />
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {connecting ? (
+                <View {...elementProps(`native-registrar-connect-panel`)} style={styles.group}>
+                  <Text {...elementProps(`native-registrar-connect-recommended`)} style={styles.recommended}>{`RECOMMENDED`}</Text>
+                  <Text {...elementProps(`native-registrar-connect-description`)} style={styles.description}>
+                    {`Connect your registrars to import domains automatically and keep your portfolio synced. Manage all your private connections together, just like in your profile.`}
+                  </Text>
+                  {auth.loading ? (
+                    <ActivityIndicator size={`small`} color={palette.accent} {...elementProps(`native-registrar-auth-loading`)} />
+                  ) : auth.user ? (
+                    <AccountConnections
+                      embedded
+                      key={auth.user.id}
+                      onBusyChange={setConnectionBusy}
+                      scope={`native-registrar-setup-connections`}
+                    />
+                  ) : (
+                    <View {...elementProps(`native-registrar-auth-prompt`)} style={styles.guide}>
+                      <Text {...elementProps(`native-registrar-auth-prompt-title`)} style={styles.label}>{`Sign Up To Connect Registrars`}</Text>
+                      <Text {...elementProps(`native-registrar-auth-prompt-copy`)} style={styles.description}>
+                        {`Create an account to save your private registrar connections and sync your domains. Already have an account? Sign in to continue.`}
+                      </Text>
+                      <View {...elementProps(`native-registrar-auth-actions`)} style={styles.actions}>
+                        <Pressable disabled={auth.busy} onPress={() => authenticate(`/signup`)} style={[styles.primaryButton, auth.busy && styles.disabled]} accessibilityRole={`link`} {...elementProps(`native-registrar-signup`)}>
+                          <UserPlus size={15} color={palette.contrast} {...elementProps(`native-registrar-signup-icon`)} />
+                          <Text {...elementProps(`native-registrar-signup-text`)} style={styles.primaryText}>{`Sign Up`}</Text>
+                        </Pressable>
+                        <Pressable disabled={auth.busy} onPress={() => authenticate(`/signin`)} style={[styles.secondaryButton, auth.busy && styles.disabled]} accessibilityRole={`link`} {...elementProps(`native-registrar-signin`)}>
+                          <LogIn size={15} color={palette.ink} {...elementProps(`native-registrar-signin-icon`)} />
+                          <Text {...elementProps(`native-registrar-signin-text`)} style={styles.secondaryText}>{`Sign In`}</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View {...elementProps(`native-registrar-csv-panel`)} style={styles.group}>
+                  <View {...elementProps(`native-registrar-csv-guide`)} style={styles.guide}>
+                    <Text {...elementProps(`native-registrar-csv-guide-title`)} style={styles.label}>{`Import Domain Records`}</Text>
+                    <Text {...elementProps(`native-registrar-csv-description`)} style={styles.description}>
+                      {`Export a CSV from any registrar account, or use our template. Upload it here, review the records below, then save. One CSV can include multiple registrars. Export CSV downloads your full portfolio.`}
+                    </Text>
+                  </View>
+                  <View {...elementProps(`native-registrar-csv-actions`)} style={styles.actions}>
+                    <Pressable disabled={busy} onPress={() => void importCsv()} style={[styles.secondaryButton, busy && styles.disabled]} accessibilityRole={`button`} accessibilityLabel={`Import Registrar CSV`} {...elementProps(`native-registrar-import-csv`)}>
+                      <Upload size={15} color={palette.ink} {...elementProps(`native-registrar-import-icon`)} />
+                      <Text {...elementProps(`native-registrar-import-text`)} style={styles.secondaryText}>{readingCsv ? `Reading CSV…` : `Import CSV`}</Text>
+                    </Pressable>
+                    <Pressable disabled={busy || !state.canExport} onPress={() => void state.exportCsv()} style={[styles.secondaryButton, (busy || !state.canExport) && styles.disabled]} accessibilityRole={`button`} accessibilityLabel={`Export Portfolio CSV`} {...elementProps(`native-registrar-export-csv`)}>
+                      <Download size={15} color={palette.ink} {...elementProps(`native-registrar-export-icon`)} />
+                      <Text {...elementProps(`native-registrar-export-text`)} style={styles.secondaryText}>{`Export CSV`}</Text>
+                    </Pressable>
+                    <Pressable disabled={busy} onPress={() => void state.downloadTemplate()} style={[styles.secondaryButton, busy && styles.disabled]} accessibilityRole={`button`} accessibilityLabel={`Download Domain CSV Template`} {...elementProps(`native-registrar-csv-template`)}>
+                      <FileDown size={15} color={palette.ink} {...elementProps(`native-registrar-csv-template-icon`)} />
+                      <Text {...elementProps(`native-registrar-csv-template-text`)} style={styles.secondaryText}>{`CSV Template`}</Text>
                     </Pressable>
                   </View>
-                  <Pressable
-                    disabled={busy}
-                    onPress={importCsv}
-                    style={styles.secondaryButton}
-                    accessibilityRole={`button`}
-                    accessibilityLabel={`Import Registrar CSV`}
-                    {...elementProps(`native-registrar-import-csv`)}
-                  >
-                    <Upload size={15} color={palette.ink} {...elementProps(`native-registrar-import-icon`)} />
-                    <Text {...elementProps(`native-registrar-import-text`)} style={styles.secondaryText}>
-                      {readingCsv ? `Reading CSV…` : `Import CSV`}
-                    </Text>
-                  </Pressable>
-                  <Text {...elementProps(`native-registrar-csv-help`)} style={styles.description}>
-                    {`Enter records below or import a CSV with domain and expiry columns. Missing costs default to 0; confirm auto-renew in your account.`}
-                  </Text>
-                  {!!state.csvNotice && (
-                    <Text {...elementProps(`native-registrar-csv-notice`)} style={styles.success} accessibilityLiveRegion={`polite`}>
-                      {state.csvNotice}
-                    </Text>
-                  )}
-                  <Text {...elementProps(`native-registrar-owner-label`)} style={styles.label}>
-                    {`Owner / portfolio`}
-                  </Text>
-                  <TextInput
-                    value={state.owner}
-                    style={styles.input}
-                    editable={!busy}
-                    onChangeText={state.setOwner}
-                    keyboardAppearance={theme}
-                    accessibilityLabel={`Owner Or Portfolio`}
-                    {...elementProps(`native-registrar-owner-input`)}
-                  />
-                  {state.drafts.map((draft, index) => (
-                    <View key={draft.id} {...elementProps(`native-registrar-domain-fields`, draft.id)} style={styles.domainFields}>
-                      <View {...elementProps(`native-registrar-domain-heading`, draft.id)} style={styles.domainHeading}>
-                        <Text {...elementProps(`native-registrar-domain-number`, draft.id)} style={styles.label}>
-                          {`Domain ${index + 1}`}
-                        </Text>
-                        {state.drafts.length > 1 && (
-                          <Pressable
-                            disabled={busy}
-                            style={styles.iconButton}
-                            accessibilityRole={`button`}
-                            onPress={() => state.removeDraft(draft.id)}
-                            {...elementProps(`native-registrar-domain-remove`, draft.id)}
-                            accessibilityLabel={`Remove Domain ${index + 1} From Import`}
-                          >
-                            <Trash2 size={16} color={palette.danger} {...elementProps(`native-registrar-domain-remove-icon`, draft.id)} />
-                          </Pressable>
-                        )}
-                      </View>
-                      {fields.map(field => (
-                        <View key={field.key} {...elementProps(`native-registrar-domain-field`, `${draft.id}-${field.key}`)} style={styles.field}>
-                          <Text {...elementProps(`native-registrar-domain-label`, `${draft.id}-${field.key}`)} style={styles.label}>
-                            {field.label}
-                          </Text>
-                          <TextInput
-                            editable={!busy}
-                            style={styles.input}
-                            autoCorrect={false}
-                            autoCapitalize={`none`}
-                            value={draft[field.key]}
-                            keyboardAppearance={theme}
-                            placeholder={field.placeholder}
-                            placeholderTextColor={palette.placeholder}
-                            keyboardType={field.key === `renewalPrice` ? `decimal-pad` : `default`}
-                            onChangeText={value => state.updateDraft(draft.id, field.key, value)}
-                            {...elementProps(`native-registrar-domain-input`, `${draft.id}-${field.key}`)}
-                            accessibilityLabel={`${field.label} For Domain ${index + 1}`}
-                          />
-                        </View>
-                      ))}
-                      <View {...elementProps(`native-registrar-domain-auto-renew`, draft.id)} style={styles.domainHeading}>
-                        <Text {...elementProps(`native-registrar-domain-auto-renew-label`, draft.id)} style={styles.label}>
-                          {`Auto-renew in registrar account`}
-                        </Text>
-                        <Switch
-                          disabled={busy}
-                          value={draft.autoRenew}
-                          thumbColor={palette.paper}
-                          ios_backgroundColor={palette.line}
-                          trackColor={{ false: palette.line, true: palette.accent }}
-                          onValueChange={value => state.updateDraft(draft.id, `autoRenew`, value)}
-                          {...elementProps(`native-registrar-domain-auto-renew-switch`, draft.id)}
-                          accessibilityLabel={`Auto-Renew For Domain ${index + 1}`}
-                        />
-                      </View>
-                      <TextInput
-                        multiline
-                        editable={!busy}
-                        value={draft.notes}
-                        placeholder={`Notes (optional)`}
-                        keyboardAppearance={theme}
-                        placeholderTextColor={palette.placeholder}
-                        style={[styles.input, styles.notesInput]}
-                        onChangeText={value => state.updateDraft(draft.id, `notes`, value)}
-                        {...elementProps(`native-registrar-domain-notes`, draft.id)}
-                        accessibilityLabel={`Notes For Domain ${index + 1}`}
-                      />
-                    </View>
-                  ))}
-                  <Pressable
-                    disabled={busy}
-                    onPress={state.addDraft}
-                    style={styles.secondaryButton}
-                    accessibilityRole={`button`}
-                    accessibilityLabel={`Add Another Domain`}
-                    {...elementProps(`native-registrar-add-another`)}
-                  >
-                    <Plus size={15} color={palette.ink} {...elementProps(`native-registrar-add-another-icon`)} />
-                    <Text {...elementProps(`native-registrar-add-another-text`)} style={styles.secondaryText}>
-                      {`Add another domain`}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-              {state.step === 2 && (
-                <View {...elementProps(`native-registrar-setup-review`)} style={styles.group}>
-                  <Text {...elementProps(`native-registrar-review-intro`)} style={styles.description}>
-                    {`Save ${state.review.length} domain(s) from ${state.registrar} to ${state.owner}. Check the details before finishing.`}
-                  </Text>
+                  {!!state.csvNotice && <Text {...elementProps(`native-registrar-csv-notice`)} style={styles.success} accessibilityLiveRegion={`polite`}>{state.csvNotice}</Text>}
                   {state.review.map((domain, index) => (
                     <View key={domain.name} {...elementProps(`native-registrar-review-domain`, String(index))} style={styles.guide}>
-                      <Text {...elementProps(`native-registrar-review-name`, String(index))} style={styles.label}>
-                        {domain.name}
-                      </Text>
-                      <Text {...elementProps(`native-registrar-review-details`, String(index))} style={styles.description}>
-                        {`Expiry ${domain.expiresAt} · ${formatCurrency(domain.renewalPrice)} / year`}
-                      </Text>
-                      <Text {...elementProps(`native-registrar-review-renew`, String(index))} style={styles.description}>
-                        {`Auto-renew recorded as ${domain.autoRenew ? `on` : `off`}`}
-                      </Text>
+                      <Text {...elementProps(`native-registrar-review-name`, String(index))} style={styles.label}>{`${index + 1}. ${domain.name}`}</Text>
+                      <Text {...elementProps(`native-registrar-review-details`, String(index))} style={styles.description}>{`${domain.registrar} · Expiry ${domain.expiresAt || `Not Set`} · ${formatCurrency(domain.renewalPrice)} / year`}</Text>
+                      <Text {...elementProps(`native-registrar-review-renew`, String(index))} style={styles.description}>{`Auto-renew recorded as ${domain.autoRenew ? `on` : `off`}`}</Text>
                     </View>
                   ))}
-                  <Text {...elementProps(`native-registrar-review-storage`)} style={styles.description}>
-                    {`These records are saved on this device. Future registrar changes must be imported or entered again.`}
-                  </Text>
+                  {!!state.review.length && (
+                    <Text {...elementProps(`native-registrar-review-storage`)} style={styles.description}>
+                      {`Imported records are saved on this device. Connect your registrars for automatic syncing.`}
+                    </Text>
+                  )}
                 </View>
               )}
             </ScrollView>
             <View {...elementProps(`native-registrar-setup-footer`)} style={styles.footer}>
-              {state.step > 0 && (
-                <Pressable
-                  disabled={busy}
-                  onPress={state.back}
-                  style={styles.secondaryButton}
-                  accessibilityRole={`button`}
-                  accessibilityLabel={`Previous Step`}
-                  {...elementProps(`native-registrar-setup-back`)}
-                >
-                  <ArrowLeft size={15} color={palette.ink} {...elementProps(`native-registrar-setup-back-icon`)} />
-                  <Text {...elementProps(`native-registrar-setup-back-text`)} style={styles.secondaryText}>
-                    {`Back`}
-                  </Text>
+              {onManual && (
+                <Pressable disabled={busy} onPress={addManually} style={[styles.textButton, busy && styles.disabled]} accessibilityRole={`button`} {...elementProps(`native-registrar-setup-manual`)}>
+                  <Pencil size={15} color={palette.accent} {...elementProps(`native-registrar-setup-manual-icon`)} />
+                  <Text {...elementProps(`native-registrar-setup-manual-text`)} style={styles.linkText}>{`Add Manually`}</Text>
                 </Pressable>
               )}
               <Pressable
+                disabled={saveDisabled}
                 accessibilityRole={`button`}
-                onPress={state.step === 2 ? state.submit : state.next}
-                disabled={busy || (state.step === 0 && !state.registrar)}
-                {...elementProps(`native-registrar-setup-continue`)}
-                style={[styles.primaryButton, (busy || (state.step === 0 && !state.registrar)) && styles.disabled]}
-                accessibilityLabel={state.step === 2 ? `Save Domains` : state.step === 1 ? `Review Domains` : `Continue`}
+                accessibilityLabel={saveLabel}
+                {...elementProps(`native-registrar-setup-save`)}
+                style={[styles.primaryButton, saveDisabled && styles.disabled]}
+                onPress={connecting ? close : () => void state.submit()}
               >
                 {state.saving
                   ? <ActivityIndicator size={`small`} color={palette.contrast} {...elementProps(`native-registrar-setup-saving`)} />
-                  : <Check size={15} color={palette.contrast} {...elementProps(`native-registrar-setup-continue-icon`)} />}
-                <Text {...elementProps(`native-registrar-setup-continue-text`)} style={styles.primaryText}>
-                  {state.saving ? `Saving…` : state.step === 2 ? `Save Domains` : state.step === 1 ? `Review Domains` : `Continue`}
-                </Text>
+                  : <Check size={15} color={palette.contrast} {...elementProps(`native-registrar-setup-save-icon`)} />}
+                <Text {...elementProps(`native-registrar-setup-save-text`)} style={styles.primaryText}>{saveLabel}</Text>
               </Pressable>
             </View>
           </View>

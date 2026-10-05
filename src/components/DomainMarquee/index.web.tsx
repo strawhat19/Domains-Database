@@ -58,7 +58,13 @@ const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
                 >
                   {useStackPill && <StackPillShape id={`domain-marquee-pill-shape-${suffix}`} />}
                   {item.domain ? (
-                    <DomainSiteIcon compact size={14} domain={item.domain} id={`domain-marquee-pill-icon-${suffix}`} />
+                    <DomainSiteIcon
+                      compact
+                      size={14}
+                      domain={item.domain}
+                      iconUrl={item.iconUrl}
+                      id={`domain-marquee-pill-icon-${suffix}`}
+                    />
                   ) : (
                     <Icon
                       size={14}

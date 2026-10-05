@@ -5,29 +5,18 @@ import { normalizeDomainName } from '../../shared/domainUtils';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { formatSyncNotice } from '../../shared/registrarSync/messages';
 import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
-import { EMPTY_CONNECTIONS, type ConnectionValues, type ConnectionProvider } from '../../shared/connections/types';
+import { createConnectionDraft } from '../../shared/connections/values';
+import { connectionFields, type AccountConnectionsProps, type ConnectionAccount, type ConnectionProvider } from '../../shared/connections/types';
 
-type ConnectionInput = ConnectionProvider | `godaddyAccountId`;
-const EMPTY_VISIBILITY: Record<ConnectionInput, boolean> = {
-  godaddy: true, porkbun: true, namesilo: true, hostinger: true, namecheap: true, godaddyAccountId: true,
-};
+type ConnectionInput = `values` | `godaddyAccountId`;
 const godaddyAccountLine = /^\s*(?:export\s+)?GODADDY_(?:CUSTOMER|SHOPPER)_ID\s*=/;
+const externalDomainLine = /^\s*(?:export\s+)?HOSTINGER_EXTERNAL_DOMAINS\s*=/;
 const withoutGoDaddyAccountId = (values: string) => values.split(/\r?\n/).filter(line => !godaddyAccountLine.test(line)).join(`\n`);
 const goDaddyAccountId = (values: string) => {
   const line = values.split(/\r?\n/).find(value => godaddyAccountLine.test(value));
   const raw = line?.slice(line.indexOf(`=`) + 1)?.trim() ?? ``;
   return raw.match(/^(['"])([\s\S]*)\1$/)?.[2] ?? raw;
 };
-const visibilityForValues = (values: ConnectionValues): Record<ConnectionInput, boolean> => ({
-  godaddy: !withoutGoDaddyAccountId(values.godaddy).trim(),
-  porkbun: !values.porkbun.trim(),
-  namesilo: !values.namesilo.trim(),
-  hostinger: !values.hostinger.trim(),
-  namecheap: !values.namecheap.trim(),
-  godaddyAccountId: !goDaddyAccountId(values.godaddy),
-});
-
-const externalDomainLine = /^\s*(?:export\s+)?HOSTINGER_EXTERNAL_DOMAINS\s*=/;
 const externalDomains = (values: string) => {
   const line = values.split(/\r?\n/).find(value => externalDomainLine.test(value));
   const raw = line?.slice(line.indexOf(`=`) + 1)?.trim() ?? ``;
@@ -40,14 +29,19 @@ const includeExternalDomain = (values: string, name: string) => {
   const lines = values.split(/\r?\n/).filter(line => !externalDomainLine.test(line));
   return [...lines, `HOSTINGER_EXTERNAL_DOMAINS=${names.join(`,`)}`].filter(Boolean).join(`\n`);
 };
+const withDrafts = (accounts: readonly ConnectionAccount[]) => [
+  ...accounts,
+  ...connectionFields.filter(field => !accounts.some(account => account.provider === field.id)).map(field => createConnectionDraft(field.id)),
+];
 const syncNotice = (label: string, result: ConnectionSyncResult) =>
   formatSyncNotice(result, `${label}${result.errors.length ? ` — Sync Finished With Errors` : ``}`);
 
-export const useAccountConnections = () => {
+export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProps, `providers`> = {}) => {
   const { user, loginRevision } = useAuth();
-  const { syncing, syncConnections, connectionStatuses, resetConnectionSync } = useDomains();
+  const { syncing, syncConnections, accountStatuses, resetConnectionSync } = useDomains();
   const actorKey = `${user?.id ?? `guest`}:${loginRevision}`;
   const mounted = useRef(true);
+  const dirty = useRef(false);
   const revision = useRef(0);
   const operationBusy = useRef(false);
   const currentActor = useRef(actorKey);
@@ -56,41 +50,46 @@ export const useAccountConnections = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(``);
   const [notice, setNotice] = useState(``);
-  const [hasSyncedDomains, setHasSyncedDomains] = useState(false);
-  const [visibility, setVisibility] = useState({ ...EMPTY_VISIBILITY });
+  const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [viewActor, setViewActor] = useState(actorKey);
-  const [includingName, setIncludingName] = useState(``);
-  const [confirmedNames, setConfirmedNames] = useState<string[]>([]);
-  const [values, setValues] = useState({ ...EMPTY_CONNECTIONS });
+  const [includingKey, setIncludingKey] = useState(``);
+  const [hasSyncedDomains, setHasSyncedDomains] = useState(false);
+  const [accounts, setAccounts] = useState<ConnectionAccount[]>([]);
   const isCurrent = (operation?: number) => mounted.current && currentActor.current === actorKey
     && (operation === undefined || operation === revision.current);
   useEffect(() => {
     mounted.current = true;
+    dirty.current = false;
     operationBusy.current = false;
-    const operation = ++revision.current;
+    ++revision.current;
     const userId = user?.id;
     setBusy(false);
     setLoading(true);
     setViewActor(actorKey);
-    setValues({ ...EMPTY_CONNECTIONS });
-    setConfirmedNames([]);
-    setIncludingName(``);
+    setAccounts([]);
+    setIncludingKey(``);
     setError(``);
     setNotice(``);
+    setVisibility({});
     setHasSyncedDomains(false);
-    setVisibility({ ...EMPTY_VISIBILITY });
-    if (!userId) setLoading(false);
-    else connectionsAPI.getConnections(userId).then(snapshot => {
-      if (!isCurrent(operation) || snapshot.userId !== userId) return;
-      setValues(snapshot.values);
-      setConfirmedNames(externalDomains(snapshot.values.hostinger));
-      setVisibility(visibilityForValues(snapshot.values));
+    const load = () => {
+      const operation = revision.current;
+      return connectionsAPI.getConnections(userId).then(snapshot => {
+      if (!isCurrent(operation) || snapshot.userId !== userId || dirty.current || operationBusy.current) return;
+      setAccounts(withDrafts(snapshot.accounts));
+      setVisibility({});
     }).catch(() => { if (isCurrent(operation)) setError(`Could Not Load Connections`); })
       .finally(() => { if (isCurrent(operation)) setLoading(false); });
-    return () => { mounted.current = false; ++revision.current; operationBusy.current = false; };
+    };
+    if (!userId) setLoading(false);
+    else void load();
+    const unsubscribe = connectionsAPI.subscribeConnections(changedUserId => {
+      if (changedUserId === userId && !dirty.current && !operationBusy.current) void load();
+    });
+    return () => { mounted.current = false; ++revision.current; operationBusy.current = false; unsubscribe(); };
   }, [actorKey]);
   const beginOperation = () => {
-    if (!user?.id || !isCurrent() || operationBusy.current || loading) return;
+    if (!user?.id || !isCurrent() || operationBusy.current || loading || syncing) return;
     operationBusy.current = true;
     const operation = ++revision.current;
     setBusy(true);
@@ -102,44 +101,63 @@ export const useAccountConnections = () => {
   const finishOperation = (operation: number) => {
     if (!isCurrent(operation)) return;
     operationBusy.current = false;
-    setIncludingName(``);
+    setIncludingKey(``);
     setBusy(false);
   };
-  const change = (provider: ConnectionProvider, value: string) => {
-    if (!isCurrent() || operationBusy.current) return;
+  const editAccount = (id: string, change: (account: ConnectionAccount) => ConnectionAccount) => {
+    if (!isCurrent() || operationBusy.current || loading || syncing) return;
+    dirty.current = true;
     setError(``);
     setNotice(``);
     setHasSyncedDomains(false);
-    setValues(current => {
-      const accountLines = provider === `godaddy` && !value.split(/\r?\n/).some(line => godaddyAccountLine.test(line))
-        ? current.godaddy.split(/\r?\n/).filter(line => godaddyAccountLine.test(line)) : [];
-      return { ...current, [provider]: accountLines.length ? [value, ...accountLines].filter(Boolean).join(`\n`) : value };
-    });
+    setAccounts(current => current.map(account => account.id === id ? change(account) : account));
   };
-  const changeGodaddyAccountId = (value: string) => {
-    if (!isCurrent() || operationBusy.current) return;
-    setHasSyncedDomains(false);
+  const change = (id: string, value: string) => editAccount(id, account => {
+    const accountLines = account.provider === `godaddy` && !value.split(/\r?\n/).some(line => godaddyAccountLine.test(line))
+      ? account.values.split(/\r?\n/).filter(line => godaddyAccountLine.test(line)) : [];
+    return { ...account, values: accountLines.length ? [value, ...accountLines].filter(Boolean).join(`\n`) : value };
+  });
+  const changeGodaddyAccountId = (id: string, value: string) => {
     if (/[\r\n\u0000]/.test(value)) { setError(`Enter A Customer UUID Or Numeric Shopper ID`); return; }
-    setError(``);
-    setNotice(``);
     const accountId = value.trim();
     const key = /^\d+$/.test(accountId) ? `GODADDY_SHOPPER_ID` : `GODADDY_CUSTOMER_ID`;
-    setValues(current => ({
-      ...current,
-      godaddy: [withoutGoDaddyAccountId(current.godaddy).trimEnd(), accountId ? `${key}=${accountId}` : ``].filter(Boolean).join(`\n`),
+    editAccount(id, account => ({
+      ...account, values: [withoutGoDaddyAccountId(account.values).trimEnd(), accountId ? `${key}=${accountId}` : ``].filter(Boolean).join(`\n`),
     }));
   };
-  const save = async () => {
+  const add = (provider: ConnectionProvider) => {
+    if (!isCurrent() || operationBusy.current || loading || syncing) return;
+    dirty.current = true;
+    setAccounts(current => [...current, createConnectionDraft(provider)]);
+    setError(``);
+    setNotice(``);
+  };
+  const save = async (accountId?: string) => {
     const request = beginOperation();
     if (!request) return;
     const { operation, userId } = request;
     try {
-      const snapshot = await connectionsAPI.saveConnections(values, userId);
+      const latest = await connectionsAPI.getConnections(userId);
+      if (!isCurrent(operation)) return;
+      const selected = accounts.filter(account => accountId ? account.id === accountId : !providers || providers.includes(account.provider));
+      if (accountId && !selected[0]?.values.trim()) throw new Error(`Enter Connection Values Before Saving`);
+      const payload = accountId
+        ? [...latest.accounts.filter(account => account.id !== accountId), ...selected]
+        : [...latest.accounts.filter(account => providers && !providers.includes(account.provider)), ...selected];
+      const snapshot = await connectionsAPI.saveConnections(payload, userId);
       if (!isCurrent(operation) || snapshot.userId !== userId) return;
-      setValues(snapshot.values);
-      setConfirmedNames(externalDomains(snapshot.values.hostinger));
+      const savedAccount = accountId ? snapshot.accounts.find(account => account.id === accountId) ?? snapshot.accounts.at(-1) : undefined;
+      if (accountId && savedAccount) {
+        dirty.current = accounts.some(account => account.id !== accountId && !!account.values.trim()
+          && snapshot.accounts.find(value => value.id === account.id)?.values !== account.values);
+        setAccounts(current => current.map(account => account.id === accountId ? savedAccount : account));
+      } else {
+        setAccounts(withDrafts(snapshot.accounts));
+        dirty.current = false;
+      }
+      setVisibility({});
       setNotice(`Connections Saved — Checking Domains…`);
-      const result = await syncConnections(snapshot);
+      const result = await syncConnections(snapshot, savedAccount ? [savedAccount.id] : undefined);
       if (!isCurrent(operation)) return;
       setHasSyncedDomains(result.count > 0);
       setNotice(syncNotice(`Connections Saved`, result));
@@ -148,42 +166,68 @@ export const useAccountConnections = () => {
       if (isCurrent(operation)) setError(failure instanceof Error ? failure.message : `Could Not Save Connections`);
     } finally { finishOperation(operation); }
   };
+  const remove = async (accountId: string) => {
+    const account = accounts.find(value => value.id === accountId);
+    if (!account || !isCurrent() || operationBusy.current || loading || syncing) return;
+    if (!account.number) {
+      setAccounts(current => withDrafts(current.filter(value => value.id !== accountId)));
+      return;
+    }
+    const request = beginOperation();
+    if (!request) return;
+    const { operation, userId } = request;
+    try {
+      const latest = await connectionsAPI.getConnections(userId);
+      if (!isCurrent(operation)) return;
+      await connectionsAPI.saveConnections(latest.accounts.filter(value => value.id !== accountId), userId);
+      if (!isCurrent(operation)) return;
+      resetConnectionSync();
+      setAccounts(current => withDrafts(current.filter(value => value.id !== accountId)));
+      setNotice(`Connection Removed`);
+    } catch (failure) {
+      if (isCurrent(operation)) setError(failure instanceof Error ? failure.message : `Could Not Remove Connection`);
+    } finally { finishOperation(operation); }
+  };
   const clear = async () => {
     const request = beginOperation();
     if (!request) return;
     const { operation, userId } = request;
     try {
-      await connectionsAPI.clearConnections(userId);
+      const latest = await connectionsAPI.getConnections(userId);
+      if (!isCurrent(operation)) return;
+      if (providers) await connectionsAPI.saveConnections(latest.accounts.filter(account => !providers.includes(account.provider)), userId);
+      else await connectionsAPI.clearConnections(userId);
       if (!isCurrent(operation)) return;
       resetConnectionSync();
-      setValues({ ...EMPTY_CONNECTIONS });
-      setConfirmedNames([]);
-      setVisibility({ ...EMPTY_VISIBILITY });
+      setAccounts(current => withDrafts(providers ? current.filter(account => !providers.includes(account.provider)) : []));
+      setVisibility({});
+      dirty.current = false;
       setNotice(`Connections Removed`);
     } catch { if (isCurrent(operation)) setError(`Could Not Remove Connections`); }
     finally { finishOperation(operation); }
   };
-  const includeDomain = async (candidateName: string) => {
-    if (syncing || !connectionStatuses.hostinger.discoveredDomains?.some(domain => domain.name === candidateName)) return;
+  const includeDomain = async (accountId: string, candidateName: string) => {
+    if (!accountStatuses[accountId]?.discoveredDomains?.some(domain => domain.name === candidateName)) return;
     const request = beginOperation();
     if (!request) return;
     const { operation, userId } = request;
     try {
       const name = normalizeDomainName(candidateName);
-      setIncludingName(name);
+      setIncludingKey(`${accountId}:${name}`);
       const latest = await connectionsAPI.getConnections(userId);
       if (!isCurrent(operation) || latest.userId !== userId) return;
-      if (!latest.values.hostinger) throw new Error(`Save Your Hostinger Connection Before Including Domains`);
-      const hostinger = includeExternalDomain(latest.values.hostinger, name);
-      const snapshot = await connectionsAPI.saveConnections({ ...latest.values, hostinger }, userId);
+      const account = latest.accounts.find(value => value.id === accountId && value.provider === `hostinger`);
+      if (!account) throw new Error(`Save Your Hostinger Connection Before Including Domains`);
+      const values = includeExternalDomain(account.values, name);
+      const snapshot = await connectionsAPI.saveConnections(latest.accounts.map(value => value.id === accountId ? { ...value, values } : value), userId);
       if (!isCurrent(operation) || snapshot.userId !== userId) return;
-      setConfirmedNames(externalDomains(snapshot.values.hostinger));
-      setValues(current => {
-        try { return { ...current, hostinger: includeExternalDomain(current.hostinger, name) }; }
-        catch { return current; }
-      });
+      setAccounts(current => current.map(value => {
+        if (value.id !== accountId) return value;
+        try { return { ...value, values: includeExternalDomain(value.values, name) }; }
+        catch { return value; }
+      }));
       setNotice(`Ownership Confirmed — Checking Domains…`);
-      const result = await syncConnections(snapshot);
+      const result = await syncConnections(snapshot, [accountId]);
       if (!isCurrent(operation)) return;
       setHasSyncedDomains(result.count > 0);
       setNotice(syncNotice(`Ownership Confirmed`, result));
@@ -194,23 +238,23 @@ export const useAccountConnections = () => {
   };
   const dismiss = () => { setError(``); setNotice(``); setHasSyncedDomains(false); };
   const currentView = viewActor === actorKey;
-  const currentValues = currentView ? values : { ...EMPTY_CONNECTIONS };
-  const godaddyAccountId = goDaddyAccountId(currentValues.godaddy);
-  const inputValues = { ...currentValues, godaddy: withoutGoDaddyAccountId(currentValues.godaddy) };
-  const inputValue = (field: ConnectionInput) => field === `godaddyAccountId` ? godaddyAccountId : inputValues[field];
-  const isVisible = (field: ConnectionInput) => currentView && (!inputValue(field).trim() || visibility[field]);
-  const toggleVisibility = (field: ConnectionInput) => {
-    if (!isCurrent() || operationBusy.current || loading || !inputValue(field).trim()) return;
-    setVisibility(current => ({ ...current, [field]: !current[field] }));
+  const inputValue = (account: ConnectionAccount, field: ConnectionInput = `values`) => field === `godaddyAccountId`
+    ? goDaddyAccountId(account.values) : account.provider === `godaddy` ? withoutGoDaddyAccountId(account.values) : account.values;
+  const isVisible = (account: ConnectionAccount, field: ConnectionInput = `values`) => currentView
+    && (!inputValue(account, field).trim() || (visibility[`${account.id}:${field}`] ?? !account.number));
+  const toggleVisibility = (account: ConnectionAccount, field: ConnectionInput = `values`) => {
+    if (!isCurrent() || operationBusy.current || loading || syncing || !inputValue(account, field).trim()) return;
+    setVisibility(current => ({ ...current, [`${account.id}:${field}`]: !isVisible(account, field) }));
   };
-  const discoveredDomains = currentView ? (connectionStatuses.hostinger.discoveredDomains ?? [])
-    .filter(domain => !confirmedNames.includes(domain.name.toLowerCase())) : [];
+  const discoveredDomains = (account: ConnectionAccount) => currentView ? (accountStatuses[account.id]?.discoveredDomains ?? [])
+    .filter(domain => !externalDomains(account.values).includes(domain.name.toLowerCase())) : [];
   return {
-    save, clear, change, dismiss, syncing, isVisible, inputValues, includeDomain, toggleVisibility,
-    godaddyAccountId, changeGodaddyAccountId, connectionStatuses, discoveredDomains,
+    add, save, clear, change, remove, dismiss, syncing, isVisible, inputValue, includeDomain, toggleVisibility,
+    changeGodaddyAccountId, accountStatuses, discoveredDomains,
+    signedIn: !!user?.id,
     busy: currentView && busy, loading: !currentView || loading,
     showDomainsLink: currentView && !busy && hasSyncedDomains,
-    error: currentView ? error : ``, notice: currentView ? notice : ``, includingName: currentView ? includingName : ``,
-    values: currentValues,
+    error: currentView ? error : ``, notice: currentView ? notice : ``, includingKey: currentView ? includingKey : ``,
+    accounts: currentView ? accounts.filter(account => !providers || providers.includes(account.provider)) : [],
   };
 };

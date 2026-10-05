@@ -28,3 +28,16 @@
   :is(.connection-reveal, [data-class='connection-reveal']), :is(.hosted-domain-include, [data-class='hosted-domain-include']), :is(.connections-view-domains, [data-class='connections-view-domains']) { transition: none; }
   :is(.connections-sync-spinner, [data-class='connections-sync-spinner'], .connections-save-spinner, [data-class='connections-save-spinner']) > div { animation: none !important; }
 }
+
+:is(.connection-add, [data-class='connection-add']), :is(.connection-save, [data-class='connection-save']), :is(.connection-remove, [data-class='connection-remove']) { transition: background-color .22s ease, border-color .22s ease, opacity .22s ease; }
+:is(.connection-add, [data-class='connection-add']):not([aria-disabled='true']):hover { border-color: var(--accent) !important; }
+:is(.connection-save, [data-class='connection-save']):not([aria-disabled='true']):hover { filter: brightness(1.06); }
+:is(.connection-remove, [data-class='connection-remove']):not([aria-disabled='true']):hover { background: var(--danger-bg) !important; }
+:is(.connection-add, [data-class='connection-add']), :is(.connection-save, [data-class='connection-save']), :is(.connection-remove, [data-class='connection-remove']) { outline-offset: 3px; }
+@media (max-width: 560px) {
+  :is(.connection-account-actions, [data-class='connection-account-actions']) { align-items: stretch !important; flex-direction: column !important; }
+  :is(.connection-save, [data-class='connection-save']), :is(.connection-remove, [data-class='connection-remove']) { justify-content: center !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.connection-add, [data-class='connection-add']), :is(.connection-save, [data-class='connection-save']), :is(.connection-remove, [data-class='connection-remove']) { transition: none; }
+}
