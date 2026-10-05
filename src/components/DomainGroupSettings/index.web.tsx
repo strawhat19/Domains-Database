@@ -1,8 +1,8 @@
 import './styles.scss';
 import '../DomainEditor/styles.scss';
 import { X, Check } from 'lucide-react';
-import { useDomainGroupSettings } from './useDomainGroupSettings';
 import type { CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
+import { CREATE_COLLECTION_OPTION, MAIN_DATABASE_COLLECTION_OPTION, useDomainGroupSettings } from './useDomainGroupSettings';
 
 interface DomainGroupSettingsProps {
   onClose: () => void;
@@ -49,7 +49,7 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
           </button>
         </header>
         <p id={`domain-group-settings-description`} className={`domain-dialog-description`}>
-          {`Give your group a unique name and an optional description.`}
+          {`Give your group a unique name, an optional description, and choose where to keep it.`}
         </p>
         <form noValidate id={`domain-group-settings-form`} className={`domain-group-settings-form`} onSubmit={settings.handleSubmit}>
           <div id={`domain-group-settings-fields`} className={`domain-group-settings-fields`}>
@@ -95,6 +95,93 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
                 {`Up to 280 characters, shown next to the group title.`}
               </p>
             </div>
+            <div id={`domain-group-settings-collection-field`} className={`domain-editor-field`}>
+              <label id={`domain-group-settings-collection-label`} htmlFor={`domain-group-settings-collection`} className={`domain-editor-label`}>
+                {`Save to collection`}
+              </label>
+              <select
+                value={settings.collectionId}
+                ref={settings.collectionSelectRef}
+                id={`domain-group-settings-collection`}
+                aria-invalid={settings.invalidField === `collection` || settings.missingCollection}
+                className={`domain-editor-input domain-editor-select domain-group-settings-collection-select`}
+                onChange={event => settings.setCollectionId(event.target.value)}
+                aria-describedby={`domain-group-settings-collection-help${settings.error ? ` domain-group-settings-error` : ``}`}
+              >
+                <option value={MAIN_DATABASE_COLLECTION_OPTION} id={`domain-group-settings-collection-main`} className={`domain-group-settings-collection-option`}>
+                  {`Main Domains Database`}
+                </option>
+                {settings.collections.map(collection => (
+                  <option
+                    key={collection.id}
+                    value={collection.id}
+                    id={`domain-group-settings-collection-${collection.id}`}
+                    className={`domain-group-settings-collection-option`}
+                  >
+                    {collection.name}
+                  </option>
+                ))}
+                {settings.missingCollection && (
+                  <option disabled value={settings.collectionId} id={`domain-group-settings-collection-unavailable`} className={`domain-group-settings-collection-option`}>
+                    {`Unavailable Collection`}
+                  </option>
+                )}
+                <option value={CREATE_COLLECTION_OPTION} id={`domain-group-settings-collection-create`} className={`domain-group-settings-collection-option`}>
+                  {`Add New Collection…`}
+                </option>
+              </select>
+              <p id={`domain-group-settings-collection-help`} className={`domain-group-settings-help`}>
+                {`The group and its domains appear together in the selected collection.`}
+              </p>
+            </div>
+            {settings.creatingCollection && (
+              <fieldset id={`domain-group-settings-new-collection`} className={`domain-group-settings-new-collection`}>
+                <legend id={`domain-group-settings-new-collection-title`} className={`domain-group-settings-collection-legend`}>
+                  {`New collection`}
+                </legend>
+                <div id={`domain-group-settings-collection-name-field`} className={`domain-editor-field`}>
+                  <label id={`domain-group-settings-collection-name-label`} htmlFor={`domain-group-settings-collection-name`} className={`domain-editor-label`}>
+                    {`Collection title`}
+                  </label>
+                  <input
+                    required
+                    maxLength={80}
+                    autoComplete={`off`}
+                    value={settings.collectionName}
+                    ref={settings.collectionNameInputRef}
+                    id={`domain-group-settings-collection-name`}
+                    placeholder={`e.g. Client portfolio`}
+                    aria-invalid={settings.invalidField === `collectionName`}
+                    className={`domain-editor-input domain-group-settings-collection-name-input`}
+                    onChange={event => settings.setCollectionName(event.target.value)}
+                    aria-describedby={`domain-group-settings-collection-name-help${settings.error ? ` domain-group-settings-error` : ``}`}
+                  />
+                  <p id={`domain-group-settings-collection-name-help`} className={`domain-group-settings-help`}>
+                    {`Collection titles must be unique, regardless of capitalization.`}
+                  </p>
+                </div>
+                <div id={`domain-group-settings-collection-description-field`} className={`domain-editor-field`}>
+                  <label id={`domain-group-settings-collection-description-label`} htmlFor={`domain-group-settings-collection-description`} className={`domain-editor-label`}>
+                    {`Collection description (optional)`}
+                  </label>
+                  <textarea
+                    rows={3}
+                    maxLength={280}
+                    value={settings.collectionDescription}
+                    ref={settings.collectionDescriptionInputRef}
+                    id={`domain-group-settings-collection-description`}
+                    placeholder={`A short note about this collection…`}
+                    aria-invalid={settings.invalidField === `collectionDescription`}
+                    className={`domain-editor-input domain-group-settings-description-input`}
+                    onChange={event => settings.setCollectionDescription(event.target.value)}
+                    aria-describedby={`domain-group-settings-collection-description-help${settings.error ? ` domain-group-settings-error` : ``}`}
+                  />
+                  <p id={`domain-group-settings-collection-description-help`} className={`domain-group-settings-help`}>
+                    {`Up to 280 characters, shown next to the collection title.`}
+                  </p>
+                </div>
+              </fieldset>
+            )}
           </div>
           {settings.error && (
             <p role={`alert`} id={`domain-group-settings-error`} className={`domain-dialog-error`}>

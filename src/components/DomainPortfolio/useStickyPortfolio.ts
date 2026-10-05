@@ -36,9 +36,23 @@ export const useStickyPortfolio = (columnKey: string) => {
     const table = tableRef.current;
     const scroll = scrollRef.current;
     const toolbar = toolbarRef.current;
-    if (!head || !table || !scroll || !toolbar) {
+    if (!toolbar) {
       setHeader(current => sameHeader(current, INITIAL_HEADER) ? current : INITIAL_HEADER);
       return;
+    }
+    if (!head || !table || !scroll) {
+      const measureToolbar = () => {
+        const next = { ...INITIAL_HEADER, toolbarHeight: toolbar.getBoundingClientRect().height };
+        setHeader(current => sameHeader(current, next) ? current : next);
+      };
+      const observer = typeof ResizeObserver === `undefined` ? null : new ResizeObserver(measureToolbar);
+      observer?.observe(toolbar);
+      window.addEventListener(`resize`, measureToolbar, { passive: true });
+      measureToolbar();
+      return () => {
+        observer?.disconnect();
+        window.removeEventListener(`resize`, measureToolbar);
+      };
     }
 
     let mounted = true;

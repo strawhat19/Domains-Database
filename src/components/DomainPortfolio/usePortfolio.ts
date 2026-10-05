@@ -6,6 +6,7 @@ import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
+import { sortPortfolioDomains } from '../../shared/portfolioPreferences/groups';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnValue, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 export type SortField = PortfolioColumn;
@@ -42,20 +43,7 @@ export const usePortfolio = () => {
   const importInputRef = useRef<HTMLInputElement>(null);
   const closeDelete = () => { if (!pendingId) setDeletingDomain(null); };
   useModalFocus(deleteModalRef, Boolean(deletingDomain), closeDelete);
-  const sortedDomains = useMemo(() => (
-    [...data.domains].sort((first, second) => {
-      const firstValue = getPortfolioColumnValue(first, sortField ?? `name`);
-      const secondValue = getPortfolioColumnValue(second, sortField ?? `name`);
-      const firstMissing = firstValue === undefined || firstValue === `` || (Array.isArray(firstValue) && !firstValue.length);
-      const secondMissing = secondValue === undefined || secondValue === `` || (Array.isArray(secondValue) && !secondValue.length);
-      if (firstMissing || secondMissing) return Number(firstMissing) - Number(secondMissing);
-      const comparison = (typeof firstValue === `number` || typeof firstValue === `boolean`)
-        && (typeof secondValue === `number` || typeof secondValue === `boolean`)
-        ? Number(firstValue) - Number(secondValue)
-        : String(firstValue).localeCompare(String(secondValue), undefined, { numeric: true, sensitivity: `base` });
-      return !sortField || sortDirection === `asc` ? comparison : -comparison;
-    })
-  ), [data.domains, sortField, sortDirection]);
+  const sortedDomains = useMemo(() => sortPortfolioDomains(data.domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [data.domains, sortField, sortDirection]);
   const filteredDomains = useMemo(() => {
     const search = query.trim().toLowerCase();
     return sortedDomains.filter(domain => {

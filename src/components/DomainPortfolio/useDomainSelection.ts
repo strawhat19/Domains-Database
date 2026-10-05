@@ -40,11 +40,12 @@ export const useDomainSelection = (domains: DomainRecord[], visibleIds: string[]
     });
   };
 
-  const selectAll = (checked: boolean) => {
+  const selectMany = (ids: string[], checked: boolean) => {
     selectionAnchor.current = null;
     setSelectedIds(current => {
       const next = new Set(current);
-      visibleIds.forEach(id => {
+      ids.forEach(id => {
+        if (!availableIds.has(id)) return;
         if (checked) next.add(id);
         else next.delete(id);
       });
@@ -52,10 +53,13 @@ export const useDomainSelection = (domains: DomainRecord[], visibleIds: string[]
     });
   };
 
+  const selectAll = (checked: boolean) => selectMany(visibleIds, checked);
+
   const visibleSelectedCount = visibleIds.filter(id => selectedIds.has(id)).length;
   return {
     select,
     selectAll,
+    selectMany,
     selectedIds,
     clearSelection,
     visibleSelectedCount,

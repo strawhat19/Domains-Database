@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
+import { GROUP_DRAG_TYPE, DOMAIN_DRAG_TYPE, readDomainDrag } from './dragData';
 import type { PortfolioGroup } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
@@ -7,6 +8,7 @@ interface DomainReorderOptions {
   groupEnabled?: boolean;
   selectedIds?: Set<string>;
   onGrouped?: () => void;
+  availableIds?: string[];
 }
 
 type DragSource = {
@@ -22,7 +24,7 @@ type DragSource = {
 export const useDomainReorder = (
   groups: PortfolioGroup[],
   enabled: boolean,
-  { groupEnabled = false, selectedIds, onGrouped }: DomainReorderOptions = {},
+  { groupEnabled = false, selectedIds, onGrouped, availableIds }: DomainReorderOptions = {},
 ) => {
   const preferences = usePortfolioPreferences();
   const source = useRef<DragSource | null>(null);
@@ -55,11 +57,12 @@ export const useDomainReorder = (
       onDragStart: (event: DragEvent<HTMLElement>) => {
         if (!enabled && !groupEnabled) { event.preventDefault(); return; }
         const domainIds = selectedIds?.has(domainId)
-          ? groups.flatMap(group => group.domains).filter(domain => selectedIds?.has(domain.id)).map(domain => domain.id)
+          ? (availableIds ?? groups.flatMap(group => group.domains).map(domain => domain.id)).filter(id => selectedIds?.has(id))
           : [domainId];
         source.current = { groupKey, domainId, domainIds, kind: `domain` };
         event.dataTransfer.effectAllowed = `move`;
         event.dataTransfer.setData(`text/plain`, domainId);
+        event.dataTransfer.setData(DOMAIN_DRAG_TYPE, JSON.stringify({ groupKey, domainId, domainIds }));
         setDraggingId(domainId);
         setDraggingGroupId(``);
       },
@@ -87,21 +90,24 @@ export const useDomainReorder = (
   };
 
   const groupMoves = (groupId: string) => {
-    const index = preferences.customGroups.findIndex(group => group.id === groupId);
+    const groupIds = groups.flatMap(group => group.customGroupId ? [group.customGroupId] : []);
+    const index = groupIds.indexOf(groupId);
     return {
       onMoveUp: groupEnabled && index > 0
-        ? () => preferences.moveGroup(groupId, preferences.customGroups[index - 1].id) : undefined,
-      onMoveDown: groupEnabled && index >= 0 && index < preferences.customGroups.length - 1
-        ? () => preferences.moveGroup(groupId, preferences.customGroups[index + 1].id, `after`) : undefined,
+        ? () => preferences.moveGroup(groupId, groupIds[index - 1]) : undefined,
+      onMoveDown: groupEnabled && index >= 0 && index < groupIds.length - 1
+        ? () => preferences.moveGroup(groupId, groupIds[index + 1], `after`) : undefined,
     };
   };
 
   const groupHandlers = (group: PortfolioGroup) => {
-    const canDrop = () => {
+    const canDrop = (transfer: DataTransfer) => {
       const current = source.current;
-      if (!groupEnabled || !current) return false;
-      if (current.kind === `group`) return Boolean(group.customGroupId && group.customGroupId !== current.groupId);
-      return Boolean(group.customGroupId || group.key === `custom:ungrouped`);
+      if (!groupEnabled) return false;
+      if (transfer.types.includes(GROUP_DRAG_TYPE)) {
+        return Boolean(group.customGroupId && (current?.kind !== `group` || group.customGroupId !== current.groupId));
+      }
+      return transfer.types.includes(DOMAIN_DRAG_TYPE) && Boolean(group.customGroupId || group.key === `custom:ungrouped`);
     };
     return {
       draggable: groupEnabled && Boolean(group.customGroupId),
@@ -111,13 +117,13 @@ export const useDomainReorder = (
         event.stopPropagation();
         source.current = { kind: `group`, groupId: group.customGroupId };
         event.dataTransfer.effectAllowed = `move`;
-        event.dataTransfer.setData(`application/x-domains-database-group`, group.customGroupId);
+        event.dataTransfer.setData(GROUP_DRAG_TYPE, group.customGroupId);
         event.dataTransfer.setData(`text/plain`, group.customGroupId);
         setDraggingId(``);
         setDraggingGroupId(group.customGroupId);
       },
       onDragOver: (event: DragEvent<HTMLElement>) => {
-        if (!canDrop()) return;
+        if (!canDrop(event.dataTransfer)) return;
         event.preventDefault();
         event.stopPropagation();
         event.dataTransfer.dropEffect = `move`;
@@ -129,18 +135,19 @@ export const useDomainReorder = (
         setTargetGroupKey(current => current === group.key ? `` : current);
       },
       onDrop: (event: DragEvent<HTMLElement>) => {
-        if (!canDrop()) return;
+        if (!canDrop(event.dataTransfer)) return;
         event.preventDefault();
         event.stopPropagation();
-        const current = source.current;
-        if (current?.kind === `group` && group.customGroupId) {
+        const groupId = event.dataTransfer.getData(GROUP_DRAG_TYPE);
+        const domain = readDomainDrag(event.dataTransfer);
+        if (groupId && group.customGroupId && preferences.customGroups.some(item => item.id === groupId)) {
           const bounds = event.currentTarget.getBoundingClientRect();
           const placement = event.clientY > bounds.top + bounds.height / 2 ? `after` : `before`;
-          preferences.moveGroup(current.groupId, group.customGroupId, placement);
-        } else if (current?.kind === `domain`) {
-          const availableIds = new Set(groups.flatMap(item => item.domains).map(domain => domain.id));
-          if (current.domainIds.every(id => availableIds.has(id))
-            && preferences.assignDomains(current.domainIds, group.customGroupId ?? null)) onGrouped?.();
+          preferences.moveGroup(groupId, group.customGroupId, placement);
+        } else if (domain) {
+          const available = new Set(availableIds ?? groups.flatMap(item => item.domains).map(record => record.id));
+          if (domain.domainIds.every(id => available.has(id))
+            && preferences.assignDomains(domain.domainIds, group.customGroupId ?? null)) onGrouped?.();
         }
         clear();
       },

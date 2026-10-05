@@ -11,10 +11,12 @@ import { REGISTRARS, useSampleData } from '../../shared/config';
 import { formatCurrency } from '../../shared/domainUtils';
 import GroupControls from '../GroupControls/index.web';
 import PortfolioRecords from '../PortfolioRecords/index.web';
+import PortfolioCollection from '../PortfolioCollection/index.web';
 import PortfolioSelection from '../PortfolioSelection/index.web';
 import { usePortfolio } from './usePortfolio';
 import { useDomainSelection } from './useDomainSelection';
-import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
+import { useCollectionReorder } from './useCollectionReorder';
+import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { useStickyPortfolio } from './useStickyPortfolio';
 import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDown, FlaskConical, ShieldCheck, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw } from 'lucide-react';
@@ -25,19 +27,26 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const { user } = useAuth();
   const { visibleColumns, toggleColumn, resetColumns } = useColumns();
   const preferences = usePortfolioPreferences();
-  const tableVisible = preferences.view === `table` || (!portfolio.loading && !portfolio.filteredDomains.length);
+  const sections = useMemo(() => buildPortfolioSections(portfolio.filteredDomains, preferences), [portfolio.filteredDomains, preferences]);
+  const mainGroups = useMemo(() => portfolio.sortField
+    ? buildPortfolioSections(portfolio.filteredDomains, { ...preferences, orders: {} }).mainGroups
+    : sections.mainGroups, [portfolio.filteredDomains, portfolio.sortField, preferences, sections.mainGroups]);
+  const tableVisible = preferences.view === `table` || (!portfolio.loading && !sections.mainDomains.length);
   const sticky = useStickyPortfolio(`${preferences.view}|${tableVisible}|${visibleColumns.join(`|`)}`);
   const columns = PORTFOLIO_COLUMNS.filter(column => visibleColumns.includes(column.field));
   const columnCounts = useMemo(() => getPortfolioColumnCounts(portfolio.domains), [portfolio.domains]);
   const showAnnualSpend = columns.some(column => column.price);
   const showMonthlySpend = visibleColumns.includes(`monthlyCost`);
+  const mainVisibleIds = useMemo(() => {
+    const domains = mainGroups.flatMap(group => group.domains);
+    return (compact ? domains.slice(0, 4) : domains).map(domain => domain.id);
+  }, [mainGroups, compact]);
   const visibleIds = useMemo(() => {
-    const ordered = buildPortfolioGroups(portfolio.filteredDomains, portfolio.sortField
-      ? { ...preferences, orders: {} }
-      : preferences).flatMap(group => group.domains);
-    return (compact ? ordered.slice(0, 4) : ordered).map(domain => domain.id);
-  }, [portfolio.filteredDomains, preferences, compact, portfolio.sortField]);
+    return [...sections.collections.flatMap(section => section.domains.map(domain => domain.id)), ...mainVisibleIds];
+  }, [sections.collections, mainVisibleIds]);
   const selection = useDomainSelection(portfolio.domains, visibleIds);
+  const collectionReorder = useCollectionReorder(!portfolio.loading && !portfolio.pendingId);
+  const mainHandlers = collectionReorder.handlers(null);
   const ViewIcon = preferences.view === `table` ? LayoutGrid : List;
   const manualSyncBlocked = portfolio.loading || portfolio.syncing || portfolio.manualSyncWaitSeconds > 0;
   const manualSyncLabel = portfolio.syncing ? `Syncing…` : portfolio.manualSyncWaitSeconds > 0
@@ -52,6 +61,31 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     void portfolio.refreshWebsiteInsights(records);
   };
   const hasFilters = portfolio.domains.length > 0 && Boolean(portfolio.query || portfolio.registrarFilter !== `All Registrars`);
+  const selectionFor = (ids: string[]) => {
+    const count = ids.filter(id => selection.selectedIds.has(id)).length;
+    return {
+      onSelectAll: (checked: boolean) => selection.selectMany(ids, checked),
+      allSelected: ids.length > 0 && count === ids.length,
+      someSelected: count > 0 && count < ids.length,
+    };
+  };
+  const recordProps = {
+    hasFilters,
+    visibleColumns,
+    onSelect: selection.select,
+    onEdit: portfolio.openEditor,
+    loading: portfolio.loading,
+    onDelete: portfolio.requestDelete,
+    allDomains: portfolio.sortedDomains,
+    selectedIds: selection.selectedIds,
+    onGrouped: selection.clearSelection,
+    busy: Boolean(portfolio.pendingId),
+    onToggleAutoRenew: portfolio.toggleAutoRenew,
+    onEmptyAction: () => {
+      if (!hasFilters) portfolio.openSetup();
+      else { portfolio.setQuery(``); portfolio.setRegistrarFilter(`All Registrars`); }
+    },
+  };
   return (
     <section
       id={`domain-portfolio`}
@@ -332,6 +366,35 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </span>
           </button>
         </div>
+        {sections.collections.map(section => (
+          <PortfolioCollection
+            {...recordProps}
+            key={section.collection.id}
+            domains={section.domains}
+            collection={section.collection}
+            {...collectionReorder.moves(section.collection.id)}
+            {...collectionReorder.handlers(section.collection.id)}
+            globalToolbarHeight={sticky.header.toolbarHeight}
+            {...selectionFor(section.domains.map(domain => domain.id))}
+          />
+        ))}
+        {sections.collections.length > 0 && (
+          <div
+            onDrop={mainHandlers.onDrop}
+            onDragOver={mainHandlers.onDragOver}
+            onDragLeave={mainHandlers.onDragLeave}
+            id={`portfolio-main-database-heading`}
+            aria-describedby={`portfolio-main-database-help`}
+            className={`portfolio-main-database-heading${mainHandlers.dropTarget ? ` portfolio-main-database-drop-target` : ``}`}
+          >
+            <h3 id={`portfolio-main-database-title`} className={`portfolio-main-database-title`}>
+              {`Domains Database`}
+            </h3>
+            <p id={`portfolio-main-database-help`} className={`portfolio-main-database-help`}>
+              {`Drop a group here to move it back to the main database`}
+            </p>
+          </div>
+        )}
         <div id={`portfolio-scroll-hint`} className={`portfolio-scroll-hint${preferences.view === `grid` ? ` portfolio-scroll-hint-hidden` : ``}`}>
           <span id={`portfolio-scroll-hint-text`} className={`portfolio-scroll-hint-text`}>
             {`Scroll to see all columns`}
@@ -339,30 +402,14 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           <ArrowRight size={13} aria-hidden={`true`} id={`portfolio-scroll-hint-icon`} className={`portfolio-scroll-hint-icon`} />
         </div>
         <PortfolioRecords
+          {...recordProps}
           sticky={sticky}
           compact={compact}
-          loading={portfolio.loading}
-          hasFilters={hasFilters}
-          onEdit={portfolio.openEditor}
-          onDelete={portfolio.requestDelete}
-          domains={portfolio.filteredDomains}
-          allDomains={portfolio.sortedDomains}
+          domains={sections.mainDomains}
+          {...selectionFor(mainVisibleIds)}
           sortField={portfolio.sortField}
-          selectedIds={selection.selectedIds}
-          allSelected={selection.allSelected}
-          someSelected={selection.someSelected}
-          onSelect={selection.select}
-          onSelectAll={selection.selectAll}
-          onGrouped={selection.clearSelection}
-          visibleColumns={visibleColumns}
           sortDirection={portfolio.sortDirection}
-          busy={Boolean(portfolio.pendingId)}
-          onToggleAutoRenew={portfolio.toggleAutoRenew}
           onSort={portfolio.changeSort}
-          onEmptyAction={() => {
-            if (!hasFilters) portfolio.openSetup();
-            else { portfolio.setQuery(``); portfolio.setRegistrarFilter(`All Registrars`); }
-          }}
         />
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
           <div id={`portfolio-storage-meta`} className={`portfolio-storage-meta`}>

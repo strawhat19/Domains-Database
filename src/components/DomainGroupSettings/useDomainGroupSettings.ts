@@ -4,17 +4,31 @@ import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import type { CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
+export const MAIN_DATABASE_COLLECTION_OPTION = `main`;
+export const CREATE_COLLECTION_OPTION = `create`;
+
 export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () => void) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
+  const [collectionName, setCollectionNameValue] = useState(``);
   const [name, setNameValue] = useState(group.name);
-  const [invalidField, setInvalidField] = useState<`name` | `description` | null>(null);
+  const [collectionDescription, setCollectionDescriptionValue] = useState(``);
   const [description, setDescriptionValue] = useState(group.description ?? ``);
+  const [collectionId, setCollectionIdValue] = useState(group.collectionId ?? MAIN_DATABASE_COLLECTION_OPTION);
+  const [invalidField, setInvalidField] = useState<`name` | `description` | `collection` | `collectionName` | `collectionDescription` | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const collectionSelectRef = useRef<HTMLSelectElement>(null);
+  const collectionNameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  const collectionDescriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  const creatingCollection = collectionId === CREATE_COLLECTION_OPTION;
   const missingGroup = !preferences.customGroups.some(current => current.id === group.id);
-  const availabilityError = missingGroup ? `This Group Is No Longer Available` : ``;
+  const missingCollection = collectionId !== MAIN_DATABASE_COLLECTION_OPTION && !creatingCollection
+    && !preferences.collections.some(collection => collection.id === collectionId);
+  const availabilityError = missingGroup
+    ? `This Group Is No Longer Available`
+    : missingCollection ? `This Collection Is No Longer Available. Choose Another Collection` : ``;
 
   useModalFocus(modalRef, true, onClose);
 
@@ -30,20 +44,37 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     };
   }, []);
 
-  const setName = (value: string) => {
+  useEffect(() => {
+    if (creatingCollection) collectionNameInputRef.current?.focus();
+  }, [creatingCollection]);
+
+  const clearError = () => {
     setError(``);
     setInvalidField(null);
+  };
+  const setName = (value: string) => {
+    clearError();
     setNameValue(value);
   };
   const setDescription = (value: string) => {
-    setError(``);
-    setInvalidField(null);
+    clearError();
     setDescriptionValue(value);
+  };
+  const setCollectionId = (value: string) => {
+    clearError();
+    setCollectionIdValue(value);
+  };
+  const setCollectionName = (value: string) => {
+    clearError();
+    setCollectionNameValue(value);
+  };
+  const setCollectionDescription = (value: string) => {
+    clearError();
+    setCollectionDescriptionValue(value);
   };
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(``);
-    setInvalidField(null);
+    clearError();
     if (missingGroup) {
       setError(availabilityError);
       return;
@@ -67,7 +98,35 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
       descriptionInputRef.current?.focus();
       return;
     }
-    if (!preferences.updateGroup(group.id, trimmedName, trimmedDescription)) {
+    if (missingCollection) {
+      setInvalidField(`collection`);
+      setError(availabilityError);
+      collectionSelectRef.current?.focus();
+      return;
+    }
+    const trimmedCollectionName = collectionName.trim();
+    const trimmedCollectionDescription = collectionDescription.trim();
+    if (creatingCollection) {
+      const duplicateCollectionName = preferences.collections.some(collection => collection.name.trim().toLowerCase() === trimmedCollectionName.toLowerCase());
+      if (!trimmedCollectionName || trimmedCollectionName.length > 80 || duplicateCollectionName) {
+        setInvalidField(`collectionName`);
+        setError(duplicateCollectionName ? `A Collection With This Title Already Exists` : `Enter A Collection Title Between 1 And 80 Characters`);
+        collectionNameInputRef.current?.focus();
+        return;
+      }
+      if (trimmedCollectionDescription.length > 280) {
+        setInvalidField(`collectionDescription`);
+        setError(`Keep The Collection Description Within 280 Characters`);
+        collectionDescriptionInputRef.current?.focus();
+        return;
+      }
+    }
+    if (!preferences.saveGroupSettings(group.id, {
+      name: trimmedName,
+      description: trimmedDescription,
+      collectionId: creatingCollection || collectionId === MAIN_DATABASE_COLLECTION_OPTION ? null : collectionId,
+      ...(creatingCollection ? { newCollection: { name: trimmedCollectionName, description: trimmedCollectionDescription } } : {}),
+    })) {
       setError(`Could Not Save Group. Try Again Shortly`);
       return;
     }
@@ -78,12 +137,24 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     name,
     setName,
     modalRef,
+    collectionId,
     description,
     invalidField,
     nameInputRef,
     handleSubmit,
+    collectionName,
     setDescription,
+    setCollectionId,
+    missingCollection,
+    setCollectionName,
+    creatingCollection,
+    collectionSelectRef,
+    collectionDescription,
+    collectionNameInputRef,
     descriptionInputRef,
+    setCollectionDescription,
+    collectionDescriptionInputRef,
+    collections: preferences.collections,
     error: error || availabilityError,
   };
 };

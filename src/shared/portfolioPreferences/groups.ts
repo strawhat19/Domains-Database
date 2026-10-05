@@ -1,5 +1,6 @@
 import type { DomainRecord } from '../types';
-import type { PortfolioPreferences, PortfolioGroup } from './types';
+import type { PortfolioColumn } from '../portfolioColumns';
+import type { PortfolioPreferences, PortfolioGroup, PortfolioSections } from './types';
 import { getPortfolioColumnDisplay, getPortfolioColumnValue, hasPortfolioColumnValue, PORTFOLIO_COLUMNS } from '../portfolioColumns';
 
 export type { PortfolioGroup } from './types';
@@ -12,6 +13,21 @@ export const applyDomainOrder = (domains: DomainRecord[], order: string[] = []) 
     (positions.get(first.id) ?? Number.MAX_SAFE_INTEGER) - (positions.get(second.id) ?? Number.MAX_SAFE_INTEGER)
   ));
 };
+
+export const sortPortfolioDomains = (domains: DomainRecord[], field: PortfolioColumn, direction: `asc` | `desc` = `asc`): DomainRecord[] => (
+  [...domains].sort((first, second) => {
+    const firstValue = getPortfolioColumnValue(first, field);
+    const secondValue = getPortfolioColumnValue(second, field);
+    const firstMissing = firstValue === undefined || firstValue === `` || (Array.isArray(firstValue) && !firstValue.length);
+    const secondMissing = secondValue === undefined || secondValue === `` || (Array.isArray(secondValue) && !secondValue.length);
+    if (firstMissing || secondMissing) return Number(firstMissing) - Number(secondMissing);
+    const comparison = (typeof firstValue === `number` || typeof firstValue === `boolean`)
+      && (typeof secondValue === `number` || typeof secondValue === `boolean`)
+      ? Number(firstValue) - Number(secondValue)
+      : String(firstValue).localeCompare(String(secondValue), undefined, { numeric: true, sensitivity: `base` });
+    return direction === `asc` ? comparison : -comparison;
+  })
+);
 
 export const buildPortfolioGroups = (domains: DomainRecord[], preferences: PortfolioPreferences): PortfolioGroup[] => {
   const { orders, groupBy, customGroups } = preferences;
@@ -47,4 +63,28 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
   return [...groups.values()]
     .sort((first, second) => first.label.localeCompare(second.label, undefined, { numeric: true, sensitivity: `base` }))
     .map(group => ({ ...group, domains: applyDomainOrder(group.domains, orders[group.key]) }));
+};
+
+export const buildPortfolioSections = (domains: DomainRecord[], preferences: PortfolioPreferences): PortfolioSections => {
+  const collectionIds = new Set(preferences.collections.map(collection => collection.id));
+  const assignedDomainIds = new Set(preferences.customGroups
+    .filter(group => group.collectionId && collectionIds.has(group.collectionId))
+    .flatMap(group => group.domainIds));
+  const mainDomains = domains.filter(domain => !assignedDomainIds.has(domain.id));
+  const mainGroups = buildPortfolioGroups(mainDomains, {
+    ...preferences,
+    customGroups: preferences.customGroups.filter(group => !group.collectionId || !collectionIds.has(group.collectionId)),
+  });
+  const collections = preferences.collections.map(collection => {
+    const customGroups = preferences.customGroups.filter(group => group.collectionId === collection.id);
+    const domainIds = new Set(customGroups.flatMap(group => group.domainIds));
+    const availableDomains = sortPortfolioDomains(domains.filter(domain => domainIds.has(domain.id)), `name`);
+    const groups = buildPortfolioGroups(availableDomains, { ...preferences, customGroups, groupBy: `custom` })
+      .filter(group => Boolean(group.customGroupId))
+      .map(group => collection.sortField
+        ? { ...group, domains: sortPortfolioDomains(group.domains, collection.sortField, collection.sortDirection) }
+        : group);
+    return { groups, collection, domains: groups.flatMap(group => group.domains) };
+  });
+  return { collections, mainGroups, mainDomains };
 };

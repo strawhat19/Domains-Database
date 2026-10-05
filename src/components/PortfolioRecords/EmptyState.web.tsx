@@ -1,26 +1,26 @@
 import { Plus, Search, RotateCcw } from 'lucide-react';
 
-const PortfolioEmptyState = ({ hasFilters, onAction }: { hasFilters: boolean; onAction: () => void }) => (
-  <div id={`portfolio-empty-content`} className={`portfolio-empty-content`}>
-    <Search size={23} strokeWidth={1.4} aria-hidden={`true`} id={`portfolio-empty-icon`} className={`portfolio-empty-icon`} />
-    <h3 id={`portfolio-empty-title`} className={`portfolio-empty-title`}>
+const PortfolioEmptyState = ({ hasFilters, onAction, idPrefix = `portfolio` }: { hasFilters: boolean; idPrefix?: string; onAction: () => void }) => (
+  <div id={`${idPrefix}-empty-content`} className={`portfolio-empty-content`}>
+    <Search size={23} strokeWidth={1.4} aria-hidden={`true`} id={`${idPrefix}-empty-icon`} className={`portfolio-empty-icon`} />
+    <h3 id={`${idPrefix}-empty-title`} className={`portfolio-empty-title`}>
       {hasFilters ? `No domains found` : `Your registry is empty`}
     </h3>
-    <p id={`portfolio-empty-description`} className={`portfolio-empty-description`}>
+    <p id={`${idPrefix}-empty-description`} className={`portfolio-empty-description`}>
       {hasFilters ? `Try another name or a different registrar.` : `Bring your GoDaddy, Namecheap, or Hostinger domains into one place.`}
     </p>
     <button
       type={`button`}
       onClick={onAction}
-      id={`portfolio-empty-action`}
+      id={`${idPrefix}-empty-action`}
       className={`portfolio-button portfolio-button-secondary`}
     >
       {hasFilters ? (
-        <RotateCcw size={14} aria-hidden={`true`} id={`portfolio-empty-action-icon`} className={`portfolio-button-icon`} />
+        <RotateCcw size={14} aria-hidden={`true`} id={`${idPrefix}-empty-action-icon`} className={`portfolio-button-icon`} />
       ) : (
-        <Plus size={14} aria-hidden={`true`} id={`portfolio-empty-action-icon`} className={`portfolio-button-icon`} />
+        <Plus size={14} aria-hidden={`true`} id={`${idPrefix}-empty-action-icon`} className={`portfolio-button-icon`} />
       )}
-      <span id={`portfolio-empty-action-text`} className={`portfolio-button-text`}>
+      <span id={`${idPrefix}-empty-action-text`} className={`portfolio-button-text`}>
         {hasFilters ? `Clear Filters` : `Add Domain`}
       </span>
     </button>

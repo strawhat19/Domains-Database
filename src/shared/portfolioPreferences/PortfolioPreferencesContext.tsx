@@ -1,11 +1,20 @@
 import { GROUPABLE_COLUMNS } from './groups';
 import type { PropsWithChildren } from 'react';
+import { PORTFOLIO_COLUMNS } from '../portfolioColumns';
 import { createOperationQueue } from '../common/storage';
+import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { readPortfolioPreferences, savePortfolioPreferences } from './storage';
-import type { PortfolioPreferences, PortfolioPreferencesContextValue } from './types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CustomPortfolioCollection, PortfolioPreferences, PortfolioPreferencesContextValue } from './types';
 
-const DEFAULT_PREFERENCES: PortfolioPreferences = { view: `table`, groupBy: `none`, customGroups: [], orders: {} };
+const DEFAULT_PREFERENCES: PortfolioPreferences = {
+  orders: {},
+  view: `table`,
+  groupBy: `none`,
+  collections: [],
+  customGroups: [],
+  collectionNumber: 0,
+};
 const uniqueIds = (value: unknown): string[] => Array.isArray(value)
   ? [...new Set(value.filter((id): id is string => typeof id === `string` && Boolean(id)))]
   : [];
@@ -13,12 +22,40 @@ const uniqueIds = (value: unknown): string[] => Array.isArray(value)
 const restorePreferences = (value: unknown): PortfolioPreferences => {
   if (!value || typeof value !== `object` || Array.isArray(value)) return DEFAULT_PREFERENCES;
   const saved = value as Record<string, unknown>;
+  const seenCollections = new Set<string>();
+  const seenCollectionNames = new Set<string>();
+  const seenCollectionNumbers = new Set<number>();
+  const collections = (Array.isArray(saved.collections) ? saved.collections : []).flatMap((value): CustomPortfolioCollection[] => {
+    if (!value || typeof value !== `object` || typeof value.name !== `string`) return [];
+    const number = getAppCollectionIDNumber(value.id, `Collection`);
+    const name = value.name.trim();
+    if (!number || value.number !== number || !name || name.length > 80
+      || seenCollections.has(value.id) || seenCollectionNumbers.has(number) || seenCollectionNames.has(name.toLowerCase())) return [];
+    seenCollections.add(value.id);
+    seenCollectionNumbers.add(number);
+    seenCollectionNames.add(name.toLowerCase());
+    const description = typeof value.description === `string` ? value.description.trim() : ``;
+    const sortField = value.sortField === null ? null : PORTFOLIO_COLUMNS.some(column => column.field === value.sortField) ? value.sortField : `name`;
+    return [{
+      name,
+      number,
+      id: value.id,
+      sortField,
+      sortDirection: value.sortDirection === `desc` ? `desc` : `asc`,
+      ...(description ? { description } : {}),
+    }];
+  });
+  const savedCollectionNumber = typeof saved.collectionNumber === `number` && Number.isSafeInteger(saved.collectionNumber) && saved.collectionNumber >= 0
+    ? saved.collectionNumber
+    : 0;
+  const collectionNumber = Math.max(savedCollectionNumber, 0, ...collections.map(collection => collection.number));
   const seenGroups = new Set<string>();
   const seenDomains = new Set<string>();
   const customGroups = (Array.isArray(saved.customGroups) ? saved.customGroups : []).flatMap(value => {
     if (!value || typeof value !== `object` || typeof value.id !== `string` || typeof value.name !== `string`) return [];
     const name = value.name.trim();
     const description = typeof value.description === `string` ? value.description.trim() : ``;
+    const collectionId = typeof value.collectionId === `string` && seenCollections.has(value.collectionId) ? value.collectionId : undefined;
     if (!value.id || !name || seenGroups.has(value.id)) return [];
     seenGroups.add(value.id);
     const domainIds = uniqueIds(value.domainIds).filter(id => {
@@ -26,7 +63,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
       seenDomains.add(id);
       return true;
     });
-    return [{ id: value.id, name, domainIds, ...(description ? { description } : {}) }];
+    return [{ id: value.id, name, domainIds, ...(description ? { description } : {}), ...(collectionId ? { collectionId } : {}) }];
   });
   const orders = saved.orders && typeof saved.orders === `object` && !Array.isArray(saved.orders)
     ? Object.fromEntries(Object.entries(saved.orders).map(([key, ids]) => [key, uniqueIds(ids)]))
@@ -34,7 +71,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
   const groupBy = saved.groupBy === `custom` || GROUPABLE_COLUMNS.some(column => column.field === saved.groupBy)
     ? saved.groupBy as PortfolioPreferences[`groupBy`]
     : `none`;
-  return { orders, groupBy, customGroups, view: saved.view === `grid` ? `grid` : `table` };
+  return { orders, groupBy, collections, customGroups, collectionNumber, view: saved.view === `grid` ? `grid` : `table` };
 };
 
 const assignGroupDomains = (current: PortfolioPreferences, domainIds: string[], groupId: string | null): PortfolioPreferences => {
@@ -132,16 +169,46 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     return id;
   }, [ready, change, userId, enabled]);
 
-  const updateGroup = useCallback<PortfolioPreferencesContextValue[`updateGroup`]>((id, value, descriptionValue) => {
+  const saveGroupSettings = useCallback<PortfolioPreferencesContextValue[`saveGroupSettings`]>((id, input) => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
-    const name = value.trim();
-    const description = descriptionValue.trim();
-    const groups = preferenceRef.current.customGroups;
-    if (!name || name.toLowerCase() === `ungrouped` || name.length > 80 || description.length > 280 || !groups.some(group => group.id === id)) return false;
+    const current = preferenceRef.current;
+    const name = input.name.trim();
+    const description = input.description.trim();
+    const groups = current.customGroups;
+    const existing = groups.find(group => group.id === id);
+    if (!existing || !name || name.toLowerCase() === `ungrouped` || name.length > 80 || description.length > 280) return false;
     if (groups.some(group => group.id !== id && group.name.toLowerCase() === name.toLowerCase())) return false;
-    change(current => ({ ...current, customGroups: current.customGroups.map(group => group.id === id ? { ...group, name, description } : group) }));
+    let collectionId = input.collectionId === undefined ? existing.collectionId : input.collectionId ?? undefined;
+    let createdCollection: CustomPortfolioCollection | undefined;
+    if (input.newCollection) {
+      if (input.collectionId !== undefined && input.collectionId !== null) return false;
+      const collectionName = input.newCollection.name.trim();
+      const collectionDescription = input.newCollection.description.trim();
+      const number = current.collectionNumber + 1;
+      if (!collectionName || collectionName.length > 80 || collectionDescription.length > 280 || !Number.isSafeInteger(number)) return false;
+      if (current.collections.some(collection => collection.name.toLowerCase() === collectionName.toLowerCase())) return false;
+      collectionId = genID(`Collection`, number, collectionName).id;
+      createdCollection = {
+        number,
+        id: collectionId,
+        name: collectionName,
+        sortField: `name`,
+        sortDirection: `asc`,
+        description: collectionDescription,
+      };
+    } else if (collectionId !== undefined && !current.collections.some(collection => collection.id === collectionId)) return false;
+    change(current => ({
+      ...current,
+      collectionNumber: createdCollection?.number ?? current.collectionNumber,
+      collections: createdCollection ? [...current.collections, createdCollection] : current.collections,
+      customGroups: current.customGroups.map(group => group.id === id ? { ...group, name, description, collectionId } : group),
+    }));
     return true;
   }, [ready, change, userId, enabled]);
+
+  const updateGroup = useCallback<PortfolioPreferencesContextValue[`updateGroup`]>((id, name, description) => (
+    saveGroupSettings(id, { name, description })
+  ), [saveGroupSettings]);
 
   const renameGroup = useCallback<PortfolioPreferencesContextValue[`renameGroup`]>((id, name) => {
     const group = preferenceRef.current.customGroups.find(group => group.id === id);
@@ -184,13 +251,60 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId || groupId === targetId) return false;
     const groups = preferenceRef.current.customGroups;
     const source = groups.find(group => group.id === groupId);
-    if (!source || !groups.some(group => group.id === targetId)) return false;
+    const target = groups.find(group => group.id === targetId);
+    if (!source || !target) return false;
     change(current => {
       const customGroups = current.customGroups.filter(group => group.id !== groupId);
       const targetIndex = customGroups.findIndex(group => group.id === targetId) + (placement === `after` ? 1 : 0);
-      customGroups.splice(targetIndex, 0, source);
+      customGroups.splice(targetIndex, 0, { ...source, collectionId: target.collectionId });
       return { ...current, customGroups };
     });
+    return true;
+  }, [ready, change, userId, enabled]);
+
+  const updateCollection = useCallback<PortfolioPreferencesContextValue[`updateCollection`]>((id, value, descriptionValue) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    const name = value.trim();
+    const description = descriptionValue.trim();
+    const collections = preferenceRef.current.collections;
+    if (!name || name.length > 80 || description.length > 280 || !collections.some(collection => collection.id === id)) return false;
+    if (collections.some(collection => collection.id !== id && collection.name.toLowerCase() === name.toLowerCase())) return false;
+    change(current => ({ ...current, collections: current.collections.map(collection => collection.id === id ? { ...collection, name, description } : collection) }));
+    return true;
+  }, [ready, change, userId, enabled]);
+
+  const setCollectionSort = useCallback<PortfolioPreferencesContextValue[`setCollectionSort`]>((id, sortField, sortDirection) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    if (sortDirection !== `asc` && sortDirection !== `desc`) return false;
+    if (sortField !== null && !PORTFOLIO_COLUMNS.some(column => column.field === sortField)) return false;
+    if (!preferenceRef.current.collections.some(collection => collection.id === id)) return false;
+    change(current => ({ ...current, collections: current.collections.map(collection => collection.id === id ? { ...collection, sortField, sortDirection } : collection) }));
+    return true;
+  }, [ready, change, userId, enabled]);
+
+  const moveCollection = useCallback<PortfolioPreferencesContextValue[`moveCollection`]>((id, targetId, placement = `before`) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId || id === targetId) return false;
+    const collections = preferenceRef.current.collections;
+    const source = collections.find(collection => collection.id === id);
+    if (!source || !collections.some(collection => collection.id === targetId)) return false;
+    change(current => {
+      const collections = current.collections.filter(collection => collection.id !== id);
+      const targetIndex = collections.findIndex(collection => collection.id === targetId) + (placement === `after` ? 1 : 0);
+      collections.splice(targetIndex, 0, source);
+      return { ...current, collections };
+    });
+    return true;
+  }, [ready, change, userId, enabled]);
+
+  const assignGroupCollection = useCallback<PortfolioPreferencesContextValue[`assignGroupCollection`]>((id, collectionId) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    const current = preferenceRef.current;
+    if (!current.customGroups.some(group => group.id === id)) return false;
+    if (collectionId !== null && !current.collections.some(collection => collection.id === collectionId)) return false;
+    change(current => ({
+      ...current,
+      customGroups: current.customGroups.map(group => group.id === id ? { ...group, collectionId: collectionId ?? undefined } : group),
+    }));
     return true;
   }, [ready, change, userId, enabled]);
 
@@ -213,7 +327,12 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     updateGroup,
     assignDomain,
     assignDomains,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, assignDomain, assignDomains]);
+    moveCollection,
+    updateCollection,
+    saveGroupSettings,
+    setCollectionSort,
+    assignGroupCollection,
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, assignDomain, assignDomains, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, assignGroupCollection]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

@@ -1,6 +1,17 @@
 .domain-group-settings-fields { gap: 18px; display: grid; }
 .domain-group-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .domain-group-settings-description-input { resize: vertical; min-height: 92px; }
+.domain-group-settings-new-collection {
+  gap: 18px;
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--input);
+  border: 1px solid var(--line);
+}
+.domain-group-settings-collection-legend { padding: 0 6px; font-size: 12px; color: var(--ink); }
 .domain-group-settings .domain-group-settings-footer { justify-content: flex-end; }
 .domain-group-settings .domain-group-settings-close {
   border-radius: 4px;
@@ -10,5 +21,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .domain-group-settings-name-input, .domain-group-settings-description-input { transition: none; }
+  .domain-group-settings-name-input, .domain-group-settings-description-input,
+  .domain-group-settings-collection-select, .domain-group-settings-collection-name-input { transition: none; }
 }

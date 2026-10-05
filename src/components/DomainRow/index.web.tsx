@@ -277,6 +277,7 @@ const DomainRow = ({
 
 interface DomainRowSkeletonProps {
   index: number;
+  idPrefix?: string;
   position?: number;
   visibleColumns?: PortfolioColumn[];
 }
@@ -285,30 +286,31 @@ export const DomainRowSkeleton = ({
   index,
   position = index + 1,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
+  idPrefix = `domain`,
 }: DomainRowSkeletonProps) => {
   const columns = PORTFOLIO_COLUMNS
     .filter(column => column.field === `name` || visibleColumns.includes(column.field))
     .map(column => getDomainSkeletonKey(column.field));
 
   return (
-    <tr id={`domain-skeleton-row-${index}`} data-position={position} className={`domain-row domain-row-skeleton`} aria-hidden={`true`}>
-      <td id={`domain-skeleton-${index}-position-cell`} className={`domain-position-cell`}>
-        <span id={`domain-skeleton-${index}-position`} className={`domain-row-position`}>
+    <tr id={`${idPrefix}-skeleton-row-${index}`} data-position={position} className={`domain-row domain-row-skeleton`} aria-hidden={`true`}>
+      <td id={`${idPrefix}-skeleton-${index}-position-cell`} className={`domain-position-cell`}>
+        <span id={`${idPrefix}-skeleton-${index}-position`} className={`domain-row-position`}>
           {position}
         </span>
       </td>
-      <td id={`domain-skeleton-${index}-selection-cell`} className={`domain-selection-cell`}>
-        <span id={`domain-skeleton-${index}-selection`} className={`domain-skeleton-line domain-skeleton-line-selection`} />
+      <td id={`${idPrefix}-skeleton-${index}-selection-cell`} className={`domain-selection-cell`}>
+        <span id={`${idPrefix}-skeleton-${index}-selection`} className={`domain-skeleton-line domain-skeleton-line-selection`} />
       </td>
       {[...columns, `actions`].map(column => (
-        <td key={column} id={`domain-skeleton-${index}-${column}-cell`} className={`domain-skeleton-cell`}>
+        <td key={column} id={`${idPrefix}-skeleton-${index}-${column}-cell`} className={`domain-skeleton-cell`}>
           {column === `name` ? (
-            <div id={`domain-skeleton-${index}-identity`} className={`domain-identity`}>
-              <span id={`domain-skeleton-${index}-icon`} className={`domain-skeleton-line domain-skeleton-line-icon`} />
-              <span id={`domain-skeleton-${index}-${column}`} className={`domain-skeleton-line domain-skeleton-line-${column}`} />
+            <div id={`${idPrefix}-skeleton-${index}-identity`} className={`domain-identity`}>
+              <span id={`${idPrefix}-skeleton-${index}-icon`} className={`domain-skeleton-line domain-skeleton-line-icon`} />
+              <span id={`${idPrefix}-skeleton-${index}-${column}`} className={`domain-skeleton-line domain-skeleton-line-${column}`} />
             </div>
           ) : (
-            <span id={`domain-skeleton-${index}-${column}`} className={`domain-skeleton-line domain-skeleton-line-${column}`} />
+            <span id={`${idPrefix}-skeleton-${index}-${column}`} className={`domain-skeleton-line domain-skeleton-line-${column}`} />
           )}
         </td>
       ))}
