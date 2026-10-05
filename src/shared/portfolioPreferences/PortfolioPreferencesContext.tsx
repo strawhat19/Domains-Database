@@ -18,6 +18,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
   const customGroups = (Array.isArray(saved.customGroups) ? saved.customGroups : []).flatMap(value => {
     if (!value || typeof value !== `object` || typeof value.id !== `string` || typeof value.name !== `string`) return [];
     const name = value.name.trim();
+    const description = typeof value.description === `string` ? value.description.trim() : ``;
     if (!value.id || !name || seenGroups.has(value.id)) return [];
     seenGroups.add(value.id);
     const domainIds = uniqueIds(value.domainIds).filter(id => {
@@ -25,7 +26,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
       seenDomains.add(id);
       return true;
     });
-    return [{ id: value.id, name, domainIds }];
+    return [{ id: value.id, name, domainIds, ...(description ? { description } : {}) }];
   });
   const orders = saved.orders && typeof saved.orders === `object` && !Array.isArray(saved.orders)
     ? Object.fromEntries(Object.entries(saved.orders).map(([key, ids]) => [key, uniqueIds(ids)]))
@@ -34,6 +35,24 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     ? saved.groupBy as PortfolioPreferences[`groupBy`]
     : `none`;
   return { orders, groupBy, customGroups, view: saved.view === `grid` ? `grid` : `table` };
+};
+
+const assignGroupDomains = (current: PortfolioPreferences, domainIds: string[], groupId: string | null): PortfolioPreferences => {
+  const selectedIds = new Set(domainIds);
+  const destinationKey = `custom:${groupId ?? `ungrouped`}`;
+  return {
+    ...current,
+    customGroups: current.customGroups.map(group => ({
+      ...group,
+      domainIds: group.id === groupId
+        ? uniqueIds([...group.domainIds, ...domainIds])
+        : group.domainIds.filter(id => !selectedIds.has(id)),
+    })),
+    orders: Object.fromEntries(Object.entries(current.orders).map(([key, ids]) => [
+      key,
+      key.startsWith(`custom:`) && key !== destinationKey ? ids.filter(id => !selectedIds.has(id)) : ids,
+    ])),
+  };
 };
 
 export const PortfolioPreferencesContext = createContext<PortfolioPreferencesContextValue | undefined>(undefined);
@@ -98,22 +117,36 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     change(current => ({ ...current, groupBy }));
   }, [change]);
 
-  const createGroup = useCallback<PortfolioPreferencesContextValue[`createGroup`]>(value => {
+  const createGroup = useCallback<PortfolioPreferencesContextValue[`createGroup`]>((value, domainIds) => {
     if (!enabled || !active.current) return undefined;
+    const selectedIds = uniqueIds(domainIds);
+    if (domainIds !== undefined && (!ready || loadedUserId.current !== userId || !selectedIds.length)) return undefined;
     const name = value.trim();
-    if (!name || preferenceRef.current.customGroups.some(group => group.name.toLowerCase() === name.toLowerCase())) return undefined;
+    if (!name || name.toLowerCase() === `ungrouped` || preferenceRef.current.customGroups.some(group => group.name.toLowerCase() === name.toLowerCase())) return undefined;
     const id = `group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
-    change(current => ({ ...current, groupBy: `custom`, customGroups: [...current.customGroups, { id, name, domainIds: [] }] }));
+    change(current => assignGroupDomains({
+      ...current,
+      groupBy: `custom`,
+      customGroups: [...current.customGroups, { id, name, domainIds: [] }],
+    }, selectedIds, id));
     return id;
-  }, [change, enabled]);
+  }, [ready, change, userId, enabled]);
 
-  const renameGroup = useCallback<PortfolioPreferencesContextValue[`renameGroup`]>((id, value) => {
-    if (!enabled || !active.current) return false;
+  const updateGroup = useCallback<PortfolioPreferencesContextValue[`updateGroup`]>((id, value, descriptionValue) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
     const name = value.trim();
-    if (!name || preferenceRef.current.customGroups.some(group => group.id !== id && group.name.toLowerCase() === name.toLowerCase())) return false;
-    change(current => ({ ...current, customGroups: current.customGroups.map(group => group.id === id ? { ...group, name } : group) }));
+    const description = descriptionValue.trim();
+    const groups = preferenceRef.current.customGroups;
+    if (!name || name.toLowerCase() === `ungrouped` || name.length > 80 || description.length > 280 || !groups.some(group => group.id === id)) return false;
+    if (groups.some(group => group.id !== id && group.name.toLowerCase() === name.toLowerCase())) return false;
+    change(current => ({ ...current, customGroups: current.customGroups.map(group => group.id === id ? { ...group, name, description } : group) }));
     return true;
-  }, [change, enabled]);
+  }, [ready, change, userId, enabled]);
+
+  const renameGroup = useCallback<PortfolioPreferencesContextValue[`renameGroup`]>((id, name) => {
+    const group = preferenceRef.current.customGroups.find(group => group.id === id);
+    return group ? updateGroup(id, name, group.description ?? ``) : false;
+  }, [updateGroup]);
 
   const deleteGroup = useCallback<PortfolioPreferencesContextValue[`deleteGroup`]>(id => {
     change(current => ({
@@ -124,17 +157,16 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   }, [change]);
 
   const assignDomain = useCallback<PortfolioPreferencesContextValue[`assignDomain`]>((domainId, groupId) => {
-    change(current => ({
-      ...current,
-      customGroups: current.customGroups.map(group => ({
-        ...group,
-        domainIds: group.id === groupId
-          ? [...group.domainIds.filter(id => id !== domainId), domainId]
-          : group.domainIds.filter(id => id !== domainId),
-      })),
-      orders: Object.fromEntries(Object.entries(current.orders).map(([key, ids]) => [key, key.startsWith(`custom:`) ? ids.filter(id => id !== domainId) : ids])),
-    }));
+    change(current => assignGroupDomains(current, [domainId], groupId));
   }, [change]);
+
+  const assignDomains = useCallback<PortfolioPreferencesContextValue[`assignDomains`]>((domainIds, groupId) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    const selectedIds = uniqueIds(domainIds);
+    if (!selectedIds.length || (groupId !== null && !preferenceRef.current.customGroups.some(group => group.id === groupId))) return false;
+    change(current => ({ ...assignGroupDomains(current, selectedIds, groupId), groupBy: `custom` }));
+    return true;
+  }, [ready, change, userId, enabled]);
 
   const moveDomain = useCallback<PortfolioPreferencesContextValue[`moveDomain`]>((groupKey, domainId, targetId, fullGroupDomainIds, placement = `before`) => {
     const available = uniqueIds(fullGroupDomainIds);
@@ -148,6 +180,20 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     });
   }, [change]);
 
+  const moveGroup = useCallback<PortfolioPreferencesContextValue[`moveGroup`]>((groupId, targetId, placement = `before`) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId || groupId === targetId) return false;
+    const groups = preferenceRef.current.customGroups;
+    const source = groups.find(group => group.id === groupId);
+    if (!source || !groups.some(group => group.id === targetId)) return false;
+    change(current => {
+      const customGroups = current.customGroups.filter(group => group.id !== groupId);
+      const targetIndex = customGroups.findIndex(group => group.id === targetId) + (placement === `after` ? 1 : 0);
+      customGroups.splice(targetIndex, 0, source);
+      return { ...current, customGroups };
+    });
+    return true;
+  }, [ready, change, userId, enabled]);
+
   const resetOrder = useCallback<PortfolioPreferencesContextValue[`resetOrder`]>(groupKey => {
     change(current => ({ ...current, orders: Object.fromEntries(Object.entries(current.orders).filter(([key]) => key !== groupKey)) }));
   }, [change]);
@@ -156,6 +202,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const value = useMemo(() => ({
     ...(enabled && ready && loadedUserId.current === userId ? preferences : DEFAULT_PREFERENCES),
     setView,
+    moveGroup,
     moveDomain,
     clearOrders,
     resetOrder,
@@ -163,8 +210,10 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     createGroup,
     renameGroup,
     deleteGroup,
+    updateGroup,
     assignDomain,
-  }), [ready, enabled, userId, preferences, setView, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, assignDomain]);
+    assignDomains,
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, assignDomain, assignDomains]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

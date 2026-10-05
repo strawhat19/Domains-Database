@@ -1,6 +1,6 @@
 import './styles.scss';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
-import { getDomainRow, getDomainColumnKey } from '../DomainRow/domainRow';
+import { getDomainRow, getDomainColumnKey, getDomainSelectionHandlers } from '../DomainRow/domainRow';
 import type { DomainItemProps, DomainDragProps } from '../DomainRow/domainRow';
 import { Check, Minus, Pencil, Trash2, ArrowUp, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
 import {
@@ -33,6 +33,7 @@ const DomainGridCard = ({
   onMoveDown,
   onDragStart,
   onToggleAutoRenew,
+  selectionDescriptionId,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainGridCardProps) => {
   const scope = `domain-grid-card-${domain.id}`;
@@ -41,6 +42,7 @@ const DomainGridCard = ({
   const columns = PORTFOLIO_COLUMNS.filter(column => (
     column.field !== `name` && visibleColumns.includes(column.field)
   ));
+  const selectionHandlers = getDomainSelectionHandlers(domain.id, !!selected, onSelect);
 
   return (
     <article
@@ -58,6 +60,7 @@ const DomainGridCard = ({
           {position}
         </span>
         <input
+          {...selectionHandlers}
           type={`checkbox`}
           draggable={false}
           checked={!!selected}
@@ -65,8 +68,7 @@ const DomainGridCard = ({
           id={`${scope}-selection`}
           className={`domain-grid-card-selection`}
           aria-label={`Select ${domain.name}`}
-          onClick={event => event.stopPropagation()}
-          onChange={event => onSelect?.(domain.id, event.target.checked)}
+          aria-describedby={selectionDescriptionId}
         />
         <DomainSiteIcon size={32} domain={domain.name} id={`${scope}-symbol`} />
         <a

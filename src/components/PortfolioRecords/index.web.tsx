@@ -1,15 +1,20 @@
 import './styles.scss';
-import { useMemo } from 'react';
-import { RotateCcw } from 'lucide-react';
-import type { CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
+import { ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
+import type { CSSProperties, KeyboardEvent } from 'react';
 import { useDomainReorder } from './useDomainReorder';
 import PortfolioEmptyState from './EmptyState.web';
 import type { DomainRecord } from '../../shared/types';
 import DomainRow, { DomainRowSkeleton } from '../DomainRow';
+import DomainGroupPicker from '../DomainGroupPicker/index.web';
+import DomainContextMenu from '../DomainContextMenu/index.web';
+import DomainGroupSettings from '../DomainGroupSettings/index.web';
 import PortfolioTableHead from '../PortfolioTableHead/index.web';
 import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
+import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
 import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
+import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { PORTFOLIO_COLUMNS, type PortfolioColumn } from '../../shared/portfolioColumns';
 
@@ -27,9 +32,10 @@ interface PortfolioRecordsProps {
   someSelected: boolean;
   selectedIds: Set<string>;
   sticky: ReturnType<typeof useStickyPortfolio>;
+  onGrouped: () => void;
   onEmptyAction: () => void;
   onSelectAll: (checked: boolean) => void;
-  onSelect: (id: string, checked: boolean) => void;
+  onSelect: (id: string, checked: boolean, extend?: boolean) => void;
   onSort: (field: PortfolioColumn) => void;
   onEdit: (domain: DomainRecord) => void;
   onDelete: (domain: DomainRecord) => void;
@@ -38,9 +44,14 @@ interface PortfolioRecordsProps {
 
 const PortfolioRecords = ({
   busy, sticky, compact, loading, domains, allDomains, hasFilters,
-  selectedIds, allSelected, someSelected, onSelect, onSelectAll,
+  selectedIds, allSelected, someSelected, onSelect, onGrouped, onSelectAll,
   sortField, sortDirection, visibleColumns, onEdit, onSort, onDelete, onEmptyAction, onToggleAutoRenew,
 }: PortfolioRecordsProps) => {
+  const [groupingIds, setGroupingIds] = useState<Set<string> | null>(null);
+  const [editingGroup, setEditingGroup] = useState<CustomPortfolioGroup | null>(null);
+  const contextMenu = useDomainContextMenu((action, targets) => {
+    if (action === `group`) setGroupingIds(new Set(targets.map(domain => domain.id)));
+  });
   const preferences = usePortfolioPreferences();
   const orderingPreferences = useMemo(() => sortField
     ? { ...preferences, orders: {} }
@@ -55,43 +66,148 @@ const PortfolioRecords = ({
       .filter(group => group.domains.length);
   }, [domains, orderingPreferences, compact]);
   const positions = new Map(groups.flatMap(group => group.domains).map((domain, index) => [domain.id, index + 1]));
-  const reorder = useDomainReorder(fullGroups, !sortField && !loading && !busy && !compact);
+  const reorder = useDomainReorder(fullGroups, !sortField && !loading && !busy && !compact, {
+    onGrouped,
+    selectedIds,
+    groupEnabled: preferences.groupBy === `custom` && !loading && !busy,
+  });
   const tableStyle = { [`--portfolio-table-width`]: `${Math.max(380, columns.length * 140 + 160)}px` } as CSSProperties;
   const stickyHeaderReady = sticky.header.headHeight > 0 && sticky.header.columnWidths.length === columns.length + 3;
   const grouped = preferences.groupBy !== `none`;
   const empty = !loading && !domains.length;
-  const groupHeading = (key: string, label: string, count: number) => (
-    <div id={`portfolio-group-${encodeURIComponent(key)}-heading`} className={`portfolio-group-heading`}>
-      <span id={`portfolio-group-${encodeURIComponent(key)}-label`} className={`portfolio-group-label`}>
-        {label}
-      </span>
-      <span id={`portfolio-group-${encodeURIComponent(key)}-count`} className={`portfolio-group-count`}>
-        {count}
-      </span>
-      {!sortField && preferences.orders[key]?.length > 0 && (
-        <button
-          type={`button`}
-          title={`Reset group order`}
-          aria-label={`Reset order for ${label}`}
-          className={`portfolio-group-reset`}
-          id={`portfolio-group-${encodeURIComponent(key)}-reset`}
-          onClick={() => preferences.resetOrder(key)}
-        >
-          <RotateCcw size={13} aria-hidden={`true`} id={`portfolio-group-${encodeURIComponent(key)}-reset-icon`} className={`portfolio-group-reset-icon`} />
-        </button>
-      )}
-    </div>
+  const selectedDomains = allDomains.filter(domain => selectedIds.has(domain.id));
+  const groupingDomains = allDomains.filter(domain => groupingIds?.has(domain.id));
+  const menuDomains = (domain: DomainRecord) => selectedDomains.length ? selectedDomains : [domain];
+  const groupPicker = groupingIds && (
+    <DomainGroupPicker
+      onGrouped={onGrouped}
+      domains={groupingDomains}
+      onClose={() => setGroupingIds(null)}
+    />
+  );
+  const groupSettings = editingGroup && (
+    <DomainGroupSettings group={editingGroup} onClose={() => setEditingGroup(null)} />
+  );
+  const openContextMenuFromKeyboard = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.defaultPrevented || !(event.key === `ContextMenu` || (event.shiftKey && event.key === `F10`))) return;
+    const row = event.target instanceof Element ? event.target.closest<HTMLTableRowElement>(`tr.domain-row`) : null;
+    const domain = row ? allDomains.find(item => row.id === `domain-row-${item.id}`) : undefined;
+    if (!row || !domain) return;
+    event.preventDefault();
+    event.stopPropagation();
+    contextMenu.openFromKeyboard(row, domain, menuDomains(domain));
+  };
+  const groupHeading = (group: PortfolioGroup, grid = false) => {
+    const { key, label, description } = group;
+    const scope = `portfolio-group-${encodeURIComponent(key)}`;
+    const customGroup = preferences.customGroups.find(item => item.id === group.customGroupId);
+    const moves = customGroup ? reorder.groupMoves(customGroup.id) : undefined;
+    return (
+      <div
+        id={`${scope}-heading`}
+        {...(grid ? reorder.groupHandlers(group) : {})}
+        className={`portfolio-group-heading${grid && reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-dragging` : ``}${grid && reorder.targetGroupKey === key ? ` portfolio-group-heading-drop-target` : ``}`}
+      >
+        {customGroup && (
+          <div
+            role={`group`}
+            id={`${scope}-reorder`}
+            className={`portfolio-group-reorder`}
+            aria-label={`Reorder ${label}`}
+            aria-describedby={`portfolio-group-interaction-help`}
+          >
+            <span id={`${scope}-drag-handle`} className={`portfolio-group-drag-handle`} title={`Drag to reorder ${label}`} aria-hidden={`true`}>
+              <GripVertical size={14} id={`${scope}-drag-handle-icon`} className={`portfolio-group-drag-handle-icon`} />
+            </span>
+            <div id={`${scope}-move-actions`} className={`portfolio-group-move-actions`}>
+              <button
+                type={`button`}
+                draggable={false}
+                disabled={!moves?.onMoveUp}
+                id={`${scope}-move-up`}
+                onClick={moves?.onMoveUp}
+                title={`Move ${label} up`}
+                aria-label={`Move ${label} up`}
+                className={`portfolio-group-move-action`}
+              >
+                <ArrowUp size={11} aria-hidden={`true`} id={`${scope}-move-up-icon`} className={`portfolio-group-move-action-icon`} />
+              </button>
+              <button
+                type={`button`}
+                draggable={false}
+                disabled={!moves?.onMoveDown}
+                id={`${scope}-move-down`}
+                onClick={moves?.onMoveDown}
+                title={`Move ${label} down`}
+                aria-label={`Move ${label} down`}
+                className={`portfolio-group-move-action`}
+              >
+                <ArrowDown size={11} aria-hidden={`true`} id={`${scope}-move-down-icon`} className={`portfolio-group-move-action-icon`} />
+              </button>
+            </div>
+          </div>
+        )}
+        <div id={`${scope}-copy`} className={`portfolio-group-copy`}>
+          <span id={`${scope}-label`} className={`portfolio-group-label`}>
+            {label}
+          </span>
+          {description && (
+            <span id={`${scope}-description`} className={`portfolio-group-description`}>
+              {description}
+            </span>
+          )}
+          <span id={`${scope}-count`} className={`portfolio-group-count`}>
+            {group.domains.length}
+          </span>
+        </div>
+        <div id={`${scope}-actions`} className={`portfolio-group-actions`}>
+          {!sortField && preferences.orders[key]?.length > 0 && (
+            <button
+              type={`button`}
+              draggable={false}
+              title={`Reset group order`}
+              id={`${scope}-reset`}
+              className={`portfolio-group-reset`}
+              aria-label={`Reset order for ${label}`}
+              onClick={() => preferences.resetOrder(key)}
+            >
+              <RotateCcw size={13} aria-hidden={`true`} id={`${scope}-reset-icon`} className={`portfolio-group-reset-icon`} />
+            </button>
+          )}
+          {customGroup && (
+            <button
+              type={`button`}
+              draggable={false}
+              id={`${scope}-settings`}
+              title={`Edit ${label}`}
+              aria-haspopup={`dialog`}
+              aria-label={`Edit ${label}`}
+              className={`portfolio-group-settings`}
+              onClick={() => setEditingGroup(customGroup)}
+            >
+              <Settings size={14} aria-hidden={`true`} id={`${scope}-settings-icon`} className={`portfolio-group-settings-icon`} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+  const groupHelp = (
+    <p id={`portfolio-group-interaction-help`} className={`portfolio-sr-only`}>
+      {`Drag a custom group heading to reorder groups, or use its up and down buttons. Drop domain rows on a group heading to move them into that group. Use the Group context menu action as a keyboard alternative.`}
+    </p>
   );
 
   if (preferences.view === `grid` && !empty) return (
     <div id={`portfolio-grid-view`} className={`portfolio-grid-view`} aria-busy={loading}>
+      {groupHelp}
       {loading ? (
         <div id={`portfolio-grid-loading`} className={`portfolio-domain-grid`}>
           {[0, 1, 2, 3].map(index => <DomainGridCardSkeleton key={index} index={index} visibleColumns={visibleColumns} />)}
         </div>
       ) : empty ? <PortfolioEmptyState hasFilters={hasFilters} onAction={onEmptyAction} /> : groups.map(group => (
         <section key={group.key} id={`portfolio-grid-group-${encodeURIComponent(group.key)}`} className={`portfolio-grid-group`}>
-          {grouped && groupHeading(group.key, group.label, group.domains.length)}
+          {grouped && groupHeading(group, true)}
           <div id={`portfolio-grid-group-${encodeURIComponent(group.key)}-domains`} className={`portfolio-domain-grid`}>
             {group.domains.map(domain => (
               <DomainGridCard
@@ -104,6 +220,7 @@ const PortfolioRecords = ({
                 selected={selectedIds.has(domain.id)}
                 position={positions.get(domain.id) ?? 1}
                 visibleColumns={visibleColumns}
+                selectionDescriptionId={`portfolio-selection-help`}
                 onToggleAutoRenew={onToggleAutoRenew}
                 {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
               />
@@ -116,11 +233,18 @@ const PortfolioRecords = ({
           )}
         </section>
       ))}
+      {groupPicker}
+      {groupSettings}
     </div>
   );
 
   return (
-    <div id={`portfolio-records-table`} className={`portfolio-records-table`}>
+    <div
+      id={`portfolio-records-table`}
+      className={`portfolio-records-table`}
+      onKeyDown={openContextMenuFromKeyboard}
+    >
+      {groupHelp}
       <div
         hidden={!stickyHeaderReady}
         id={`portfolio-sticky-head`}
@@ -174,9 +298,13 @@ const PortfolioRecords = ({
           ) : groups.map(group => (
             <tbody key={group.key} id={`portfolio-table-group-${encodeURIComponent(group.key)}`} className={`portfolio-table-body`}>
               {grouped && (
-                <tr id={`portfolio-table-group-${encodeURIComponent(group.key)}-heading-row`} className={`portfolio-group-heading-row`}>
+                <tr
+                  {...reorder.groupHandlers(group)}
+                  id={`portfolio-table-group-${encodeURIComponent(group.key)}-heading-row`}
+                  className={`portfolio-group-heading-row${reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
+                >
                   <th colSpan={columns.length + 3} scope={`rowgroup`} id={`portfolio-table-group-${encodeURIComponent(group.key)}-heading-cell`} className={`portfolio-group-heading-cell`}>
-                    {groupHeading(group.key, group.label, group.domains.length)}
+                    {groupHeading(group)}
                   </th>
                 </tr>
               )}
@@ -191,6 +319,8 @@ const PortfolioRecords = ({
                   selected={selectedIds.has(domain.id)}
                   position={positions.get(domain.id) ?? 1}
                   visibleColumns={visibleColumns}
+                  selectionDescriptionId={`portfolio-selection-help`}
+                  onContextMenu={event => contextMenu.open(event, domain, menuDomains(domain))}
                   onToggleAutoRenew={onToggleAutoRenew}
                   {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
                 />
@@ -206,6 +336,9 @@ const PortfolioRecords = ({
           ))}
         </table>
       </div>
+      <DomainContextMenu {...contextMenu} />
+      {groupPicker}
+      {groupSettings}
       {empty && (
         <div id={`portfolio-records-empty`} className={`portfolio-records-empty`}>
           <PortfolioEmptyState hasFilters={hasFilters} onAction={onEmptyAction} />

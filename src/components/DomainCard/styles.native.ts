@@ -7,6 +7,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   position: { minWidth: 20, textAlign: `center`, color: palette.muted, fontSize: 11, fontFamily: `DMSans_400Regular` },
   selectionPosition: { gap: 2, alignItems: `center` },
   selectionButton: { width: 32, height: 32, alignItems: `center`, justifyContent: `center` },
+  selectionIcon: { backgroundColor: `transparent` },
   siteIcon: { width: 22, height: 22, resizeMode: `contain` },
   top: { gap: 8, flexDirection: `row`, alignItems: `center` },
   monogram: { width: 32, height: 32, borderRadius: 8, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.subtle },

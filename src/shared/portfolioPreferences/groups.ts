@@ -23,6 +23,7 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
       key: `custom:${group.id}`,
       label: group.name,
       customGroupId: group.id,
+      description: group.description,
       domains: applyDomainOrder(domains.filter(domain => membership.get(domain.id) === group.id), orders[`custom:${group.id}`]),
     }));
     groups.push({

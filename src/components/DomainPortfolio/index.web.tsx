@@ -58,6 +58,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       aria-labelledby={`portfolio-title`}
       className={`domain-portfolio${compact ? `` : ` domain-portfolio-full`}`}
     >
+      <p id={`portfolio-selection-help`} className={`portfolio-sr-only`}>
+        {`Use Space to toggle a focused checkbox. Use Shift-click or Shift+Space to select or clear a range from your last selection. Use Shift+F10 or the Menu key in a table row to open actions for all selected domains.`}
+      </p>
       <div id={`portfolio-heading-row`} className={`portfolio-heading-row`}>
         <div id={`portfolio-heading`} className={`portfolio-heading`}>
           <span id={`portfolio-eyebrow`} className={`portfolio-eyebrow`}>
@@ -281,7 +284,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </select>
               <ChevronDown size={13} aria-hidden={`true`} id={`portfolio-registrar-filter-icon`} className={`portfolio-registrar-filter-icon`} />
             </div>
-            <PortfolioSelection count={selection.visibleSelectedCount} />
+            <PortfolioSelection count={selection.selectedIds.size} visibleCount={selection.visibleSelectedCount} />
           </div>
           <div id={`portfolio-toolbar-meta`} className={`portfolio-toolbar-meta`}>
             {useSampleData && portfolio.summary.hasSampleData && (
@@ -350,6 +353,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           someSelected={selection.someSelected}
           onSelect={selection.select}
           onSelectAll={selection.selectAll}
+          onGrouped={selection.clearSelection}
           visibleColumns={visibleColumns}
           sortDirection={portfolio.sortDirection}
           busy={Boolean(portfolio.pendingId)}

@@ -1,0 +1,29 @@
+.domain-group-picker-selection {
+  gap: 8px;
+  display: grid;
+  padding: 12px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background: var(--input);
+  border: 1px solid var(--line);
+}
+.domain-group-picker-count { font-size: 11px; color: var(--muted); font-family: var(--font-bold); }
+.domain-group-picker-domain-list {
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  list-style: none;
+  overflow-y: auto;
+  max-height: 120px;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.domain-group-picker-domain { font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.domain-group-picker-fields { gap: 12px; display: grid; }
+.domain-group-picker-help { margin: 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+.domain-group-picker .domain-group-picker-footer { justify-content: flex-end; }
+
+@media (prefers-reduced-motion: reduce) {
+  .domain-group-picker-select, .domain-group-picker-name-input { transition: none; }
+}

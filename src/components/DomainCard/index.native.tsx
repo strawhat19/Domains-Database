@@ -1,8 +1,9 @@
 import { createStyles } from './styles.native';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { elementProps } from '../../shared/elementProps';
-import { Square, CheckSquare, Globe2, Pencil, RefreshCw, Trash2 } from 'lucide-react-native';
+import { Globe2, Pencil, RefreshCw, Trash2 } from 'lucide-react-native';
 import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -71,7 +72,6 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
   const daysLabel = !Number.isFinite(days)
     ? `Expiry unknown`
     : days < 0 ? `${Math.abs(days)} day(s) ago` : days === 0 ? `Expires today` : `In ${days} day(s)`;
-  const SelectionIcon = selected ? CheckSquare : Square;
 
   return (
     <View {...elementProps(`native-domain-card`, domain.id)} style={[styles.card, selected && styles.cardSelected]}>
@@ -86,7 +86,38 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
               accessibilityLabel={`Select ${domain.name}`}
               onPress={() => onSelect(domain.id)}
             >
-              <SelectionIcon {...elementProps(`native-domain-select-icon`, domain.id)} size={18} color={selected ? palette.accent : palette.muted} />
+              <Svg
+                width={18}
+                height={18}
+                accessible={false}
+                viewBox={`0 0 16 16`}
+                pointerEvents={`none`}
+                style={styles.selectionIcon}
+                accessibilityElementsHidden
+                importantForAccessibility={`no-hide-descendants`}
+                {...elementProps(`native-domain-select-icon`, domain.id)}
+              >
+                {selected ? (
+                  <Path
+                    fill={palette.accent}
+                    fillRule={`evenodd`}
+                    {...elementProps(`native-domain-select-check`, domain.id)}
+                    d={`M4 0h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4Z M4.2 7.7 6.6 10.1 11.7 5 13.1 6.4 6.6 12.9 2.8 9.1Z`}
+                  />
+                ) : (
+                  <Rect
+                    x={.75}
+                    y={.75}
+                    rx={3.25}
+                    width={14.5}
+                    fill={`none`}
+                    height={14.5}
+                    strokeWidth={1.5}
+                    stroke={palette.accent}
+                    {...elementProps(`native-domain-select-outline`, domain.id)}
+                  />
+                )}
+              </Svg>
             </Pressable>
           )}
           <Text {...elementProps(`native-domain-position`, domain.id)} style={styles.position}>

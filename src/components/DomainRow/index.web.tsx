@@ -1,8 +1,9 @@
 import './styles.scss';
+import type { MouseEventHandler } from 'react';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
 import { Check, Minus, Pencil, Trash2, ArrowUp, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
-import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey } from './domainRow';
+import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
   PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
@@ -13,7 +14,9 @@ import {
   type PortfolioColumn,
 } from '../../shared/portfolioColumns';
 
-export interface DomainRowProps extends DomainItemProps, DomainDragProps<HTMLTableRowElement> {}
+export interface DomainRowProps extends DomainItemProps, DomainDragProps<HTMLTableRowElement> {
+  onContextMenu?: MouseEventHandler<HTMLTableRowElement>;
+}
 
 const DomainRow = ({
   busy,
@@ -32,7 +35,9 @@ const DomainRow = ({
   onDragOver,
   onDragStart,
   onMoveDown,
+  onContextMenu,
   onToggleAutoRenew,
+  selectionDescriptionId,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainRowProps) => {
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
@@ -40,6 +45,18 @@ const DomainRow = ({
   const columns = PORTFOLIO_COLUMNS.filter(column => (
     column.field === `name` || visibleColumns.includes(column.field)
   ));
+  const selectionHandlers = getDomainSelectionHandlers(domain.id, !!selected, onSelect);
+
+  const handleRowClick: MouseEventHandler<HTMLTableRowElement> = event => {
+    if (busy || !onSelect || !isDomainSelectionTarget(event.target, event.currentTarget)) return;
+    onSelect(domain.id, !selected, event.shiftKey);
+    event.currentTarget.querySelector<HTMLInputElement>(`.domain-selection`)?.focus({ preventScroll: true });
+  };
+
+  const handleRowMouseDown: MouseEventHandler<HTMLTableRowElement> = event => {
+    if (busy || !onSelect || event.button !== 0 || !event.shiftKey) return;
+    if (isDomainSelectionTarget(event.target, event.currentTarget)) event.preventDefault();
+  };
 
   const renderColumn = (field: PortfolioColumn) => {
     switch (field) {
@@ -188,11 +205,14 @@ const DomainRow = ({
     <tr
       id={scope}
       onDrop={onDrop}
+      onClick={handleRowClick}
       data-position={position}
       draggable={draggable}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDragStart={onDragStart}
+      onMouseDown={handleRowMouseDown}
+      onContextMenu={onContextMenu}
       className={`domain-row${draggable ? ` domain-row-draggable` : ``}${selected ? ` domain-row-selected` : ``}${dragging ? ` domain-row-dragging` : ``}${dropTarget ? ` domain-row-drop-target` : ``}`}
     >
       <td id={`${scope}-position-cell`} className={`domain-position-cell`}>
@@ -202,6 +222,7 @@ const DomainRow = ({
       </td>
       <td id={`${scope}-selection-cell`} className={`domain-selection-cell`}>
         <input
+          {...selectionHandlers}
           type={`checkbox`}
           draggable={false}
           checked={!!selected}
@@ -209,8 +230,7 @@ const DomainRow = ({
           id={`${scope}-selection`}
           className={`domain-selection`}
           aria-label={`Select ${domain.name}`}
-          onClick={event => event.stopPropagation()}
-          onChange={event => onSelect?.(domain.id, event.target.checked)}
+          aria-describedby={selectionDescriptionId}
         />
       </td>
       {columns.map(column => {

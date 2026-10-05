@@ -2,14 +2,14 @@ import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
-  page: { gap: 28, width: `100%`, maxWidth: 1120, alignSelf: `center`, paddingTop: 52, paddingBottom: 44, paddingHorizontal: 24 },
+  page: { gap: 28, width: `100%`, alignSelf: `center`, paddingTop: 52, paddingBottom: 44, paddingHorizontal: 24 },
   compactPage: { gap: 22, paddingTop: 30, paddingHorizontal: 20 },
   shortAccessPage: { paddingTop: 8, paddingBottom: 8 },
   intro: { gap: 14 },
   eyebrow: { gap: 7, flexDirection: `row`, alignItems: `center` },
   eyebrowText: { fontSize: 10, letterSpacing: 1.5, color: palette.accent, fontFamily: `DMSans_700Bold` },
-  title: { fontSize: 48, lineHeight: 54, color: palette.ink, fontFamily: `InstrumentSerif_400Regular` },
-  compactTitle: { fontSize: 39, lineHeight: 45 },
+  title: { fontSize: 48, lineHeight: 54, letterSpacing: -1.2, color: palette.ink, fontFamily: `DMSans_700Bold` },
+  compactTitle: { fontSize: 39, lineHeight: 45, letterSpacing: -.8 },
   description: { maxWidth: 560, fontSize: 13, lineHeight: 22, color: palette.muted, fontFamily: `DMSans_400Regular` },
   form: { gap: 12, padding: 22, borderWidth: 1, borderRadius: 14, borderColor: palette.line, backgroundColor: palette.paper },
   inputLabel: { fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },

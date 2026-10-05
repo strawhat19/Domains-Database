@@ -1,4 +1,4 @@
-:is(.domain-search-page, [data-class='domain-search-page']) { padding-inline: 0 !important; }
+:is(.domain-search-page, .domain-search-access-page, .domain-search-access-loading, [data-class='domain-search-page'], [data-class='domain-search-access-page'], [data-class='domain-search-access-loading']) { padding-inline: 0 !important; }
 :is(.domain-search-check-warnings, [data-class='domain-search-check-warnings']) { white-space: pre-line; overflow-wrap: anywhere; }
 :is(.domain-search-input, [data-class='domain-search-input']):focus { outline: none; }
 :is(.domain-search-input-wrap, [data-class='domain-search-input-wrap']):focus-within { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--focus-ring); }

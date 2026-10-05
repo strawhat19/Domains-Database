@@ -1,0 +1,14 @@
+.domain-group-settings-fields { gap: 18px; display: grid; }
+.domain-group-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
+.domain-group-settings-description-input { resize: vertical; min-height: 92px; }
+.domain-group-settings .domain-group-settings-footer { justify-content: flex-end; }
+.domain-group-settings .domain-group-settings-close {
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid var(--line);
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .domain-group-settings-name-input, .domain-group-settings-description-input { transition: none; }
+}
