@@ -9,6 +9,7 @@ import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shar
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
+import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
 import type { DomainInput, DomainRecord, Registrar } from '../../shared/types';
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : `Something Went Wrong`;
@@ -44,6 +45,7 @@ export const useNativePortfolio = (compact = false) => {
   const [input, setInput] = useState<DomainInput>(newDomain);
   const [sortByName, setSortByName] = useState(true);
   const [registrar, setRegistrar] = useState<Registrar | `All`>(`All`);
+  const groupEditor = useDomainGroupEditor(editingId);
   const editingSyncedDomain = Boolean(editingDomain && getDomainSource(editingDomain) === `registrar`);
   const filteredDomains = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -66,6 +68,7 @@ export const useNativePortfolio = (compact = false) => {
     setFormError(``);
     setEditingId(domain?.id);
     setEditingDomain(domain ?? null);
+    groupEditor.resetGroup(domain?.id);
     updateRenewalPrice(domain ? String(domain.renewalPrice) : ``);
     setInput(domain ? {
       meta: domain.meta,
@@ -105,6 +108,7 @@ export const useNativePortfolio = (compact = false) => {
     setSaving(true);
     setFormError(``);
     try {
+      if (editingId) groupEditor.validateGroup();
       const syncedDomain = editingSyncedDomain && editingDomain
         ? context.domains.find(domain => domain.id === editingDomain.id) ?? editingDomain : null;
       const record: DomainInput = syncedDomain ? {
@@ -113,7 +117,10 @@ export const useNativePortfolio = (compact = false) => {
         description: input.description ?? ``,
         meta: { ...syncedDomain.meta, siteIconUrl: getCustomSiteIconUrl(input) },
       } : { ...input, renewalPrice: Number(renewalPrice || 0) };
-      if (editingId) await context.updateDomain(editingId, record);
+      if (editingId) {
+        await context.updateDomain(editingId, record);
+        await groupEditor.saveGroup(editingId);
+      }
       else await context.addDomain(record);
       setEditorOpen(false);
     } catch (error) {
@@ -193,6 +200,7 @@ export const useNativePortfolio = (compact = false) => {
   return {
     ...context,
     input,
+    groupEditor,
     search,
     dueSoon,
     saving,

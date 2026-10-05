@@ -14,7 +14,7 @@ interface DomainEditorProps {
 }
 
 const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
-  const { error, input, close, saving, setField, modalRef, handleSubmit } = useDomainEditor(domain, onClose);
+  const { error, input, close, saving, setField, modalRef, groupEditor, handleSubmit } = useDomainEditor(domain, onClose);
   const isEditing = Boolean(domain?.id);
   const isSynced = domain && getDomainSource(domain) === `registrar`;
   return (
@@ -55,7 +55,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
           </button>
         </header>
         <p id={`domain-editor-description`} className={`domain-dialog-description`}>
-          {isSynced ? `Edit your icon, notes, and description. Domain details are managed by registrar sync.` : `A little detail now. A lot less searching later.`}
+          {isSynced ? `Edit your group, icon, notes, and description. Domain details are managed by registrar sync.` : `A little detail now. A lot less searching later.`}
         </p>
         {!isSynced && <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />}
         <form id={`domain-editor-form`} className={`domain-editor-form`} onSubmit={handleSubmit}>
@@ -172,6 +172,31 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   </label>
                 </div>
               </>
+            )}
+            {isEditing && (
+              <div id={`domain-group-field`} className={`domain-editor-field domain-editor-field-full`}>
+                <label id={`domain-group-label`} className={`domain-editor-label`} htmlFor={`domain-group-input`}>
+                  {`Group`}
+                </label>
+                <select
+                  disabled={saving}
+                  value={groupEditor.groupId}
+                  id={`domain-group-input`}
+                  className={`domain-editor-input domain-editor-select`}
+                  onChange={event => groupEditor.setGroupId(event.target.value)}
+                >
+                  {groupEditor.options.map(option => (
+                    <option
+                      key={option.id}
+                      value={option.id}
+                      className={`domain-editor-option`}
+                      id={`domain-group-option-${option.id || `ungrouped`}`}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             )}
             <div id={`domain-site-icon-field`} className={`domain-editor-field domain-editor-field-full`}>
               <label id={`domain-site-icon-label`} className={`domain-editor-label`} htmlFor={`domain-site-icon-input`}>

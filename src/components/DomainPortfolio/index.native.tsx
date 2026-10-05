@@ -437,6 +437,43 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     </Text>
                   </View>
                 )}
+                {state.editingDomain && (
+                  <View {...elementProps(`native-domain-editor-group-field`)} style={styles.field}>
+                    <Text {...elementProps(`native-domain-editor-group-label`)} style={styles.fieldLabel}>
+                      {`Custom Group`}
+                    </Text>
+                    <View
+                      accessibilityRole={`radiogroup`}
+                      accessibilityLabel={`Custom Domain Group`}
+                      style={styles.registrarChoices}
+                      {...elementProps(`native-domain-editor-group-choices`)}
+                    >
+                      {state.groupEditor.options.map(group => {
+                        const groupId = group.id || `ungrouped`;
+                        const selected = state.groupEditor.groupId === group.id;
+                        return (
+                          <Pressable
+                            key={groupId}
+                            disabled={state.saving}
+                            accessibilityRole={`radio`}
+                            accessibilityLabel={group.label}
+                            accessibilityState={{ checked: selected }}
+                            onPress={() => state.groupEditor.setGroupId(group.id)}
+                            {...elementProps(`native-domain-editor-group-choice`, groupId)}
+                            style={[styles.registrarButton, selected && styles.registrarButtonActive]}
+                          >
+                            <Text
+                              {...elementProps(`native-domain-editor-group-choice-text`, groupId)}
+                              style={[styles.registrarText, selected && styles.registrarTextActive]}
+                            >
+                              {group.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
                 {!editingSyncedDomain && textFields.map(field => (
                   <View {...elementProps(`native-domain-editor-field`, field.key)} key={field.key} style={styles.field}>
                     <Text {...elementProps(`native-domain-editor-field-label`, field.key)} style={styles.fieldLabel}>

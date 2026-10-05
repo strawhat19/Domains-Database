@@ -5,6 +5,7 @@ import { getDomainSource } from '../../shared/domainUtils';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
+import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
 
 export const useModalFocus = (container: RefObject<HTMLDivElement | null>, open: boolean, onClose: () => void) => {
   const closeHandler = useRef(onClose);
@@ -70,6 +71,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
 
 export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose: () => void) => {
   const { addDomain, updateDomain } = useDomains();
+  const groupEditor = useDomainGroupEditor(domain?.id);
   const isSynced = domain && getDomainSource(domain) === `registrar`;
   const [error, setError] = useState(``);
   const [saving, setSaving] = useState(false);
@@ -89,8 +91,11 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     setSaving(true);
     const domainInput = { ...input, name: input.name.trim().toLowerCase(), owner: input.owner.trim(), notes: input.notes.trim(), description: input.description?.trim() ?? `` };
     try {
-      if (domain?.id) await updateDomain(domain.id, domainInput);
-      else await addDomain(domainInput);
+      if (domain?.id) {
+        groupEditor.validateGroup();
+        await updateDomain(domain.id, domainInput);
+        groupEditor.saveGroup(domain.id);
+      } else await addDomain(domainInput);
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `Unable To Save Domain`);
@@ -98,5 +103,5 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
       setSaving(false);
     }
   };
-  return { error, input, close, saving, setField, modalRef, handleSubmit };
+  return { error, input, close, saving, setField, modalRef, groupEditor, handleSubmit };
 };
