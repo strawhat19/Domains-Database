@@ -1,0 +1,11 @@
+:is(.domain-search-watch-button, [data-class='domain-search-watch-button']) {
+  transition: background .22s ease, border-color .22s ease, opacity .22s ease;
+
+  &:hover { background: var(--subtle); border-color: var(--accent) !important; }
+}
+
+:is(.watch-signin-description, [data-class='watch-signin-description']) { overflow-wrap: anywhere; }
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.domain-search-watch-button, [data-class='domain-search-watch-button']) { transition: none; }
+}

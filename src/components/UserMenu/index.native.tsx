@@ -1,12 +1,14 @@
 import { Link } from 'expo-router';
 import { Roles } from '../../types/types';
 import { useUserMenu } from './useUserMenu';
+import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
-import { Image, Pressable, Text, View } from 'react-native';
-import { LogIn, LogOut, PlugZap, UserRound, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
+import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Eye, LogIn, LogOut, PlugZap, UserRound, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
 
 const UserMenu = () => {
   const state = useUserMenu();
+  const { width } = useWindowDimensions();
   const { user, styles, palette } = state;
   const GuestIcon = state.hasSavedAccount ? LogIn : UserRoundPlus;
   if (state.loading) return <View {...elementProps(`user-menu-loading`)} style={styles.skeleton} />;
@@ -51,6 +53,19 @@ const UserMenu = () => {
               <Text {...elementProps(`user-menu-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
             </Pressable>
           </Link>
+          {width <= 1200 && (
+            <Link href={routes.watching.href} asChild>
+              <Pressable
+                style={styles.item}
+                onPress={state.close}
+                accessibilityRole={`link`}
+                {...elementProps(`user-menu-watching`)}
+              >
+                <Eye {...elementProps(`user-menu-watching-icon`)} size={16} color={palette.ink} />
+                <Text {...elementProps(`user-menu-watching-text`)} style={styles.linkText}>{routes.watching.label}</Text>
+              </Pressable>
+            </Link>
+          )}
           <Link href={`/profile/connections`} asChild>
             <Pressable {...elementProps(`user-menu-connections`)} style={styles.item} accessibilityRole={`link`}>
               <PlugZap {...elementProps(`user-menu-connections-icon`)} size={16} color={palette.ink} />

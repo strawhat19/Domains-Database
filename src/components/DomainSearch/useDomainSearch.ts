@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useRecentSearches } from '../../shared/domainSearch/useRecentSearches';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { getAvailableConnections } from './resultPresentation';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
@@ -22,13 +24,17 @@ const emptyState = (actorKey: string, query = ``): SearchState => ({
 });
 
 export const useDomainSearch = () => {
+  const params = useLocalSearchParams<{ q?: string | string[] }>();
   const availability = useConnectionAvailability();
-  const { user, loginRevision } = useAuth();
+  const recentSearches = useRecentSearches();
+  const { user, loading: authLoading, loginRevision } = useAuth();
   const actorKey = `${user?.id ?? `guest`}:${loginRevision}:${availability.revision}`;
   const currentActor = useRef(actorKey);
   const mounted = useRef(false);
   const revision = useRef(0);
   const controller = useRef<AbortController | null>(null);
+  const appliedQuery = useRef(``);
+  const recordedRouteQuery = useRef(``);
   const [state, setState] = useState<SearchState>(() => emptyState(actorKey));
   currentActor.current = actorKey;
   const visible = state.actorKey === actorKey && availability.eligible;
@@ -41,7 +47,7 @@ export const useDomainSearch = () => {
   const loadingMore = visible && state.loadingMore;
   const availableResults = results?.results.flatMap(result => {
     const connections = getAvailableConnections(result);
-    return connections.length ? [{ ...result, connections }] : [];
+    return connections.length ? [result] : [];
   }) ?? [];
   const checkedVariants = results?.results.filter(result => (
     result.connections.length > 0 && result.connections.every(connection => !connection.pending)
@@ -61,6 +67,7 @@ export const useDomainSearch = () => {
     controller.current?.abort();
     controller.current = null;
     revision.current += 1;
+    appliedQuery.current = ``;
     setState(emptyState(actorKey));
     return () => {
       mounted.current = false;
@@ -80,12 +87,12 @@ export const useDomainSearch = () => {
 
   const clear = () => setQuery(``);
 
-  const search = async (append: boolean) => {
-    if (!availability.eligible || loading || loadingMore || !mounted.current || currentActor.current !== actorKey) return;
+  const search = async (append: boolean, input = query, fromRoute = false) => {
+    if (authLoading || !availability.eligible || (!fromRoute && (loading || loadingMore)) || !mounted.current || currentActor.current !== actorKey) return;
     if (append && (!variants || !results || results.results.length >= variants.domains.length)) return;
     let name: string;
     try {
-      name = normalizeDomainSearchQuery(query);
+      name = normalizeDomainSearchQuery(input);
     } catch (failure) {
       setState(current => ({ ...current, actorKey, error: failure instanceof Error ? failure.message : `Enter A Valid Domain Name` }));
       return;
@@ -100,6 +107,10 @@ export const useDomainSearch = () => {
     setState(current => append
       ? { ...current, error: ``, loadingMore: true }
       : { ...emptyState(actorKey, name), loading: true });
+    if (!append && (!fromRoute || recordedRouteQuery.current !== name)) {
+      if (fromRoute) recordedRouteQuery.current = name;
+      void recentSearches.rememberSearch(name).catch(() => undefined);
+    }
     try {
       const choices = append && variants ? variants : await getConnectedDomainVariants(name, request.signal, user?.id ?? null);
       if (!isCurrent()) return;
@@ -125,15 +136,30 @@ export const useDomainSearch = () => {
     }
   };
 
+  const incomingQuery = typeof params.q === `string` ? params.q.trim().slice(0, 253) : ``;
+  useEffect(() => {
+    if (authLoading || !incomingQuery || !availability.eligible || !mounted.current) return;
+    const key = `${actorKey}:${incomingQuery}`;
+    if (appliedQuery.current === key) return;
+    appliedQuery.current = key;
+    void search(false, incomingQuery, true);
+  }, [actorKey, authLoading, availability.eligible, incomingQuery]);
+
   return {
     user, note, query, error, results, loading, loadingMore, clear, setQuery,
     checkWarnings, checkedVariants, availableResults, hasUnconfirmedResults,
     accessError: availability.error,
+    requestedQuery: incomingQuery,
+    recentSearches: recentSearches.records,
+    recentSearchesError: recentSearches.error,
+    recentSearchesLoading: recentSearches.loading,
     eligible: availability.eligible,
-    accessLoading: availability.loading,
+    accessLoading: authLoading || availability.loading,
     totalVariants: variants?.domains.length ?? 0,
     hasMore: !!results && results.results.length < (variants?.domains.length ?? 0),
     submit: () => search(false),
+    searchRecent: (value: string) => { void search(false, value); },
+    clearRecentSearches: () => { void recentSearches.clearRecentSearches().catch(() => undefined); },
     loadMore: () => search(true),
   };
 };

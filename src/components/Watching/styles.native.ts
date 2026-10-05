@@ -1,0 +1,30 @@
+import { StyleSheet } from 'react-native';
+import type { ThemePalette } from '../../shared/themeContext/theme';
+
+export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  disabled: { opacity: .45 },
+  records: { gap: 12 },
+  heading: { gap: 9 },
+  compactPage: { padding: 20, paddingTop: 28 },
+  page: { gap: 18, padding: 28, paddingTop: 40 },
+  dataDescription: { gap: 4 },
+  skeletonDomain: { width: `60%`, height: 20 },
+  skeletonDate: { width: `40%` },
+  skeleton: { height: 14, borderRadius: 3, backgroundColor: palette.skeleton },
+  primaryButton: { borderColor: palette.accent, backgroundColor: palette.accent },
+  primaryButtonText: { color: palette.contrast },
+  emptyDescription: { textAlign: `center` },
+  title: { fontSize: 30, color: palette.ink, letterSpacing: -.8, fontFamily: `DMSans_700Bold` },
+  emptyTitle: { fontSize: 19, color: palette.ink, textAlign: `center`, fontFamily: `DMSans_600SemiBold` },
+  description: { fontSize: 12, lineHeight: 20, color: palette.muted, fontFamily: `DMSans_400Regular` },
+  disclaimer: { fontSize: 11, lineHeight: 18, color: palette.muted, fontFamily: `DMSans_400Regular` },
+  buttonText: { fontSize: 12, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  eyebrowText: { fontSize: 9, letterSpacing: 1.5, color: palette.accent, fontFamily: `DMSans_700Bold` },
+  eyebrow: { gap: 7, flexDirection: `row`, alignItems: `center` },
+  headingActions: { gap: 8, marginTop: 7, flexWrap: `wrap`, flexDirection: `row` },
+  searchInput: { flex: 1, fontSize: 12, color: palette.ink, paddingVertical: 12, fontFamily: `DMSans_400Regular` },
+  button: { gap: 7, minHeight: 44, borderWidth: 1, borderRadius: 6, paddingVertical: 12, paddingHorizontal: 16, borderColor: palette.line, flexDirection: `row`, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.paper },
+  empty: { gap: 12, padding: 30, borderWidth: 1, borderRadius: 8, borderColor: palette.line, alignItems: `center`, backgroundColor: palette.paper },
+  skeletonCard: { gap: 18, padding: 20, borderWidth: 1, borderRadius: 8, borderColor: palette.line, backgroundColor: palette.paper },
+  searchWrap: { gap: 9, minHeight: 44, borderWidth: 1, borderRadius: 6, paddingHorizontal: 13, borderColor: palette.line, flexDirection: `row`, alignItems: `center`, backgroundColor: palette.input },
+});

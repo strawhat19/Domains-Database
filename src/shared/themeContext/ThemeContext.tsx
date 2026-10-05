@@ -1,14 +1,18 @@
 import type { PropsWithChildren } from 'react';
-import { Appearance, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalStorage } from '../config';
+import { useAuth } from '../authContext/useAuth';
+import { AppState, Appearance, Platform } from 'react-native';
+import { getSavedTheme, saveTheme, getThemeStorageKey } from './preferences';
 import { themePalettes, THEME_STORAGE_KEY, type ThemeMode, type ThemePalette } from './theme';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 
 interface ThemeContextValue {
+  error: string;
   ready: boolean;
   isDark: boolean;
   theme: ThemeMode;
   palette: ThemePalette;
+  clearError: () => void;
   toggleTheme: () => void;
 }
 
@@ -16,10 +20,19 @@ export const ThemeContext = createContext<ThemeContextValue | undefined>(undefin
 const useThemeLayoutEffect = Platform.OS === `web` && typeof window !== `undefined` ? useLayoutEffect : useEffect;
 
 export const ThemeProvider = ({ children }: PropsWithChildren) => {
-  const [ready, setReady] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
+  const scope = authLoading ? `pending` : userId ?? `guest`;
+  const currentScope = useRef(scope);
+  currentScope.current = scope;
+  const [error, setError] = useState(``);
+  const [loadedScope, setLoadedScope] = useState<string | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(`dark`);
+  const currentTheme = useRef(theme);
+  currentTheme.current = theme;
   const preferenceChanged = useRef(false);
-  const storageQueue = useRef<Promise<void>>(Promise.resolve());
+  const mutationRevision = useRef(0);
+  const ready = !authLoading && loadedScope === scope;
   const palette = themePalettes[theme];
   const isDark = theme === `dark`;
 
@@ -27,7 +40,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     if (Platform.OS !== `web` || typeof document === `undefined`) return;
     let saved = document.documentElement.dataset.theme;
     try {
-      saved = window.localStorage.getItem(THEME_STORAGE_KEY) ?? saved;
+      if (useLocalStorage) saved = window.localStorage.getItem(THEME_STORAGE_KEY) ?? saved;
     } catch {}
     if (!preferenceChanged.current && (saved === `light` || saved === `dark`)) {
       setTheme(saved);
@@ -36,22 +49,44 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     let mounted = true;
-    AsyncStorage.getItem(THEME_STORAGE_KEY).then(saved => {
-      if (mounted && !preferenceChanged.current && (saved === `light` || saved === `dark`)) {
-        setTheme(saved);
+    let request = 0;
+    setError(``);
+    setLoadedScope(null);
+    if (authLoading) return () => { mounted = false; };
+    const refresh = () => {
+      const revision = ++request;
+      const changed = mutationRevision.current;
+      const isCurrent = () => mounted && currentScope.current === scope && request === revision;
+      void getSavedTheme(userId).then(saved => {
+        if (isCurrent() && changed === mutationRevision.current) {
+          currentTheme.current = saved ?? `dark`;
+          setTheme(currentTheme.current);
+          setError(``);
+        }
+      }).catch(failure => {
+        if (isCurrent()) setError(failure instanceof Error ? failure.message : `Could Not Load Theme Preference`);
+      }).finally(() => {
+        if (isCurrent()) setLoadedScope(scope);
+      });
+    };
+    const changed = (event: StorageEvent) => {
+      if (event.key === null || event.key === THEME_STORAGE_KEY || event.key === getThemeStorageKey(userId)) refresh();
+    };
+    const subscription = AppState.addEventListener(`change`, state => { if (state === `active`) refresh(); });
+    refresh();
+    if (typeof window !== `undefined`) {
+      window.addEventListener(`focus`, refresh);
+      window.addEventListener(`storage`, changed);
+    }
+    return () => {
+      mounted = false;
+      subscription.remove();
+      if (typeof window !== `undefined`) {
+        window.removeEventListener(`focus`, refresh);
+        window.removeEventListener(`storage`, changed);
       }
-    }).catch(() => undefined).finally(() => {
-      if (mounted) setReady(true);
-    });
-    return () => { mounted = false; };
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
-    storageQueue.current = storageQueue.current
-      .then(() => AsyncStorage.setItem(THEME_STORAGE_KEY, theme))
-      .catch(() => undefined);
-  }, [theme, ready]);
+    };
+  }, [scope, userId, authLoading]);
 
   useThemeLayoutEffect(() => {
     if (Platform.OS !== `web`) {
@@ -77,17 +112,31 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
   }, [theme, palette, ready]);
 
   const toggleTheme = useCallback(() => {
+    if (!ready) return;
     preferenceChanged.current = true;
-    setTheme(current => current === `light` ? `dark` : `light`);
-  }, []);
+    const nextTheme = currentTheme.current === `light` ? `dark` : `light`;
+    const revision = ++mutationRevision.current;
+    currentTheme.current = nextTheme;
+    setTheme(nextTheme);
+    setError(``);
+    void saveTheme(nextTheme, userId).catch(failure => {
+      if (currentScope.current === scope && mutationRevision.current === revision) {
+        setError(failure instanceof Error ? failure.message : `Could Not Save Theme Preference`);
+      }
+    });
+  }, [ready, scope, userId]);
+
+  const clearError = useCallback(() => setError(``), []);
 
   const value = useMemo(() => ({
     ready,
     theme,
     isDark,
     palette,
+    clearError,
     toggleTheme,
-  }), [ready, theme, isDark, palette, toggleTheme]);
+    error: ready ? error : ``,
+  }), [ready, theme, isDark, palette, error, clearError, toggleTheme]);
 
   return (
     <ThemeContext.Provider value={value}>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocalStorage } from '../../shared/config';
-import { resolveAuthReturnTo } from '../../shared/routes';
+import { routes, resolveAuthReturnTo } from '../../shared/routes';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -10,8 +10,9 @@ type Field = `email` | `password`;
 export const useAuthForm = (mode: AuthMode) => {
   const auth = useAuth();
   const router = useRouter();
-  const params = useLocalSearchParams<{ returnTo?: string | string[] }>();
+  const params = useLocalSearchParams<{ q?: string | string[]; returnTo?: string | string[] }>();
   const returnTo = resolveAuthReturnTo(params.returnTo);
+  const query = returnTo === routes.search.href && typeof params.q === `string` ? params.q.trim().slice(0, 253) : ``;
   const [feedback, setFeedback] = useState(``);
   const [showPassword, setShowPassword] = useState(false);
   const [fields, setFields] = useState({ email: ``, password: `` });
@@ -38,7 +39,7 @@ export const useAuthForm = (mode: AuthMode) => {
       if (signingUp) await auth.signUp(input);
       else await auth.signIn(input);
       setFields({ email: ``, password: `` });
-      router.replace(returnTo);
+      router.replace(query ? { pathname: routes.search.href, params: { q: query } } : returnTo);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : `Could Not Access Your Account`);
     }
@@ -47,7 +48,7 @@ export const useAuthForm = (mode: AuthMode) => {
   const navigate = (href: `/signin` | `/signup` | `/profile`) => {
     if (disabled) return;
     if (href === `/profile`) router.push(href);
-    else router.push({ pathname: href, params: { returnTo } });
+    else router.push({ pathname: href, params: { returnTo, ...(query ? { q: query } : {}) } });
   };
 
   const clearFeedback = () => { setFeedback(``); auth.clearError(); };

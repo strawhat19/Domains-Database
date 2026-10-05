@@ -9,6 +9,7 @@ import { AuthProvider } from '../src/shared/authContext/AuthContext';
 import { ThemeProvider } from '../src/shared/themeContext/ThemeContext';
 import { DomainProvider } from '../src/shared/domainContext/DomainContext';
 import { ColumnProvider } from '../src/shared/columnContext/ColumnContext';
+import { WatchingProvider } from '../src/shared/watching/WatchingContext';
 import { ConnectionAvailabilityProvider } from '../src/shared/connections/ConnectionAvailabilityContext';
 import { PortfolioPreferencesProvider } from '../src/shared/portfolioPreferences/PortfolioPreferencesContext';
 
@@ -29,11 +30,11 @@ const RootLayout = () => {
   useAppFonts();
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ThemeProvider>
           <AccountContent />
-        </AuthProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 };
@@ -47,7 +48,9 @@ const AccountContent = () => {
       <ColumnProvider key={accountKey} enabled={enabled} userId={user?.id ?? null}>
         <DomainProvider enabled={enabled}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>
-            <RootContent />
+            <WatchingProvider key={accountKey} enabled={enabled}>
+              <RootContent />
+            </WatchingProvider>
           </PortfolioPreferencesProvider>
         </DomainProvider>
       </ColumnProvider>

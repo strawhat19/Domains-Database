@@ -6,15 +6,16 @@ import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 
 const ThemeToggle = () => {
-  const { isDark, palette, toggleTheme } = useTheme();
+  const { ready, isDark, palette, toggleTheme } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const Icon = isDark ? Sun : Moon;
 
   return (
     <Pressable
       onPress={toggleTheme}
+      disabled={!ready}
       accessibilityRole={`button`}
-      accessibilityState={{ selected: isDark }}
+      accessibilityState={{ selected: isDark, disabled: !ready }}
       {...elementProps(`native-header-theme-toggle`)}
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       accessibilityLabel={isDark ? `Switch to light mode` : `Switch to dark mode`}

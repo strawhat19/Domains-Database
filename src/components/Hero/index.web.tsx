@@ -1,8 +1,12 @@
 import './styles.scss';
 import ExtensionIndex from '../ExtensionIndex';
-import { ArrowUpRight } from 'lucide-react';
+import { useHeroSearch } from './useHeroSearch';
+import { Search, ArrowUpRight } from 'lucide-react';
 
-const Hero = () => (
+const Hero = () => {
+  const search = useHeroSearch();
+
+  return (
   <section
     id={`landing-hero`}
     className={`landing-hero`}
@@ -27,6 +31,43 @@ const Hero = () => (
       <p id={`hero-description`} className={`hero-description`}>
         {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
       </p>
+      <form
+        role={`search`}
+        id={`hero-domain-search`}
+        className={`hero-domain-search`}
+        onSubmit={event => { event.preventDefault(); search.submit(); }}
+      >
+        <label
+          htmlFor={`hero-domain-search-input`}
+          id={`hero-domain-search-label`}
+          className={`hero-domain-search-label`}
+        >
+          {`Find your next domain`}
+        </label>
+        <div id={`hero-domain-search-row`} className={`hero-domain-search-row`}>
+          <input
+            required
+            type={`text`}
+            autoCorrect={`off`}
+            autoComplete={`off`}
+            value={search.query}
+            autoCapitalize={`none`}
+            placeholder={`your-next-domain.com`}
+            id={`hero-domain-search-input`}
+            className={`hero-domain-search-input`}
+            onChange={event => search.setQuery(event.target.value)}
+          />
+          <button
+            type={`submit`}
+            id={`hero-domain-search-submit`}
+            className={`hero-domain-search-submit`}
+            aria-label={`Search Domain Availability`}
+          >
+            <Search size={15} aria-hidden id={`hero-domain-search-icon`} className={`hero-domain-search-icon`} />
+            <span id={`hero-domain-search-text`} className={`hero-domain-search-text`}>{`Search`}</span>
+          </button>
+        </div>
+      </form>
       <a
         href={`/domains`}
         id={`hero-portfolio-link`}
@@ -45,6 +86,7 @@ const Hero = () => (
     </div>
     <ExtensionIndex />
   </section>
-);
+  );
+};
 
 export default Hero;

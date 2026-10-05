@@ -35,5 +35,5 @@ export const useUserMenu = () => {
       router.replace(`/`);
     } catch {}
   };
-  return { ...auth, open, styles, palette, signOut, guestAuth, toggle: () => setOpen(current => !current) };
+  return { ...auth, open, styles, palette, signOut, guestAuth, close: () => setOpen(false), toggle: () => setOpen(current => !current) };
 };

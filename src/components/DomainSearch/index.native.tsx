@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
+import Toast from '../Toast';
 import LoadingScreen from '../LoadingScreen';
+import RecentDomainSearches from '../RecentDomainSearches';
 import { createStyles } from './styles.native';
 import { useDomainSearch } from './useDomainSearch';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
+import { useWatching } from '../../shared/watching/useWatching';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { Search, LogIn, PlugZap, X, ShieldCheck, Plus } from 'lucide-react-native';
 import SearchResultCard, { SearchResultSkeleton } from './SearchResultCard';
@@ -12,6 +15,7 @@ import { ActivityIndicator, Pressable, Text, TextInput, View, useWindowDimension
 
 const DomainSearch = () => {
   const state = useDomainSearch();
+  const watching = useWatching();
   const { palette } = useTheme();
   const { width, height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -20,10 +24,24 @@ const DomainSearch = () => {
   const signedIn = Boolean(state.user?.id);
   const busy = state.loading || state.loadingMore;
   const disabled = busy || !state.query.trim();
+  const inlineRecentSearches = width >= 900 && state.eligible && !state.accessLoading
+    && (state.recentSearches.length > 0 || state.recentSearchesLoading || !!state.recentSearchesError);
+  const recentSearches = (
+    <RecentDomainSearches
+      inline={inlineRecentSearches}
+      records={state.recentSearches}
+      onSearch={state.searchRecent}
+      onClear={state.clearRecentSearches}
+      error={state.recentSearchesError}
+      loading={state.recentSearchesLoading}
+      disabled={busy || state.accessLoading || !state.eligible}
+    />
+  );
 
   if (state.accessLoading) return (
     <View {...elementProps(`domain-search-access-loading`)} style={accessPageStyle} accessibilityLabel={`Loading Domain Search`}>
       <LoadingScreen compact suffix={`domain-search-access`} label={`Loading domain search…`} />
+      {recentSearches}
     </View>
   );
 
@@ -43,7 +61,10 @@ const DomainSearch = () => {
         </View>
         <Link
           asChild
-          href={signedIn ? routes.connections.href : { pathname: routes.signin.href, params: { returnTo: routes.search.href } }}
+          href={signedIn ? routes.connections.href : {
+            pathname: routes.signin.href,
+            params: { returnTo: routes.search.href, ...(state.requestedQuery ? { q: state.requestedQuery } : {}) },
+          }}
         >
           <Pressable
             {...elementProps(`domain-search-access-link`)}
@@ -60,17 +81,25 @@ const DomainSearch = () => {
           </Pressable>
         </Link>
       </View>
+      {recentSearches}
     </View>
   );
 
   return (
     <View {...elementProps(`domain-search-page`)} style={pageStyle}>
       <View {...elementProps(`domain-search-intro`)} style={styles.intro}>
-        <View {...elementProps(`domain-search-eyebrow`)} style={styles.eyebrow}>
-          <Search {...elementProps(`domain-search-eyebrow-icon`)} size={14} color={palette.accent} />
-          <Text {...elementProps(`domain-search-eyebrow-text`)} style={styles.eyebrowText}>
-            {`DOMAIN DISCOVERY`}
-          </Text>
+        <View {...elementProps(`domain-search-intro-top-row`)} style={styles.introTopRow}>
+          <View {...elementProps(`domain-search-eyebrow`)} style={styles.eyebrow}>
+            <Search {...elementProps(`domain-search-eyebrow-icon`)} size={14} color={palette.accent} />
+            <Text {...elementProps(`domain-search-eyebrow-text`)} style={styles.eyebrowText}>
+              {`DOMAIN DISCOVERY`}
+            </Text>
+          </View>
+          {inlineRecentSearches && (
+            <View {...elementProps(`domain-search-inline-recents`)} style={styles.inlineRecents}>
+              {recentSearches}
+            </View>
+          )}
         </View>
         <Text {...elementProps(`domain-search-title`)} style={[styles.title, width < 600 && styles.compactTitle]} accessibilityRole={`header`}>
           {`Find your next domain.`}
@@ -139,6 +168,7 @@ const DomainSearch = () => {
           )}
         </View>
       </View>
+      {!inlineRecentSearches && recentSearches}
       {!!state.error && (
         <View {...elementProps(`domain-search-error`)} style={styles.errorPanel} accessibilityRole={`alert`} accessibilityLiveRegion={`polite`}>
           <Text {...elementProps(`domain-search-error-text`)} style={styles.errorText}>
@@ -231,6 +261,8 @@ const DomainSearch = () => {
           </Text>
         </View>
       )}
+      <Toast id={`search-watch-error`} message={watching.error} onDismiss={watching.clearError} />
+      <Toast id={`search-watch-notice`} kind={`success`} message={watching.notice} onDismiss={watching.clearNotice} />
     </View>
   );
 };

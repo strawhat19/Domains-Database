@@ -24,6 +24,7 @@ export enum Types {
   Visit = `Visit`,
   Domain = `Domain`,
   Notification = `Notification`,
+  WatchedDomain = `WatchedDomain`,
 }
 
 export enum UserGroups {

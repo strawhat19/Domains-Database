@@ -1,4 +1,5 @@
 import { Link } from 'expo-router';
+import WatchButton from '../WatchButton';
 import { createStyles } from './styles.native';
 import { ArrowUpRight, Globe2 } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
@@ -8,9 +9,9 @@ import { getSearchStatus, getAvailableConnections, getDomainSearchStatus, format
 
 type SearchStyles = ReturnType<typeof createStyles>;
 type ResultCardProps = { suffix: string; styles: SearchStyles; palette: ThemePalette; result: SearchDomainResult };
-type ConnectionResultProps = { suffix: string; result: SearchResult; styles: SearchStyles; palette: ThemePalette };
+type ConnectionResultProps = { suffix: string; result: SearchResult; styles: SearchStyles; palette: ThemePalette; domainResult: SearchDomainResult };
 
-const ConnectionResult = ({ result, palette, styles, suffix }: ConnectionResultProps) => {
+const ConnectionResult = ({ result, palette, styles, suffix, domainResult }: ConnectionResultProps) => {
   const status = getSearchStatus(result);
   const renewal = formatSearchPrice(result.renewal);
   const registration = formatSearchPrice(result.registration);
@@ -68,22 +69,25 @@ const ConnectionResult = ({ result, palette, styles, suffix }: ConnectionResultP
           {result.note}
         </Text>
       )}
-      {purchaseHref && (
-        <Link href={purchaseHref} asChild target={`_blank`} rel={`noopener noreferrer`}>
-          <Pressable
-            {...elementProps(`domain-search-purchase-link`, suffix)}
-            {...(Platform.OS === `web` ? { hrefAttrs: { target: `_blank`, rel: `noopener noreferrer` } } : {})}
-            style={styles.purchaseLink}
-            accessibilityRole={`link`}
-            accessibilityLabel={`${action} — ${Platform.OS === `web` ? `Opens In A New Tab` : `Opens Registrar Website`}`}
-          >
-            <Text {...elementProps(`domain-search-purchase-text`, suffix)} style={styles.purchaseText}>
-              {action}
-            </Text>
-            <ArrowUpRight {...elementProps(`domain-search-purchase-icon`, suffix)} size={15} color={palette.accent} />
-          </Pressable>
-        </Link>
-      )}
+      <View {...elementProps(`domain-search-result-actions`, suffix)} style={styles.resultActions}>
+        {purchaseHref && (
+          <Link href={purchaseHref} asChild target={`_blank`} rel={`noopener noreferrer`}>
+            <Pressable
+              {...elementProps(`domain-search-purchase-link`, suffix)}
+              {...(Platform.OS === `web` ? { hrefAttrs: { target: `_blank`, rel: `noopener noreferrer` } } : {})}
+              style={styles.purchaseLink}
+              accessibilityRole={`link`}
+              accessibilityLabel={`${action} — ${Platform.OS === `web` ? `Opens In A New Tab` : `Opens Registrar Website`}`}
+            >
+              <Text {...elementProps(`domain-search-purchase-text`, suffix)} style={styles.purchaseText}>
+                {action}
+              </Text>
+              <ArrowUpRight {...elementProps(`domain-search-purchase-icon`, suffix)} size={15} color={palette.accent} />
+            </Pressable>
+          </Link>
+        )}
+        <WatchButton suffix={suffix} result={domainResult} />
+      </View>
     </View>
   );
 };
@@ -122,6 +126,7 @@ const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) 
             styles={styles}
             palette={palette}
             result={connection}
+            domainResult={result}
             suffix={`${suffix}-${connection.provider}-${index}`}
           />
         ))}

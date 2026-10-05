@@ -1,6 +1,7 @@
 import './styles.scss';
 import '../../styles/global.scss';
 import { Link } from 'expo-router';
+import Toast from '../Toast';
 import UserMenu from '../UserMenu';
 import ThemeToggle from '../ThemeToggle';
 import ScrollToTop from '../ScrollToTop';
@@ -8,16 +9,17 @@ import DomainMarquee from '../DomainMarquee';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
 import NotificationBell from '../NotificationBell';
+import { routes } from '../../shared/routes';
 import type { CSSProperties, PropsWithChildren } from 'react';
 import { useShellScroll } from './useShellScroll.web';
 import { useMobileNavigation } from './useMobileNavigation';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, footerLinks } from './useAppShell';
-import { X, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { X, Eye, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
   const { pathname, year, signedIn, navigation, fitViewport } = useAppShell();
-  const { isDark } = useTheme();
+  const { isDark, error: themeError, clearError: clearThemeError } = useTheme();
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn;
@@ -65,8 +67,8 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
           >
             <div id={`header-navigation-content`} className={`header-navigation-content`}>
               <div id={`header-navigation-links`} className={`header-navigation-links`}>
-                {navigation.map(item => {
-                  const Icon = { Info, Mail, House, Search, Globe2, UsersRound }[item.icon];
+                {navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href).map(item => {
+                  const Icon = { Eye, Info, Mail, House, Search, Globe2, UsersRound }[item.icon];
                   return (
                     <Link key={item.label} href={item.href} asChild>
                       <RouterAnchor
@@ -124,6 +126,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
         {children}
       </main>
       <AuthFeedback />
+      <Toast id={`theme-preference-error`} message={themeError} onDismiss={clearThemeError} />
       <ScrollToTop visible={scroll.showScrollTop} onPress={scroll.scrollToTop} bottomInset={scroll.bottomInset} />
       <footer id={`site-footer`} className={`site-footer`}>
         <div id={`footer-inner`} className={`footer-inner`}>

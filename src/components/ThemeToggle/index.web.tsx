@@ -3,7 +3,7 @@ import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../shared/themeContext/useTheme';
 
 const ThemeToggle = () => {
-  const { isDark, toggleTheme } = useTheme();
+  const { ready, isDark, toggleTheme } = useTheme();
   const Icon = isDark ? Sun : Moon;
   const label = isDark ? `Switch to light mode` : `Switch to dark mode`;
 
@@ -11,6 +11,7 @@ const ThemeToggle = () => {
     <button
       type={`button`}
       title={label}
+      disabled={!ready}
       id={`header-theme-toggle`}
       aria-label={label}
       aria-pressed={isDark}
