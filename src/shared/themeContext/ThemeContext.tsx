@@ -59,8 +59,21 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
       return;
     }
     if (!ready || typeof document === `undefined`) return;
-    document.documentElement.dataset.theme = theme;
+    const root = document.documentElement;
+    root.dataset.themeChanging = `true`;
+    root.dataset.theme = theme;
     document.querySelector(`meta[name="theme-color"]`)?.setAttribute(`content`, palette.canvas);
+    void window.getComputedStyle(root).backgroundColor;
+    // Restore transitions after the new theme has had a chance to paint.
+    let frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => {
+        delete root.dataset.themeChanging;
+      });
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      delete root.dataset.themeChanging;
+    };
   }, [theme, palette, ready]);
 
   const toggleTheme = useCallback(() => {

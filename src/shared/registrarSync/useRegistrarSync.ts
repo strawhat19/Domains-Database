@@ -195,6 +195,12 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
   }, [enabled, userId, canSyncManually, applyPolicy, syncConnections]);
 
   useEffect(() => {
+    if (!enabled || !syncNotice) return;
+    const timer = setTimeout(clearSyncNotice, 60_000);
+    return () => clearTimeout(timer);
+  }, [enabled, syncNotice, clearSyncNotice]);
+
+  useEffect(() => {
     if (!enabled || !userId) return;
     let mounted = true;
     let operation = 0;

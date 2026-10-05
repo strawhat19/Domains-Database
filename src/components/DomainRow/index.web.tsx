@@ -38,6 +38,7 @@ const DomainRow = ({
   onContextMenu,
   onToggleAutoRenew,
   selectionDescriptionId,
+  reorderable = draggable,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainRowProps) => {
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
@@ -63,7 +64,7 @@ const DomainRow = ({
       case `name`:
         return (
           <div id={`${scope}-identity`} className={`domain-identity`}>
-            {draggable && (
+            {reorderable && (
               <div id={`${scope}-reorder`} className={`domain-reorder`}>
                 <span id={`${scope}-drag-handle`} className={`domain-drag-handle`} title={`Drag to reorder ${domain.name}`}>
                   <GripVertical size={14} aria-hidden={`true`} id={`${scope}-drag-handle-icon`} className={`domain-drag-handle-icon`} />

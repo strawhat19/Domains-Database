@@ -34,6 +34,7 @@ const DomainGridCard = ({
   onDragStart,
   onToggleAutoRenew,
   selectionDescriptionId,
+  reorderable = draggable,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainGridCardProps) => {
   const scope = `domain-grid-card-${domain.id}`;
@@ -152,7 +153,7 @@ const DomainGridCard = ({
         </dl>
       )}
       <div id={`${scope}-footer`} className={`domain-grid-card-footer`}>
-        {draggable && (
+        {reorderable && (
           <div id={`${scope}-reorder`} className={`domain-grid-card-reorder`}>
             <span
               id={`${scope}-drag-handle`}

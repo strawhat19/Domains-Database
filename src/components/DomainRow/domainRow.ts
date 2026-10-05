@@ -22,6 +22,7 @@ export interface DomainDragProps<Element extends HTMLElement> {
   dragging?: boolean;
   dropTarget?: boolean;
   draggable?: boolean;
+  reorderable?: boolean;
   onDrop?: DragEventHandler<Element>;
   onDragEnd?: DragEventHandler<Element>;
   onDragOver?: DragEventHandler<Element>;

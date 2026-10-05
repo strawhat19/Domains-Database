@@ -51,6 +51,7 @@ export const useDomainReorder = (
   const handlers = (groupKey: string, domainId: string, visibleIds: string[]) => {
     const index = visibleIds.indexOf(domainId);
     return {
+      reorderable: enabled,
       draggable: enabled || groupEnabled,
       dragging: draggingId === domainId,
       dropTarget: targetId === domainId,

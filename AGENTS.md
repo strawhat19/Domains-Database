@@ -44,3 +44,5 @@ Apply these preferences across projects and workspaces for the strawhat19 GitHub
 16. Before publishing a completed landing page, include About, Terms, Contact, and Privacy Policy pages. Menu links should navigate to internal pages instead of section anchors; include common aliases such as about-us to about and contact-us to contact.
 
 17. Before implementation, read the applicable guidance in this order: ai/skills/structure/structure.md, ai/skills/database/database.md, ai/skills/api/api.md, ai/skills/authentication/authentication.md when authentication is involved, ai/skills/social/social.md when profiles, posts, followers, messaging, or social privacy are involved, then ai/skills/routes/routes.md. Read only what the requested work needs, preserve the existing architecture where practical, and do not run premature validation.
+
+18. For logo concepts, visual identity design rounds, or logo mockups, read [the logo and mockup skill](ai/skills/design/SKILL.md) and its linked guide before creating assets.

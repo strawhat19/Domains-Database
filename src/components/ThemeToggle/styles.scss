@@ -9,7 +9,7 @@
   place-items: center;
   background: var(--paper);
   border: 1px solid var(--line);
-  transition: color .24s ease, background .24s ease, border-color .24s ease;
+  transition: color .12s ease, background .12s ease, border-color .12s ease;
 
   &:hover {
     color: var(--accent);
@@ -20,4 +20,4 @@
   }
 }
 
-.header-theme-toggle-icon { transition: transform .24s ease; }
+.header-theme-toggle-icon { transition: transform .12s ease; }

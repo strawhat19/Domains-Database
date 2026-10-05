@@ -334,7 +334,13 @@ const PortfolioRecords = ({
           </div>
         </div>
       </div>
-      <div ref={sticky.scrollRef} id={`${idPrefix}-table-scroll`} className={`portfolio-table-scroll`} style={{ marginTop: stickyHeaderReady ? -sticky.header.headHeight : 0 }}>
+      <div
+        ref={sticky.scrollRef}
+        id={`${idPrefix}-table-scroll`}
+        data-loading={loading || undefined}
+        className={`portfolio-table-scroll`}
+        style={{ marginTop: stickyHeaderReady ? -sticky.header.headHeight : 0 }}
+      >
         <table ref={sticky.tableRef} style={tableStyle} id={`${idPrefix}-table`} className={`portfolio-table`} aria-busy={loading}>
           <caption id={`${idPrefix}-table-caption`} className={`portfolio-sr-only`}>
             {`Your saved domain records. Monthly costs are annual costs divided by twelve. Auto-renew settings are a record only.`}
