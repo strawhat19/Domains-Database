@@ -1,5 +1,6 @@
 import './styles.scss';
 import type { MouseEventHandler } from 'react';
+import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
@@ -259,6 +260,7 @@ const DomainRow = ({
       })}
       <td id={`${scope}-actions-cell`} className={`actionsCell domain-actions-cell`}>
         <div id={`${scope}-actions`} className={`domain-row-actions`}>
+          <DomainAnalyticsButton compact suffix={scope} domain={domain.name} />
           <button
             type={`button`}
             disabled={busy}

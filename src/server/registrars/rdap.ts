@@ -16,6 +16,8 @@ const registrarNames: [RegExp, Registrar][] = [
 
 export interface DomainRegistration {
   registered?: boolean;
+  createdAt?: string;
+  expiresAt?: string;
   registrar: Registrar | ``;
   registrarName?: string;
   registrarIanaId?: string;
@@ -81,9 +83,16 @@ export const getDomainRegistration = async (name: string, context: RegistrarRequ
   const record = await readPublicJSON(new URL(`domain/${encodeURIComponent(name)}`, endpoint), context);
   if (!record) return { registrar: ``, registered: false };
   if (record.objectClassName !== `domain` || providerName(record.ldhName, context.provider) !== name) throw invalidResponse(context.provider);
+  const events = Array.isArray(record.events) ? record.events : [];
+  const eventDate = (action: string) => {
+    const date = events.find(event => event && typeof event === `object` && event.eventAction === action)?.eventDate;
+    return typeof date === `string` && date.length <= 64 && /^\d{4}-\d{2}-\d{2}T/.test(date)
+      && Number.isFinite(Date.parse(date)) ? new Date(date).toISOString() : undefined;
+  };
+  const dates = { createdAt: eventDate(`registration`), expiresAt: eventDate(`expiration`) };
   const entities = Array.isArray(record.entities) ? record.entities : [];
   const entity = entities.find(value => value && typeof value === `object` && Array.isArray(value.roles) && value.roles.includes(`registrar`));
-  if (!entity) return { registrar: ``, registered: true };
+  if (!entity) return { ...dates, registrar: ``, registered: true };
   const card = Array.isArray(entity.vcardArray) ? entity.vcardArray[1] : undefined;
   const label = Array.isArray(card) ? card.find(value => Array.isArray(value) && value[0] === `fn`)?.[3] : undefined;
   const registrarName = typeof label === `string` && label.length <= 200 && !/[\u0000-\u001f\u007f]/.test(label) ? label.trim() : undefined;
@@ -92,5 +101,5 @@ export const getDomainRegistration = async (name: string, context: RegistrarRequ
     && `type` in value && value.type === `IANA Registrar ID`)?.identifier;
   const registrarIanaId = typeof identifier === `string` && /^\d{1,10}$/.test(identifier) ? identifier : undefined;
   const registrar = registrarName ? registrarNames.find(([pattern]) => pattern.test(registrarName))?.[1] ?? `` : ``;
-  return { registrar, registrarName, registrarIanaId, registered: true };
+  return { ...dates, registrar, registrarName, registrarIanaId, registered: true };
 };

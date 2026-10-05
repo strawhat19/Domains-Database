@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
+import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import { createStyles } from './styles.native';
 import { Text, View, Pressable } from 'react-native';
 import { Eye, Trash2, ArrowUpRight } from 'lucide-react-native';
@@ -93,6 +94,7 @@ const WatchingRow = ({ busy, record, onRemove }: WatchingRowProps) => {
           <Text {...elementProps(`watching-added-date`, suffix)} style={styles.note}>{view.addedDate}</Text>
         </View>
       </View>
+      <DomainAnalyticsButton suffix={`watching-${suffix}`} domain={record.domain} />
       <Pressable
         {...elementProps(`watching-remove`, suffix)}
         disabled={busy}

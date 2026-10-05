@@ -1,4 +1,5 @@
 import { createStyles } from './styles.native';
+import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -265,6 +266,7 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
           </Text>
         </View>
       ))}
+      <DomainAnalyticsButton suffix={`native-domain-card-${domain.id}`} domain={domain.name} />
     </View>
   );
 };

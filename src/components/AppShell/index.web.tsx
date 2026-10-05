@@ -15,7 +15,7 @@ import { useShellScroll } from './useShellScroll.web';
 import { useMobileNavigation } from './useMobileNavigation';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, footerLinks } from './useAppShell';
-import { X, Eye, Menu, Info, Mail, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
   const { pathname, year, signedIn, navigation, fitViewport } = useAppShell();
@@ -68,7 +68,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
             <div id={`header-navigation-content`} className={`header-navigation-content`}>
               <div id={`header-navigation-links`} className={`header-navigation-links`}>
                 {navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href).map(item => {
-                  const Icon = { Eye, Info, Mail, House, Search, Globe2, UsersRound }[item.icon];
+                  const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, UsersRound }[item.icon];
                   return (
                     <Link key={item.label} href={item.href} asChild>
                       <RouterAnchor

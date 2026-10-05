@@ -53,7 +53,7 @@ const UserMenu = () => {
               <Text {...elementProps(`user-menu-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
             </Pressable>
           </Link>
-          {width <= 1200 && (
+          {width <= 1360 && (
             <Link href={routes.watching.href} asChild>
               <Pressable
                 style={styles.item}

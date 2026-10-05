@@ -1,4 +1,5 @@
 import './styles.scss';
+import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import { getDomainSource } from '../../shared/domainUtils';
@@ -199,6 +200,7 @@ const DomainGridCard = ({
           </div>
         )}
         <div id={`${scope}-actions`} className={`domain-grid-card-actions`}>
+          <DomainAnalyticsButton suffix={scope} domain={domain.name} />
           <button
             type={`button`}
             disabled={busy}

@@ -1,0 +1,92 @@
+.domain-analytics-dialog {
+  padding: 0;
+  margin: auto;
+  display: none;
+  color: var(--ink);
+  width: calc(100vw - 48px);
+  max-width: 620px;
+  overflow: hidden;
+  border-radius: 14px;
+  max-height: calc(100dvh - 48px);
+  background: var(--paper);
+  flex-direction: column;
+  border: 1px solid var(--line);
+  box-shadow: 0 20px 80px rgba(0, 0, 0, .18);
+
+  &::backdrop { background: var(--overlay); }
+  &[open] { display: flex; animation: domain-analytics-enter .18s ease-out; }
+}
+.domain-analytics-header {
+  gap: 16px;
+  display: flex;
+  flex-shrink: 0;
+  padding: 22px;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.domain-analytics-heading { min-width: 0; }
+.domain-analytics-eyebrow { gap: 8px; display: flex; font-size: 10px; color: var(--accent); letter-spacing: .14em; align-items: center; }
+.domain-analytics-icon { flex-shrink: 0; }
+.domain-analytics-title { margin: 9px 0 0; font-size: 25px; color: var(--ink); overflow-wrap: anywhere; }
+.domain-analytics-close { width: 34px; height: 34px; display: grid; border: 0; flex-shrink: 0; border-radius: 7px; color: var(--muted); place-items: center; background: transparent; }
+.domain-analytics-close:hover { color: var(--ink); background: var(--subtle); }
+.domain-analytics-body { padding: 22px; overflow-y: auto; }
+.domain-analytics-description { margin: 0 0 20px; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.domain-analytics-section { padding-top: 18px; margin-top: 20px; border-top: 1px solid var(--line); }
+.domain-analytics-section-title { gap: 8px; display: flex; margin: 0 0 14px; font-size: 14px; color: var(--ink); align-items: center; }
+.domain-analytics-section-icon { color: var(--accent); }
+.domain-analytics-fields { gap: 16px; margin: 16px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.domain-analytics-name-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.domain-analytics-field { min-width: 0; }
+.domain-analytics-field-label { margin-bottom: 6px; font-size: 10px; color: var(--muted); }
+.domain-analytics-field-value { margin: 0; font-size: 12px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.domain-analytics-note { margin: 0; font-size: 11px; line-height: 1.7; color: var(--muted); }
+.domain-analytics-dialog .actionsCell { align-items: flex-start; }
+.domain-analytics-dialog .rowStatus { gap: 7px; display: inline-flex; align-items: center; }
+.domain-analytics-dialog .statusDotWrap { width: 9px; height: 9px; display: grid; place-items: center; }
+.domain-analytics-dialog .statusDot { width: 6px; height: 6px; display: block; border-radius: 50%; background: currentColor; }
+.domain-analytics-dialog .statusText { font-size: 11px; font-weight: 600; }
+.domain-analytics-status-unknown,
+.domain-analytics-status-unregistered,
+.domain-analytics-status-registered { color: var(--muted); }
+.domain-analytics-warning { margin: 10px 0; font-size: 11px; line-height: 1.7; color: var(--warning); }
+.domain-analytics-error { margin: 12px 0; padding: 12px; font-size: 12px; line-height: 1.7; border-radius: 8px; color: var(--danger); background: var(--danger-bg); }
+.domain-analytics-dns-records { gap: 6px; padding: 0; margin: 0; display: flex; list-style: none; flex-direction: column; }
+.domain-analytics-dns-record { gap: 12px; padding: 10px; display: flex; font-size: 11px; line-height: 1.6; border-radius: 7px; align-items: flex-start; background: var(--input); }
+.domain-analytics-dns-type { width: 40px; flex-shrink: 0; font-size: 10px; font-weight: 600; color: var(--accent); }
+.domain-analytics-dns-value { min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
+.domain-analytics-keywords { gap: 6px; display: flex; margin: 12px 0; flex-wrap: wrap; }
+.domain-analytics-keyword { padding: 6px 9px; font-size: 11px; font-weight: 600; border-radius: 7px; color: var(--accent); background: var(--subtle); }
+.domain-analytics-research-links { gap: 8px; display: flex; flex-wrap: wrap; }
+.domain-analytics-research-link,
+.domain-analytics-refresh { gap: 6px; padding: 8px 10px; display: inline-flex; min-height: 36px; font-size: 11px; font-weight: 600; border-radius: 7px; color: var(--accent); align-items: center; text-decoration: none; background: transparent; border: 1px solid var(--line); transition: background .2s ease, border-color .2s ease; }
+.domain-analytics-research-link:hover,
+.domain-analytics-refresh:hover:not(:disabled) { background: var(--subtle); border-color: var(--accent); }
+.domain-analytics-provider-note { margin: 16px 0 0; padding: 12px; font-size: 11px; line-height: 1.7; color: var(--muted); border-radius: 8px; background: var(--input); }
+.domain-analytics-footer { gap: 16px; display: flex; flex-shrink: 0; padding: 16px 22px; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); }
+.domain-analytics-refresh:disabled { opacity: .5; cursor: default; }
+.domain-analytics-loading { gap: 10px; display: flex; color: var(--muted); flex-wrap: wrap; align-items: center; }
+.domain-analytics-loading-text { font-size: 12px; }
+.domain-analytics-loading-icon { color: var(--accent); animation: domain-analytics-spin 1.5s linear infinite; }
+.domain-analytics-skeleton { width: 100%; height: 110px; margin-top: 10px; border-radius: 10px; background: var(--skeleton); }
+.domain-analytics-dialog :is(button, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+@keyframes domain-analytics-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes domain-analytics-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 560px) {
+  .domain-analytics-dialog { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); }
+  .domain-analytics-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .domain-analytics-header,
+  .domain-analytics-body { padding: 18px; }
+  .domain-analytics-footer { padding: 14px 18px; }
+  .domain-analytics-title { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .domain-analytics-dialog[open],
+  .domain-analytics-loading-icon { animation: none; }
+  .domain-analytics-research-link,
+  .domain-analytics-refresh { transition: none; }
+}

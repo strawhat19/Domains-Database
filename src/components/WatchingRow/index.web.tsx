@@ -1,4 +1,5 @@
 import './styles.scss';
+import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import { Eye, Trash2, ArrowUpRight } from 'lucide-react';
 import { getWatchingRow, getWatchingConnection, type WatchingRowProps } from './presentation';
 
@@ -87,6 +88,7 @@ const WatchingRow = ({ busy, record, onRemove }: WatchingRowProps) => {
         <time dateTime={record.created} id={`watching-added-${suffix}`} className={`watching-date`}>{view.addedDate}</time>
       </td>
       <td id={`watching-actions-cell-${suffix}`} className={`actionsCell watching-actions-cell`}>
+        <DomainAnalyticsButton compact suffix={`watching-${suffix}`} domain={record.domain} />
         <button
           type={`button`}
           disabled={busy}

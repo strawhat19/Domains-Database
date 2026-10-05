@@ -1,0 +1,19 @@
+.auction-row {
+  transition: background .2s ease;
+  &:hover { background: var(--subtle); }
+  > td, > th { padding: 16px; font-size: 12px; text-align: left; font-weight: 400; vertical-align: top; border-top: 1px solid var(--line); }
+}
+.auction-domain-identity { gap: 9px; display: flex; align-items: center; }
+.auction-domain-icon { flex-shrink: 0; color: var(--accent); }
+.auction-domain { font-size: 13px; overflow-wrap: anywhere; font-family: var(--font-bold); }
+.auction-source { font-family: var(--font-bold); }
+.auction-row-note { display: block; margin-top: 5px; font-size: 10px; color: var(--muted); }
+.auction-price { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.auction-bids-cell, .auction-ends, .auction-age-cell { font-variant-numeric: tabular-nums; }
+.auction-page .auction-row-status { gap: 4px; display: inline-flex; margin-top: 7px; font-size: 10px; color: var(--muted); align-items: center; }
+.auction-page .auction-row-status-ended { color: var(--danger); }
+.auction-page .statusDotWrap { width: 8px; height: 8px; display: grid; place-items: center; }
+.auction-page .statusDot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.auction-action-list { gap: 9px; display: flex; align-items: center; flex-wrap: wrap; }
+.auction-source-link { gap: 4px; display: inline-flex; color: var(--accent); font-size: 11px; white-space: nowrap; align-items: center; text-decoration: none; font-family: var(--font-bold); text-underline-offset: 3px; &:hover { text-decoration: underline; } }
+@media (prefers-reduced-motion: reduce) { .auction-row { transition: none; } }

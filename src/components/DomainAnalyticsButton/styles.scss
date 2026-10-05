@@ -1,0 +1,23 @@
+.domain-analytics-button {
+  gap: 6px;
+  display: inline-flex;
+  min-height: 34px;
+  padding: 7px 10px;
+  color: var(--accent);
+  border-radius: 7px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  font: 600 11px var(--font-body);
+  transition: background .22s ease, border-color .22s ease;
+
+  &:hover { background: var(--subtle); border-color: var(--accent); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+.domain-analytics-button-icon { flex-shrink: 0; }
+.domain-analytics-button-compact { width: 34px; padding: 7px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .domain-analytics-button { transition: none; }
+}

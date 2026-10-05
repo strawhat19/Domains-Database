@@ -114,7 +114,7 @@
 .footer-link { gap: 6px; min-height: 44px; display: inline-flex; align-items: center; font-size: 11px; color: var(--muted); transition: color .22s ease; }
 .footer-link:hover { color: var(--accent); }
 
-@media (max-width: 1200px) {
+@media (max-width: 1360px) {
   .header-inner { flex-wrap: wrap; padding: 10px var(--shell-gutter) 14px; gap: 0 var(--header-action-gap); }
   .header-brand { flex: 1; order: 0; min-width: 0; max-width: 220px; }
   .header-logo { width: 100%; }

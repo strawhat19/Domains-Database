@@ -1,5 +1,6 @@
 import { Link } from 'expo-router';
 import WatchButton from '../WatchButton';
+import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import { createStyles } from './styles.native';
 import { ArrowUpRight, Globe2 } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
@@ -105,6 +106,7 @@ const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) 
         <Text {...elementProps(`domain-search-result-domain`, suffix)} style={styles.resultDomain} numberOfLines={1}>
           {result.domain}
         </Text>
+        <DomainAnalyticsButton suffix={`search-${suffix}`} domain={result.domain} />
         <View {...elementProps(`actionsCell`, `search-${suffix}`)} style={styles.actionsCell}>
           <View {...elementProps(`rowStatus`, `search-${suffix}`)} style={styles.rowStatus}>
             <View {...elementProps(`statusDotWrap`, `search-${suffix}`)} style={styles.statusDotWrap}>
