@@ -1,6 +1,7 @@
 .domain-collection-settings-fields { gap: 18px; display: grid; }
 .domain-collection-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .domain-collection-settings-description-input { resize: vertical; min-height: 92px; }
+.domain-collection-settings-visibility-input { width: 100%; cursor: pointer; }
 .domain-collection-settings .domain-collection-settings-footer { justify-content: flex-end; }
 .domain-collection-settings .domain-collection-settings-close {
   border-radius: 4px;
@@ -10,5 +11,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .domain-collection-settings-name-input, .domain-collection-settings-description-input { transition: none; }
+  .domain-collection-settings-name-input, .domain-collection-settings-visibility-input, .domain-collection-settings-description-input { transition: none; }
 }

@@ -1,13 +1,14 @@
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
-import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
+import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
 export const useDomainCollectionSettings = (collection: CustomPortfolioCollection, onClose: () => void) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
   const [name, setNameValue] = useState(collection.name);
+  const [visibility, setVisibilityValue] = useState<CollectionVisibility>(collection.visibility ?? `private`);
   const [invalidField, setInvalidField] = useState<`name` | `description` | null>(null);
   const [description, setDescriptionValue] = useState(collection.description ?? ``);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -41,6 +42,10 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     clearError();
     setDescriptionValue(value);
   };
+  const setVisibility = (value: CollectionVisibility) => {
+    clearError();
+    setVisibilityValue(value);
+  };
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearError();
@@ -64,7 +69,7 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
       descriptionInputRef.current?.focus();
       return;
     }
-    if (!preferences.updateCollection(collection.id, trimmedName, trimmedDescription)) {
+    if (!preferences.updateCollection(collection.id, trimmedName, trimmedDescription, visibility)) {
       setError(`Could Not Save Collection. Try Again Shortly`);
       return;
     }
@@ -75,10 +80,12 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     name,
     setName,
     modalRef,
+    visibility,
     description,
     invalidField,
     nameInputRef,
     handleSubmit,
+    setVisibility,
     setDescription,
     descriptionInputRef,
     error: error || availabilityError,

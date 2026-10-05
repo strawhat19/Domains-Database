@@ -49,7 +49,7 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
           </button>
         </header>
         <p id={`domain-collection-settings-description`} className={`domain-dialog-description`}>
-          {`Edit the title and optional description shown above this collection's domains.`}
+          {`Edit the title, optional description, and visibility of this collection.`}
         </p>
         <form noValidate id={`domain-collection-settings-form`} className={`domain-collection-settings-form`} onSubmit={settings.handleSubmit}>
           <div id={`domain-collection-settings-fields`} className={`domain-collection-settings-fields`}>
@@ -93,6 +93,24 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
               />
               <p id={`domain-collection-settings-description-help`} className={`domain-collection-settings-help`}>
                 {`Up to 280 characters, shown next to the collection title.`}
+              </p>
+            </div>
+            <div id={`domain-collection-settings-visibility-field`} className={`domain-editor-field`}>
+              <label id={`domain-collection-settings-visibility-label`} htmlFor={`domain-collection-settings-visibility`} className={`domain-editor-label`}>
+                {`Visibility`}
+              </label>
+              <select
+                value={settings.visibility}
+                id={`domain-collection-settings-visibility`}
+                className={`domain-editor-input domain-collection-settings-visibility-input`}
+                aria-describedby={`domain-collection-settings-visibility-help`}
+                onChange={event => settings.setVisibility(event.target.value === `public` ? `public` : `private`)}
+              >
+                <option id={`domain-collection-settings-visibility-private`} value={`private`}>{`Private`}</option>
+                <option id={`domain-collection-settings-visibility-public`} value={`public`}>{`Public / Published`}</option>
+              </select>
+              <p id={`domain-collection-settings-visibility-help`} className={`domain-collection-settings-help`}>
+                {`Private keeps this collection unpublished. Public / Published marks it for public sharing.`}
               </p>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { PortfolioColumn } from '../../shared/portfolioColumns';
 import { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
-import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
+import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
 export const usePortfolioCollection = (
@@ -32,6 +32,9 @@ export const usePortfolioCollection = (
     collection.sortField ? null : `name`,
     `asc`,
   );
+  const voteUp = () => preferences.voteCollection(collection.id, `up`);
+  const voteDown = () => preferences.voteCollection(collection.id, `down`);
+  const setVisibility = (visibility: CollectionVisibility) => preferences.setCollectionVisibility(collection.id, visibility);
 
-  return { sticky, editing, onSort, setEditing, recordsSticky, toggleManualOrder };
+  return { sticky, voteUp, editing, onSort, voteDown, setEditing, setVisibility, recordsSticky, toggleManualOrder };
 };

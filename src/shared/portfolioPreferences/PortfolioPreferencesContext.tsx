@@ -41,6 +41,10 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
       number,
       id: value.id,
       sortField,
+      upvotes: Number.isSafeInteger(value.upvotes) && value.upvotes >= 0 ? value.upvotes : 0,
+      downvotes: Number.isSafeInteger(value.downvotes) && value.downvotes >= 0 ? value.downvotes : 0,
+      visibility: value.visibility === `public` ? `public` : `private`,
+      currentVote: value.currentVote === `up` || value.currentVote === `down` ? value.currentVote : null,
       sortDirection: value.sortDirection === `desc` ? `desc` : `asc`,
       ...(description ? { description } : {}),
     }];
@@ -190,9 +194,13 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
       collectionId = genID(`Collection`, number, collectionName).id;
       createdCollection = {
         number,
+        upvotes: 0,
+        downvotes: 0,
         id: collectionId,
+        currentVote: null,
         name: collectionName,
         sortField: `name`,
+        visibility: `private`,
         sortDirection: `asc`,
         description: collectionDescription,
       };
@@ -262,14 +270,49 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     return true;
   }, [ready, change, userId, enabled]);
 
-  const updateCollection = useCallback<PortfolioPreferencesContextValue[`updateCollection`]>((id, value, descriptionValue) => {
+  const updateCollection = useCallback<PortfolioPreferencesContextValue[`updateCollection`]>((id, value, descriptionValue, visibility) => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    if (visibility !== undefined && visibility !== `private` && visibility !== `public`) return false;
     const name = value.trim();
     const description = descriptionValue.trim();
     const collections = preferenceRef.current.collections;
     if (!name || name.length > 80 || description.length > 280 || !collections.some(collection => collection.id === id)) return false;
     if (collections.some(collection => collection.id !== id && collection.name.toLowerCase() === name.toLowerCase())) return false;
-    change(current => ({ ...current, collections: current.collections.map(collection => collection.id === id ? { ...collection, name, description } : collection) }));
+    change(current => ({
+      ...current,
+      collections: current.collections.map(collection => collection.id === id ? {
+        ...collection,
+        name,
+        description,
+        ...(visibility !== undefined ? { visibility } : {}),
+      } : collection),
+    }));
+    return true;
+  }, [ready, change, userId, enabled]);
+
+  const setCollectionVisibility = useCallback<PortfolioPreferencesContextValue[`setCollectionVisibility`]>((id, visibility) => {
+    if (visibility !== `private` && visibility !== `public`) return false;
+    const collection = preferenceRef.current.collections.find(collection => collection.id === id);
+    return collection ? updateCollection(id, collection.name, collection.description ?? ``, visibility) : false;
+  }, [updateCollection]);
+
+  const voteCollection = useCallback<PortfolioPreferencesContextValue[`voteCollection`]>((id, vote) => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    if (vote !== `up` && vote !== `down`) return false;
+    if (!preferenceRef.current.collections.some(collection => collection.id === id && collection.visibility === `public`)) return false;
+    change(current => ({
+      ...current,
+      collections: current.collections.map(collection => {
+        if (collection.id !== id) return collection;
+        const currentVote = collection.currentVote === vote ? null : vote;
+        return {
+          ...collection,
+          currentVote,
+          upvotes: Math.max(0, collection.upvotes - (collection.currentVote === `up` ? 1 : 0) + (currentVote === `up` ? 1 : 0)),
+          downvotes: Math.max(0, collection.downvotes - (collection.currentVote === `down` ? 1 : 0) + (currentVote === `down` ? 1 : 0)),
+        };
+      }),
+    }));
     return true;
   }, [ready, change, userId, enabled]);
 
@@ -325,6 +368,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     renameGroup,
     deleteGroup,
     updateGroup,
+    voteCollection,
     assignDomain,
     assignDomains,
     moveCollection,
@@ -332,7 +376,8 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     saveGroupSettings,
     setCollectionSort,
     assignGroupCollection,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, assignDomain, assignDomains, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, assignGroupCollection]);
+    setCollectionVisibility,
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, voteCollection, assignDomain, assignDomains, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, assignGroupCollection, setCollectionVisibility]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

@@ -2,6 +2,8 @@ import type { DomainRecord } from '../types';
 import type { PortfolioColumn } from '../portfolioColumns';
 
 export type PortfolioView = `table` | `grid`;
+export type CollectionVote = `up` | `down` | null;
+export type CollectionVisibility = `private` | `public`;
 export type PortfolioGroupBy = `none` | `custom` | PortfolioColumn;
 
 export interface CustomPortfolioGroup {
@@ -16,8 +18,12 @@ export interface CustomPortfolioCollection {
   id: string;
   name: string;
   number: number;
+  upvotes: number;
+  downvotes: number;
   description?: string;
+  currentVote: CollectionVote;
   sortDirection: `asc` | `desc`;
+  visibility: CollectionVisibility;
   sortField: PortfolioColumn | null;
 }
 
@@ -67,10 +73,12 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   assignDomain: (domainId: string, groupId: string | null) => void;
   createGroup: (name: string, domainIds?: string[]) => string | undefined;
   assignDomains: (domainIds: string[], groupId: string | null) => boolean;
+  voteCollection: (collectionId: string, vote: Exclude<CollectionVote, null>) => boolean;
   updateGroup: (groupId: string, name: string, description: string) => boolean;
   saveGroupSettings: (groupId: string, input: GroupSettingsInput) => boolean;
   moveGroup: (groupId: string, targetId: string, placement?: `before` | `after`) => boolean;
-  updateCollection: (collectionId: string, name: string, description: string) => boolean;
+  updateCollection: (collectionId: string, name: string, description: string, visibility?: CollectionVisibility) => boolean;
+  setCollectionVisibility: (collectionId: string, visibility: CollectionVisibility) => boolean;
   assignGroupCollection: (groupId: string, collectionId: string | null) => boolean;
   setCollectionSort: (collectionId: string, field: PortfolioColumn | null, direction: `asc` | `desc`) => boolean;
   moveCollection: (collectionId: string, targetId: string, placement?: `before` | `after`) => boolean;
