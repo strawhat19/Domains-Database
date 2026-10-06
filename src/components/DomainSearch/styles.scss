@@ -1,4 +1,46 @@
-:is(.domain-search-page, .domain-search-access-page, .domain-search-access-loading, [data-class='domain-search-page'], [data-class='domain-search-access-page'], [data-class='domain-search-access-loading']) { padding-inline: 0 !important; }
+:is(.domain-search-page, .domain-search-access-page, .domain-search-access-loading, [data-class='domain-search-page'], [data-class='domain-search-access-page'], [data-class='domain-search-access-loading']) { isolation: isolate; position: relative; padding-inline: 0 !important; }
+
+:root[data-theme='dark'] {
+  :is(.domain-search-form, [data-class='domain-search-form']) {
+    border-color: #345866 !important;
+    background: linear-gradient(145deg, #1a3442, #162b36) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .04), 0 10px 36px rgb(0 0 0 / .12), 0 0 25px rgb(90 207 198 / .04);
+  }
+  :is(.domain-search-input-wrap, [data-class='domain-search-input-wrap']) {
+    border-color: #5b909b !important;
+    background-color: #0c1a25 !important;
+    box-shadow: inset 0 2px 6px rgb(0 0 0 / .28), 0 1px 0 rgb(255 255 255 / .04);
+
+    &:focus-within { border-color: var(--accent) !important; box-shadow: inset 0 2px 6px rgb(0 0 0 / .28), 0 0 0 3px var(--focus-ring), 0 0 20px rgb(90 207 198 / .08); }
+  }
+}
+
+:is(.domain-search-workspace, [data-class='domain-search-workspace']) {
+  width: 100%;
+  container-type: inline-size;
+  container-name: domain-search-workspace;
+  flex-wrap: wrap;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+}
+
+:is(.domain-search-controls-column, .domain-search-discovery-column, [data-class='domain-search-controls-column'], [data-class='domain-search-discovery-column']) {
+  min-width: 0;
+  width: 100% !important;
+  flex: 0 0 100% !important;
+  max-width: none !important;
+}
+
+@container domain-search-workspace (min-width: 940px) {
+  :is(.domain-search-controls-column, [data-class='domain-search-controls-column']) { width: auto !important; flex: 1 1 0 !important; }
+  :is(.domain-search-discovery-column, [data-class='domain-search-discovery-column']) { width: 320px !important; max-width: 320px !important; flex: 0 0 320px !important; align-self: stretch; }
+}
+
+.app-shell[data-search-viewport='true'] :is(.domain-search-workspace, [data-class='domain-search-workspace']) {
+  min-height: calc(var(--page-content-height) - 76px);
+  align-items: stretch !important;
+}
+
 :is(.domain-search-check-warnings, [data-class='domain-search-check-warnings']) { white-space: pre-line; overflow-wrap: anywhere; }
 :is(.domain-search-input, [data-class='domain-search-input']):focus { outline: none; }
 :is(.domain-search-input-wrap, [data-class='domain-search-input-wrap']):focus-within { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--focus-ring); }

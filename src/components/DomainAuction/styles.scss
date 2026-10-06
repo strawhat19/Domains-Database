@@ -50,6 +50,9 @@
 .auction-match-field { width: 160px; }
 .auction-sort-field { width: 190px; }
 .auction-field-input { width: 100%; height: 41px; min-width: 0; font-size: 12px; padding: 10px 12px; color: var(--ink); border-radius: 4px; font-family: var(--font-body); background: var(--input); border: 1px solid var(--line); transition: background .2s ease, border-color .2s ease; &:focus { background: var(--paper); border-color: var(--accent); } }
+.auction-price-wrap { width: 100%; position: relative; }
+.auction-price-prefix { top: 0; bottom: 0; left: 12px; z-index: 1; display: flex; position: absolute; font-size: 12px; color: var(--muted); align-items: center; user-select: none; pointer-events: none; }
+.auction-price-input { padding-left: 28px; }
 .auction-filter-actions { gap: 12px; display: flex; margin-top: 16px; justify-content: space-between; }
 .auction-text-button { gap: 6px; border: 0; display: inline-flex; cursor: pointer; font-size: 11px; color: var(--accent); padding: 5px 0; align-items: center; background: transparent; font-family: var(--font-bold); &:disabled { opacity: .45; cursor: default; } }
 .auction-advanced-filters { gap: 16px; display: grid; margin-top: 16px; padding-top: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
@@ -71,7 +74,7 @@
 #auction-page-range { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .auction-page-actions { gap: 8px; display: flex; flex-shrink: 0; flex-wrap: nowrap; }
 .auction-page-actions .auction-button { padding: 9px 12px; font-size: 11px; }
-.auction-table-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.auction-table-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; container-name: auction-table; container-type: inline-size; scrollbar-color: var(--line-strong) transparent; }
 .auction-table { width: 100%; min-width: 1040px; border-spacing: 0; border-collapse: separate; }
 .auction-table-heading { padding: 13px 16px; font-size: 10px; font-weight: 400; text-align: left; color: var(--muted); white-space: nowrap; background: var(--input); letter-spacing: .035em; text-transform: uppercase; font-family: var(--font-mono); border-top: 1px solid var(--line); }
 .auction-table-heading-domain { min-width: 200px; }

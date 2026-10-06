@@ -1,21 +1,25 @@
 import './styles.scss';
 import { COLUMN_GROUPS } from './groups';
 import { useEffect, useRef, useState } from 'react';
-import { X, Columns3, RotateCcw } from 'lucide-react';
+import { X, Columns3, RotateCcw, MoveHorizontal } from 'lucide-react';
 import { PORTFOLIO_COLUMNS, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 interface ColumnControlsProps {
+  onFit: () => void;
   onReset: () => void;
+  fitDisabled?: boolean;
   visibleColumns: PortfolioColumn[];
   onToggle: (column: PortfolioColumn) => void;
   columnCounts: Record<PortfolioColumn, number>;
 }
 
 const ColumnControls = ({
+  onFit,
   onReset,
   onToggle,
   columnCounts,
   visibleColumns,
+  fitDisabled = false,
 }: ColumnControlsProps) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -46,20 +50,34 @@ const ColumnControls = ({
 
   return (
     <div ref={rootRef} id={`portfolio-column-controls`} className={`column-controls`}>
-      <button
-        type={`button`}
-        ref={buttonRef}
-        aria-expanded={open}
-        id={`portfolio-columns-button`}
-        aria-controls={`portfolio-column-panel`}
-        onClick={() => setOpen(current => !current)}
-        className={`portfolio-button portfolio-button-secondary column-controls-button${open ? ` column-controls-button-open` : ``}`}
-      >
-        <Columns3 size={15} aria-hidden={`true`} id={`portfolio-columns-button-icon`} className={`portfolio-button-icon`} />
-        <span id={`portfolio-columns-button-text`} className={`portfolio-button-text`}>
-          {`Columns`}
-        </span>
-      </button>
+      <div id={`portfolio-column-tools`} className={`column-controls-tools`}>
+        <button
+          type={`button`}
+          ref={buttonRef}
+          aria-expanded={open}
+          id={`portfolio-columns-button`}
+          aria-controls={`portfolio-column-panel`}
+          onClick={() => setOpen(current => !current)}
+          className={`portfolio-button portfolio-button-secondary column-controls-button${open ? ` column-controls-button-open` : ``}`}
+        >
+          <Columns3 size={15} aria-hidden={`true`} id={`portfolio-columns-button-icon`} className={`portfolio-button-icon`} />
+          <span id={`portfolio-columns-button-text`} className={`portfolio-button-text`}>
+            {`Columns`}
+          </span>
+        </button>
+        <button
+          type={`button`}
+          onClick={onFit}
+          disabled={fitDisabled}
+          id={`portfolio-fit-columns`}
+          aria-label={`Fit Columns To Contents`}
+          title={`Fit Each Column To Its Longest Value`}
+          className={`portfolio-button portfolio-button-secondary column-controls-fit`}
+        >
+          <MoveHorizontal size={15} aria-hidden={`true`} id={`portfolio-fit-columns-icon`} className={`portfolio-button-icon`} />
+          <span id={`portfolio-fit-columns-text`} className={`portfolio-button-text`}>{`Fit`}</span>
+        </button>
+      </div>
       {open && (
         <div id={`portfolio-column-panel`} className={`column-controls-panel`}>
           <fieldset id={`portfolio-column-options`} className={`column-controls-options`}>

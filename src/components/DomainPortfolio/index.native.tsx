@@ -504,7 +504,18 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   <Text {...elementProps(`native-domain-editor-price-label`)} style={styles.fieldLabel}>
                     {`Annual renewal price (USD)`}
                   </Text>
-                  <TextInput {...elementProps(`native-domain-editor-price-input`)} style={styles.fieldInput} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={palette.placeholder} keyboardType={`decimal-pad`} accessibilityLabel={`Annual Renewal Price In USD`} />
+                  <View {...elementProps(`native-domain-editor-price-control`, state.editingId ?? `new`)} style={styles.priceControl}>
+                    <View
+                      accessible={false}
+                      style={styles.pricePrefix}
+                      accessibilityElementsHidden
+                      importantForAccessibility={`no-hide-descendants`}
+                      {...elementProps(`native-domain-editor-price-prefix`, state.editingId ?? `new`)}
+                    >
+                      <Text {...elementProps(`native-domain-editor-price-currency`, state.editingId ?? `new`)} style={styles.priceCurrency}>{`$`}</Text>
+                    </View>
+                    <TextInput {...elementProps(`native-domain-editor-price-input`)} style={[styles.fieldInput, styles.priceInput]} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={palette.placeholder} keyboardType={`decimal-pad`} accessibilityLabel={`Annual Renewal Price In USD`} />
+                  </View>
                 </View>}
                 {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-auto-renew`)} style={styles.toggle}>
                   <View {...elementProps(`native-domain-editor-auto-renew-copy`)} style={styles.toggleCopy}>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import type { MouseEvent, FocusEvent, PointerEvent } from 'react';
 
 interface DragGesture {
@@ -12,7 +12,7 @@ interface DragGesture {
 
 const loopPosition = (position: number, width: number) => ((position % width) + width) % width;
 
-export const useMarquee = () => {
+export const useMarquee = (contentKey: string) => {
   const phase = useRef(0);
   const cycleWidth = useRef(0);
   const focused = useRef(false);
@@ -27,30 +27,52 @@ export const useMarquee = () => {
   const [measured, setMeasured] = useState(false);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const paint = () => {
+  const paint = useCallback(() => {
     if (!track.current || !cycleWidth.current) return;
     track.current.style.transform = `translate3d(${-cycleWidth.current - phase.current}px, 0, 0)`;
-  };
+  }, []);
 
   useEffect(() => {
     let frame = 0;
     let lastFrame = 0;
+    let layoutReady = false;
+    let cancelled = false;
+    let fontsReady = !document.fonts || document.fonts.status === `loaded`;
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
     const motion = window.matchMedia(`(prefers-reduced-motion: reduce)`);
     const applyMotionPreference = () => { reducedMotion.current = motion.matches; };
     const measure = () => {
       if (!cycle.current || !viewport.current) return;
       const width = cycle.current.getBoundingClientRect().width;
       if (!width) return;
+      layoutReady = false;
+      if (settleTimer !== undefined) clearTimeout(settleTimer);
+      const previousWidth = cycleWidth.current;
+      const progress = previousWidth > 0 ? loopPosition(phase.current, previousWidth) / previousWidth : 0;
       cycleWidth.current = width;
-      phase.current = loopPosition(phase.current, width);
+      phase.current = progress * width;
       setCopyCount(Math.max(3, Math.ceil(viewport.current.clientWidth / width) + 2));
-      setMeasured(true);
       paint();
+      if (fontsReady) settleTimer = setTimeout(() => {
+        if (cancelled || !fontsReady) return;
+        paint();
+        setMeasured(true);
+        layoutReady = true;
+        lastFrame = 0;
+      }, 250);
     };
+    const onFontLoading = () => {
+      fontsReady = false;
+      layoutReady = false;
+      if (settleTimer !== undefined) clearTimeout(settleTimer);
+      settleTimer = undefined;
+    };
+    const onFontsReady = () => { fontsReady = true; measure(); };
+    const onVisibilityChange = () => { lastFrame = 0; if (!document.hidden) measure(); };
     const animate = (now: number) => {
       const elapsed = lastFrame ? Math.min(now - lastFrame, 64) : 0;
       lastFrame = now;
-      if (cycleWidth.current && !reducedMotion.current && !focused.current && !gesture.current) {
+      if (layoutReady && !document.hidden && cycleWidth.current && !reducedMotion.current && !focused.current && !gesture.current) {
         phase.current = loopPosition(phase.current + elapsed * .035, cycleWidth.current);
         paint();
       }
@@ -61,17 +83,28 @@ export const useMarquee = () => {
     if (viewport.current) observer?.observe(viewport.current);
     applyMotionPreference();
     measure();
+    void document.fonts?.ready.then(() => { if (!cancelled) onFontsReady(); });
+    document.fonts?.addEventListener(`loading`, onFontLoading);
+    document.fonts?.addEventListener(`loadingdone`, onFontsReady);
+    document.fonts?.addEventListener(`loadingerror`, onFontsReady);
+    document.addEventListener(`visibilitychange`, onVisibilityChange);
     motion.addEventListener(`change`, applyMotionPreference);
     window.addEventListener(`resize`, measure);
     frame = window.requestAnimationFrame(animate);
     return () => {
+      cancelled = true;
       observer?.disconnect();
+      if (settleTimer !== undefined) clearTimeout(settleTimer);
       window.cancelAnimationFrame(frame);
+      document.fonts?.removeEventListener(`loading`, onFontLoading);
+      document.fonts?.removeEventListener(`loadingdone`, onFontsReady);
+      document.fonts?.removeEventListener(`loadingerror`, onFontsReady);
+      document.removeEventListener(`visibilitychange`, onVisibilityChange);
       window.removeEventListener(`resize`, measure);
       motion.removeEventListener(`change`, applyMotionPreference);
       if (clickTimer.current !== undefined) clearTimeout(clickTimer.current);
     };
-  }, []);
+  }, [contentKey, paint]);
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0) return;

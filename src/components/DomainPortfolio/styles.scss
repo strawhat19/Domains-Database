@@ -69,15 +69,15 @@
 .portfolio-main-database-help { margin: 0; font-size: 11px; color: var(--muted); }
 .portfolio-toolbar {
   gap: 12px;
-  z-index: 5;
+  z-index: 6;
   display: flex;
   position: sticky;
   flex-wrap: wrap;
-  min-height: 76px;
   container-type: inline-size;
   container-name: portfolio-toolbar;
-  padding: 16px 20px;
+  padding: 12px 20px;
   align-items: center;
+  align-content: flex-start;
   background: var(--paper);
   border-radius: 6px 6px 0 0;
   top: calc(var(--site-header-offset, 0px) + var(--portfolio-sticky-gap, 12px));
@@ -103,13 +103,13 @@
   align-items: center;
   background: var(--input);
   border: 1px solid var(--line);
-  transition: background .2s ease, border-color .2s ease;
-  &:focus-within { background: var(--paper); border-color: var(--accent); }
+  transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
+  &:focus-within { background: var(--paper); border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 }
 .portfolio-search-icon { flex-shrink: 0; color: var(--muted); }
 .portfolio-search { border: 0; width: 100%; min-width: 0; padding: 10px 0; font-size: 13px; color: var(--ink); background: transparent; font-family: var(--font-body); }
 .portfolio-search::placeholder { color: var(--placeholder); }
-.portfolio-search:focus { outline: none; }
+.domain-portfolio .portfolio-search:focus { outline: none; }
 .portfolio-registrar-controls { gap: 12px; display: flex; min-width: 0; max-width: 100%; align-items: center; }
 .portfolio-registrar-filter-wrap { width: 174px; min-width: 0; position: relative; }
 .portfolio-registrar-filter {
@@ -208,7 +208,7 @@
   .portfolio-primary-actions .portfolio-button { width: 100%; }
   .portfolio-domain-actions { width: 100%; }
   .portfolio-domain-actions .portfolio-button { flex: 1; width: auto; }
-  .portfolio-toolbar { gap: 12px; padding: 16px; flex-wrap: wrap; }
+  .portfolio-toolbar { gap: 12px; padding: 12px 16px; flex-wrap: wrap; }
   .portfolio-search-wrap { flex-basis: 100%; max-width: none; }
   .portfolio-search, .portfolio-registrar-filter { font-size: 16px; }
   .portfolio-toolbar-meta { margin-left: auto; }

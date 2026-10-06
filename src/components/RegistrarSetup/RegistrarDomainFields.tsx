@@ -49,16 +49,19 @@ const RegistrarDomainFields = ({ draft, index, removable, onChange, onRemove }: 
         <label id={`${scope}-price-label`} className={`registrar-setup-label`} htmlFor={`${scope}-price`}>
           {`Annual renewal · USD (optional)`}
         </label>
-        <input
-          min={0}
-          step={0.01}
-          type={`number`}
-          inputMode={`decimal`}
-          value={draft.renewalPrice}
-          id={`${scope}-price`}
-          className={`registrar-setup-input`}
-          onChange={event => onChange(draft.id, `renewalPrice`, event.target.value)}
-        />
+        <div id={`${scope}-price-control`} className={`registrar-setup-price-control`}>
+          <span aria-hidden id={`${scope}-price-prefix`} className={`registrar-setup-price-prefix`}>{`$`}</span>
+          <input
+            min={0}
+            step={0.01}
+            type={`number`}
+            inputMode={`decimal`}
+            value={draft.renewalPrice}
+            id={`${scope}-price`}
+            className={`registrar-setup-input registrar-setup-price-input`}
+            onChange={event => onChange(draft.id, `renewalPrice`, event.target.value)}
+          />
+        </div>
       </div>
       <label id={`${scope}-auto-renew-label`} className={`registrar-setup-checkbox-label registrar-setup-field-wide`} htmlFor={`${scope}-auto-renew`}>
         <input

@@ -1,0 +1,19 @@
+.responsive-domain-heading {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.responsive-domain-heading-text { margin: 0; }
+
+.responsive-domain-heading-probe {
+  top: 0;
+  left: 0;
+  margin: 0;
+  width: max-content;
+  position: absolute;
+  visibility: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+}

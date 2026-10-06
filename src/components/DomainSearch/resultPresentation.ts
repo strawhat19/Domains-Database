@@ -38,10 +38,10 @@ export const formatSearchPrice = (price: SearchResult[`registration`]) => {
   let amount: string;
   try {
     amount = currency
-      ? new Intl.NumberFormat(`en-US`, { currency, style: `currency`, currencyDisplay: `code` }).format(price.amount)
-      : new Intl.NumberFormat(`en-US`, { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(price.amount);
+      ? new Intl.NumberFormat(`en-US`, { currency, style: `currency`, currencyDisplay: `symbol` }).format(price.amount)
+      : `$${new Intl.NumberFormat(`en-US`, { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(price.amount)}`;
   } catch {
-    amount = `${currency ? `${currency} ` : ``}${price.amount.toFixed(2)}`;
+    amount = `${currency && currency !== `USD` ? `${currency} ` : `$`}${price.amount.toFixed(2)}`;
   }
   const years = price.years;
   const term = years && Number.isInteger(years) && years > 0 ? `${years} ${years === 1 ? `year` : `years`}` : `Term not provided`;

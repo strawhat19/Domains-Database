@@ -1,6 +1,7 @@
 import { routes } from '../../shared/routes';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../shared/authContext/useAuth';
+import { useAppFonts } from '../../shared/useAppFonts';
 import { notificationsAPI } from '../../api/notifications';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
@@ -18,6 +19,7 @@ export interface DomainMarqueeItem {
 }
 
 export const useDomainMarquee = () => {
+  const [fontsLoaded, fontError] = useAppFonts();
   const { user, loading: authLoading } = useAuth();
   const { domains, loading: domainsLoading } = useDomains();
   const [loading, setLoading] = useState(true);
@@ -58,5 +60,9 @@ export const useDomainMarquee = () => {
     return values.sort((left, right) => left.label.localeCompare(right.label, `en`, { sensitivity: `base` }));
   }, [showDomains, userDomains, notifications]);
 
-  return { items, showDomains, loading: !showDomains && loading };
+  return {
+    items,
+    showDomains,
+    loading: authLoading || (Boolean(user?.id) && domainsLoading) || (!fontsLoaded && !fontError) || (!showDomains && loading),
+  };
 };

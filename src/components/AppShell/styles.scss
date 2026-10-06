@@ -80,6 +80,19 @@
 .header-link-active,
 .header-link-active:hover { color: var(--strong-text); background: var(--strong); }
 
+.header-link-beta {
+  font-size: 9px;
+  flex-shrink: 0;
+  line-height: 14px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: .3px;
+  color: var(--accent);
+  background: var(--subtle);
+  border: 1px solid var(--accent);
+  font-family: 'DMSans_700Bold', sans-serif;
+}
+
 .main-content {
   flex: 1;
   width: 100%;
@@ -90,6 +103,13 @@
 .app-shell[data-fit-view='true'] {
   min-height: 100dvh;
   .main-content { display: flex; min-height: 0; padding-block: 16px; flex-direction: column; justify-content: center; }
+  .site-footer { margin-top: 0; }
+}
+
+.app-shell[data-search-viewport='true'] {
+  min-height: 100dvh;
+  --page-content-height: calc(100dvh - var(--shell-header-height, 128px) - var(--site-footer-height, 84px));
+  .main-content { padding-block: 0; justify-content: flex-start; }
   .site-footer { margin-top: 0; }
 }
 

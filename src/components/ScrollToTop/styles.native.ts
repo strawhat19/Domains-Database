@@ -1,4 +1,5 @@
-import { StyleSheet } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
@@ -6,17 +7,16 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   button: {
     width: 44,
     height: 44,
-    elevation: 4,
     borderWidth: 1,
     borderRadius: 6,
-    shadowRadius: 8,
-    shadowOpacity: .12,
     alignItems: `center`,
-    shadowColor: palette.ink,
     justifyContent: `center`,
     borderColor: palette.line,
     backgroundColor: palette.paper,
-    shadowOffset: { width: 0, height: 4 },
+    ...Platform.select<ViewStyle>({
+      web: { boxShadow: `0px 4px 8px color-mix(in srgb, ${palette.ink} 12%, transparent)` },
+      default: { elevation: 4, shadowRadius: 8, shadowOpacity: .12, shadowColor: palette.ink, shadowOffset: { width: 0, height: 4 } },
+    }),
   },
   pressed: { backgroundColor: palette.subtle },
 });

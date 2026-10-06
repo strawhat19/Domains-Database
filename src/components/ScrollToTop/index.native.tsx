@@ -16,9 +16,8 @@ const ScrollToTop = ({ visible, onPress, bottomInset = 0 }: ScrollToTopProps) =>
     <Animated.View
       accessible={false}
       accessibilityElementsHidden={!visible}
-      pointerEvents={visible ? `auto` : `none`}
       {...elementProps(`native-scroll-to-top`)}
-      style={[styles.root, { bottom: 20 + bottomInset }, motion]}
+      style={[styles.root, { bottom: 20 + bottomInset, pointerEvents: visible ? `auto` : `none` }, motion]}
       importantForAccessibility={visible ? `auto` : `no-hide-descendants`}
     >
       <Pressable

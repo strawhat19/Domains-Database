@@ -54,7 +54,7 @@
 .watching-filter::placeholder { color: var(--placeholder); }
 .watching-filter:focus { outline: none; }
 .watching-list-label { gap: 5px; display: flex; font-size: 11px; color: var(--muted); align-items: center; }
-.watching-table-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.watching-table-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; container-name: watching-table; container-type: inline-size; scrollbar-color: var(--line-strong) transparent; }
 .watching-table { width: 100%; min-width: 1150px; border-spacing: 0; border-collapse: separate; }
 .watching-table-heading { font-size: 10px; text-align: left; font-weight: 400; color: var(--muted); padding: 13px 16px; white-space: nowrap; background: var(--input); letter-spacing: .035em; text-transform: uppercase; font-family: var(--font-mono); border-top: 1px solid var(--line); }
 .watching-table-heading-domain { min-width: 190px; }

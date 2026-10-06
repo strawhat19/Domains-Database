@@ -1,0 +1,52 @@
+.magic-typing {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 18px;
+  width: max-content;
+}
+
+.magic-typing-content {
+  gap: 6px;
+  display: flex;
+  min-width: 0;
+  font-size: 11px;
+  min-height: 18px;
+  align-items: center;
+  color: var(--muted);
+}
+
+.magic-typing-icon { flex-shrink: 0; color: var(--accent); }
+.magic-typing-label { flex-shrink: 0; }
+
+.magic-typing-example {
+  gap: 2px;
+  width: 16ch;
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  min-height: 16px;
+  white-space: nowrap;
+  align-items: center;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.magic-typing-domain { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.magic-typing-caret { width: 1px; height: 11px; flex-shrink: 0; background: currentColor; }
+.magic-typing-caret-active { animation: magic-typing-blink 1.1s ease-in-out infinite; }
+
+.magic-typing-accessible-label {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@keyframes magic-typing-blink { 50% { opacity: .25; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .magic-typing-caret-active { animation: none; }
+}

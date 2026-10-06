@@ -95,8 +95,7 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
                 height={18}
                 accessible={false}
                 viewBox={`0 0 16 16`}
-                pointerEvents={`none`}
-                style={styles.selectionIcon}
+                style={[styles.selectionIcon, { pointerEvents: `none` }]}
                 accessibilityElementsHidden
                 importantForAccessibility={`no-hide-descendants`}
                 {...elementProps(`native-domain-select-icon`, domain.id)}

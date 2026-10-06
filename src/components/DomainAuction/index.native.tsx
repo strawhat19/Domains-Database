@@ -156,12 +156,40 @@ const DomainAuction = () => {
                   <TextInput {...elementProps(`auction-input`, field.key)} style={styles.input} value={state.filters[field.key]} autoCorrect={false} autoCapitalize={`none`} placeholder={field.placeholder} placeholderTextColor={palette.placeholder} onChangeText={value => state.updateFilter(field.key, value)} accessibilityLabel={field.label} />
                 </View>
               ))}
-              {auctionNumericFields.map(field => (
-                <View key={field.key} {...elementProps(`auction-field`, field.key)} style={styles.field}>
-                  <Text {...elementProps(`auction-label`, field.key)} style={styles.label}>{field.label}</Text>
-                  <TextInput {...elementProps(`auction-input`, field.key)} style={styles.input} value={state.filters[field.key]} keyboardType={field.key.includes(`Price`) ? `decimal-pad` : `number-pad`} placeholder={`Any`} placeholderTextColor={palette.placeholder} onChangeText={value => state.updateFilter(field.key, value)} accessibilityLabel={field.label} />
-                </View>
-              ))}
+              {auctionNumericFields.map(field => {
+                const usd = field.key === `minPrice` || field.key === `maxPrice`;
+                const input = (
+                  <TextInput
+                    {...elementProps(`auction-input`, field.key)}
+                    style={usd ? [styles.input, styles.priceInput] : styles.input}
+                    value={state.filters[field.key]}
+                    keyboardType={field.key.includes(`Price`) ? `decimal-pad` : `number-pad`}
+                    placeholder={`Any`}
+                    placeholderTextColor={palette.placeholder}
+                    onChangeText={value => state.updateFilter(field.key, value)}
+                    accessibilityLabel={field.label}
+                  />
+                );
+                return (
+                  <View key={field.key} {...elementProps(`auction-field`, field.key)} style={styles.field}>
+                    <Text {...elementProps(`auction-label`, field.key)} style={styles.label}>{field.label}</Text>
+                    {usd ? (
+                      <View {...elementProps(`auction-price-wrap`, field.key)} style={styles.priceWrap}>
+                        {input}
+                        <View
+                          pointerEvents={`none`}
+                          accessibilityElementsHidden
+                          importantForAccessibility={`no-hide-descendants`}
+                          {...elementProps(`auction-price-prefix`, field.key)}
+                          style={styles.pricePrefix}
+                        >
+                          <Text {...elementProps(`auction-price-symbol`, field.key)} style={styles.priceSymbol}>{`$`}</Text>
+                        </View>
+                      </View>
+                    ) : input}
+                  </View>
+                );
+              })}
             </View>
             {[
               { key: `noDigits`, label: `No Numbers` },

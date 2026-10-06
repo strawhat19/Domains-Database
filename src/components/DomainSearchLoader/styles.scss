@@ -1,0 +1,16 @@
+:is(.domain-search-loader-preview, [data-class='domain-search-loader-preview']) {
+  animation: domain-search-loader-pulse 2.8s ease-in-out infinite;
+}
+
+:is(.domain-search-loader-bar, [data-class='domain-search-loader-bar']) {
+  transition: width .24s ease, height .24s ease;
+}
+
+@keyframes domain-search-loader-pulse {
+  50% { opacity: .58; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.domain-search-loader-preview, [data-class='domain-search-loader-preview']) { animation: none; }
+  :is(.domain-search-loader-bar, [data-class='domain-search-loader-bar']) { transition: none; }
+}

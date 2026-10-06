@@ -8,6 +8,7 @@ export interface RecentDomainSearchesProps {
   inline?: boolean;
   loading: boolean;
   disabled?: boolean;
+  maxHeight?: number;
   onClear: () => void;
   records: RecentDomainSearchRecord[];
   onSearch: (query: string) => void;

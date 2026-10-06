@@ -3,8 +3,11 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   button: { gap: 6, minHeight: 34, borderWidth: 1, borderRadius: 7, paddingVertical: 7, paddingHorizontal: 10, flexDirection: `row`, alignItems: `center`, borderColor: palette.line },
+  compact: { gap: 4, height: 28, minHeight: 28, maxHeight: 28, paddingVertical: 0, paddingHorizontal: 8 },
+  iconOnly: { width: 28, minWidth: 28, paddingHorizontal: 0, justifyContent: `center` },
   watched: { borderColor: palette.accent, backgroundColor: palette.subtle },
   buttonText: { fontSize: 11, color: palette.accent, fontFamily: `DMSans_600SemiBold` },
+  compactText: { fontSize: 10 },
   disabled: { opacity: .55 },
   overlay: { flex: 1, padding: 24, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.overlay },
   backdrop: { ...StyleSheet.absoluteFillObject },

@@ -6,6 +6,9 @@
 .watching-domain-identity { gap: 9px; display: flex; align-items: center; }
 .watching-domain-mark { width: 28px; height: 28px; display: grid; flex-shrink: 0; color: var(--accent); border-radius: 4px; place-items: center; background: var(--canvas); border: 1px solid var(--line); }
 .watching-domain { font-size: 13px; overflow-wrap: anywhere; font-family: var(--font-bold); }
+@container watching-table (min-width: 1150px) {
+  .watching-domain { font-size: 15px; }
+}
 .watching-page .watching-status { gap: 4px; margin: 0; display: inline-flex; font-size: 10px; color: var(--muted); align-items: center; white-space: nowrap; }
 .watching-page .watching-status-available { color: var(--success); }
 .watching-page .watching-status-error, .watching-page .watching-status-unavailable { color: var(--danger); }

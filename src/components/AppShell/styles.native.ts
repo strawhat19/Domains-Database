@@ -19,6 +19,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   navigationLinkActive: { backgroundColor: palette.strong },
   navigationText: { color: palette.muted, fontSize: 12, fontFamily: `DMSans_600SemiBold` },
   navigationTextActive: { color: `#ffffff` },
+  navigationBetaText: { fontSize: 8, letterSpacing: .3, color: palette.accent, fontFamily: `DMSans_700Bold` },
+  navigationBeta: { borderWidth: 1, borderRadius: 4, paddingVertical: 2, paddingHorizontal: 4, borderColor: palette.accent, backgroundColor: palette.subtle },
   footer: { gap: 10, minHeight: 64, paddingTop: 8, paddingHorizontal: 24, alignItems: `center`, flexDirection: `row`, borderTopWidth: 1, borderTopColor: palette.line },
   footerColumn: { flex: 1, minWidth: 0 },
   footerLinks: { gap: 6, flex: 1.35, flexDirection: `row`, justifyContent: `center` },

@@ -1,10 +1,17 @@
 import './styles.scss';
-import { Search } from 'lucide-react';
+import { useState } from 'react';
+import MagicTyping from '../MagicTyping';
+import { Search, History } from 'lucide-react';
 import ExtensionIndex from '../ExtensionIndex';
 import { useHeroSearch } from './useHeroSearch';
+import { useWindowDimensions } from 'react-native';
+import DiscoveryBackdrop from '../DiscoveryBackdrop';
+import ResponsiveDomainHeading from '../ResponsiveDomainHeading';
 
 const Hero = () => {
   const search = useHeroSearch();
+  const { width } = useWindowDimensions();
+  const [searchFocused, setSearchFocused] = useState(false);
 
   return (
   <section
@@ -12,6 +19,7 @@ const Hero = () => {
     className={`landing-hero`}
     aria-labelledby={`hero-title`}
   >
+    <DiscoveryBackdrop suffix={`hero`} variant={`landing`} />
     <div id={`hero-heading-group`} className={`hero-heading-group`}>
       <p id={`hero-eyebrow`} className={`hero-eyebrow`}>
         <span
@@ -37,13 +45,15 @@ const Hero = () => {
         className={`hero-domain-search`}
         onSubmit={event => { event.preventDefault(); search.submit(); }}
       >
-        <label
+        <ResponsiveDomainHeading
+          forceCompact={width < 600}
+          shortText={`Find your domain`}
+          fullText={`Find your next domain`}
           htmlFor={`hero-domain-search-input`}
           id={`hero-domain-search-label`}
           className={`hero-domain-search-label`}
-        >
-          {`Find your next domain`}
-        </label>
+        />
+        <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
         <div id={`hero-domain-search-row`} className={`hero-domain-search-row`}>
           <input
             required
@@ -54,6 +64,8 @@ const Hero = () => {
             autoCapitalize={`none`}
             placeholder={`your-next-domain.com`}
             id={`hero-domain-search-input`}
+            onBlur={() => setSearchFocused(false)}
+            onFocus={() => setSearchFocused(true)}
             className={`hero-domain-search-input`}
             onChange={event => search.setQuery(event.target.value)}
           />
@@ -68,6 +80,41 @@ const Hero = () => {
           </button>
         </div>
       </form>
+      <div id={`hero-domain-discovery`} className={`hero-domain-discovery`}>
+        <div id={`hero-domain-recents`} className={`hero-domain-recents`}>
+          <div role={`group`} title={`Recents`} aria-label={`Recents`} id={`hero-domain-recents-heading`} className={`hero-domain-recents-heading`}>
+            <History size={12} aria-hidden id={`hero-domain-recents-icon`} className={`hero-domain-recents-icon`} />
+            <span id={`hero-domain-recents-label`} className={`hero-domain-recents-label`}>{`Recents`}</span>
+          </div>
+          <div id={`hero-domain-recents-items`} className={`hero-domain-recents-items`} aria-live={`polite`}>
+            {search.recentSearchesLoading ? (
+              <span id={`hero-domain-recents-loading`} className={`hero-domain-recents-message`}>{`Loading…`}</span>
+            ) : search.recentSearches.length ? search.recentSearches.slice(0, 3).map((record, index) => (
+              <button
+                type={`button`}
+                key={record.query}
+                title={record.query}
+                id={`hero-domain-recent-${index}`}
+                className={`hero-domain-recent`}
+                onClick={() => search.searchDomain(record.query)}
+                aria-label={`Search ${record.query} Again`}
+              >
+                <Search size={10} aria-hidden id={`hero-domain-recent-icon-${index}`} className={`hero-domain-recent-icon`} />
+                <span id={`hero-domain-recent-query-${index}`} className={`hero-domain-recent-query`}>{record.query}</span>
+              </button>
+            )) : (
+              <span id={`hero-domain-recents-empty`} className={`hero-domain-recents-message`}>
+                {search.recentSearchesError ? `Recents unavailable` : `Your searches appear here`}
+              </span>
+            )}
+          </div>
+        </div>
+        {!!search.recentSearchesError && (
+          <p id={`hero-domain-recents-error`} className={`hero-domain-recents-error`} role={`status`}>
+            {search.recentSearchesError}
+          </p>
+        )}
+      </div>
     </div>
     <ExtensionIndex />
   </section>

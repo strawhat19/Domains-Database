@@ -4,6 +4,10 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   heading: { gap: 9 },
   field: { gap: 7 },
+  priceWrap: { position: `relative` },
+  priceInput: { paddingLeft: 28 },
+  pricePrefix: { top: 0, left: 12, bottom: 0, zIndex: 1, position: `absolute`, justifyContent: `center` },
+  priceSymbol: { fontSize: 12, color: palette.muted, fontFamily: `DMSans_400Regular` },
   fields: { gap: 14 },
   records: { gap: 12 },
   advanced: { gap: 16 },

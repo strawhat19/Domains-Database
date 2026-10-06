@@ -18,7 +18,7 @@ import { useAppShell, footerLinks } from './useAppShell';
 import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
-  const { pathname, year, signedIn, navigation, fitViewport } = useAppShell();
+  const { pathname, year, signedIn, navigation, fitViewport, searchViewport } = useAppShell();
   const { isDark, error: themeError, clearError: clearThemeError } = useTheme();
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
@@ -30,6 +30,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       id={`app-shell`}
       className={`app-shell`}
       data-fit-view={fitViewport || undefined}
+      data-search-viewport={searchViewport || undefined}
       style={{
         [`--site-header-offset`]: `${scroll.headerHeight}px`,
         [`--site-footer-height`]: scroll.footerHeight ? `${scroll.footerHeight}px` : undefined,
@@ -69,11 +70,13 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
               <div id={`header-navigation-links`} className={`header-navigation-links`}>
                 {navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href).map(item => {
                   const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, UsersRound }[item.icon];
+                  const beta = `beta` in item && item.beta;
                   return (
                     <Link key={item.label} href={item.href} asChild>
                       <RouterAnchor
                         id={`header-link-${item.label.toLowerCase()}`}
                         className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
+                        aria-label={beta ? `${item.label} (Beta)` : undefined}
                         aria-current={pathname === item.href ? `page` : undefined}
                       >
                         <Icon
@@ -88,6 +91,15 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                         >
                           {item.label}
                         </span>
+                        {beta && (
+                          <span
+                            aria-hidden
+                            className={`header-link-beta`}
+                            id={`header-link-beta-${item.label.toLowerCase()}`}
+                          >
+                            {`Beta`}
+                          </span>
+                        )}
                       </RouterAnchor>
                     </Link>
                   );

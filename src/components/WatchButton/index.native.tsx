@@ -1,34 +1,79 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useWatchButton } from './useWatchButton';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
 import { Eye, X, LogIn, UserRoundPlus } from 'lucide-react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import type { DomainSearchDomainResult } from '../../shared/domainSearch/types';
-import { Modal, Pressable, Text, View, ActivityIndicator } from 'react-native';
+import { Modal, Platform, Pressable, Text, View, ActivityIndicator } from 'react-native';
 
-const WatchButton = ({ result, suffix }: { suffix: string; result: DomainSearchDomainResult }) => {
+type WatchButtonProps = {
+  suffix: string;
+  compact?: boolean;
+  iconOnly?: boolean;
+  disabled?: boolean;
+  hiddenFromAccessibility?: boolean;
+  result: DomainSearchDomainResult;
+  onPromptChange?: (open: boolean) => void;
+};
+
+const WatchButton = ({
+  result,
+  suffix,
+  onPromptChange,
+  compact = false,
+  iconOnly = false,
+  disabled = false,
+  hiddenFromAccessibility = false,
+}: WatchButtonProps) => {
   const state = useWatchButton(result);
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const buttonDisabled = disabled || state.disabled;
+  const actionLabel = state.watched ? `View ${result.domain} In Watching` : `Watch ${result.domain}`;
+
+  useEffect(() => {
+    if (!state.promptOpen) return;
+    onPromptChange?.(true);
+    return () => onPromptChange?.(false);
+  }, [onPromptChange, state.promptOpen]);
 
   return (
     <>
       <Pressable
         {...elementProps(`domain-search-watch-button`, suffix)}
-        disabled={state.disabled}
+        {...(Platform.OS === `web` ? {
+          title: actionLabel,
+          tabIndex: hiddenFromAccessibility ? -1 as const : undefined,
+        } : {})}
+        disabled={buttonDisabled}
+        accessible={!hiddenFromAccessibility}
+        focusable={!hiddenFromAccessibility}
         accessibilityRole={`button`}
         onPress={() => void state.watch()}
-        style={[styles.button, state.watched && styles.watched, state.disabled && styles.disabled]}
-        accessibilityState={{ disabled: state.disabled, busy: state.saving }}
-        accessibilityLabel={state.watched ? `View ${result.domain} In Watching` : `Watch ${result.domain}`}
+        accessibilityLabel={actionLabel}
+        accessibilityElementsHidden={hiddenFromAccessibility}
+        importantForAccessibility={hiddenFromAccessibility ? `no-hide-descendants` : `auto`}
+        accessibilityState={{ disabled: buttonDisabled, busy: state.saving }}
+        style={[
+          styles.button,
+          (compact || iconOnly) && styles.compact,
+          iconOnly && styles.iconOnly,
+          state.watched && styles.watched,
+          buttonDisabled && styles.disabled,
+        ]}
       >
         {state.saving
           ? <ActivityIndicator {...elementProps(`domain-search-watch-progress`, suffix)} size={`small`} color={palette.accent} />
           : <Eye {...elementProps(`domain-search-watch-icon`, suffix)} size={15} color={palette.accent} />}
-        <Text {...elementProps(`domain-search-watch-text`, suffix)} style={styles.buttonText}>
-          {state.saving ? `Saving…` : state.watched ? `Watching` : `Watch`}
-        </Text>
+        {!iconOnly && (
+          <Text
+            {...elementProps(`domain-search-watch-text`, suffix)}
+            style={[styles.buttonText, compact && styles.compactText]}
+          >
+            {state.saving ? `Saving…` : state.watched ? `Watching` : `Watch`}
+          </Text>
+        )}
       </Pressable>
       <Modal
         transparent

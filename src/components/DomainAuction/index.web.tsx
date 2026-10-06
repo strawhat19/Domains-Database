@@ -164,21 +164,38 @@ const DomainAuction = () => {
                 />
               </div>
             ))}
-            {auctionNumericFields.map(field => (
-              <div key={field.key} id={`auction-field-${field.key}`} className={`auction-field`}>
-                <label id={`auction-label-${field.key}`} className={`auction-field-label`} htmlFor={`auction-input-${field.key}`}>{field.label}</label>
+            {auctionNumericFields.map(field => {
+              const usd = field.key === `minPrice` || field.key === `maxPrice`;
+              const input = (
                 <input
                   min={0}
                   type={`number`}
                   placeholder={`Any`}
                   id={`auction-input-${field.key}`}
-                  className={`auction-field-input`}
+                  className={`auction-field-input${usd ? ` auction-price-input` : ``}`}
                   value={state.filters[field.key]}
                   step={field.key.includes(`Price`) ? `0.01` : `1`}
                   onChange={event => state.updateFilter(field.key, event.target.value)}
                 />
-              </div>
-            ))}
+              );
+              return (
+                <div key={field.key} id={`auction-field-${field.key}`} className={`auction-field`}>
+                  <label id={`auction-label-${field.key}`} className={`auction-field-label`} htmlFor={`auction-input-${field.key}`}>{field.label}</label>
+                  {usd ? (
+                    <div id={`auction-price-wrap-${field.key}`} className={`auction-price-wrap`}>
+                      <span
+                        aria-hidden
+                        id={`auction-price-prefix-${field.key}`}
+                        className={`auction-price-prefix`}
+                      >
+                        {`$`}
+                      </span>
+                      {input}
+                    </div>
+                  ) : input}
+                </div>
+              );
+            })}
             <div id={`auction-name-options`} className={`auction-name-options`}>
               {[
                 { key: `noDigits`, label: `No Numbers` },

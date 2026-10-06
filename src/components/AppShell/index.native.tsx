@@ -22,7 +22,7 @@ import { Eye, Info, Mail, Gavel, House, Search, Globe2, FileText, UsersRound, Ar
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
-  const { pathname, year, signedIn, navigation, fitViewport } = useAppShell();
+  const { pathname, year, signedIn, navigation, fitViewport, searchViewport } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [viewportHeight, setViewportHeight] = useState(height);
@@ -35,7 +35,9 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
     inputRange: [.86, 1],
     outputRange: [1, 0],
   }), [scroll.headerOpacity]);
-  const pageContentHeight = fitViewport ? Math.max(0, viewportHeight - scroll.headerHeight - footerHeight) : undefined;
+  const pageContentHeight = fitViewport || searchViewport
+    ? Math.max(0, viewportHeight - scroll.headerHeight - footerHeight)
+    : undefined;
   const heroContext = useMemo(() => ({ pageContentHeight, setHeroBottom: scroll.setHeroBottom }), [pageContentHeight, scroll.setHeroBottom]);
   const openPiratechs = async () => {
     try {
@@ -53,22 +55,20 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
       >
         {sticky && (
           <Animated.View
-            pointerEvents={`none`}
             {...elementProps(`native-header-blur-layer`)}
-            style={[StyleSheet.absoluteFill, { opacity: blurOpacity }]}
+            style={[StyleSheet.absoluteFill, { opacity: blurOpacity, pointerEvents: `none` }]}
           >
             <BlurView
               intensity={40}
-              pointerEvents={`none`}
               blurTarget={blurTargetRef}
               tint={isDark ? `dark` : `light`}
-              style={StyleSheet.absoluteFill}
+              style={[StyleSheet.absoluteFill, { pointerEvents: `none` }]}
               blurMethod={`dimezisBlurView`}
               {...elementProps(`native-header-blur`)}
             />
           </Animated.View>
         )}
-        <Animated.View pointerEvents={`none`} {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, { opacity: scroll.headerOpacity, backgroundColor: palette.paper }]} />
+        <Animated.View {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, { pointerEvents: `none`, opacity: scroll.headerOpacity, backgroundColor: palette.paper }]} />
         <DomainMarquee translucent={scroll.scrolled} />
         <View {...elementProps(`native-header-row`)} style={styles.headerRow}>
           <Link href={`/`} asChild>
@@ -99,7 +99,9 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
           </View>
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
-          {navigation.filter(item => width > 1360 || item.href !== routes.watching.href).map(({ label, href, icon }) => {
+          {navigation.filter(item => width > 1360 || item.href !== routes.watching.href).map(item => {
+            const { label, href, icon } = item;
+            const beta = `beta` in item && item.beta;
             const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, UsersRound }[icon];
             const active = pathname === href;
             return (
@@ -107,7 +109,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                 <Pressable
                   {...elementProps(`native-navigation-link`, label.toLowerCase())}
                   accessibilityRole={`link`}
-                  accessibilityLabel={label}
+                  accessibilityLabel={beta ? `${label} (Beta)` : label}
                   accessibilityState={{ selected: active }}
                   style={StyleSheet.flatten([styles.navigationLink, active && styles.navigationLinkActive])}
                 >
@@ -115,6 +117,19 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>
                     {label}
                   </Text>
+                  {beta && (
+                    <View
+                      accessible={false}
+                      accessibilityElementsHidden
+                      style={styles.navigationBeta}
+                      importantForAccessibility={`no-hide-descendants`}
+                      {...elementProps(`native-navigation-beta`, label.toLowerCase())}
+                    >
+                      <Text {...elementProps(`native-navigation-beta-text`, label.toLowerCase())} style={styles.navigationBetaText}>
+                        {`Beta`}
+                      </Text>
+                    </View>
+                  )}
                 </Pressable>
               </Link>
             );
@@ -144,7 +159,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             contentContainerStyle={[styles.content, { paddingTop: sticky ? scroll.headerHeight : 0 }]}
           >
             {!sticky && header}
-            <View {...elementProps(`native-app-main`)} style={[styles.main, fitViewport && { minHeight: pageContentHeight }]} onLayout={scroll.onMainLayout}>
+            <View {...elementProps(`native-app-main`)} style={[styles.main, (fitViewport || searchViewport) && { minHeight: pageContentHeight }]} onLayout={scroll.onMainLayout}>
               {children}
             </View>
             <View

@@ -16,17 +16,21 @@ import {
 const pixelsPerSecond = 26;
 const movementThreshold = 8;
 
-export const useMarquee = () => {
+export const useMarquee = (contentKey: string) => {
   const router = useRouter();
   const offset = useRef(0);
   const dragged = useRef(false);
   const interacting = useRef(false);
   const scroll = useRef<ScrollView>(null);
   const touchOrigin = useRef({ x: 0, y: 0 });
+  const previousCycleWidth = useRef(0);
+  const layoutReadyRef = useRef(false);
+  const [layoutReady, setLayoutReady] = useState(false);
   const [cycleWidth, setCycleWidth] = useState(0);
+  const [contentWidth, setContentWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(true);
-  const [appActive, setAppActive] = useState(AppState.currentState === `active`);
+  const [appActive, setAppActive] = useState(AppState.currentState !== `background` && AppState.currentState !== `inactive`);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyCount = cycleWidth > 0 ? Math.max(3, Math.ceil(viewportWidth / cycleWidth) + 3) : 3;
   const copies = Array.from({ length: copyCount }, (_, index) => index);
@@ -76,18 +80,37 @@ export const useMarquee = () => {
     if (item.external) void Linking.openURL(item.href).catch(() => undefined);
     else router.push(routes.signup.href);
   };
-  const measureCycle = (event: LayoutChangeEvent) => setCycleWidth(event.nativeEvent.layout.width);
-  const measureViewport = (event: LayoutChangeEvent) => setViewportWidth(event.nativeEvent.layout.width);
+  const pauseLayout = () => {
+    layoutReadyRef.current = false;
+    setLayoutReady(false);
+  };
+  const measureCycle = (event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width;
+    if (!Number.isFinite(width) || width <= 0 || width === cycleWidth) return;
+    pauseLayout();
+    setCycleWidth(width);
+  };
+  const measureViewport = (event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width;
+    if (!Number.isFinite(width) || width <= 0 || width === viewportWidth) return;
+    pauseLayout();
+    setViewportWidth(width);
+  };
+  const measureContent = (width: number) => {
+    if (!Number.isFinite(width) || width <= 0 || width === contentWidth) return;
+    pauseLayout();
+    setContentWidth(width);
+  };
 
   useEffect(() => {
     let mounted = true;
     const updateMotion = (enabled: boolean) => {
       if (mounted) setReduceMotion(enabled);
     };
-    AccessibilityInfo.isReduceMotionEnabled().then(updateMotion).catch(() => updateMotion(false));
+    AccessibilityInfo.isReduceMotionEnabled().then(updateMotion).catch(() => updateMotion(true));
     const motionSubscription = AccessibilityInfo.addEventListener(`reduceMotionChanged`, updateMotion);
     const appSubscription = AppState.addEventListener(`change`, (state) => {
-      setAppActive(state === `active`);
+      setAppActive(state !== `background` && state !== `inactive`);
       if (state === `active`) {
         dragged.current = false;
         interacting.current = false;
@@ -102,18 +125,32 @@ export const useMarquee = () => {
   }, []);
 
   useEffect(() => {
-    if (cycleWidth <= 0 || interacting.current) return;
-    wrapOffset();
-  }, [cycleWidth, viewportWidth]);
+    layoutReadyRef.current = false;
+    setLayoutReady(false);
+    if (cycleWidth <= 0 || viewportWidth <= 0 || contentWidth + copyCount < cycleWidth * copyCount) return;
+    const previousWidth = previousCycleWidth.current;
+    if (previousWidth !== cycleWidth) {
+      const phase = previousWidth > 0 ? ((offset.current - previousWidth) % previousWidth + previousWidth) % previousWidth / previousWidth : 0;
+      offset.current = cycleWidth + phase * cycleWidth;
+      previousCycleWidth.current = cycleWidth;
+    }
+    if (!interacting.current) wrapOffset();
+    const timer = setTimeout(() => {
+      if (!interacting.current) wrapOffset();
+      layoutReadyRef.current = true;
+      setLayoutReady(true);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [cycleWidth, contentWidth, copyCount, viewportWidth, contentKey]);
 
   useEffect(() => {
-    if (reduceMotion || !appActive || cycleWidth <= 0) return;
+    if (reduceMotion || !appActive || !layoutReady || cycleWidth <= 0) return;
     let frame = 0;
     let previousTime: number | null = null;
     const animate = (time: number) => {
       const elapsed = previousTime === null ? 0 : Math.min(time - previousTime, 64);
       previousTime = time;
-      if (!interacting.current) {
+      if (layoutReadyRef.current && !interacting.current) {
         const nextOffset = offset.current + pixelsPerSecond * elapsed / 1000;
         offset.current = cycleWidth + ((nextOffset % cycleWidth) + cycleWidth) % cycleWidth;
         scroll.current?.scrollTo({ x: offset.current, animated: false });
@@ -122,12 +159,13 @@ export const useMarquee = () => {
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [appActive, cycleWidth, reduceMotion]);
+  }, [appActive, cycleWidth, reduceMotion, layoutReady]);
 
   return {
     copies,
     scroll,
     onScroll,
+    measureContent,
     openItem,
     onTouchMove,
     measureCycle,

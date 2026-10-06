@@ -16,8 +16,7 @@ const StackPillShape = ({ id, fill = `transparent`, stroke = `transparent` }: St
     <View
       accessible={false}
       onLayout={measure}
-      style={styles.shape}
-      pointerEvents={`none`}
+      style={[styles.shape, { pointerEvents: `none` }]}
       accessibilityElementsHidden
       importantForAccessibility={`no-hide-descendants`}
       {...elementProps(`stack-pill-shape`, id)}

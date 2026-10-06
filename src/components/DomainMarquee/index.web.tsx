@@ -11,7 +11,7 @@ import { sampleNotificationCount } from '../../shared/sampleNotifications';
 import { useDomainMarquee, type DomainMarqueeItem } from './useDomainMarquee';
 
 const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
-  const state = useMarquee();
+  const state = useMarquee(JSON.stringify(items.map(item => [item.id, item.label])));
   return (
     <div
       ref={state.viewport}

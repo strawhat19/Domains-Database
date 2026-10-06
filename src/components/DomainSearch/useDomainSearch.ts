@@ -117,13 +117,10 @@ export const useDomainSearch = () => {
       setState(current => isCurrent() ? { ...current, variants: choices, note: choices.note ?? `` } : current);
       const offset = previous?.results.length ?? 0;
       const domains = choices.domains.slice(offset, offset + DOMAIN_SEARCH_PAGE_SIZE);
-      const showResults = (page: DomainSearchResults) => {
-        if (isCurrent()) setState(current => isCurrent() ? {
-          ...current, results: { ...page, results: [...(previous?.results ?? []), ...page.results] },
-        } : current);
-      };
-      const result = await searchConnectedDomains(domains, request.signal, user?.id ?? null, choices.connectionsUpdated, showResults);
-      showResults(result);
+      const result = await searchConnectedDomains(domains, request.signal, user?.id ?? null, choices.connectionsUpdated);
+      if (isCurrent()) setState(current => isCurrent() ? {
+        ...current, loading: false, loadingMore: false, results: { ...result, results: [...(previous?.results ?? []), ...result.results] },
+      } : current);
     } catch (failure) {
       if (isCurrent()) setState(current => isCurrent() ? {
         ...current,

@@ -6,6 +6,9 @@
 .auction-domain-identity { gap: 9px; display: flex; align-items: center; }
 .auction-domain-icon { flex-shrink: 0; color: var(--accent); }
 .auction-domain { font-size: 13px; overflow-wrap: anywhere; font-family: var(--font-bold); }
+@container auction-table (min-width: 1040px) {
+  .auction-domain { font-size: 15px; }
+}
 .auction-source { font-family: var(--font-bold); }
 .auction-row-note { display: block; margin-top: 5px; font-size: 10px; color: var(--muted); }
 .auction-price { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }

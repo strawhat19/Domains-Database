@@ -20,7 +20,7 @@ import PortfolioCollection from '../PortfolioCollection/index.web';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
-import { X, Plus, Search, Link2, Trash2, ArrowRight, ChevronDown, FlaskConical, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw, Columns3 } from 'lucide-react';
+import { X, Plus, Search, Link2, Trash2, ArrowRight, ChevronDown, FlaskConical, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
@@ -331,21 +331,23 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               visibleCount={selection.visibleSelectedCount}
             />
           </div>
-          <div id={`portfolio-toolbar-meta`} className={`portfolio-toolbar-meta`}>
-            {useSampleData && portfolio.summary.hasSampleData && (
+          {useSampleData && portfolio.summary.hasSampleData && (
+            <div id={`portfolio-toolbar-meta`} className={`portfolio-toolbar-meta`}>
               <span id={`portfolio-sample-label`} className={`portfolio-sample-label`} title={`Illustrative Records, Not Connected Accounts`}>
                 <FlaskConical size={12} aria-hidden={`true`} id={`portfolio-sample-icon`} className={`portfolio-sample-icon`} />
                 <span id={`portfolio-sample-text`} className={`portfolio-sample-text`}>
                   {`Sample Data`}
                 </span>
               </span>
-            )}
-          </div>
+            </div>
+          )}
           <ColumnControls
             onReset={resetColumns}
             onToggle={toggleColumn}
+            fitDisabled={portfolio.loading}
             columnCounts={columnCounts}
             visibleColumns={visibleColumns}
+            onFit={() => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current) })}
           />
           <button
             type={`button`}
@@ -375,17 +377,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             <span id={`portfolio-manual-order-text`} className={`portfolio-button-text`}>
               {portfolio.sortField ? `Manual order` : `Sort A–Z`}
             </span>
-          </button>
-          <button
-            type={`button`}
-            id={`portfolio-fit-columns`}
-            disabled={portfolio.loading}
-            title={`Fit Each Column To Its Longest Value`}
-            className={`portfolio-button portfolio-button-secondary`}
-            onClick={() => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current) })}
-          >
-            <Columns3 size={15} aria-hidden={`true`} id={`portfolio-fit-columns-icon`} className={`portfolio-button-icon`} />
-            <span id={`portfolio-fit-columns-text`} className={`portfolio-button-text`}>{`Fit Columns`}</span>
           </button>
         </div>
         {sections.collections.map(section => (

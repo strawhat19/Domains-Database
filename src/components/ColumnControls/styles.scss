@@ -1,5 +1,6 @@
 .column-controls { display: contents; }
-.column-controls-button { padding: 10px 12px; margin-left: auto; }
+.column-controls-tools { gap: 8px; display: flex; flex-shrink: 0; margin-left: auto; align-items: center; }
+.column-controls-button, .column-controls-fit { padding: 10px 12px; }
 .column-controls-button-open { color: var(--accent); background: var(--subtle); border-color: var(--accent); }
 .column-controls-panel {
   order: 1;

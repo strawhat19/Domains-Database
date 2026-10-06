@@ -1,0 +1,40 @@
+:is(.discovery-backdrop-glows, [data-class='discovery-backdrop-glows']) {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: discovery-backdrop-glow-drift 29s ease-in-out infinite alternate;
+}
+
+:is(.discovery-backdrop-orbits, [data-class='discovery-backdrop-orbits']) {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: discovery-backdrop-orbit-drift 35s ease-in-out infinite alternate;
+}
+
+:is(.discovery-backdrop-constellation, [data-class='discovery-backdrop-constellation']) {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: discovery-backdrop-node-drift 24s ease-in-out infinite alternate;
+}
+
+:is(.discovery-backdrop, [data-class='discovery-backdrop'])[data-motion='paused'] {
+  :is(.discovery-backdrop-glows, .discovery-backdrop-orbits, .discovery-backdrop-constellation, [data-class='discovery-backdrop-glows'], [data-class='discovery-backdrop-orbits'], [data-class='discovery-backdrop-constellation']) { animation-play-state: paused; }
+}
+
+@keyframes discovery-backdrop-glow-drift {
+  from { opacity: .76; transform: translate(0, 0) scale(1); }
+  to { opacity: 1; transform: translate(-12px, 8px) scale(1.025); }
+}
+
+@keyframes discovery-backdrop-orbit-drift {
+  from { opacity: .76; transform: translate(0, 0) rotate(-1deg); }
+  to { opacity: 1; transform: translate(5px, -6px) rotate(1deg); }
+}
+
+@keyframes discovery-backdrop-node-drift {
+  from { opacity: .68; transform: translate(0, 0); }
+  to { opacity: 1; transform: translate(5px, -4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.discovery-backdrop-glows, .discovery-backdrop-orbits, .discovery-backdrop-constellation, [data-class='discovery-backdrop-glows'], [data-class='discovery-backdrop-orbits'], [data-class='discovery-backdrop-constellation']) { animation: none; transform: none; opacity: 1; }
+}

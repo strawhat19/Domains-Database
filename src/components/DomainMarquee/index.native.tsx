@@ -19,6 +19,7 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
     copies,
     scroll,
     onScroll,
+    measureContent,
     openItem,
     onTouchMove,
     measureCycle,
@@ -27,7 +28,7 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
     pauseInteraction,
     releaseInteraction,
     onScrollBeginDrag,
-  } = useMarquee();
+  } = useMarquee(JSON.stringify(items.map(item => [item.id, item.label])));
 
   return (
     <ScrollView
@@ -48,6 +49,7 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
       onScrollEndDrag={releaseInteraction}
       onMomentumScrollBegin={pauseInteraction}
       onMomentumScrollEnd={releaseInteraction}
+      onContentSizeChange={measureContent}
       {...elementProps(`native-domain-marquee-viewport`, scope)}
     >
       {copies.map(copyIndex => (
@@ -126,7 +128,7 @@ const DomainMarquee = ({ scope = `header`, translucent = false }: { scope?: stri
       {...elementProps(`native-domain-marquee`, scope)}
       accessibilityLabel={showDomains ? `Your domains` : `Notifications`}
     >
-      {loading && !items.length ? (
+      {loading ? (
         <View
           style={styles.loading}
           accessibilityElementsHidden
@@ -143,7 +145,7 @@ const DomainMarquee = ({ scope = `header`, translucent = false }: { scope?: stri
             </View>
           ))}
         </View>
-      ) : (
+      ) : items.length > 0 && (
         <MarqueeTrack
           scope={scope}
           items={items}
@@ -156,11 +158,10 @@ const DomainMarquee = ({ scope = `header`, translucent = false }: { scope?: stri
         return (
           <View
             key={side}
-            pointerEvents={`none`}
             accessibilityElementsHidden
             importantForAccessibility={`no-hide-descendants`}
             {...elementProps(`native-domain-marquee-fade`, suffix)}
-            style={[styles.fade, side === `left` ? styles.fadeLeft : styles.fadeRight, { width: fadeWidth }]}
+            style={[styles.fade, side === `left` ? styles.fadeLeft : styles.fadeRight, { width: fadeWidth, pointerEvents: `none` }]}
           >
             <Svg
               width={`100%`}
