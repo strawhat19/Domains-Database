@@ -1,4 +1,5 @@
 import './styles.scss';
+import { Check, Plus, X } from 'lucide-react';
 import ConnectRegistrar from './ConnectRegistrar';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import { REGISTRARS } from '../../shared/config';
@@ -6,7 +7,6 @@ import { useDomainEditor } from './useDomainEditor';
 import type { DomainRecord } from '../../shared/types';
 import { getDomainSource } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
-import { Check, Plus, X, ShieldCheck } from 'lucide-react';
 
 interface DomainEditorProps {
   onClose: () => void;
@@ -275,12 +275,6 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
             </p>
           )}
           <footer id={`domain-editor-footer`} className={`domain-dialog-footer`}>
-            <span id={`domain-editor-storage-note`} className={`domain-dialog-storage-note`}>
-              <ShieldCheck size={14} aria-hidden={`true`} id={`domain-editor-storage-icon`} className={`domain-dialog-storage-icon`} />
-              <span id={`domain-editor-storage-text`} className={`domain-dialog-storage-text`}>
-                {`Saved on this device`}
-              </span>
-            </span>
             <div id={`domain-editor-actions`} className={`domain-dialog-actions`}>
               <button
                 type={`button`}

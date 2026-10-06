@@ -90,7 +90,7 @@ const Connections = ({ onClose, onImport, onDownloadTemplate }: ConnectionsProps
           <LockKeyhole size={18} aria-hidden={`true`} id={`connections-private-icon`} className={`connections-private-icon`} />
           <div id={`connections-private-copy`} className={`connections-private-copy`}>
             <span id={`connections-private-title`} className={`connections-private-title`}>
-              {`Your portfolio stays on this device`}
+              {`Your connections stay private`}
             </span>
             <p id={`connections-private-description`} className={`connections-private-description`}>
               {`Manual entry and CSV import need no API keys. Save supported registrar connections in your private account settings for read-only domain checks. Portfolio edits do not change registrar settings.`}

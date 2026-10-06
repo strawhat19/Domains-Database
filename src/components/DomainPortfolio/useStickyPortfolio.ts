@@ -61,7 +61,9 @@ export const useStickyPortfolio = (columnKey: string) => {
       const mirror = mirrorTableRef.current;
       if (!mirror) return;
       const left = Math.max(0, Math.min(scroll.scrollLeft, scroll.scrollWidth - scroll.clientWidth));
+      const actionsOffset = Math.min(0, scroll.clientWidth - table.getBoundingClientRect().width + left);
       mirror.style.transform = `translateX(${-left}px)`;
+      mirror.style.setProperty(`--portfolio-actions-offset`, `${actionsOffset}px`);
     };
     const measure = () => {
       if (!mounted) return;

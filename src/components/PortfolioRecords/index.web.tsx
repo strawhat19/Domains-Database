@@ -1,23 +1,25 @@
 import './styles.scss';
 import { useMemo, useState } from 'react';
-import { ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
-import type { CSSProperties, KeyboardEvent } from 'react';
-import { useDomainReorder } from './useDomainReorder';
-import { useStickyPortfolioGroup } from './useStickyPortfolioGroup';
 import PortfolioEmptyState from './EmptyState.web';
+import { useDomainReorder } from './useDomainReorder';
 import type { DomainRecord } from '../../shared/types';
+import type { CSSProperties, KeyboardEvent } from 'react';
 import DomainRow, { DomainRowSkeleton } from '../DomainRow';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainContextMenu from '../DomainContextMenu/index.web';
-import DomainGroupSettings from '../DomainGroupSettings/index.web';
 import PortfolioTableHead from '../PortfolioTableHead/index.web';
-import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
+import DomainGroupSettings from '../DomainGroupSettings/index.web';
+import { useColumns } from '../../shared/columnContext/useColumns';
+import { useStickyPortfolioGroup } from './useStickyPortfolioGroup';
+import { getPortfolioColumnWidth } from '../DomainPortfolio/columnLayout.web';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
-import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
-import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
+import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
+import { ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
+import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
+import { getOrderedPortfolioColumns, type PortfolioColumn } from '../../shared/portfolioColumns';
+import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { PORTFOLIO_COLUMNS, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 export interface PortfolioRecordsProps {
   busy: boolean;
@@ -58,10 +60,11 @@ const PortfolioRecords = ({
     if (action === `group`) setGroupingIds(new Set(targets.map(domain => domain.id)));
   });
   const preferences = usePortfolioPreferences();
+  const { columnWidths, flexibleColumns } = useColumns();
   const orderingPreferences = useMemo(() => !collectionId && sortField
     ? { ...preferences, orders: {} }
     : preferences, [preferences, collectionId, sortField]);
-  const columns = PORTFOLIO_COLUMNS.filter(column => visibleColumns.includes(column.field));
+  const columns = getOrderedPortfolioColumns(visibleColumns);
   const fullGroups = useMemo(() => {
     const sections = buildPortfolioSections(allDomains, orderingPreferences);
     return collectionId
@@ -85,8 +88,15 @@ const PortfolioRecords = ({
     availableIds: allDomains.map(domain => domain.id),
     groupEnabled: (Boolean(collectionId) || preferences.groupBy === `custom`) && !loading && !busy,
   });
-  const tableStyle = { [`--portfolio-table-width`]: `${Math.max(380, columns.length * 140 + 160)}px` } as CSSProperties;
-  const stickyHeaderReady = sticky.header.headHeight > 0 && sticky.header.columnWidths.length === columns.length + 3;
+  const baseWidths = columns.map(column => getPortfolioColumnWidth(column.field, columnWidths));
+  const flexibleCount = columns.filter(column => flexibleColumns.includes(column.field)).length;
+  const unusedWidth = Math.max(0, sticky.header.width - baseWidths.reduce((total, width) => total + width, 190));
+  const dataWidths = columns.map((column, index) => (baseWidths[index] ?? 72)
+    + (flexibleColumns.includes(column.field) && flexibleCount ? unusedWidth / flexibleCount : 0));
+  const widths = [38, 36, ...dataWidths, flexibleCount ? 0 : unusedWidth, 116];
+  const tableWidth = widths.reduce((total, width) => total + width, 0);
+  const tableStyle: CSSProperties = { width: tableWidth, minWidth: tableWidth, tableLayout: `fixed` };
+  const stickyHeaderReady = sticky.header.headHeight > 0 && sticky.header.columnWidths.length === columns.length + 4;
   const grouped = Boolean(collectionId) || preferences.groupBy !== `none`;
   const empty = !loading && !groups.some(group => group.domains.length);
   const showGroupHeadings = grouped && groups.length > 0;
@@ -279,8 +289,7 @@ const PortfolioRecords = ({
             ref={sticky.mirrorTableRef}
             id={`${idPrefix}-sticky-table`}
             className={`portfolio-table portfolio-sticky-table`}
-            style={{ width: sticky.header.columnWidths.length === columns.length + 3
-              ? sticky.header.columnWidths.reduce((total, width) => total + width, 0) : undefined }}
+            style={tableStyle}
           >
             <PortfolioTableHead
               mirrored
@@ -289,7 +298,7 @@ const PortfolioRecords = ({
               sortField={sortField}
               idPrefix={`${idPrefix}-sticky`}
               sortDirection={sortDirection}
-              columnWidths={sticky.header.columnWidths.length === columns.length + 3 ? sticky.header.columnWidths : undefined}
+              columnWidths={widths}
               allSelected={allSelected}
               someSelected={someSelected}
               onSelectAll={onSelectAll}
@@ -345,6 +354,15 @@ const PortfolioRecords = ({
           <caption id={`${idPrefix}-table-caption`} className={`portfolio-sr-only`}>
             {`Your saved domain records. Monthly costs are annual costs divided by twelve. Auto-renew settings are a record only.`}
           </caption>
+          <colgroup id={`${idPrefix}-table-columns`}>
+            <col id={`${idPrefix}-column-position`} style={{ width: widths[0] }} />
+            <col id={`${idPrefix}-column-selection`} style={{ width: widths[1] }} />
+            {columns.map((column, index) => (
+              <col key={column.field} id={`${idPrefix}-column-${column.field}`} style={{ width: widths[index + 2] }} />
+            ))}
+            <col id={`${idPrefix}-column-space`} style={{ width: widths[columns.length + 2] }} />
+            <col id={`${idPrefix}-column-actions`} style={{ width: 116 }} />
+          </colgroup>
           <PortfolioTableHead
             columns={columns}
             onSort={onSort}
@@ -356,6 +374,7 @@ const PortfolioRecords = ({
             allSelected={allSelected}
             someSelected={someSelected}
             onSelectAll={onSelectAll}
+            columnWidths={widths}
           />
           {loading || (empty && !showGroupHeadings) ? (
             <tbody id={`${idPrefix}-table-body`} className={`portfolio-table-body`}>
@@ -369,7 +388,7 @@ const PortfolioRecords = ({
                   id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-row`}
                   className={`portfolio-group-heading-row${reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
                 >
-                  <th colSpan={columns.length + 3} scope={`rowgroup`} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-cell`} className={`portfolio-group-heading-cell`}>
+                  <th colSpan={columns.length + 4} scope={`rowgroup`} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-cell`} className={`portfolio-group-heading-cell`}>
                     {groupHeading(group)}
                   </th>
                 </tr>
@@ -393,7 +412,7 @@ const PortfolioRecords = ({
               ))}
               {!group.domains.length && (
                 <tr id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-row`} className={`portfolio-group-empty-row`}>
-                  <td colSpan={columns.length + 3} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-cell`} className={`portfolio-group-empty`}>
+                  <td colSpan={columns.length + 4} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-cell`} className={`portfolio-group-empty`}>
                     {`No domains in this group`}
                   </td>
                 </tr>

@@ -20,7 +20,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
   const headings = {
     profile: { eyebrow: `A LITTLE ABOUT YOU`, title: `Your profile.`, copy: `Set your profile visibility and keep your account details together.` },
     connections: { eyebrow: `PRIVATE CONNECTIONS`, title: `Connections.`, copy: `Prepare your registrar connections in one place.` },
-    dashboard: { eyebrow: `ON THIS DEVICE`, title: `Dashboard.`, copy: `Local account activity and an overview of your own portfolio.` },
+    dashboard: { eyebrow: `ACCOUNT OVERVIEW`, title: `Dashboard.`, copy: `Account activity and an overview of your own portfolio.` },
   };
   return (
     <View {...elementProps(`account-page`, page)} style={[styles.root, state.compact && styles.compact]}>

@@ -132,7 +132,7 @@ export const useNativePortfolio = (compact = false) => {
 
   const deleteDomain = (domain: DomainRecord) => Alert.alert(
     `Delete Domain`,
-    `Remove ${domain.name} from this device? Your registration will remain with ${domain.registrar}.`,
+    `Remove ${domain.name} from your portfolio? Your registration will remain with ${domain.registrar}.`,
     [
       { text: `Cancel`, style: `cancel` },
       { text: `Delete`, style: `destructive`, onPress: () => {
@@ -188,7 +188,7 @@ export const useNativePortfolio = (compact = false) => {
 
   const resetSamples = () => Alert.alert(
     `Restore Sample Domains`,
-    `This replaces every domain saved on this device with the sample portfolio. Export a backup first if you want to keep your entries.`,
+    `This replaces every domain in your portfolio with the sample portfolio. Export a backup first if you want to keep your entries.`,
     [
       { text: `Cancel`, style: `cancel` },
       { text: `Restore Samples`, style: `destructive`, onPress: () => {

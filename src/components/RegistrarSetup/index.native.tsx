@@ -193,7 +193,7 @@ const RegistrarSetup = ({ onClose, onManual }: RegistrarSetupProps) => {
                   ))}
                   {!!state.review.length && (
                     <Text {...elementProps(`native-registrar-review-storage`)} style={styles.description}>
-                      {`Imported records are saved on this device. Connect your registrars for automatic syncing.`}
+                      {`Connect your registrars for automatic syncing.`}
                     </Text>
                   )}
                 </View>

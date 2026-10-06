@@ -59,6 +59,10 @@ export const PORTFOLIO_COLUMNS: PortfolioColumnDefinition[] = [
 export const DEFAULT_VISIBLE_COLUMNS: PortfolioColumn[] = [
   `name`, `registrar`, `expiresAt`, `autoRenew`, `renewalPrice`, `renewalEstimate`, `websitePerformance`, `trancoRank`,
 ];
+export const getOrderedPortfolioColumns = (fields: readonly PortfolioColumn[]) => [...new Set(fields)].flatMap(field => {
+  const column = PORTFOLIO_COLUMNS.find(item => item.field === field);
+  return column ? [column] : [];
+});
 export const COLUMN_STORAGE_KEY = `domains-database:columns:v1`;
 
 const EXTRA_HEADERS = {
@@ -167,6 +171,9 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
 export const getPortfolioColumnDisplay = (domain: DomainRecord, column: PortfolioColumn) => {
   const value = getPortfolioColumnValue(domain, column);
   if (!hasPortfolioColumnValue(value, column)) return `—`;
+  if (column === `status` && typeof value === `string`) return value
+    .replace(/([a-z\d])([A-Z])/g, `$1 $2`).replace(/[_\s-]+/g, ` `).trim().toLowerCase()
+    .replace(/\b[a-z]/g, letter => letter.toUpperCase());
   if (column === `websitePerformance` && typeof value === `number`) return `${value} / 100`;
   if (column === `trancoRank` && typeof value === `number`) return `#${new Intl.NumberFormat(`en-US`).format(value)}`;
   if (column === `renewalEstimate` && typeof value === `number`) {

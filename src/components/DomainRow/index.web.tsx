@@ -9,10 +9,10 @@ import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { Check, Minus, Pencil, Trash2, ArrowUp, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
 import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
-  PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
   getPortfolioColumnDisplay,
   getPortfolioColumnValue,
+  getOrderedPortfolioColumns,
   getRenewalEstimateHint,
   getWebsiteInsightsHint,
   type PortfolioColumn,
@@ -46,11 +46,10 @@ const DomainRow = ({
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainRowProps) => {
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
+  const needsAttention = status !== `Active`;
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const registrarManaged = getDomainSource(domain) === `registrar`;
-  const columns = PORTFOLIO_COLUMNS.filter(column => (
-    column.field === `name` || visibleColumns.includes(column.field)
-  ));
+  const columns = getOrderedPortfolioColumns(visibleColumns);
   const selectionHandlers = getDomainSelectionHandlers(domain.id, !!selected, onSelect);
 
   const handleRowClick: MouseEventHandler<HTMLTableRowElement> = event => {
@@ -113,7 +112,7 @@ const DomainRow = ({
                 rel={`noopener noreferrer`}
                 href={`https://${domain.name}`}
                 className={`domain-name domain-site-link`}
-                aria-label={`Open ${domain.name} in a new tab`}
+                aria-label={`Open ${domain.name} in a new tab${needsAttention ? ` — Needs Attention: ${status}` : ``}`}
               >
                 <span id={`${scope}-site-link-label`} className={`domain-site-link-label`}>
                   {domain.name.slice(0, lastDot)}
@@ -127,6 +126,14 @@ const DomainRow = ({
                   id={`${scope}-site-link-icon`}
                   className={`domain-site-link-icon`}
                 />
+                {needsAttention && (
+                  <span
+                    aria-hidden={`true`}
+                    id={`${scope}-attention-dot`}
+                    className={`domain-attention-dot`}
+                    title={`Needs Attention: ${status}`}
+                  />
+                )}
               </a>
             </div>
           </div>
@@ -258,6 +265,7 @@ const DomainRow = ({
           </td>
         );
       })}
+      <td aria-hidden={`true`} id={`${scope}-space-cell`} className={`domain-space-cell`} />
       <td id={`${scope}-actions-cell`} className={`actionsCell domain-actions-cell`}>
         <div id={`${scope}-actions`} className={`domain-row-actions`}>
           <DomainAnalyticsButton compact suffix={scope} domain={domain.name} />
@@ -302,9 +310,7 @@ export const DomainRowSkeleton = ({
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
   idPrefix = `domain`,
 }: DomainRowSkeletonProps) => {
-  const columns = PORTFOLIO_COLUMNS
-    .filter(column => column.field === `name` || visibleColumns.includes(column.field))
-    .map(column => getDomainSkeletonKey(column.field));
+  const columns = getOrderedPortfolioColumns(visibleColumns).map(column => getDomainSkeletonKey(column.field));
 
   return (
     <tr id={`${idPrefix}-skeleton-row-${index}`} data-position={position} className={`domain-row domain-row-skeleton`} aria-hidden={`true`}>
@@ -316,14 +322,14 @@ export const DomainRowSkeleton = ({
       <td id={`${idPrefix}-skeleton-${index}-selection-cell`} className={`domain-selection-cell`}>
         <span id={`${idPrefix}-skeleton-${index}-selection`} className={`domain-skeleton-line domain-skeleton-line-selection`} />
       </td>
-      {[...columns, `actions`].map(column => (
-        <td key={column} id={`${idPrefix}-skeleton-${index}-${column}-cell`} className={`domain-skeleton-cell`}>
+      {[...columns, `space`, `actions`].map(column => (
+        <td key={column} id={`${idPrefix}-skeleton-${index}-${column}-cell`} className={column === `space` ? `domain-space-cell` : column === `actions` ? `domain-skeleton-cell domain-actions-cell` : `domain-skeleton-cell`}>
           {column === `name` ? (
             <div id={`${idPrefix}-skeleton-${index}-identity`} className={`domain-identity`}>
               <span id={`${idPrefix}-skeleton-${index}-icon`} className={`domain-skeleton-line domain-skeleton-line-icon`} />
               <span id={`${idPrefix}-skeleton-${index}-${column}`} className={`domain-skeleton-line domain-skeleton-line-${column}`} />
             </div>
-          ) : (
+          ) : column === `space` ? null : (
             <span id={`${idPrefix}-skeleton-${index}-${column}`} className={`domain-skeleton-line domain-skeleton-line-${column}`} />
           )}
         </td>

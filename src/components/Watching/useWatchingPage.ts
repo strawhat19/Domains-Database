@@ -15,7 +15,7 @@ export const useWatchingPage = () => {
   const availableCount = records.filter(record => getDomainSearchStatus(record).state === `available`).length;
   const disabled = watching.loading || watching.busy || watching.syncing;
   const storageMessage = useLocalStorage
-    ? `Watching is saved to your account on this device.`
+    ? `Watching keeps your saved domains together.`
     : `Connect a backend to save Watching.`;
 
   return {

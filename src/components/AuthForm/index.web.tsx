@@ -201,7 +201,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
         <div id={`auth-form-local-note-${mode}`} className={`auth-form-local-note`}>
           <HardDrive id={`auth-form-local-note-icon-${mode}`} className={`auth-form-local-note-icon`} size={15} aria-hidden />
           <p id={`auth-form-local-note-copy-${mode}`} className={`auth-form-local-copy`}>
-            {useLocalStorage ? `Your account and portfolio are saved on this device.` : `Accounts are available once the service is connected.`}
+            {useLocalStorage ? `Manage your portfolio with your account.` : `Accounts are available once the service is connected.`}
           </p>
         </div>
       </div>

@@ -243,7 +243,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               <View {...elementProps(`auth-form-local-note`, mode)} style={styles.localNote}>
                 <HardDrive {...elementProps(`auth-form-local-note-icon`, mode)} size={16} color={palette.muted} />
                 <Text {...elementProps(`auth-form-local-note-copy`, mode)} style={styles.localCopy}>
-                  {useLocalStorage ? `Your account and portfolio are saved on this device.` : `Accounts are available once the service is connected.`}
+                  {useLocalStorage ? `Manage your portfolio with your account.` : `Accounts are available once the service is connected.`}
                 </Text>
               </View>
             )}

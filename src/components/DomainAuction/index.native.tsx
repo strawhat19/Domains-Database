@@ -208,7 +208,7 @@ const DomainAuction = () => {
         <Text {...elementProps(`auction-results-count`)} style={styles.hint} accessibilityLiveRegion={`polite`}>{state.loading ? `Loading…` : `${state.matchingCount} of ${state.records.length} domain(s)`}</Text>
       </View>
       <View {...elementProps(`auction-results-tools`)} style={styles.choices}>
-        <Pressable {...elementProps(`auction-reload-snapshot`)} style={[styles.textButton, disabled && styles.disabled]} disabled={disabled} onPress={state.reloadListings} accessibilityRole={`button`} accessibilityLabel={`Reload Saved Inventory From This Device`}>
+        <Pressable {...elementProps(`auction-reload-snapshot`)} style={[styles.textButton, disabled && styles.disabled]} disabled={disabled} onPress={state.reloadListings} accessibilityRole={`button`} accessibilityLabel={`Reload Saved Inventory`}>
           <RefreshCw {...elementProps(`auction-reload-icon`)} size={13} color={palette.accent} />
           <Text {...elementProps(`auction-reload-text`)} style={styles.textButtonText}>{`Reload Saved`}</Text>
         </Pressable>
@@ -239,8 +239,8 @@ const DomainAuction = () => {
       </View>
       {!!state.matchingCount && !state.loading && (
         <View {...elementProps(`auction-pagination`)} style={styles.pagination}>
-          <Text {...elementProps(`auction-page-range`)} style={styles.hint}>{`${state.resultStart}–${state.resultEnd} of ${state.matchingCount} · Page ${state.currentPage} of ${state.pageCount}`}</Text>
-          <View {...elementProps(`auction-page-actions`)} style={styles.choices}>
+          <Text {...elementProps(`auction-page-range`)} numberOfLines={1} style={[styles.hint, styles.pageRange]}>{`${state.resultStart}–${state.resultEnd} of ${state.matchingCount} · Page ${state.currentPage} of ${state.pageCount}`}</Text>
+          <View {...elementProps(`auction-page-actions`)} style={styles.pageActions}>
             <Pressable {...elementProps(`auction-previous-page`)} style={[styles.button, state.currentPage <= 1 && styles.disabled]} disabled={state.currentPage <= 1} onPress={state.previousPage} accessibilityRole={`button`}>
               <ChevronLeft {...elementProps(`auction-previous-icon`)} size={14} color={palette.ink} />
               <Text {...elementProps(`auction-previous-text`)} style={styles.buttonText}>{`Previous`}</Text>
@@ -252,7 +252,7 @@ const DomainAuction = () => {
           </View>
         </View>
       )}
-      <Text {...elementProps(`auction-data-footnote`)} style={styles.hint}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : `${state.storageMessage} Import a fresh file to update prices and metrics; Reload Saved only reloads this device's snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</Text>
+      <Text {...elementProps(`auction-data-footnote`)} style={styles.hint}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : `${state.storageMessage} Import a fresh file to update prices and metrics; Reload Saved opens the last imported snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</Text>
     </View>
   );
 };

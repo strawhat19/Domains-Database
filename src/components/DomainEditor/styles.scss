@@ -123,8 +123,7 @@
   justify-content: space-between;
   border-top: 1px solid var(--line);
 }
-.domain-dialog-storage-note { gap: 5px; display: flex; font-size: 10px; color: var(--muted); align-items: center; }
-.domain-dialog-actions { gap: 8px; display: flex; align-items: center; }
+.domain-dialog-actions { gap: 8px; display: flex; margin-left: auto; align-items: center; }
 @keyframes domain-dialog-reveal { from { opacity: 0; } to { opacity: 1; } }
 @keyframes domain-dialog-enter { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (min-width: 900px) {
@@ -141,7 +140,6 @@
   .domain-dialog-actions { width: 100%; align-items: stretch; flex-direction: column; }
   .domain-dialog .portfolio-button { min-width: 0; max-width: 100%; white-space: normal; }
   .domain-dialog-actions .portfolio-button { width: 100%; }
-  .domain-dialog-storage-note { align-self: center; }
 }
 @media (prefers-reduced-motion: reduce) {
   .domain-dialog, .domain-dialog-backdrop { animation: none; }

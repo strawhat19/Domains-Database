@@ -9,7 +9,7 @@ import { formatCurrency } from '../../shared/domainUtils';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { useConnectRegistrar } from '../DomainEditor/ConnectRegistrar/useConnectRegistrar';
-import { X, Check, Cable, LogIn, FileUp, UserPlus, Download, PencilLine, ShieldCheck } from 'lucide-react';
+import { X, Check, Cable, LogIn, FileUp, UserPlus, Download, PencilLine } from 'lucide-react';
 
 const entryTabs = [
   { id: `connect`, label: `Connect Registrar`, Icon: Cable },
@@ -263,12 +263,6 @@ const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?:
             </p>
           )}
           <footer id={`registrar-setup-footer`} className={`domain-dialog-footer`}>
-            <span id={`registrar-setup-storage-note`} className={`domain-dialog-storage-note`}>
-              <ShieldCheck size={14} aria-hidden={`true`} id={`registrar-setup-storage-icon`} className={`domain-dialog-storage-icon`} />
-              <span id={`registrar-setup-storage-text`} className={`domain-dialog-storage-text`}>
-                {`Saved on this device`}
-              </span>
-            </span>
             <div id={`registrar-setup-actions`} className={`domain-dialog-actions`}>
               <button
                 type={`button`}

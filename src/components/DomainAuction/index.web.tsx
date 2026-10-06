@@ -216,7 +216,7 @@ const DomainAuction = () => {
           <h2 id={`auction-results-title`} className={`auction-results-title`}>{state.preview ? `Preview Auction Inventory` : `Auction Inventory`}</h2>
           <div id={`auction-results-tools`} className={`auction-results-tools`}>
             <span id={`auction-results-count`} className={`auction-results-count`} role={`status`}>{state.loading ? `Loading…` : `${state.matchingCount} of ${state.records.length} domain(s)`}</span>
-            <button type={`button`} id={`auction-reload-snapshot`} className={`auction-text-button`} disabled={disabled} onClick={state.reloadListings} title={`Reload Saved Inventory From This Device`}>
+            <button type={`button`} id={`auction-reload-snapshot`} className={`auction-text-button`} disabled={disabled} onClick={state.reloadListings} title={`Reload Saved Inventory`}>
               <RefreshCw size={13} aria-hidden={`true`} id={`auction-reload-icon`} className={`auction-button-icon`} />
               <span id={`auction-reload-text`} className={`auction-button-text`}>{`Reload Saved`}</span>
             </button>
@@ -271,7 +271,7 @@ const DomainAuction = () => {
             </div>
           </nav>
         )}
-        <p id={`auction-data-footnote`} className={`auction-data-footnote`}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : `${state.storageMessage} Download and import a fresh file to update prices and metrics; Reload Saved only reloads this device's snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</p>
+        <p id={`auction-data-footnote`} className={`auction-data-footnote`}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : `${state.storageMessage} Download and import a fresh file to update prices and metrics; Reload Saved opens the last imported snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</p>
       </div>
     </section>
   );

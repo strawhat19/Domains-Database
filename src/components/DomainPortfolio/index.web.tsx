@@ -1,32 +1,33 @@
 import './styles.scss';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import ColumnControls from '../ColumnControls';
 import DomainEditor from '../DomainEditor';
-import RegistrarSetup from '../RegistrarSetup/index.web';
-import { PORTFOLIO_COLUMNS, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
-import { useAuth } from '../../shared/authContext/useAuth';
-import { useColumns } from '../../shared/columnContext/useColumns';
-import { REGISTRARS, useSampleData } from '../../shared/config';
-import { formatCurrency } from '../../shared/domainUtils';
-import GroupControls from '../GroupControls/index.web';
-import PortfolioRecords from '../PortfolioRecords/index.web';
-import PortfolioCollection from '../PortfolioCollection/index.web';
-import PortfolioSelection from '../PortfolioSelection/index.web';
 import { usePortfolio } from './usePortfolio';
+import ColumnControls from '../ColumnControls';
+import GroupControls from '../GroupControls/index.web';
+import RegistrarSetup from '../RegistrarSetup/index.web';
+import { fitPortfolioColumns } from './columnLayout.web';
 import { useDomainSelection } from './useDomainSelection';
+import { useStickyPortfolio } from './useStickyPortfolio';
+import { formatCurrency } from '../../shared/domainUtils';
+import { useAuth } from '../../shared/authContext/useAuth';
+import PortfolioRecords from '../PortfolioRecords/index.web';
 import { useCollectionReorder } from './useCollectionReorder';
+import { REGISTRARS, useSampleData } from '../../shared/config';
+import PortfolioSelection from '../PortfolioSelection/index.web';
+import { useColumns } from '../../shared/columnContext/useColumns';
+import PortfolioCollection from '../PortfolioCollection/index.web';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { useStickyPortfolio } from './useStickyPortfolio';
-import { X, Plus, Search, Link2, Upload, Download, Trash2, ArrowRight, ChevronDown, FlaskConical, ShieldCheck, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw } from 'lucide-react';
+import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
+import { X, Plus, Search, Link2, Trash2, ArrowRight, ChevronDown, FlaskConical, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw, Columns3 } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
-  const [toolsTab, setToolsTab] = useState<`connect` | `csv`>(`connect`);
+  const portfolioRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const { user } = useAuth();
-  const { visibleColumns, toggleColumn, resetColumns } = useColumns();
+  const { visibleColumns, columnWidths, toggleColumn, resetColumns, setColumnWidths } = useColumns();
   const preferences = usePortfolioPreferences();
   const sections = useMemo(() => buildPortfolioSections(portfolio.filteredDomains, preferences), [portfolio.filteredDomains, preferences]);
   const mainGroups = useMemo(() => portfolio.sortField
@@ -34,7 +35,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     : sections.mainGroups, [portfolio.filteredDomains, portfolio.sortField, preferences, sections.mainGroups]);
   const tableVisible = preferences.view === `table` || (!portfolio.loading && !sections.mainDomains.length);
   const sticky = useStickyPortfolio(`${preferences.view}|${tableVisible}|${visibleColumns.join(`|`)}`);
-  const columns = PORTFOLIO_COLUMNS.filter(column => visibleColumns.includes(column.field));
+  const columns = getOrderedPortfolioColumns(visibleColumns);
   const columnCounts = useMemo(() => getPortfolioColumnCounts(portfolio.domains), [portfolio.domains]);
   const showAnnualSpend = columns.some(column => column.price);
   const showMonthlySpend = visibleColumns.includes(`monthlyCost`);
@@ -89,6 +90,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   };
   return (
     <section
+      ref={portfolioRef}
       id={`domain-portfolio`}
       aria-labelledby={`portfolio-title`}
       className={`domain-portfolio${compact ? `` : ` domain-portfolio-full`}`}
@@ -366,6 +368,17 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {portfolio.sortField ? `Manual order` : `Sort A–Z`}
             </span>
           </button>
+          <button
+            type={`button`}
+            id={`portfolio-fit-columns`}
+            disabled={portfolio.loading}
+            title={`Fit Each Column To Its Longest Value`}
+            className={`portfolio-button portfolio-button-secondary`}
+            onClick={() => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current) })}
+          >
+            <Columns3 size={15} aria-hidden={`true`} id={`portfolio-fit-columns-icon`} className={`portfolio-button-icon`} />
+            <span id={`portfolio-fit-columns-text`} className={`portfolio-button-text`}>{`Fit Columns`}</span>
+          </button>
         </div>
         {sections.collections.map(section => (
           <PortfolioCollection
@@ -413,97 +426,13 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           onSort={portfolio.changeSort}
         />
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
-          <div id={`portfolio-storage-meta`} className={`portfolio-storage-meta`}>
-            <ShieldCheck size={13} aria-hidden={`true`} id={`portfolio-storage-icon`} className={`portfolio-storage-icon`} />
-            <span id={`portfolio-storage-text`} className={`portfolio-storage-text`}>
-              {`Saved On This Device`}
-            </span>
-            <span id={`portfolio-count-separator`} className={`portfolio-count-separator`} aria-hidden={`true`}>
-              {`·`}
-            </span>
-            <span id={`portfolio-visible-count`} className={`portfolio-visible-count`}>
-              {`Showing ${visibleIds.length} Of ${portfolio.filteredDomains.length}`}
-            </span>
-          </div>
-          <div id={`portfolio-transfer-tools`} className={`portfolio-transfer-tools`}>
-            <div role={`tablist`} aria-label={`Add Or Transfer Domains`} id={`portfolio-tools-tabs`} className={`portfolio-tools-tabs`}>
-              {([`connect`, `csv`] as const).map(tab => {
-                const TabIcon = tab === `connect` ? Link2 : Upload;
-                return (
-                  <button
-                    key={tab}
-                    role={`tab`}
-                    type={`button`}
-                    id={`portfolio-tools-tab-${tab}`}
-                    aria-selected={toolsTab === tab}
-                    tabIndex={toolsTab === tab ? 0 : -1}
-                    aria-controls={`portfolio-tools-panel-${tab}`}
-                    className={`portfolio-tools-tab${toolsTab === tab ? ` portfolio-tools-tab-active` : ``}`}
-                    onClick={() => setToolsTab(tab)}
-                    onKeyDown={event => {
-                      if (![ `ArrowLeft`, `ArrowRight`, `Home`, `End` ].includes(event.key)) return;
-                      event.preventDefault();
-                      const next = event.key === `Home` ? `connect` : event.key === `End` ? `csv` : tab === `connect` ? `csv` : `connect`;
-                      setToolsTab(next);
-                      event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`#portfolio-tools-tab-${next}`)?.focus();
-                    }}
-                  >
-                    <TabIcon size={13} aria-hidden={`true`} id={`portfolio-tools-tab-icon-${tab}`} className={`portfolio-button-icon`} />
-                    <span id={`portfolio-tools-tab-text-${tab}`} className={`portfolio-button-text`}>
-                      {tab === `connect` ? `Connect Registrar` : `Import / Export CSV`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <div
-              role={`tabpanel`}
-              id={`portfolio-tools-panel-connect`}
-              hidden={toolsTab !== `connect`}
-              aria-labelledby={`portfolio-tools-tab-connect`}
-              className={`portfolio-tools-panel`}
-            >
-              <span id={`portfolio-connect-recommendation`} className={`portfolio-connect-recommendation`}>
-                {`Recommended: connect a registrar to sync your domains automatically.`}
-              </span>
-              <button type={`button`} disabled={portfolio.loading} onClick={portfolio.openSetup} id={`portfolio-connect-registrar`} className={`portfolio-button portfolio-button-quiet`}>
-                <Link2 size={13} aria-hidden={`true`} id={`portfolio-connect-registrar-icon`} className={`portfolio-button-icon`} />
-                <span id={`portfolio-connect-registrar-text`} className={`portfolio-button-text`}>{`Connect Registrar`}</span>
-              </button>
-            </div>
-            <div
-              role={`tabpanel`}
-              id={`portfolio-tools-panel-csv`}
-              hidden={toolsTab !== `csv`}
-              aria-labelledby={`portfolio-tools-tab-csv`}
-              className={`portfolio-tools-panel portfolio-secondary-actions`}
-            >
-              <button
-                type={`button`}
-                onClick={portfolio.requestImport}
-                id={`portfolio-import-csv`}
-                disabled={portfolio.loading || portfolio.importing}
-                className={`portfolio-button portfolio-button-quiet`}
-              >
-                <Upload size={13} aria-hidden={`true`} id={`portfolio-import-icon`} className={`portfolio-button-icon`} />
-                <span id={`portfolio-import-text`} className={`portfolio-button-text`}>
-                  {portfolio.importing ? `Importing…` : `Import CSV`}
-                </span>
-              </button>
-              <button
-                type={`button`}
-                onClick={portfolio.exportDomains}
-                id={`portfolio-export-csv`}
-                disabled={portfolio.loading || portfolio.exporting || !portfolio.domains.length}
-                className={`portfolio-button portfolio-button-quiet`}
-              >
-                <Download size={13} aria-hidden={`true`} id={`portfolio-export-icon`} className={`portfolio-button-icon`} />
-                <span id={`portfolio-export-text`} className={`portfolio-button-text`}>
-                  {portfolio.exporting ? `Exporting…` : `Export CSV`}
-                </span>
-              </button>
-            </div>
-          </div>
+          <span id={`portfolio-visible-count`} className={`portfolio-visible-count`}>
+            {`Showing ${visibleIds.length} Of ${portfolio.filteredDomains.length}`}
+          </span>
+          <button type={`button`} disabled={portfolio.loading} onClick={portfolio.openSetup} id={`portfolio-connect-registrar`} className={`portfolio-button portfolio-button-quiet`}>
+            <Link2 size={13} aria-hidden={`true`} id={`portfolio-connect-registrar-icon`} className={`portfolio-button-icon`} />
+            <span id={`portfolio-connect-registrar-text`} className={`portfolio-button-text`}>{`Connect Registrar`}</span>
+          </button>
         </div>
       </div>
       {compact && (

@@ -1,19 +1,19 @@
 import { Link, useRouter } from 'expo-router';
 import RegistrarSetup from '../RegistrarSetup';
-import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
-import { useEffect, useMemo, useState } from 'react';
 import { createStyles } from './styles.native';
+import { REGISTRARS } from '../../shared/config';
 import DomainCard from '../DomainCard/index.native';
-import { REGISTRARS, useSampleData } from '../../shared/config';
+import { useEffect, useMemo, useState } from 'react';
 import { elementProps } from '../../shared/elementProps';
-import { useAuth } from '../../shared/authContext/useAuth';
-import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { useNativePortfolio } from './useNativePortfolio';
+import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
+import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
+import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Download, Globe2, Link2, Plus, RotateCcw, Save, Search, Upload, X, Gauge, RefreshCw } from 'lucide-react-native';
+import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, RefreshCw } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -27,12 +27,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const state = useNativePortfolio(compact);
   const router = useRouter();
   const { user } = useAuth();
-  const [toolsTab, setToolsTab] = useState<`connect` | `csv`>(`connect`);
   const [editorIconFailed, setEditorIconFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const insets = useSafeAreaInsets();
-  const sampleCount = useSampleData ? state.domains.filter(domain => domain.isSample).length : 0;
-  const sampleLabel = sampleCount ? `${sampleCount} sample domain(s) included` : `Your records, on this device`;
   const SortIcon = state.sortByName ? ArrowDownAZ : ArrowDownWideNarrow;
   const manualSyncBlocked = state.loading || state.syncing || state.manualSyncWaitSeconds > 0;
   const manualSyncLabel = state.syncing ? `Syncing…` : state.manualSyncWaitSeconds > 0
@@ -291,63 +288,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </Text>
           </View>
         </ScrollView>
-        {!compact && (
-          <>
-            <View {...elementProps(`native-portfolio-tools-tabs`)} style={styles.toolsTabs} accessibilityRole={`tablist`} accessibilityLabel={`Add Or Transfer Domains`}>
-              {([`connect`, `csv`] as const).map(tab => {
-                const TabIcon = tab === `connect` ? Link2 : Upload;
-                const selected = toolsTab === tab;
-                return (
-                  <Pressable
-                    key={tab}
-                    accessibilityRole={`tab`}
-                    onPress={() => setToolsTab(tab)}
-                    accessibilityState={{ selected }}
-                    {...elementProps(`native-portfolio-tools-tab`, tab)}
-                    style={[styles.toolsTab, selected && styles.toolsTabActive]}
-                  >
-                    <TabIcon {...elementProps(`native-portfolio-tools-tab-icon`, tab)} size={13} color={selected ? palette.accent : palette.muted} />
-                    <Text {...elementProps(`native-portfolio-tools-tab-text`, tab)} style={[styles.toolsTabText, selected && styles.toolsTabTextActive]}>
-                      {tab === `connect` ? `Connect Registrar` : `Import / Export CSV`}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-            {toolsTab === `connect` ? (
-              <View {...elementProps(`native-portfolio-tools-panel-connect`)} style={styles.toolsPanel}>
-                <Text {...elementProps(`native-portfolio-connect-recommendation`)} style={styles.csvHint}>
-                  {`Recommended: connect a registrar to sync your domains automatically.`}
-                </Text>
-                <Pressable {...elementProps(`native-portfolio-connect-registrar`)} style={[styles.secondaryButton, state.loading && styles.disabled]} disabled={state.loading} onPress={state.openSetup} accessibilityRole={`button`}>
-                  <Link2 {...elementProps(`native-portfolio-connect-registrar-icon`)} size={13} color={palette.accent} />
-                  <Text {...elementProps(`native-portfolio-connect-registrar-text`)} style={styles.secondaryButtonText}>{`Connect Registrar`}</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <View {...elementProps(`native-portfolio-tools-panel-csv`)} style={styles.toolsPanel}>
-                <View {...elementProps(`native-portfolio-csv-actions`)} style={styles.csvActions}>
-                  <Pressable {...elementProps(`native-portfolio-import`)} style={[styles.secondaryButton, (state.working || state.loading) && styles.disabled]} disabled={state.working || state.loading} onPress={() => void state.importCsv()} accessibilityRole={`button`} accessibilityLabel={`Import Domains From CSV`}>
-                    <Upload {...elementProps(`native-portfolio-import-icon`)} size={13} color={palette.muted} />
-                    <Text {...elementProps(`native-portfolio-import-text`)} style={styles.secondaryButtonText}>
-                      {`Import CSV`}
-                    </Text>
-                  </Pressable>
-                  <Pressable {...elementProps(`native-portfolio-export`)} style={[styles.secondaryButton, (state.working || state.loading || !state.domains.length) && styles.disabled]} disabled={state.working || state.loading || !state.domains.length} onPress={() => void state.exportCsv()} accessibilityRole={`button`} accessibilityLabel={`Export All Domains To CSV`}>
-                    <Download {...elementProps(`native-portfolio-export-icon`)} size={13} color={palette.muted} />
-                    <Text {...elementProps(`native-portfolio-export-text`)} style={styles.secondaryButtonText}>
-                      {`Export CSV`}
-                    </Text>
-                  </Pressable>
-                  {state.working && <ActivityIndicator {...elementProps(`native-portfolio-file-progress`)} size={`small`} color={palette.accent} />}
-                </View>
-                <Text {...elementProps(`native-portfolio-csv-hint`)} style={styles.csvHint}>
-                  {`CSV columns: domain, registrar, expiry, owner, auto_renew, renewal_price, notes. Re-importing a domain updates its saved details.`}
-                </Text>
-              </View>
-            )}
-          </>
-        )}
       </View>
       <View {...elementProps(`native-portfolio-records`)} style={styles.records}>
         {state.loading ? [0, 1, 2].map(index => <DomainCard key={index} index={index} loading />) : state.visibleDomains.map((domain, index) => (
@@ -389,8 +329,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         )}
       </View>
       <View {...elementProps(`native-portfolio-bottom`)} style={styles.bottom}>
-        <Text {...elementProps(`native-portfolio-sample-label`)} style={styles.bottomText}>
-          {sampleLabel}
+        <Text {...elementProps(`native-portfolio-showing`)} numberOfLines={1} style={styles.bottomText}>
+          {state.loading ? `Loading…` : `Showing ${state.visibleDomains.length} Of ${state.filteredDomains.length}`}
         </Text>
         {compact ? (
           <Link href={`/domains`} asChild>
@@ -401,14 +341,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <ArrowRight {...elementProps(`native-portfolio-view-all-icon`)} size={12} color={palette.accent} />
             </Pressable>
           </Link>
-        ) : useSampleData ? (
-          <Pressable {...elementProps(`native-portfolio-restore`)} style={[styles.textButton, state.loading && styles.disabled]} disabled={state.loading} accessibilityRole={`button`} accessibilityLabel={`Restore Sample Domains`} onPress={state.resetSamples}>
-            <RotateCcw {...elementProps(`native-portfolio-restore-icon`)} size={11} color={palette.accent} />
-            <Text {...elementProps(`native-portfolio-restore-text`)} style={styles.textButtonText}>
-              {`Restore samples`}
-            </Text>
+        ) : (
+          <Pressable {...elementProps(`native-portfolio-connect-registrar`)} style={[styles.secondaryButton, state.loading && styles.disabled]} disabled={state.loading} onPress={state.openSetup} accessibilityRole={`button`} accessibilityLabel={`Connect Registrar`}>
+            <Link2 {...elementProps(`native-portfolio-connect-registrar-icon`)} size={13} color={palette.accent} />
+            <Text {...elementProps(`native-portfolio-connect-registrar-text`)} style={styles.secondaryButtonText}>{`Connect Registrar`}</Text>
           </Pressable>
-        ) : null}
+        )}
       </View>
       {state.setupOpen && <RegistrarSetup onClose={state.closeSetup} onManual={() => state.openEditor()} />}
       <Modal visible={state.editorOpen} transparent animationType={`fade`} onRequestClose={state.closeEditor}>
@@ -610,7 +548,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   </Text>
                 </Pressable>
                 <Text {...elementProps(`native-domain-editor-footnote`)} style={styles.modalFootnote}>
-                  {`Saved on this device. Registrar accounts stay as they are.`}
+                  {`Registrar accounts stay as they are.`}
                 </Text>
               </View>
             </View>

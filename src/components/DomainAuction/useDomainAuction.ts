@@ -111,6 +111,6 @@ export const useDomainAuction = () => {
     reportError: setError,
     clearNotice: () => setNotice(``),
     reloadListings: () => { setPreview(false); setRevision(current => current + 1); },
-    storageMessage: useLocalStorage ? `Imported inventory is saved on this device.` : `Connect a backend to save auction inventory.`,
+    storageMessage: useLocalStorage ? `Imported inventory is saved as a snapshot.` : `Connect a backend to save auction inventory.`,
   };
 };
