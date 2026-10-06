@@ -122,13 +122,6 @@
 
 @media (min-width: 900px) {
   .domain-dialog.registrar-setup-dialog { max-width: 1040px; }
-  .registrar-setup-connection-panel :is(.account-connections, [data-class='account-connections']) {
-    display: grid !important;
-    align-items: start;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    > :not(.connection-provider, [data-class='connection-provider']) { grid-column: 1 / -1; }
-  }
-  .registrar-setup-connection-panel :is(.connection-provider, [data-class='connection-provider']) { min-width: 0; }
 }
 
 @media (max-width: 560px) {

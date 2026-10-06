@@ -6,17 +6,10 @@ import { useDomains } from '../../shared/domainContext/useDomains';
 import { formatSyncNotice } from '../../shared/registrarSync/messages';
 import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
 import { createConnectionDraft } from '../../shared/connections/values';
+import { connectionInputValue, connectionInputFields, supportsRegistrarSync, withConnectionInputValue, type ConnectionInputKey } from '../../shared/connections/inputs';
 import { connectionFields, type AccountConnectionsProps, type ConnectionAccount, type ConnectionProvider } from '../../shared/connections/types';
 
-type ConnectionInput = `values` | `godaddyAccountId`;
-const godaddyAccountLine = /^\s*(?:export\s+)?GODADDY_(?:CUSTOMER|SHOPPER)_ID\s*=/;
 const externalDomainLine = /^\s*(?:export\s+)?HOSTINGER_EXTERNAL_DOMAINS\s*=/;
-const withoutGoDaddyAccountId = (values: string) => values.split(/\r?\n/).filter(line => !godaddyAccountLine.test(line)).join(`\n`);
-const goDaddyAccountId = (values: string) => {
-  const line = values.split(/\r?\n/).find(value => godaddyAccountLine.test(value));
-  const raw = line?.slice(line.indexOf(`=`) + 1)?.trim() ?? ``;
-  return raw.match(/^(['"])([\s\S]*)\1$/)?.[2] ?? raw;
-};
 const externalDomains = (values: string) => {
   const line = values.split(/\r?\n/).find(value => externalDomainLine.test(value));
   const raw = line?.slice(line.indexOf(`=`) + 1)?.trim() ?? ``;
@@ -55,6 +48,9 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   const [includingKey, setIncludingKey] = useState(``);
   const [hasSyncedDomains, setHasSyncedDomains] = useState(false);
   const [accounts, setAccounts] = useState<ConnectionAccount[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<ConnectionProvider>(connectionFields[0].id);
+  const fields = connectionFields.filter(field => !providers || providers.includes(field.id));
+  const activeProvider = fields.find(field => field.id === selectedProvider)?.id ?? fields[0]?.id;
   const isCurrent = (operation?: number) => mounted.current && currentActor.current === actorKey
     && (operation === undefined || operation === revision.current);
   useEffect(() => {
@@ -72,6 +68,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     setNotice(``);
     setVisibility({});
     setHasSyncedDomains(false);
+    setSelectedProvider(connectionFields[0].id);
     const load = () => {
       const operation = revision.current;
       return connectionsAPI.getConnections(userId).then(snapshot => {
@@ -112,18 +109,11 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     setHasSyncedDomains(false);
     setAccounts(current => current.map(account => account.id === id ? change(account) : account));
   };
-  const change = (id: string, value: string) => editAccount(id, account => {
-    const accountLines = account.provider === `godaddy` && !value.split(/\r?\n/).some(line => godaddyAccountLine.test(line))
-      ? account.values.split(/\r?\n/).filter(line => godaddyAccountLine.test(line)) : [];
-    return { ...account, values: accountLines.length ? [value, ...accountLines].filter(Boolean).join(`\n`) : value };
-  });
-  const changeGodaddyAccountId = (id: string, value: string) => {
-    if (/[\r\n\u0000]/.test(value)) { setError(`Enter A Customer UUID Or Numeric Shopper ID`); return; }
-    const accountId = value.trim();
-    const key = /^\d+$/.test(accountId) ? `GODADDY_SHOPPER_ID` : `GODADDY_CUSTOMER_ID`;
-    editAccount(id, account => ({
-      ...account, values: [withoutGoDaddyAccountId(account.values).trimEnd(), accountId ? `${key}=${accountId}` : ``].filter(Boolean).join(`\n`),
-    }));
+  const change = (id: string, key: ConnectionInputKey, value: string) => {
+    if (!isCurrent() || operationBusy.current || loading || syncing) return;
+    if (/[\r\n\u0000]/.test(value)) { setError(`Enter One Connection Value Per Field`); return; }
+    if (connectionInputFields[key].secret) setVisibility(current => ({ ...current, [`${id}:${key}`]: true }));
+    editAccount(id, account => ({ ...account, values: withConnectionInputValue(account, key, value) }));
   };
   const add = (provider: ConnectionProvider) => {
     if (!isCurrent() || operationBusy.current || loading || syncing) return;
@@ -156,11 +146,13 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
         dirty.current = false;
       }
       setVisibility({});
-      setNotice(`Connections Saved — Checking Domains…`);
+      const syncable = (savedAccount ? [savedAccount] : snapshot.accounts).some(supportsRegistrarSync);
+      setNotice(syncable ? `Connections Saved — Checking Domains…` : `Developer OAuth Credentials Saved`);
       const result = await syncConnections(snapshot, savedAccount ? [savedAccount.id] : undefined);
       if (!isCurrent(operation)) return;
       setHasSyncedDomains(result.count > 0);
-      setNotice(syncNotice(`Connections Saved`, result));
+      setNotice(syncable ? syncNotice(`Connections Saved`, result)
+        : `Developer OAuth Credentials Saved — Domain Sync Requires Reseller Credentials`);
       setError(result.errors.join(`\n`));
     } catch (failure) {
       if (isCurrent(operation)) setError(failure instanceof Error ? failure.message : `Could Not Save Connections`);
@@ -238,19 +230,20 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   };
   const dismiss = () => { setError(``); setNotice(``); setHasSyncedDomains(false); };
   const currentView = viewActor === actorKey;
-  const inputValue = (account: ConnectionAccount, field: ConnectionInput = `values`) => field === `godaddyAccountId`
-    ? goDaddyAccountId(account.values) : account.provider === `godaddy` ? withoutGoDaddyAccountId(account.values) : account.values;
-  const isVisible = (account: ConnectionAccount, field: ConnectionInput = `values`) => currentView
-    && (!inputValue(account, field).trim() || (visibility[`${account.id}:${field}`] ?? !account.number));
-  const toggleVisibility = (account: ConnectionAccount, field: ConnectionInput = `values`) => {
-    if (!isCurrent() || operationBusy.current || loading || syncing || !inputValue(account, field).trim()) return;
-    setVisibility(current => ({ ...current, [`${account.id}:${field}`]: !isVisible(account, field) }));
+  const inputValue = (account: ConnectionAccount, key: ConnectionInputKey) => currentView ? connectionInputValue(account, key) : ``;
+  const isVisible = (account: ConnectionAccount, key: ConnectionInputKey) => currentView
+    && (!connectionInputFields[key].secret || !inputValue(account, key).trim() || (visibility[`${account.id}:${key}`] ?? !account.number));
+  const toggleVisibility = (account: ConnectionAccount, key: ConnectionInputKey) => {
+    if (!isCurrent() || operationBusy.current || loading || syncing || !connectionInputFields[key].secret || !inputValue(account, key).trim()) return;
+    setVisibility(current => ({ ...current, [`${account.id}:${key}`]: !isVisible(account, key) }));
   };
   const discoveredDomains = (account: ConnectionAccount) => currentView ? (accountStatuses[account.id]?.discoveredDomains ?? [])
     .filter(domain => !externalDomains(account.values).includes(domain.name.toLowerCase())) : [];
   return {
     add, save, clear, change, remove, dismiss, syncing, isVisible, inputValue, includeDomain, toggleVisibility,
-    changeGodaddyAccountId, accountStatuses, discoveredDomains,
+    accountStatuses, discoveredDomains,
+    fields, activeProvider,
+    selectProvider: setSelectedProvider,
     signedIn: !!user?.id,
     busy: currentView && busy, loading: !currentView || loading,
     showDomainsLink: currentView && !busy && hasSyncedDomains,

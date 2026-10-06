@@ -34,6 +34,7 @@ const PortfolioCollection = ({
   onDragLeave,
   onDragStart,
   globalToolbarHeight,
+  compact = false,
   dragging = false,
   draggable = false,
   dropTarget = false,
@@ -217,7 +218,7 @@ const PortfolioCollection = ({
       <PortfolioRecords
         {...records}
         forceTable
-        compact={false}
+        compact={compact}
         idPrefix={scope}
         onSort={state.onSort}
         collectionId={collection.id}

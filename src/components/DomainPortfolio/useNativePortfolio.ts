@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import { useMemo, useState } from 'react';
-import { REGISTRARS } from '../../shared/config';
+import { REGISTRARS, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
@@ -53,7 +53,7 @@ export const useNativePortfolio = (compact = false) => {
       .filter(domain => (registrar === `All` || domain.registrar === registrar) && `${domain.name} ${domain.owner} ${domain.registrar}`.toLowerCase().includes(query))
       .sort((first, second) => sortByName ? first.name.localeCompare(second.name) : first.expiresAt.localeCompare(second.expiresAt));
   }, [context.domains, search, registrar, sortByName]);
-  const visibleDomains = compact ? filteredDomains.slice(0, 4) : filteredDomains;
+  const visibleDomains = compact ? filteredDomains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : filteredDomains;
   const dueSoon = context.domains.filter(domain => getDomainStatus(domain) !== `Active`).length;
   const openSetup = () => {
     context.clearNotice();

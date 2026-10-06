@@ -10,6 +10,7 @@ import DomainContextMenu from '../DomainContextMenu/index.web';
 import PortfolioTableHead from '../PortfolioTableHead/index.web';
 import DomainGroupSettings from '../DomainGroupSettings/index.web';
 import { useColumns } from '../../shared/columnContext/useColumns';
+import { PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { useStickyPortfolioGroup } from './useStickyPortfolioGroup';
 import { getPortfolioColumnWidth } from '../DomainPortfolio/columnLayout.web';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
@@ -77,7 +78,7 @@ const PortfolioRecords = ({
       ? sections.collections.find(section => section.collection.id === collectionId)?.groups ?? []
       : sections.mainGroups;
     if (!compact) return items;
-    const visibleIds = new Set(items.flatMap(group => group.domains).slice(0, 4).map(domain => domain.id));
+    const visibleIds = new Set(items.flatMap(group => group.domains).slice(0, PORTFOLIO_PREVIEW_LIMIT).map(domain => domain.id));
     return items.map(group => ({ ...group, domains: group.domains.filter(domain => visibleIds.has(domain.id)) }))
       .filter(group => group.domains.length);
   }, [domains, orderingPreferences, collectionId, compact]);

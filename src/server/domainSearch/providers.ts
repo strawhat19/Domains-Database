@@ -1,11 +1,10 @@
 import { XMLParser } from 'fast-xml-parser';
 import { searchVercel } from './vercel';
+import type { SearchCredentials } from './environment';
 import { SyntaxValidator } from 'fast-xml-validator';
 import { readLimitedText } from '../registrars/request';
-import type { RegistrarCredentials } from '../registrars/credentials';
 import { registrarPurchaseUrl } from '../../shared/domainSearch/types';
-import type { ConnectionProvider } from '../../shared/connections/types';
-import type { DomainSearchResult, DomainSearchPrice } from '../../shared/domainSearch/types';
+import type { DomainSearchResult, DomainSearchPrice, DomainSearchProvider } from '../../shared/domainSearch/types';
 import { providerLabels, upstreamError, RegistrarRelayError } from '../registrars/errors';
 
 const invalid = () => new RegistrarRelayError(502, `Registrar Returned Invalid Availability Or Pricing`);
@@ -35,7 +34,7 @@ const price = (value: unknown, currency: unknown, period?: unknown, divisor = 1)
   return { amount: cost / divisor, currency, ...(period == null ? {} : { years: years(period) }) };
 };
 
-const requestSearch = async (provider: ConnectionProvider, url: URL, signal: AbortSignal, init: RequestInit = {}) => {
+const requestSearch = async (provider: DomainSearchProvider, url: URL, signal: AbortSignal, init: RequestInit = {}) => {
   const method = init.method ?? `GET`;
   const allowed = provider === `godaddy` ? url.origin === `https://api.godaddy.com` && [`/v1/domains/available`, `/v3/domains/check-availability`].includes(url.pathname) && method === `GET`
     : provider === `hostinger` ? url.origin === `https://developers.hostinger.com` && url.pathname === `/api/domains/v1/availability` && method === `POST`
@@ -75,7 +74,7 @@ const namecheapCommand = (text: string, command: string) => {
   return result;
 };
 
-const goDaddy = async (auth: Extract<RegistrarCredentials, { provider: `godaddy` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
+const goDaddy = async (auth: Extract<SearchCredentials, { provider: `godaddy` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
   const modern = auth.authorization.startsWith(`Bearer `);
   const url = new URL(`https://api.godaddy.com/${modern ? `v3/domains/check-availability` : `v1/domains/available`}`);
   url.searchParams.set(`domain`, domain);
@@ -99,7 +98,7 @@ const goDaddy = async (auth: Extract<RegistrarCredentials, { provider: `godaddy`
   };
 };
 
-const hostinger = async (auth: Extract<RegistrarCredentials, { provider: `hostinger` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
+const hostinger = async (auth: Extract<SearchCredentials, { provider: `hostinger` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
   const dot = domain.indexOf(`.`);
   const text = await requestSearch(`hostinger`, new URL(`https://developers.hostinger.com/api/domains/v1/availability`), signal, {
     method: `POST`,
@@ -113,7 +112,7 @@ const hostinger = async (auth: Extract<RegistrarCredentials, { provider: `hostin
   return { available: result.is_available, note: `Hostinger Returns Availability Without A Price — See Hostinger For Pricing And Registration Restrictions` };
 };
 
-const porkbun = async (auth: Extract<RegistrarCredentials, { provider: `porkbun` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
+const porkbun = async (auth: Extract<SearchCredentials, { provider: `porkbun` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
   const value = record(json(await requestSearch(`porkbun`, new URL(`https://api.porkbun.com/api/json/v3/domain/checkDomain/${domain}`), signal, {
     method: `POST`,
     headers: { 'Content-Type': `application/json` },
@@ -151,7 +150,7 @@ const porkbun = async (auth: Extract<RegistrarCredentials, { provider: `porkbun`
   };
 };
 
-const namesilo = async (auth: Extract<RegistrarCredentials, { provider: `namesilo` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
+const namesilo = async (auth: Extract<SearchCredentials, { provider: `namesilo` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
   const url = new URL(`https://www.namesilo.com/apibatch/checkRegisterAvailability`);
   Object.entries({ key: auth.apiKey, version: `1`, type: `json`, domains: domain }).forEach(([key, value]) => url.searchParams.set(key, value));
   const reply = record(record(json(await requestSearch(`namesilo`, url, signal))).reply);
@@ -163,7 +162,7 @@ const namesilo = async (auth: Extract<RegistrarCredentials, { provider: `namesil
   return { note: `NameSilo Did Not Return A Definitive Availability Result — Check At The Registrar` };
 };
 
-const namecheap = async (auth: Extract<RegistrarCredentials, { provider: `namecheap` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
+const namecheap = async (auth: Extract<SearchCredentials, { provider: `namecheap` }>, domain: string, signal: AbortSignal): Promise<Partial<DomainSearchResult>> => {
   const call = async (command: string, fields: Record<string, string>) => {
     const url = new URL(`https://api.namecheap.com/xml.response`);
     Object.entries({ ...fields, Command: command, ApiKey: auth.apiKey, ApiUser: auth.username, UserName: auth.username, ClientIp: auth.clientIp }).forEach(([key, value]) => url.searchParams.set(key, value));
@@ -210,7 +209,7 @@ const namecheap = async (auth: Extract<RegistrarCredentials, { provider: `namech
   return { available, registration, renewal, note };
 };
 
-export const searchRegistrar = async (auth: RegistrarCredentials, domain: string, signal: AbortSignal): Promise<DomainSearchResult> => {
+export const searchRegistrar = async (auth: SearchCredentials, domain: string, signal: AbortSignal): Promise<DomainSearchResult> => {
   const result = auth.provider === `vercel` ? await searchVercel(domain, signal, auth)
     : auth.provider === `godaddy` ? await goDaddy(auth, domain, signal)
     : auth.provider === `hostinger` ? await hostinger(auth, domain, signal)

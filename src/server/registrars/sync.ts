@@ -5,6 +5,7 @@ import { getNameSiloDomains } from './namesilo';
 import { RegistrarRelayError } from './errors';
 import { getHostingerDomains } from './hostinger';
 import { getNamecheapDomains } from './namecheap';
+import { getSquarespaceDomains } from './squarespace';
 import type { RegistrarCredentials } from './credentials';
 import type { RegistrarRequestContext } from './request';
 import type { RegistrarSyncResult } from '../../shared/registrarSync/types';
@@ -29,6 +30,7 @@ export const syncRegistrar = async (credentials: RegistrarCredentials, signal: A
     if (credentials.provider === `hostinger`) return await getHostingerDomains(credentials.authorization, context, credentials.externalDomains);
     if (credentials.provider === `porkbun`) return await getPorkbunDomains(credentials, context);
     if (credentials.provider === `namesilo`) return await getNameSiloDomains(credentials, context);
+    if (credentials.provider === `squarespace`) return await getSquarespaceDomains(credentials, context);
     return await getNamecheapDomains(credentials, context);
   } finally {
     clearTimeout(timeout);

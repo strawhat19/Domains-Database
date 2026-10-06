@@ -1,4 +1,4 @@
-import { MAX_RESPONSE_BYTES } from './validation';
+import { MAX_REQUEST_BYTES, MAX_RESPONSE_BYTES } from './validation';
 import type { ConnectionProvider } from '../../shared/connections/types';
 import { providerLabels, RegistrarRelayError, upstreamError } from './errors';
 
@@ -8,6 +8,11 @@ export interface RegistrarRequestContext {
   provider: ConnectionProvider;
 }
 
+interface RegistrarRequestOptions {
+  body: string;
+  method: `POST`;
+}
+
 const upstreamPaths = {
   vercel: `https://api.vercel.com/v5/domains`,
   godaddy: `https://api.godaddy.com/v1/domains`,
@@ -15,6 +20,7 @@ const upstreamPaths = {
   namesilo: `https://www.namesilo.com/apibatch/listDomains`,
   porkbun: `https://api.porkbun.com/api/json/v3/domain/listAll`,
   hostinger: `https://developers.hostinger.com/api/domains/v1/portfolio`,
+  squarespace: `https://api.squarespace.com/reseller/v1/domains`,
 };
 
 const goDaddyDetailPath = /^\/v2\/customers\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\/domains\/[a-z0-9.-]+$/i;
@@ -56,12 +62,23 @@ export const readLimitedText = async (
   }
 };
 
-export const requestRegistrar = async (url: URL, headers: Record<string, string>, context: RegistrarRequestContext) => {
+export const requestRegistrar = async (
+  url: URL,
+  headers: Record<string, string>,
+  context: RegistrarRequestContext,
+  options?: RegistrarRequestOptions,
+) => {
   const target = `${url.origin}${url.pathname}`;
   const goDaddyRead = context.provider === `godaddy` && url.origin === `https://api.godaddy.com`
     && (goDaddyShopperPath.test(url.pathname) || goDaddyDetailPath.test(url.pathname));
   const hostingerRead = context.provider === `hostinger` && target === `https://developers.hostinger.com/api/hosting/v1/websites`;
-  if ((target !== upstreamPaths[context.provider] && !goDaddyRead && !hostingerRead) || url.username || url.password || url.hash) {
+  const squarespaceToken = context.provider === `squarespace`
+    && target === `https://login.squarespace.com/api/1/login/oauth/provider/tokens` && !url.search;
+  const permitted = options
+    ? squarespaceToken && options.method === `POST` && typeof options.body === `string`
+      && new TextEncoder().encode(options.body).byteLength <= MAX_REQUEST_BYTES
+    : target === upstreamPaths[context.provider] || goDaddyRead || hostingerRead;
+  if (!permitted || url.username || url.password || url.hash) {
     throw new RegistrarRelayError(500, `Registrar Request Is Unavailable`);
   }
   const remaining = context.deadline - Date.now();
@@ -74,10 +91,11 @@ export const requestRegistrar = async (url: URL, headers: Record<string, string>
   try {
     const response = await fetch(url, {
       headers,
-      method: `GET`,
+      body: options?.body,
       cache: `no-store`,
       redirect: `error`,
       credentials: `omit`,
+      method: options?.method ?? `GET`,
       signal: controller.signal,
     });
     if (!response.ok) {

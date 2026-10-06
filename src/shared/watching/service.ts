@@ -2,7 +2,6 @@ import { authAPI } from '../../api/auth';
 import { Types } from '../../types/types';
 import { useLocalStorage } from '../config';
 import { normalizeDomainName } from '../domainUtils';
-import { connectionFields } from '../connections/types';
 import { getAppCollectionIDNumber } from '../common/ids';
 import { accountStorageKey } from '../authentication/userScope';
 import { WatchedDomain } from '../models/watching/WatchedDomain';
@@ -112,7 +111,7 @@ const saveWatching = async (snapshot: WatchingSnapshot) => {
 const mockConnections = (domain: string): DomainSearchResult[] => {
   const hash = Array.from(domain).reduce((value, character) => (value * 31 + character.charCodeAt(0)) >>> 0, 0);
   const available = hash % 7 !== 0;
-  return connectionFields.filter(field => field.search).map((field, index) => {
+  return domainSearchFields.map((field, index) => {
     const amount = (899 + index * 150 + hash % 600) / 100;
     return {
       domain,

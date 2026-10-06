@@ -7,18 +7,21 @@ export type RegistrarCredentials =
   | { provider: `namesilo`; apiKey: string }
   | { provider: `porkbun`; apiKey: string; secretKey: string }
   | { provider: `vercel`; authorization: string; teamId?: string }
+  | { provider: `squarespace`; clientId: string; clientSecret: string }
   | { provider: `hostinger`; authorization: string; externalDomains?: string[] }
   | { provider: `namecheap`; apiKey: string; username: string; clientIp: string }
   | { provider: `godaddy`; authorization: string; shopperId?: string; customerId?: string; lookupAuthorization?: string };
 
 export const parseCredentials = (provider: ConnectionProvider, input: string): RegistrarCredentials => {
+  const resellerCredentialsRequired = `Enter Squarespace Reseller Client ID And Secret — Developer OAuth Credentials Cannot Sync Domains`;
   let normalized: string;
   try {
     normalized = normalizeConnections({ ...EMPTY_CONNECTIONS, [provider]: input })[provider];
   } catch {
+    if (provider === `squarespace`) throw new RegistrarRelayError(400, resellerCredentialsRequired);
     throw new RegistrarRelayError(400, `Enter Valid Registrar Connection Values`);
   }
-  if (!normalized) throw new RegistrarRelayError(400, `Enter Registrar Connection Values Before Syncing`);
+  if (!normalized) throw new RegistrarRelayError(400, provider === `squarespace` ? resellerCredentialsRequired : `Enter Registrar Connection Values Before Syncing`);
   const fields: Record<string, string> = {};
   for (const line of normalized.split(`\n`)) {
     const match = /^([A-Z][A-Z0-9_]*)=(.*)$/.exec(line);
@@ -67,6 +70,13 @@ export const parseCredentials = (provider: ConnectionProvider, input: string): R
     const secretKey = fields.PORKBUN_SECRET_API_KEY;
     if (!apiKey || !secretKey || apiKey.length > 256 || secretKey.length > 256) throw new RegistrarRelayError(400, `Enter Both Valid Porkbun API Keys`);
     return { provider, apiKey, secretKey };
+  }
+  if (provider === `squarespace`) {
+    const clientId = fields.SQUARESPACE_RESELLER_CLIENT_ID;
+    const clientSecret = fields.SQUARESPACE_RESELLER_CLIENT_SECRET;
+    if (!clientId || !clientSecret) throw new RegistrarRelayError(400, resellerCredentialsRequired);
+    if (clientId.includes(`:`)) throw new RegistrarRelayError(400, `Enter A Valid Squarespace Reseller Client ID`);
+    return { provider, clientId, clientSecret };
   }
   const apiKey = fields.NAMECHEAP_API_KEY;
   const username = fields.NAMECHEAP_USERNAME;

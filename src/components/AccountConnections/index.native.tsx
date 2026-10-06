@@ -1,6 +1,7 @@
 import Toast from '../Toast';
 import { Link } from 'expo-router';
 import { useMemo, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
 import { createStyles } from './styles.native';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
@@ -8,8 +9,9 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAccountConnections } from './useAccountConnections';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 import type { RegistrarDomain } from '../../shared/registrarSync/types';
-import { Pressable, Text, TextInput, View, ActivityIndicator } from 'react-native';
-import { connectionFields, type AccountConnectionsProps } from '../../shared/connections/types';
+import { Pressable, Text, TextInput, View, Platform, ActivityIndicator } from 'react-native';
+import type { AccountConnectionsProps } from '../../shared/connections/types';
+import { connectionInputFields, supportsRegistrarSync, connectionInputSections } from '../../shared/connections/inputs';
 import { Eye, Plus, Save, EyeOff, Trash2, Globe2, UserPlus, LogIn, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 
 interface HostedDomainCandidateProps {
@@ -26,10 +28,10 @@ interface ConnectionInputProps {
   busy: boolean;
   value: string;
   label: string;
+  secret: boolean;
   fieldId: string;
   loading: boolean;
   revealed: boolean;
-  multiline?: boolean;
   palette: ThemePalette;
   placeholder: string;
   onToggle: () => void;
@@ -37,7 +39,7 @@ interface ConnectionInputProps {
   styles: ReturnType<typeof createStyles>;
 }
 
-const ConnectionInput = ({ busy, value, label, fieldId, styles, palette, loading, revealed, placeholder, onChange, onToggle, multiline = true }: ConnectionInputProps) => {
+const ConnectionInput = ({ busy, value, label, secret, fieldId, styles, palette, loading, revealed, placeholder, onChange, onToggle }: ConnectionInputProps) => {
   const RevealIcon = revealed ? EyeOff : Eye;
   const disabled = busy || loading || !value.trim();
   return (
@@ -45,31 +47,33 @@ const ConnectionInput = ({ busy, value, label, fieldId, styles, palette, loading
       {loading ? <View {...elementProps(`connection-skeleton`, fieldId)} style={styles.skeleton} /> : (
         <TextInput
           {...elementProps(`connection-input`, fieldId)}
-          style={styles.input}
+          style={[styles.input, !secret && styles.publicInput]}
           autoCorrect={false}
           autoComplete={`off`}
           autoCapitalize={`none`}
-          multiline={multiline && revealed}
-          editable={!busy && revealed}
+          multiline={false}
+          editable={!busy && (!secret || revealed)}
           value={value}
-          secureTextEntry={!revealed}
+          secureTextEntry={secret && !revealed}
           placeholder={placeholder}
-          accessibilityLabel={`${label} Connection Values`}
+          accessibilityLabel={label}
           placeholderTextColor={palette.placeholder}
           onChangeText={onChange}
         />
       )}
-      <Pressable
-        {...elementProps(`connection-reveal`, fieldId)}
-        disabled={disabled}
-        onPress={onToggle}
-        accessibilityRole={`button`}
-        style={[styles.revealButton, disabled && styles.disabled]}
-        accessibilityState={{ disabled, checked: revealed }}
-        accessibilityLabel={`${revealed ? `Hide` : `Show`} ${label} Values`}
-      >
-        <RevealIcon {...elementProps(`connection-reveal-icon`, fieldId)} size={18} color={palette.muted} />
-      </Pressable>
+      {secret && (
+        <Pressable
+          {...elementProps(`connection-reveal`, fieldId)}
+          disabled={disabled}
+          onPress={onToggle}
+          accessibilityRole={`button`}
+          style={[styles.revealButton, disabled && styles.disabled]}
+          accessibilityState={{ disabled, checked: revealed }}
+          accessibilityLabel={`${revealed ? `Hide` : `Show`} ${label}`}
+        >
+          <RevealIcon {...elementProps(`connection-reveal-icon`, fieldId)} size={18} color={palette.muted} />
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -117,9 +121,19 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const disabled = state.busy || state.loading || state.syncing;
-  const fields = connectionFields.filter(field => !providers || providers.includes(field.id));
   useEffect(() => { onBusyChange?.(disabled); }, [disabled, onBusyChange]);
   useEffect(() => () => { onBusyChange?.(false); }, [onBusyChange]);
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
+    if (![`Home`, `End`, `ArrowLeft`, `ArrowRight`].includes(event.key)) return;
+    event.preventDefault();
+    const count = state.fields.length;
+    const nextIndex = event.key === `Home` ? 0 : event.key === `End` ? count - 1
+      : (index + (event.key === `ArrowRight` ? 1 : -1) + count) % count;
+    const field = state.fields[nextIndex];
+    if (!field) return;
+    state.selectProvider(field.id);
+    document.getElementById(`connection-tab-${scope}-${field.id}`)?.focus();
+  };
   if (!state.signedIn) return (
     <View {...elementProps(`connections-signup-prompt`, scope)} style={styles.field}>
       <Text {...elementProps(`connections-signup-title`, scope)} style={styles.title}>{`Sign Up To Connect Registrars`}</Text>
@@ -141,12 +155,16 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
     </View>
   );
   return (
-    <View {...elementProps(`account-connections`, scope)} style={[styles.panel, embedded && styles.embedded]}>
+    <View
+      {...elementProps(`account-connections`, scope)}
+      {...(Platform.OS === `web` ? { dataSet: { class: `account-connections`, embedded: embedded ? `true` : `false` } } : {})}
+      style={[styles.panel, embedded && styles.embedded]}
+    >
       <View {...elementProps(`connections-heading`, scope)} style={styles.row}>
         <Text {...elementProps(`connections-title`, scope)} style={styles.title}>{`Registrar Connections`}</Text>
       </View>
       <Text {...elementProps(`connections-description`, scope)} style={styles.copy}>
-        {`Connect a registrar to sync its domains. Add separate GoDaddy, Hostinger, or Vercel accounts as needed. Saved connections are checked on sign-in and refresh after 2 hours and 24 minutes. Review external domains found through hosting before including them.`}
+        {`Connect a registrar to sync its domains. Add separate GoDaddy, Hostinger, Vercel, or Squarespace reseller accounts as needed. Saved connections are checked on sign-in and refresh after 2 hours and 24 minutes. Review external domains found through hosting before including them.`}
       </Text>
       {state.syncing && (
         <View
@@ -162,14 +180,60 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
           <Text {...elementProps(`connections-sync-text`, scope)} style={styles.copy}>{`Syncing Domains…`}</Text>
         </View>
       )}
-      {fields.map(field => {
+      <View
+        {...elementProps(`connection-tabs`, scope)}
+        style={styles.tabs}
+        accessibilityRole={`tablist`}
+        accessibilityLabel={`Registrar Connectors`}
+      >
+        {state.fields.map((field, index) => {
+          const selected = state.activeProvider === field.id;
+          const providerScope = `${scope}-${field.id}`;
+          return (
+            <Pressable
+              key={field.id}
+              {...elementProps(`connection-tab`, providerScope)}
+              {...(Platform.OS === `web` ? {
+                tabIndex: selected ? 0 as const : -1 as const,
+                'aria-controls': `connection-provider-${providerScope}`,
+                onKeyDown: (event: KeyboardEvent<HTMLElement>) => handleTabKeyDown(event, index),
+              } : {})}
+              accessibilityRole={`tab`}
+              accessibilityLabel={field.label}
+              onPress={() => state.selectProvider(field.id)}
+              accessibilityState={{ selected }}
+              style={[styles.tab, selected && styles.activeTab]}
+            >
+              <Globe2 {...elementProps(`connection-tab-icon`, providerScope)} size={15} color={selected ? palette.accent : palette.muted} />
+              <Text {...elementProps(`connection-tab-text`, providerScope)} style={[styles.tabText, selected && styles.activeTabText]}>
+                {field.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {state.fields.map(field => {
+        const selected = state.activeProvider === field.id;
         const accounts = state.accounts.filter(account => account.provider === field.id);
         const providerScope = `${scope}-${field.id}`;
         return (
-          <View key={field.id} {...elementProps(`connection-provider`, providerScope)} style={styles.provider}>
+          <View
+            key={field.id}
+            {...elementProps(`connection-provider`, providerScope)}
+            {...(Platform.OS === `web` ? {
+              role: `tabpanel` as const,
+              inert: !selected,
+              'aria-hidden': !selected,
+              tabIndex: selected ? 0 as const : -1 as const,
+              'aria-labelledby': `connection-tab-${providerScope}`,
+            } : {})}
+            accessibilityElementsHidden={!selected}
+            importantForAccessibility={selected ? `auto` : `no-hide-descendants`}
+            style={[styles.provider, !selected && { display: `none` }]}
+          >
             <View {...elementProps(`connection-provider-heading`, providerScope)} style={styles.row}>
               <Text {...elementProps(`connection-provider-label`, providerScope)} style={styles.title}>{field.label}</Text>
-              {(field.id === `godaddy` || field.id === `hostinger` || field.id === `vercel`) && (
+              {(field.id === `godaddy` || field.id === `hostinger` || field.id === `vercel` || field.id === `squarespace`) && (
                 <Pressable
                   {...elementProps(`connection-add`, providerScope)}
                   disabled={disabled}
@@ -183,6 +247,30 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                 </Pressable>
               )}
             </View>
+            {field.id === `squarespace` && (
+              <View {...elementProps(`connection-access-links`, providerScope)} style={styles.row}>
+                {[
+                  { id: `account`, label: `Open Squarespace`, href: `https://account.squarespace.com/domains` },
+                  { id: `oauth`, label: `Developer Apps`, href: `https://account.squarespace.com/developer-apps` },
+                  { id: `api`, label: `Reseller API Access`, href: `https://developers.squarespace.com/reseller/api-fundamentals` },
+                ].map(link => (
+                  <Link asChild key={link.id} target={`_blank`} rel={`noopener noreferrer`} href={link.href}>
+                    <Pressable
+                      {...elementProps(`connection-access-link`, `${providerScope}-${link.id}`)}
+                      {...(Platform.OS === `web` ? { hrefAttrs: { target: `_blank`, rel: `noopener noreferrer` } } : {})}
+                      style={styles.button}
+                      accessibilityRole={`link`}
+                      accessibilityLabel={`${link.label} — Opens In A New Tab Or Browser`}
+                    >
+                      <Globe2 {...elementProps(`connection-access-icon`, `${providerScope}-${link.id}`)} size={15} color={palette.accent} />
+                      <Text {...elementProps(`connection-access-text`, `${providerScope}-${link.id}`)} style={styles.buttonText}>
+                        {link.label}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                ))}
+              </View>
+            )}
             {state.loading && <View {...elementProps(`connection-skeleton`, providerScope)} style={styles.skeleton} />}
             {accounts.map((account, index) => {
               const accountScope = `${scope}-${account.id}`;
@@ -193,25 +281,59 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                   <View {...elementProps(`connection-account-heading`, accountScope)} style={styles.row}>
                     <Text {...elementProps(`connection-account-title`, accountScope)} style={styles.label}>{`${field.label} Connection ${index + 1}`}</Text>
                   </View>
-                  <Text {...elementProps(`connection-label`, accountScope)} style={styles.label}>{`API Credentials`}</Text>
-                  <ConnectionInput
-                    styles={styles}
-                    palette={palette}
-                    busy={disabled}
-                    label={field.label}
-                    loading={state.loading}
-                    fieldId={accountScope}
-                    placeholder={field.placeholder}
-                    value={state.inputValue(account)}
-                    revealed={state.isVisible(account)}
-                    onToggle={() => state.toggleVisibility(account)}
-                    onChange={value => state.change(account.id, value)}
-                  />
+                  {connectionInputSections(field.id).map(section => {
+                    const sectionScope = `${accountScope}-${section.id}`;
+                    return (
+                      <View key={section.id} {...elementProps(`connection-input-section`, sectionScope)} style={styles.field}>
+                        {!!section.label && (
+                          <Text {...elementProps(`connection-input-section-title`, sectionScope)} style={styles.label}>
+                            {section.label}
+                          </Text>
+                        )}
+                        {!!section.hint && (
+                          <Text {...elementProps(`connection-hint`, sectionScope)} style={styles.copy}>
+                            {section.hint}
+                          </Text>
+                        )}
+                        {section.keys.map(key => {
+                          const input = connectionInputFields[key];
+                          const inputScope = `${accountScope}-${key.toLowerCase().replace(/_/g, `-`)}`;
+                          return (
+                            <View key={key} {...elementProps(`connection-key-field`, inputScope)} style={styles.field}>
+                              <Text {...elementProps(`connection-label`, inputScope)} style={styles.label}>
+                                {input.label}
+                              </Text>
+                              <ConnectionInput
+                                styles={styles}
+                                palette={palette}
+                                busy={disabled}
+                                fieldId={inputScope}
+                                secret={input.secret}
+                                loading={state.loading}
+                                placeholder={input.placeholder}
+                                label={`${field.label} ${input.label}`}
+                                value={state.inputValue(account, key)}
+                                revealed={state.isVisible(account, key)}
+                                onToggle={() => state.toggleVisibility(account, key)}
+                                onChange={value => state.change(account.id, key, value)}
+                              />
+                              {!!input.hint && (
+                                <Text {...elementProps(`connection-hint`, inputScope)} style={styles.copy}>
+                                  {input.hint}
+                                </Text>
+                              )}
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })}
                   <Text {...elementProps(`connection-hint`, accountScope)} style={styles.copy}>{field.hint}</Text>
                   {field.id === `vercel` && (
                     <Link asChild target={`_blank`} rel={`noopener noreferrer`} href={`https://vercel.com/account/settings/tokens`}>
                       <Pressable
                         {...elementProps(`connection-token-link`, accountScope)}
+                        {...(Platform.OS === `web` ? { hrefAttrs: { target: `_blank`, rel: `noopener noreferrer` } } : {})}
                         style={styles.button}
                         accessibilityRole={`link`}
                         accessibilityLabel={`Open Vercel Access Tokens`}
@@ -220,30 +342,6 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                         <Text {...elementProps(`connection-token-text`, accountScope)} style={styles.buttonText}>{`API Tokens`}</Text>
                       </Pressable>
                     </Link>
-                  )}
-                  {field.id === `godaddy` && (
-                    <View {...elementProps(`connection-account-field`, accountScope)} style={styles.field}>
-                      <Text {...elementProps(`connection-label`, `${accountScope}-godaddy-account-id`)} style={styles.label}>
-                        {`Customer UUID or Shopper ID`}
-                      </Text>
-                      <ConnectionInput
-                        multiline={false}
-                        styles={styles}
-                        palette={palette}
-                        busy={disabled}
-                        loading={state.loading}
-                        fieldId={`${accountScope}-godaddy-account-id`}
-                        value={state.inputValue(account, `godaddyAccountId`)}
-                        label={`GoDaddy Customer UUID or Shopper ID`}
-                        placeholder={`Customer UUID or numeric shopper ID`}
-                        revealed={state.isVisible(account, `godaddyAccountId`)}
-                        onToggle={() => state.toggleVisibility(account, `godaddyAccountId`)}
-                        onChange={value => state.changeGodaddyAccountId(account.id, value)}
-                      />
-                      <Text {...elementProps(`connection-hint`, `${accountScope}-godaddy-account-id`)} style={styles.copy}>
-                        {`Optional: customer UUID or numeric shopper ID for this account's renewal estimates. Leave blank for automatic lookup.`}
-                      </Text>
-                    </View>
                   )}
                   <View {...elementProps(`actionsCell`, accountScope)} style={styles.actionsCell}>
                     <View {...elementProps(`rowStatus`, accountScope)} style={styles.rowStatus}>
@@ -268,7 +366,9 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                       style={[styles.button, styles.primary, disabled && styles.disabled]}
                     >
                       <Save {...elementProps(`connection-save-icon`, accountScope)} size={16} color={palette.contrast} />
-                      <Text {...elementProps(`connection-save-text`, accountScope)} style={[styles.buttonText, styles.primaryText]}>{account.number ? `Save & Sync` : `Connect & Sync`}</Text>
+                      <Text {...elementProps(`connection-save-text`, accountScope)} style={[styles.buttonText, styles.primaryText]}>
+                        {!supportsRegistrarSync(account) ? `Save Credentials` : account.number ? `Save & Sync` : `Connect & Sync`}
+                      </Text>
                     </Pressable>
                     {(!!account.number || accounts.length > 1 || !!account.values.trim()) && (
                       <Pressable

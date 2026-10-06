@@ -115,9 +115,6 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
               aria-label={mobileNavigation.open ? `Collapse Navigation Menu` : `Expand Navigation Menu`}
             >
               <MenuIcon size={18} aria-hidden={`true`} id={`header-menu-icon`} className={`header-menu-icon`} />
-              <span id={`header-menu-text`} className={`header-menu-text`}>
-                {mobileNavigation.open ? `Close` : `Menu`}
-              </span>
             </button>
           </div>
         </div>

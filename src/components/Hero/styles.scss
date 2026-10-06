@@ -106,27 +106,6 @@
   &:hover { opacity: .85; }
 }
 
-.hero-portfolio-link {
-  gap: 18px;
-  margin-top: 22px;
-  display: inline-flex;
-  padding-bottom: 8px;
-  align-items: center;
-  font-size: 12px;
-  font-family: var(--font-bold);
-  border-bottom: 1px solid var(--ink);
-  transition: color .24s ease, border-color .24s ease;
-
-  &:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-
-    .hero-portfolio-icon { transform: translate(2px, -2px); }
-  }
-}
-
-.hero-portfolio-icon { transition: transform .24s ease; }
-
 @media (max-width: 1000px) {
   .landing-hero { gap: 30px; }
   .hero-title { font-size: clamp(49px, 6.7vw, 72px); }
@@ -142,7 +121,6 @@
   .hero-title { font-size: clamp(46px, 10vw, 70px); }
   .hero-eyebrow { margin-bottom: 18px; font-size: 9px; }
   .hero-description { max-width: 420px; margin-top: 20px; }
-  .hero-portfolio-link { margin-top: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

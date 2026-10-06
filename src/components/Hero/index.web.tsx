@@ -1,7 +1,7 @@
 import './styles.scss';
+import { Search } from 'lucide-react';
 import ExtensionIndex from '../ExtensionIndex';
 import { useHeroSearch } from './useHeroSearch';
-import { Search, ArrowUpRight } from 'lucide-react';
 
 const Hero = () => {
   const search = useHeroSearch();
@@ -68,21 +68,6 @@ const Hero = () => {
           </button>
         </div>
       </form>
-      <a
-        href={`/domains`}
-        id={`hero-portfolio-link`}
-        className={`hero-portfolio-link`}
-      >
-        <span id={`hero-portfolio-text`} className={`hero-portfolio-text`}>
-          {`Browse your portfolio`}
-        </span>
-        <ArrowUpRight
-          size={18}
-          aria-hidden={`true`}
-          id={`hero-portfolio-icon`}
-          className={`hero-portfolio-icon`}
-        />
-      </a>
     </div>
     <ExtensionIndex />
   </section>

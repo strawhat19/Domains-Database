@@ -13,7 +13,7 @@ import { formatCurrency } from '../../shared/domainUtils';
 import { useAuth } from '../../shared/authContext/useAuth';
 import PortfolioRecords from '../PortfolioRecords/index.web';
 import { useCollectionReorder } from './useCollectionReorder';
-import { REGISTRARS, useSampleData } from '../../shared/config';
+import { REGISTRARS, useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import PortfolioSelection from '../PortfolioSelection/index.web';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import PortfolioCollection from '../PortfolioCollection/index.web';
@@ -41,11 +41,15 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const showMonthlySpend = visibleColumns.includes(`monthlyCost`);
   const mainVisibleIds = useMemo(() => {
     const domains = mainGroups.flatMap(group => group.domains);
-    return (compact ? domains.slice(0, 4) : domains).map(domain => domain.id);
+    return (compact ? domains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : domains).map(domain => domain.id);
   }, [mainGroups, compact]);
+  const collectionVisibleIds = useMemo(() => new Map(sections.collections.map(section => [
+    section.collection.id,
+    (compact ? section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : section.domains).map(domain => domain.id),
+  ])), [sections.collections, compact]);
   const visibleIds = useMemo(() => {
-    return [...sections.collections.flatMap(section => section.domains.map(domain => domain.id)), ...mainVisibleIds];
-  }, [sections.collections, mainVisibleIds]);
+    return [...collectionVisibleIds.values()].flat().concat(mainVisibleIds);
+  }, [collectionVisibleIds, mainVisibleIds]);
   const selection = useDomainSelection(portfolio.domains, visibleIds);
   const collectionReorder = useCollectionReorder(!portfolio.loading && !portfolio.pendingId);
   const mainHandlers = collectionReorder.handlers(null);
@@ -321,7 +325,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </select>
               <ChevronDown size={13} aria-hidden={`true`} id={`portfolio-registrar-filter-icon`} className={`portfolio-registrar-filter-icon`} />
             </div>
-            <PortfolioSelection count={selection.selectedIds.size} visibleCount={selection.visibleSelectedCount} />
+            <PortfolioSelection
+              totalCount={portfolio.domains.length}
+              count={selection.selectedIds.size}
+              visibleCount={selection.visibleSelectedCount}
+            />
           </div>
           <div id={`portfolio-toolbar-meta`} className={`portfolio-toolbar-meta`}>
             {useSampleData && portfolio.summary.hasSampleData && (
@@ -383,13 +391,14 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         {sections.collections.map(section => (
           <PortfolioCollection
             {...recordProps}
+            compact={compact}
             key={section.collection.id}
             domains={section.domains}
             collection={section.collection}
             {...collectionReorder.moves(section.collection.id)}
             {...collectionReorder.handlers(section.collection.id)}
             globalToolbarHeight={sticky.header.toolbarHeight}
-            {...selectionFor(section.domains.map(domain => domain.id))}
+            {...selectionFor(collectionVisibleIds.get(section.collection.id) ?? [])}
           />
         ))}
         {sections.collections.length > 0 && (

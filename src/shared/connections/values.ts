@@ -30,7 +30,7 @@ export const normalizeConnections = (input: ConnectionValues): ConnectionValues 
   const result: ConnectionValues = { ...EMPTY_CONNECTIONS };
   for (const field of connectionFields) {
     const savedText = input?.[field.id];
-    const text = savedText === undefined && (field.id === `vercel` || field.id === `porkbun` || field.id === `namesilo`) ? `` : savedText;
+    const text = savedText === undefined && (field.id === `vercel` || field.id === `porkbun` || field.id === `namesilo` || field.id === `squarespace`) ? `` : savedText;
     if (typeof text !== `string` || text.length > 12000) throw new Error(`Enter Valid ${field.label} Values`);
     const values: Record<string, string> = {};
     const formatted: Record<string, string> = {};
@@ -66,6 +66,21 @@ export const normalizeConnections = (input: ConnectionValues): ConnectionValues 
     }
     if (field.id === `namesilo` && !values.NAMESILO_API_KEY) throw new Error(`Enter A NameSilo API Key`);
     if (field.id === `porkbun` && (!values.PORKBUN_API_KEY || !values.PORKBUN_SECRET_API_KEY)) throw new Error(`Enter Both Porkbun API Keys`);
+    if (field.id === `squarespace`) {
+      const groups = [
+        { label: `Developer OAuth`, id: `SQUARESPACE_CLIENT_ID`, secret: `SQUARESPACE_CLIENT_SECRET` },
+        { label: `Reseller API`, id: `SQUARESPACE_RESELLER_CLIENT_ID`, secret: `SQUARESPACE_RESELLER_CLIENT_SECRET` },
+      ];
+      for (const group of groups) {
+        const clientId = values[group.id];
+        const clientSecret = values[group.secret];
+        if (!clientId && !clientSecret) continue;
+        if (!clientId || !clientSecret) throw new Error(`Enter Both Squarespace ${group.label} Client Credentials`);
+        if (clientId.includes(`:`) || !/^[\x21-\x7e]{1,8192}$/.test(clientId) || !/^[\x21-\x7e]{1,8192}$/.test(clientSecret)) {
+          throw new Error(`Enter Valid Squarespace ${group.label} Client Credentials`);
+        }
+      }
+    }
     if (field.id === `namecheap`) {
       if (!values.NAMECHEAP_API_KEY || !values.NAMECHEAP_USERNAME || !values.NAMECHEAP_CLIENT_IP) throw new Error(`Enter All Three Namecheap Values`);
       const parts = values.NAMECHEAP_CLIENT_IP.split(`.`);

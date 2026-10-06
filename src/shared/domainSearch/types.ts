@@ -1,8 +1,9 @@
 import { connectionFields, type ConnectionProvider } from '../connections/types';
 
-export type DomainSearchProvider = ConnectionProvider;
+export type DomainSearchProvider = Exclude<ConnectionProvider, `squarespace`>;
+type DomainSearchField = Extract<typeof connectionFields[number], { search: true }>;
 
-export const domainSearchFields = connectionFields.filter(field => field.search);
+export const domainSearchFields = connectionFields.filter((field): field is DomainSearchField => field.search);
 
 export interface DomainSearchPrice {
   years?: number;

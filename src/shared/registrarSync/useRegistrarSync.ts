@@ -3,10 +3,11 @@ import { formatSyncNotice } from './messages';
 import { getRegistrarDomains } from './client';
 import { useAuth } from '../authContext/useAuth';
 import { connectionsAPI } from '../../api/connections';
+import { supportsRegistrarSync } from '../connections/inputs';
 import { CONNECTIONS_STORAGE_KEY } from '../connections/service';
 import { accountStorageKey } from '../authentication/userScope';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AccountSyncStatuses, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
+import type { AccountSyncStatuses, ConnectionSyncStatus, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
 import { connectionFields, type ConnectionAccount, type ConnectionSnapshot } from '../connections/types';
 import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
 
@@ -17,7 +18,19 @@ const emptyStatuses = (): ConnectionSyncStatuses => ({
   namesilo: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   hostinger: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   namecheap: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
+  squarespace: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
 });
+
+const savedOnlyMessage = `Developer OAuth Credentials Saved — Domain Sync Requires Reseller Credentials`;
+const savedOnlyStatus = (): ConnectionSyncStatus => ({ count: 0, checkedAt: ``, state: `idle`, message: savedOnlyMessage });
+const snapshotAccountStatuses = (snapshot: ConnectionSnapshot, statuses: AccountSyncStatuses = {}): AccountSyncStatuses =>
+  Object.fromEntries(snapshot.accounts.flatMap(account => {
+    if (!supportsRegistrarSync(account)) return [[account.id, savedOnlyStatus()]];
+    const status = statuses[account.id];
+    return status ? [[account.id, status]] : [];
+  }));
+const hasSuccessfulConnection = (policy: RegistrarSyncPolicy, snapshot: ConnectionSnapshot) => policy.successfulProviders.some(provider =>
+  snapshot.accounts.some(account => account.provider === provider && supportsRegistrarSync(account) && Boolean(account.values.trim())));
 
 const aggregateStatuses = (accounts: readonly ConnectionAccount[], statuses: AccountSyncStatuses): ConnectionSyncStatuses => {
   const result = emptyStatuses();
@@ -34,7 +47,7 @@ const aggregateStatuses = (accounts: readonly ConnectionAccount[], statuses: Acc
       discoveredDomains: entries.flatMap(status => status.discoveredDomains ?? []),
       state: checking ? `checking` : errors.length ? `error` : connected ? `connected` : `idle`,
       message: checking ? `Checking Connection(s)…` : errors.length ? errors.map(status => status.message).join(`\n`)
-        : connected ? formatSyncNotice({ count }) : `Not Connected`,
+        : connected ? formatSyncNotice({ count }) : entries.some(status => status.message === savedOnlyMessage) ? savedOnlyMessage : `Not Connected`,
     };
   }
   return result;
@@ -94,7 +107,14 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
     setClock(Date.now());
     setCooldownUntil(policy.manualCooldownUntil);
     setCanSyncManually(policy.connectionsUpdated === snapshot.updated
-      && policy.successfulProviders.some(provider => Boolean(snapshot.values[provider]?.trim())));
+      && hasSuccessfulConnection(policy, snapshot));
+    if (snapshot.accounts.some(account => !supportsRegistrarSync(account))) {
+      setAccountStatuses(previous => snapshotAccountStatuses(snapshot, previous));
+      if (!syncingRef.current) setConnectionStatuses(previous => ({
+        ...previous,
+        squarespace: aggregateStatuses(snapshot.accounts, snapshotAccountStatuses(snapshot, policy.accountStatuses)).squarespace,
+      }));
+    }
   }, []);
 
   const runSync = useCallback(async (saved?: ConnectionSnapshot, automatic = false, connectionIds?: readonly string[]): Promise<ConnectionSyncResult> => {
@@ -117,21 +137,29 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (!current()) return empty;
       if (snapshot.userId !== userId) throw new Error(`Sign In To Sync Your Domains`);
       applyPolicy(policy, snapshot);
+      const syncAccounts = snapshot.accounts.filter(supportsRegistrarSync);
+      const savedOnlyAccounts = snapshot.accounts.filter(account => !supportsRegistrarSync(account));
+      const accountNext = snapshotAccountStatuses(snapshot, policy.accountStatuses);
       if (automatic && isSyncCacheFresh(policy, snapshot.updated)
-        && snapshot.accounts.every(account => {
+        && syncAccounts.every(account => {
           const status = policy.accountStatuses?.[account.id];
           return status && ![`idle`, `checking`].includes(status.state);
         })) {
-        setConnectionStatuses(policy.statuses);
-        setAccountStatuses(policy.accountStatuses ?? {});
+        const statuses = { ...policy.statuses, squarespace: aggregateStatuses(snapshot.accounts, accountNext).squarespace };
+        if (savedOnlyAccounts.some(account => {
+          const status = policy.accountStatuses?.[account.id];
+          return status?.state !== `idle` || status?.message !== savedOnlyMessage || status?.count !== 0;
+        })) {
+          const cached = await saveSyncCache(userId, snapshot.updated, statuses, 0, current, accountNext);
+          if (!current()) return empty;
+          applyPolicy(cached, snapshot);
+        }
+        setConnectionStatuses(statuses);
+        setAccountStatuses(accountNext);
         return empty;
       }
-      const accounts = snapshot.accounts.filter(account => !connectionIds || connectionIds.includes(account.id));
+      const accounts = syncAccounts.filter(account => !connectionIds || connectionIds.includes(account.id));
       setSyncing(Boolean(accounts.length));
-      const accountNext: AccountSyncStatuses = Object.fromEntries(snapshot.accounts.flatMap(account => {
-        const status = policy.accountStatuses?.[account.id];
-        return status ? [[account.id, status]] : [];
-      }));
       accounts.forEach(account => { accountNext[account.id] = { count: 0, message: `Checking Connection…`, checkedAt: ``, state: `checking` }; });
       const updateStatuses = () => {
         setAccountStatuses({ ...accountNext });
@@ -181,7 +209,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       const errors = results.flatMap(result => result.errors);
       const warnings = results.flatMap(result => result.warnings);
       const successful = results.some(result => !result.errors.length);
-      if (accounts.length) {
+      if (accounts.length || savedOnlyAccounts.length) {
         const cached = await saveSyncCache(userId, snapshot.updated, next, successful ? Date.now() : 0, current, accountNext);
         if (!current()) return empty;
         applyPolicy(cached, snapshot);
@@ -216,7 +244,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (!current()) return;
       applyPolicy(policy, snapshot);
       if (policy.connectionsUpdated !== snapshot.updated
-        || !policy.successfulProviders.some(provider => Boolean(snapshot.values[provider]?.trim()))) {
+        || !hasSuccessfulConnection(policy, snapshot)) {
         setManualNotice(`Save A Successful Registrar Connection Before Syncing`);
         return;
       }

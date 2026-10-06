@@ -29,6 +29,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const { user } = useAuth();
   const [editorIconFailed, setEditorIconFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectionToolsWidth, setSelectionToolsWidth] = useState(0);
   const insets = useSafeAreaInsets();
   const SortIcon = state.sortByName ? ArrowDownAZ : ArrowDownWideNarrow;
   const manualSyncBlocked = state.loading || state.syncing || state.manualSyncWaitSeconds > 0;
@@ -255,6 +256,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           showsHorizontalScrollIndicator={false}
           style={styles.registrarScroll}
           contentContainerStyle={styles.registrarList}
+          onLayout={event => setSelectionToolsWidth(event.nativeEvent.layout.width)}
         >
           <Pressable
             {...elementProps(`native-portfolio-check-all`)}
@@ -284,7 +286,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Pressable>
           <View {...elementProps(`native-portfolio-selected-count`)} style={styles.secondaryButton} accessibilityLiveRegion={`polite`}>
             <Text {...elementProps(`native-portfolio-selected-count-text`)} style={styles.secondaryButtonText}>
-              {`${selectedIds.length} selected`}
+              {`${selectedIds.length} selected${selectionToolsWidth >= 640 ? ` / ${state.domains.length} total` : ``}`}
             </Text>
           </View>
         </ScrollView>

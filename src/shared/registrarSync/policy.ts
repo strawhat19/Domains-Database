@@ -28,7 +28,7 @@ export interface ManualSyncReservation {
   policy: RegistrarSyncPolicy;
 }
 
-const providers: ConnectionProvider[] = [`vercel`, `godaddy`, `porkbun`, `namesilo`, `hostinger`, `namecheap`];
+const providers: ConnectionProvider[] = [`vercel`, `godaddy`, `porkbun`, `namesilo`, `hostinger`, `namecheap`, `squarespace`];
 const serialize = createOperationQueue(SYNC_POLICY_STORAGE_KEY);
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === `object` && !Array.isArray(value);
 const isTimestamp = (value: unknown): value is number => typeof value === `number` && Number.isSafeInteger(value) && value >= 0 && value <= 8.64e15;
@@ -77,11 +77,16 @@ const emptyStatuses = (): ConnectionSyncStatuses => ({
   namesilo: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   hostinger: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   namecheap: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
+  squarespace: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
 });
 const migrateLegacyPolicy = (value: unknown) => {
-  if (!isRecord(value) || value.version !== 1 || !isRecord(value.statuses)
-    || Object.prototype.hasOwnProperty.call(value.statuses, `vercel`)) return value;
-  return { ...value, statuses: { ...value.statuses, vercel: emptyStatuses().vercel } };
+  if (!isRecord(value) || value.version !== 1 || !isRecord(value.statuses)) return value;
+  const defaults = emptyStatuses();
+  const statuses = { ...value.statuses };
+  for (const provider of [`vercel`, `squarespace`] as const) {
+    if (!Object.prototype.hasOwnProperty.call(statuses, provider)) statuses[provider] = defaults[provider];
+  }
+  return { ...value, statuses };
 };
 const emptyPolicy = (userId: string): RegistrarSyncPolicy => ({
   userId,

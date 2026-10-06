@@ -74,6 +74,8 @@
   position: sticky;
   flex-wrap: wrap;
   min-height: 76px;
+  container-type: inline-size;
+  container-name: portfolio-toolbar;
   padding: 16px 20px;
   align-items: center;
   background: var(--paper);
