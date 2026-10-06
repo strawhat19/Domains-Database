@@ -120,7 +120,7 @@
 .domain-price-cell, .domain-annual-cost-cell { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .domain-renewal-estimate { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .domain-row .domain-space-cell { padding: 0; }
-.domain-row .domain-actions-cell { right: 0; z-index: 1; width: 116px; position: sticky; padding-left: 4px; padding-right: 14px; background: var(--paper); box-shadow: -1px 0 0 var(--line); }
+.domain-row .domain-actions-cell { right: 0; z-index: 1; width: 116px; position: sticky; padding-left: 4px; padding-right: 14px; background: var(--paper); }
 .domain-row:hover .domain-actions-cell { background: var(--subtle); }
 .domain-row-selected .domain-actions-cell { background: color-mix(in srgb, var(--accent) 7%, var(--paper)); }
 .domain-row-selected:hover .domain-actions-cell { background: color-mix(in srgb, var(--accent) 11%, var(--paper)); }

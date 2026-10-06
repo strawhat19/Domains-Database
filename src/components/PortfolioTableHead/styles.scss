@@ -37,7 +37,7 @@
 .portfolio-table-heading-dragging { opacity: .55; }
 .portfolio-table-heading-drop { box-shadow: inset 3px 0 0 var(--accent), 0 1px 0 var(--line); }
 .portfolio-table-heading.portfolio-table-heading-spacer { padding: 0; min-width: 0; }
-.portfolio-table-heading.portfolio-table-heading-actions { right: 0; z-index: 4; position: sticky; text-align: right; background: var(--input); box-shadow: -1px 0 0 var(--line), 0 1px 0 var(--line); }
+.portfolio-table-heading.portfolio-table-heading-actions { right: 0; z-index: 4; position: sticky; text-align: right; background: var(--input); box-shadow: 0 1px 0 var(--line); }
 .portfolio-table-heading.portfolio-table-heading-actions-mirrored { right: auto; position: relative; transform: translateX(var(--portfolio-actions-offset, 0px)); }
 .portfolio-actions-label { font-size: 10px; color: var(--muted); letter-spacing: .035em; text-transform: uppercase; font-family: var(--font-mono); }
 .portfolio-column-resize-handle {
