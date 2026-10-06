@@ -9,6 +9,7 @@ export interface RegistrarRequestContext {
 }
 
 const upstreamPaths = {
+  vercel: `https://api.vercel.com/v5/domains`,
   godaddy: `https://api.godaddy.com/v1/domains`,
   namecheap: `https://api.namecheap.com/xml.response`,
   namesilo: `https://www.namesilo.com/apibatch/listDomains`,

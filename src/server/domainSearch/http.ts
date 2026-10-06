@@ -1,3 +1,4 @@
+import { searchVercel } from './vercel';
 import { searchRegistrar } from './providers';
 import { RegistrarRelayError } from '../registrars/errors';
 import { normalizeDomainName } from '../../shared/domainUtils';
@@ -29,8 +30,8 @@ export const handleDomainSearch = async (request: Request) => {
     let domain: string;
     try { domain = normalizeDomainName(record.domain); }
     catch { throw new RegistrarRelayError(400, `Enter A Domain Name Without A Path Or Login`); }
-    const credentials = readSearchCredentials(record);
-    const result = await searchRegistrar(credentials, domain, controller.signal);
+    const result = record.provider === `vercel` && !Object.prototype.hasOwnProperty.call(record, `values`) ? await searchVercel(domain, controller.signal)
+      : await searchRegistrar(readSearchCredentials(record), domain, controller.signal);
     if (controller.signal.aborted) throw new RegistrarRelayError(504, `Domain Search Timed Out Or Cancelled`);
     return Response.json(result, { headers: responseHeaders });
   } catch (failure) {

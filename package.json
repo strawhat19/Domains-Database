@@ -1,17 +1,17 @@
 {
   "name": "domains-database",
-  "version": "0.0.1.1",
+  "version": "0.0.1.2",
   "private": true,
   "main": "expo-router/entry",
   "engines": {
     "node": ">=22.13.0"
   },
   "scripts": {
-    "start": "expo start",
-    "web": "expo start --web",
-    "ios": "expo start --ios",
-    "android": "expo start --android",
-    "export:web": "expo export --platform web"
+    "start": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start",
+    "web": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --web",
+    "ios": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --ios",
+    "android": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --android",
+    "export:web": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli export --platform web"
   },
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.1",

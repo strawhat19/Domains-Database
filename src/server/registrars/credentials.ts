@@ -6,6 +6,7 @@ import { EMPTY_CONNECTIONS, type ConnectionProvider } from '../../shared/connect
 export type RegistrarCredentials =
   | { provider: `namesilo`; apiKey: string }
   | { provider: `porkbun`; apiKey: string; secretKey: string }
+  | { provider: `vercel`; authorization: string; teamId?: string }
   | { provider: `hostinger`; authorization: string; externalDomains?: string[] }
   | { provider: `namecheap`; apiKey: string; username: string; clientIp: string }
   | { provider: `godaddy`; authorization: string; shopperId?: string; customerId?: string; lookupAuthorization?: string };
@@ -26,6 +27,13 @@ export const parseCredentials = (provider: ConnectionProvider, input: string): R
     if ((value.startsWith(`'`) && value.endsWith(`'`)) || (value.startsWith(`"`) && value.endsWith(`"`))) value = value.slice(1, -1);
     if (!/^[\x21-\x7e]{1,8192}$/.test(value)) throw new RegistrarRelayError(400, `Enter Valid Registrar Connection Values`);
     fields[match[1]] = value;
+  }
+  if (provider === `vercel`) {
+    const token = fields.VERCEL_API_TOKEN;
+    const teamId = fields.VERCEL_TEAM_ID;
+    if (!token) throw new RegistrarRelayError(400, `Enter A Vercel API Token`);
+    if (teamId && (teamId.length > 100 || !/^team_[a-z0-9]+$/i.test(teamId))) throw new RegistrarRelayError(400, `Enter VERCEL_TEAM_ID As A Team ID Starting With team_`);
+    return { provider, teamId, authorization: `Bearer ${token}` };
   }
   if (provider === `godaddy`) {
     const token = fields.GODADDY_PAT;

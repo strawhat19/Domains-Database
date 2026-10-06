@@ -1,4 +1,8 @@
-import type { ConnectionProvider } from '../connections/types';
+import { connectionFields, type ConnectionProvider } from '../connections/types';
+
+export type DomainSearchProvider = ConnectionProvider;
+
+export const domainSearchFields = connectionFields.filter(field => field.search);
 
 export interface DomainSearchPrice {
   years?: number;
@@ -15,7 +19,7 @@ export interface DomainSearchResult {
   available?: boolean;
   purchaseUrl: string;
   retryAfterMs?: number;
-  provider: ConnectionProvider;
+  provider: DomainSearchProvider;
   renewal?: DomainSearchPrice;
   registration?: DomainSearchPrice;
 }
@@ -38,9 +42,10 @@ export interface DomainSearchResults {
   results: DomainSearchDomainResult[];
 }
 
-export const registrarPurchaseUrl = (provider: ConnectionProvider, domain: string) => {
+export const registrarPurchaseUrl = (provider: DomainSearchProvider, domain: string) => {
   const name = encodeURIComponent(domain);
-  const links: Record<ConnectionProvider, string> = {
+  const links: Record<DomainSearchProvider, string> = {
+    vercel: `https://vercel.com/domains`,
     porkbun: `https://porkbun.com/checkout/search?q=${name}`,
     hostinger: `https://www.hostinger.com/domain-name-search`,
     namesilo: `https://www.namesilo.com/domain/search-domains?query=${name}`,

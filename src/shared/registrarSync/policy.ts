@@ -28,7 +28,7 @@ export interface ManualSyncReservation {
   policy: RegistrarSyncPolicy;
 }
 
-const providers: ConnectionProvider[] = [`godaddy`, `porkbun`, `namesilo`, `hostinger`, `namecheap`];
+const providers: ConnectionProvider[] = [`vercel`, `godaddy`, `porkbun`, `namesilo`, `hostinger`, `namecheap`];
 const serialize = createOperationQueue(SYNC_POLICY_STORAGE_KEY);
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === `object` && !Array.isArray(value);
 const isTimestamp = (value: unknown): value is number => typeof value === `number` && Number.isSafeInteger(value) && value >= 0 && value <= 8.64e15;
@@ -71,12 +71,18 @@ const isPolicy = (value: unknown, userId: string): value is RegistrarSyncPolicy 
     && (value.accountStatuses === undefined || (isRecord(value.accountStatuses) && Object.values(value.accountStatuses).every(isStatus)));
 };
 const emptyStatuses = (): ConnectionSyncStatuses => ({
+  vercel: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   godaddy: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   porkbun: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   namesilo: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   hostinger: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   namecheap: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
 });
+const migrateLegacyPolicy = (value: unknown) => {
+  if (!isRecord(value) || value.version !== 1 || !isRecord(value.statuses)
+    || Object.prototype.hasOwnProperty.call(value.statuses, `vercel`)) return value;
+  return { ...value, statuses: { ...value.statuses, vercel: emptyStatuses().vercel } };
+};
 const emptyPolicy = (userId: string): RegistrarSyncPolicy => ({
   userId,
   version: 1,
@@ -98,7 +104,7 @@ const readPolicy = async (userId: string): Promise<RegistrarSyncPolicy> => {
   let policy = emptyPolicy(userId);
   if (saved !== null) {
     try {
-      const parsed: unknown = JSON.parse(saved);
+      const parsed: unknown = migrateLegacyPolicy(JSON.parse(saved));
       if (!isPolicy(parsed, userId)) throw new Error();
       policy = parsed;
     } catch { throw new Error(`Saved Sync Settings Could Not Be Read`); }

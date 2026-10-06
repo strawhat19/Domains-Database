@@ -6,6 +6,8 @@ Domains Database is a domain inventory built with Expo, React Native, TypeScript
 
 Use Node.js 22.20.0 or another version supported by Expo SDK 57. Node 22.20.0 is already installed on this computer through nvm-windows.
 
+The npm scripts check the minimum Node version and preload a Windows limit of 32 concurrent file reads and writes to reduce Metro's EMFILE errors while retaining its disk cache.
+
 ```powershell
 nvm use 22.20.0
 npm install

@@ -54,7 +54,7 @@ export const readRequestRecord = async (request: Request): Promise<Record<string
 export const readConnectionInput = (record: Record<string, unknown>) => {
   const provider = record.provider;
   const values = record.values;
-  if (provider !== `godaddy` && provider !== `hostinger` && provider !== `namecheap` && provider !== `porkbun` && provider !== `namesilo`) {
+  if (provider !== `vercel` && provider !== `godaddy` && provider !== `hostinger` && provider !== `namecheap` && provider !== `porkbun` && provider !== `namesilo`) {
     throw new RegistrarRelayError(400, `Choose A Supported Registrar`);
   }
   if (typeof values !== `string` || !values.trim() || values.length > 12_000) throw new RegistrarRelayError(400, `Enter Valid Registrar Connection Values`);

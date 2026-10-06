@@ -151,7 +151,7 @@ const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?:
                   <Cable size={23} aria-hidden={`true`} id={`registrar-setup-auth-icon`} className={`registrar-setup-auth-icon`} />
                   <h3 id={`registrar-setup-auth-title`} className={`registrar-setup-section-title`}>{`Sign up to connect your registrars`}</h3>
                   <p id={`registrar-setup-auth-copy`} className={`registrar-setup-helper`}>
-                    {auth.loading ? `Loading your account…` : `Create an account to connect GoDaddy, Hostinger, Namecheap, Porkbun, and NameSilo in one place. You can also sign in to an existing account.`}
+                    {auth.loading ? `Loading your account…` : `Create an account to connect Vercel, GoDaddy, Hostinger, Namecheap, Porkbun, and NameSilo in one place. You can also sign in to an existing account.`}
                   </p>
                   <div id={`registrar-setup-auth-actions`} className={`registrar-setup-auth-actions`}>
                     <button type={`button`} disabled={connect.busy} id={`registrar-setup-signup`} className={`portfolio-button portfolio-button-primary`} onClick={() => connect.navigate(`/signup`)}>

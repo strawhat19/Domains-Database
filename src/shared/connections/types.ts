@@ -1,4 +1,4 @@
-export type ConnectionProvider = `godaddy` | `hostinger` | `namecheap` | `porkbun` | `namesilo`;
+export type ConnectionProvider = `vercel` | `godaddy` | `hostinger` | `namecheap` | `porkbun` | `namesilo`;
 export type ConnectionValues = Record<ConnectionProvider, string>;
 
 export interface ConnectionAccount {
@@ -24,8 +24,9 @@ export interface ConnectionSnapshot {
   values: ConnectionValues;
 }
 
-export const EMPTY_CONNECTIONS: ConnectionValues = { godaddy: ``, porkbun: ``, namesilo: ``, hostinger: ``, namecheap: `` };
+export const EMPTY_CONNECTIONS: ConnectionValues = { vercel: ``, godaddy: ``, porkbun: ``, namesilo: ``, hostinger: ``, namecheap: `` };
 export const connectionFields = [
+  { id: `vercel`, search: true, label: `Vercel`, placeholder: `VERCEL_API_TOKEN=your_token\nVERCEL_TEAM_ID=team_optional`, hint: `Create a token at vercel.com/account/settings/tokens with access to your account or team. Team ID is optional; Vercel-registered domains sync, while external hosting domains are excluded`, keys: [`VERCEL_API_TOKEN`, `VERCEL_TEAM_ID`] },
   { id: `godaddy`, search: true, label: `GoDaddy`, placeholder: `GODADDY_PAT=your_token`, hint: `Use a PAT or API key/secret pair`, keys: [`GODADDY_PAT`, `GODADDY_API_KEY`, `GODADDY_API_SECRET`, `GODADDY_SHOPPER_ID`, `GODADDY_CUSTOMER_ID`] },
   { id: `hostinger`, search: true, label: `Hostinger`, placeholder: `HOSTINGER_API_TOKEN=your_token`, hint: `Registered domains sync automatically. Review discovered external domains before including them; shared hosting access does not prove ownership`, keys: [`HOSTINGER_API_TOKEN`, `HOSTINGER_EXTERNAL_DOMAINS`] },
   { id: `namecheap`, search: true, label: `Namecheap`, placeholder: `NAMECHEAP_API_KEY=your_key\nNAMECHEAP_USERNAME=your_username\nNAMECHEAP_CLIENT_IP=your_server_public_ipv4`, hint: `Enter the API key, account username, and whitelisted server IPv4 on separate lines`, keys: [`NAMECHEAP_API_KEY`, `NAMECHEAP_USERNAME`, `NAMECHEAP_CLIENT_IP`] },

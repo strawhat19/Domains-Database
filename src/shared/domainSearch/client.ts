@@ -1,12 +1,11 @@
 import { authAPI } from '../../api/auth';
-import { connectionsAPI } from '../../api/connections';
-import { registrarPurchaseUrl } from './types';
 import { normalizeDomainName } from '../domainUtils';
-import { connectionFields } from '../connections/types';
+import { connectionsAPI } from '../../api/connections';
 import { getServerSearchProviders } from './availability';
+import type { ConnectionSnapshot } from '../connections/types';
+import { domainSearchFields, registrarPurchaseUrl } from './types';
 import { popularExtensions, sortDomainExtensions, normalizeDomainSearchQuery } from './query';
-import type { ConnectionProvider, ConnectionSnapshot } from '../connections/types';
-import type { DomainSearchResult, DomainSearchResults, DomainSearchVariants } from './types';
+import type { DomainSearchResult, DomainSearchResults, DomainSearchVariants, DomainSearchProvider } from './types';
 
 const cancelled = () => new Error(`Domain Search Cancelled`);
 const nextProviderSearch = new Map<string, number>();
@@ -15,7 +14,7 @@ interface SearchConnections {
   userId: string | null;
   connectionsUpdated: string;
   snapshot: ConnectionSnapshot | null;
-  sources: { field: typeof connectionFields[number]; values?: string }[];
+  sources: { values?: string; field: { id: DomainSearchProvider; label: string } }[];
 }
 
 const checkSearchConnections = async (signal: AbortSignal, { userId, snapshot }: SearchConnections) => {
@@ -40,11 +39,12 @@ const getSearchConnections = async (signal: AbortSignal, expectedUserId?: string
   ]);
   if (signal.aborted) throw cancelled();
   if (userId && privateResult.status === `rejected`) throw privateResult.reason;
-  const providers: ConnectionProvider[] = serverResult.status === `fulfilled` ? serverResult.value : [];
+  const providers: DomainSearchProvider[] = serverResult.status === `fulfilled` ? serverResult.value : [];
   const privateSnapshot = privateResult.status === `fulfilled` ? privateResult.value : null;
-  const sources = connectionFields.filter(field => field.search).flatMap<SearchConnections['sources'][number]>(field => privateSnapshot?.values[field.id]?.trim()
-    ? [{ field, values: privateSnapshot.values[field.id] }]
-    : providers.includes(field.id) ? [{ field }] : []);
+  const sources = domainSearchFields.flatMap<SearchConnections['sources'][number]>(field => {
+    const values = privateSnapshot?.values[field.id]?.trim();
+    return values ? [{ field, values }] : providers.includes(field.id) ? [{ field }] : [];
+  });
   if (!sources.length) {
     if (serverResult.status === `rejected`) throw serverResult.reason;
     if (privateResult.status === `rejected`) throw privateResult.reason;

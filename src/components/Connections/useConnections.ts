@@ -3,6 +3,7 @@ import type { Registrar } from '../../shared/types';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 
 const registrarLinks: Record<Registrar, string> = {
+  Vercel: `https://vercel.com/dashboard`,
   GoDaddy: `https://www.godaddy.com/`,
   Porkbun: `https://porkbun.com/account/`,
   NameSilo: `https://www.namesilo.com/`,

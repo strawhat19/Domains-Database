@@ -1,15 +1,15 @@
 import Toast from '../Toast';
-import { useMemo, useEffect } from 'react';
 import { Link } from 'expo-router';
+import { useMemo, useEffect } from 'react';
 import { createStyles } from './styles.native';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAccountConnections } from './useAccountConnections';
-import { connectionFields, type AccountConnectionsProps } from '../../shared/connections/types';
-import type { RegistrarDomain } from '../../shared/registrarSync/types';
 import type { ThemePalette } from '../../shared/themeContext/theme';
+import type { RegistrarDomain } from '../../shared/registrarSync/types';
 import { Pressable, Text, TextInput, View, ActivityIndicator } from 'react-native';
+import { connectionFields, type AccountConnectionsProps } from '../../shared/connections/types';
 import { Eye, Plus, Save, EyeOff, Trash2, Globe2, UserPlus, LogIn, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 
 interface HostedDomainCandidateProps {
@@ -146,7 +146,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
         <Text {...elementProps(`connections-title`, scope)} style={styles.title}>{`Registrar Connections`}</Text>
       </View>
       <Text {...elementProps(`connections-description`, scope)} style={styles.copy}>
-        {`Connect a registrar to sync its domains. Add as many GoDaddy or Hostinger accounts as you need. Saved connections are checked on sign-in and refresh after 2 hours and 24 minutes. Review external domains found through hosting before including them.`}
+        {`Connect a registrar to sync its domains. Add separate GoDaddy, Hostinger, or Vercel accounts as needed. Saved connections are checked on sign-in and refresh after 2 hours and 24 minutes. Review external domains found through hosting before including them.`}
       </Text>
       {state.syncing && (
         <View
@@ -169,7 +169,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
           <View key={field.id} {...elementProps(`connection-provider`, providerScope)} style={styles.provider}>
             <View {...elementProps(`connection-provider-heading`, providerScope)} style={styles.row}>
               <Text {...elementProps(`connection-provider-label`, providerScope)} style={styles.title}>{field.label}</Text>
-              {(field.id === `godaddy` || field.id === `hostinger`) && (
+              {(field.id === `godaddy` || field.id === `hostinger` || field.id === `vercel`) && (
                 <Pressable
                   {...elementProps(`connection-add`, providerScope)}
                   disabled={disabled}
@@ -208,6 +208,19 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                     onChange={value => state.change(account.id, value)}
                   />
                   <Text {...elementProps(`connection-hint`, accountScope)} style={styles.copy}>{field.hint}</Text>
+                  {field.id === `vercel` && (
+                    <Link asChild target={`_blank`} rel={`noopener noreferrer`} href={`https://vercel.com/account/settings/tokens`}>
+                      <Pressable
+                        {...elementProps(`connection-token-link`, accountScope)}
+                        style={styles.button}
+                        accessibilityRole={`link`}
+                        accessibilityLabel={`Open Vercel Access Tokens`}
+                      >
+                        <Globe2 {...elementProps(`connection-token-icon`, accountScope)} size={15} color={palette.accent} />
+                        <Text {...elementProps(`connection-token-text`, accountScope)} style={styles.buttonText}>{`API Tokens`}</Text>
+                      </Pressable>
+                    </Link>
+                  )}
                   {field.id === `godaddy` && (
                     <View {...elementProps(`connection-account-field`, accountScope)} style={styles.field}>
                       <Text {...elementProps(`connection-label`, `${accountScope}-godaddy-account-id`)} style={styles.label}>

@@ -1,9 +1,11 @@
 import { XMLParser } from 'fast-xml-parser';
+import { listVercelExtensions } from './vercel';
 import { SyntaxValidator } from 'fast-xml-validator';
 import { readLimitedText } from '../registrars/request';
 import { readSearchCredentials } from './environment';
 import type { RegistrarCredentials } from '../registrars/credentials';
 import type { ConnectionProvider } from '../../shared/connections/types';
+import type { DomainSearchProvider } from '../../shared/domainSearch/types';
 import { providerLabels, upstreamError, RegistrarRelayError } from '../registrars/errors';
 import { checkRequest, responseHeaders, readRequestRecord } from '../registrars/http';
 
@@ -15,6 +17,7 @@ interface ExtensionCatalog {
 const maximumCatalogBytes = 2 * 1024 * 1024;
 const maximumExtensions = 5_000;
 const catalogTargets: Record<ConnectionProvider, string> = {
+  vercel: `https://api.vercel.com/v1/registrar/tlds/supported`,
   godaddy: `https://api.godaddy.com/v1/domains/tlds`,
   namecheap: `https://api.namecheap.com/xml.response`,
   namesilo: `https://www.namesilo.com/apibatch/getPrices`,
@@ -22,8 +25,8 @@ const catalogTargets: Record<ConnectionProvider, string> = {
   hostinger: `https://developers.hostinger.com/api/billing/v1/catalog`,
 };
 
-const invalid = (provider: ConnectionProvider) =>
-  new RegistrarRelayError(502, `${providerLabels[provider]} Returned An Invalid Extension Catalog`);
+const invalid = (provider: DomainSearchProvider) =>
+  new RegistrarRelayError(502, `${provider === `vercel` ? `Vercel` : providerLabels[provider]} Returned An Invalid Extension Catalog`);
 
 const record = (value: unknown, provider: ConnectionProvider): Record<string, unknown> => {
   if (!value || typeof value !== `object` || Array.isArray(value)) throw invalid(provider);
@@ -49,7 +52,7 @@ const normalizeExtension = (value: unknown): string | undefined => {
   } catch { return undefined; }
 };
 
-const catalog = (values: unknown[], provider: ConnectionProvider, note?: string): ExtensionCatalog => {
+const catalog = (values: unknown[], provider: DomainSearchProvider, note?: string): ExtensionCatalog => {
   if (values.length > maximumExtensions) throw invalid(provider);
   const extensions = [...new Set(values.map(normalizeExtension).filter((value): value is string => !!value))].sort();
   if (!extensions.length) throw invalid(provider);
@@ -124,6 +127,7 @@ const namecheapExtensions = async (auth: Extract<RegistrarCredentials, { provide
 };
 
 export const listRegistrarExtensions = async (auth: RegistrarCredentials, signal: AbortSignal): Promise<ExtensionCatalog> => {
+  if (auth.provider === `vercel`) return catalog(await listVercelExtensions(signal, auth), `vercel`, `Vercel Supported Extensions — Availability And Checkout Pricing Are Checked Separately`);
   if (auth.provider === `namecheap`) return namecheapExtensions(auth, signal);
   const url = new URL(catalogTargets[auth.provider]);
   const headers: Record<string, string> = { Accept: `application/json` };
@@ -177,8 +181,9 @@ export const handleDomainExtensions = async (request: Request): Promise<Response
     checkRequest(request);
     const input = await readRequestRecord(request);
     if (Object.keys(input).some(key => ![`values`, `provider`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
-    const credentials = readSearchCredentials(input);
-    const result = await listRegistrarExtensions(credentials, request.signal);
+    const result = input.provider === `vercel` && !Object.prototype.hasOwnProperty.call(input, `values`)
+      ? catalog(await listVercelExtensions(request.signal), `vercel`, `Vercel Supported Extensions — Availability And Checkout Pricing Are Checked Separately`)
+      : await listRegistrarExtensions(readSearchCredentials(input), request.signal);
     return Response.json(result, { headers: responseHeaders });
   } catch (failure) {
     const error = failure instanceof RegistrarRelayError ? failure

@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
+import { searchVercel } from './vercel';
 import { SyntaxValidator } from 'fast-xml-validator';
 import { readLimitedText } from '../registrars/request';
 import type { RegistrarCredentials } from '../registrars/credentials';
@@ -210,7 +211,8 @@ const namecheap = async (auth: Extract<RegistrarCredentials, { provider: `namech
 };
 
 export const searchRegistrar = async (auth: RegistrarCredentials, domain: string, signal: AbortSignal): Promise<DomainSearchResult> => {
-  const result = auth.provider === `godaddy` ? await goDaddy(auth, domain, signal)
+  const result = auth.provider === `vercel` ? await searchVercel(domain, signal, auth)
+    : auth.provider === `godaddy` ? await goDaddy(auth, domain, signal)
     : auth.provider === `hostinger` ? await hostinger(auth, domain, signal)
     : auth.provider === `namecheap` ? await namecheap(auth, domain, signal)
     : auth.provider === `porkbun` ? await porkbun(auth, domain, signal) : await namesilo(auth, domain, signal);

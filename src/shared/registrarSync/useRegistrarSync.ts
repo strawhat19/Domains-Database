@@ -11,6 +11,7 @@ import { connectionFields, type ConnectionAccount, type ConnectionSnapshot } fro
 import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
 
 const emptyStatuses = (): ConnectionSyncStatuses => ({
+  vercel: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   godaddy: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   porkbun: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
   namesilo: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },

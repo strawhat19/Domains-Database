@@ -1,3 +1,6 @@
 const { getDefaultConfig } = require(`expo/metro-config`);
 
-module.exports = getDefaultConfig(__dirname);
+const config = getDefaultConfig(__dirname);
+if (process.platform === `win32`) config.maxWorkers = Math.min(config.maxWorkers, 2);
+
+module.exports = config;

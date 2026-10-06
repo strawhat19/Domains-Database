@@ -1,3 +1,4 @@
+import { getVercelDomains } from './vercel';
 import { getGoDaddyDomains } from './godaddy';
 import { getPorkbunDomains } from './porkbun';
 import { getNameSiloDomains } from './namesilo';
@@ -23,6 +24,7 @@ export const syncRegistrar = async (credentials: RegistrarCredentials, signal: A
   };
   try {
     if (controller.signal.aborted) throw new RegistrarRelayError(408, `Registrar Sync Was Cancelled`);
+    if (credentials.provider === `vercel`) return await getVercelDomains(credentials, context);
     if (credentials.provider === `godaddy`) return await getGoDaddyDomains(credentials.authorization, context, credentials.customerId, credentials.lookupAuthorization, credentials.shopperId);
     if (credentials.provider === `hostinger`) return await getHostingerDomains(credentials.authorization, context, credentials.externalDomains);
     if (credentials.provider === `porkbun`) return await getPorkbunDomains(credentials, context);

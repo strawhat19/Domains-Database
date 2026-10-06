@@ -2,13 +2,13 @@ import { authAPI } from '../../api/auth';
 import { Types } from '../../types/types';
 import { useLocalStorage } from '../config';
 import { normalizeDomainName } from '../domainUtils';
-import { getAppCollectionIDNumber } from '../common/ids';
 import { connectionFields } from '../connections/types';
-import { registrarPurchaseUrl } from '../domainSearch/types';
-import { WatchedDomain } from '../models/watching/WatchedDomain';
+import { getAppCollectionIDNumber } from '../common/ids';
 import { accountStorageKey } from '../authentication/userScope';
-import type { DomainSearchPrice, DomainSearchResult, DomainSearchDomainResult } from '../domainSearch/types';
+import { WatchedDomain } from '../models/watching/WatchedDomain';
+import { domainSearchFields, registrarPurchaseUrl } from '../domainSearch/types';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
+import type { DomainSearchPrice, DomainSearchResult, DomainSearchDomainResult } from '../domainSearch/types';
 
 export const WATCHING_STORAGE_KEY = `domains-database:watching:v1`;
 const serialize = createOperationQueue(WATCHING_STORAGE_KEY);
@@ -44,7 +44,7 @@ const normalizeConnections = (connections: DomainSearchResult[], domain: string)
   if (!Array.isArray(connections)) throw new Error(`Domain Search Results Could Not Be Read`);
   const providers = new Set<string>();
   return connections.map(connection => {
-    const field = connectionFields.find(field => field.search && field.id === connection?.provider);
+    const field = domainSearchFields.find(field => field.id === connection?.provider);
     if (!field || providers.has(field.id) || connection.domain !== domain
       || (connection.note !== undefined && typeof connection.note !== `string`)
       || (connection.error !== undefined && typeof connection.error !== `string`)

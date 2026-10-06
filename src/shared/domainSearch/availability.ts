@@ -1,5 +1,4 @@
-import { connectionFields } from '../connections/types';
-import type { ConnectionProvider } from '../connections/types';
+import { domainSearchFields, type DomainSearchProvider } from './types';
 
 const cancelled = () => {
   const error = new Error(`Domain Search Cancelled`);
@@ -7,7 +6,7 @@ const cancelled = () => {
   return error;
 };
 
-export const getServerSearchProviders = async (signal?: AbortSignal): Promise<ConnectionProvider[]> => {
+export const getServerSearchProviders = async (signal?: AbortSignal): Promise<DomainSearchProvider[]> => {
   const controller = new AbortController();
   const abort = () => controller.abort();
   signal?.addEventListener(`abort`, abort, { once: true });
@@ -23,7 +22,7 @@ export const getServerSearchProviders = async (signal?: AbortSignal): Promise<Co
     if (!response.ok) throw new Error(`Domain Search Configuration Is Unavailable`);
     const result: unknown = await response.json();
     const providers = (result as { providers?: unknown } | null)?.providers;
-    const fields = connectionFields.filter(field => field.search);
+    const fields = domainSearchFields;
     if (!Array.isArray(providers) || providers.length > fields.length
       || !providers.every(provider => typeof provider === `string` && fields.some(field => field.id === provider))) {
       throw new Error(`Domain Search Configuration Is Invalid`);
