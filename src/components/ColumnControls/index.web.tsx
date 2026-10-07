@@ -1,52 +1,62 @@
 import './styles.scss';
+import type { RefObject } from 'react';
 import { COLUMN_GROUPS } from './groups';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { X, Columns3, RotateCcw, MoveHorizontal } from 'lucide-react';
 import { PORTFOLIO_COLUMNS, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 interface ColumnControlsProps {
+  open: boolean;
   onFit: () => void;
   onReset: () => void;
   fitDisabled?: boolean;
+  onOpenChange: (open: boolean) => void;
   visibleColumns: PortfolioColumn[];
   onToggle: (column: PortfolioColumn) => void;
   columnCounts: Record<PortfolioColumn, number>;
+  settingsButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
 const ColumnControls = ({
+  open,
   onFit,
   onReset,
   onToggle,
   columnCounts,
+  onOpenChange,
   visibleColumns,
+  settingsButtonRef,
   fitDisabled = false,
 }: ColumnControlsProps) => {
-  const [open, setOpen] = useState(false);
+  const invokingRef = useRef<HTMLElement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const close = () => {
-    setOpen(false);
-    buttonRef.current?.focus();
+    onOpenChange(false);
+    (invokingRef.current ?? buttonRef.current)?.focus({ preventScroll: true });
   };
 
   useEffect(() => {
     if (!open) return;
+    invokingRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : buttonRef.current;
     const handleOutsideClick = (event: PointerEvent) => {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)
+        && !settingsButtonRef.current?.contains(event.target)) onOpenChange(false);
     };
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== `Escape`) return;
       event.preventDefault();
-      setOpen(false);
-      buttonRef.current?.focus();
+      onOpenChange(false);
+      (invokingRef.current ?? buttonRef.current)?.focus({ preventScroll: true });
     };
+    rootRef.current?.querySelector<HTMLInputElement>(`input:not(:disabled)`)?.focus({ preventScroll: true });
     document.addEventListener(`keydown`, handleEscape);
     document.addEventListener(`pointerdown`, handleOutsideClick);
     return () => {
       document.removeEventListener(`keydown`, handleEscape);
       document.removeEventListener(`pointerdown`, handleOutsideClick);
     };
-  }, [open]);
+  }, [open, onOpenChange, settingsButtonRef]);
 
   return (
     <div ref={rootRef} id={`portfolio-column-controls`} className={`column-controls`}>
@@ -59,7 +69,7 @@ const ColumnControls = ({
           aria-expanded={open}
           id={`portfolio-columns-button`}
           aria-controls={`portfolio-column-panel`}
-          onClick={() => setOpen(current => !current)}
+          onClick={() => onOpenChange(!open)}
           className={`portfolio-button portfolio-button-secondary column-controls-button${open ? ` column-controls-button-open` : ``}`}
         >
           <Columns3 size={15} aria-hidden={`true`} id={`portfolio-columns-button-icon`} className={`portfolio-button-icon`} />

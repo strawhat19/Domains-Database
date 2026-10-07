@@ -1,0 +1,9 @@
+.domain-dialog.portfolio-copy-options { max-width: 500px; }
+.portfolio-copy-options-list { gap: 10px; display: grid; }
+.portfolio-copy-options .portfolio-copy-option { gap: 14px; width: 100%; padding: 16px; text-align: left; white-space: normal; justify-content: flex-start; }
+.portfolio-copy-option-icon { color: var(--accent); }
+.portfolio-copy-option-content { gap: 5px; display: grid; min-width: 0; }
+.portfolio-copy-option-label { font-size: 13px; }
+.portfolio-copy-option-description { font-size: 12px; line-height: 1.5; color: var(--muted); font-family: var(--font-body); }
+.portfolio-copy-tree-help { margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.portfolio-copy-options-footer { justify-content: flex-end; }
