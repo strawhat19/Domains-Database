@@ -33,7 +33,7 @@ const BlogCard = ({ article, compact = false, featured = false, prefix = `blog` 
               </span>
             </div>
             <h2 id={`${id}-title`} className={`blog-card-title`}>{article.title}</h2>
-            {!compact && !featured && <p id={`${id}-excerpt`} className={`blog-card-excerpt`}>{article.excerpt}</p>}
+            {!compact && <p id={`${id}-excerpt`} className={`blog-card-excerpt`}>{article.excerpt}</p>}
             <span id={`${id}-read`} className={`blog-card-read`}>
               {`Read guide`}
               <ArrowUpRight size={15} aria-hidden id={`${id}-arrow`} className={`blog-card-icon`} />

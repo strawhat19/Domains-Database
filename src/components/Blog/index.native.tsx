@@ -21,7 +21,7 @@ const Blog = () => {
   const padding = wide ? 32 : 20;
   const contentWidth = Math.min(width, 1120) - padding * 2;
   const cardWidth = (contentWidth - (wide ? 20 : 0)) / (wide ? 2 : 1);
-  const featuredWidth = sideBySide ? (contentWidth - 32) * .6 : contentWidth;
+  const featuredWidth = sideBySide ? (contentWidth - 32) * .6 : cardWidth;
 
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
 
@@ -84,7 +84,7 @@ const Blog = () => {
                 {`Featured guide`}
               </Text>
             </View>
-            <BlogCard featured article={featuredBlogArticle} prefix={`blog-featured`} />
+            <BlogCard article={featuredBlogArticle} featured={sideBySide} prefix={`blog-featured`} />
           </View>
         </View>
         <View {...elementProps(`native-blog-grid`)} style={styles.grid}>

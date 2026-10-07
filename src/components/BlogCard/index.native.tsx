@@ -1,7 +1,7 @@
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import { useMemo } from 'react';
-import { Text, View, Pressable, useWindowDimensions } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
 import { Clock3, ArrowUpRight } from 'lucide-react-native';
 import { createStyles } from './styles.native';
 import { getBlogHref } from '../../shared/blog/metadata';
@@ -18,9 +18,7 @@ type BlogCardProps = {
 };
 
 const BlogCard = ({ article, compact = false, featured = false, prefix = `blog` }: BlogCardProps) => {
-  const { width } = useWindowDimensions();
   const { palette } = useTheme();
-  const phoneFeatured = featured && width < 700;
   const suffix = `${prefix}-${article.slug}`;
   const styles = useMemo(() => createStyles(palette), [palette]);
 
@@ -36,12 +34,12 @@ const BlogCard = ({ article, compact = false, featured = false, prefix = `blog` 
         >
           <Image
             contentFit={compact || featured ? `contain` : `cover`}
-            style={[styles.image, compact && styles.compactImage, featured && styles.featuredImage, phoneFeatured && styles.phoneFeaturedImage]}
+            style={[styles.image, compact && styles.compactImage, featured && styles.featuredImage]}
             source={blogImages[article.slug]}
             accessibilityLabel={article.imageAlt}
             {...elementProps(`native-blog-card-image`, suffix)}
           />
-          <View {...elementProps(`native-blog-card-body`, suffix)} style={[styles.body, compact && styles.compactBody, featured && styles.featuredBody, phoneFeatured && styles.phoneFeaturedBody]}>
+          <View {...elementProps(`native-blog-card-body`, suffix)} style={[styles.body, compact && styles.compactBody, featured && styles.featuredBody]}>
             <View {...elementProps(`native-blog-card-meta`, suffix)} style={styles.meta}>
               <Text {...elementProps(`native-blog-card-category`, suffix)} style={styles.category}>
                 {article.category}
@@ -53,7 +51,7 @@ const BlogCard = ({ article, compact = false, featured = false, prefix = `blog` 
                 </Text>
               </View>
             </View>
-            <Text {...elementProps(`native-blog-card-title`, suffix)} style={[styles.title, compact && styles.compactTitle, featured && styles.featuredTitle, phoneFeatured && styles.phoneFeaturedTitle]} accessibilityRole={`header`}>
+            <Text {...elementProps(`native-blog-card-title`, suffix)} style={[styles.title, compact && styles.compactTitle, featured && styles.featuredTitle]} accessibilityRole={`header`}>
               {article.title}
             </Text>
             {!compact && !featured && (
