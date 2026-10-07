@@ -16,7 +16,7 @@ import { getPortfolioColumnWidth } from '../DomainPortfolio/columnLayout.web';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
-import { ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
+import { Eye, ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
 import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
 import { getOrderedPortfolioColumns, type PortfolioColumn } from '../../shared/portfolioColumns';
 import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
@@ -27,7 +27,9 @@ export interface PortfolioRecordsProps {
   loading: boolean;
   compact: boolean;
   idPrefix?: string;
+  searching?: boolean;
   forceTable?: boolean;
+  searchGroups?: PortfolioGroup[];
   collectionId?: string | null;
   hasFilters: boolean;
   domains: DomainRecord[];
@@ -47,13 +49,16 @@ export interface PortfolioRecordsProps {
   onEdit: (domain: DomainRecord) => void;
   onDelete: (domain: DomainRecord) => void;
   onToggleAutoRenew: (domain: DomainRecord) => void;
+  onToggleGroupSearch?: (key: string) => void;
+  isGroupShowingAll?: (key: string) => boolean;
 }
 
 const PortfolioRecords = ({
   busy, sticky, compact, loading, domains, allDomains, hasFilters,
   selectedIds, allSelected, someSelected, onSelect, onGrouped, onSelectAll,
   sortField, sortDirection, visibleColumns, onEdit, onSort, onDelete, onEmptyAction, onToggleAutoRenew,
-  idPrefix = `portfolio`, forceTable = false, collectionId = null,
+  searchGroups, isGroupShowingAll, onToggleGroupSearch,
+  idPrefix = `portfolio`, searching = false, forceTable = false, collectionId = null,
 }: PortfolioRecordsProps) => {
   const [groupingIds, setGroupingIds] = useState<Set<string> | null>(null);
   const [editingGroup, setEditingGroup] = useState<CustomPortfolioGroup | null>(null);
@@ -73,15 +78,15 @@ const PortfolioRecords = ({
       : sections.mainGroups;
   }, [allDomains, orderingPreferences, collectionId]);
   const groups = useMemo(() => {
-    const sections = buildPortfolioSections(domains, orderingPreferences);
-    const items = collectionId
-      ? sections.collections.find(section => section.collection.id === collectionId)?.groups ?? []
-      : sections.mainGroups;
+    const sections = searchGroups ? undefined : buildPortfolioSections(domains, orderingPreferences);
+    const items = searchGroups ?? (collectionId
+      ? sections?.collections.find(section => section.collection.id === collectionId)?.groups ?? []
+      : sections?.mainGroups ?? []);
     if (!compact) return items;
     const visibleIds = new Set(items.flatMap(group => group.domains).slice(0, PORTFOLIO_PREVIEW_LIMIT).map(domain => domain.id));
     return items.map(group => ({ ...group, domains: group.domains.filter(domain => visibleIds.has(domain.id)) }))
-      .filter(group => group.domains.length);
-  }, [domains, orderingPreferences, collectionId, compact]);
+      .filter((group, index) => group.domains.length || (searching && !items[index]?.domains.length));
+  }, [domains, orderingPreferences, collectionId, compact, searching, searchGroups]);
   const positions = new Map(groups.flatMap(group => group.domains).map((domain, index) => [domain.id, index + 1]));
   const reorder = useDomainReorder(fullGroups, !sortField && !loading && !busy && !compact, {
     onGrouped,
@@ -134,6 +139,8 @@ const PortfolioRecords = ({
     const scope = `${idPrefix}${mirrored ? `-sticky` : ``}-group-${encodeURIComponent(key)}`;
     const customGroup = preferences.customGroups.find(item => item.id === group.customGroupId);
     const moves = customGroup ? reorder.groupMoves(customGroup.id) : undefined;
+    const showingAll = Boolean(isGroupShowingAll?.(key));
+    const searchLabel = showingAll ? `Show only search matches in ${label}` : `Show all domains in ${label}`;
     return (
       <div
         id={`${scope}-heading`}
@@ -193,6 +200,20 @@ const PortfolioRecords = ({
           </span>
         </div>
         <div id={`${scope}-actions`} className={`portfolio-group-actions`}>
+          {searching && onToggleGroupSearch && (
+            <button
+              type={`button`}
+              draggable={false}
+              title={searchLabel}
+              aria-label={searchLabel}
+              aria-pressed={showingAll}
+              id={`${scope}-search-toggle`}
+              className={`portfolio-group-search-toggle`}
+              onClick={() => onToggleGroupSearch(key)}
+            >
+              <Eye size={14} aria-hidden={`true`} id={`${scope}-search-toggle-icon`} className={`portfolio-group-search-toggle-icon`} />
+            </button>
+          )}
           {!sortField && preferences.orders[key]?.length > 0 && (
             <button
               type={`button`}
@@ -260,7 +281,7 @@ const PortfolioRecords = ({
           </div>
           {!group.domains.length && (
             <p id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-empty`} className={`portfolio-group-empty`}>
-              {`No domains in this group`}
+              {searching ? `No matching domains in this group` : `No domains in this group`}
             </p>
           )}
         </section>
@@ -414,7 +435,7 @@ const PortfolioRecords = ({
               {!group.domains.length && (
                 <tr id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-row`} className={`portfolio-group-empty-row`}>
                   <td colSpan={columns.length + 4} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-cell`} className={`portfolio-group-empty`}>
-                    {`No domains in this group`}
+                    {searching ? `No matching domains in this group` : `No domains in this group`}
                   </td>
                 </tr>
               )}

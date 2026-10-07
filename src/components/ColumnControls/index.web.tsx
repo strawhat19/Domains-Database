@@ -54,6 +54,8 @@ const ColumnControls = ({
         <button
           type={`button`}
           ref={buttonRef}
+          title={`Columns`}
+          aria-label={`Columns`}
           aria-expanded={open}
           id={`portfolio-columns-button`}
           aria-controls={`portfolio-column-panel`}
@@ -62,7 +64,8 @@ const ColumnControls = ({
         >
           <Columns3 size={15} aria-hidden={`true`} id={`portfolio-columns-button-icon`} className={`portfolio-button-icon`} />
           <span id={`portfolio-columns-button-text`} className={`portfolio-button-text`}>
-            {`Columns`}
+            <span id={`portfolio-columns-button-text-full`} className={`portfolio-button-text-full`}>{`Columns`}</span>
+            <span id={`portfolio-columns-button-text-short`} className={`portfolio-button-text-short`}>{`Cols`}</span>
           </span>
         </button>
         <button

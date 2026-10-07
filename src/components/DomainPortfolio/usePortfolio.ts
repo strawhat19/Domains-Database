@@ -44,16 +44,18 @@ export const usePortfolio = () => {
   const closeDelete = () => { if (!pendingId) setDeletingDomain(null); };
   useModalFocus(deleteModalRef, Boolean(deletingDomain), closeDelete);
   const sortedDomains = useMemo(() => sortPortfolioDomains(data.domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [data.domains, sortField, sortDirection]);
+  const registrarDomains = useMemo(() => sortedDomains.filter(domain => (
+    registrarFilter === `All Registrars` || domain.registrar === registrarFilter
+  )), [sortedDomains, registrarFilter]);
   const filteredDomains = useMemo(() => {
     const search = query.trim().toLowerCase();
-    return sortedDomains.filter(domain => {
-      const matchesRegistrar = registrarFilter === `All Registrars` || domain.registrar === registrarFilter;
-      const matchesSearch = PORTFOLIO_COLUMNS
-        .map(column => getPortfolioColumnValue(domain, column.field))
-        .join(` `).toLowerCase().includes(search);
-      return matchesRegistrar && matchesSearch;
-    });
-  }, [sortedDomains, query, registrarFilter]);
+    return registrarDomains.filter(domain => [
+      domain.name,
+      domain.title,
+      domain.description,
+      ...PORTFOLIO_COLUMNS.map(column => getPortfolioColumnValue(domain, column.field)),
+    ].join(` `).toLowerCase().includes(search));
+  }, [query, registrarDomains]);
   const summary = useMemo(() => ({
     count: data.domains.length,
     registrarCounts: getRegistrarCounts(data.domains),
@@ -159,7 +161,7 @@ export const usePortfolio = () => {
   return {
     ...data, query, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
     clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain, registrarFilter,
-    closeDelete, requestDelete, deletingDomain, deleteModalRef, importInputRef, requestImport, confirmDelete, downloadTemplate, filteredDomains, sortedDomains,
+    closeDelete, requestDelete, deletingDomain, deleteModalRef, importInputRef, requestImport, confirmDelete, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
     setupOpen, openSetup, closeSetup, setEditorOpen, setDeletingDomain, setRegistrarFilter, toggleAutoRenew, toggleManualOrder,
   };
 };

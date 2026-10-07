@@ -1,6 +1,6 @@
 import './styles.scss';
 import GroupEditor from './GroupEditor.web';
-import { X, Plus, Search, Layers3 } from 'lucide-react';
+import { X, Plus, Search, Layers3, ChevronDown } from 'lucide-react';
 import { useGroupControls } from './useGroupControls';
 import type { DomainRecord } from '../../shared/types';
 import type { PortfolioGroupBy } from '../../shared/portfolioPreferences/types';
@@ -19,20 +19,32 @@ const GroupControls = ({ domains }: GroupControlsProps) => {
       <button
         type={`button`}
         ref={groups.buttonRef}
+        aria-haspopup={`dialog`}
         aria-expanded={groups.open}
         id={`portfolio-groups-button`}
         title={activeLabel ? `Grouped by ${activeLabel}` : `Group domains`}
         aria-controls={`portfolio-group-panel`}
+        aria-label={`Groups, ${groups.groupCount} ${groups.groupCount === 1 ? `group` : `groups`}${activeLabel ? `, grouped by ${activeLabel}` : ``}`}
         onClick={() => groups.setOpen(current => !current)}
         className={`portfolio-button portfolio-button-secondary group-controls-button${groups.open || activeLabel ? ` group-controls-button-active` : ``}`}
       >
         <Layers3 size={15} aria-hidden={`true`} id={`portfolio-groups-button-icon`} className={`portfolio-button-icon`} />
         <span id={`portfolio-groups-button-text`} className={`portfolio-button-text`}>
-          {activeLabel ? `Group: ${activeLabel}` : `Group`}
+          {`Groups`}
         </span>
+        <span aria-hidden={`true`} id={`portfolio-groups-button-count`} className={`group-controls-badge`}>
+          {groups.groupCount}
+        </span>
+        <ChevronDown size={12} aria-hidden={`true`} id={`portfolio-groups-button-chevron`} className={`group-controls-chevron`} />
       </button>
       {groups.open && (
-        <section id={`portfolio-group-panel`} className={`group-controls-panel`} aria-labelledby={`portfolio-group-panel-title`}>
+        <section
+          role={`dialog`}
+          ref={groups.panelRef}
+          id={`portfolio-group-panel`}
+          className={`group-controls-panel`}
+          aria-labelledby={`portfolio-group-panel-title`}
+        >
           <div id={`portfolio-group-panel-heading`} className={`group-controls-heading`}>
             <h3 id={`portfolio-group-panel-title`} className={`group-controls-title`}>
               {`Group domains`}

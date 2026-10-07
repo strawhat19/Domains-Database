@@ -4,7 +4,7 @@ import type { CSSProperties, DragEventHandler } from 'react';
 import DomainCollectionSettings from '../DomainCollectionSettings/index.web';
 import PortfolioRecords, { type PortfolioRecordsProps } from '../PortfolioRecords/index.web';
 import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
-import { Lock, Globe, Share2, ArrowUp, Settings, ArrowDown, ThumbsUp, ThumbsDown, ChevronDown, ArrowDownAZ, GripVertical } from 'lucide-react';
+import { Eye, Lock, Globe, Share2, ArrowUp, Settings, ArrowDown, ThumbsUp, ThumbsDown, ChevronDown, ArrowDownAZ, GripVertical } from 'lucide-react';
 
 export interface PortfolioCollectionProps extends Omit<PortfolioRecordsProps,
   `sticky` | `compact` | `sortField` | `sortDirection` | `onSort` | `collectionId` | `idPrefix` | `forceTable`
@@ -15,6 +15,8 @@ export interface PortfolioCollectionProps extends Omit<PortfolioRecordsProps,
   dropTarget?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  showAllDomains?: boolean;
+  onToggleSearch?: () => void;
   globalToolbarHeight: number;
   collection: CustomPortfolioCollection;
   onDrop?: DragEventHandler<HTMLDivElement>;
@@ -28,6 +30,7 @@ const PortfolioCollection = ({
   collection,
   onMoveUp,
   onMoveDown,
+  onToggleSearch,
   onDrop,
   onDragEnd,
   onDragOver,
@@ -38,6 +41,7 @@ const PortfolioCollection = ({
   dragging = false,
   draggable = false,
   dropTarget = false,
+  showAllDomains = false,
   ...records
 }: PortfolioCollectionProps) => {
   const scope = `portfolio-collection-${collection.id}`;
@@ -45,6 +49,7 @@ const PortfolioCollection = ({
   const visibility = collection.visibility ?? `private`;
   const VisibilityIcon = visibility === `public` ? Globe : Lock;
   const OrderIcon = collection.sortField ? GripVertical : ArrowDownAZ;
+  const searchToggleLabel = showAllDomains ? `Show only search matches in ${collection.name}` : `Show all domains in ${collection.name}`;
   const style = { [`--portfolio-global-toolbar-height`]: `${globalToolbarHeight}px` } as CSSProperties;
 
   return (
@@ -179,14 +184,29 @@ const PortfolioCollection = ({
             onClick={state.toggleManualOrder}
             aria-pressed={collection.sortField === null}
             disabled={records.loading || records.busy}
-            title={collection.sortField ? `Use manual domain order` : `Sort domains A–Z`}
+            aria-label={collection.sortField ? `Manual` : `Sort A–Z`}
+            title={collection.sortField ? `Switch to manual sorting` : `Sort domains A–Z`}
             className={`portfolio-button portfolio-button-secondary portfolio-collection-order-toggle`}
           >
             <OrderIcon size={14} aria-hidden={`true`} id={`${scope}-order-toggle-icon`} className={`portfolio-button-icon`} />
             <span id={`${scope}-order-toggle-text`} className={`portfolio-button-text`}>
-              {collection.sortField ? `Manual Order` : `Sort A–Z`}
+              {collection.sortField ? `Manual` : `Sort A–Z`}
             </span>
           </button>
+          {records.searching && onToggleSearch && (
+            <button
+              type={`button`}
+              draggable={false}
+              title={searchToggleLabel}
+              onClick={onToggleSearch}
+              id={`${scope}-search-toggle`}
+              aria-label={searchToggleLabel}
+              aria-pressed={showAllDomains}
+              className={`portfolio-collection-search-toggle${showAllDomains ? ` portfolio-collection-search-toggle-active` : ``}`}
+            >
+              <Eye size={17} aria-hidden={`true`} id={`${scope}-search-toggle-icon`} className={`portfolio-collection-search-toggle-icon`} />
+            </button>
+          )}
           <button
             type={`button`}
             draggable={false}

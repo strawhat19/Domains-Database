@@ -1,16 +1,39 @@
-.group-controls { display: contents; }
+.group-controls { display: flex; flex-shrink: 0; align-items: center; }
 .group-controls-button { padding: 10px 12px; }
 .group-controls-button-active { color: var(--accent); background: var(--subtle); border-color: var(--accent); }
+.group-controls-badge {
+  height: 20px;
+  padding: 0 5px;
+  display: grid;
+  min-width: 20px;
+  font-size: 10px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  place-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  font-variant-numeric: tabular-nums;
+}
+.group-controls-chevron { flex-shrink: 0; transition: transform .2s ease; }
+.group-controls-button[aria-expanded='true'] .group-controls-chevron { transform: rotate(180deg); }
 .group-controls-panel {
-  order: 1;
-  width: 100%;
+  right: 20px;
+  z-index: 10;
   min-width: 0;
   padding: 16px;
-  flex-basis: 100%;
-  border-radius: 5px;
-  background: var(--input);
+  overflow-y: auto;
+  position: absolute;
+  border-radius: 8px;
+  top: calc(100% + 8px);
+  color: var(--ink);
+  background: var(--paper);
   border: 1px solid var(--line);
+  overscroll-behavior: contain;
+  width: min(480px, calc(100% - 40px));
+  max-height: min(60dvh, 520px);
+  box-shadow: 0 6px 18px var(--shadow);
   animation: group-controls-enter .2s ease both;
+  &[data-placement='top'] { top: auto; bottom: calc(100% + 8px); }
 }
 .group-controls-heading { gap: 12px; display: flex; margin-bottom: 12px; align-items: center; justify-content: space-between; }
 .group-controls-title { margin: 0; font-size: 12px; font-family: var(--font-bold); }
@@ -58,6 +81,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 @media (max-width: 560px) {
+  .group-controls-panel { right: 14px; width: calc(100% - 28px); }
   .group-controls-select, .group-controls-name-input, .group-editor-name-input, .group-controls-domain-search-input { font-size: 16px; }
   .group-controls-create .group-controls-field, .group-editor-name-label { flex-basis: 100%; min-width: 0; }
   .group-controls-create > .portfolio-button { width: 100%; }
@@ -66,5 +90,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .group-controls-panel { animation: none; }
-  .group-controls-button, .group-controls-select, .group-controls-name-input, .group-editor-name-input { transition: none; }
+  .group-controls-button, .group-controls-select, .group-controls-chevron, .group-controls-name-input, .group-editor-name-input { transition: none; }
 }

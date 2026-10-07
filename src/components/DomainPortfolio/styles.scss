@@ -54,6 +54,8 @@
   &-quiet { color: var(--muted); padding: 7px 8px; font-size: 11px; background: transparent; }
   &-quiet:hover:not(:disabled) { color: var(--ink); background: var(--subtle); }
 }
+.portfolio-button-text-full { display: inline; }
+.portfolio-button-text-short { display: none; }
 .portfolio-card { overflow: visible; border-radius: 6px; background: var(--paper); border: 1px solid var(--line); }
 .portfolio-main-database-heading {
   gap: 8px;
@@ -155,7 +157,37 @@
 .portfolio-table-heading-position { width: 38px; min-width: 38px; padding: 10px 6px; text-align: center; color: var(--muted); font-size: 10px; font-family: var(--font-mono); }
 .portfolio-table-heading-selection { width: 36px; min-width: 36px; padding: 10px 6px; text-align: center; }
 .portfolio-select-all { width: 15px; height: 15px; margin: 0; cursor: pointer; vertical-align: middle; accent-color: var(--accent); }
-.portfolio-view-toggle { padding: 10px; }
+.portfolio-view-toggle {
+  gap: 3px;
+  padding: 3px;
+  flex-shrink: 0;
+  margin-left: auto;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  background: var(--input);
+  border: 1px solid var(--line);
+}
+.portfolio-view-option {
+  gap: 6px;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  min-height: 32px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  color: var(--muted);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-family: var(--font-bold);
+  transition: color .2s ease, background .2s ease, box-shadow .2s ease;
+  &:hover { color: var(--ink); background: var(--subtle); }
+}
+.portfolio-view-option-active,
+.portfolio-view-option-active:hover { color: var(--accent); background: var(--paper); box-shadow: 0 1px 3px var(--shadow); }
 .portfolio-scroll-hint-hidden { display: none !important; }
 .portfolio-sort-button { border: 0; gap: 7px; display: flex; padding: 0; cursor: pointer; font-size: 10px; color: var(--muted); align-items: center; letter-spacing: .035em; text-transform: uppercase; background: transparent; font-family: var(--font-mono); }
 .portfolio-table-heading-renewalPrice .portfolio-sort-button, .portfolio-table-heading-monthlyCost .portfolio-sort-button { margin-left: auto; }
@@ -202,6 +234,9 @@
   .portfolio-registrar-label { min-width: 0; overflow-wrap: anywhere; }
   .portfolio-button { min-width: 0; max-width: 100%; white-space: normal; }
   .portfolio-button-text { min-width: 0; overflow-wrap: anywhere; }
+  .portfolio-button-text-full { display: none; }
+  .portfolio-button-text-short { display: inline; }
+  .portfolio-view-option-text { display: none; }
   .portfolio-button-icon { flex-shrink: 0; }
   .portfolio-heading-row { gap: 18px; align-items: flex-start; flex-direction: column; }
   .portfolio-primary-actions { width: 100%; align-items: stretch; flex-direction: column; }
@@ -224,5 +259,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .portfolio-sync-spinner { animation: none; }
-  .portfolio-button, .portfolio-sort-icon, .portfolio-search-wrap, .portfolio-view-all, .portfolio-view-all-icon, .portfolio-registrar-filter, .portfolio-main-database-heading { transition: none; }
+  .portfolio-button, .portfolio-sort-icon, .portfolio-search-wrap, .portfolio-view-all, .portfolio-view-option, .portfolio-view-all-icon, .portfolio-registrar-filter, .portfolio-main-database-heading { transition: none; }
 }

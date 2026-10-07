@@ -21,7 +21,7 @@
   &:hover, &:focus-visible { color: var(--accent); background: var(--paper); }
   &:disabled { opacity: .3; cursor: default; }
 }
-.portfolio-group-settings {
+.portfolio-group-settings, .portfolio-group-search-toggle {
   border: 0;
   width: 28px;
   height: 28px;
@@ -32,6 +32,10 @@
   background: transparent;
   transition: color .2s ease, background .2s ease;
   &:hover, &:focus-visible { color: var(--accent); background: var(--paper); }
+}
+.portfolio-group-search-toggle {
+  cursor: pointer;
+  &[aria-pressed='true'] { color: var(--accent); background: var(--paper); }
 }
 .portfolio-group-heading-row[draggable='true'], .portfolio-group-heading[draggable='true'] { cursor: grab; }
 .portfolio-group-heading-dragging, .portfolio-group-heading-row-dragging { opacity: .45; }
@@ -61,6 +65,6 @@
   .portfolio-domain-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .portfolio-group-reset, .portfolio-group-settings, .portfolio-group-move-action, .portfolio-group-heading-cell, .portfolio-group-heading { transition: none; }
+  .portfolio-group-reset, .portfolio-group-settings, .portfolio-group-search-toggle, .portfolio-group-move-action, .portfolio-group-heading-cell, .portfolio-group-heading { transition: none; }
   .portfolio-sticky-group-clip:not([hidden]), .portfolio-sticky-group-clip:not([hidden]) .portfolio-sticky-group-table { will-change: auto; }
 }

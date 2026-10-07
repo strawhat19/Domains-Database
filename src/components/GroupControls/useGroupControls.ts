@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DomainRecord } from '../../shared/types';
+import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
 export const useGroupControls = (domains: DomainRecord[]) => {
@@ -9,30 +10,58 @@ export const useGroupControls = (domains: DomainRecord[]) => {
   const [name, setName] = useState(``);
   const [error, setError] = useState(``);
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const close = () => {
     setOpen(false);
-    buttonRef.current?.focus();
+    buttonRef.current?.focus({ preventScroll: true });
   };
 
   useEffect(() => {
     if (!open) return;
+    const positionPanel = () => {
+      const panel = panelRef.current;
+      const toolbar = rootRef.current?.closest<HTMLElement>(`.portfolio-toolbar`);
+      if (!panel || !toolbar) return;
+      const bounds = toolbar.getBoundingClientRect();
+      const headerBottom = document.getElementById(`site-header`)?.getBoundingClientRect().bottom ?? 0;
+      const above = bounds.top - Math.max(0, headerBottom) - 24;
+      const below = window.innerHeight - bounds.bottom - 24;
+      const opensAbove = below < 240 && above > below;
+      panel.dataset.placement = opensAbove ? `top` : `bottom`;
+      panel.style.maxHeight = `${Math.max(0, Math.min(520, opensAbove ? above : below))}px`;
+    };
     const handleOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const handleFocusOutside = (event: FocusEvent) => {
       if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
     };
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== `Escape`) return;
       event.preventDefault();
       setOpen(false);
-      buttonRef.current?.focus();
+      buttonRef.current?.focus({ preventScroll: true });
     };
+    positionPanel();
+    panelRef.current?.querySelector<HTMLSelectElement>(`select`)?.focus({ preventScroll: true });
+    window.addEventListener(`resize`, positionPanel);
+    window.addEventListener(`scroll`, positionPanel, { passive: true });
+    document.addEventListener(`focusin`, handleFocusOutside);
     document.addEventListener(`keydown`, handleEscape);
     document.addEventListener(`pointerdown`, handleOutsideClick);
     return () => {
+      window.removeEventListener(`resize`, positionPanel);
+      window.removeEventListener(`scroll`, positionPanel);
+      document.removeEventListener(`focusin`, handleFocusOutside);
       document.removeEventListener(`keydown`, handleEscape);
       document.removeEventListener(`pointerdown`, handleOutsideClick);
     };
   }, [open]);
+
+  const groupCount = useMemo(() => preferences.groupBy === `none` ? 0
+    : preferences.groupBy === `custom` ? preferences.customGroups.length
+    : buildPortfolioGroups(domains, preferences).length, [domains, preferences]);
 
   const membership = useMemo(() => new Map(preferences.customGroups.flatMap(group => (
     group.domainIds.map(id => [id, group.id] as const)
@@ -62,7 +91,9 @@ export const useGroupControls = (domains: DomainRecord[]) => {
     setOpen,
     setQuery,
     rootRef,
+    panelRef,
     buttonRef,
+    groupCount,
     membership,
     createGroup,
     filteredDomains,
