@@ -15,7 +15,7 @@ import { useShellScroll } from './useShellScroll.web';
 import { useMobileNavigation } from './useMobileNavigation';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, footerLinks } from './useAppShell';
-import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
   const { pathname, year, signedIn, navigation, fitViewport, searchViewport } = useAppShell();
@@ -69,15 +69,16 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
             <div id={`header-navigation-content`} className={`header-navigation-content`}>
               <div id={`header-navigation-links`} className={`header-navigation-links`}>
                 {navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href).map(item => {
-                  const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, UsersRound }[item.icon];
+                  const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, UsersRound }[item.icon];
                   const beta = `beta` in item && item.beta;
+                  const active = pathname === item.href || (item.href === routes.blog.href && pathname.startsWith(`${item.href}/`));
                   return (
                     <Link key={item.label} href={item.href} asChild>
                       <RouterAnchor
                         id={`header-link-${item.label.toLowerCase()}`}
-                        className={`header-link${pathname === item.href ? ` header-link-active` : ``}`}
+                        className={`header-link${active ? ` header-link-active` : ``}`}
                         aria-label={beta ? `${item.label} (Beta)` : undefined}
-                        aria-current={pathname === item.href ? `page` : undefined}
+                        aria-current={active ? `page` : undefined}
                       >
                         <Icon
                           size={14}

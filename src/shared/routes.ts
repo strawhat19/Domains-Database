@@ -13,6 +13,7 @@ export const routes = {
   signin: { href: `/signin`, label: `Sign In`, icon: `LogIn`, redirects: [`login`, `log-in`, `sign-in`] },
   signup: { href: `/signup`, label: `Sign Up`, icon: `UserPlus`, redirects: [`register`, `sign-up`] },
   about: { href: `/about`, label: `About`, icon: `Info`, redirects: [`about-us`] },
+  blog: { href: `/blog`, label: `Blog`, icon: `BookOpen` },
   terms: { href: `/terms`, label: `Terms`, icon: `FileText`, redirects: [`terms-of-service`] },
   contact: { href: `/contact`, label: `Contact`, icon: `Mail`, redirects: [`contact-us`] },
   privacy: { href: `/privacy`, label: `Privacy`, icon: `ShieldCheck`, redirects: [`privacy-policy`] },
@@ -23,5 +24,5 @@ const authReturnPaths = Object.values(routes).map(route => route.href)
   .filter((href): href is AuthReturnPath => href !== routes.signin.href && href !== routes.signup.href);
 export const resolveAuthReturnTo = (value: unknown): AuthReturnPath => authReturnPaths.find(href => href === value) ?? routes.domains.href;
 
-export const navigation = [routes.home, routes.about, routes.domains, routes.watching, routes.search, routes.auction, routes.community, routes.contact];
+export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.watching, routes.search, routes.auction, routes.community, routes.contact];
 export const footerLinks = [routes.terms, routes.privacy];

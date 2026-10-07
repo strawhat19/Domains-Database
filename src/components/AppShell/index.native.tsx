@@ -18,7 +18,7 @@ import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
-import { Eye, Info, Mail, Gavel, House, Search, Globe2, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react-native';
+import { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react-native';
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
@@ -102,8 +102,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
           {navigation.filter(item => width > 1360 || item.href !== routes.watching.href).map(item => {
             const { label, href, icon } = item;
             const beta = `beta` in item && item.beta;
-            const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, UsersRound }[icon];
-            const active = pathname === href;
+            const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, UsersRound }[icon];
+            const active = pathname === href || (href === routes.blog.href && pathname.startsWith(`${href}/`));
             return (
               <Link key={href} href={href} asChild>
                 <Pressable

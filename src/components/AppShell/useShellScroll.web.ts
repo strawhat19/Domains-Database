@@ -14,7 +14,7 @@ export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathnam
     let frame: number | null = null;
     const measure = () => {
       frame = null;
-      const nextHero = document.getElementById(`landing-hero`);
+      const nextHero = document.getElementById(`landing-hero`) ?? document.querySelector<HTMLElement>(`[data-scroll-hero]`);
       if (nextHero !== hero) {
         if (hero) observer?.unobserve(hero);
         hero = nextHero;
