@@ -7,6 +7,7 @@ export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathnam
   const [footerHeight, setFooterHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [scrollTopRightInset, setScrollTopRightInset] = useState(20);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -26,6 +27,23 @@ export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathnam
       const footer = document.getElementById(`site-footer`);
       const footerTop = footer?.getBoundingClientRect().top ?? window.innerHeight;
       setBottomInset(Math.max(0, window.innerHeight - footerTop));
+      const scrollTopButton = document.getElementById(`scroll-to-top`);
+      let rightInset = 20;
+      if (scrollTopButton) {
+        const buttonBounds = scrollTopButton.getBoundingClientRect();
+        const viewportRight = document.documentElement.clientWidth;
+        const normalLeft = viewportRight - 20 - buttonBounds.width;
+        // Compare against the normal position so shifting right cannot toggle the offset repeatedly.
+        for (const table of document.querySelectorAll<HTMLElement>(`.portfolio-table-scroll`)) {
+          const tableBounds = table.getBoundingClientRect();
+          if (tableBounds.width <= 0 || tableBounds.height <= 0
+            || tableBounds.top >= buttonBounds.bottom || tableBounds.bottom <= buttonBounds.top
+            || tableBounds.left >= viewportRight - 20 || tableBounds.right <= normalLeft) continue;
+          const clearInset = viewportRight - tableBounds.right - buttonBounds.width - 4;
+          rightInset = Math.min(rightInset, Math.max(8, clearInset));
+        }
+      }
+      setScrollTopRightInset(rightInset);
       setHeaderHeight(height);
       setFooterHeight(footer?.getBoundingClientRect().height ?? 0);
       setScrolled(sticky && scrollY > 8);
@@ -41,6 +59,7 @@ export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathnam
     const footer = document.getElementById(`site-footer`);
     if (footer) observer?.observe(footer);
     const main = document.getElementById(`main-content`);
+    if (main) observer?.observe(main);
     const contentObserver = typeof MutationObserver === `undefined` ? null : new MutationObserver(schedule);
     if (main) contentObserver?.observe(main, { childList: true, subtree: true });
     window.addEventListener(`scroll`, schedule, { passive: true });
@@ -62,5 +81,5 @@ export const useShellScroll = (headerRef: RefObject<HTMLElement | null>, pathnam
     window.scrollTo({ top: 0, behavior: reducedMotion ? `auto` : `smooth` });
   }, []);
 
-  return { bottomInset, scrollToTop, showScrollTop, footerHeight, pageHeaderHeight: headerHeight, scrolled: sticky && scrolled, headerHeight: sticky ? headerHeight : 0 };
+  return { bottomInset, scrollToTop, showScrollTop, footerHeight, scrollTopRightInset, pageHeaderHeight: headerHeight, scrolled: sticky && scrolled, headerHeight: sticky ? headerHeight : 0 };
 };

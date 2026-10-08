@@ -1,5 +1,6 @@
 import './styles.scss';
 import { useMemo, useState } from 'react';
+import StarButton from '../StarButton/index.web';
 import PortfolioEmptyState from './EmptyState.web';
 import { useDomainReorder } from './useDomainReorder';
 import type { DomainRecord } from '../../shared/types';
@@ -16,7 +17,7 @@ import { getPortfolioColumnWidth } from '../DomainPortfolio/columnLayout.web';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
-import { Eye, ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
+import { Eye, EyeOff, ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
 import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
 import { getOrderedPortfolioColumns, type PortfolioColumn } from '../../shared/portfolioColumns';
 import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
@@ -47,7 +48,6 @@ export interface PortfolioRecordsProps {
   onSelect: (id: string, checked: boolean, extend?: boolean) => void;
   onSort: (field: PortfolioColumn) => void;
   onEdit: (domain: DomainRecord) => void;
-  onDelete: (domain: DomainRecord) => void;
   onToggleAutoRenew: (domain: DomainRecord) => void;
   onToggleGroupSearch?: (key: string) => void;
   isGroupShowingAll?: (key: string) => boolean;
@@ -58,7 +58,7 @@ export interface PortfolioRecordsProps {
 const PortfolioRecords = ({
   busy, sticky, compact, loading, domains, allDomains, hasFilters,
   selectedIds, allSelected, someSelected, onSelect, onGrouped, onSelectAll,
-  sortField, sortDirection, visibleColumns, onEdit, onSort, onDelete, onEmptyAction, onToggleAutoRenew,
+  sortField, sortDirection, visibleColumns, onEdit, onSort, onEmptyAction, onToggleAutoRenew,
   searchGroups, isGroupShowingAll, onToggleGroupSearch, onChangeDescription, onChangeProjectStatus,
   idPrefix = `portfolio`, searching = false, forceTable = false, collectionId = null,
 }: PortfolioRecordsProps) => {
@@ -74,7 +74,7 @@ const PortfolioRecords = ({
     : preferences, [preferences, collectionId, sortField]);
   const columns = getOrderedPortfolioColumns(visibleColumns);
   const fullGroups = useMemo(() => {
-    const sections = buildPortfolioSections(allDomains, orderingPreferences);
+    const sections = buildPortfolioSections(allDomains, { ...orderingPreferences, showHiddenGroups: true });
     return collectionId
       ? sections.collections.find(section => section.collection.id === collectionId)?.groups ?? []
       : sections.mainGroups;
@@ -107,6 +107,9 @@ const PortfolioRecords = ({
   const stickyHeaderReady = sticky.header.headHeight > 0 && sticky.header.columnWidths.length === columns.length + 4;
   const grouped = Boolean(collectionId) || preferences.groupBy !== `none`;
   const empty = !loading && !groups.some(group => group.domains.length);
+  const hasHiddenDomainGroups = !preferences.showHiddenGroups && fullGroups.some(group => (
+    group.domains.length > 0 && preferences.hiddenGroupKeys.includes(group.key)
+  ));
   const showGroupHeadings = grouped && groups.length > 0;
   const stickyGroup = useStickyPortfolioGroup(
     sticky,
@@ -141,13 +144,16 @@ const PortfolioRecords = ({
     const scope = `${idPrefix}${mirrored ? `-sticky` : ``}-group-${encodeURIComponent(key)}`;
     const customGroup = preferences.customGroups.find(item => item.id === group.customGroupId);
     const moves = customGroup ? reorder.groupMoves(customGroup.id) : undefined;
+    const hidden = preferences.hiddenGroupKeys.includes(key);
+    const VisibilityIcon = hidden ? EyeOff : Eye;
+    const visibilityLabel = `${hidden ? `Show` : `Hide`} ${label}`;
     const showingAll = Boolean(isGroupShowingAll?.(key));
     const searchLabel = showingAll ? `Show only search matches in ${label}` : `Show all domains in ${label}`;
     return (
       <div
         id={`${scope}-heading`}
         {...(grid ? reorder.groupHandlers(group) : {})}
-        className={`portfolio-group-heading${grid && reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-dragging` : ``}${grid && reorder.targetGroupKey === key ? ` portfolio-group-heading-drop-target` : ``}`}
+        className={`portfolio-group-heading${hidden ? ` portfolio-group-heading-hidden` : ``}${grid && reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-dragging` : ``}${grid && reorder.targetGroupKey === key ? ` portfolio-group-heading-drop-target` : ``}`}
       >
         {customGroup && (
           <div
@@ -200,6 +206,11 @@ const PortfolioRecords = ({
           <span id={`${scope}-count`} className={`portfolio-group-count`}>
             {group.domains.length}
           </span>
+          {hidden && (
+            <span id={`${scope}-visibility-state`} className={`portfolio-group-hidden-state`}>
+              {`Hidden`}
+            </span>
+          )}
         </div>
         <div id={`${scope}-actions`} className={`portfolio-group-actions`}>
           {searching && onToggleGroupSearch && (
@@ -229,19 +240,53 @@ const PortfolioRecords = ({
               <RotateCcw size={13} aria-hidden={`true`} id={`${scope}-reset-icon`} className={`portfolio-group-reset-icon`} />
             </button>
           )}
-          {customGroup && (
+          {key !== `all` && (
             <button
               type={`button`}
               draggable={false}
-              id={`${scope}-settings`}
-              title={`Edit ${label}`}
-              aria-haspopup={`dialog`}
-              aria-label={`Edit ${label}`}
-              className={`portfolio-group-settings`}
-              onClick={() => setEditingGroup(customGroup)}
+              title={visibilityLabel}
+              disabled={busy || loading}
+              aria-label={visibilityLabel}
+              aria-pressed={!hidden}
+              id={`${scope}-visibility-toggle`}
+              className={`portfolio-group-visibility-toggle`}
+              onClick={() => {
+                const changed = preferences.toggleGroupVisibility(key);
+                if (changed && !hidden && !preferences.showHiddenGroups) {
+                  document.getElementById(`portfolio-table-settings`)?.focus({ preventScroll: true });
+                }
+              }}
             >
-              <Settings size={14} aria-hidden={`true`} id={`${scope}-settings-icon`} className={`portfolio-group-settings-icon`} />
+              <VisibilityIcon
+                size={14}
+                aria-hidden={`true`}
+                id={`${scope}-visibility-toggle-icon`}
+                className={`portfolio-group-visibility-toggle-icon`}
+              />
             </button>
+          )}
+          {customGroup && (
+            <>
+              <StarButton
+                id={`${scope}-star`}
+                disabled={busy || loading}
+                starred={customGroup.starred === true}
+                onPress={() => { preferences.toggleGroupStar(customGroup.id); }}
+                label={`${customGroup.starred ? `Unstar` : `Star`} ${customGroup.name}`}
+              />
+              <button
+                type={`button`}
+                draggable={false}
+                id={`${scope}-settings`}
+                title={`Edit ${label}`}
+                aria-haspopup={`dialog`}
+                aria-label={`Edit ${label}`}
+                className={`portfolio-group-settings`}
+                onClick={() => setEditingGroup(customGroup)}
+              >
+                <Settings size={14} aria-hidden={`true`} id={`${scope}-settings-icon`} className={`portfolio-group-settings-icon`} />
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -252,6 +297,11 @@ const PortfolioRecords = ({
       {`Drag a custom group heading to reorder groups, or use its up and down buttons. Drop domain rows on a group heading to move them into that group. Use the Group context menu action as a keyboard alternative.`}
     </p>
   );
+  const hiddenGroupsNotice = (
+    <p role={`status`} id={`${idPrefix}-hidden-groups-notice`} className={`portfolio-hidden-groups-notice`}>
+      {`Groups are hidden. Turn on Show Hidden Groups in Table Settings to display them.`}
+    </p>
+  );
 
   if (!forceTable && preferences.view === `grid` && !empty) return (
     <div id={`${idPrefix}-grid-view`} className={`portfolio-grid-view`} aria-busy={loading}>
@@ -260,7 +310,7 @@ const PortfolioRecords = ({
         <div id={`${idPrefix}-grid-loading`} className={`portfolio-domain-grid`}>
           {[0, 1, 2, 3].map(index => <DomainGridCardSkeleton key={index} index={index} visibleColumns={visibleColumns} />)}
         </div>
-      ) : empty ? <PortfolioEmptyState idPrefix={idPrefix} hasFilters={hasFilters} onAction={onEmptyAction} /> : groups.map(group => (
+      ) : empty ? hasHiddenDomainGroups ? hiddenGroupsNotice : <PortfolioEmptyState idPrefix={idPrefix} hasFilters={hasFilters} onAction={onEmptyAction} /> : groups.map(group => (
         <section key={group.key} id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}`} className={`portfolio-grid-group`}>
           {grouped && groupHeading(group, true)}
           <div id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-domains`} className={`portfolio-domain-grid`}>
@@ -270,7 +320,6 @@ const PortfolioRecords = ({
                 key={domain.id}
                 domain={domain}
                 onEdit={onEdit}
-                onDelete={onDelete}
                 onSelect={onSelect}
                 selected={selectedIds.has(domain.id)}
                 position={positions.get(domain.id) ?? 1}
@@ -423,7 +472,6 @@ const PortfolioRecords = ({
                   key={domain.id}
                   domain={domain}
                   onEdit={onEdit}
-                  onDelete={onDelete}
                   onSelect={onSelect}
                   selected={selectedIds.has(domain.id)}
                   position={positions.get(domain.id) ?? 1}
@@ -450,9 +498,9 @@ const PortfolioRecords = ({
       <DomainContextMenu {...contextMenu} />
       {groupPicker}
       {groupSettings}
-      {empty && !showGroupHeadings && (
+      {empty && (hasHiddenDomainGroups || !showGroupHeadings) && (
         <div id={`${idPrefix}-records-empty`} className={`portfolio-records-empty`}>
-          {collectionId ? (
+          {hasHiddenDomainGroups ? hiddenGroupsNotice : collectionId ? (
             <p id={`${idPrefix}-empty-description`} className={`portfolio-group-empty`}>
               {hasFilters
                 ? `No domains match the current filters in this collection`

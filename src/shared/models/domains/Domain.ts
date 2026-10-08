@@ -29,6 +29,7 @@ export class Domain extends Data {
   status?: string;
   future?: string;
   locked?: boolean;
+  starred?: boolean;
   privacy?: boolean;
   dnssec?: boolean;
   currency?: string;
@@ -62,6 +63,7 @@ export class Domain extends Data {
     this.status = data.status;
     this.future = data.future;
     this.locked = data.locked;
+    this.starred = data.starred === true;
     this.privacy = data.privacy;
     this.dnssec = data.dnssec;
     this.currency = data.currency;

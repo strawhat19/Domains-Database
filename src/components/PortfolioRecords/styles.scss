@@ -21,7 +21,7 @@
   &:hover, &:focus-visible { color: var(--accent); background: var(--paper); }
   &:disabled { opacity: .3; cursor: default; }
 }
-.portfolio-group-settings, .portfolio-group-search-toggle {
+.portfolio-group-settings, .portfolio-group-search-toggle, .portfolio-group-visibility-toggle {
   border: 0;
   width: 28px;
   height: 28px;
@@ -33,6 +33,13 @@
   transition: color .2s ease, background .2s ease;
   &:hover, &:focus-visible { color: var(--accent); background: var(--paper); }
 }
+.portfolio-group-visibility-toggle {
+  cursor: pointer;
+  &[aria-pressed='false'] { background: var(--paper); }
+  &:disabled { opacity: .3; cursor: default; }
+}
+.portfolio-group-heading-hidden .portfolio-group-label { color: var(--muted); }
+.portfolio-group-hidden-state { font-size: 10px; color: var(--muted); font-family: var(--font-body); }
 .portfolio-group-search-toggle {
   cursor: pointer;
   &[aria-pressed='true'] { color: var(--accent); background: var(--paper); }
@@ -51,6 +58,7 @@
 .portfolio-records-table { position: relative; }
 .portfolio-table-scroll[data-loading='true'] { overflow-x: hidden; }
 .portfolio-records-empty { padding: 35px 20px; border-top: 1px solid var(--line); }
+.portfolio-hidden-groups-notice { margin: 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
 .portfolio-sticky-head { z-index: 4; position: sticky; background: var(--input); box-shadow: 0 1px 0 var(--line); }
 .portfolio-sticky-group { top: 100%; left: 0; right: 0; height: 0; z-index: 3; position: absolute; pointer-events: none; }
 .portfolio-sticky-group-clip { width: 100%; overflow: hidden; pointer-events: auto; box-shadow: 0 1px 0 var(--line); }
@@ -65,6 +73,6 @@
   .portfolio-domain-grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .portfolio-group-reset, .portfolio-group-settings, .portfolio-group-search-toggle, .portfolio-group-move-action, .portfolio-group-heading-cell, .portfolio-group-heading { transition: none; }
+  .portfolio-group-reset, .portfolio-group-settings, .portfolio-group-search-toggle, .portfolio-group-visibility-toggle, .portfolio-group-move-action, .portfolio-group-heading-cell, .portfolio-group-heading { transition: none; }
   .portfolio-sticky-group-clip:not([hidden]), .portfolio-sticky-group-clip:not([hidden]) .portfolio-sticky-group-table { will-change: auto; }
 }

@@ -8,7 +8,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
     width: 44,
     height: 44,
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: 22,
     alignItems: `center`,
     justifyContent: `center`,
     borderColor: palette.line,

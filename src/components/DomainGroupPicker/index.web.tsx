@@ -125,6 +125,22 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped }: DomainGroupPickerPro
                 />
               </label>
             )}
+            <label
+              id={`domain-group-picker-scroll-label`}
+              htmlFor={`domain-group-picker-scroll-input`}
+              className={`domain-group-picker-scroll-label`}
+            >
+              <input
+                type={`checkbox`}
+                checked={picker.scrollToGroup}
+                id={`domain-group-picker-scroll-input`}
+                className={`domain-group-picker-scroll-checkbox`}
+                onChange={event => picker.setScrollToGroup(event.currentTarget.checked)}
+              />
+              <span id={`domain-group-picker-scroll-text`} className={`domain-group-picker-scroll-text`}>
+                {`Scroll to Group when Done`}
+              </span>
+            </label>
           </div>
           {picker.error && (
             <p role={`alert`} id={`domain-group-picker-error`} className={`domain-dialog-error`}>

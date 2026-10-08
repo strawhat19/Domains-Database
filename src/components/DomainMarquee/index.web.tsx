@@ -61,6 +61,7 @@ const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
                     <DomainSiteIcon
                       compact
                       size={14}
+                      fallback={`link`}
                       domain={item.domain}
                       iconUrl={item.iconUrl}
                       id={`domain-marquee-pill-icon-${suffix}`}

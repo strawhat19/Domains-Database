@@ -1,7 +1,7 @@
 import { authAPI } from './auth';
 import { Domain } from '../shared/models/domains/Domain';
 import type { WebsiteInsights } from '../shared/websiteInsights/types';
-import { getDomainSource, validateDomainInput } from '../shared/domainUtils';
+import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
 import { createSampleDomains } from '../shared/sampleDomains';
 import { createOperationQueue } from '../shared/common/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -416,6 +416,7 @@ export const api = {
       ...validated,
       id,
       isSample: false,
+      starred: original.starred,
       number: original.number,
       meta: { ...validated.meta, domainSource: getDomainSource(original) },
       updated: new Date().toISOString(),
@@ -425,9 +426,19 @@ export const api = {
     await saveSnapshot({ ...current, domains: current.domains.map(record => record.id === id ? domain : record) });
     return copyDomains([domain])[0];
   }),
+  toggleDomainStar: (id: string): Promise<void> => serializePortfolioMutation(async () => {
+    const current = await readSnapshot();
+    const original = current.domains.find(domain => domain.id === id);
+    if (!original) throw new Error(`Domain Could Not Be Found`);
+    const domain = new Domain({ ...original, starred: !original.starred });
+    await saveSnapshot({ ...current, domains: current.domains.map(record => record.id === id ? domain : record) });
+  }),
   deleteDomain: (id: string) => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
-    if (!current.domains.some(domain => domain.id === id)) throw new Error(`Domain Could Not Be Found`);
+    const domain = current.domains.find(record => record.id === id);
+    if (!domain) throw new Error(`Domain Could Not Be Found`);
+    const restriction = getDomainDeletionRestriction(domain);
+    if (restriction) throw new Error(restriction);
     await saveSnapshot({ ...current, domains: current.domains.filter(domain => domain.id !== id) });
   }),
   importDomains: (inputs: DomainInput[]) => serializePortfolioMutation(async () => {

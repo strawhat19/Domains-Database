@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Image, View } from 'react-native';
 import { createStyles } from './styles.native';
-import { Globe2 } from 'lucide-react-native';
+import { Link2, Globe2 } from 'lucide-react-native';
 import { useDomainSiteIcon } from './useDomainSiteIcon';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -13,12 +13,14 @@ interface DomainSiteIconProps {
   domain: string;
   iconUrl?: string;
   compact?: boolean;
+  fallback?: `globe` | `link`;
 }
 
-const SiteIconContent = ({ id, sourceUrl, size = 28, compact = false }: DomainSiteIconProps & { sourceUrl: string }) => {
+const SiteIconContent = ({ id, sourceUrl, size = 28, compact = false, fallback = `globe` }: DomainSiteIconProps & { sourceUrl: string }) => {
   const { palette } = useTheme();
   const { failed, loaded, onLoad, onError } = useDomainSiteIcon();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const FallbackIcon = fallback === `link` ? Link2 : Globe2;
   const imageSize = compact ? size : Math.min(20, size);
   const fallbackSize = compact ? size : Math.min(16, size);
   return (
@@ -29,7 +31,7 @@ const SiteIconContent = ({ id, sourceUrl, size = 28, compact = false }: DomainSi
       style={[styles.container, compact && styles.compact, { width: size, height: size }]}
     >
       {(!sourceUrl || !loaded || failed) && (
-        <Globe2
+        <FallbackIcon
           size={fallbackSize}
           strokeWidth={1.4}
           color={compact ? palette.accent : palette.muted}

@@ -158,7 +158,12 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       </main>
       <AuthFeedback />
       <Toast id={`theme-preference-error`} message={themeError} onDismiss={clearThemeError} />
-      <ScrollToTop visible={scroll.showScrollTop} onPress={scroll.scrollToTop} bottomInset={scroll.bottomInset} />
+      <ScrollToTop
+        visible={scroll.showScrollTop}
+        onPress={scroll.scrollToTop}
+        bottomInset={scroll.bottomInset}
+        rightInset={scroll.scrollTopRightInset}
+      />
       <footer id={`site-footer`} className={`site-footer`}>
         <div id={`footer-inner`} className={`footer-inner`}>
           <p id={`footer-copyright`} className={`footer-copyright`}>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { usePortfolioActionsVisibility } from './usePortfolioActionsVisibility';
 
 const copyText = async (text: string) => {
   if (navigator.clipboard?.writeText) {
@@ -24,7 +25,9 @@ const copyText = async (text: string) => {
 };
 
 export const usePortfolioToolbar = () => {
+  const actions = usePortfolioActionsVisibility();
   const [copyOpen, setCopyOpen] = useState(false);
+  const [columnsOpen, setColumnsOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState(``);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [copyState, setCopyState] = useState<`idle` | `copying` | `copied` | `error`>(`idle`);
@@ -39,6 +42,10 @@ export const usePortfolioToolbar = () => {
     return () => window.clearTimeout(timeout);
   }, [copyState]);
 
+  const openSettings = () => {
+    setColumnsOpen(false);
+    setSettingsOpen(true);
+  };
   const openCopyOptions = () => {
     if (copyState === `copying`) return;
     setCopyMessage(``);
@@ -64,10 +71,14 @@ export const usePortfolioToolbar = () => {
   };
 
   return {
+    ...actions,
     copyOpen,
+    columnsOpen,
     copyDomains,
     copyMessage,
     settingsOpen,
+    openSettings,
+    setColumnsOpen,
     openCopyOptions,
     setSettingsOpen,
     closeCopyOptions,

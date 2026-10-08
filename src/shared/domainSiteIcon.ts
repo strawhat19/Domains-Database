@@ -18,6 +18,15 @@ export const getCustomSiteIconUrl = (domain: Pick<DomainInput, `meta`>): string 
   typeof domain.meta?.siteIconUrl === `string` ? domain.meta.siteIconUrl : ``
 );
 
+export const getLinkSiteIconUrl = (value: string): string => {
+  try {
+    const url = normalizeSiteIconUrl(value);
+    return url ? `${new URL(url).origin}/favicon.ico` : ``;
+  } catch {
+    return ``;
+  }
+};
+
 export const getDomainSiteIconUrl = (domain: Pick<DomainInput, `name` | `meta`>): string => {
   const name = domain.name?.trim()?.toLowerCase()?.replace(/\.$/, ``);
   const labels = name?.split(`.`) ?? [];

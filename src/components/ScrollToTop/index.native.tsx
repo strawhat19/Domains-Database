@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ArrowUp } from 'lucide-react-native';
+import { ChevronUp } from 'lucide-react-native';
 import type { ScrollToTopProps } from './types';
 import { createStyles } from './styles.native';
 import { Animated, Pressable } from 'react-native';
@@ -29,7 +29,7 @@ const ScrollToTop = ({ visible, onPress, bottomInset = 0 }: ScrollToTopProps) =>
         {...elementProps(`native-scroll-to-top-button`)}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       >
-        <ArrowUp
+        <ChevronUp
           size={19}
           accessible={false}
           color={palette.accent}

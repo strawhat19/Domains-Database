@@ -3,14 +3,15 @@ import ConnectRegistrar from './ConnectRegistrar';
 import DomainLinks from '../DomainLinks/index.web';
 import SettingsField from '../SettingsField/index.web';
 import ProjectSelect from './ProjectSelect/index.web';
-import { X, Plus, Check, ChevronDown } from 'lucide-react';
+import { X, Plus, Check, Trash2, ChevronDown } from 'lucide-react';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainStarButton from '../DomainStarButton/index.web';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import { REGISTRARS } from '../../shared/config';
 import { useDomainEditor } from './useDomainEditor';
 import type { DomainRecord } from '../../shared/types';
-import { getDomainSource } from '../../shared/domainUtils';
+import { getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 
@@ -20,8 +21,26 @@ interface DomainEditorProps {
 }
 
 const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
-  const { error, input, close, saving, setField, modalRef, groupEditor, handleSubmit } = useDomainEditor(domain, onClose);
+  const {
+    error,
+    input,
+    close,
+    saving,
+    deleting,
+    setField,
+    modalRef,
+    groupEditor,
+    handleDelete,
+    cancelDelete,
+    requestDelete,
+    handleSubmit,
+    deleteButtonRef,
+    deleteCancelRef,
+    confirmingDelete,
+  } = useDomainEditor(domain, onClose);
+  const deleteId = `domain-editor-delete-${domain?.id ?? `new`}`;
   const isEditing = Boolean(domain?.id);
+  const deleteRestriction = domain ? getDomainDeletionRestriction(domain) : ``;
   const isSynced = Boolean(domain && getDomainSource(domain) === `registrar`);
   return (
     <div
@@ -43,7 +62,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
         <header id={`domain-editor-header`} className={`domain-dialog-header`}>
           <div id={`domain-editor-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-editor-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {isEditing ? `SETTINGS` : `YOUR PORTFOLIO`}
+              {isEditing ? `DOMAIN SETTINGS` : `YOUR PORTFOLIO`}
             </span>
             <div id={`domain-editor-title-row`} className={`domain-editor-title-row`}>
               <h2 id={`domain-editor-title`} className={`domain-dialog-title`}>
@@ -59,16 +78,32 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               )}
             </div>
           </div>
-          <button
-            type={`button`}
-            onClick={close}
-            disabled={saving}
-            id={`domain-editor-close`}
-            aria-label={`Close Domain Editor`}
-            className={`domain-dialog-close`}
+          <div
+            role={`group`}
+            id={`domain-editor-header-actions`}
+            aria-label={`Domain Editor Actions`}
+            className={`domain-editor-header-actions`}
           >
-            <X size={19} aria-hidden={`true`} id={`domain-editor-close-icon`} className={`domain-dialog-close-icon`} />
-          </button>
+            {isEditing && domain && (
+              <DomainStarButton
+                size={34}
+                disabled={saving}
+                domainId={domain.id}
+                domainName={domain.name}
+                id={`domain-editor-star-${domain.id}`}
+              />
+            )}
+            <button
+              type={`button`}
+              onClick={close}
+              disabled={saving}
+              id={`domain-editor-close`}
+              aria-label={`Close Domain Editor`}
+              className={`domain-dialog-close`}
+            >
+              <X size={19} aria-hidden={`true`} id={`domain-editor-close-icon`} className={`domain-dialog-close-icon`} />
+            </button>
+          </div>
         </header>
         {!isEditing && (
           <p id={`domain-editor-description`} className={`domain-dialog-description`}>
@@ -469,7 +504,77 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               {error}
             </p>
           )}
+          {isEditing && confirmingDelete && (
+            <div
+              role={`group`}
+              id={`${deleteId}-confirmation`}
+              className={`domain-editor-delete-confirmation`}
+              aria-labelledby={`${deleteId}-confirmation-title`}
+              aria-describedby={`${deleteId}-confirmation-description`}
+            >
+              <div id={`${deleteId}-confirmation-copy`} className={`domain-editor-delete-confirmation-copy`}>
+                <h3 id={`${deleteId}-confirmation-title`} className={`domain-editor-delete-confirmation-title`}>
+                  {`Delete ${domain?.name}?`}
+                </h3>
+                <p id={`${deleteId}-confirmation-description`} className={`domain-editor-delete-confirmation-description`}>
+                  {`This removes the domain entry from your portfolio. It does not cancel the domain registration.`}
+                </p>
+              </div>
+              <div id={`${deleteId}-confirmation-actions`} className={`domain-editor-delete-confirmation-actions`}>
+                <button
+                  type={`button`}
+                  disabled={saving}
+                  onClick={cancelDelete}
+                  ref={deleteCancelRef}
+                  id={`${deleteId}-keep`}
+                  className={`portfolio-button portfolio-button-secondary`}
+                >
+                  <X size={15} aria-hidden={`true`} id={`${deleteId}-keep-icon`} className={`portfolio-button-icon`} />
+                  <span id={`${deleteId}-keep-text`} className={`portfolio-button-text`}>
+                    {`Keep Domain`}
+                  </span>
+                </button>
+                <button
+                  type={`button`}
+                  disabled={saving}
+                  onClick={handleDelete}
+                  id={`${deleteId}-confirm`}
+                  className={`portfolio-button domain-editor-delete-button`}
+                >
+                  <Trash2 size={15} aria-hidden={`true`} id={`${deleteId}-confirm-icon`} className={`portfolio-button-icon`} />
+                  <span id={`${deleteId}-confirm-text`} className={`portfolio-button-text`}>
+                    {deleting ? `Deleting…` : `Delete Domain`}
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
           <footer id={`domain-editor-footer`} className={`domain-dialog-footer`}>
+            {isEditing && (
+              <div id={`${deleteId}-action`} className={`domain-editor-delete-action`}>
+                <button
+                  type={`button`}
+                  onClick={requestDelete}
+                  ref={deleteButtonRef}
+                  id={`${deleteId}-button`}
+                  aria-expanded={confirmingDelete}
+                  className={`portfolio-button domain-editor-delete-button`}
+                  aria-controls={confirmingDelete ? `${deleteId}-confirmation` : undefined}
+                  disabled={saving || Boolean(deleteRestriction)}
+                  aria-describedby={deleteRestriction ? `${deleteId}-restriction` : undefined}
+                >
+                  <Trash2 size={15} aria-hidden={`true`} id={`${deleteId}-icon`} className={`portfolio-button-icon`} />
+                  <span id={`${deleteId}-text`} className={`portfolio-button-text`}>
+                    {`Delete Domain`}
+                  </span>
+                </button>
+                {deleteRestriction && (
+                  <p id={`${deleteId}-restriction`} className={`domain-editor-delete-restriction`}>
+                    {deleteRestriction}
+                  </p>
+                )}
+              </div>
+            )}
             <div id={`domain-editor-actions`} className={`domain-dialog-actions`}>
               <button
                 type={`button`}
@@ -485,7 +590,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               </button>
               <button
                 type={`submit`}
-                disabled={saving}
+                disabled={saving || confirmingDelete}
                 id={`domain-editor-submit`}
                 className={`portfolio-button portfolio-button-primary`}
               >
@@ -493,7 +598,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   ? <Check size={16} aria-hidden={`true`} id={`domain-editor-submit-icon`} className={`portfolio-button-icon`} />
                   : <Plus size={16} aria-hidden={`true`} id={`domain-editor-submit-icon`} className={`portfolio-button-icon`} />}
                 <span id={`domain-editor-submit-text`} className={`portfolio-button-text`}>
-                  {saving ? `Saving…` : isEditing ? `Save Changes` : `Add Domain`}
+                  {saving && !deleting ? `Saving…` : isEditing ? `Save Changes` : `Add Domain`}
                 </span>
               </button>
             </div>

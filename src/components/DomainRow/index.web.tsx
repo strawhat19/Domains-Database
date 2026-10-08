@@ -2,14 +2,16 @@ import './styles.scss';
 import type { MouseEventHandler } from 'react';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
+import LinkSiteIcon from '../LinkSiteIcon/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainStarButton from '../DomainStarButton/index.web';
 import DomainDescription from '../DomainDescription/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
 import { getDomainSource } from '../../shared/domainUtils';
-import { getDomainPreviewLink } from '../../shared/domainLinks';
+import { getDomainPreviewLink, getDomainGithubRepoLink } from '../../shared/domainLinks';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
-import { Eye, Check, Minus, Trash2, ArrowUp, Settings, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
+import { Check, Minus, ArrowUp, Settings, ArrowDown, GripVertical } from 'lucide-react';
 import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
   DEFAULT_VISIBLE_COLUMNS,
@@ -37,7 +39,6 @@ const DomainRow = ({
   dragging,
   dropTarget,
   onSelect,
-  onDelete,
   onMoveUp,
   draggable,
   onDragEnd,
@@ -55,6 +56,7 @@ const DomainRow = ({
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
   const needsAttention = status !== `Active`;
   const previewLink = getDomainPreviewLink(domain);
+  const githubRepoLink = getDomainGithubRepoLink(domain);
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const registrarManaged = getDomainSource(domain) === `registrar`;
   const columns = getOrderedPortfolioColumns(visibleColumns);
@@ -108,6 +110,7 @@ const DomainRow = ({
               </div>
             )}
             <DomainSiteIcon
+              fallback={`link`}
               domain={domain.name}
               id={`${scope}-symbol`}
               iconUrl={getCustomSiteIconUrl(domain)}
@@ -129,12 +132,6 @@ const DomainRow = ({
                       {domain.name.slice(lastDot)}
                     </span>
                   </span>
-                  <ArrowUpRight
-                    size={13}
-                    aria-hidden={`true`}
-                    id={`${scope}-site-link-icon`}
-                    className={`domain-site-link-icon`}
-                  />
                   {needsAttention && (
                     <span
                       aria-hidden={`true`}
@@ -155,7 +152,21 @@ const DomainRow = ({
                     title={`Preview ${domain.name}`}
                     aria-label={`Open Preview For ${domain.name} In A New Tab`}
                   >
-                    <Eye size={13} aria-hidden={`true`} id={`${scope}-preview-icon`} className={`domain-preview-icon`} />
+                    <LinkSiteIcon size={13} url={previewLink} id={`${scope}-preview-icon`} />
+                  </a>
+                )}
+                {githubRepoLink && (
+                  <a
+                    target={`_blank`}
+                    draggable={false}
+                    href={githubRepoLink}
+                    rel={`noopener noreferrer`}
+                    id={`${scope}-github-repo-link`}
+                    className={`domain-github-link`}
+                    title={`GitHub Repository For ${domain.name}`}
+                    aria-label={`Open GitHub Repository For ${domain.name} In A New Tab`}
+                  >
+                    <LinkSiteIcon size={13} url={githubRepoLink} id={`${scope}-github-icon`} />
                   </a>
                 )}
                 <DomainProjectBadge
@@ -319,17 +330,12 @@ const DomainRow = ({
       <td id={`${scope}-actions-cell`} className={`actionsCell domain-actions-cell`}>
         <div id={`${scope}-actions`} className={`domain-row-actions`}>
           <DomainAnalyticsButton compact suffix={scope} domain={domain.name} />
-          <button
-            type={`button`}
+          <DomainStarButton
+            id={`${scope}-star`}
             disabled={busy}
-            title={`Remove Domain`}
-            id={`${scope}-remove`}
-            onClick={() => onDelete(domain)}
-            aria-label={`Remove ${domain.name}`}
-            className={`domain-row-action domain-row-action-remove`}
-          >
-            <Trash2 size={14} aria-hidden={`true`} id={`${scope}-remove-icon`} className={`domain-row-action-icon`} />
-          </button>
+            domainId={domain.id}
+            domainName={domain.name}
+          />
           <button
             type={`button`}
             disabled={busy}

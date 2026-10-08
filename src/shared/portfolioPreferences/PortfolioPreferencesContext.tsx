@@ -14,6 +14,8 @@ const DEFAULT_PREFERENCES: PortfolioPreferences = {
   collections: [],
   customGroups: [],
   collectionNumber: 0,
+  hiddenGroupKeys: [],
+  showHiddenGroups: false,
 };
 const uniqueIds = (value: unknown): string[] => Array.isArray(value)
   ? [...new Set(value.filter((id): id is string => typeof id === `string` && Boolean(id)))]
@@ -67,7 +69,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
       seenDomains.add(id);
       return true;
     });
-    return [{ id: value.id, name, domainIds, ...(description ? { description } : {}), ...(collectionId ? { collectionId } : {}) }];
+    return [{ id: value.id, name, domainIds, starred: value.starred === true, ...(description ? { description } : {}), ...(collectionId ? { collectionId } : {}) }];
   });
   const orders = saved.orders && typeof saved.orders === `object` && !Array.isArray(saved.orders)
     ? Object.fromEntries(Object.entries(saved.orders).map(([key, ids]) => [key, uniqueIds(ids)]))
@@ -75,7 +77,16 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
   const groupBy = saved.groupBy === `custom` || GROUPABLE_COLUMNS.some(column => column.field === saved.groupBy)
     ? saved.groupBy as PortfolioPreferences[`groupBy`]
     : `none`;
-  return { orders, groupBy, collections, customGroups, collectionNumber, view: saved.view === `grid` ? `grid` : `table` };
+  return {
+    orders,
+    groupBy,
+    collections,
+    customGroups,
+    collectionNumber,
+    showHiddenGroups: saved.showHiddenGroups === true,
+    hiddenGroupKeys: uniqueIds(saved.hiddenGroupKeys),
+    view: saved.view === `grid` ? `grid` : `table`,
+  };
 };
 
 const assignGroupDomains = (current: PortfolioPreferences, domainIds: string[], groupId: string | null): PortfolioPreferences => {
@@ -158,6 +169,23 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     change(current => ({ ...current, groupBy }));
   }, [change]);
 
+  const setShowHiddenGroups = useCallback<PortfolioPreferencesContextValue[`setShowHiddenGroups`]>(showHiddenGroups => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
+    change(current => ({ ...current, showHiddenGroups }));
+  }, [ready, change, userId, enabled]);
+
+  const toggleGroupVisibility = useCallback<PortfolioPreferencesContextValue[`toggleGroupVisibility`]>(groupKey => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    if (!groupKey.trim() || groupKey === `all`) return false;
+    change(current => ({
+      ...current,
+      hiddenGroupKeys: current.hiddenGroupKeys.includes(groupKey)
+        ? current.hiddenGroupKeys.filter(key => key !== groupKey)
+        : [...current.hiddenGroupKeys, groupKey],
+    }));
+    return true;
+  }, [ready, change, userId, enabled]);
+
   const createGroup = useCallback<PortfolioPreferencesContextValue[`createGroup`]>((value, domainIds) => {
     if (!enabled || !active.current) return undefined;
     const selectedIds = uniqueIds(domainIds);
@@ -217,6 +245,16 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const updateGroup = useCallback<PortfolioPreferencesContextValue[`updateGroup`]>((id, name, description) => (
     saveGroupSettings(id, { name, description })
   ), [saveGroupSettings]);
+
+  const toggleGroupStar = useCallback<PortfolioPreferencesContextValue[`toggleGroupStar`]>(id => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    if (!preferenceRef.current.customGroups.some(group => group.id === id)) return false;
+    change(current => ({
+      ...current,
+      customGroups: current.customGroups.map(group => group.id === id ? { ...group, starred: group.starred !== true } : group),
+    }));
+    return true;
+  }, [ready, change, userId, enabled]);
 
   const renameGroup = useCallback<PortfolioPreferencesContextValue[`renameGroup`]>((id, name) => {
     const group = preferenceRef.current.customGroups.find(group => group.id === id);
@@ -371,13 +409,16 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     voteCollection,
     assignDomain,
     assignDomains,
+    toggleGroupStar,
     moveCollection,
     updateCollection,
     saveGroupSettings,
     setCollectionSort,
+    setShowHiddenGroups,
+    toggleGroupVisibility,
     assignGroupCollection,
     setCollectionVisibility,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, voteCollection, assignDomain, assignDomains, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, assignGroupCollection, setCollectionVisibility]);
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, voteCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, toggleGroupVisibility, assignGroupCollection, setCollectionVisibility]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { scrollToPortfolioGroup } from './scrollToGroup.web';
 import type { DomainRecord } from '../../shared/types';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
@@ -13,6 +14,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
   const { loading, domains: availableDomains } = useDomains();
   const [name, setNameValue] = useState(``);
   const [error, setError] = useState(``);
+  const [scrollToGroup, setScrollToGroup] = useState(false);
   const [groupId, setGroupIdValue] = useState(CREATE_GROUP_OPTION);
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +35,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
         : ``;
   const groupError = missingGroup ? `This Group Is No Longer Available. Choose Another Group` : ``;
 
-  useModalFocus(modalRef, true, onClose);
+  useModalFocus(modalRef, true, onClose, true);
 
   useEffect(() => {
     const invokingElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -42,7 +44,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
       // Changing groups can remount the invoking row while keeping its checkbox ID.
       if (!invokingElement?.isConnected) {
         const invokingControl = invokingId ? document.getElementById(invokingId) : null;
-        (invokingControl ?? document.getElementById(`portfolio-groups-button`))?.focus();
+        (invokingControl ?? document.getElementById(`portfolio-groups-button`))?.focus({ preventScroll: true });
       }
     };
   }, []);
@@ -70,6 +72,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
       groupSelectRef.current?.focus();
       return;
     }
+    let destinationGroupId: string | null = groupId === UNGROUPED_GROUP_OPTION ? null : groupId;
     if (creatingGroup) {
       const trimmedName = name.trim();
       const duplicateName = preferences.customGroups.some(group => group.name.toLowerCase() === trimmedName.toLowerCase());
@@ -78,16 +81,22 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
         nameInputRef.current?.focus();
         return;
       }
-      if (!preferences.createGroup(trimmedName, domainIds)) {
+      const createdGroupId = preferences.createGroup(trimmedName, domainIds);
+      if (!createdGroupId) {
         setError(`Could Not Create Group. The Portfolio Or Group Names May Have Changed`);
         return;
       }
-    } else if (!preferences.assignDomains(domainIds, groupId === UNGROUPED_GROUP_OPTION ? null : groupId)) {
+      destinationGroupId = createdGroupId;
+    } else if (!preferences.assignDomains(domainIds, destinationGroupId)) {
       setError(`Could Not Update Groups. The Portfolio Or Selected Group May Have Changed`);
       return;
     }
     onGrouped?.();
     onClose();
+    if (scrollToGroup) {
+      const collectionId = preferences.customGroups.find(group => group.id === destinationGroupId)?.collectionId;
+      scrollToPortfolioGroup(destinationGroupId, collectionId);
+    }
   };
 
   return {
@@ -99,7 +108,9 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
     nameInputRef,
     creatingGroup,
     handleSubmit,
+    scrollToGroup,
     groupSelectRef,
+    setScrollToGroup,
     count: domainIds.length,
     customGroups: preferences.customGroups,
     error: error || availabilityError || groupError,

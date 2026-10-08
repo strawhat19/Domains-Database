@@ -1,5 +1,5 @@
 import './styles.scss';
-import { X, Plus, Check, Pencil, BookOpen } from 'lucide-react';
+import { X, Check, Pencil, BookOpen } from 'lucide-react';
 import { useDomainDescription } from './useDomainDescription';
 
 interface DomainDescriptionProps {
@@ -89,6 +89,7 @@ const DomainDescription = ({ id, busy, value, onSave, domainName, onReadMore }: 
       ) : (
         <>
           <button
+            title={label}
             type={`button`}
             draggable={false}
             aria-label={label}
@@ -106,12 +107,7 @@ const DomainDescription = ({ id, busy, value, onSave, domainName, onReadMore }: 
                 <Pencil size={12} aria-hidden={`true`} id={`${id}-edit-icon`} className={`domain-description-edit-icon`} />
               </>
             ) : (
-              <>
-                <Plus size={12} aria-hidden={`true`} id={`${id}-add-icon`} className={`domain-description-add-icon`} />
-                <span id={`${id}-add-label`} className={`domain-description-add-label`}>
-                  {`Add Description`}
-                </span>
-              </>
+              <Pencil size={12} aria-hidden={`true`} id={`${id}-add-icon`} className={`domain-description-add-icon`} />
             )}
           </button>
           {description.truncated && (

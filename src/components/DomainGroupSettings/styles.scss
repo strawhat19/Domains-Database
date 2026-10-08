@@ -1,4 +1,5 @@
 .domain-group-settings-header { margin-bottom: 25px; }
+.domain-group-settings-header-actions { gap: 8px; display: flex; flex-shrink: 0; align-items: center; }
 .domain-group-settings-fields { gap: 18px; display: grid; }
 .domain-group-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .domain-group-settings-description-input { resize: vertical; min-height: 92px; }

@@ -5,6 +5,7 @@ import DomainEditor from '../DomainEditor';
 import { usePortfolio } from './usePortfolio';
 import ColumnControls from '../ColumnControls';
 import GroupControls from '../GroupControls/index.web';
+import TableSettings from '../TableSettings/index.web';
 import RegistrarSetup from '../RegistrarSetup/index.web';
 import { fitPortfolioColumns } from './columnLayout.web';
 import { useDomainSelection } from './useDomainSelection';
@@ -25,7 +26,7 @@ import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups
 import { usePortfolioSearch } from '../../shared/portfolioPreferences/usePortfolioSearch';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
-import { X, Copy, Plus, Lock, Check, Globe, Search, Link2, Filter, Trash2, Settings, ArrowRight, FlaskConical, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw } from 'lucide-react';
+import { X, Copy, Plus, Lock, Check, Globe, Search, Link2, Filter, Settings, ArrowRight, FlaskConical, LayoutGrid, List, ArrowDownAZ, GripVertical, Gauge, RefreshCw } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
@@ -74,6 +75,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const collectionReorder = useCollectionReorder(!portfolio.loading && !portfolio.pendingId);
   const mainHandlers = collectionReorder.handlers(null);
   const manualSyncBlocked = portfolio.loading || portfolio.syncing || portfolio.manualSyncWaitSeconds > 0;
+  const fitColumns = () => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current) });
   const manualSyncLabel = portfolio.syncing ? `Syncing…` : portfolio.manualSyncWaitSeconds > 0
     ? `Wait ${Math.floor(portfolio.manualSyncWaitSeconds / 60)}:${String(portfolio.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const displayedError = portfolio.localError || portfolio.insightError || portfolio.error;
@@ -102,7 +104,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     onSelect: selection.select,
     onEdit: portfolio.openEditor,
     loading: portfolio.loading,
-    onDelete: portfolio.requestDelete,
     allDomains: portfolio.sortedDomains,
     selectedIds: selection.selectedIds,
     onGrouped: selection.clearSelection,
@@ -191,6 +192,14 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 )}
               </>
             )}
+            {portfolio.syncing && (
+              <div role={`status`} aria-live={`polite`} id={`portfolio-sync-status`} className={`portfolio-sync-status`}>
+                <span aria-hidden={`true`} id={`portfolio-sync-spinner`} className={`portfolio-sync-spinner`} />
+                <span id={`portfolio-sync-text`} className={`portfolio-sync-text`}>
+                  {`Syncing Domains…`}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <div id={`portfolio-primary-actions`} className={`portfolio-primary-actions`}>
@@ -218,7 +227,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {`Registrars`}
             </span>
           </button> */}
-          <div id={`portfolio-domain-actions`} className={`portfolio-domain-actions`}>
+          <div
+            id={`portfolio-domain-actions`}
+            ref={toolbar.primaryActionsRef}
+            className={`portfolio-domain-actions`}
+          >
             {user && portfolio.canSyncManually && (
               <button
                 type={`button`}
@@ -255,14 +268,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         <p role={`status`} aria-live={`polite`} id={`portfolio-manual-sync-message`} className={`portfolio-manual-sync-message`}>
           {portfolio.manualSyncMessage}
         </p>
-      )}
-      {portfolio.syncing && (
-        <div role={`status`} aria-live={`polite`} id={`portfolio-sync-status`} className={`portfolio-sync-status`}>
-          <span aria-hidden={`true`} id={`portfolio-sync-spinner`} className={`portfolio-sync-spinner`} />
-          <span id={`portfolio-sync-text`} className={`portfolio-sync-text`}>
-            {`Syncing Domains…`}
-          </span>
-        </div>
       )}
       {(portfolio.refreshing || portfolio.insightNotice) && (
         <div role={`status`} aria-live={`polite`} id={`portfolio-website-info-status`} className={`portfolio-message portfolio-message-success`}>
@@ -323,15 +328,15 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </div>
             )}
             <ColumnControls
-              open={toolbar.settingsOpen}
+              open={toolbar.columnsOpen}
+              onFit={fitColumns}
               onReset={resetColumns}
               onToggle={toggleColumn}
               fitDisabled={portfolio.loading}
               columnCounts={columnCounts}
               visibleColumns={visibleColumns}
-              onOpenChange={toolbar.setSettingsOpen}
+              onOpenChange={toolbar.setColumnsOpen}
               settingsButtonRef={toolbar.settingsButtonRef}
-              onFit={() => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current) })}
             />
             <GroupControls domains={portfolio.domains} />
             <button
@@ -415,6 +420,64 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </button>
             </div>
             <div id={`portfolio-toolbar-actions`} className={`portfolio-toolbar-actions`}>
+              <div
+                role={`group`}
+                aria-label={`Domain Actions`}
+                aria-hidden={!toolbar.showCompactActions}
+                id={`portfolio-toolbar-domain-actions`}
+                data-visible={toolbar.showCompactActions}
+                className={`portfolio-toolbar-domain-actions`}
+                data-has-sync={Boolean(user && portfolio.canSyncManually)}
+              >
+                {user && portfolio.canSyncManually && (
+                  <button
+                    type={`button`}
+                    aria-busy={portfolio.syncing}
+                    tabIndex={toolbar.showCompactActions ? 0 : -1}
+                    id={`portfolio-toolbar-sync-domains`}
+                    onClick={() => void portfolio.syncManually()}
+                    data-focus-fallback={`portfolio-sync-domains`}
+                    disabled={!toolbar.showCompactActions || manualSyncBlocked}
+                    aria-label={`Sync Domains From Connected Registrars, ${manualSyncLabel}`}
+                    aria-describedby={portfolio.manualSyncMessage ? `portfolio-manual-sync-message` : undefined}
+                    title={portfolio.manualSyncMessage || `Sync Domains From Connected Registrars`}
+                    className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button`}
+                  >
+                    {portfolio.syncing ? (
+                      <span
+                        aria-hidden={`true`}
+                        id={`portfolio-toolbar-sync-spinner`}
+                        className={`portfolio-sync-spinner`}
+                      />
+                    ) : (
+                      <RefreshCw
+                        size={15}
+                        aria-hidden={`true`}
+                        id={`portfolio-toolbar-sync-domains-icon`}
+                        className={`portfolio-button-icon`}
+                      />
+                    )}
+                  </button>
+                )}
+                <button
+                  type={`button`}
+                  title={`Add Domain`}
+                  aria-label={`Add Domain`}
+                  onClick={portfolio.openSetup}
+                  id={`portfolio-toolbar-add-domain`}
+                  data-focus-fallback={`portfolio-add-domain`}
+                  tabIndex={toolbar.showCompactActions ? 0 : -1}
+                  disabled={!toolbar.showCompactActions || portfolio.loading}
+                  className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button`}
+                >
+                  <Plus
+                    size={16}
+                    aria-hidden={`true`}
+                    id={`portfolio-toolbar-add-domain-icon`}
+                    className={`portfolio-button-icon`}
+                  />
+                </button>
+              </div>
               <button
                 type={`button`}
                 aria-haspopup={`dialog`}
@@ -493,12 +556,13 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <button
                 type={`button`}
                 title={`Table Settings`}
+                aria-haspopup={`dialog`}
                 aria-label={`Table Settings`}
                 ref={toolbar.settingsButtonRef}
                 id={`portfolio-table-settings`}
                 aria-expanded={toolbar.settingsOpen}
-                aria-controls={`portfolio-column-panel`}
-                onClick={() => toolbar.setSettingsOpen(current => !current)}
+                onClick={toolbar.openSettings}
+                aria-controls={`table-settings-dialog`}
                 className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button${toolbar.settingsOpen ? ` portfolio-toolbar-icon-button-active` : ``}`}
               >
                 <Settings size={16} aria-hidden={`true`} id={`portfolio-table-settings-icon`} className={`portfolio-button-icon`} />
@@ -654,6 +718,19 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       {portfolio.setupOpen && (
         <RegistrarSetup onClose={portfolio.closeSetup} onManual={() => portfolio.openEditor()} />
       )}
+      {toolbar.settingsOpen && (
+        <TableSettings
+          onFit={fitColumns}
+          onReset={resetColumns}
+          onToggle={toggleColumn}
+          columnCounts={columnCounts}
+          fitDisabled={portfolio.loading}
+          sortField={portfolio.sortField}
+          visibleColumns={visibleColumns}
+          onClose={() => toolbar.setSettingsOpen(false)}
+          onToggleManualOrder={portfolio.toggleManualOrder}
+        />
+      )}
       {toolbar.copyOpen && (
         <PortfolioCopyOptions
           busy={toolbar.copying}
@@ -663,84 +740,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           onClose={toolbar.closeCopyOptions}
           error={toolbar.copyError ? toolbar.copyMessage : undefined}
         />
-      )}
-      {portfolio.deletingDomain && (
-        <div
-          role={`presentation`}
-          id={`domain-delete-backdrop`}
-          className={`domain-dialog-backdrop`}
-          onMouseDown={event => { if (event.target === event.currentTarget) portfolio.closeDelete(); }}
-        >
-          <div
-            tabIndex={-1}
-            role={`alertdialog`}
-            aria-modal={`true`}
-            id={`domain-delete-dialog`}
-            ref={portfolio.deleteModalRef}
-            aria-labelledby={`domain-delete-title`}
-            aria-describedby={`domain-delete-description`}
-            className={`domain-dialog domain-delete-dialog`}
-          >
-            <header id={`domain-delete-header`} className={`domain-dialog-header`}>
-              <div id={`domain-delete-heading`} className={`domain-dialog-heading`}>
-                <span id={`domain-delete-eyebrow`} className={`domain-dialog-eyebrow`}>
-                  {`YOUR PORTFOLIO`}
-                </span>
-                <h2 id={`domain-delete-title`} className={`domain-dialog-title`}>
-                  {`Remove this domain?`}
-                </h2>
-              </div>
-              <button
-                type={`button`}
-                id={`domain-delete-close`}
-                onClick={portfolio.closeDelete}
-                disabled={Boolean(portfolio.pendingId)}
-                className={`domain-dialog-close`}
-                aria-label={`Close Remove Domain Dialog`}
-              >
-                <X size={19} aria-hidden={`true`} id={`domain-delete-close-icon`} className={`domain-dialog-close-icon`} />
-              </button>
-            </header>
-            <p id={`domain-delete-name`} className={`domain-delete-name`}>
-              {portfolio.deletingDomain.name}
-            </p>
-            <p id={`domain-delete-description`} className={`domain-dialog-description`}>
-              {`This removes the entry from this device. It doesn't cancel your domain registration.`}
-            </p>
-            {portfolio.localError && (
-              <p role={`alert`} id={`domain-delete-error`} className={`domain-dialog-error`}>
-                {portfolio.localError}
-              </p>
-            )}
-            <footer id={`domain-delete-footer`} className={`domain-dialog-footer domain-delete-footer`}>
-              <button
-                data-autofocus
-                type={`button`}
-                id={`domain-delete-cancel`}
-                onClick={portfolio.closeDelete}
-                disabled={Boolean(portfolio.pendingId)}
-                className={`portfolio-button portfolio-button-secondary`}
-              >
-                <X size={15} aria-hidden={`true`} id={`domain-delete-cancel-icon`} className={`portfolio-button-icon`} />
-                <span id={`domain-delete-cancel-text`} className={`portfolio-button-text`}>
-                  {`Keep Domain`}
-                </span>
-              </button>
-              <button
-                type={`button`}
-                id={`domain-delete-confirm`}
-                onClick={portfolio.confirmDelete}
-                disabled={Boolean(portfolio.pendingId)}
-                className={`portfolio-button portfolio-button-danger`}
-              >
-                <Trash2 size={15} aria-hidden={`true`} id={`domain-delete-confirm-icon`} className={`portfolio-button-icon`} />
-                <span id={`domain-delete-confirm-text`} className={`portfolio-button-text`}>
-                  {portfolio.pendingId ? `Removing…` : `Remove Domain`}
-                </span>
-              </button>
-            </footer>
-          </div>
-        </div>
       )}
     </section>
   );

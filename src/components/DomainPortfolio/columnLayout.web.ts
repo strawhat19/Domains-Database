@@ -1,6 +1,6 @@
 import type { DomainRecord } from '../../shared/types';
 import { getDomainStatus } from '../../shared/domainUtils';
-import { getDomainPreviewLink } from '../../shared/domainLinks';
+import { getDomainPreviewLink, getDomainGithubRepoLink } from '../../shared/domainLinks';
 import { getDomainColumnKey } from '../DomainRow/domainRow';
 import { getDomainSourceBadge } from '../DomainSourceBadge/domainSourceBadge';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnDisplay, getPortfolioColumnValue, type PortfolioColumn, type PortfolioColumnDefinition } from '../../shared/portfolioColumns';
@@ -94,18 +94,18 @@ export const fitPortfolioColumns = (
     const description = find(`.domain-description`, cell);
     const readMore = description?.querySelector(`.domain-description-read-more`);
     const descriptionTrigger = description?.querySelector(`.domain-description-trigger`);
-    const addDescriptionLabel = description?.querySelector(`.domain-description-add-label`);
-    const stackedName = readStyle(nameCopy)?.flexDirection === `column`;
-    const linkDecoration = horizontalBox(link) + elementWidth(find(`.domain-site-link-icon`, cell), 13) + elementGap(link, 6);
+    const descriptionCopy = find(`.domain-name-copy:has(.domain-site-description)`, cell) ?? nameCopy;
+    const stackedName = readStyle(descriptionCopy)?.flexDirection === `column`;
+    const linkDecoration = horizontalBox(link);
     const nameDecoration = horizontalBox(identity) + horizontalBox(nameCopy)
       + elementWidth(find(`.domain-site-icon`, cell), 28) + elementGap(identity, 9)
       + (reorder || !cell ? elementWidth(reorder, 36) + elementGap(identity, 9) : 0);
     const attentionDecoration = elementWidth(find(`.domain-attention-dot`, cell), 5) + elementGap(link, 6);
     const descriptionFont = readFont(description?.querySelector(`.domain-site-description`), 12);
-    const addDescriptionFont = readFont(addDescriptionLabel, 11);
     const nameGap = elementGap(nameCopy, 6);
     const headingGap = elementGap(heading, 6);
     const previewWidth = elementWidth(cell?.querySelector(`.domain-preview-link`), 22);
+    const githubWidth = elementWidth(cell?.querySelector(`.domain-github-link`), 22);
     const descriptionDecoration = horizontalBox(description) + horizontalBox(descriptionTrigger, 8) + elementGap(descriptionTrigger, 4);
     const readMoreDecoration = elementWidth(readMore)
       + (readMore ? elementGap(description, 6) : 0);
@@ -129,16 +129,17 @@ export const fitPortfolioColumns = (
       const value = getPortfolioColumnDisplay(domain, field);
       let width = measure(value, font);
       if (field === `name`) {
+        const hasDescription = Boolean(domain.description?.trim());
         const projectWidth = measure(getPortfolioColumnDisplay(domain, `projectStatus`), projectFont) + projectDecoration;
-        const descriptionWidth = domain.description?.trim()
-          ? Math.min(280, measure(domain.description.trim(), descriptionFont)) + descriptionDecoration
+        const descriptionWidth = hasDescription
+          ? Math.min(280, measure(domain.description?.trim() ?? ``, descriptionFont)) + descriptionDecoration
             + elementWidth(description?.querySelector(`.domain-description-edit-icon`), 12) + readMoreDecoration
-          : measure(addDescriptionLabel?.textContent?.trim() || `Add Description`, addDescriptionFont) + descriptionDecoration
-            + elementWidth(description?.querySelector(`.domain-description-add-icon`), 12);
+          : elementWidth(find(`.domain-description-empty`, cell), 22);
         const linkWidth = width + linkDecoration + (getDomainStatus(domain) !== `Active` ? attentionDecoration : 0);
         const headingWidth = linkWidth + projectWidth + headingGap + horizontalBox(heading)
-          + (getDomainPreviewLink(domain) ? previewWidth + headingGap : 0);
-        width = nameDecoration + (stackedName
+          + (getDomainPreviewLink(domain) ? previewWidth + headingGap : 0)
+          + (getDomainGithubRepoLink(domain) ? githubWidth + headingGap : 0);
+        width = nameDecoration + (stackedName && hasDescription
           ? Math.max(headingWidth, descriptionWidth)
           : headingWidth + descriptionWidth + (descriptionWidth ? nameGap : 0));
       } else if (field === `registrar`) {

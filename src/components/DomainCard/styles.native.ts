@@ -16,7 +16,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   name: { flexShrink: 1, color: palette.accent, fontSize: 16, letterSpacing: -.3, fontFamily: `DMSans_600SemiBold` },
   nameLine: { gap: 6, flexDirection: `row`, alignItems: `center` },
   nameSeparator: { flexShrink: 0, color: palette.muted, fontSize: 12, fontFamily: `DMSans_400Regular` },
-  siteLink: { gap: 5, flexShrink: 1, maxWidth: `100%`, flexDirection: `row`, alignItems: `center` },
+  siteLink: { flexShrink: 1, maxWidth: `100%`, flexDirection: `row`, alignItems: `center` },
   siteDescription: { flex: 1, minWidth: 0, color: `#ffffff`, fontSize: 12, fontFamily: `DMSans_400Regular` },
   owner: { color: palette.muted, fontSize: 11, fontFamily: `DMSans_400Regular` },
   actionsCell: { gap: 3, flexDirection: `row` },

@@ -7,7 +7,7 @@ export type { Domain, Registrar, DomainRegistrant } from './models/domains/Domai
 
 export type DomainRecord = Domain;
 export type DomainSource = `csv` | `manual` | `registrar`;
-export interface DomainInput extends Omit<DomainRecord, keyof Data | `isSample` | `projectStatus`> {
+export interface DomainInput extends Omit<DomainRecord, keyof Data | `starred` | `isSample` | `projectStatus`> {
   name: string;
   title?: string;
   color?: DataColor;

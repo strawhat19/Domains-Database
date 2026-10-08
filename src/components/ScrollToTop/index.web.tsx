@@ -1,8 +1,8 @@
 import './styles.scss';
-import { ArrowUp } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import type { ScrollToTopProps } from './types';
 
-const ScrollToTop = ({ visible, onPress, bottomInset = 0 }: ScrollToTopProps) => (
+const ScrollToTop = ({ visible, onPress, rightInset = 20, bottomInset = 0 }: ScrollToTopProps) => (
   <button
     type={`button`}
     onClick={onPress}
@@ -13,9 +13,12 @@ const ScrollToTop = ({ visible, onPress, bottomInset = 0 }: ScrollToTopProps) =>
     tabIndex={visible ? 0 : -1}
     aria-label={`Scroll To Top`}
     className={`scroll-to-top${visible ? ` is-visible` : ``}`}
-    style={{ bottom: `calc(20px + ${bottomInset}px + env(safe-area-inset-bottom, 0px))` }}
+    style={{
+      right: `max(${rightInset}px, env(safe-area-inset-right, 0px))`,
+      bottom: `calc(20px + ${bottomInset}px + env(safe-area-inset-bottom, 0px))`,
+    }}
   >
-    <ArrowUp
+    <ChevronUp
       size={19}
       aria-hidden={`true`}
       id={`scroll-to-top-icon`}

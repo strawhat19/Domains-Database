@@ -1,0 +1,41 @@
+.domain-dialog.table-settings {
+  display: flex;
+  max-width: 940px;
+  overflow: hidden;
+  flex-direction: column;
+}
+.table-settings-header { flex-shrink: 0; margin-bottom: 20px; }
+.table-settings-content {
+  gap: 24px;
+  min-height: 0;
+  display: grid;
+  overflow-y: auto;
+  padding: 4px 4px 4px 0;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+.table-settings-fields { gap: 18px 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.table-settings-field { gap: 8px; border: 0; margin: 0; padding: 0; min-width: 0; display: grid; align-content: start; }
+.table-settings-label { gap: 5px; padding: 0; display: flex; font-size: 11px; color: var(--muted); align-items: center; }
+.table-settings-view .table-settings-label { margin-bottom: 8px; }
+.table-settings-choices { gap: 8px; display: flex; flex-wrap: wrap; }
+.table-settings-choice[aria-pressed=true] { color: var(--contrast); border-color: var(--accent); background: var(--accent); }
+.table-settings-sort-options { gap: 8px; display: grid; justify-items: start; }
+.table-settings-current-sort { font-size: 12px; color: var(--ink); }
+.table-settings-group-visibility { align-content: center; }
+.table-settings-hidden-label { gap: 7px; display: flex; cursor: pointer; font-size: 12px; color: var(--ink); align-items: center; }
+.table-settings-field-icon { flex-shrink: 0; }
+.table-settings-hidden-text { min-width: 0; overflow-wrap: anywhere; }
+.table-settings .table-settings-footer { gap: 12px; flex-shrink: 0; align-items: center; justify-content: space-between; }
+.table-settings-column-actions { gap: 8px; display: flex; flex-wrap: wrap; }
+.table-settings :is(button, input, select):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 620px) {
+  .table-settings-fields { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .table-settings .table-settings-footer { align-items: stretch; flex-direction: column; }
+  .table-settings-column-actions .portfolio-button { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .table-settings .portfolio-button, .table-settings .column-controls-option { transition: none; }
+}

@@ -4,7 +4,29 @@ import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainProjectStatus } from '../../shared/domainProject';
-import { Eye, Flag, Code2, Award, Sprout, ListTodo, Building2, Lightbulb, Briefcase, CircleCheck, FlaskConical } from 'lucide-react-native';
+import {
+  Eye,
+  Flag,
+  Plug,
+  Code2,
+  Award,
+  LogIn,
+  Brain,
+  Sprout,
+  Rocket,
+  Monitor,
+  ListTodo,
+  Database,
+  Building2,
+  Lightbulb,
+  Briefcase,
+  Megaphone,
+  CreditCard,
+  CheckCheck,
+  Smartphone,
+  CircleCheck,
+  FlaskConical,
+} from 'lucide-react-native';
 
 interface DomainProjectBadgeProps {
   id: string;
@@ -12,7 +34,29 @@ interface DomainProjectBadgeProps {
   field: `projectStatus` | `difficulty`;
 }
 
-const icons: Record<string, typeof Eye> = { Eye, Flag, Code2, Award, Sprout, ListTodo, Building2, Lightbulb, Briefcase, CircleCheck, FlaskConical };
+const icons: Record<string, typeof Eye> = {
+  Eye,
+  Flag,
+  Plug,
+  Code2,
+  Award,
+  LogIn,
+  Brain,
+  Sprout,
+  Rocket,
+  Monitor,
+  ListTodo,
+  Database,
+  Building2,
+  Lightbulb,
+  Briefcase,
+  Megaphone,
+  CreditCard,
+  CheckCheck,
+  Smartphone,
+  CircleCheck,
+  FlaskConical,
+};
 
 const DomainProjectBadge = ({ id, field, value }: DomainProjectBadgeProps) => {
   const { palette } = useTheme();

@@ -30,6 +30,7 @@ export interface DomainContextValue {
   resetSampleData: () => Promise<void>;
   prepareExport: () => Promise<DomainRecord[]>;
   deleteDomain: (id: string) => Promise<void>;
+  toggleDomainStar: (id: string) => Promise<void>;
   refreshWebsiteInsights: (domains: DomainRecord[]) => Promise<void>;
   importDomains: (inputs: DomainInput[]) => Promise<number>;
   addDomain: (input: DomainInput) => Promise<DomainRecord>;
@@ -103,6 +104,7 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
 
   const addDomain = useCallback((input: DomainInput) => mutate(() => api.createDomain(input), `Domain Added`), [mutate]);
   const deleteDomain = useCallback((id: string) => mutate(() => api.deleteDomain(id), `Domain Removed`), [mutate]);
+  const toggleDomainStar = useCallback((id: string) => mutate(() => api.toggleDomainStar(id), `Domain Star Updated`), [mutate]);
   const updateDomain = useCallback((id: string, input: DomainInput) => mutate(() => api.updateDomain(id, input), `Domain Updated`), [mutate]);
   const importDomains = useCallback((inputs: DomainInput[]) => mutate(() => api.importDomains(inputs), `${inputs.length} Domain(s) Imported`), [mutate]);
   const prepareExport = useCallback(() => mutate(() => api.prepareExport(), `CSV Prepared`), [mutate]);
@@ -129,12 +131,13 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
     importDomains,
     prepareExport,
     resetSampleData,
+    toggleDomainStar,
     refreshWebsiteInsights,
     syncConnections: sync.syncConnections,
     accountStatuses: sync.accountStatuses,
     connectionStatuses: sync.connectionStatuses,
     resetConnectionSync: sync.resetConnectionSync,
-  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.accountStatuses, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
+  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, toggleDomainStar, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.accountStatuses, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
 
   return (
     <DomainContext.Provider value={value}>

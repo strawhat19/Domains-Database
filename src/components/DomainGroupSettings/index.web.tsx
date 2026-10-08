@@ -1,6 +1,7 @@
 import './styles.scss';
 import '../DomainEditor/styles.scss';
 import { X, Check } from 'lucide-react';
+import StarButton from '../StarButton/index.web';
 import SettingsField from '../SettingsField/index.web';
 import type { CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
 import { CREATE_COLLECTION_OPTION, MAIN_DATABASE_COLLECTION_OPTION, useDomainGroupSettings } from './useDomainGroupSettings';
@@ -36,21 +37,31 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
         <header id={`domain-group-settings-header`} className={`domain-dialog-header domain-group-settings-header`}>
           <div id={`domain-group-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-group-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {`SETTINGS`}
+              {`GROUP SETTINGS`}
             </span>
             <h2 id={`domain-group-settings-title`} className={`domain-dialog-title`}>
               {group.name}
             </h2>
           </div>
-          <button
-            type={`button`}
-            onClick={onClose}
-            id={`domain-group-settings-close`}
-            aria-label={`Close Group Settings`}
-            className={`domain-dialog-close domain-group-settings-close`}
-          >
-            <X size={19} aria-hidden={`true`} id={`domain-group-settings-close-icon`} className={`domain-dialog-close-icon`} />
-          </button>
+          <div id={`domain-group-settings-header-actions-${group.id}`} className={`domain-group-settings-header-actions`}>
+            <StarButton
+              size={34}
+              starred={settings.starred}
+              onPress={settings.toggleStar}
+              disabled={settings.missingGroup}
+              id={`domain-group-settings-star-${group.id}`}
+              label={`${settings.starred ? `Unstar` : `Star`} ${group.name}`}
+            />
+            <button
+              type={`button`}
+              onClick={onClose}
+              id={`domain-group-settings-close`}
+              aria-label={`Close Group Settings`}
+              className={`domain-dialog-close domain-group-settings-close`}
+            >
+              <X size={19} aria-hidden={`true`} id={`domain-group-settings-close-icon`} className={`domain-dialog-close-icon`} />
+            </button>
+          </div>
         </header>
         <form noValidate id={`domain-group-settings-form`} className={`domain-group-settings-form`} onSubmit={settings.handleSubmit}>
           <div id={`domain-group-settings-fields`} className={`domain-group-settings-fields`}>

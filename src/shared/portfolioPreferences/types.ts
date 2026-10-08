@@ -9,6 +9,7 @@ export type PortfolioGroupBy = `none` | `custom` | PortfolioColumn;
 export interface CustomPortfolioGroup {
   id: string;
   name: string;
+  starred?: boolean;
   description?: string;
   collectionId?: string;
   domainIds: string[];
@@ -37,6 +38,8 @@ export interface GroupSettingsInput {
 export interface PortfolioPreferences {
   view: PortfolioView;
   groupBy: PortfolioGroupBy;
+  hiddenGroupKeys: string[];
+  showHiddenGroups: boolean;
   collectionNumber: number;
   customGroups: CustomPortfolioGroup[];
   orders: Record<string, string[]>;
@@ -70,6 +73,9 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   deleteGroup: (groupId: string) => void;
   setGroupBy: (groupBy: PortfolioGroupBy) => void;
   renameGroup: (groupId: string, name: string) => boolean;
+  toggleGroupStar: (groupId: string) => boolean;
+  setShowHiddenGroups: (value: boolean) => void;
+  toggleGroupVisibility: (groupKey: string) => boolean;
   assignDomain: (domainId: string, groupId: string | null) => void;
   createGroup: (name: string, domainIds?: string[]) => string | undefined;
   assignDomains: (domainIds: string[], groupId: string | null) => boolean;

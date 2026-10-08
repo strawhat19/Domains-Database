@@ -3,6 +3,7 @@ import RegistrarSetup from '../RegistrarSetup';
 import { createStyles } from './styles.native';
 import { REGISTRARS } from '../../shared/config';
 import DomainCard from '../DomainCard/index.native';
+import DomainStarButton from '../DomainStarButton/index.native';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
 import DomainProjectSelect from '../DomainProjectSelect/index.native';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,10 +14,11 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
+import { getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, RefreshCw } from 'lucide-react-native';
+import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, Trash2, RefreshCw } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -42,6 +44,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const visibleIds = state.visibleDomains.map(domain => domain.id);
   const editorSiteIconUrl = getDomainSiteIconUrl(state.input);
   const editingSyncedDomain = state.editingSyncedDomain;
+  const editingRecord = state.domains.find(domain => domain.id === state.editingId) ?? state.editingDomain;
+  const deletionRestriction = editingRecord ? getDomainDeletionRestriction(editingRecord) : ``;
+  const deleteDisabled = state.saving || Boolean(deletionRestriction);
   const selectDomain = (id: string) => setSelectedIds(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
   const selectVisible = () => setSelectedIds(current => [...new Set([...current, ...visibleIds])]);
   const clearVisible = () => setSelectedIds(current => current.filter(id => !visibleIds.includes(id)));
@@ -110,9 +115,25 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 );
               })}
             </View>
-            <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
-              {state.loading ? `— need attention` : `${state.dueSoon} need attention`}
-            </Text>
+            <View {...elementProps(`native-portfolio-counts-details`)} style={styles.countsDetails}>
+              <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
+                {state.loading ? `— need attention` : `${state.dueSoon} need attention`}
+              </Text>
+              {state.syncing && (
+                <View
+                  accessible
+                  {...elementProps(`native-portfolio-sync-status`)}
+                  style={styles.syncStatus}
+                  accessibilityRole={`progressbar`}
+                  accessibilityLiveRegion={`polite`}
+                  accessibilityState={{ busy: true }}
+                  accessibilityLabel={`Syncing Domains…`}
+                >
+                  <ActivityIndicator {...elementProps(`native-portfolio-sync-spinner`)} size={`small`} color={palette.accent} />
+                  <Text {...elementProps(`native-portfolio-sync-text`)} style={styles.description}>{`Syncing Domains…`}</Text>
+                </View>
+              )}
+            </View>
           </View>
           <View {...elementProps(`native-portfolio-primary-actions`)} style={styles.headingActions}>
             {user && state.canSyncManually && (
@@ -145,20 +166,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         <Text {...elementProps(`native-portfolio-manual-sync-message`)} style={styles.manualSyncMessage} accessibilityLiveRegion={`polite`}>
           {state.manualSyncMessage}
         </Text>
-      )}
-      {state.syncing && (
-        <View
-          accessible
-          {...elementProps(`native-portfolio-sync-status`)}
-          style={styles.syncStatus}
-          accessibilityRole={`progressbar`}
-          accessibilityLiveRegion={`polite`}
-          accessibilityState={{ busy: true }}
-          accessibilityLabel={`Syncing Domains…`}
-        >
-          <ActivityIndicator {...elementProps(`native-portfolio-sync-spinner`)} size={`small`} color={palette.accent} />
-          <Text {...elementProps(`native-portfolio-sync-text`)} style={styles.description}>{`Syncing Domains…`}</Text>
-        </View>
       )}
       <Pressable
         onPress={refreshWebsiteInfo}
@@ -290,7 +297,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Pressable>
           <View {...elementProps(`native-portfolio-selected-count`)} style={styles.secondaryButton} accessibilityLiveRegion={`polite`}>
             <Text {...elementProps(`native-portfolio-selected-count-text`)} style={styles.secondaryButtonText}>
-              {`${selectedIds.length} selected${selectionToolsWidth >= 640 ? ` / ${state.domains.length} total` : ``}`}
+              {selectedIds.length
+                ? `${selectedIds.length} selected${selectionToolsWidth >= 640 ? ` / ${state.domains.length} total` : ``}`
+                : `${state.domains.length} total`}
             </Text>
           </View>
         </ScrollView>
@@ -303,7 +312,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             domain={domain}
             onSelect={selectDomain}
             onEdit={state.openEditor}
-            onDelete={state.deleteDomain}
             selected={selectedIds.includes(domain.id)}
           />
         ))}
@@ -362,7 +370,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <View {...elementProps(`native-domain-editor-header`)} style={styles.modalHeader}>
                 <View {...elementProps(`native-domain-editor-heading`)} style={styles.modalHeading}>
                   <Text {...elementProps(`native-domain-editor-eyebrow`)} style={styles.modalEyebrow}>
-                    {state.editingDomain ? `SETTINGS` : `DOMAIN RECORD`}
+                    {state.editingDomain ? `DOMAIN SETTINGS` : `DOMAIN RECORD`}
                   </Text>
                   <View
                     style={styles.modalTitleRow}
@@ -391,9 +399,23 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     )}
                   </View>
                 </View>
-                <Pressable {...elementProps(`native-domain-editor-close`)} style={styles.modalClose} disabled={state.saving} onPress={state.closeEditor} accessibilityRole={`button`} accessibilityLabel={`Close Domain Editor`}>
-                  <X {...elementProps(`native-domain-editor-close-icon`)} size={17} color={palette.muted} />
-                </Pressable>
+                <View
+                  style={styles.modalHeaderActions}
+                  {...elementProps(`native-domain-editor-header-actions`, state.editingId ?? `new`)}
+                >
+                  {state.editingDomain && (
+                    <DomainStarButton
+                      size={34}
+                      disabled={state.saving}
+                      domainId={state.editingDomain.id}
+                      domainName={state.editingDomain.name}
+                      id={`native-domain-editor-star-${state.editingDomain.id}`}
+                    />
+                  )}
+                  <Pressable {...elementProps(`native-domain-editor-close`)} style={styles.modalClose} disabled={state.saving} onPress={state.closeEditor} accessibilityRole={`button`} accessibilityLabel={`Close Domain Editor`}>
+                    <X {...elementProps(`native-domain-editor-close-icon`)} size={17} color={palette.muted} />
+                  </Pressable>
+                </View>
               </View>
               <ScrollView {...elementProps(`native-domain-editor-scroll`)} style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps={`handled`}>
                 <View {...elementProps(`native-domain-editor-site-icon-field`)} style={styles.field}>
@@ -646,11 +668,48 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </ScrollView>
               <View {...elementProps(`native-domain-editor-footer`)} style={styles.modalFooter}>
                 <Pressable {...elementProps(`native-domain-editor-save`)} style={[styles.primaryButton, state.saving && styles.disabled]} disabled={state.saving} onPress={() => void state.saveDomain()} accessibilityRole={`button`} accessibilityLabel={`Save Domain`}>
-                  {state.saving ? <ActivityIndicator {...elementProps(`native-domain-editor-save-progress`)} size={`small`} color={`#ffffff`} /> : <Save {...elementProps(`native-domain-editor-save-icon`)} size={14} color={`#ffffff`} />}
+                  {state.saving && !state.deleting ? <ActivityIndicator {...elementProps(`native-domain-editor-save-progress`)} size={`small`} color={`#ffffff`} /> : <Save {...elementProps(`native-domain-editor-save-icon`)} size={14} color={`#ffffff`} />}
                   <Text {...elementProps(`native-domain-editor-save-text`)} style={styles.primaryButtonText}>
-                    {state.saving ? `Saving…` : `Save domain`}
+                    {state.saving && !state.deleting ? `Saving…` : `Save domain`}
                   </Text>
                 </Pressable>
+                {state.editingDomain && (
+                  <View
+                    style={styles.field}
+                    {...elementProps(`native-domain-editor-delete-action`, state.editingDomain.id)}
+                  >
+                    <Pressable
+                      disabled={deleteDisabled}
+                      onPress={state.requestDelete}
+                      accessibilityRole={`button`}
+                      accessibilityLabel={`Delete ${state.editingDomain.name}`}
+                      accessibilityHint={deletionRestriction || `Confirm removal from your portfolio`}
+                      accessibilityState={{ disabled: deleteDisabled }}
+                      {...elementProps(`native-domain-editor-delete`, state.editingDomain.id)}
+                      style={[styles.secondaryButton, styles.deleteButton, deleteDisabled && styles.disabled]}
+                    >
+                      <Trash2
+                        size={14}
+                        color={palette.danger}
+                        {...elementProps(`native-domain-editor-delete-icon`, state.editingDomain.id)}
+                      />
+                      <Text
+                        style={[styles.secondaryButtonText, styles.deleteButtonText]}
+                        {...elementProps(`native-domain-editor-delete-text`, state.editingDomain.id)}
+                      >
+                        {state.deleting ? `Deleting…` : `Delete Domain`}
+                      </Text>
+                    </Pressable>
+                    {!!deletionRestriction && (
+                      <Text
+                        style={styles.fieldHint}
+                        {...elementProps(`native-domain-editor-delete-restriction`, state.editingDomain.id)}
+                      >
+                        {deletionRestriction}
+                      </Text>
+                    )}
+                  </View>
+                )}
                 <Text {...elementProps(`native-domain-editor-footnote`)} style={styles.modalFootnote}>
                   {`Registrar accounts stay as they are.`}
                 </Text>

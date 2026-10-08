@@ -44,6 +44,8 @@
   border: 1px solid var(--line);
 }
 .domain-name-copy { flex: 1; gap: 6px; min-width: 0; display: flex; align-items: center; }
+.domain-name-copy:has(.domain-description-empty) { flex-wrap: wrap; align-items: center; flex-direction: row; }
+.domain-name-copy:has(.domain-description-empty) > .domain-description { flex: 0 0 auto; }
 .domain-name-copy:has(.domain-description-editing) { gap: 4px; align-items: stretch; flex-direction: column; }
 .domain-name-heading { gap: 6px; min-width: 0; display: flex; align-items: center; }
 .domain-name-copy .domain-site-link { flex-shrink: 1; }
@@ -71,18 +73,10 @@
   &:hover, &:focus-visible {
     color: var(--accent);
     text-decoration: underline;
-    .domain-site-link-icon { color: var(--accent); transform: translate(1px, -1px); }
   }
 }
 .domain-site-link-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.domain-site-link-icon {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-  color: var(--accent);
-  transition: color .2s ease, transform .2s ease;
-}
-.domain-preview-link {
+.domain-github-link, .domain-preview-link {
   width: 22px;
   height: 22px;
   display: grid;
@@ -163,7 +157,6 @@
   background: transparent;
   transition: background .2s ease, color .2s ease;
   &:hover { color: var(--ink); background: var(--subtle); }
-  &-remove:hover { color: var(--danger); background: var(--danger-bg); }
   &:disabled { opacity: .4; cursor: wait; }
 }
 .domain-row-skeleton:hover { background: transparent; }
@@ -194,7 +187,6 @@
   .domain-identity { gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .domain-row, .domain-row-action, .domain-move-action, .domain-auto-renew, .domain-site-link, .domain-preview-link, .domain-site-link-icon { transition: none; }
-  .domain-site-link:hover .domain-site-link-icon, .domain-site-link:focus-visible .domain-site-link-icon { transform: none; }
+  .domain-row, .domain-row-action, .domain-move-action, .domain-auto-renew, .domain-site-link, .domain-github-link, .domain-preview-link { transition: none; }
   .domain-skeleton-line { animation: none; }
 }

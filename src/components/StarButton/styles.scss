@@ -1,0 +1,26 @@
+.star-button {
+  border: 0;
+  padding: 0;
+  display: grid;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--muted);
+  border-radius: 6px;
+  place-items: center;
+  background: transparent;
+  transition: color .2s ease, background .2s ease;
+  &:hover:not(:disabled) { color: var(--ink); background: var(--input); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  &:disabled { opacity: .55; cursor: wait; }
+}
+.star-button-icon { transition: filter .2s ease, transform .2s ease; }
+.star-button:hover:not(:disabled) .star-button-icon { transform: scale(1.08); }
+.star-button-starred {
+  color: #fbbf24;
+  &:hover:not(:disabled) { color: #fbbf24; }
+  .star-button-icon { filter: drop-shadow(0 0 5px #fbbf2499); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .star-button, .star-button-icon { transition: none; }
+  .star-button:hover:not(:disabled) .star-button-icon { transform: none; }
+}

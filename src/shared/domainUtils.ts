@@ -32,6 +32,14 @@ export const getDomainSource = (domain: DomainRecord): DomainSource => {
   return `manual`;
 };
 
+export const getDomainDeletionRestriction = (domain: DomainRecord): string => {
+  const source = getDomainSource(domain);
+  if (source === `manual`) return ``;
+  return source === `registrar`
+    ? `Synced domains cannot be deleted here. They are managed by your connected registrar.`
+    : `Only manually added domains can be deleted here. This domain was imported from CSV.`;
+};
+
 export const getRegistrarCounts = (domains: DomainRecord[]) => {
   const counts = new Map<string, number>();
   for (const domain of domains) {

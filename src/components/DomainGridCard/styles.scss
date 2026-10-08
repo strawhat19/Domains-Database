@@ -22,7 +22,6 @@
 .domain-grid-card-name-separator { font-size: 12px; flex-shrink: 0; white-space: pre; color: var(--muted); }
 .domain-grid-card-description { flex: 1; min-width: 0; color: #fff; font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .domain-grid-card-site-link {
-  gap: 5px;
   min-width: 0;
   max-width: 100%;
   font-size: 14px;
@@ -35,14 +34,10 @@
   text-underline-offset: 3px;
   font-family: var(--font-bold);
   transition: color .2s ease;
-  &:hover, &:focus-visible {
-    text-decoration: underline;
-    .domain-grid-card-site-link-icon { transform: translate(1px, -1px); }
-  }
+  &:hover, &:focus-visible { text-decoration: underline; }
 }
 .domain-grid-card-site-link-label { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .domain-grid-card-extension { color: var(--accent); }
-.domain-grid-card-site-link-icon { flex-shrink: 0; color: var(--accent); transition: transform .2s ease; }
 .domain-grid-card-details { gap: 12px 16px; margin: 0; display: grid; padding: 0 16px 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .domain-grid-card-field { min-width: 0; }
 .domain-grid-card-field-label { font-size: 10px; margin-bottom: 5px; color: var(--muted); }
@@ -87,7 +82,6 @@
   background: transparent;
   transition: background .2s ease, color .2s ease;
   &:hover, &:focus-visible { color: var(--ink); background: var(--subtle); }
-  &-remove:hover { color: var(--danger); background: var(--danger-bg); }
   &:disabled { opacity: .3; cursor: default; }
 }
 .domain-grid-card-skeleton:hover { border-color: var(--line); }
@@ -107,7 +101,6 @@
 .domain-grid-card-skeleton-actions { width: 52px; height: 24px; margin-left: auto; }
 @keyframes domain-grid-card-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .domain-grid-card, .domain-grid-card-action, .domain-grid-card-auto-renew, .domain-grid-card-site-link, .domain-grid-card-site-link-icon { transition: none; }
-  .domain-grid-card-site-link:hover .domain-grid-card-site-link-icon, .domain-grid-card-site-link:focus-visible .domain-grid-card-site-link-icon { transform: none; }
+  .domain-grid-card, .domain-grid-card-action, .domain-grid-card-auto-renew, .domain-grid-card-site-link { transition: none; }
   .domain-grid-card-skeleton-line { animation: none; }
 }

@@ -26,6 +26,7 @@
   grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
 }
 .column-controls-group { min-width: 0; }
+.column-controls-options-expanded .column-controls-groups { max-height: none; overflow: visible; padding-right: 0; scrollbar-gutter: auto; }
 .column-controls-group-title {
   margin: 0;
   font-size: 11px;

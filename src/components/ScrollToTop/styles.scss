@@ -9,7 +9,7 @@
   position: fixed;
   cursor: pointer;
   visibility: hidden;
-  border-radius: 5px;
+  border-radius: 50%;
   pointer-events: none;
   color: var(--accent);
   place-items: center;
@@ -17,7 +17,7 @@
   transform: translateY(8px);
   border: 1px solid var(--line);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--ink) 12%, transparent);
-  transition: opacity .24s ease, transform .24s ease, background .24s ease, border-color .24s ease, visibility 0s .24s;
+  transition: right .24s ease, opacity .24s ease, transform .24s ease, background .24s ease, border-color .24s ease, visibility 0s .24s;
 
   &.is-visible {
     opacity: 1;

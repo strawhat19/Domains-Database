@@ -31,6 +31,7 @@
   justify-content: space-between;
 }
 .domain-dialog-heading { min-width: 0; }
+.domain-editor-header-actions { gap: 8px; display: flex; flex-shrink: 0; align-items: center; }
 .domain-editor-settings .domain-dialog-header { margin-bottom: 25px; }
 .domain-editor-title-row {
   gap: 12px;
@@ -164,6 +165,30 @@
   border-top: 1px solid var(--line);
 }
 .domain-dialog-actions { gap: 8px; display: flex; margin-left: auto; align-items: center; }
+.domain-editor-delete-action { gap: 7px; min-width: 0; display: grid; justify-items: start; }
+.domain-editor-delete-restriction { margin: 0; max-width: 330px; font-size: 11px; line-height: 1.5; color: var(--muted); }
+.domain-editor .domain-editor-delete-button {
+  color: var(--danger);
+  background: transparent;
+  border-color: var(--danger);
+  &:hover:not(:disabled) { background: var(--subtle); }
+  &:focus-visible { outline: 2px solid var(--danger); outline-offset: 3px; }
+  &:disabled { opacity: .45; cursor: not-allowed; }
+}
+.domain-editor-delete-confirmation {
+  gap: 16px;
+  display: flex;
+  padding: 16px;
+  margin-top: 24px;
+  border-radius: 8px;
+  align-items: center;
+  border: 1px solid var(--danger);
+  justify-content: space-between;
+}
+.domain-editor-delete-confirmation-copy { min-width: 0; }
+.domain-editor-delete-confirmation-title { margin: 0; font-size: 14px; color: var(--danger); }
+.domain-editor-delete-confirmation-description { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+.domain-editor-delete-confirmation-actions { gap: 8px; display: flex; flex-shrink: 0; }
 @keyframes domain-dialog-reveal { from { opacity: 0; } to { opacity: 1; } }
 @keyframes domain-dialog-enter { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (min-width: 900px) {
@@ -172,6 +197,7 @@
 }
 @media (max-width: 800px) {
   .domain-editor-settings .domain-editor-content { grid-template-columns: minmax(0, 1fr); }
+  .domain-editor-delete-confirmation { align-items: flex-start; flex-direction: column; }
 }
 @media (max-width: 560px) {
   .domain-dialog-backdrop { padding: 16px; align-items: flex-start; }
@@ -184,6 +210,8 @@
   .domain-dialog-actions { width: 100%; align-items: stretch; flex-direction: column; }
   .domain-dialog .portfolio-button { min-width: 0; max-width: 100%; white-space: normal; }
   .domain-dialog-actions .portfolio-button { width: 100%; }
+  .domain-editor-delete-action, .domain-editor-delete-confirmation-actions { width: 100%; }
+  .domain-editor-delete-confirmation-actions { flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) {
   .domain-dialog, .domain-dialog-backdrop { animation: none; }

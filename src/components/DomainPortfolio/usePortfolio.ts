@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { getCsvFile } from '../../shared/csvFiles.web';
-import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
@@ -33,16 +32,12 @@ export const usePortfolio = () => {
   const [registrarFilter, setRegistrarFilter] = useState(`All Registrars`);
   const [setupOpen, setSetupOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<DomainRecord | null>(null);
-  const [deletingDomain, setDeletingDomain] = useState<DomainRecord | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [pendingId, setPendingId] = useState(``);
   const importingRef = useRef(false);
-  const deleteModalRef = useRef<HTMLDivElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
-  const closeDelete = () => { if (!pendingId) setDeletingDomain(null); };
-  useModalFocus(deleteModalRef, Boolean(deletingDomain), closeDelete);
   const sortedDomains = useMemo(() => sortPortfolioDomains(data.domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [data.domains, sortField, sortDirection]);
   const registrarDomains = useMemo(() => sortedDomains.filter(domain => (
     registrarFilter === `All Registrars` || domain.registrar === registrarFilter
@@ -90,10 +85,6 @@ export const usePortfolio = () => {
   const closeSetup = () => setSetupOpen(false);
   const requestImport = () => {
     importInputRef.current?.click();
-  };
-  const requestDelete = (domain: DomainRecord) => {
-    setLocalError(``);
-    setDeletingDomain(domain);
   };
   const clearError = () => setLocalError(``);
   const importFiles = async (files: File[]) => {
@@ -174,23 +165,10 @@ export const usePortfolio = () => {
       setPendingId(``);
     }
   };
-  const confirmDelete = async () => {
-    if (!deletingDomain || pendingId) return;
-    setPendingId(deletingDomain.id);
-    setLocalError(``);
-    try {
-      await data.deleteDomain(deletingDomain.id);
-      setDeletingDomain(null);
-    } catch (caught) {
-      setLocalError(caught instanceof Error ? caught.message : `Unable To Remove Domain`);
-    } finally {
-      setPendingId(``);
-    }
-  };
   return {
     ...data, query, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
     clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain, registrarFilter,
-    closeDelete, requestDelete, deletingDomain, deleteModalRef, importInputRef, requestImport, confirmDelete, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
-    setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, setDeletingDomain, setRegistrarFilter, toggleAutoRenew, toggleManualOrder, changeProjectStatus,
+    importInputRef, requestImport, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
+    setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, setRegistrarFilter, toggleAutoRenew, toggleManualOrder, changeProjectStatus,
   };
 };

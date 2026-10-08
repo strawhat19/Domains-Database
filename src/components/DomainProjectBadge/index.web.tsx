@@ -1,6 +1,29 @@
 import './styles.scss';
 import type { DomainProjectStatus } from '../../shared/domainProject';
-import { Eye, Flag, Code2, Award, Sprout, ListTodo, Building2, Lightbulb, Briefcase, CircleCheck, ChevronDown, FlaskConical } from 'lucide-react';
+import {
+  Eye,
+  Flag,
+  Plug,
+  Code2,
+  Award,
+  LogIn,
+  Brain,
+  Sprout,
+  Rocket,
+  Monitor,
+  ListTodo,
+  Database,
+  Building2,
+  Lightbulb,
+  Briefcase,
+  Megaphone,
+  CreditCard,
+  CheckCheck,
+  Smartphone,
+  CircleCheck,
+  ChevronDown,
+  FlaskConical,
+} from 'lucide-react';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainProjectStatus } from '../../shared/domainProject';
 
 interface DomainProjectBadgeProps {
@@ -13,7 +36,29 @@ interface DomainProjectBadgeProps {
   onChange?: (value: DomainProjectStatus) => void;
 }
 
-const icons: Record<string, typeof Eye> = { Eye, Flag, Code2, Award, Sprout, ListTodo, Building2, Lightbulb, Briefcase, CircleCheck, FlaskConical };
+const icons: Record<string, typeof Eye> = {
+  Eye,
+  Flag,
+  Plug,
+  Code2,
+  Award,
+  LogIn,
+  Brain,
+  Sprout,
+  Rocket,
+  Monitor,
+  ListTodo,
+  Database,
+  Building2,
+  Lightbulb,
+  Briefcase,
+  Megaphone,
+  CreditCard,
+  CheckCheck,
+  Smartphone,
+  CircleCheck,
+  FlaskConical,
+};
 
 const DomainProjectBadge = ({ id, field, value, disabled, onChange, editLabel, className = `` }: DomainProjectBadgeProps) => {
   const editable = field === `projectStatus` && Boolean(onChange);

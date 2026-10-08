@@ -2,12 +2,13 @@ import './styles.scss';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainStarButton from '../DomainStarButton/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import { getDomainSource } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { getDomainRow, getDomainColumnKey, getDomainSelectionHandlers } from '../DomainRow/domainRow';
 import type { DomainItemProps, DomainDragProps } from '../DomainRow/domainRow';
-import { Check, Minus, Trash2, ArrowUp, Settings, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
+import { Check, Minus, ArrowUp, Settings, ArrowDown, GripVertical } from 'lucide-react';
 import {
   PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
@@ -30,7 +31,6 @@ const DomainGridCard = ({
   dropTarget,
   onSelect,
   position,
-  onDelete,
   onMoveUp,
   draggable,
   onDragEnd,
@@ -79,6 +79,7 @@ const DomainGridCard = ({
         />
         <DomainSiteIcon
           size={32}
+          fallback={`link`}
           domain={domain.name}
           id={`${scope}-symbol`}
           iconUrl={getCustomSiteIconUrl(domain)}
@@ -99,12 +100,6 @@ const DomainGridCard = ({
                 {domain.name.slice(lastDot)}
               </span>
             </span>
-            <ArrowUpRight
-              size={13}
-              aria-hidden={`true`}
-              id={`${scope}-site-link-icon`}
-              className={`domain-grid-card-site-link-icon`}
-            />
           </a>
           <span aria-hidden={`true`} id={`${scope}-status-separator`} className={`domain-grid-card-name-separator`}>
             {` | `}
@@ -229,17 +224,12 @@ const DomainGridCard = ({
         )}
         <div id={`${scope}-actions`} className={`domain-grid-card-actions`}>
           <DomainAnalyticsButton suffix={scope} domain={domain.name} />
-          <button
-            type={`button`}
+          <DomainStarButton
+            id={`${scope}-star`}
             disabled={busy}
-            title={`Remove Domain`}
-            id={`${scope}-remove`}
-            onClick={() => onDelete(domain)}
-            aria-label={`Remove ${domain.name}`}
-            className={`domain-grid-card-action domain-grid-card-action-remove`}
-          >
-            <Trash2 size={14} aria-hidden={`true`} id={`${scope}-remove-icon`} className={`domain-grid-card-action-icon`} />
-          </button>
+            domainId={domain.id}
+            domainName={domain.name}
+          />
           <button
             type={`button`}
             disabled={busy}

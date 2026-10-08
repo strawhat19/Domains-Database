@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, RefObject } from 'react';
 import { REGISTRARS } from '../../shared/config';
-import { getDomainSource } from '../../shared/domainUtils';
+import { getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
 import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
 
-export const useModalFocus = (container: RefObject<HTMLDivElement | null>, open: boolean, onClose: () => void) => {
+export const useModalFocus = (
+  container: RefObject<HTMLDivElement | null>,
+  open: boolean,
+  onClose: () => void,
+  preventRestoreScroll = false,
+) => {
   const closeHandler = useRef(onClose);
   closeHandler.current = onClose;
   useEffect(() => {
@@ -48,9 +53,16 @@ export const useModalFocus = (container: RefObject<HTMLDivElement | null>, open:
       window.cancelAnimationFrame(frame);
       document.body.style.overflow = previousOverflow;
       document.removeEventListener(`keydown`, handleKeyDown);
-      if (previousFocus?.isConnected) previousFocus.focus();
+      if (previousFocus?.isConnected) {
+        const unavailable = previousFocus.matches(`:disabled`) || previousFocus.closest(`[aria-hidden='true']`);
+        const fallbackId = unavailable ? previousFocus.dataset.focusFallback : undefined;
+        const fallback = fallbackId ? document.getElementById(fallbackId) : null;
+        if (fallback?.isConnected && !fallback.matches(`:disabled`) && !fallback.closest(`[aria-hidden='true'], [hidden], [inert]`)) {
+          fallback.focus({ preventScroll: true });
+        } else previousFocus.focus({ preventScroll: preventRestoreScroll });
+      }
     };
-  }, [container, open]);
+  }, [container, open, preventRestoreScroll]);
 };
 
 const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
@@ -83,23 +95,67 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
 };
 
 export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose: () => void) => {
-  const { addDomain, updateDomain } = useDomains();
+  const { addDomain, deleteDomain, updateDomain } = useDomains();
   const groupEditor = useDomainGroupEditor(domain?.id);
   const isSynced = domain && getDomainSource(domain) === `registrar`;
   const [error, setError] = useState(``);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const pendingActionRef = useRef(false);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const [input, setInput] = useState<DomainInput>(() => getInitialInput(domain));
-  const close = () => { if (!saving) onClose(); };
+  const close = () => { if (!pendingActionRef.current) onClose(); };
   useModalFocus(modalRef, true, close);
+
+  useEffect(() => {
+    if (confirmingDelete) deleteCancelRef.current?.focus();
+  }, [confirmingDelete]);
+
+  const requestDelete = () => {
+    if (!domain?.id || pendingActionRef.current || getDomainDeletionRestriction(domain)) return;
+    setError(``);
+    setConfirmingDelete(true);
+  };
+  const cancelDelete = () => {
+    if (pendingActionRef.current) return;
+    setError(``);
+    setConfirmingDelete(false);
+    deleteButtonRef.current?.focus();
+  };
+  const handleDelete = async () => {
+    if (!domain?.id || !confirmingDelete || pendingActionRef.current) return;
+    const restriction = getDomainDeletionRestriction(domain);
+    if (restriction) {
+      setError(restriction);
+      setConfirmingDelete(false);
+      return;
+    }
+    pendingActionRef.current = true;
+    setError(``);
+    setDeleting(true);
+    try {
+      await deleteDomain(domain.id);
+      onClose();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : `Unable To Delete Domain`);
+    } finally {
+      pendingActionRef.current = false;
+      setDeleting(false);
+    }
+  };
   const setField = <Key extends keyof DomainInput>(field: Key, value: DomainInput[Key]) => {
+    if (pendingActionRef.current) return;
     if (isSynced && ![`meta`, `mvp`, `future`, `childLinks`, `parentLink`, `difficulty`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `socialMediaLinks`].includes(field)) return;
     setError(``);
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (saving) return;
+    if (confirmingDelete || pendingActionRef.current) return;
+    pendingActionRef.current = true;
     setError(``);
     setSaving(true);
     const domainInput = {
@@ -120,8 +176,25 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `Unable To Save Domain`);
     } finally {
+      pendingActionRef.current = false;
       setSaving(false);
     }
   };
-  return { error, input, close, saving, setField, modalRef, groupEditor, handleSubmit };
+  return {
+    error,
+    input,
+    close,
+    deleting,
+    setField,
+    modalRef,
+    groupEditor,
+    handleDelete,
+    cancelDelete,
+    requestDelete,
+    handleSubmit,
+    deleteButtonRef,
+    deleteCancelRef,
+    confirmingDelete,
+    saving: saving || deleting,
+  };
 };

@@ -1,9 +1,9 @@
 import './styles.scss';
 import type { RefObject } from 'react';
-import { COLUMN_GROUPS } from './groups';
 import { useEffect, useRef } from 'react';
+import ColumnOptions from './ColumnOptions.web';
 import { X, Columns3, RotateCcw, MoveHorizontal } from 'lucide-react';
-import { PORTFOLIO_COLUMNS, type PortfolioColumn } from '../../shared/portfolioColumns';
+import type { PortfolioColumn } from '../../shared/portfolioColumns';
 
 interface ColumnControlsProps {
   open: boolean;
@@ -93,78 +93,11 @@ const ColumnControls = ({
       </div>
       {open && (
         <div id={`portfolio-column-panel`} className={`column-controls-panel`}>
-          <fieldset id={`portfolio-column-options`} className={`column-controls-options`}>
-            <legend id={`portfolio-column-options-title`} className={`column-controls-title`}>
-              {`Show columns`}
-            </legend>
-            <div id={`portfolio-column-groups`} className={`column-controls-groups`}>
-              {COLUMN_GROUPS.map(group => (
-                <section
-                  key={group.id}
-                  className={`column-controls-group`}
-                  id={`portfolio-column-group-${group.id}`}
-                  aria-labelledby={`portfolio-column-group-${group.id}-title`}
-                >
-                  <h3
-                    className={`column-controls-group-title`}
-                    id={`portfolio-column-group-${group.id}-title`}
-                  >
-                    {group.label}
-                  </h3>
-                  <div
-                    className={`column-controls-group-options`}
-                    id={`portfolio-column-group-${group.id}-options`}
-                  >
-                    {PORTFOLIO_COLUMNS.filter(column => group.fields.includes(column.field)).map(column => {
-                      const required = column.field === `name`;
-                      const count = columnCounts[column.field] ?? 0;
-                      const scope = `portfolio-column-option-${column.field}`;
-                      const countDescription = `${count} saved portfolio ${count === 1 ? `row has` : `rows have`} a value for ${column.label}.`;
-                      return (
-                        <label
-                          key={column.field}
-                          htmlFor={scope}
-                          id={`${scope}-label`}
-                          className={`column-controls-option${required ? ` column-controls-option-required` : ``}`}
-                        >
-                          <input
-                            id={scope}
-                            type={`checkbox`}
-                            disabled={required}
-                            className={`column-controls-checkbox`}
-                            aria-describedby={`${scope}-count`}
-                            onChange={() => onToggle(column.field)}
-                            checked={required || visibleColumns.includes(column.field)}
-                          />
-                          <span id={`${scope}-text`} className={`column-controls-option-text`}>
-                            {column.label}
-                          </span>
-                          {column.public && (
-                            <span id={`${scope}-public`} className={`column-controls-public-text`}>
-                              {`Public`}
-                            </span>
-                          )}
-                          <span
-                            id={`${scope}-count`}
-                            title={countDescription}
-                            aria-label={countDescription}
-                            className={`column-controls-option-count`}
-                          >
-                            {`(${count})`}
-                          </span>
-                          {required && (
-                            <span id={`${scope}-required`} className={`column-controls-required-text`}>
-                              {`Always shown`}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </fieldset>
+          <ColumnOptions
+            onToggle={onToggle}
+            columnCounts={columnCounts}
+            visibleColumns={visibleColumns}
+          />
           <div id={`portfolio-column-actions`} className={`column-controls-actions`}>
             <button
               type={`button`}

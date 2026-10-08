@@ -88,6 +88,7 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
                   <DomainSiteIcon
                     compact
                     size={14}
+                    fallback={`link`}
                     domain={item.domain}
                     iconUrl={item.iconUrl}
                     id={`native-domain-marquee-pill-icon-${suffix}`}

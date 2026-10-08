@@ -27,3 +27,8 @@ export const getDomainPreviewLink = (domain: Pick<DomainRecord, `previewLinks`>)
   try { return normalizeDomainLink(domain.previewLinks[0], `Preview Link`); }
   catch { return ``; }
 };
+
+export const getDomainGithubRepoLink = (domain: Pick<DomainRecord, `githubRepoLink`>): string => {
+  try { return normalizeDomainLink(domain.githubRepoLink, `GitHub Repository Link`); }
+  catch { return ``; }
+};

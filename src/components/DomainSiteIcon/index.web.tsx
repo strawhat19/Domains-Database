@@ -1,5 +1,5 @@
 import './styles.scss';
-import { Globe2 } from 'lucide-react';
+import { Link2, Globe2 } from 'lucide-react';
 import { useDomainSiteIcon } from './useDomainSiteIcon';
 import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 
@@ -9,10 +9,12 @@ interface DomainSiteIconProps {
   domain: string;
   iconUrl?: string;
   compact?: boolean;
+  fallback?: `globe` | `link`;
 }
 
-const SiteIconContent = ({ id, iconUrl, size = 28, compact = false }: DomainSiteIconProps) => {
+const SiteIconContent = ({ id, iconUrl, size = 28, compact = false, fallback = `globe` }: DomainSiteIconProps) => {
   const { failed, loaded, onLoad, onError } = useDomainSiteIcon();
+  const FallbackIcon = fallback === `link` ? Link2 : Globe2;
   const imageSize = compact ? size : Math.min(20, size);
   const fallbackSize = compact ? size : Math.min(16, size);
   return (
@@ -23,7 +25,7 @@ const SiteIconContent = ({ id, iconUrl, size = 28, compact = false }: DomainSite
       style={{ width: size, height: size }}
     >
       {(!loaded || failed) && (
-        <Globe2
+        <FallbackIcon
           size={fallbackSize}
           strokeWidth={1.4}
           id={`${id}-fallback`}

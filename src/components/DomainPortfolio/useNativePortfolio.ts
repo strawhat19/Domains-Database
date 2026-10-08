@@ -1,13 +1,13 @@
 import { Alert } from 'react-native';
 import * as Sharing from 'expo-sharing';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { REGISTRARS, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnValue } from '../../shared/portfolioColumns';
-import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
+import { getDomainSource, getDomainStatus, getRegistrarCounts, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
@@ -41,6 +41,7 @@ export const useNativePortfolio = (compact = false) => {
   const registrarCounts = useMemo(() => getRegistrarCounts(context.domains), [context.domains]);
   const [search, setSearch] = useState(``);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [working, setWorking] = useState(false);
   const [formError, setFormError] = useState(``);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -51,6 +52,10 @@ export const useNativePortfolio = (compact = false) => {
   const [input, setInput] = useState<DomainInput>(newDomain);
   const [sortByName, setSortByName] = useState(true);
   const [registrar, setRegistrar] = useState<Registrar | `All`>(`All`);
+  const mutationPending = useRef(false);
+  const deleteConfirmationOpen = useRef(false);
+  const currentEditor = useRef({ open: editorOpen, id: editingId });
+  currentEditor.current = { open: editorOpen, id: editingId };
   const groupEditor = useDomainGroupEditor(editingId);
   const editingSyncedDomain = Boolean(editingDomain && getDomainSource(editingDomain) === `registrar`);
   const filteredDomains = useMemo(() => {
@@ -75,6 +80,7 @@ export const useNativePortfolio = (compact = false) => {
   const closeSetup = () => setSetupOpen(false);
 
   const openEditor = (domain?: DomainRecord) => {
+    if (mutationPending.current || deleteConfirmationOpen.current) return;
     context.clearNotice();
     setFormError(``);
     setEditingId(domain?.id);
@@ -102,7 +108,7 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const closeEditor = () => {
-    if (!saving) setEditorOpen(false);
+    if (!saving && !mutationPending.current) setEditorOpen(false);
   };
 
   const setRenewalPrice = (value: string) => {
@@ -121,7 +127,8 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const saveDomain = async () => {
-    if (saving) return;
+    if (saving || mutationPending.current || deleteConfirmationOpen.current) return;
+    mutationPending.current = true;
     setSaving(true);
     setFormError(``);
     try {
@@ -146,20 +153,47 @@ export const useNativePortfolio = (compact = false) => {
     } catch (error) {
       setFormError(errorMessage(error));
     } finally {
+      mutationPending.current = false;
       setSaving(false);
     }
   };
 
-  const deleteDomain = (domain: DomainRecord) => Alert.alert(
-    `Delete Domain`,
-    `Remove ${domain.name} from your portfolio? Your registration will remain with ${domain.registrar}.`,
-    [
-      { text: `Cancel`, style: `cancel` },
-      { text: `Delete`, style: `destructive`, onPress: () => {
-        void context.deleteDomain(domain.id).catch(error => Alert.alert(`Unable To Delete Domain`, errorMessage(error)));
-      } },
-    ],
-  );
+  const requestDelete = () => {
+    if (!editorOpen || !editingId || !editingDomain || editingDomain.id !== editingId
+      || saving || mutationPending.current || deleteConfirmationOpen.current) return;
+    const domain = context.domains.find(record => record.id === editingId) ?? editingDomain;
+    const restriction = getDomainDeletionRestriction(domain);
+    if (restriction) { setFormError(restriction); return; }
+    const targetId = editingId;
+    const releaseConfirmation = () => { deleteConfirmationOpen.current = false; };
+    deleteConfirmationOpen.current = true;
+    Alert.alert(
+      `Delete Domain`,
+      `Remove ${domain.name} from your portfolio? Your registration will remain with ${domain.registrar || `your registrar`}.`,
+      [
+        { text: `Cancel`, style: `cancel`, onPress: releaseConfirmation },
+        { text: `Delete`, style: `destructive`, onPress: async () => {
+          releaseConfirmation();
+          if (mutationPending.current || !currentEditor.current.open || currentEditor.current.id !== targetId) return;
+          mutationPending.current = true;
+          setSaving(true);
+          setDeleting(true);
+          setFormError(``);
+          try {
+            await context.deleteDomain(targetId);
+            setEditorOpen(false);
+          } catch (error) {
+            setFormError(errorMessage(error));
+          } finally {
+            mutationPending.current = false;
+            setDeleting(false);
+            setSaving(false);
+          }
+        } },
+      ],
+      { cancelable: true, onDismiss: releaseConfirmation },
+    );
+  };
 
   const importCsv = async () => {
     if (working) return;
@@ -224,6 +258,7 @@ export const useNativePortfolio = (compact = false) => {
     search,
     dueSoon,
     saving,
+    deleting,
     working,
     registrar,
     formError,
@@ -243,7 +278,7 @@ export const useNativePortfolio = (compact = false) => {
     closeEditor,
     updateInput,
     saveDomain,
-    deleteDomain,
+    requestDelete,
     importCsv,
     exportCsv,
     resetSamples,

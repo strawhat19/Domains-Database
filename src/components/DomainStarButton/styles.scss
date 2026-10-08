@@ -1,0 +1,10 @@
+.domain-star-control { display: inline-flex; flex-shrink: 0; align-items: center; }
+.domain-star-error {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}

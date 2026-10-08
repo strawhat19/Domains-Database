@@ -23,7 +23,8 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const collectionDescriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const creatingCollection = collectionId === CREATE_COLLECTION_OPTION;
-  const missingGroup = !preferences.customGroups.some(current => current.id === group.id);
+  const currentGroup = preferences.customGroups.find(current => current.id === group.id);
+  const missingGroup = !currentGroup;
   const missingCollection = collectionId !== MAIN_DATABASE_COLLECTION_OPTION && !creatingCollection
     && !preferences.collections.some(collection => collection.id === collectionId);
   const availabilityError = missingGroup
@@ -71,6 +72,9 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const setCollectionDescription = (value: string) => {
     clearError();
     setCollectionDescriptionValue(value);
+  };
+  const toggleStar = () => {
+    if (!preferences.toggleGroupStar(group.id)) setError(`Could Not Update Group Star. Try Again Shortly`);
   };
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -137,7 +141,9 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     name,
     setName,
     modalRef,
+    toggleStar,
     collectionId,
+    missingGroup,
     description,
     invalidField,
     nameInputRef,
@@ -156,5 +162,6 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     collectionDescriptionInputRef,
     collections: preferences.collections,
     error: error || availabilityError,
+    starred: currentGroup?.starred === true,
   };
 };

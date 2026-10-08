@@ -44,12 +44,15 @@
   transition: opacity .2s ease;
 }
 .domain-description-empty {
-  font-size: 11px;
+  padding: 0;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
   color: var(--muted);
+  justify-content: center;
   &:hover, &:focus-visible { color: var(--ink); }
 }
 .domain-description-add-icon { flex-shrink: 0; }
-.domain-description-add-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .domain-description-read-more {
   gap: 4px;
   border: 0;

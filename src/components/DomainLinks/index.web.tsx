@@ -1,6 +1,6 @@
 import './styles.scss';
-import { ExternalLink } from 'lucide-react';
 import type { DomainInput } from '../../shared/types';
+import LinkSiteIcon from '../LinkSiteIcon/index.web';
 import SettingsField from '../SettingsField/index.web';
 import { normalizeDomainLink } from '../../shared/domainLinks';
 
@@ -116,7 +116,11 @@ const DomainLinks = ({ id, input, onChange, disabled = false }: DomainLinksProps
                           title={`Open ${field.label}${field.multiple ? ` ${link.index + 1}` : ``}`}
                           aria-label={`Open ${field.label}${field.multiple ? ` ${link.index + 1}` : ``} in a New Tab`}
                         >
-                          <ExternalLink size={13} aria-hidden={`true`} id={`${fieldId}-open-icon-${link.index}`} className={`domain-links-open-icon`} />
+                          <LinkSiteIcon
+                            size={13}
+                            url={link.href}
+                            id={`${fieldId}-open-icon-${link.index}`}
+                          />
                         </a>
                       )}
                     </span>

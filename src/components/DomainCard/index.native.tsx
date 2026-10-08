@@ -1,5 +1,6 @@
 import { createStyles } from './styles.native';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
+import DomainStarButton from '../DomainStarButton/index.native';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
 import DomainProjectBadge from '../DomainProjectBadge/index.native';
 import Svg, { Path, Rect } from 'react-native-svg';
@@ -8,7 +9,7 @@ import type { DomainRecord } from '../../shared/types';
 import { elementProps } from '../../shared/elementProps';
 import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
-import { Globe2, Trash2, Settings, RefreshCw, ArrowUpRight } from 'lucide-react-native';
+import { Link2, Settings, RefreshCw } from 'lucide-react-native';
 import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -22,10 +23,9 @@ interface DomainCardProps {
   domain?: DomainRecord;
   onSelect?: (id: string) => void;
   onEdit?: (domain: DomainRecord) => void;
-  onDelete?: (domain: DomainRecord) => void;
 }
 
-const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEdit, onDelete, onSelect }: DomainCardProps) => {
+const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEdit, onSelect }: DomainCardProps) => {
   const { palette } = useTheme();
   const { visibleColumns } = useColumns();
   const [iconFailed, setIconFailed] = useState(false);
@@ -132,7 +132,7 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
         </View>
         <View {...elementProps(`native-domain-monogram`, domain.id)} style={styles.monogram}>
           {iconFailed || !siteIconUrl ? (
-            <Globe2 {...elementProps(`native-domain-icon-fallback`, domain.id)} size={20} color={palette.accent} />
+            <Link2 {...elementProps(`native-domain-icon-fallback`, domain.id)} size={20} color={palette.accent} />
           ) : (
             <Image
               key={siteIconUrl}
@@ -156,7 +156,6 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
               <Text {...elementProps(`native-domain-name`, domain.id)} style={styles.name} numberOfLines={1}>
                 {domain.name}
               </Text>
-              <ArrowUpRight size={13} color={palette.accent} {...elementProps(`native-domain-site-link-icon`, domain.id)} />
             </Pressable>
             <Text
               style={styles.nameSeparator}
@@ -191,9 +190,11 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
           </View>
         </View>
         <View {...elementProps(`actionsCell`, domain.id)} style={styles.actionsCell}>
-          <Pressable {...elementProps(`native-domain-delete`, domain.id)} style={styles.actionButton} onPress={() => onDelete?.(domain)} accessibilityRole={`button`} accessibilityLabel={`Delete ${domain.name}`}>
-            <Trash2 {...elementProps(`native-domain-delete-icon`, domain.id)} size={14} color={palette.muted} />
-          </Pressable>
+          <DomainStarButton
+            domainId={domain.id}
+            domainName={domain.name}
+            id={`native-domain-star-${domain.id}`}
+          />
           <Pressable {...elementProps(`native-domain-edit`, domain.id)} style={styles.actionButton} onPress={() => onEdit?.(domain)} accessibilityRole={`button`} accessibilityLabel={`${domain.name} Settings`}>
             <Settings {...elementProps(`native-domain-edit-icon`, domain.id)} size={14} color={palette.muted} />
           </Pressable>

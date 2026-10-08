@@ -32,7 +32,7 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
         <header id={`domain-collection-settings-header`} className={`domain-dialog-header`}>
           <div id={`domain-collection-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-collection-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {`SETTINGS`}
+              {`COLLECTION SETTINGS`}
             </span>
             <h2 id={`domain-collection-settings-title`} className={`domain-dialog-title`}>
               {collection.name}

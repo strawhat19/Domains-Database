@@ -11,7 +11,6 @@ export interface DomainItemProps {
   selectionDescriptionId?: string;
   visibleColumns?: PortfolioColumn[];
   onEdit: (domain: DomainRecord) => void;
-  onDelete: (domain: DomainRecord) => void;
   onMoveUp?: (domain: DomainRecord) => void;
   onMoveDown?: (domain: DomainRecord) => void;
   onToggleAutoRenew: (domain: DomainRecord) => void;
