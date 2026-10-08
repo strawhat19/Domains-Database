@@ -8,19 +8,47 @@
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
+  --project-status-icon: var(--muted);
+  --project-status-text: var(--paper);
+  --project-status-background: var(--ink);
+}
+.domain-project-badge.domain-project-badge-tone-accent {
+  --project-status-icon: var(--accent);
+  --project-status-text: var(--contrast);
+  --project-status-background: var(--accent);
+}
+.domain-project-badge.domain-project-badge-tone-warning {
+  --project-status-icon: var(--warning);
+  --project-status-text: var(--contrast);
+  --project-status-background: var(--warning);
+}
+.domain-project-badge.domain-project-badge-tone-success {
+  --project-status-icon: var(--success);
+  --project-status-text: var(--contrast);
+  --project-status-background: var(--success);
+}
+.domain-project-badge.domain-project-badge-tone-danger {
+  --project-status-icon: var(--danger);
+  --project-status-text: var(--contrast);
+  --project-status-background: var(--danger);
 }
 .domain-project-badge .domain-project-badge-icon-wrap { width: 13px; height: 13px; flex-shrink: 0; }
-.domain-project-badge-icon { display: block; flex-shrink: 0; }
+.domain-project-badge-icon { display: block; flex-shrink: 0; color: var(--project-status-icon); }
 .domain-project-badge-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .domain-project-badge-pill.rowStatus {
   gap: 4px;
-  color: #fff;
   font-size: 11px;
-  padding: 2px 6px;
+  padding: 2px 7px;
   line-height: 14px;
   position: relative;
   border-radius: 999px;
-  transition: opacity .2s ease, filter .2s ease, background .2s ease;
+  color: var(--project-status-text);
+  font-family: var(--font-bold);
+  background: var(--project-status-background);
+  box-shadow: 0 0 0 1px var(--paper), 0 1px 3px var(--shadow);
+  border: 1px solid color-mix(in srgb, var(--project-status-background) 60%, var(--ink));
+  transition: opacity .2s ease, filter .2s ease, color .2s ease, background .2s ease, border-color .2s ease;
+  .domain-project-badge-icon { color: inherit; }
   .domain-project-badge-icon-wrap, .domain-project-badge-icon, .domain-project-badge-chevron { width: 11px; height: 11px; }
   &:not(.domain-project-badge-disabled):hover { filter: brightness(1.08); }
   &:focus-within { outline-offset: 3px; outline: 2px solid var(--accent); }

@@ -2,6 +2,9 @@ import { Data } from '../Data';
 import type { JSONValue } from '../Data';
 import { Types } from '../../../types/types';
 import { isAppCollectionID } from '../../common/ids';
+import type { DomainTag } from '../../domainTags';
+import { normalizeDomainTags } from '../../domainTags';
+import { restoreDomainPrice } from '../../domainPricing';
 import { normalizeDomainProjectStatus } from '../../domainProject';
 import type { DomainDifficulty, DomainProjectStatus } from '../../domainProject';
 
@@ -26,6 +29,7 @@ export class Domain extends Data {
   projectStatus: DomainProjectStatus;
   tld?: string;
   mvp?: string;
+  tags?: DomainTag[];
   status?: string;
   future?: string;
   locked?: boolean;
@@ -37,8 +41,10 @@ export class Domain extends Data {
   updatedAt?: string;
   providerId?: string;
   ownershipAt?: string;
+  startingBid?: number;
   parentLink?: string;
   difficulty?: DomainDifficulty;
+  estimatedRevenue?: number;
   githubRepoLink?: string;
   productionLink?: string;
   firstImportedAt?: string;
@@ -47,6 +53,7 @@ export class Domain extends Data {
   childLinks?: string[];
   previewLinks?: string[];
   relatedLinks?: string[];
+  developmentLinks?: string[];
   socialMediaLinks?: string[];
   internationalName?: string;
   registrant?: DomainRegistrant;
@@ -60,6 +67,7 @@ export class Domain extends Data {
     this.notes = data.notes ?? ``;
     this.tld = data.tld;
     this.mvp = data.mvp;
+    this.tags = normalizeDomainTags(data.tags);
     this.status = data.status;
     this.future = data.future;
     this.locked = data.locked;
@@ -70,8 +78,10 @@ export class Domain extends Data {
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
     this.ownershipAt = data.ownershipAt;
+    this.startingBid = restoreDomainPrice(data.startingBid);
     this.parentLink = data.parentLink;
     this.difficulty = data.difficulty;
+    this.estimatedRevenue = restoreDomainPrice(data.estimatedRevenue);
     this.githubRepoLink = data.githubRepoLink;
     this.productionLink = data.productionLink;
     this.isSample = data.isSample === true;
@@ -88,6 +98,7 @@ export class Domain extends Data {
     this.childLinks = Array.isArray(data.childLinks) ? [...data.childLinks] : undefined;
     this.previewLinks = Array.isArray(data.previewLinks) ? [...data.previewLinks] : undefined;
     this.relatedLinks = Array.isArray(data.relatedLinks) ? [...data.relatedLinks] : undefined;
+    this.developmentLinks = Array.isArray(data.developmentLinks) ? [...data.developmentLinks] : undefined;
     this.socialMediaLinks = Array.isArray(data.socialMediaLinks) ? [...data.socialMediaLinks] : undefined;
     this.registrant = data.registrant ? { ...data.registrant } : undefined;
     this.meta = data.meta ? { ...data.meta } : undefined;

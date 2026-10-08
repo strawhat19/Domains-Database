@@ -11,17 +11,23 @@ export type DomainLinkField =
   | `relatedLinks`
   | `githubRepoLink`
   | `productionLink`
+  | `developmentLinks`
   | `socialMediaLinks`;
+
+export type DomainLinkValues = Pick<DomainInput, DomainLinkField>;
 
 interface DomainLinksProps {
   id: string;
-  input: DomainInput;
+  errorId?: string;
   disabled?: boolean;
-  onChange: <Key extends DomainLinkField>(field: Key, value: DomainInput[Key]) => void;
+  input: DomainLinkValues;
+  invalidField?: DomainLinkField | null;
+  onChange: <Key extends DomainLinkField>(field: Key, value: DomainLinkValues[Key]) => void;
 }
 
 const fields: { key: DomainLinkField; label: string; multiple?: boolean }[] = [
   { key: `previewLinks`, label: `Preview Links`, multiple: true },
+  { key: `developmentLinks`, label: `Development Links`, multiple: true },
   { key: `relatedLinks`, label: `Related Links`, multiple: true },
   { key: `parentLink`, label: `Parent Link` },
   { key: `childLinks`, label: `Child Links`, multiple: true },
@@ -38,7 +44,7 @@ const getOpenHref = (value: string) => {
   }
 };
 
-const DomainLinks = ({ id, input, onChange, disabled = false }: DomainLinksProps) => (
+const DomainLinks = ({ id, input, onChange, errorId, invalidField, disabled = false }: DomainLinksProps) => (
   <aside id={id} className={`domain-links`} aria-labelledby={`${id}-title`}>
     <h3 id={`${id}-title`} className={`domain-links-title`}>
       {`Links`}
@@ -61,6 +67,7 @@ const DomainLinks = ({ id, input, onChange, disabled = false }: DomainLinksProps
                 disabled={disabled}
                 label={field.label}
                 id={`${fieldId}-setting`}
+                invalid={invalidField === field.key}
                 value={links.length ? links.map((link, index) => (
                   <span key={index} id={`${fieldId}-value-${index}`} className={`domain-links-value`}>
                     {link}
@@ -78,7 +85,8 @@ const DomainLinks = ({ id, input, onChange, disabled = false }: DomainLinksProps
                       spellCheck={false}
                       id={`${fieldId}-input`}
                       placeholder={`https://example.com`}
-                      aria-describedby={`${fieldId}-help`}
+                      aria-invalid={invalidField === field.key}
+                      aria-describedby={`${fieldId}-help${invalidField === field.key && errorId ? ` ${errorId}` : ``}`}
                       className={`domain-editor-input domain-links-textarea`}
                       onChange={event => onChange(field.key, event.target.value.split(`\n`))}
                     />
@@ -96,6 +104,8 @@ const DomainLinks = ({ id, input, onChange, disabled = false }: DomainLinksProps
                     autoComplete={`off`}
                     spellCheck={false}
                     id={`${fieldId}-input`}
+                    aria-invalid={invalidField === field.key}
+                    aria-describedby={invalidField === field.key ? errorId : undefined}
                     placeholder={field.key === `githubRepoLink` ? `https://github.com/owner/repository` : `https://example.com`}
                     className={`domain-editor-input domain-links-input`}
                     onChange={event => onChange(field.key, event.target.value)}

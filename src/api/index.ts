@@ -1,4 +1,6 @@
 import { authAPI } from './auth';
+import { normalizeDomainTags } from '../shared/domainTags';
+import { restoreDomainPrice } from '../shared/domainPricing';
 import { Domain } from '../shared/models/domains/Domain';
 import type { WebsiteInsights } from '../shared/websiteInsights/types';
 import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
@@ -59,7 +61,12 @@ const restoreSnapshot = (parsed: PortfolioSnapshot, uid = getScopeUid()): Portfo
   const numbers = new Set<number>();
   const storedDomains = useSampleData ? parsed.domains : parsed.domains.filter(domain => !domain?.isSample);
   const domains = storedDomains.map(domain => {
-    const input = validateDomainInput(domain);
+    const input = validateDomainInput({
+      ...domain,
+      tags: normalizeDomainTags(domain?.tags),
+      startingBid: restoreDomainPrice(domain?.startingBid),
+      estimatedRevenue: restoreDomainPrice(domain?.estimatedRevenue),
+    });
     if (!domain?.id || !Number.isInteger(domain?.number) || domain.number < 1 || ids.has(domain.id) || numbers.has(domain.number) || names.has(input.name)) throw new Error(`Saved Portfolio Data Could Not Be Read`);
     const restored = new Domain({ ...domain, ...input, uid, isSample: domain.isSample === true });
     ids.add(restored.id);
@@ -383,13 +390,17 @@ export const api = {
     const changes: Partial<DomainInput> = registrarManaged ? {
       notes: input?.notes ?? original.notes,
       mvp: input?.mvp ?? original.mvp,
+      tags: input && input.tags !== undefined ? input.tags : original.tags,
       future: input?.future ?? original.future,
+      ...(input && `startingBid` in input ? { startingBid: input.startingBid } : {}),
+      ...(input && `estimatedRevenue` in input ? { estimatedRevenue: input.estimatedRevenue } : {}),
       childLinks: input?.childLinks ?? original.childLinks,
       parentLink: input?.parentLink ?? original.parentLink,
       previewLinks: input?.previewLinks ?? original.previewLinks,
       relatedLinks: input?.relatedLinks ?? original.relatedLinks,
       githubRepoLink: input?.githubRepoLink ?? original.githubRepoLink,
       productionLink: input?.productionLink ?? original.productionLink,
+      developmentLinks: input?.developmentLinks ?? original.developmentLinks,
       socialMediaLinks: input?.socialMediaLinks ?? original.socialMediaLinks,
       difficulty: input && `difficulty` in input ? input.difficulty : original.difficulty,
       projectStatus: input && `projectStatus` in input ? input.projectStatus : original.projectStatus,
@@ -462,6 +473,7 @@ export const api = {
             isSample: false,
             updated: importedAt,
             id: original.id,
+            tags: input.tags !== undefined ? validated.tags : original.tags,
             number: original.number,
             notes: validated.notes || original.notes,
             registrar: validated.registrar || original.registrar,

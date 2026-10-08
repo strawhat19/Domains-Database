@@ -1,7 +1,56 @@
+.domain-group-settings { max-width: 900px; }
 .domain-group-settings-header { margin-bottom: 25px; }
 .domain-group-settings-header-actions { gap: 8px; display: flex; flex-shrink: 0; align-items: center; }
+.domain-group-settings-title-row { gap: 10px; display: flex; flex-wrap: wrap; align-items: center; }
+.domain-group-settings-preview-link {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  margin-top: 7px;
+  color: var(--muted);
+  border-radius: 5px;
+  place-items: center;
+  transition: color .2s ease, background .2s ease;
+  &:hover { color: var(--accent); background: var(--subtle); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+.domain-group-settings-content {
+  gap: 28px;
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+}
 .domain-group-settings-fields { gap: 18px; display: grid; }
 .domain-group-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
+.domain-group-settings-type-controls {
+  gap: 4px;
+  padding: 4px;
+  display: grid;
+  border-radius: 8px;
+  background: var(--input);
+  border: 1px solid var(--line);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.domain-group-settings-type-button {
+  gap: 7px;
+  border: 0;
+  display: flex;
+  cursor: pointer;
+  min-height: 36px;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 5px;
+  color: var(--muted);
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: color .2s ease, background .2s ease;
+  &:hover { color: var(--ink); background: var(--subtle); }
+  &:disabled { opacity: .55; cursor: default; }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+}
+.domain-group-settings-type-button-active { color: var(--accent); background: var(--paper); }
+.domain-group-settings-icon-preview { border: 0; background: transparent; }
 .domain-group-settings-description-input { resize: vertical; min-height: 92px; }
 .domain-group-settings-new-collection {
   gap: 18px;
@@ -22,7 +71,13 @@
   &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 }
 
+@media (max-width: 800px) {
+  .domain-group-settings-content { gap: 20px; grid-template-columns: minmax(0, 1fr); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .domain-group-settings-type-button, .domain-group-settings-preview-link,
   .domain-group-settings-name-input, .domain-group-settings-description-input,
-  .domain-group-settings-collection-select, .domain-group-settings-collection-name-input { transition: none; }
+  .domain-group-settings-icon-input, .domain-group-settings-collection-select,
+  .domain-group-settings-collection-name-input { transition: none; }
 }

@@ -3,9 +3,11 @@ import type { PropsWithChildren } from 'react';
 import { PORTFOLIO_FIELDS } from '../portfolioColumns';
 import { createOperationQueue } from '../common/storage';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
+import { normalizeGroupDetails, restoreGroupDetails } from './details';
 import { readPortfolioPreferences, savePortfolioPreferences } from './storage';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CustomPortfolioCollection, PortfolioPreferences, PortfolioPreferencesContextValue } from './types';
+import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../domainProject';
+import type { PortfolioPreferences, PortfolioGroupDetails, CustomPortfolioCollection, PortfolioPreferencesContextValue } from './types';
 
 const DEFAULT_PREFERENCES: PortfolioPreferences = {
   orders: {},
@@ -69,7 +71,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
       seenDomains.add(id);
       return true;
     });
-    return [{ id: value.id, name, domainIds, starred: value.starred === true, ...(description ? { description } : {}), ...(collectionId ? { collectionId } : {}) }];
+    return [{ id: value.id, name, domainIds, ...restoreGroupDetails(value), starred: value.starred === true, ...(description ? { description } : {}), ...(collectionId ? { collectionId } : {}) }];
   });
   const orders = saved.orders && typeof saved.orders === `object` && !Array.isArray(saved.orders)
     ? Object.fromEntries(Object.entries(saved.orders).map(([key, ids]) => [key, uniqueIds(ids)]))
@@ -196,7 +198,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     change(current => assignGroupDomains({
       ...current,
       groupBy: `custom`,
-      customGroups: [...current.customGroups, { id, name, domainIds: [] }],
+      customGroups: [...current.customGroups, { id, name, isApp: false, domainIds: [], projectStatus: DEFAULT_DOMAIN_PROJECT_STATUS }],
     }, selectedIds, id));
     return id;
   }, [ready, change, userId, enabled]);
@@ -210,6 +212,9 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     const existing = groups.find(group => group.id === id);
     if (!existing || !name || name.toLowerCase() === `ungrouped` || name.length > 80 || description.length > 280) return false;
     if (groups.some(group => group.id !== id && group.name.toLowerCase() === name.toLowerCase())) return false;
+    let details: PortfolioGroupDetails;
+    try { details = normalizeGroupDetails(input); }
+    catch { return false; }
     let collectionId = input.collectionId === undefined ? existing.collectionId : input.collectionId ?? undefined;
     let createdCollection: CustomPortfolioCollection | undefined;
     if (input.newCollection) {
@@ -237,7 +242,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
       ...current,
       collectionNumber: createdCollection?.number ?? current.collectionNumber,
       collections: createdCollection ? [...current.collections, createdCollection] : current.collections,
-      customGroups: current.customGroups.map(group => group.id === id ? { ...group, name, description, collectionId } : group),
+      customGroups: current.customGroups.map(group => group.id === id ? { ...group, ...details, name, description, collectionId } : group),
     }));
     return true;
   }, [ready, change, userId, enabled]);
@@ -245,6 +250,18 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const updateGroup = useCallback<PortfolioPreferencesContextValue[`updateGroup`]>((id, name, description) => (
     saveGroupSettings(id, { name, description })
   ), [saveGroupSettings]);
+
+  const updateGroupProjectStatus = useCallback<PortfolioPreferencesContextValue[`updateGroupProjectStatus`]>((id, value) => {
+    const group = preferenceRef.current.customGroups.find(group => group.id === id);
+    if (!group) return false;
+    try {
+      return saveGroupSettings(id, {
+        name: group.name,
+        description: group.description ?? ``,
+        projectStatus: normalizeDomainProjectStatus(value),
+      });
+    } catch { return false; }
+  }, [saveGroupSettings]);
 
   const toggleGroupStar = useCallback<PortfolioPreferencesContextValue[`toggleGroupStar`]>(id => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
@@ -418,7 +435,8 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     toggleGroupVisibility,
     assignGroupCollection,
     setCollectionVisibility,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, voteCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, toggleGroupVisibility, assignGroupCollection, setCollectionVisibility]);
+    updateGroupProjectStatus,
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, voteCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, toggleGroupVisibility, assignGroupCollection, setCollectionVisibility, updateGroupProjectStatus]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

@@ -13,45 +13,48 @@ export type DomainProjectStatus =
   | `Mobile Responsiveness`
   | `MVP`
   | `Review`
+  | `Blocked`
   | `Ads Review`
   | `Testing`
   | `Done`;
 export type DomainDifficulty = `Simple` | `Business` | `Professional` | `Enterprise`;
+export type DomainProjectTone = `neutral` | `accent` | `warning` | `success` | `danger`;
 
 export const DEFAULT_DOMAIN_PROJECT_STATUS: DomainProjectStatus = `Future`;
 
 interface DomainProjectOption<Value extends string> {
   icon: string;
-  color: string;
+  tone: DomainProjectTone;
   value: Value;
   label: string;
 }
 
 export const DOMAIN_PROJECT_STATUSES: readonly DomainProjectOption<DomainProjectStatus>[] = [
-  { icon: `Lightbulb`, color: `#b45309`, value: `Future`, label: `Future` },
-  { icon: `ListTodo`, color: `#2563eb`, value: `To Do`, label: `To Do` },
-  { icon: `Brain`, color: `#a16207`, value: `Concepting`, label: `Concepting` },
-  { icon: `CheckCheck`, color: `#4d7c0f`, value: `Concept Finalize`, label: `Concept Finalize` },
-  { icon: `Code2`, color: `#9333ea`, value: `In Development`, label: `In Development` },
-  { icon: `Flag`, color: `#c2410c`, value: `Almost Done`, label: `Almost Done` },
-  { icon: `Monitor`, color: `#0369a1`, value: `Front End Done`, label: `Front End Done` },
-  { icon: `Plug`, color: `#7c3aed`, value: `Connecting Back End`, label: `Connecting Back End` },
-  { icon: `LogIn`, color: `#0f766e`, value: `Sign In / Sign Up`, label: `Sign In / Sign Up` },
-  { icon: `Database`, color: `#1d4ed8`, value: `Database Functionality`, label: `Database Functionality` },
-  { icon: `CreditCard`, color: `#047857`, value: `Connecting Payments`, label: `Connecting Payments` },
-  { icon: `Smartphone`, color: `#0e7490`, value: `Mobile Responsiveness`, label: `Mobile Responsiveness` },
-  { icon: `Rocket`, color: `#6d28d9`, value: `MVP`, label: `MVP` },
-  { icon: `Eye`, color: `#db2777`, value: `Review`, label: `Review` },
-  { icon: `Megaphone`, color: `#9a3412`, value: `Ads Review`, label: `Ads Review` },
-  { icon: `FlaskConical`, color: `#0891b2`, value: `Testing`, label: `Testing` },
-  { icon: `CircleCheck`, color: `#15803d`, value: `Done`, label: `Done` },
+  { icon: `Lightbulb`, tone: `neutral`, value: `Future`, label: `Future` },
+  { icon: `ListTodo`, tone: `neutral`, value: `To Do`, label: `To Do` },
+  { icon: `Brain`, tone: `neutral`, value: `Concepting`, label: `Concepting` },
+  { icon: `CheckCheck`, tone: `neutral`, value: `Concept Finalize`, label: `Concept Finalize` },
+  { icon: `Code2`, tone: `accent`, value: `In Development`, label: `In Development` },
+  { icon: `Flag`, tone: `success`, value: `Almost Done`, label: `Almost Done` },
+  { icon: `Monitor`, tone: `success`, value: `Front End Done`, label: `Front End Done` },
+  { icon: `Plug`, tone: `accent`, value: `Connecting Back End`, label: `Connecting Back End` },
+  { icon: `LogIn`, tone: `accent`, value: `Sign In / Sign Up`, label: `Sign In / Sign Up` },
+  { icon: `Database`, tone: `accent`, value: `Database Functionality`, label: `Database Functionality` },
+  { icon: `CreditCard`, tone: `accent`, value: `Connecting Payments`, label: `Connecting Payments` },
+  { icon: `Smartphone`, tone: `accent`, value: `Mobile Responsiveness`, label: `Mobile Responsiveness` },
+  { icon: `Rocket`, tone: `success`, value: `MVP`, label: `MVP` },
+  { icon: `Eye`, tone: `warning`, value: `Review`, label: `Review` },
+  { icon: `Ban`, tone: `danger`, value: `Blocked`, label: `Blocked` },
+  { icon: `Megaphone`, tone: `warning`, value: `Ads Review`, label: `Ads Review` },
+  { icon: `FlaskConical`, tone: `warning`, value: `Testing`, label: `Testing` },
+  { icon: `CircleCheck`, tone: `success`, value: `Done`, label: `Done` },
 ];
 
 export const DOMAIN_DIFFICULTIES: readonly DomainProjectOption<DomainDifficulty>[] = [
-  { icon: `Sprout`, color: `#15803d`, value: `Simple`, label: `Simple` },
-  { icon: `Briefcase`, color: `#2563eb`, value: `Business`, label: `Business` },
-  { icon: `Award`, color: `#9333ea`, value: `Professional`, label: `Professional` },
-  { icon: `Building2`, color: `#c2410c`, value: `Enterprise`, label: `Enterprise` },
+  { icon: `Sprout`, tone: `success`, value: `Simple`, label: `Simple` },
+  { icon: `Briefcase`, tone: `accent`, value: `Business`, label: `Business` },
+  { icon: `Award`, tone: `neutral`, value: `Professional`, label: `Professional` },
+  { icon: `Building2`, tone: `warning`, value: `Enterprise`, label: `Enterprise` },
 ];
 
 const normalizeOption = <Value extends string>(value: unknown, label: string, options: readonly DomainProjectOption<Value>[]) => {

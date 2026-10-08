@@ -56,7 +56,7 @@ export const buildPortfolioCopyText = (
   if (sections.collections.length && mainNodes.length) {
     roots.push({
       children: mainNodes,
-      label: `Main Domains Database`,
+      label: `Database`,
     });
   } else roots.push(...mainNodes);
 

@@ -1,11 +1,33 @@
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
-import type { CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
+import { normalizeDomainTags } from '../../shared/domainTags';
+import { normalizeSiteIconUrl } from '../../shared/domainSiteIcon';
+import { DOMAIN_PRICE_FIELDS, normalizeDomainPrice } from '../../shared/domainPricing';
+import type { DomainLinkField } from '../DomainLinks/index.web';
+import { normalizeDomainLink, normalizeDomainLinks } from '../../shared/domainLinks';
+import { normalizeDomainProjectStatus } from '../../shared/domainProject';
+import { normalizeGroupDetails } from '../../shared/portfolioPreferences/details';
+import type { CustomPortfolioGroup, PortfolioGroupDetails } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
-export const MAIN_DATABASE_COLLECTION_OPTION = `main`;
 export const CREATE_COLLECTION_OPTION = `create`;
+export const CONVERT_COLLECTION_OPTION = `convert`;
+export const MAIN_DATABASE_COLLECTION_OPTION = `main`;
+
+const GROUP_LINK_FIELDS: { key: DomainLinkField; label: string; multiple?: boolean }[] = [
+  { key: `parentLink`, label: `Parent Link` },
+  { key: `childLinks`, label: `Child Link`, multiple: true },
+  { key: `previewLinks`, label: `Preview Link`, multiple: true },
+  { key: `relatedLinks`, label: `Related Link`, multiple: true },
+  { key: `developmentLinks`, label: `Development Links`, multiple: true },
+  { key: `productionLink`, label: `Production Link` },
+  { key: `githubRepoLink`, label: `GitHub Repository Link` },
+  { key: `socialMediaLinks`, label: `Social Media Link`, multiple: true },
+];
+
+type GroupSettingsField = keyof PortfolioGroupDetails
+  | `name` | `description` | `collection` | `collectionName` | `collectionDescription`;
 
 export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () => void) => {
   const preferences = usePortfolioPreferences();
@@ -15,17 +37,36 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const [collectionDescription, setCollectionDescriptionValue] = useState(``);
   const [description, setDescriptionValue] = useState(group.description ?? ``);
   const [collectionId, setCollectionIdValue] = useState(group.collectionId ?? MAIN_DATABASE_COLLECTION_OPTION);
-  const [invalidField, setInvalidField] = useState<`name` | `description` | `collection` | `collectionName` | `collectionDescription` | null>(null);
+  const [invalidField, setInvalidField] = useState<GroupSettingsField | null>(null);
+  const [details, setDetailsValue] = useState<PortfolioGroupDetails>(() => ({
+    isApp: group.isApp === true,
+    tags: normalizeDomainTags(group.tags),
+    parentLink: group.parentLink ?? ``,
+    startingBid: group.startingBid,
+    siteIconUrl: group.siteIconUrl ?? ``,
+    childLinks: group.childLinks ?? [],
+    previewLinks: group.previewLinks ?? [],
+    relatedLinks: group.relatedLinks ?? [],
+    estimatedRevenue: group.estimatedRevenue,
+    productionLink: group.productionLink ?? ``,
+    githubRepoLink: group.githubRepoLink ?? ``,
+    developmentLinks: [...(group.developmentLinks ?? [])],
+    socialMediaLinks: group.socialMediaLinks ?? [],
+    projectStatus: normalizeDomainProjectStatus(group.projectStatus),
+  }));
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const siteIconInputRef = useRef<HTMLInputElement>(null);
   const collectionSelectRef = useRef<HTMLSelectElement>(null);
   const collectionNameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const collectionDescriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const creatingCollection = collectionId === CREATE_COLLECTION_OPTION;
+  const convertingToCollection = collectionId === CONVERT_COLLECTION_OPTION;
+  const addingCollection = creatingCollection || convertingToCollection;
   const currentGroup = preferences.customGroups.find(current => current.id === group.id);
   const missingGroup = !currentGroup;
-  const missingCollection = collectionId !== MAIN_DATABASE_COLLECTION_OPTION && !creatingCollection
+  const missingCollection = collectionId !== MAIN_DATABASE_COLLECTION_OPTION && !addingCollection
     && !preferences.collections.some(collection => collection.id === collectionId);
   const availabilityError = missingGroup
     ? `This Group Is No Longer Available`
@@ -73,6 +114,10 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     clearError();
     setCollectionDescriptionValue(value);
   };
+  const setDetail = <Key extends keyof PortfolioGroupDetails>(field: Key, value: PortfolioGroupDetails[Key]) => {
+    clearError();
+    setDetailsValue(current => ({ ...current, [field]: value }));
+  };
   const toggleStar = () => {
     if (!preferences.toggleGroupStar(group.id)) setError(`Could Not Update Group Star. Try Again Shortly`);
   };
@@ -108,30 +153,51 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
       collectionSelectRef.current?.focus();
       return;
     }
-    const trimmedCollectionName = collectionName.trim();
-    const trimmedCollectionDescription = collectionDescription.trim();
-    if (creatingCollection) {
+    const trimmedCollectionName = convertingToCollection ? trimmedName : collectionName.trim();
+    const trimmedCollectionDescription = convertingToCollection ? trimmedDescription : collectionDescription.trim();
+    if (addingCollection) {
       const duplicateCollectionName = preferences.collections.some(collection => collection.name.trim().toLowerCase() === trimmedCollectionName.toLowerCase());
       if (!trimmedCollectionName || trimmedCollectionName.length > 80 || duplicateCollectionName) {
-        setInvalidField(`collectionName`);
+        setInvalidField(convertingToCollection ? `name` : `collectionName`);
         setError(duplicateCollectionName ? `A Collection With This Title Already Exists` : `Enter A Collection Title Between 1 And 80 Characters`);
-        collectionNameInputRef.current?.focus();
+        (convertingToCollection ? nameInputRef : collectionNameInputRef).current?.focus();
         return;
       }
       if (trimmedCollectionDescription.length > 280) {
-        setInvalidField(`collectionDescription`);
+        setInvalidField(convertingToCollection ? `description` : `collectionDescription`);
         setError(`Keep The Collection Description Within 280 Characters`);
-        collectionDescriptionInputRef.current?.focus();
+        (convertingToCollection ? descriptionInputRef : collectionDescriptionInputRef).current?.focus();
         return;
       }
     }
+    let detailField: keyof PortfolioGroupDetails = `siteIconUrl`;
+    let normalizedDetails: PortfolioGroupDetails;
+    try {
+      normalizeSiteIconUrl(details.siteIconUrl);
+      for (const field of GROUP_LINK_FIELDS) {
+        detailField = field.key;
+        if (field.multiple) normalizeDomainLinks(details[field.key], field.label);
+        else normalizeDomainLink(details[field.key], field.label);
+      }
+      for (const { field, label } of DOMAIN_PRICE_FIELDS) {
+        detailField = field;
+        normalizeDomainPrice(details[field], label);
+      }
+      normalizedDetails = normalizeGroupDetails(details);
+    } catch (failure) {
+      setInvalidField(detailField);
+      setError(failure instanceof Error ? failure.message : `Enter Valid Group Links`);
+      if (detailField === `siteIconUrl`) siteIconInputRef.current?.focus();
+      return;
+    }
     if (!preferences.saveGroupSettings(group.id, {
       name: trimmedName,
+      ...normalizedDetails,
       description: trimmedDescription,
-      collectionId: creatingCollection || collectionId === MAIN_DATABASE_COLLECTION_OPTION ? null : collectionId,
-      ...(creatingCollection ? { newCollection: { name: trimmedCollectionName, description: trimmedCollectionDescription } } : {}),
+      collectionId: addingCollection || collectionId === MAIN_DATABASE_COLLECTION_OPTION ? null : collectionId,
+      ...(addingCollection ? { newCollection: { name: trimmedCollectionName, description: trimmedCollectionDescription } } : {}),
     })) {
-      setError(`Could Not Save Group. Try Again Shortly`);
+      setError(convertingToCollection ? `Could Not Convert Group. Try Again Shortly` : `Could Not Save Group. Try Again Shortly`);
       return;
     }
     onClose();
@@ -139,7 +205,9 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
 
   return {
     name,
+    details,
     setName,
+    setDetail,
     modalRef,
     toggleStar,
     collectionId,
@@ -147,6 +215,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     description,
     invalidField,
     nameInputRef,
+    siteIconInputRef,
     handleSubmit,
     collectionName,
     setDescription,
@@ -155,6 +224,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     setCollectionName,
     creatingCollection,
     collectionSelectRef,
+    convertingToCollection,
     collectionDescription,
     collectionNameInputRef,
     descriptionInputRef,
@@ -163,5 +233,6 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     collections: preferences.collections,
     error: error || availabilityError,
     starred: currentGroup?.starred === true,
+    invalidLinkField: GROUP_LINK_FIELDS.find(field => field.key === invalidField)?.key ?? null,
   };
 };

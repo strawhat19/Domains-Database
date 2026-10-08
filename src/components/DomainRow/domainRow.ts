@@ -8,6 +8,7 @@ export interface DomainItemProps {
   selected?: boolean;
   position: number;
   domain: DomainRecord;
+  hideProjectDetails?: boolean;
   selectionDescriptionId?: string;
   visibleColumns?: PortfolioColumn[];
   onEdit: (domain: DomainRecord) => void;

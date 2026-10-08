@@ -1,6 +1,8 @@
 import { genID } from './common/ids';
 import { REGISTRARS } from './config';
 import { Types } from '../types/types';
+import { validateDomainTags } from './domainTags';
+import { DOMAIN_PRICE_FIELDS, normalizeDomainPrice } from './domainPricing';
 import { normalizeSiteIconUrl } from './domainSiteIcon';
 import { normalizeDomainLink, normalizeDomainLinks } from './domainLinks';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from './domainProject';
@@ -132,11 +134,15 @@ export const normalizeDomainExtras = (input: Partial<DomainInput>): Partial<Doma
     if (value !== undefined) extras[field] = value;
   }
   if (`difficulty` in input) extras.difficulty = normalizeDomainDifficulty(input.difficulty);
+  for (const { field, label } of DOMAIN_PRICE_FIELDS) {
+    if (field in input) extras[field] = normalizeDomainPrice(input[field], label);
+  }
+  if (input.tags !== undefined) extras.tags = validateDomainTags(input.tags);
   extras.projectStatus = normalizeDomainProjectStatus(input.projectStatus);
   for (const [field, label] of [[`parentLink`, `Parent Link`], [`productionLink`, `Production Link`], [`githubRepoLink`, `GitHub Repository Link`]] as const) {
     if (input[field] !== undefined) extras[field] = normalizeDomainLink(input[field], label);
   }
-  for (const [field, label] of [[`childLinks`, `Child Links`], [`relatedLinks`, `Related Links`], [`previewLinks`, `Preview Links`], [`socialMediaLinks`, `Social Media Links`]] as const) {
+  for (const [field, label] of [[`childLinks`, `Child Links`], [`relatedLinks`, `Related Links`], [`previewLinks`, `Preview Links`], [`developmentLinks`, `Development Links`], [`socialMediaLinks`, `Social Media Links`]] as const) {
     if (input[field] !== undefined) extras[field] = normalizeDomainLinks(input[field], label);
   }
   for (const field of [`mvp`, `future`] as const) {

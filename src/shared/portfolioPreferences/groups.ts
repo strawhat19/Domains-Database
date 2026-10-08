@@ -36,10 +36,24 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
   if (groupBy === `custom`) {
     const membership = new Map(customGroups.flatMap(group => group.domainIds.map(id => [id, group.id] as const)));
     const groups: PortfolioGroup[] = customGroups.map(group => ({
+      isApp: group.isApp,
+      tags: group.tags,
       key: `custom:${group.id}`,
       label: group.name,
+      parentLink: group.parentLink,
+      startingBid: group.startingBid,
+      childLinks: group.childLinks,
+      siteIconUrl: group.siteIconUrl,
       customGroupId: group.id,
+      previewLinks: group.previewLinks,
+      relatedLinks: group.relatedLinks,
       description: group.description,
+      estimatedRevenue: group.estimatedRevenue,
+      projectStatus: group.projectStatus,
+      productionLink: group.productionLink,
+      githubRepoLink: group.githubRepoLink,
+      developmentLinks: group.developmentLinks,
+      socialMediaLinks: group.socialMediaLinks,
       domains: applyDomainOrder(domains.filter(domain => membership.get(domain.id) === group.id), orders[`custom:${group.id}`]),
     }));
     groups.push({

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, RefObject } from 'react';
 import { REGISTRARS } from '../../shared/config';
+import { normalizeDomainTags } from '../../shared/domainTags';
 import { getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { useDomains } from '../../shared/domainContext/useDomains';
@@ -71,6 +72,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
   const expiresAt = `${nextYear.getFullYear()}-${String(nextYear.getMonth() + 1).padStart(2, `0`)}-${String(nextYear.getDate()).padStart(2, `0`)}`;
   return {
     meta: domain?.meta,
+    tags: normalizeDomainTags(domain?.tags),
     name: domain?.name ?? ``,
     notes: domain?.notes ?? ``,
     owner: domain?.owner ?? ``,
@@ -78,11 +80,14 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
     future: domain?.future ?? ``,
     difficulty: domain?.difficulty,
     parentLink: domain?.parentLink ?? ``,
+    startingBid: domain?.startingBid,
+    estimatedRevenue: domain?.estimatedRevenue,
     childLinks: [...(domain?.childLinks ?? [])],
     previewLinks: [...(domain?.previewLinks ?? [])],
     relatedLinks: [...(domain?.relatedLinks ?? [])],
     githubRepoLink: domain?.githubRepoLink ?? ``,
     productionLink: domain?.productionLink ?? ``,
+    developmentLinks: [...(domain?.developmentLinks ?? [])],
     socialMediaLinks: [...(domain?.socialMediaLinks ?? [])],
     projectStatus: normalizeDomainProjectStatus(domain?.projectStatus),
     description: domain?.description ?? ``,
@@ -148,7 +153,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   };
   const setField = <Key extends keyof DomainInput>(field: Key, value: DomainInput[Key]) => {
     if (pendingActionRef.current) return;
-    if (isSynced && ![`meta`, `mvp`, `future`, `childLinks`, `parentLink`, `difficulty`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `socialMediaLinks`].includes(field)) return;
+    if (isSynced && ![`mvp`, `meta`, `tags`, `future`, `childLinks`, `parentLink`, `difficulty`, `startingBid`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `estimatedRevenue`, `developmentLinks`, `socialMediaLinks`].includes(field)) return;
     setError(``);
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };

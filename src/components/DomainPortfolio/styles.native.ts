@@ -80,6 +80,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   pricePrefix: { top: 0, left: 13, bottom: 0, zIndex: 1, position: `absolute`, pointerEvents: `none`, justifyContent: `center` },
   siteIconRow: { gap: 12, flexDirection: `row`, alignItems: `center` },
   siteIconInput: { flex: 1, minWidth: 0 },
+  siteIconPreviewGroup: { gap: 4, alignItems: `center` },
   siteIconPreview: { width: 48, height: 48, borderWidth: 1, borderRadius: 8, borderColor: palette.line, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.input },
   siteIconImage: { width: 30, height: 30, resizeMode: `contain` },
   descriptionInput: { minHeight: 88, textAlignVertical: `top` },

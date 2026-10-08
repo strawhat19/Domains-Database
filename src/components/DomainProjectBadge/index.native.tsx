@@ -3,8 +3,10 @@ import { Text, View } from 'react-native';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import type { DomainProjectTone } from '../../shared/domainProject';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import {
+  Ban,
   Eye,
   Flag,
   Plug,
@@ -35,6 +37,7 @@ interface DomainProjectBadgeProps {
 }
 
 const icons: Record<string, typeof Eye> = {
+  Ban,
   Eye,
   Flag,
   Plug,
@@ -61,6 +64,13 @@ const icons: Record<string, typeof Eye> = {
 const DomainProjectBadge = ({ id, field, value }: DomainProjectBadgeProps) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const iconColors: Record<DomainProjectTone, string> = {
+    accent: palette.accent,
+    danger: palette.danger,
+    neutral: palette.muted,
+    success: palette.success,
+    warning: palette.warning,
+  };
   const options = field === `projectStatus` ? DOMAIN_PROJECT_STATUSES : DOMAIN_DIFFICULTIES;
   const badgeValue = field === `projectStatus` ? normalizeDomainProjectStatus(value) : value;
   const option = options.find(item => item.value === badgeValue);
@@ -74,7 +84,11 @@ const DomainProjectBadge = ({ id, field, value }: DomainProjectBadgeProps) => {
           style={styles.statusDotWrap}
           {...elementProps(`domain-project-badge-icon-wrap`, id)}
         >
-          <Icon size={14} color={option?.color ?? palette.muted} {...elementProps(`domain-project-badge-icon`, id)} />
+          <Icon
+            size={14}
+            color={iconColors[option?.tone ?? `neutral`]}
+            {...elementProps(`domain-project-badge-icon`, id)}
+          />
         </View>
       )}
       <Text

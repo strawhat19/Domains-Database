@@ -51,10 +51,11 @@ const DomainRow = ({
   onChangeProjectStatus,
   selectionDescriptionId,
   reorderable = draggable,
+  hideProjectDetails = false,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainRowProps) => {
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
-  const needsAttention = status !== `Active`;
+  const needsAttention = !hideProjectDetails && status !== `Active`;
   const previewLink = getDomainPreviewLink(domain);
   const githubRepoLink = getDomainGithubRepoLink(domain);
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
@@ -74,6 +75,7 @@ const DomainRow = ({
   };
 
   const renderColumn = (field: PortfolioColumn) => {
+    if (hideProjectDetails && (field === `status` || field === `projectStatus`)) return null;
     switch (field) {
       case `name`:
         return (
@@ -110,10 +112,13 @@ const DomainRow = ({
               </div>
             )}
             <DomainSiteIcon
+              disabled={busy}
               fallback={`link`}
               domain={domain.name}
               id={`${scope}-symbol`}
+              onEdit={() => onEdit(domain)}
               iconUrl={getCustomSiteIconUrl(domain)}
+              editLabel={`Add A Logo Or Site Icon For ${domain.name}`}
             />
             <div id={`${scope}-name-copy`} className={`domain-name-copy`}>
               <div id={`${scope}-name-heading`} className={`domain-name-heading`}>
@@ -141,7 +146,7 @@ const DomainRow = ({
                     />
                   )}
                 </a>
-                {previewLink && (
+                {!hideProjectDetails && previewLink && (
                   <a
                     target={`_blank`}
                     draggable={false}
@@ -169,24 +174,28 @@ const DomainRow = ({
                     <LinkSiteIcon size={13} url={githubRepoLink} id={`${scope}-github-icon`} />
                   </a>
                 )}
-                <DomainProjectBadge
-                  disabled={busy}
-                  field={`projectStatus`}
-                  value={domain.projectStatus}
-                  id={`${scope}-project-status`}
-                  className={`domain-project-status`}
-                  editLabel={`Change Project Status For ${domain.name}`}
-                  onChange={value => onChangeProjectStatus(domain, value)}
-                />
+                {!hideProjectDetails && (
+                  <DomainProjectBadge
+                    disabled={busy}
+                    field={`projectStatus`}
+                    value={domain.projectStatus}
+                    id={`${scope}-project-status`}
+                    className={`domain-project-status`}
+                    editLabel={`Change Project Status For ${domain.name}`}
+                    onChange={value => onChangeProjectStatus(domain, value)}
+                  />
+                )}
               </div>
-              <DomainDescription
-                busy={busy}
-                id={`${scope}-description`}
-                domainName={domain.name}
-                value={domain.description}
-                onReadMore={() => onEdit(domain)}
-                onSave={value => onChangeDescription(domain, value)}
-              />
+              {!hideProjectDetails && (
+                <DomainDescription
+                  busy={busy}
+                  id={`${scope}-description`}
+                  domainName={domain.name}
+                  value={domain.description}
+                  onReadMore={() => onEdit(domain)}
+                  onSave={value => onChangeDescription(domain, value)}
+                />
+              )}
             </div>
           </div>
         );
@@ -209,7 +218,9 @@ const DomainRow = ({
               <span id={`${scope}-registrar-name`} className={`domain-registrar-name`}>
                 {domain.registrar || `—`}
               </span>
-              <DomainSourceBadge domain={domain} id={`${scope}-source-status`} />
+              {!hideProjectDetails && (
+                <DomainSourceBadge domain={domain} id={`${scope}-source-status`} />
+              )}
             </div>
           </div>
         );
@@ -219,14 +230,16 @@ const DomainRow = ({
             <span id={`${scope}-renewal-date`} className={`domain-renewal-date`}>
               {getPortfolioColumnDisplay(domain, field)}
             </span>
-            <span id={`${scope}-status`} className={`rowStatus rowStatus-${statusKey}`}>
-              <span id={`${scope}-status-dot-wrap`} className={`statusDotWrap`} aria-hidden={`true`}>
-                <span id={`${scope}-status-dot`} className={`statusDot`} />
+            {!hideProjectDetails && (
+              <span id={`${scope}-status`} className={`rowStatus rowStatus-${statusKey}`}>
+                <span id={`${scope}-status-dot-wrap`} className={`statusDotWrap`} aria-hidden={`true`}>
+                  <span id={`${scope}-status-dot`} className={`statusDot`} />
+                </span>
+                <span id={`${scope}-status-text`} className={`statusText`}>
+                  {status}
+                </span>
               </span>
-              <span id={`${scope}-status-text`} className={`statusText`}>
-                {status}
-              </span>
-            </span>
+            )}
           </>
         );
       case `autoRenew`:

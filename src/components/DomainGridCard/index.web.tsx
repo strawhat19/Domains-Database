@@ -40,6 +40,7 @@ const DomainGridCard = ({
   onToggleAutoRenew,
   selectionDescriptionId,
   reorderable = draggable,
+  hideProjectDetails = false,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainGridCardProps) => {
   const scope = `domain-grid-card-${domain.id}`;
@@ -48,6 +49,7 @@ const DomainGridCard = ({
   const registrarManaged = getDomainSource(domain) === `registrar`;
   const columns = PORTFOLIO_COLUMNS.filter(column => (
     column.field !== `name` && visibleColumns.includes(column.field)
+    && (!hideProjectDetails || (column.field !== `status` && column.field !== `projectStatus`))
   ));
   const selectionHandlers = getDomainSelectionHandlers(domain.id, !!selected, onSelect);
 
@@ -79,10 +81,13 @@ const DomainGridCard = ({
         />
         <DomainSiteIcon
           size={32}
+          disabled={busy}
           fallback={`link`}
           domain={domain.name}
           id={`${scope}-symbol`}
+          onEdit={() => onEdit(domain)}
           iconUrl={getCustomSiteIconUrl(domain)}
+          editLabel={`Add A Logo Or Site Icon For ${domain.name}`}
         />
         <div id={`${scope}-name-copy`} className={`domain-grid-card-name-copy`}>
           <a
@@ -101,16 +106,20 @@ const DomainGridCard = ({
               </span>
             </span>
           </a>
-          <span aria-hidden={`true`} id={`${scope}-status-separator`} className={`domain-grid-card-name-separator`}>
-            {` | `}
-          </span>
-          <DomainProjectBadge
-            field={`projectStatus`}
-            value={domain.projectStatus}
-            id={`${scope}-project-status`}
-            className={`domain-project-status`}
-          />
-          {!!domain.description && (
+          {!hideProjectDetails && (
+            <>
+              <span aria-hidden={`true`} id={`${scope}-status-separator`} className={`domain-grid-card-name-separator`}>
+                {` | `}
+              </span>
+              <DomainProjectBadge
+                field={`projectStatus`}
+                value={domain.projectStatus}
+                id={`${scope}-project-status`}
+                className={`domain-project-status`}
+              />
+            </>
+          )}
+          {!hideProjectDetails && !!domain.description && (
             <>
               <span aria-hidden={`true`} id={`${scope}-description-separator`} className={`domain-grid-card-name-separator`}>
                 {` | `}
@@ -171,7 +180,7 @@ const DomainGridCard = ({
                       {value}
                     </span>
                   )}
-                  {column.field === `expiresAt` && (
+                  {!hideProjectDetails && column.field === `expiresAt` && (
                     <span id={`${scope}-status`} className={`domain-grid-card-status domain-grid-card-status-${statusKey}`}>
                       <span id={`${scope}-status-dot`} className={`domain-grid-card-status-dot`} aria-hidden={`true`} />
                       <span id={`${scope}-status-text`} className={`domain-grid-card-status-text`}>
@@ -179,7 +188,7 @@ const DomainGridCard = ({
                       </span>
                     </span>
                   )}
-                  {column.field === `registrar` && (
+                  {!hideProjectDetails && column.field === `registrar` && (
                     <DomainSourceBadge domain={domain} id={`${scope}-source-status`} />
                   )}
                 </dd>

@@ -21,11 +21,20 @@ interface DomainCardProps {
   selected?: boolean;
   loading?: boolean;
   domain?: DomainRecord;
+  hideProjectDetails?: boolean;
   onSelect?: (id: string) => void;
   onEdit?: (domain: DomainRecord) => void;
 }
 
-const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEdit, onSelect }: DomainCardProps) => {
+const DomainCard = ({
+  domain,
+  onEdit,
+  onSelect,
+  index = 0,
+  loading = false,
+  selected = false,
+  hideProjectDetails = false,
+}: DomainCardProps) => {
   const { palette } = useTheme();
   const { visibleColumns } = useColumns();
   const [iconFailed, setIconFailed] = useState(false);
@@ -157,18 +166,22 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
                 {domain.name}
               </Text>
             </Pressable>
-            <Text
-              style={styles.nameSeparator}
-              {...elementProps(`native-domain-name-status-separator`, domain.id)}
-            >
-              {` | `}
-            </Text>
-            <DomainProjectBadge
-              value={projectStatus}
-              field={`projectStatus`}
-              id={`native-domain-name-status-${domain.id}`}
-            />
-            {!!domain.description?.trim() && (
+            {!hideProjectDetails && (
+              <>
+                <Text
+                  style={styles.nameSeparator}
+                  {...elementProps(`native-domain-name-status-separator`, domain.id)}
+                >
+                  {` | `}
+                </Text>
+                <DomainProjectBadge
+                  value={projectStatus}
+                  field={`projectStatus`}
+                  id={`native-domain-name-status-${domain.id}`}
+                />
+              </>
+            )}
+            {!hideProjectDetails && !!domain.description?.trim() && (
               <>
                 <Text
                   style={styles.nameSeparator}
@@ -205,16 +218,20 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
           <Text {...elementProps(`native-domain-registrar`, domain.id)} style={styles.registrar}>
             {domain.registrar || `—`}
           </Text>
-          <DomainSourceBadge domain={domain} id={`native-domain-source-${domain.id}`} />
+          {!hideProjectDetails && (
+            <DomainSourceBadge domain={domain} id={`native-domain-source-${domain.id}`} />
+          )}
         </View>
-        <View {...elementProps(`rowStatus`, domain.id)} style={styles.rowStatus}>
-          <View {...elementProps(`statusDotWrap`, domain.id)} style={[styles.statusDotWrap, { backgroundColor: colors.background }]}>
-            <View {...elementProps(`statusDot`, domain.id)} style={[styles.statusDot, { backgroundColor: colors.foreground }]} />
+        {!hideProjectDetails && (
+          <View {...elementProps(`rowStatus`, domain.id)} style={styles.rowStatus}>
+            <View {...elementProps(`statusDotWrap`, domain.id)} style={[styles.statusDotWrap, { backgroundColor: colors.background }]}>
+              <View {...elementProps(`statusDot`, domain.id)} style={[styles.statusDot, { backgroundColor: colors.foreground }]} />
+            </View>
+            <Text {...elementProps(`statusText`, domain.id)} style={[styles.statusText, { color: colors.foreground }]}>
+              {status}
+            </Text>
           </View>
-          <Text {...elementProps(`statusText`, domain.id)} style={[styles.statusText, { color: colors.foreground }]}>
-            {status}
-          </Text>
-        </View>
+        )}
       </View>
       <View {...elementProps(`native-domain-card-bottom`, domain.id)} style={styles.bottom}>
         <View {...elementProps(`native-domain-expiry`, domain.id)} style={styles.expiry}>

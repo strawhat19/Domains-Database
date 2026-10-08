@@ -2,7 +2,10 @@ import { Link, useRouter } from 'expo-router';
 import RegistrarSetup from '../RegistrarSetup';
 import { createStyles } from './styles.native';
 import { REGISTRARS } from '../../shared/config';
+import TagPicker from '../TagPicker/index.native';
 import DomainCard from '../DomainCard/index.native';
+import CurrencyField from '../CurrencyField/index.native';
+import DomainSiteIcon from '../DomainSiteIcon/index.native';
 import DomainStarButton from '../DomainStarButton/index.native';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
 import DomainProjectSelect from '../DomainProjectSelect/index.native';
@@ -12,12 +15,14 @@ import { useNativePortfolio } from './useNativePortfolio';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
+import { normalizeDomainLink } from '../../shared/domainLinks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { ActivityIndicator, Image, Linking, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, Trash2, RefreshCw } from 'lucide-react-native';
 
 const textFields = [
@@ -31,6 +36,10 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const { palette, isDark } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const state = useNativePortfolio(compact);
+  const { customGroups } = usePortfolioPreferences();
+  const appDomainIds = useMemo(() => new Set(customGroups
+    .filter(group => group.isApp)
+    .flatMap(group => group.domainIds)), [customGroups]);
   const router = useRouter();
   const { user } = useAuth();
   const [editorIconFailed, setEditorIconFailed] = useState(false);
@@ -43,6 +52,13 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     ? `Wait ${Math.floor(state.manualSyncWaitSeconds / 60)}:${String(state.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const visibleIds = state.visibleDomains.map(domain => domain.id);
   const editorSiteIconUrl = getDomainSiteIconUrl(state.input);
+  const editorHasCustomSiteIcon = Boolean(getCustomSiteIconUrl(state.input).trim());
+  const developmentLinkActions = (state.input.developmentLinks ?? []).flatMap((value, index) => {
+    try {
+      const url = normalizeDomainLink(value, `Development Link`);
+      return url ? [{ url, index }] : [];
+    } catch { return []; }
+  });
   const editingSyncedDomain = state.editingSyncedDomain;
   const editingRecord = state.domains.find(domain => domain.id === state.editingId) ?? state.editingDomain;
   const deletionRestriction = editingRecord ? getDomainDeletionRestriction(editingRecord) : ``;
@@ -76,10 +92,10 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       <View {...elementProps(`native-portfolio-heading`)} style={styles.heading}>
         <View {...elementProps(`native-portfolio-heading-copy`)} style={styles.headingCopy}>
           <Text {...elementProps(`native-portfolio-eyebrow`)} style={styles.eyebrow}>
-            {`DOMAIN REGISTRY`}
+            {`Table`}
           </Text>
           <Text {...elementProps(`native-portfolio-title`)} style={styles.title}>
-            {compact ? `Portfolio overview` : `Your portfolio`}
+            {`Domains`}
           </Text>
           <Text {...elementProps(`native-portfolio-description`)} style={styles.description}>
             {`Your domain records, sorted and searchable.`}
@@ -89,7 +105,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           <View {...elementProps(`native-portfolio-counts`)} style={styles.counts}>
             <View {...elementProps(`native-portfolio-count-summary`)} style={styles.countSummary}>
               <Text {...elementProps(`native-portfolio-domain-count`)} style={styles.countText}>
-                {state.loading ? `Loading portfolio…` : `${state.domains.length} domain(s) · ${new Set(state.domains.map(domain => domain.registrar).filter(Boolean)).size} registrar(s)`}
+                {state.loading ? `Loading portfolio…` : `${state.domains.length} ${state.domains.length === 1 ? `Domain` : `Domains`} · ${new Set(state.domains.map(domain => domain.registrar).filter(Boolean)).size} registrar(s)`}
               </Text>
               {!state.loading && state.registrarCounts.map(({ registrar, count }) => {
                 const slug = registrar.toLowerCase().replace(/\s+/g, `-`);
@@ -298,8 +314,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           <View {...elementProps(`native-portfolio-selected-count`)} style={styles.secondaryButton} accessibilityLiveRegion={`polite`}>
             <Text {...elementProps(`native-portfolio-selected-count-text`)} style={styles.secondaryButtonText}>
               {selectedIds.length
-                ? `${selectedIds.length} selected${selectionToolsWidth >= 640 ? ` / ${state.domains.length} total` : ``}`
-                : `${state.domains.length} total`}
+                ? `${selectedIds.length} SELECTED${selectionToolsWidth >= 640 ? ` / ${state.domains.length} TOTAL` : ``}`
+                : `${state.domains.length} TOTAL`}
             </Text>
           </View>
         </ScrollView>
@@ -313,6 +329,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             onSelect={selectDomain}
             onEdit={state.openEditor}
             selected={selectedIds.includes(domain.id)}
+            hideProjectDetails={appDomainIds.has(domain.id)}
           />
         ))}
         {!state.loading && !state.visibleDomains.length && (
@@ -423,19 +440,32 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     {`Site Icon URL`}
                   </Text>
                   <View {...elementProps(`native-domain-editor-site-icon-row`)} style={styles.siteIconRow}>
-                    <View {...elementProps(`native-domain-editor-site-icon-preview`)} style={styles.siteIconPreview}>
-                      {editorSiteIconUrl && !editorIconFailed ? (
-                        <Image
-                          key={editorSiteIconUrl}
-                          style={styles.siteIconImage}
-                          source={{ uri: editorSiteIconUrl }}
-                          accessibilityIgnoresInvertColors
-                          onError={() => setEditorIconFailed(true)}
-                          {...elementProps(`native-domain-editor-site-icon-image`)}
-                          accessibilityLabel={`Site Icon Preview For ${state.input.name || `New Domain`}`}
-                        />
-                      ) : (
-                        <Globe2 {...elementProps(`native-domain-editor-site-icon-fallback`)} size={22} color={palette.muted} />
+                    <View
+                      style={styles.siteIconPreviewGroup}
+                      {...elementProps(`native-domain-editor-site-icon-preview-group`, state.editingId ?? `new`)}
+                    >
+                      <View {...elementProps(`native-domain-editor-site-icon-preview`)} style={styles.siteIconPreview}>
+                        {editorSiteIconUrl && !editorIconFailed ? (
+                          <Image
+                            key={editorSiteIconUrl}
+                            style={styles.siteIconImage}
+                            source={{ uri: editorSiteIconUrl }}
+                            accessibilityIgnoresInvertColors
+                            onError={() => setEditorIconFailed(true)}
+                            {...elementProps(`native-domain-editor-site-icon-image`)}
+                            accessibilityLabel={`${editorHasCustomSiteIcon ? `Custom Logo` : `Site Icon`} Preview For ${state.input.name || `New Domain`}`}
+                          />
+                        ) : (
+                          <Globe2 {...elementProps(`native-domain-editor-site-icon-fallback`)} size={22} color={palette.muted} />
+                        )}
+                      </View>
+                      {editorHasCustomSiteIcon && (
+                        <Text
+                          style={styles.fieldHint}
+                          {...elementProps(`native-domain-editor-custom-logo-label`, state.editingId ?? `new`)}
+                        >
+                          {`Custom logo`}
+                        </Text>
                       )}
                     </View>
                     <TextInput
@@ -453,6 +483,33 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       onChangeText={value => state.updateInput(`meta`, { ...state.input.meta, siteIconUrl: value })}
                     />
                   </View>
+                  {editorHasCustomSiteIcon && (
+                    <View
+                      accessible
+                      style={styles.siteIconRow}
+                      accessibilityRole={`image`}
+                      {...elementProps(`native-domain-editor-original-site-icon`, state.editingId ?? `new`)}
+                      accessibilityLabel={`Original Site Icon For ${state.input.name || `New Domain`}`}
+                    >
+                      <View
+                        style={styles.siteIconPreview}
+                        {...elementProps(`native-domain-editor-original-site-icon-preview`, state.editingId ?? `new`)}
+                      >
+                        <DomainSiteIcon
+                          compact
+                          size={30}
+                          domain={state.input.name}
+                          id={`native-domain-editor-original-site-icon-${state.editingId ?? `new`}`}
+                        />
+                      </View>
+                      <Text
+                        style={styles.fieldHint}
+                        {...elementProps(`native-domain-editor-original-site-icon-label`, state.editingId ?? `new`)}
+                      >
+                        {`Original site icon`}
+                      </Text>
+                    </View>
+                  )}
                   <Text {...elementProps(`native-domain-editor-site-icon-hint`)} style={styles.fieldHint}>
                     {`Use a public HTTP or HTTPS image URL. Leave blank to use the domain's favicon.`}
                   </Text>
@@ -539,6 +596,35 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     <TextInput {...elementProps(`native-domain-editor-price-input`)} style={[styles.fieldInput, styles.priceInput]} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={palette.placeholder} keyboardType={`decimal-pad`} accessibilityLabel={`Annual Renewal Price In USD`} />
                   </View>
                 </View>}
+                <View
+                  style={styles.fieldPair}
+                  {...elementProps(`native-domain-editor-price-fields`, state.editingId ?? `new`)}
+                >
+                  <View
+                    style={styles.pairedField}
+                    {...elementProps(`native-domain-editor-estimated-revenue-field`, state.editingId ?? `new`)}
+                  >
+                    <CurrencyField
+                      label={`Est. Revenue`}
+                      disabled={state.saving}
+                      value={state.input.estimatedRevenue}
+                      id={`native-domain-editor-estimated-revenue-${state.editingId ?? `new`}`}
+                      onChange={value => state.updateInput(`estimatedRevenue`, value)}
+                    />
+                  </View>
+                  <View
+                    style={styles.pairedField}
+                    {...elementProps(`native-domain-editor-starting-bid-field`, state.editingId ?? `new`)}
+                  >
+                    <CurrencyField
+                      label={`Starting Bid`}
+                      disabled={state.saving}
+                      value={state.input.startingBid}
+                      id={`native-domain-editor-starting-bid-${state.editingId ?? `new`}`}
+                      onChange={value => state.updateInput(`startingBid`, value)}
+                    />
+                  </View>
+                </View>
                 {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-auto-renew`)} style={styles.toggle}>
                   <View {...elementProps(`native-domain-editor-auto-renew-copy`)} style={styles.toggleCopy}>
                     <Text {...elementProps(`native-domain-editor-auto-renew-label`)} style={styles.fieldLabel}>
@@ -615,6 +701,24 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     />
                   </View>
                 </View>
+                <View
+                  style={styles.field}
+                  {...elementProps(`native-domain-editor-tags-field`, state.editingId ?? `new`)}
+                >
+                  <Text
+                    style={styles.fieldLabel}
+                    {...elementProps(`native-domain-editor-tags-label`, state.editingId ?? `new`)}
+                  >
+                    {`Tags`}
+                  </Text>
+                  <TagPicker
+                    label={`Tags`}
+                    disabled={state.saving}
+                    value={state.input.tags}
+                    id={`native-domain-editor-tags-${state.editingId ?? `new`}`}
+                    onChange={tags => state.updateInput(`tags`, tags)}
+                  />
+                </View>
                 <View {...elementProps(`native-domain-editor-plan-fields`)} style={styles.fieldPair}>
                   <View {...elementProps(`native-domain-editor-mvp-field`)} style={[styles.field, styles.pairedField]}>
                     <Text {...elementProps(`native-domain-editor-mvp-label`)} style={styles.fieldLabel}>
@@ -648,6 +752,70 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       onChangeText={value => state.updateInput(`future`, value)}
                     />
                   </View>
+                </View>
+                <View
+                  style={styles.field}
+                  {...elementProps(`native-domain-editor-development-links-field`, state.editingId ?? `new`)}
+                >
+                  <Text
+                    style={styles.fieldLabel}
+                    {...elementProps(`native-domain-editor-development-links-label`, state.editingId ?? `new`)}
+                  >
+                    {`Development Links`}
+                  </Text>
+                  <TextInput
+                    multiline
+                    autoCorrect={false}
+                    autoComplete={`off`}
+                    autoCapitalize={`none`}
+                    keyboardType={`url`}
+                    editable={!state.saving}
+                    placeholder={`http://localhost:8081`}
+                    accessibilityLabel={`Development Links`}
+                    placeholderTextColor={palette.placeholder}
+                    value={state.input.developmentLinks?.join(`\n`) ?? ``}
+                    accessibilityHint={`Enter One HTTP Or HTTPS URL Per Line`}
+                    style={[styles.fieldInput, styles.descriptionInput]}
+                    {...elementProps(`native-domain-editor-development-links-input`, state.editingId ?? `new`)}
+                    onChangeText={value => state.updateInput(`developmentLinks`, value.split(/\r?\n/))}
+                  />
+                  <Text
+                    style={styles.fieldHint}
+                    {...elementProps(`native-domain-editor-development-links-hint`, state.editingId ?? `new`)}
+                  >
+                    {`Enter one HTTP or HTTPS URL per line.`}
+                  </Text>
+                  {!!developmentLinkActions.length && (
+                    <View
+                      style={styles.registrarChoices}
+                      {...elementProps(`native-domain-editor-development-links-actions`, state.editingId ?? `new`)}
+                    >
+                      {developmentLinkActions.map(({ url, index }) => (
+                        <Pressable
+                          key={index}
+                          disabled={state.saving}
+                          accessibilityRole={`link`}
+                          accessibilityState={{ disabled: state.saving }}
+                          accessibilityLabel={`Open Development Link ${index + 1}: ${url}`}
+                          style={[styles.secondaryButton, state.saving && styles.disabled]}
+                          onPress={() => void Linking.openURL(url).catch(() => undefined)}
+                          {...elementProps(`native-domain-editor-development-link-open`, `${state.editingId ?? `new`}-${index}`)}
+                        >
+                          <Link2
+                            size={14}
+                            color={palette.accent}
+                            {...elementProps(`native-domain-editor-development-link-icon`, `${state.editingId ?? `new`}-${index}`)}
+                          />
+                          <Text
+                            style={styles.secondaryButtonText}
+                            {...elementProps(`native-domain-editor-development-link-text`, `${state.editingId ?? `new`}-${index}`)}
+                          >
+                            {`Open Link ${index + 1}`}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                 </View>
                 <View {...elementProps(`native-domain-editor-description-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-description-label`)} style={styles.fieldLabel}>

@@ -9,10 +9,26 @@
   border: 1px solid var(--line);
 }
 .domain-site-icon-compact { border: 0; color: inherit; background: transparent; border-radius: 2px; }
-.domain-site-icon-fallback, .domain-site-icon-image { grid-area: 1 / 1; }
+.domain-site-icon-fallback, .domain-site-icon-image, .domain-site-icon-edit-icon { grid-area: 1 / 1; }
+.domain-site-icon-editable {
+  padding: 0;
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease, border-color .2s ease;
+  .domain-site-icon-fallback { transition: opacity .2s ease; }
+  &:not(:disabled):is(:hover, :focus-visible) {
+    color: var(--accent);
+    background: var(--subtle);
+    border-color: var(--accent);
+    .domain-site-icon-fallback { opacity: 0; }
+    .domain-site-icon-edit-icon { opacity: 1; }
+  }
+  &:disabled { cursor: default; }
+}
+.domain-site-icon-edit-icon { opacity: 0; transition: opacity .2s ease; }
 .domain-site-icon-image { opacity: 0; object-fit: contain; transition: opacity .2s ease; }
 .domain-site-icon-image-loaded { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .domain-site-icon-image { transition: none; }
+  .domain-site-icon-image, .domain-site-icon-editable,
+  .domain-site-icon-edit-icon, .domain-site-icon-editable .domain-site-icon-fallback { transition: none; }
 }

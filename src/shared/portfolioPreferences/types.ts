@@ -1,12 +1,31 @@
 import type { DomainRecord } from '../types';
+import type { DomainTag } from '../domainTags';
 import type { PortfolioColumn } from '../portfolioColumns';
+import type { DomainProjectStatus } from '../domainProject';
 
 export type PortfolioView = `table` | `grid`;
 export type CollectionVote = `up` | `down` | null;
 export type CollectionVisibility = `private` | `public`;
 export type PortfolioGroupBy = `none` | `custom` | PortfolioColumn;
 
-export interface CustomPortfolioGroup {
+export interface PortfolioGroupDetails {
+  isApp?: boolean;
+  tags?: DomainTag[];
+  parentLink?: string;
+  startingBid?: number;
+  siteIconUrl?: string;
+  childLinks?: string[];
+  estimatedRevenue?: number;
+  githubRepoLink?: string;
+  productionLink?: string;
+  previewLinks?: string[];
+  relatedLinks?: string[];
+  developmentLinks?: string[];
+  socialMediaLinks?: string[];
+  projectStatus?: DomainProjectStatus;
+}
+
+export interface CustomPortfolioGroup extends PortfolioGroupDetails {
   id: string;
   name: string;
   starred?: boolean;
@@ -28,7 +47,7 @@ export interface CustomPortfolioCollection {
   sortField: PortfolioColumn | null;
 }
 
-export interface GroupSettingsInput {
+export interface GroupSettingsInput extends PortfolioGroupDetails {
   name: string;
   description: string;
   collectionId?: string | null;
@@ -46,7 +65,7 @@ export interface PortfolioPreferences {
   collections: CustomPortfolioCollection[];
 }
 
-export interface PortfolioGroup {
+export interface PortfolioGroup extends PortfolioGroupDetails {
   key: string;
   label: string;
   description?: string;
@@ -82,6 +101,7 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   voteCollection: (collectionId: string, vote: Exclude<CollectionVote, null>) => boolean;
   updateGroup: (groupId: string, name: string, description: string) => boolean;
   saveGroupSettings: (groupId: string, input: GroupSettingsInput) => boolean;
+  updateGroupProjectStatus: (groupId: string, status: DomainProjectStatus) => boolean;
   moveGroup: (groupId: string, targetId: string, placement?: `before` | `after`) => boolean;
   updateCollection: (collectionId: string, name: string, description: string, visibility?: CollectionVisibility) => boolean;
   setCollectionVisibility: (collectionId: string, visibility: CollectionVisibility) => boolean;

@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from 'react';
 import { REGISTRARS, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
+import { normalizeDomainTags } from '../../shared/domainTags';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnValue } from '../../shared/portfolioColumns';
@@ -21,6 +22,7 @@ const newDomain = (): DomainInput => {
   const month = String(today.getMonth() + 1).padStart(2, `0`);
   const day = String(today.getDate()).padStart(2, `0`);
   return {
+    tags: [],
     name: ``,
     notes: ``,
     mvp: ``,
@@ -28,6 +30,7 @@ const newDomain = (): DomainInput => {
     autoRenew: true,
     description: ``,
     renewalPrice: 0,
+    developmentLinks: [],
     owner: `My Portfolio`,
     registrar: REGISTRARS[0],
     projectStatus: DEFAULT_DOMAIN_PROJECT_STATUS,
@@ -90,12 +93,14 @@ export const useNativePortfolio = (compact = false) => {
     setInput(domain ? {
       ...domain,
       meta: domain.meta,
+      tags: normalizeDomainTags(domain.tags),
       mvp: domain.mvp ?? ``,
       name: domain.name,
       owner: domain.owner,
       notes: domain.notes,
       future: domain.future ?? ``,
       difficulty: domain.difficulty,
+      developmentLinks: [...(domain.developmentLinks ?? [])],
       registrar: domain.registrar,
       projectStatus: normalizeDomainProjectStatus(domain.projectStatus),
       createdAt: domain.createdAt,
@@ -117,7 +122,7 @@ export const useNativePortfolio = (compact = false) => {
     setInput(current => markDomainFieldsKnown(current, [`renewalPrice`]));
   };
   const updateInput = <K extends keyof DomainInput>(field: K, value: DomainInput[K]) => {
-    if (editingSyncedDomain && ![`mvp`, `meta`, `future`, `difficulty`, `description`, `projectStatus`].includes(field)) return;
+    if (editingSyncedDomain && ![`mvp`, `meta`, `tags`, `future`, `difficulty`, `startingBid`, `description`, `projectStatus`, `estimatedRevenue`, `developmentLinks`].includes(field)) return;
     setInput(current => {
       if (editingSyncedDomain && field === `meta`) {
         return { ...current, meta: { ...current.meta, siteIconUrl: getCustomSiteIconUrl({ meta: value as DomainInput[`meta`] }) } };
@@ -138,8 +143,12 @@ export const useNativePortfolio = (compact = false) => {
       const record: DomainInput = syncedDomain ? {
         ...syncedDomain,
         mvp: input.mvp,
+        tags: input.tags,
         future: input.future,
         difficulty: input.difficulty,
+        startingBid: input.startingBid,
+        estimatedRevenue: input.estimatedRevenue,
+        developmentLinks: input.developmentLinks,
         projectStatus: normalizeDomainProjectStatus(input.projectStatus),
         description: input.description ?? ``,
         meta: { ...syncedDomain.meta, siteIconUrl: getCustomSiteIconUrl(input) },

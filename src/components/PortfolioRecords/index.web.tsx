@@ -2,12 +2,15 @@ import './styles.scss';
 import { useMemo, useState } from 'react';
 import StarButton from '../StarButton/index.web';
 import PortfolioEmptyState from './EmptyState.web';
+import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import { useDomainReorder } from './useDomainReorder';
 import type { DomainRecord } from '../../shared/types';
 import type { CSSProperties, KeyboardEvent } from 'react';
 import DomainRow, { DomainRowSkeleton } from '../DomainRow';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainContextMenu from '../DomainContextMenu/index.web';
+import PortfolioGroupLinks from '../PortfolioGroupLinks/index.web';
+import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import PortfolioTableHead from '../PortfolioTableHead/index.web';
 import DomainGroupSettings from '../DomainGroupSettings/index.web';
 import { useColumns } from '../../shared/columnContext/useColumns';
@@ -17,7 +20,7 @@ import { getPortfolioColumnWidth } from '../DomainPortfolio/columnLayout.web';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
-import { Eye, EyeOff, ArrowUp, ArrowDown, RotateCcw, Settings, GripVertical } from 'lucide-react';
+import { Eye, EyeOff, ArrowUp, Settings, AppWindow, ArrowDown, RotateCcw, GripVertical } from 'lucide-react';
 import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
 import { getOrderedPortfolioColumns, type PortfolioColumn } from '../../shared/portfolioColumns';
 import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
@@ -68,6 +71,10 @@ const PortfolioRecords = ({
     if (action === `group`) setGroupingIds(new Set(targets.map(domain => domain.id)));
   });
   const preferences = usePortfolioPreferences();
+  const customGroupsById = useMemo(() => new Map(preferences.customGroups.map(group => [group.id, group])), [preferences.customGroups]);
+  const appDomainIds = useMemo(() => new Set(preferences.customGroups
+    .filter(group => group.isApp)
+    .flatMap(group => group.domainIds)), [preferences.customGroups]);
   const { columnWidths, flexibleColumns } = useColumns();
   const orderingPreferences = useMemo(() => !collectionId && sortField
     ? { ...preferences, orders: {} }
@@ -142,7 +149,7 @@ const PortfolioRecords = ({
   const groupHeading = (group: PortfolioGroup, grid = false, mirrored = false) => {
     const { key, label, description } = group;
     const scope = `${idPrefix}${mirrored ? `-sticky` : ``}-group-${encodeURIComponent(key)}`;
-    const customGroup = preferences.customGroups.find(item => item.id === group.customGroupId);
+    const customGroup = customGroupsById.get(group.customGroupId ?? ``);
     const moves = customGroup ? reorder.groupMoves(customGroup.id) : undefined;
     const hidden = preferences.hiddenGroupKeys.includes(key);
     const VisibilityIcon = hidden ? EyeOff : Eye;
@@ -153,7 +160,7 @@ const PortfolioRecords = ({
       <div
         id={`${scope}-heading`}
         {...(grid ? reorder.groupHandlers(group) : {})}
-        className={`portfolio-group-heading${hidden ? ` portfolio-group-heading-hidden` : ``}${grid && reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-dragging` : ``}${grid && reorder.targetGroupKey === key ? ` portfolio-group-heading-drop-target` : ``}`}
+        className={`portfolio-group-heading${customGroup?.isApp ? ` portfolio-group-heading-app` : ``}${hidden ? ` portfolio-group-heading-hidden` : ``}${grid && reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-dragging` : ``}${grid && reorder.targetGroupKey === key ? ` portfolio-group-heading-drop-target` : ``}`}
       >
         {customGroup && (
           <div
@@ -194,10 +201,42 @@ const PortfolioRecords = ({
             </div>
           </div>
         )}
+        {customGroup && (
+          <DomainSiteIcon
+            size={28}
+            domain={``}
+            fallback={`link`}
+            id={`${scope}-symbol`}
+            disabled={busy || loading}
+            iconUrl={customGroup.siteIconUrl}
+            onEdit={() => setEditingGroup(customGroup)}
+            editLabel={`Add A Logo Or Icon For ${customGroup.name}`}
+          />
+        )}
         <div id={`${scope}-copy`} className={`portfolio-group-copy`}>
           <span id={`${scope}-label`} className={`portfolio-group-label`}>
             {label}
           </span>
+          {customGroup?.isApp && (
+            <span id={`${scope}-kind`} className={`portfolio-group-kind`}>
+              <AppWindow size={12} aria-hidden={`true`} id={`${scope}-kind-icon`} className={`portfolio-group-kind-icon`} />
+              <span id={`${scope}-kind-text`} className={`portfolio-group-kind-text`}>{`App`}</span>
+            </span>
+          )}
+          {customGroup && (
+            <>
+              <DomainProjectBadge
+                field={`projectStatus`}
+                disabled={busy || loading}
+                id={`${scope}-project-status`}
+                value={customGroup.projectStatus}
+                className={`portfolio-group-project-status`}
+                editLabel={`Change Project Status For ${label}`}
+                onChange={value => { preferences.updateGroupProjectStatus(customGroup.id, value); }}
+              />
+              <PortfolioGroupLinks group={customGroup} id={`${scope}-links`} />
+            </>
+          )}
           {description && (
             <span id={`${scope}-description`} className={`portfolio-group-description`}>
               {description}
@@ -212,7 +251,7 @@ const PortfolioRecords = ({
             </span>
           )}
         </div>
-        <div id={`${scope}-actions`} className={`portfolio-group-actions`}>
+        <div id={`${scope}-actions`} className={`actionsCell portfolio-group-actions`}>
           {searching && onToggleGroupSearch && (
             <button
               type={`button`}
@@ -324,6 +363,7 @@ const PortfolioRecords = ({
                 selected={selectedIds.has(domain.id)}
                 position={positions.get(domain.id) ?? 1}
                 visibleColumns={visibleColumns}
+                hideProjectDetails={appDomainIds.has(domain.id)}
                 selectionDescriptionId={`portfolio-selection-help`}
                 onToggleAutoRenew={onToggleAutoRenew}
                 {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
@@ -404,7 +444,7 @@ const PortfolioRecords = ({
                     {...reorder.groupHandlers(group)}
                     data-portfolio-sticky-group-key={group.key}
                     id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-row`}
-                    className={`portfolio-group-heading-row${reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
+                    className={`portfolio-group-heading-row${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
                   >
                     <td id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-cell`} className={`portfolio-group-heading-cell`}>
                       {groupHeading(group, false, true)}
@@ -459,7 +499,7 @@ const PortfolioRecords = ({
                 <tr
                   {...reorder.groupHandlers(group)}
                   id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-row`}
-                  className={`portfolio-group-heading-row${reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
+                  className={`portfolio-group-heading-row${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
                 >
                   <th colSpan={columns.length + 4} scope={`rowgroup`} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-cell`} className={`portfolio-group-heading-cell`}>
                     {groupHeading(group)}
@@ -476,6 +516,7 @@ const PortfolioRecords = ({
                   selected={selectedIds.has(domain.id)}
                   position={positions.get(domain.id) ?? 1}
                   visibleColumns={visibleColumns}
+                  hideProjectDetails={appDomainIds.has(domain.id)}
                   selectionDescriptionId={`portfolio-selection-help`}
                   onContextMenu={event => contextMenu.open(event, domain, menuDomains(domain))}
                   onToggleAutoRenew={onToggleAutoRenew}

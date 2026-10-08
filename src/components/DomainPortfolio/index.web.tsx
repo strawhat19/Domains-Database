@@ -129,17 +129,17 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       <div id={`portfolio-heading-row`} className={`portfolio-heading-row`}>
         <div id={`portfolio-heading`} className={`portfolio-heading`}>
           <span id={`portfolio-eyebrow`} className={`portfolio-eyebrow`}>
-            {`THE REGISTRY`}
+            {`Table`}
           </span>
           <h2 id={`portfolio-title`} className={`portfolio-title`}>
-            {`Domain Portfolio`}
+            {`Domains`}
           </h2>
           <div id={`portfolio-summary`} className={`portfolio-summary`}>
             <span id={`portfolio-domain-total`} className={`portfolio-summary-item`}>
               <span id={`portfolio-domain-count`} className={`portfolio-summary-value`}>
                 {portfolio.loading ? `—` : portfolio.summary.count}
               </span>
-              {` ${portfolio.summary.count === 1 ? `domain` : `domains`}`}
+              {` ${portfolio.summary.count === 1 ? `Domain` : `Domains`}`}
             </span>
             {!portfolio.loading && portfolio.summary.registrarCounts.map(({ count, registrar }) => {
               const registrarId = registrar.toLowerCase().replace(/\s+/g, `-`);
@@ -581,7 +581,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             role={`search`}
             id={`portfolio-search-row`}
             className={`portfolio-search-row`}
-            aria-label={`Search Domain Portfolio`}
+            aria-label={`Search Domains`}
             onSubmit={event => {
               event.preventDefault();
               portfolio.setQuery(searchInputRef.current?.value ?? portfolio.query);
@@ -654,7 +654,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             className={`portfolio-main-database-heading${mainHandlers.dropTarget ? ` portfolio-main-database-drop-target` : ``}`}
           >
             <h3 id={`portfolio-main-database-title`} className={`portfolio-main-database-title`}>
-              {`Domains Database`}
+              {`Database`}
             </h3>
             <p id={`portfolio-main-database-help`} className={`portfolio-main-database-help`}>
               {`Drop a group here to move it back to the main database`}
@@ -663,12 +663,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         )}
         {showMainRecords && (
           <>
-            <div id={`portfolio-scroll-hint`} className={`portfolio-scroll-hint${preferences.view === `grid` ? ` portfolio-scroll-hint-hidden` : ``}`}>
-              <span id={`portfolio-scroll-hint-text`} className={`portfolio-scroll-hint-text`}>
-                {`Scroll to see all columns`}
-              </span>
-              <ArrowRight size={13} aria-hidden={`true`} id={`portfolio-scroll-hint-icon`} className={`portfolio-scroll-hint-icon`} />
-            </div>
             <PortfolioRecords
               {...recordProps}
               sticky={sticky}

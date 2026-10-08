@@ -1,6 +1,8 @@
 import './styles.scss';
 import ConnectRegistrar from './ConnectRegistrar';
+import TagPicker from '../TagPicker/index.web';
 import DomainLinks from '../DomainLinks/index.web';
+import CurrencyField from '../CurrencyField/index.web';
 import SettingsField from '../SettingsField/index.web';
 import ProjectSelect from './ProjectSelect/index.web';
 import { X, Plus, Check, Trash2, ChevronDown } from 'lucide-react';
@@ -11,8 +13,9 @@ import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import { REGISTRARS } from '../../shared/config';
 import { useDomainEditor } from './useDomainEditor';
 import type { DomainRecord } from '../../shared/types';
-import { getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
+import { formatCurrency, getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
+import { DOMAIN_PRICE_FIELDS } from '../../shared/domainPricing';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 
 interface DomainEditorProps {
@@ -40,6 +43,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
   } = useDomainEditor(domain, onClose);
   const deleteId = `domain-editor-delete-${domain?.id ?? `new`}`;
   const isEditing = Boolean(domain?.id);
+  const hasCustomIcon = Boolean(getCustomSiteIconUrl(input).trim());
   const deleteRestriction = domain ? getDomainDeletionRestriction(domain) : ``;
   const isSynced = Boolean(domain && getDomainSource(domain) === `registrar`);
   return (
@@ -119,19 +123,48 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   {`Site icon URL`}
                 </label>
                 <div id={`domain-site-icon-row`} className={`domain-editor-icon-row`}>
-                  <div
-                    role={`img`}
-                    id={`domain-site-icon-preview`}
-                    aria-label={`Site Icon Preview`}
-                    className={`domain-editor-icon-preview`}
-                  >
-                    <DomainSiteIcon
-                      compact
-                      size={40}
-                      domain={input.name}
-                      id={`domain-editor-site-icon`}
-                      iconUrl={getCustomSiteIconUrl(input)}
-                    />
+                  <div id={`domain-site-icon-previews`} className={`domain-editor-icon-previews`}>
+                    <div id={`domain-site-icon-custom-preview-item`} className={`domain-editor-icon-preview-item`}>
+                      <div
+                        role={`img`}
+                        id={`domain-site-icon-preview`}
+                        className={`domain-editor-icon-preview`}
+                        aria-label={hasCustomIcon ? `Custom Logo Preview` : `Site Icon Preview`}
+                      >
+                        <DomainSiteIcon
+                          compact
+                          size={40}
+                          domain={input.name}
+                          id={`domain-editor-site-icon`}
+                          iconUrl={getCustomSiteIconUrl(input)}
+                        />
+                      </div>
+                      {hasCustomIcon && (
+                        <span id={`domain-site-icon-custom-preview-label`} className={`domain-editor-icon-preview-label`}>
+                          {`Custom logo`}
+                        </span>
+                      )}
+                    </div>
+                    {hasCustomIcon && (
+                      <div id={`domain-site-icon-original-preview-item`} className={`domain-editor-icon-preview-item`}>
+                        <div
+                          role={`img`}
+                          id={`domain-site-icon-original-preview`}
+                          aria-label={`Original Site Icon Preview`}
+                          className={`domain-editor-icon-preview`}
+                        >
+                          <DomainSiteIcon
+                            compact
+                            size={40}
+                            domain={input.name}
+                            id={`domain-editor-original-site-icon`}
+                          />
+                        </div>
+                        <span id={`domain-site-icon-original-preview-label`} className={`domain-editor-icon-preview-label`}>
+                          {`Original site icon`}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div id={`domain-site-icon-copy`} className={`domain-editor-icon-copy`}>
                     <SettingsField
@@ -379,6 +412,51 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   </SettingsField>
                 </div>
               )}
+              {DOMAIN_PRICE_FIELDS.map(({ field, label }) => (
+                <div key={field} id={`domain-${field}-field-${domain?.id ?? `new`}`} className={`domain-editor-field`}>
+                  <label
+                    className={`domain-editor-label`}
+                    id={`domain-${field}-label-${domain?.id ?? `new`}`}
+                    htmlFor={`domain-${field}-input-${domain?.id ?? `new`}`}
+                  >
+                    {label}
+                  </label>
+                  <SettingsField
+                    label={label}
+                    disabled={saving}
+                    enabled={isEditing}
+                    id={`domain-${field}-setting-${domain?.id ?? `new`}`}
+                    value={input[field] === undefined ? undefined : formatCurrency(input[field])}
+                  >
+                    <CurrencyField
+                      label={label}
+                      disabled={saving}
+                      value={input[field]}
+                      id={`domain-${field}-input-${domain?.id ?? `new`}`}
+                      onChange={value => setField(field, value)}
+                    />
+                  </SettingsField>
+                </div>
+              ))}
+              <div id={`domain-tags-field-${domain?.id ?? `new`}`} className={`domain-editor-field domain-editor-field-full`}>
+                <label
+                  className={`domain-editor-label`}
+                  id={`domain-tags-input-${domain?.id ?? `new`}-label`}
+                  htmlFor={`domain-tags-input-${domain?.id ?? `new`}`}
+                >
+                  {`Tags`}
+                </label>
+                <TagPicker
+                  label={`Tags`}
+                  value={input.tags}
+                  disabled={saving}
+                  id={`domain-tags-input-${domain?.id ?? `new`}`}
+                  onChange={tags => setField(`tags`, tags)}
+                />
+                <p id={`domain-tags-help-${domain?.id ?? `new`}`} className={`domain-editor-icon-help`}>
+                  {`Choose multiple tags. Select a tag again to remove it.`}
+                </p>
+              </div>
               <div id={`domain-status-field`} className={`domain-editor-field`}>
                 <label id={`domain-status-input-label`} className={`domain-editor-label`} htmlFor={`domain-status-input`}>
                   {`Status`}

@@ -1,6 +1,7 @@
 import './styles.scss';
 import type { DomainProjectStatus } from '../../shared/domainProject';
 import {
+  Ban,
   Eye,
   Flag,
   Plug,
@@ -37,6 +38,7 @@ interface DomainProjectBadgeProps {
 }
 
 const icons: Record<string, typeof Eye> = {
+  Ban,
   Eye,
   Flag,
   Plug,
@@ -72,12 +74,11 @@ const DomainProjectBadge = ({ id, field, value, disabled, onChange, editLabel, c
     <span
       id={id}
       title={editable ? editLabel : label}
-      style={editable ? { background: option?.color ?? `var(--muted)` } : undefined}
-      className={`domain-project-badge rowStatus${editable ? ` domain-project-badge-pill${disabled ? ` domain-project-badge-disabled` : ``}` : ``}${className ? ` ${className}` : ``}`}
+      className={`domain-project-badge rowStatus domain-project-badge-tone-${option?.tone ?? `neutral`}${editable ? ` domain-project-badge-pill${disabled ? ` domain-project-badge-disabled` : ``}` : ``}${className ? ` ${className}` : ``}`}
     >
       {Icon && (
         <span id={`${id}-icon-wrap`} className={`domain-project-badge-icon-wrap statusDotWrap`} aria-hidden={`true`}>
-          <Icon size={13} color={editable ? `#fff` : option?.color ?? `var(--muted)`} id={`${id}-icon`} className={`domain-project-badge-icon`} />
+          <Icon size={13} id={`${id}-icon`} className={`domain-project-badge-icon`} />
         </span>
       )}
       <span id={`${id}-label`} className={`domain-project-badge-label statusText`}>

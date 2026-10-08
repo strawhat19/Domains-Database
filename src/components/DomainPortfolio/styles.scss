@@ -201,7 +201,6 @@
 }
 .portfolio-toolbar-meta { display: flex; margin-left: auto; align-items: center; }
 .portfolio-sample-label { gap: 5px; display: flex; padding: 6px 8px; font-size: 10px; color: var(--warning); border-radius: 3px; align-items: center; white-space: nowrap; background: var(--warning-bg); font-family: var(--font-mono); }
-.portfolio-scroll-hint { display: none; }
 .portfolio-table-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 .portfolio-table { width: 100%; min-width: var(--portfolio-table-width, 860px); border-spacing: 0; border-collapse: separate; }
 .portfolio-table-head { background: var(--input); }
@@ -260,7 +259,6 @@
 .portfolio-visibility-option:disabled { cursor: default; }
 .portfolio-view-option-active,
 .portfolio-view-option-active:hover { color: var(--accent); background: var(--paper); box-shadow: 0 1px 3px var(--shadow); }
-.portfolio-scroll-hint-hidden { display: none !important; }
 .portfolio-sort-button { border: 0; gap: 7px; display: flex; padding: 0; cursor: pointer; font-size: 10px; color: var(--muted); align-items: center; letter-spacing: .035em; text-transform: uppercase; background: transparent; font-family: var(--font-mono); }
 .portfolio-table-heading-renewalPrice .portfolio-sort-button, .portfolio-table-heading-monthlyCost .portfolio-sort-button { margin-left: auto; }
 .portfolio-sort-icon { opacity: .45; transition: opacity .2s ease; }
@@ -298,7 +296,6 @@
 @media (max-width: 1050px) {
   .portfolio-table-heading { padding-left: 16px; padding-right: 16px; }
   .portfolio-table-heading-position, .portfolio-table-heading-selection { padding-left: 6px; padding-right: 6px; }
-  .portfolio-scroll-hint { gap: 8px; display: flex; font-size: 10px; color: var(--muted); padding: 0 20px 12px; align-items: center; font-family: var(--font-mono); }
 }
 @media (max-width: 720px) {
   .portfolio-heading { min-width: 0; max-width: 100%; }
@@ -320,7 +317,6 @@
   .portfolio-toolbar { gap: 12px; padding: 12px 16px; flex-wrap: wrap; }
   .portfolio-search, .portfolio-registrar-filter { font-size: 16px; }
   .portfolio-toolbar-meta { margin-left: auto; }
-  .portfolio-scroll-hint { padding-left: 16px; }
   .portfolio-card-footer { gap: 9px; padding: 10px 10px 10px 16px; }
 }
 @media (max-width: 380px) {
