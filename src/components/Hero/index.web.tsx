@@ -31,7 +31,7 @@ const Hero = () => {
           id={`hero-eyebrow-marker`}
           className={`hero-eyebrow-marker`}
         />
-        {`PERSONAL DOMAIN REGISTRY`}
+        {`Domain Manager`}
       </p>
       <h1 id={`hero-title`} className={`hero-title`}>
         <span id={`hero-title-intro`} className={`hero-title-intro`}>

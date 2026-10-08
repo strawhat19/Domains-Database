@@ -7,10 +7,51 @@ import { useReducedMotion } from '../../shared/common/useReducedMotion';
 import Svg, { Defs, G, LinearGradient, Polygon, Stop } from 'react-native-svg';
 
 const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
+const gridSize = 20;
+const halfWidth = 29;
+const halfHeight = 21;
+const faceSkew = 4;
+const viewBox = { x: 28, y: 0, width: 700, height: 455 };
 const phaseSteps = Array.from({ length: 25 }, (_, index) => index / 24);
-const columns = Array.from({ length: 100 }, (_, index) => {
-  const row = Math.floor(index / 10);
-  const column = index % 10;
+const cubePalettes = {
+  dark: {
+    halo: `#6cffe0`,
+    left: `#0b151d`,
+    right: `#070e15`,
+    litLeft: `#176d63`,
+    litRight: `#0e4549`,
+    topPale: `#c0fff4`,
+    topTeal: `#64f5d9`,
+    topStart: `#21333e`,
+    topEnd: `#111c25`,
+    topStroke: `#2a3c45`,
+    leftStroke: `#17252d`,
+    rightStroke: `#13222a`,
+    litTopStroke: `#9cffe7`,
+    litLeftStroke: `#267c71`,
+    litRightStroke: `#1b6768`,
+  },
+  light: {
+    halo: `#34cdb0`,
+    left: `#c4d4d6`,
+    right: `#94b0b8`,
+    litLeft: `#46a695`,
+    litRight: `#237e79`,
+    topPale: `#e3fff7`,
+    topTeal: `#45cdae`,
+    topStart: `#f7faf9`,
+    topEnd: `#cbdcdd`,
+    topStroke: `#a6bfc4`,
+    leftStroke: `#a6bfc4`,
+    rightStroke: `#87a5af`,
+    litTopStroke: `#188d7b`,
+    litLeftStroke: `#288d80`,
+    litRightStroke: `#1a6b6a`,
+  },
+};
+const columns = Array.from({ length: gridSize * gridSize }, (_, index) => {
+  const row = Math.floor(index / gridSize);
+  const column = index % gridSize;
   const seed = (row * 29 + column * 17) % 37;
   const waves = seed % 2 + 1;
   const offset = seed / 37 * Math.PI * 2;
@@ -23,16 +64,22 @@ const columns = Array.from({ length: 100 }, (_, index) => {
     index,
     column,
     lit: seed < 5,
-    y: 66 + (row + column) * 18,
-    x: 380 + (column - row) * 32,
+    y: 6 + column * 27 + row * 19,
+    x: 420 + (column - row) * 32,
     glow: wave.map(value => .72 + value * .28),
     halo: wave.map(value => .08 + value * .18),
     heights: wave.map(value => height + value * amplitude),
   };
-}).sort((first, second) => first.row + first.column - second.row - second.column || first.column - second.column);
+}).filter(cube => (
+  cube.x + halfWidth + faceSkew >= viewBox.x
+  && cube.x - halfWidth - faceSkew <= viewBox.x + viewBox.width
+  && cube.y + halfHeight + faceSkew >= viewBox.y
+  && cube.y - halfHeight - Math.max(...cube.heights) - faceSkew <= viewBox.y + viewBox.height
+)).sort((first, second) => first.row + first.column - second.row - second.column || first.column - second.column);
 
 const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
-  const { palette } = useTheme();
+  const { isDark, palette } = useTheme();
+  const cubePalette = cubePalettes[isDark ? `dark` : `light`];
   const reducedMotion = useReducedMotion();
   const phase = useRef(new Animated.Value(0)).current;
   const [active, setActive] = useState(AppState.currentState !== `background` && AppState.currentState !== `inactive`);
@@ -41,13 +88,14 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
   const faces = useMemo(() => columns.map(cube => {
     const { x, y } = cube;
     const points = (face: `top` | `left` | `right`, height: number) => {
-      const upperY = (y - height).toFixed(2);
-      const middleY = (y + 16 - height).toFixed(2);
-      const lowerY = (y + 32 - height).toFixed(2);
+      const upperY = (y - halfHeight - height).toFixed(2);
+      const leftY = (y - faceSkew - height).toFixed(2);
+      const rightY = (y + faceSkew - height).toFixed(2);
+      const lowerY = (y + halfHeight - height).toFixed(2);
 
-      if (face === `left`) return `${x - 29},${middleY} ${x},${lowerY} ${x},${y + 32} ${x - 29},${y + 16}`;
-      if (face === `right`) return `${x},${lowerY} ${x + 29},${middleY} ${x + 29},${y + 16} ${x},${y + 32}`;
-      return `${x},${upperY} ${x + 29},${middleY} ${x},${lowerY} ${x - 29},${middleY}`;
+      if (face === `left`) return `${x - halfWidth},${leftY} ${x},${lowerY} ${x},${y + halfHeight} ${x - halfWidth},${y - faceSkew}`;
+      if (face === `right`) return `${x},${lowerY} ${x + halfWidth},${rightY} ${x + halfWidth},${y + faceSkew} ${x},${y + halfHeight}`;
+      return `${x},${upperY} ${x + halfWidth},${rightY} ${x},${lowerY} ${x - halfWidth},${leftY}`;
     };
     const animateFace = (face: `top` | `left` | `right`) => phase.interpolate({
       inputRange: phaseSteps,
@@ -76,7 +124,7 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
     // Every column samples the same clock with its own phase and height; the fixed bases stay grounded.
     const animation = Animated.loop(Animated.timing(phase, {
       toValue: 1,
-      duration: 24000,
+      duration: 14000,
       easing: Easing.linear,
       isInteraction: false,
       useNativeDriver: false,
@@ -96,7 +144,7 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
       <Svg
         width={`100%`}
         height={`100%`}
-        viewBox={`0 0 760 500`}
+        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
         preserveAspectRatio={`xMidYMid slice`}
         {...elementProps(`native-hero-cubes-svg`, suffix)}
       >
@@ -109,8 +157,8 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
             id={topGradient}
             {...elementProps(`native-hero-cubes-top-gradient`, suffix)}
           >
-            <Stop offset={`0%`} stopColor={`#c0fff4`} {...elementProps(`native-hero-cubes-top-pale`, suffix)} />
-            <Stop offset={`55%`} stopColor={`#64f5d9`} {...elementProps(`native-hero-cubes-top-teal`, suffix)} />
+            <Stop offset={`0%`} stopColor={cubePalette.topPale} {...elementProps(`native-hero-cubes-top-pale`, suffix)} />
+            <Stop offset={`55%`} stopColor={cubePalette.topTeal} {...elementProps(`native-hero-cubes-top-teal`, suffix)} />
             <Stop offset={`100%`} stopColor={palette.accent} {...elementProps(`native-hero-cubes-top-accent`, suffix)} />
           </LinearGradient>
           <LinearGradient
@@ -121,8 +169,8 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
             id={darkGradient}
             {...elementProps(`native-hero-cubes-dark-gradient`, suffix)}
           >
-            <Stop offset={`0%`} stopColor={`#21333e`} {...elementProps(`native-hero-cubes-dark-start`, suffix)} />
-            <Stop offset={`100%`} stopColor={`#111c25`} {...elementProps(`native-hero-cubes-dark-end`, suffix)} />
+            <Stop offset={`0%`} stopColor={cubePalette.topStart} {...elementProps(`native-hero-cubes-dark-start`, suffix)} />
+            <Stop offset={`100%`} stopColor={cubePalette.topEnd} {...elementProps(`native-hero-cubes-dark-end`, suffix)} />
           </LinearGradient>
         </Defs>
         <G {...elementProps(`native-hero-cubes-grid`, suffix)}>
@@ -136,24 +184,24 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
                   opacity={opacity}
                   points={cube.left}
                   strokeWidth={.65}
-                  fill={cube.lit ? `#176d63` : `#0b151d`}
-                  stroke={cube.lit ? `#267c71` : `#17252d`}
+                  fill={cube.lit ? cubePalette.litLeft : cubePalette.left}
+                  stroke={cube.lit ? cubePalette.litLeftStroke : cubePalette.leftStroke}
                   {...elementProps(`native-hero-cube-left`, cubeSuffix)}
                 />
                 <AnimatedPolygon
                   opacity={opacity}
                   points={cube.right}
                   strokeWidth={.65}
-                  fill={cube.lit ? `#0e4549` : `#070e15`}
-                  stroke={cube.lit ? `#1b6768` : `#13222a`}
+                  fill={cube.lit ? cubePalette.litRight : cubePalette.right}
+                  stroke={cube.lit ? cubePalette.litRightStroke : cubePalette.rightStroke}
                   {...elementProps(`native-hero-cube-right`, cubeSuffix)}
                 />
                 {cube.lit && (
                   <AnimatedPolygon
-                    fill={`#6cffe0`}
+                    fill={cubePalette.halo}
                     strokeWidth={7}
                     points={cube.top}
-                    stroke={`#6cffe0`}
+                    stroke={cubePalette.halo}
                     strokeLinejoin={`round`}
                     opacity={cube.haloOpacity}
                     {...elementProps(`native-hero-cube-glow`, cubeSuffix)}
@@ -164,7 +212,7 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
                   points={cube.top}
                   strokeWidth={.8}
                   fill={`url(#${cube.lit ? topGradient : darkGradient})`}
-                  stroke={cube.lit ? `#9cffe7` : `#2a3c45`}
+                  stroke={cube.lit ? cubePalette.litTopStroke : cubePalette.topStroke}
                   {...elementProps(`native-hero-cube-top`, cubeSuffix)}
                 />
               </G>

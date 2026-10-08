@@ -36,7 +36,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
           />
           <View {...elementProps(`auth-form-story-heading`, mode)} style={styles.storyHeading}>
             <Text {...elementProps(`auth-form-story-eyebrow`, mode)} style={styles.eyebrow}>
-              {`PERSONAL DOMAIN REGISTRY`}
+              {`Domain Manager`}
             </Text>
             <Text {...elementProps(`auth-form-story-title`, mode)} style={styles.storyTitle} accessibilityRole={`header`}>
               {`Your domains.\n`}

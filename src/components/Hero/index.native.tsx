@@ -17,12 +17,13 @@ const Hero = () => {
   const search = useHeroSearch();
   const recents = useRecentsLayout();
   const { width } = useWindowDimensions();
-  const { palette } = useTheme();
-  const heroPalette = themePalettes.dark;
+  const { isDark, palette } = useTheme();
+  const heroPalette = isDark ? themePalettes.dark : palette;
+  const heroBackground = isDark ? palette.strong : palette.paper;
   const compact = width < 600;
   const accentSize = Math.min(52, Math.max(28, (width - 48) * .105));
   const [searchFocused, setSearchFocused] = useState(false);
-  const styles = useMemo(() => createStyles(palette), [palette]);
+  const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
 
@@ -50,16 +51,29 @@ const Hero = () => {
       >
         <Defs>
           <LinearGradient id={`hero-native-content-fade`} x1={`0`} y1={`0`} x2={`0`} y2={`1`}>
-            <Stop offset={`0%`} stopColor={palette.strong} stopOpacity={.99} />
-            <Stop offset={`45%`} stopColor={palette.strong} stopOpacity={.96} />
-            <Stop offset={`75%`} stopColor={palette.strong} stopOpacity={.78} />
-            <Stop offset={`100%`} stopColor={palette.strong} stopOpacity={.12} />
+            <Stop offset={`0%`} stopColor={heroBackground} stopOpacity={.99} />
+            <Stop offset={`45%`} stopColor={heroBackground} stopOpacity={.96} />
+            <Stop offset={`75%`} stopColor={heroBackground} stopOpacity={.78} />
+            <Stop offset={`100%`} stopColor={heroBackground} stopOpacity={.12} />
+          </LinearGradient>
+          <LinearGradient id={`hero-native-cube-edge-fade`} x1={`0`} y1={`0`} x2={`0`} y2={`1`}>
+            <Stop offset={`0%`} stopColor={heroBackground} stopOpacity={0} />
+            <Stop offset={`78%`} stopColor={heroBackground} stopOpacity={0} />
+            <Stop offset={`88%`} stopColor={heroBackground} stopOpacity={.3} />
+            <Stop offset={`96%`} stopColor={heroBackground} stopOpacity={.88} />
+            <Stop offset={`100%`} stopColor={heroBackground} stopOpacity={1} />
           </LinearGradient>
         </Defs>
         <Rect width={`100%`} height={`100%`} fill={`url(#hero-native-content-fade)`} />
+        <Rect
+          width={`100%`}
+          height={`100%`}
+          {...elementProps(`hero-cube-edge-fade`)}
+          fill={`url(#hero-native-cube-edge-fade)`}
+        />
       </Svg>
       <Text {...elementProps(`hero-eyebrow`)} style={styles.eyebrow}>
-        {`PERSONAL DOMAIN REGISTRY`}
+        {`Domain Manager`}
       </Text>
       <Text
         {...elementProps(`hero-title`)}

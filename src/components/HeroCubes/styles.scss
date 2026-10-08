@@ -3,9 +3,44 @@
   height: 100%;
   overflow: hidden;
   pointer-events: none;
+  --cube-glow: #169d91;
+  --cube-highlight: #85ead6;
+  --cube-side-light: #168b89;
+  --cube-floor: #e2ebec;
+  --cube-floor-stroke: #bcced2;
+  --cube-top-stroke: #9bb1b9;
+  --cube-left-stroke: #8da5af;
+  --cube-right-stroke: #6f8c9a;
+  --cube-dark-top-start: #f8fdfc;
+  --cube-dark-top-end: #dce7e8;
+  --cube-dark-left-start: #c8d7dc;
+  --cube-dark-left-end: #9eafb8;
+  --cube-dark-right-start: #a8bcc5;
+  --cube-dark-right-end: #8299a6;
+  --cube-light-left-end: #377c7a;
+  --cube-light-right-end: #275966;
+}
+
+:root[data-theme='dark'] .hero-cubes {
   --cube-glow: color-mix(in srgb, var(--accent, #5acfc6) 38%, #40f9df);
   --cube-highlight: color-mix(in srgb, var(--accent, #5acfc6) 22%, #a7fff2);
   --cube-side-light: color-mix(in srgb, var(--accent, #5acfc6) 45%, #11b8ba);
+  --cube-floor: #09141b;
+  --cube-floor-stroke: #1a2a32;
+  --cube-top-stroke: #1b2c34;
+  --cube-left-stroke: #13252c;
+  --cube-right-stroke: #0b1b22;
+  --cube-dark-top-start: #14232b;
+  --cube-dark-top-end: #0a151c;
+  --cube-dark-left-start: #0c1a22;
+  --cube-dark-left-end: #060f15;
+  --cube-dark-right-start: #071219;
+  --cube-dark-right-end: #030a10;
+  --cube-light-left-end: #07383b;
+  --cube-light-right-end: #03242b;
+
+  .hero-cubes-atmosphere,
+  .hero-cubes-floor-glows { opacity: 1; }
 }
 
 .hero-cubes-svg {
@@ -15,10 +50,12 @@
   overflow: hidden;
 }
 
-.hero-cubes-floor-tile { fill: #09141b; stroke: #1a2a32; }
-.hero-cube-face { stroke: #1b2c34; stroke-linejoin: round; }
-.hero-cube-left { stroke: #13252c; }
-.hero-cube-right { stroke: #0b1b22; }
+.hero-cubes-atmosphere { opacity: .45; }
+.hero-cubes-floor-glows { opacity: .55; }
+.hero-cubes-floor-tile { fill: var(--cube-floor); stroke: var(--cube-floor-stroke); }
+.hero-cube-face { stroke: var(--cube-top-stroke); stroke-linejoin: round; }
+.hero-cube-left { stroke: var(--cube-left-stroke); }
+.hero-cube-right { stroke: var(--cube-right-stroke); }
 .hero-cube-face-luminous { stroke: color-mix(in srgb, var(--cube-glow) 65%, transparent); }
 .hero-cube-top.hero-cube-face-luminous { stroke: var(--cube-highlight); }
 

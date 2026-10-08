@@ -3,36 +3,45 @@ import { useId, useRef, useEffect } from 'react';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
 
 const halfWidth = 45;
-const halfHeight = 24;
-const keyTimes = `0;.16;.39;.58;.85;1`;
+const faceSkew = 6;
+const gridSize = 22;
+const halfHeight = 32;
+const sceneMargin = 160;
+const scene = { x: 40, y: 10, width: 900, height: 625 };
+const keyTimes = `0;.12;.4;.55;.88;1`;
 const keySplines = `0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1`;
-const cubes = Array.from({ length: 121 }, (_, index) => {
-  const row = Math.floor(index / 11);
-  const column = index % 11;
+const cubes = Array.from({ length: gridSize ** 2 }, (_, index) => {
+  const row = Math.floor(index / gridSize);
+  const column = index % gridSize;
   const seed = row * 41 + column * 29;
   const luminous = (row * 7 + column * 13) % 17 < 3;
-  const peak = luminous ? 62 + seed % 5 * 13 : 18 + seed % 7 * 10;
+  const peak = luminous ? 48 + seed % 5 * 11 : 18 + seed % 7 * 10;
   return {
     row,
     peak,
     index,
     column,
     luminous,
-    x: 510 + (column - row) * 47,
-    y: 115 + (column + row) * 25,
-    delay: seed % 143 / 10,
-    duration: 9 + seed % 7,
-    rest: luminous ? 38 + seed % 4 * 12 : 7 + seed % 6 * 7,
+    x: 590 + (column - row) * 47,
+    y: 10 + column * 40 + row * 27,
+    delay: seed % 143 / 20,
+    duration: 5.5 + seed % 7 * .5,
+    rest: luminous ? 28 + seed % 4 * 10 : 7 + seed % 6 * 7,
   };
-}).sort((left, right) => left.row + left.column - right.row - right.column || left.column - right.column);
+}).filter(cube => (
+  cube.x >= scene.x - sceneMargin
+  && cube.y >= scene.y - sceneMargin
+  && cube.x <= scene.x + scene.width + sceneMargin
+  && cube.y <= scene.y + scene.height + sceneMargin
+)).sort((left, right) => left.row + left.column - right.row - right.column || left.column - right.column);
 
 type CubeFace = `top` | `left` | `right`;
 type Cube = (typeof cubes)[number];
 
 const facePath = (face: CubeFace, height: number) => {
-  if (face === `top`) return `M0 ${-halfHeight - height}L${halfWidth} ${-height}L0 ${halfHeight - height}L${-halfWidth} ${-height}Z`;
-  if (face === `left`) return `M${-halfWidth} ${-height}L0 ${halfHeight - height}L0 ${halfHeight}L${-halfWidth} 0Z`;
-  return `M0 ${halfHeight - height}L${halfWidth} ${-height}L${halfWidth} 0L0 ${halfHeight}Z`;
+  if (face === `top`) return `M0 ${-halfHeight - height}L${halfWidth} ${faceSkew - height}L0 ${halfHeight - height}L${-halfWidth} ${-faceSkew - height}Z`;
+  if (face === `left`) return `M${-halfWidth} ${-faceSkew - height}L0 ${halfHeight - height}L0 ${halfHeight}L${-halfWidth} ${-faceSkew}Z`;
+  return `M0 ${halfHeight - height}L${halfWidth} ${faceSkew - height}L${halfWidth} ${faceSkew}L0 ${halfHeight}Z`;
 };
 
 const Face = ({ cube, face, suffix, moving }: { cube: Cube; face: CubeFace; suffix: string; moving: boolean }) => {
@@ -119,7 +128,7 @@ const HeroCubes = () => {
         width={`100%`}
         height={`100%`}
         focusable={`false`}
-        viewBox={`0 0 980 680`}
+        viewBox={`${scene.x} ${scene.y} ${scene.width} ${scene.height}`}
         id={`hero-cubes-svg-${suffix}`}
         className={`hero-cubes-svg`}
         preserveAspectRatio={`xMidYMid slice`}
@@ -137,16 +146,16 @@ const HeroCubes = () => {
             <stop offset={`100%`} stopColor={`var(--cube-glow)`} stopOpacity={0} />
           </radialGradient>
           <linearGradient x1={`0%`} y1={`0%`} x2={`100%`} y2={`100%`} id={`hero-cubes-dark-top-${suffix}`} className={`hero-cubes-dark-top-gradient`}>
-            <stop offset={`0%`} stopColor={`#14232b`} />
-            <stop offset={`100%`} stopColor={`#0a151c`} />
+            <stop offset={`0%`} stopColor={`var(--cube-dark-top-start)`} />
+            <stop offset={`100%`} stopColor={`var(--cube-dark-top-end)`} />
           </linearGradient>
           <linearGradient x1={`0%`} y1={`0%`} x2={`100%`} y2={`100%`} id={`hero-cubes-dark-left-${suffix}`} className={`hero-cubes-dark-left-gradient`}>
-            <stop offset={`0%`} stopColor={`#0c1a22`} />
-            <stop offset={`100%`} stopColor={`#060f15`} />
+            <stop offset={`0%`} stopColor={`var(--cube-dark-left-start)`} />
+            <stop offset={`100%`} stopColor={`var(--cube-dark-left-end)`} />
           </linearGradient>
           <linearGradient x1={`0%`} y1={`0%`} x2={`0%`} y2={`100%`} id={`hero-cubes-dark-right-${suffix}`} className={`hero-cubes-dark-right-gradient`}>
-            <stop offset={`0%`} stopColor={`#071219`} />
-            <stop offset={`100%`} stopColor={`#030a10`} />
+            <stop offset={`0%`} stopColor={`var(--cube-dark-right-start)`} />
+            <stop offset={`100%`} stopColor={`var(--cube-dark-right-end)`} />
           </linearGradient>
           <linearGradient x1={`0%`} y1={`0%`} x2={`100%`} y2={`100%`} id={`hero-cubes-light-top-${suffix}`} className={`hero-cubes-light-top-gradient`}>
             <stop offset={`0%`} stopColor={`var(--cube-highlight)`} />
@@ -154,11 +163,11 @@ const HeroCubes = () => {
           </linearGradient>
           <linearGradient x1={`0%`} y1={`0%`} x2={`0%`} y2={`100%`} id={`hero-cubes-light-left-${suffix}`} className={`hero-cubes-light-left-gradient`}>
             <stop offset={`0%`} stopColor={`var(--cube-glow)`} />
-            <stop offset={`100%`} stopColor={`#07383b`} />
+            <stop offset={`100%`} stopColor={`var(--cube-light-left-end)`} />
           </linearGradient>
           <linearGradient x1={`0%`} y1={`0%`} x2={`0%`} y2={`100%`} id={`hero-cubes-light-right-${suffix}`} className={`hero-cubes-light-right-gradient`}>
             <stop offset={`0%`} stopColor={`var(--cube-side-light)`} />
-            <stop offset={`100%`} stopColor={`#03242b`} />
+            <stop offset={`100%`} stopColor={`var(--cube-light-right-end)`} />
           </linearGradient>
           <filter x={`-80%`} y={`-120%`} width={`260%`} height={`340%`} id={`hero-cubes-bloom-${suffix}`} className={`hero-cubes-bloom-filter`}>
             <feGaussianBlur stdDeviation={5} result={`bloom`} />
@@ -185,7 +194,7 @@ const HeroCubes = () => {
           {cubes.filter(cube => cube.luminous).map(cube => (
             <ellipse
               rx={91}
-              ry={48}
+              ry={64}
               cx={cube.x}
               cy={cube.y + 16}
               key={cube.index}

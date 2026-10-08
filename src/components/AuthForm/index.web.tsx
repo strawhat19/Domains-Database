@@ -23,7 +23,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
       <aside id={`auth-form-story-${mode}`} className={`auth-form-story`} aria-labelledby={`auth-form-story-title-${mode}`}>
         <p id={`auth-form-story-eyebrow-${mode}`} className={`auth-form-story-eyebrow`}>
           <span id={`auth-form-story-marker-${mode}`} className={`auth-form-story-marker`} aria-hidden />
-          {`PERSONAL DOMAIN REGISTRY`}
+          {`Domain Manager`}
         </p>
         <div id={`auth-form-preview-${mode}`} className={`auth-form-preview`}>
           <div id={`auth-form-preview-heading-${mode}`} className={`auth-form-preview-heading`}>

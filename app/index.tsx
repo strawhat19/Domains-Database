@@ -5,7 +5,7 @@ const HomePage = () => (
   <>
     <PageMeta
       title={`Your Domains. Under Control.`}
-      description={`Keep track of every name, registrar, renewal, and yearly cost in your personal domain registry.`}
+      description={`Keep track of every name, registrar, renewal, and yearly cost with Domain Manager.`}
     />
     <Hero />
   </>
