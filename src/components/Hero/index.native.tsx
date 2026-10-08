@@ -1,7 +1,8 @@
 import HeroCubes from '../HeroCubes';
+import { Link } from 'expo-router';
 import MagicTyping from '../MagicTyping';
 import { useMemo, useState, useEffect, useContext } from 'react';
-import { Layers3, Search, History } from 'lucide-react-native';
+import { Layers3, Search, History, ArrowUpRight } from 'lucide-react-native';
 import Svg, { Defs, Rect, Stop, LinearGradient } from 'react-native-svg';
 import { useHeroSearch } from './useHeroSearch';
 import { useRecentsLayout } from '../RecentDomainSearches/useRecentsLayout';
@@ -9,6 +10,7 @@ import ResponsiveDomainHeading from '../ResponsiveDomainHeading';
 import { createStyles } from './styles.native';
 import { Text, View, Pressable, TextInput, useWindowDimensions } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
+import { routes } from '../../shared/routes';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { themePalettes } from '../../shared/themeContext/theme';
@@ -38,6 +40,31 @@ const Hero = () => {
         style={[styles.cubeArt, compact && styles.compactCubeArt]}
       >
         <HeroCubes />
+        <Svg
+          width={`100%`}
+          height={`100%`}
+          pointerEvents={`none`}
+          accessible={false}
+          {...elementProps(`hero-cube-art-fade`)}
+          style={styles.contentFade}
+        >
+          <Defs>
+            <LinearGradient id={`hero-native-art-left-fade`} x1={`0`} y1={`0`} x2={`1`} y2={`0`}>
+              <Stop offset={`0%`} stopColor={heroBackground} stopOpacity={1} />
+              <Stop offset={`10%`} stopColor={heroBackground} stopOpacity={.75} />
+              <Stop offset={`22%`} stopColor={heroBackground} stopOpacity={.2} />
+              <Stop offset={`32%`} stopColor={heroBackground} stopOpacity={0} />
+            </LinearGradient>
+            <LinearGradient id={`hero-native-art-top-fade`} x1={`0`} y1={`0`} x2={`0`} y2={`1`}>
+              <Stop offset={`0%`} stopColor={heroBackground} stopOpacity={1} />
+              <Stop offset={`8%`} stopColor={heroBackground} stopOpacity={.65} />
+              <Stop offset={`16%`} stopColor={heroBackground} stopOpacity={.15} />
+              <Stop offset={`24%`} stopColor={heroBackground} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          <Rect width={`100%`} height={`100%`} fill={`url(#hero-native-art-left-fade)`} />
+          <Rect width={`100%`} height={`100%`} fill={`url(#hero-native-art-top-fade)`} />
+        </Svg>
       </View>
       <Svg
         width={`100%`}
@@ -58,10 +85,23 @@ const Hero = () => {
           </LinearGradient>
           <LinearGradient id={`hero-native-cube-edge-fade`} x1={`0`} y1={`0`} x2={`0`} y2={`1`}>
             <Stop offset={`0%`} stopColor={heroBackground} stopOpacity={0} />
-            <Stop offset={`78%`} stopColor={heroBackground} stopOpacity={0} />
-            <Stop offset={`88%`} stopColor={heroBackground} stopOpacity={.3} />
-            <Stop offset={`96%`} stopColor={heroBackground} stopOpacity={.88} />
+            <Stop offset={`65%`} stopColor={heroBackground} stopOpacity={0} />
+            <Stop offset={`80%`} stopColor={heroBackground} stopOpacity={.28} />
+            <Stop offset={`92%`} stopColor={heroBackground} stopOpacity={.76} />
             <Stop offset={`100%`} stopColor={heroBackground} stopOpacity={1} />
+          </LinearGradient>
+          <LinearGradient id={`hero-native-cube-right-fade`} x1={`0`} y1={`0`} x2={`1`} y2={`0`}>
+            <Stop offset={`0%`} stopColor={heroBackground} stopOpacity={0} />
+            <Stop offset={`76%`} stopColor={heroBackground} stopOpacity={0} />
+            <Stop offset={`88%`} stopColor={heroBackground} stopOpacity={.3} />
+            <Stop offset={`96%`} stopColor={heroBackground} stopOpacity={.85} />
+            <Stop offset={`100%`} stopColor={heroBackground} stopOpacity={1} />
+          </LinearGradient>
+          <LinearGradient id={`hero-native-cube-top-fade`} x1={`0`} y1={`0`} x2={`0`} y2={`1`}>
+            <Stop offset={`0%`} stopColor={heroBackground} stopOpacity={1} />
+            <Stop offset={`4%`} stopColor={heroBackground} stopOpacity={.8} />
+            <Stop offset={`12%`} stopColor={heroBackground} stopOpacity={.18} />
+            <Stop offset={`20%`} stopColor={heroBackground} stopOpacity={0} />
           </LinearGradient>
         </Defs>
         <Rect width={`100%`} height={`100%`} fill={`url(#hero-native-content-fade)`} />
@@ -70,6 +110,18 @@ const Hero = () => {
           height={`100%`}
           {...elementProps(`hero-cube-edge-fade`)}
           fill={`url(#hero-native-cube-edge-fade)`}
+        />
+        <Rect
+          width={`100%`}
+          height={`100%`}
+          {...elementProps(`hero-cube-right-fade`)}
+          fill={`url(#hero-native-cube-right-fade)`}
+        />
+        <Rect
+          width={`100%`}
+          height={`100%`}
+          {...elementProps(`hero-cube-top-fade`)}
+          fill={`url(#hero-native-cube-top-fade)`}
         />
       </Svg>
       <Text {...elementProps(`hero-eyebrow`)} style={styles.eyebrow}>
@@ -96,8 +148,23 @@ const Hero = () => {
           shortText={`Find your domain`}
           fullText={`Find your next domain`}
         />
-        <View {...elementProps(`hero-magic-typing-wrap`)} style={styles.magicTypingWrap}>
-          <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+        <View {...elementProps(`hero-domain-search-suggestions`)} style={styles.searchSuggestions}>
+          <View {...elementProps(`hero-magic-typing-wrap`)} style={styles.magicTypingWrap}>
+            <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+          </View>
+          <Link asChild href={routes.domains.href}>
+            <Pressable
+              accessibilityRole={`link`}
+              accessibilityLabel={`Go To Domains`}
+              {...elementProps(`hero-domain-search-domains-link`)}
+              style={({ pressed }) => [styles.domainsLink, pressed && styles.recentPressed]}
+            >
+              <Text {...elementProps(`hero-domain-search-domains-text`)} style={styles.domainsLinkText}>
+                {`Domains`}
+              </Text>
+              <ArrowUpRight {...elementProps(`hero-domain-search-domains-icon`)} size={12} color={heroPalette.contrast} />
+            </Pressable>
+          </Link>
         </View>
         <View {...elementProps(`hero-domain-search-row`)} style={styles.searchRow}>
           <TextInput

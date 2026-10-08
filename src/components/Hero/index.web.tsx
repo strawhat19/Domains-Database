@@ -21,8 +21,10 @@ const Hero = () => {
     className={`landing-hero`}
     aria-labelledby={`hero-title`}
   >
-    <div id={`hero-cube-scene`} className={`hero-cube-scene`} aria-hidden>
-      <HeroCubes />
+    <div id={`hero-cube-viewport`} className={`hero-cube-viewport`} aria-hidden>
+      <div id={`hero-cube-scene`} className={`hero-cube-scene`}>
+        <HeroCubes />
+      </div>
     </div>
     <div id={`hero-heading-group`} className={`hero-heading-group`}>
       <p id={`hero-eyebrow`} className={`hero-eyebrow`}>
@@ -58,7 +60,19 @@ const Hero = () => {
           id={`hero-domain-search-label`}
           className={`hero-domain-search-label`}
         />
-        <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+        <div id={`hero-domain-search-suggestions`} className={`hero-domain-search-suggestions`}>
+          <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+          <Link href={routes.domains.href} asChild>
+            <RouterAnchor
+              aria-label={`Go To Domains`}
+              id={`hero-domain-search-domains-link`}
+              className={`hero-domain-search-domains-link`}
+            >
+              <span id={`hero-domain-search-domains-text`} className={`hero-domain-search-domains-text`}>{`Domains`}</span>
+              <ArrowUpRight size={12} aria-hidden id={`hero-domain-search-domains-icon`} className={`hero-domain-search-domains-icon`} />
+            </RouterAnchor>
+          </Link>
+        </div>
         <div id={`hero-domain-search-row`} className={`hero-domain-search-row`}>
           <input
             required
