@@ -3,7 +3,7 @@ import { Platform, StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette, isDark = false) => StyleSheet.create({
-  hero: { gap: 3, padding: 24, paddingTop: 42, paddingBottom: 34, position: `relative`, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: palette.paper },
+  hero: { gap: 3, padding: 24, width: `100%`, paddingTop: 42, paddingBottom: 34, position: `relative`, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: palette.paper },
   promise: { gap: 8, zIndex: 1, marginTop: 25, paddingTop: 18, borderTopWidth: 1, borderTopColor: palette.line, alignItems: `center`, flexDirection: `row` },
   title: { zIndex: 1, fontSize: 48, color: palette.ink, lineHeight: 51, letterSpacing: -2, fontFamily: `DMSans_700Bold` },
   accent: { zIndex: 1, fontSize: 48, color: palette.accent, lineHeight: 51, letterSpacing: -2, fontFamily: `DMSans_700Bold` },

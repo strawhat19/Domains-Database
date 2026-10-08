@@ -81,7 +81,8 @@
 .header-link-active,
 .header-link-active:hover { color: var(--strong-text); background: var(--strong); }
 
-.header-link-beta {
+.header-link-beta,
+.header-link-count {
   top: -6px;
   right: -4px;
   height: 19px;
@@ -144,7 +145,8 @@
   .header-navigation { flex: 1; min-width: 0; }
   .header-navigation-links { gap: 4px; width: 100%; display: grid; min-width: 0; grid-template-columns: repeat(var(--header-navigation-columns), minmax(0, 1fr)); }
   .header-link { gap: 6px; height: 32px; padding: 6px; justify-content: center; grid-column: span var(--header-navigation-top-span); }
-  .header-link-beta { top: -4px; }
+  .header-link-beta,
+  .header-link-count { top: -4px; }
   .header-link-bottom-row { grid-column: span var(--header-navigation-bottom-span); }
 }
 

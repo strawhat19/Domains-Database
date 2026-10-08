@@ -1,6 +1,5 @@
 import Hero from '../src/components/Hero';
 import PageMeta from '../src/components/PageMeta';
-import DomainPortfolio from '../src/components/DomainPortfolio';
 
 const HomePage = () => (
   <>
@@ -9,7 +8,6 @@ const HomePage = () => (
       description={`Keep track of every name, registrar, renewal, and yearly cost in your personal domain registry.`}
     />
     <Hero />
-    <DomainPortfolio compact />
   </>
 );
 

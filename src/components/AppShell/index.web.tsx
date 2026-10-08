@@ -88,7 +88,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                       <RouterAnchor
                         id={`header-link-${item.label.toLowerCase()}`}
                         className={`header-link${index >= topRowCount ? ` header-link-bottom-row` : ``}${active ? ` header-link-active` : ``}`}
-                        aria-label={beta ? `${item.label} (Beta)` : undefined}
+                        aria-label={item.accessibilityLabel}
                         aria-current={active ? `page` : undefined}
                       >
                         <Icon
@@ -103,6 +103,15 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                         >
                           {item.label}
                         </span>
+                        {item.count !== undefined && (
+                          <span
+                            aria-hidden
+                            className={`header-link-count`}
+                            id={`header-link-count-${item.label.toLowerCase()}`}
+                          >
+                            {item.count}
+                          </span>
+                        )}
                         {beta && (
                           <span
                             aria-hidden

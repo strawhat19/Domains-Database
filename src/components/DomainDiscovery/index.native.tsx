@@ -21,8 +21,8 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const activeFilter = filters.find(value => value.id === state.filter);
-  const filteredResults = sidebar ? state.statusResults : state.filteredResults;
-  const tldResults = sidebar || state.tldFilter === `all` ? state.results : state.results.filter(result => result.extension === state.tldFilter);
+  const filteredResults = state.filteredResults;
+  const tldResults = state.tldFilter === `all` ? state.results : state.results.filter(result => result.extension === state.tldFilter);
   const loading = state.loading || state.accessLoading;
   const placeholderCount = sidebar ? shelf.placeholderCount : loading && !state.results.length ? 3 : 0;
   const checkedAt = state.checkedAt ? new Date(state.checkedAt).toLocaleTimeString(`en-US`, { hour: `numeric`, minute: `2-digit` }) : ``;
@@ -160,7 +160,7 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
         </View>}
       </FilterScroller>
       <Text {...elementProps(`domain-discovery-description`, suffix)} style={styles.description}>
-        {`Curated ideas · ${activeFilter?.description ?? ``}${sidebar || state.tldFilter === `all` ? `` : ` · .${state.tldFilter}`}`}
+        {`Curated ideas · ${activeFilter?.description ?? ``}${state.tldFilter === `all` ? `` : ` · .${state.tldFilter}`}`}
       </Text>
       {sidebar ? (
         <ScrollView
@@ -195,7 +195,7 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
       {!loading && state.eligible && !filteredResults.length && !state.error && (
         <Text {...elementProps(`domain-discovery-empty`, suffix)} style={styles.detail}>
           {disabled ? `Domain ideas will resume after your search.` : state.results.length
-            ? sidebar ? `No cards match this status. Select All to see every available idea.` : `No cards match these filters. Select All and All TLDs to see every available idea.`
+            ? `No cards match these filters. Select All and All TLDs to see every available idea.`
             : `No available ideas confirmed. Refresh to check again.`}
         </Text>
       )}

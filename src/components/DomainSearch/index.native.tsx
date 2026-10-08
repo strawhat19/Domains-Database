@@ -45,7 +45,7 @@ const DomainSearch = () => {
   const discoveryShelf = useDiscoveryShelf({
     sidebar: sideBySide,
     availableHeight: workspaceHeight,
-    count: sideBySide ? discovery.statusResults.length : discovery.filteredResults.length,
+    count: discovery.filteredResults.length,
     loading: discovery.loading || discovery.accessLoading,
   });
   const controlsWidth = sideBySide ? workspaceWidth - 320 - discoveryCardGap : workspaceWidth;

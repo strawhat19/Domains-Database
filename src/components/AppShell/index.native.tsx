@@ -109,7 +109,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                 <Pressable
                   {...elementProps(`native-navigation-link`, label.toLowerCase())}
                   accessibilityRole={`link`}
-                  accessibilityLabel={beta ? `${label} (Beta)` : label}
+                  accessibilityLabel={item.accessibilityLabel}
                   accessibilityState={{ selected: active }}
                   style={StyleSheet.flatten([styles.navigationLink, active && styles.navigationLinkActive])}
                 >
@@ -117,6 +117,19 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>
                     {label}
                   </Text>
+                  {item.count !== undefined && (
+                    <View
+                      accessible={false}
+                      accessibilityElementsHidden
+                      style={styles.navigationCount}
+                      importantForAccessibility={`no-hide-descendants`}
+                      {...elementProps(`native-navigation-count`, label.toLowerCase())}
+                    >
+                      <Text {...elementProps(`native-navigation-count-text`, label.toLowerCase())} style={styles.navigationCountText}>
+                        {item.count}
+                      </Text>
+                    </View>
+                  )}
                   {beta && (
                     <View
                       accessible={false}
