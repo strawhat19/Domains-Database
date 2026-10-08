@@ -1,5 +1,6 @@
 import type { DomainRecord } from '../../shared/types';
 import { getDomainStatus } from '../../shared/domainUtils';
+import { getDomainPreviewLink } from '../../shared/domainLinks';
 import { getDomainColumnKey } from '../DomainRow/domainRow';
 import { getDomainSourceBadge } from '../DomainSourceBadge/domainSourceBadge';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnDisplay, getPortfolioColumnValue, type PortfolioColumn, type PortfolioColumnDefinition } from '../../shared/portfolioColumns';
@@ -88,18 +89,31 @@ export const fitPortfolioColumns = (
     const identity = find(`.domain-identity`, cell);
     const link = find(`.domain-site-link`, cell);
     const reorder = find(`.domain-reorder`, cell);
-    const nameDecoration = horizontalBox(identity) + horizontalBox(link) + horizontalBox(find(`.domain-name-copy`, cell))
+    const nameCopy = find(`.domain-name-copy`, cell);
+    const heading = find(`.domain-name-heading`, cell);
+    const description = find(`.domain-description`, cell);
+    const readMore = description?.querySelector(`.domain-description-read-more`);
+    const descriptionTrigger = description?.querySelector(`.domain-description-trigger`);
+    const addDescriptionLabel = description?.querySelector(`.domain-description-add-label`);
+    const stackedName = readStyle(nameCopy)?.flexDirection === `column`;
+    const linkDecoration = horizontalBox(link) + elementWidth(find(`.domain-site-link-icon`, cell), 13) + elementGap(link, 6);
+    const nameDecoration = horizontalBox(identity) + horizontalBox(nameCopy)
       + elementWidth(find(`.domain-site-icon`, cell), 28) + elementGap(identity, 9)
-      + (reorder || !cell ? elementWidth(reorder, 36) + elementGap(identity, 9) : 0)
-      + elementWidth(find(`.domain-site-link-icon`, cell), 13) + elementGap(link, 6);
+      + (reorder || !cell ? elementWidth(reorder, 36) + elementGap(identity, 9) : 0);
     const attentionDecoration = elementWidth(find(`.domain-attention-dot`, cell), 5) + elementGap(link, 6);
-    const descriptionFont = readFont(find(`.domain-site-description`, cell), 12);
-    const nameGap = elementGap(find(`.domain-name-copy`, cell), 6);
-    const separatorWidth = measure(` | `, readFont(find(`.domain-name-separator`, cell), 12));
+    const descriptionFont = readFont(description?.querySelector(`.domain-site-description`), 12);
+    const addDescriptionFont = readFont(addDescriptionLabel, 11);
+    const nameGap = elementGap(nameCopy, 6);
+    const headingGap = elementGap(heading, 6);
+    const previewWidth = elementWidth(cell?.querySelector(`.domain-preview-link`), 22);
+    const descriptionDecoration = horizontalBox(description) + horizontalBox(descriptionTrigger, 8) + elementGap(descriptionTrigger, 4);
+    const readMoreDecoration = elementWidth(readMore)
+      + (readMore ? elementGap(description, 6) : 0);
     const projectBadge = find(`.domain-project-badge`, cell);
-    const projectFont = readFont(find(`.domain-project-badge-label`, projectBadge), 12);
-    const projectDecoration = horizontalBox(projectBadge)
-      + elementWidth(find(`.domain-project-badge-icon`, cell), 13) + elementGap(projectBadge, 6);
+    const projectFont = readFont(find(`.domain-project-badge-label`, projectBadge), field === `name` ? 11 : 12);
+    const projectDecoration = horizontalBox(projectBadge, field === `name` ? 12 : 0)
+      + elementWidth(find(`.domain-project-badge-icon`, cell), field === `name` ? 11 : 13) + elementGap(projectBadge, field === `name` ? 4 : 6)
+      + (field === `name` ? elementWidth(find(`.domain-project-badge-chevron`, projectBadge), 11) + elementGap(projectBadge, 4) : 0);
     const registrar = find(`.domain-registrar`, cell);
     const registrarDecoration = horizontalBox(registrar) + horizontalBox(find(`.domain-registrar-copy`, cell))
       + elementWidth(find(`.registrar-mark`, cell), 25) + elementGap(registrar, 9);
@@ -115,11 +129,18 @@ export const fitPortfolioColumns = (
       const value = getPortfolioColumnDisplay(domain, field);
       let width = measure(value, font);
       if (field === `name`) {
-        width += nameDecoration;
-        width += measure(getPortfolioColumnDisplay(domain, `projectStatus`), projectFont)
-          + projectDecoration + separatorWidth + nameGap * 2;
-        if (domain.description?.trim()) width += Math.min(280, measure(domain.description.trim(), descriptionFont)) + separatorWidth + nameGap * 2;
-        if (getDomainStatus(domain) !== `Active`) width += attentionDecoration;
+        const projectWidth = measure(getPortfolioColumnDisplay(domain, `projectStatus`), projectFont) + projectDecoration;
+        const descriptionWidth = domain.description?.trim()
+          ? Math.min(280, measure(domain.description.trim(), descriptionFont)) + descriptionDecoration
+            + elementWidth(description?.querySelector(`.domain-description-edit-icon`), 12) + readMoreDecoration
+          : measure(addDescriptionLabel?.textContent?.trim() || `Add Description`, addDescriptionFont) + descriptionDecoration
+            + elementWidth(description?.querySelector(`.domain-description-add-icon`), 12);
+        const linkWidth = width + linkDecoration + (getDomainStatus(domain) !== `Active` ? attentionDecoration : 0);
+        const headingWidth = linkWidth + projectWidth + headingGap + horizontalBox(heading)
+          + (getDomainPreviewLink(domain) ? previewWidth + headingGap : 0);
+        width = nameDecoration + (stackedName
+          ? Math.max(headingWidth, descriptionWidth)
+          : headingWidth + descriptionWidth + (descriptionWidth ? nameGap : 0));
       } else if (field === `registrar`) {
         width = Math.max(width, measure(getDomainSourceBadge(domain).label, secondaryFont) + sourceDecoration) + registrarDecoration;
       } else if (field === `expiresAt`) {

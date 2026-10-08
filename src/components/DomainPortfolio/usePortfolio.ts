@@ -146,6 +146,34 @@ export const usePortfolio = () => {
       setPendingId(``);
     }
   };
+  const changeProjectStatus = async (domain: DomainRecord, projectStatus: DomainRecord[`projectStatus`]) => {
+    if (pendingId || projectStatus === domain.projectStatus) return;
+    setPendingId(domain.id);
+    setLocalError(``);
+    try {
+      await data.updateDomain(domain.id, { ...domain, projectStatus });
+    } catch (caught) {
+      setLocalError(caught instanceof Error ? caught.message : `Unable To Update Domain`);
+    } finally {
+      setPendingId(``);
+    }
+  };
+  const changeDescription = async (domain: DomainRecord, description: string): Promise<boolean> => {
+    const nextDescription = description.trim();
+    if (nextDescription === (domain.description ?? ``)) return true;
+    if (pendingId) return false;
+    setPendingId(domain.id);
+    setLocalError(``);
+    try {
+      await data.updateDomain(domain.id, { ...domain, description: nextDescription });
+      return true;
+    } catch (caught) {
+      setLocalError(caught instanceof Error ? caught.message : `Unable To Update Domain`);
+      return false;
+    } finally {
+      setPendingId(``);
+    }
+  };
   const confirmDelete = async () => {
     if (!deletingDomain || pendingId) return;
     setPendingId(deletingDomain.id);
@@ -163,6 +191,6 @@ export const usePortfolio = () => {
     ...data, query, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
     clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain, registrarFilter,
     closeDelete, requestDelete, deletingDomain, deleteModalRef, importInputRef, requestImport, confirmDelete, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
-    setupOpen, openSetup, closeSetup, setEditorOpen, setDeletingDomain, setRegistrarFilter, toggleAutoRenew, toggleManualOrder,
+    setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, setDeletingDomain, setRegistrarFilter, toggleAutoRenew, toggleManualOrder, changeProjectStatus,
   };
 };

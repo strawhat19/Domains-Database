@@ -65,6 +65,13 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
     mvp: domain?.mvp ?? ``,
     future: domain?.future ?? ``,
     difficulty: domain?.difficulty,
+    parentLink: domain?.parentLink ?? ``,
+    childLinks: [...(domain?.childLinks ?? [])],
+    previewLinks: [...(domain?.previewLinks ?? [])],
+    relatedLinks: [...(domain?.relatedLinks ?? [])],
+    githubRepoLink: domain?.githubRepoLink ?? ``,
+    productionLink: domain?.productionLink ?? ``,
+    socialMediaLinks: [...(domain?.socialMediaLinks ?? [])],
     projectStatus: normalizeDomainProjectStatus(domain?.projectStatus),
     description: domain?.description ?? ``,
     autoRenew: domain?.autoRenew ?? true,
@@ -86,7 +93,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const close = () => { if (!saving) onClose(); };
   useModalFocus(modalRef, true, close);
   const setField = <Key extends keyof DomainInput>(field: Key, value: DomainInput[Key]) => {
-    if (isSynced && ![`meta`, `mvp`, `future`, `difficulty`, `description`, `projectStatus`].includes(field)) return;
+    if (isSynced && ![`meta`, `mvp`, `future`, `childLinks`, `parentLink`, `difficulty`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `socialMediaLinks`].includes(field)) return;
     setError(``);
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };

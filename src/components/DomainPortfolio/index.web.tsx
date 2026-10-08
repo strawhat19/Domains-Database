@@ -108,6 +108,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     onGrouped: selection.clearSelection,
     busy: Boolean(portfolio.pendingId),
     onToggleAutoRenew: portfolio.toggleAutoRenew,
+    onChangeDescription: portfolio.changeDescription,
+    onChangeProjectStatus: portfolio.changeProjectStatus,
     onEmptyAction: () => {
       if (!hasFilters) portfolio.openSetup();
       else { portfolio.setQuery(``); portfolio.setRegistrarFilter(`All Registrars`); }

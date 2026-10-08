@@ -2,6 +2,7 @@ import { genID } from './common/ids';
 import { REGISTRARS } from './config';
 import { Types } from '../types/types';
 import { normalizeSiteIconUrl } from './domainSiteIcon';
+import { normalizeDomainLink, normalizeDomainLinks } from './domainLinks';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from './domainProject';
 import type { JSONValue, DomainInput, DomainRecord, DomainSource, DomainStatus, DomainRegistrant } from './types';
 
@@ -124,6 +125,12 @@ export const normalizeDomainExtras = (input: Partial<DomainInput>): Partial<Doma
   }
   if (`difficulty` in input) extras.difficulty = normalizeDomainDifficulty(input.difficulty);
   extras.projectStatus = normalizeDomainProjectStatus(input.projectStatus);
+  for (const [field, label] of [[`parentLink`, `Parent Link`], [`productionLink`, `Production Link`], [`githubRepoLink`, `GitHub Repository Link`]] as const) {
+    if (input[field] !== undefined) extras[field] = normalizeDomainLink(input[field], label);
+  }
+  for (const [field, label] of [[`childLinks`, `Child Links`], [`relatedLinks`, `Related Links`], [`previewLinks`, `Preview Links`], [`socialMediaLinks`, `Social Media Links`]] as const) {
+    if (input[field] !== undefined) extras[field] = normalizeDomainLinks(input[field], label);
+  }
   for (const field of [`mvp`, `future`] as const) {
     const value = input[field];
     if (value != null) {

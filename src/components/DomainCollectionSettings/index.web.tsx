@@ -1,6 +1,7 @@
 import './styles.scss';
 import '../DomainEditor/styles.scss';
 import { X, Check } from 'lucide-react';
+import SettingsField from '../SettingsField/index.web';
 import { useDomainCollectionSettings } from './useDomainCollectionSettings';
 import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 
@@ -53,20 +54,27 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
               <label id={`domain-collection-settings-name-label`} htmlFor={`domain-collection-settings-name`} className={`domain-editor-label`}>
                 {`Collection title`}
               </label>
-              <input
-                required
-                data-autofocus
-                maxLength={80}
+              <SettingsField
                 value={settings.name}
-                autoComplete={`off`}
-                ref={settings.nameInputRef}
-                id={`domain-collection-settings-name`}
-                placeholder={`e.g. Client portfolio`}
-                aria-invalid={settings.invalidField === `name`}
-                className={`domain-editor-input domain-collection-settings-name-input`}
-                onChange={event => settings.setName(event.target.value)}
-                aria-describedby={`domain-collection-settings-name-help${settings.error ? ` domain-collection-settings-error` : ``}`}
-              />
+                label={`Collection title`}
+                emptyText={`Add a collection title`}
+                id={`domain-collection-settings-name-view`}
+                invalid={settings.invalidField === `name`}
+              >
+                <input
+                  required
+                  maxLength={80}
+                  value={settings.name}
+                  autoComplete={`off`}
+                  ref={settings.nameInputRef}
+                  id={`domain-collection-settings-name`}
+                  placeholder={`e.g. Client portfolio`}
+                  aria-invalid={settings.invalidField === `name`}
+                  className={`domain-editor-input domain-collection-settings-name-input`}
+                  onChange={event => settings.setName(event.target.value)}
+                  aria-describedby={`domain-collection-settings-name-help${settings.error ? ` domain-collection-settings-error` : ``}`}
+                />
+              </SettingsField>
               <p id={`domain-collection-settings-name-help`} className={`domain-collection-settings-help`}>
                 {`Collection titles must be unique, regardless of capitalization.`}
               </p>
@@ -75,16 +83,22 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
               <label id={`domain-collection-settings-visibility-label`} htmlFor={`domain-collection-settings-visibility`} className={`domain-editor-label`}>
                 {`Visibility`}
               </label>
-              <select
-                value={settings.visibility}
-                id={`domain-collection-settings-visibility`}
-                className={`domain-editor-input domain-collection-settings-visibility-input`}
-                aria-describedby={`domain-collection-settings-visibility-help`}
-                onChange={event => settings.setVisibility(event.target.value === `public` ? `public` : `private`)}
+              <SettingsField
+                label={`Visibility`}
+                id={`domain-collection-settings-visibility-view`}
+                value={settings.visibility === `public` ? `Public / Published` : `Private`}
               >
-                <option id={`domain-collection-settings-visibility-private`} value={`private`}>{`Private`}</option>
-                <option id={`domain-collection-settings-visibility-public`} value={`public`}>{`Public / Published`}</option>
-              </select>
+                <select
+                  value={settings.visibility}
+                  id={`domain-collection-settings-visibility`}
+                  className={`domain-editor-input domain-collection-settings-visibility-input`}
+                  aria-describedby={`domain-collection-settings-visibility-help`}
+                  onChange={event => settings.setVisibility(event.target.value === `public` ? `public` : `private`)}
+                >
+                  <option id={`domain-collection-settings-visibility-private`} value={`private`}>{`Private`}</option>
+                  <option id={`domain-collection-settings-visibility-public`} value={`public`}>{`Public / Published`}</option>
+                </select>
+              </SettingsField>
               <p id={`domain-collection-settings-visibility-help`} className={`domain-collection-settings-help`}>
                 {`Private keeps this collection unpublished. Public / Published marks it for public sharing.`}
               </p>
@@ -93,18 +107,26 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
               <label id={`domain-collection-settings-description-label`} htmlFor={`domain-collection-settings-description-input`} className={`domain-editor-label`}>
                 {`Description (optional)`}
               </label>
-              <textarea
-                rows={3}
-                maxLength={280}
+              <SettingsField
+                label={`Description`}
                 value={settings.description}
-                ref={settings.descriptionInputRef}
-                id={`domain-collection-settings-description-input`}
-                placeholder={`A short note about this collection…`}
-                aria-invalid={settings.invalidField === `description`}
-                className={`domain-editor-input domain-collection-settings-description-input`}
-                onChange={event => settings.setDescription(event.target.value)}
-                aria-describedby={`domain-collection-settings-description-help${settings.error ? ` domain-collection-settings-error` : ``}`}
-              />
+                emptyText={`Add a description`}
+                id={`domain-collection-settings-description-view`}
+                invalid={settings.invalidField === `description`}
+              >
+                <textarea
+                  rows={3}
+                  maxLength={280}
+                  value={settings.description}
+                  ref={settings.descriptionInputRef}
+                  id={`domain-collection-settings-description-input`}
+                  placeholder={`A short note about this collection…`}
+                  aria-invalid={settings.invalidField === `description`}
+                  className={`domain-editor-input domain-collection-settings-description-input`}
+                  onChange={event => settings.setDescription(event.target.value)}
+                  aria-describedby={`domain-collection-settings-description-help${settings.error ? ` domain-collection-settings-error` : ``}`}
+                />
+              </SettingsField>
               <p id={`domain-collection-settings-description-help`} className={`domain-collection-settings-help`}>
                 {`Up to 280 characters, shown next to the collection title.`}
               </p>

@@ -51,13 +51,15 @@ export interface PortfolioRecordsProps {
   onToggleAutoRenew: (domain: DomainRecord) => void;
   onToggleGroupSearch?: (key: string) => void;
   isGroupShowingAll?: (key: string) => boolean;
+  onChangeDescription: (domain: DomainRecord, description: string) => Promise<boolean>;
+  onChangeProjectStatus: (domain: DomainRecord, projectStatus: DomainRecord[`projectStatus`]) => void;
 }
 
 const PortfolioRecords = ({
   busy, sticky, compact, loading, domains, allDomains, hasFilters,
   selectedIds, allSelected, someSelected, onSelect, onGrouped, onSelectAll,
   sortField, sortDirection, visibleColumns, onEdit, onSort, onDelete, onEmptyAction, onToggleAutoRenew,
-  searchGroups, isGroupShowingAll, onToggleGroupSearch,
+  searchGroups, isGroupShowingAll, onToggleGroupSearch, onChangeDescription, onChangeProjectStatus,
   idPrefix = `portfolio`, searching = false, forceTable = false, collectionId = null,
 }: PortfolioRecordsProps) => {
   const [groupingIds, setGroupingIds] = useState<Set<string> | null>(null);
@@ -429,6 +431,8 @@ const PortfolioRecords = ({
                   selectionDescriptionId={`portfolio-selection-help`}
                   onContextMenu={event => contextMenu.open(event, domain, menuDomains(domain))}
                   onToggleAutoRenew={onToggleAutoRenew}
+                  onChangeDescription={onChangeDescription}
+                  onChangeProjectStatus={onChangeProjectStatus}
                   {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
                 />
               ))}

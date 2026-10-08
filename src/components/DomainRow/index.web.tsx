@@ -3,11 +3,13 @@ import type { MouseEventHandler } from 'react';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainDescription from '../DomainDescription/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
 import { getDomainSource } from '../../shared/domainUtils';
+import { getDomainPreviewLink } from '../../shared/domainLinks';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
-import { Check, Minus, Trash2, ArrowUp, Settings, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
+import { Eye, Check, Minus, Trash2, ArrowUp, Settings, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
 import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
   DEFAULT_VISIBLE_COLUMNS,
@@ -21,6 +23,8 @@ import {
 
 export interface DomainRowProps extends DomainItemProps, DomainDragProps<HTMLTableRowElement> {
   onContextMenu?: MouseEventHandler<HTMLTableRowElement>;
+  onChangeDescription: (domain: DomainItemProps[`domain`], description: string) => Promise<boolean>;
+  onChangeProjectStatus: (domain: DomainItemProps[`domain`], status: DomainItemProps[`domain`][`projectStatus`]) => void;
 }
 
 const DomainRow = ({
@@ -42,12 +46,15 @@ const DomainRow = ({
   onMoveDown,
   onContextMenu,
   onToggleAutoRenew,
+  onChangeDescription,
+  onChangeProjectStatus,
   selectionDescriptionId,
   reorderable = draggable,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainRowProps) => {
   const { scope, status, lastDot, statusKey, registrarKey } = getDomainRow(domain);
   const needsAttention = status !== `Active`;
+  const previewLink = getDomainPreviewLink(domain);
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const registrarManaged = getDomainSource(domain) === `registrar`;
   const columns = getOrderedPortfolioColumns(visibleColumns);
@@ -106,55 +113,69 @@ const DomainRow = ({
               iconUrl={getCustomSiteIconUrl(domain)}
             />
             <div id={`${scope}-name-copy`} className={`domain-name-copy`}>
-              <a
-                target={`_blank`}
-                draggable={false}
-                id={`${scope}-name`}
-                rel={`noopener noreferrer`}
-                href={`https://${domain.name}`}
-                className={`domain-name domain-site-link`}
-                aria-label={`Open ${domain.name} in a new tab${needsAttention ? ` — Needs Attention: ${status}` : ``}`}
-              >
-                <span id={`${scope}-site-link-label`} className={`domain-site-link-label`}>
-                  {domain.name.slice(0, lastDot)}
-                  <span id={`${scope}-extension`} className={`domain-extension`}>
-                    {domain.name.slice(lastDot)}
+              <div id={`${scope}-name-heading`} className={`domain-name-heading`}>
+                <a
+                  target={`_blank`}
+                  draggable={false}
+                  id={`${scope}-name`}
+                  rel={`noopener noreferrer`}
+                  href={`https://${domain.name}`}
+                  className={`domain-name domain-site-link`}
+                  aria-label={`Open ${domain.name} in a new tab${needsAttention ? ` — Needs Attention: ${status}` : ``}`}
+                >
+                  <span id={`${scope}-site-link-label`} className={`domain-site-link-label`}>
+                    {domain.name.slice(0, lastDot)}
+                    <span id={`${scope}-extension`} className={`domain-extension`}>
+                      {domain.name.slice(lastDot)}
+                    </span>
                   </span>
-                </span>
-                <ArrowUpRight
-                  size={13}
-                  aria-hidden={`true`}
-                  id={`${scope}-site-link-icon`}
-                  className={`domain-site-link-icon`}
-                />
-                {needsAttention && (
-                  <span
+                  <ArrowUpRight
+                    size={13}
                     aria-hidden={`true`}
-                    id={`${scope}-attention-dot`}
-                    className={`domain-attention-dot`}
-                    title={`Needs Attention: ${status}`}
+                    id={`${scope}-site-link-icon`}
+                    className={`domain-site-link-icon`}
                   />
+                  {needsAttention && (
+                    <span
+                      aria-hidden={`true`}
+                      id={`${scope}-attention-dot`}
+                      className={`domain-attention-dot`}
+                      title={`Needs Attention: ${status}`}
+                    />
+                  )}
+                </a>
+                {previewLink && (
+                  <a
+                    target={`_blank`}
+                    draggable={false}
+                    href={previewLink}
+                    rel={`noopener noreferrer`}
+                    id={`${scope}-preview-link`}
+                    className={`domain-preview-link`}
+                    title={`Preview ${domain.name}`}
+                    aria-label={`Open Preview For ${domain.name} In A New Tab`}
+                  >
+                    <Eye size={13} aria-hidden={`true`} id={`${scope}-preview-icon`} className={`domain-preview-icon`} />
+                  </a>
                 )}
-              </a>
-              <span aria-hidden={`true`} id={`${scope}-status-separator`} className={`domain-name-separator`}>
-                {` | `}
-              </span>
-              <DomainProjectBadge
-                field={`projectStatus`}
-                value={domain.projectStatus}
-                id={`${scope}-project-status`}
-                className={`domain-project-status`}
+                <DomainProjectBadge
+                  disabled={busy}
+                  field={`projectStatus`}
+                  value={domain.projectStatus}
+                  id={`${scope}-project-status`}
+                  className={`domain-project-status`}
+                  editLabel={`Change Project Status For ${domain.name}`}
+                  onChange={value => onChangeProjectStatus(domain, value)}
+                />
+              </div>
+              <DomainDescription
+                busy={busy}
+                id={`${scope}-description`}
+                domainName={domain.name}
+                value={domain.description}
+                onReadMore={() => onEdit(domain)}
+                onSave={value => onChangeDescription(domain, value)}
               />
-              {!!domain.description && (
-                <>
-                  <span aria-hidden={`true`} id={`${scope}-description-separator`} className={`domain-name-separator`}>
-                    {` | `}
-                  </span>
-                  <span id={`${scope}-description`} title={domain.description} className={`domain-site-description`}>
-                    {domain.description}
-                  </span>
-                </>
-              )}
             </div>
           </div>
         );

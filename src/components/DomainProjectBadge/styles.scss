@@ -12,3 +12,35 @@
 .domain-project-badge .domain-project-badge-icon-wrap { width: 13px; height: 13px; flex-shrink: 0; }
 .domain-project-badge-icon { display: block; flex-shrink: 0; }
 .domain-project-badge-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.domain-project-badge-pill.rowStatus {
+  gap: 4px;
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  line-height: 14px;
+  position: relative;
+  border-radius: 999px;
+  transition: opacity .2s ease, filter .2s ease, background .2s ease;
+  .domain-project-badge-icon-wrap, .domain-project-badge-icon, .domain-project-badge-chevron { width: 11px; height: 11px; }
+  &:not(.domain-project-badge-disabled):hover { filter: brightness(1.08); }
+  &:focus-within { outline-offset: 3px; outline: 2px solid var(--accent); }
+  &.domain-project-badge-disabled { opacity: .6; }
+}
+.domain-project-badge-chevron { display: block; flex-shrink: 0; }
+.domain-project-badge-select {
+  inset: 0;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  color: var(--ink);
+  position: absolute;
+  border-radius: inherit;
+  background: var(--paper);
+  &:disabled { cursor: wait; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .domain-project-badge-pill.rowStatus { transition: none; }
+}

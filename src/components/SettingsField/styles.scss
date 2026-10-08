@@ -1,0 +1,74 @@
+.settings-field { width: 100%; min-width: 0; }
+.settings-field-preview {
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  color: var(--ink);
+  align-items: flex-start;
+}
+.settings-field-value {
+  min-width: 0;
+  display: block;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.settings-field-empty { color: var(--muted); }
+.settings-field-trigger {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 3px;
+  background: transparent;
+  transition: color .2s ease, background .2s ease;
+  &:hover, &:focus-visible {
+    background: var(--subtle);
+    .settings-field-edit-icon { opacity: 1; }
+  }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  &:disabled { opacity: .55; cursor: wait; }
+}
+.settings-field-edit-icon {
+  opacity: 0;
+  margin-top: 4px;
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: opacity .2s ease;
+}
+.settings-field-editor { gap: 6px; min-width: 0; display: grid; }
+.settings-field-editor-controls { min-width: 0; }
+.settings-field-editor-controls :is(input, textarea, select):invalid { border-color: var(--danger); }
+.settings-field-done {
+  gap: 4px;
+  border: 0;
+  margin: 0;
+  padding: 2px 0;
+  font: inherit;
+  display: flex;
+  font-size: 11px;
+  cursor: pointer;
+  justify-self: end;
+  border-radius: 3px;
+  align-items: center;
+  color: var(--accent);
+  background: transparent;
+  transition: color .2s ease, opacity .2s ease;
+  &:hover, &:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  &:disabled { opacity: .5; cursor: wait; }
+}
+.settings-field-invalid {
+  .settings-field-value { color: var(--danger); }
+  .settings-field-editor-controls :is(input, textarea, select) { border-color: var(--danger); }
+}
+@media (hover: none) {
+  .settings-field-edit-icon { opacity: .65; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-field-trigger, .settings-field-edit-icon, .settings-field-done { transition: none; }
+}

@@ -1,8 +1,11 @@
 import './styles.scss';
 import ConnectRegistrar from './ConnectRegistrar';
+import DomainLinks from '../DomainLinks/index.web';
+import SettingsField from '../SettingsField/index.web';
 import ProjectSelect from './ProjectSelect/index.web';
 import { X, Plus, Check, ChevronDown } from 'lucide-react';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import { REGISTRARS } from '../../shared/config';
 import { useDomainEditor } from './useDomainEditor';
@@ -72,283 +75,394 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
             {`A little detail now. A lot less searching later.`}
           </p>
         )}
-        {!isSynced && <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />}
+        {!isEditing && !isSynced && <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />}
         <form id={`domain-editor-form`} className={`domain-editor-form`} onSubmit={handleSubmit}>
-          <div id={`domain-editor-fields`} className={`domain-editor-fields`}>
-            <div id={`domain-site-icon-field`} className={`domain-editor-field domain-editor-field-full`}>
-              <label id={`domain-site-icon-label`} className={`domain-editor-label`} htmlFor={`domain-site-icon-input`}>
-                {`Site icon URL`}
-              </label>
-              <div id={`domain-site-icon-row`} className={`domain-editor-icon-row`}>
-                <div
-                  role={`img`}
-                  id={`domain-site-icon-preview`}
-                  aria-label={`Site Icon Preview`}
-                  className={`domain-editor-icon-preview`}
-                >
-                  <DomainSiteIcon
-                    compact
-                    size={40}
-                    domain={input.name}
-                    id={`domain-editor-site-icon`}
-                    iconUrl={getCustomSiteIconUrl(input)}
-                  />
-                </div>
-                <div id={`domain-site-icon-copy`} className={`domain-editor-icon-copy`}>
-                  <input
-                    type={`url`}
-                    maxLength={2048}
-                    inputMode={`url`}
-                    autoComplete={`off`}
-                    spellCheck={false}
-                    id={`domain-site-icon-input`}
-                    data-autofocus={isEditing || undefined}
-                    value={getCustomSiteIconUrl(input)}
-                    className={`domain-editor-input`}
-                    aria-describedby={`domain-site-icon-help`}
-                    placeholder={`https://example.com/icon.png`}
-                    onChange={event => setField(`meta`, { ...input.meta, siteIconUrl: event.target.value })}
-                  />
-                  <p id={`domain-site-icon-help`} className={`domain-editor-icon-help`}>
-                    {`Use a public image URL. Leave blank to use the website's default icon.`}
-                  </p>
+          <div id={`domain-editor-content`} className={`domain-editor-content`}>
+            <div id={`domain-editor-fields`} className={`domain-editor-fields`}>
+              <div id={`domain-site-icon-field`} className={`domain-editor-field domain-editor-field-full`}>
+                <label id={`domain-site-icon-label`} className={`domain-editor-label`} htmlFor={`domain-site-icon-input`}>
+                  {`Site icon URL`}
+                </label>
+                <div id={`domain-site-icon-row`} className={`domain-editor-icon-row`}>
+                  <div
+                    role={`img`}
+                    id={`domain-site-icon-preview`}
+                    aria-label={`Site Icon Preview`}
+                    className={`domain-editor-icon-preview`}
+                  >
+                    <DomainSiteIcon
+                      compact
+                      size={40}
+                      domain={input.name}
+                      id={`domain-editor-site-icon`}
+                      iconUrl={getCustomSiteIconUrl(input)}
+                    />
+                  </div>
+                  <div id={`domain-site-icon-copy`} className={`domain-editor-icon-copy`}>
+                    <SettingsField
+                      disabled={saving}
+                      enabled={isEditing}
+                      label={`Site Icon URL`}
+                      id={`domain-site-icon-setting`}
+                      value={getCustomSiteIconUrl(input)}
+                      emptyText={`Website Default Icon`}
+                    >
+                      <input
+                        type={`url`}
+                        maxLength={2048}
+                        inputMode={`url`}
+                        autoComplete={`off`}
+                        spellCheck={false}
+                        id={`domain-site-icon-input`}
+                        value={getCustomSiteIconUrl(input)}
+                        className={`domain-editor-input`}
+                        aria-describedby={`domain-site-icon-help`}
+                        placeholder={`https://example.com/icon.png`}
+                        onChange={event => setField(`meta`, { ...input.meta, siteIconUrl: event.target.value })}
+                      />
+                    </SettingsField>
+                    <p id={`domain-site-icon-help`} className={`domain-editor-icon-help`}>
+                      {`Use a public image URL. Leave blank to use the website's default icon.`}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div id={`domain-name-field`} className={`domain-editor-field`}>
-              <label id={`domain-name-label`} className={`domain-editor-label`} htmlFor={`domain-name-input`}>
-                {`Domain name`}
-              </label>
-              <input
-                required
-                maxLength={253}
-                spellCheck={false}
-                value={input.name}
-                readOnly={isSynced}
-                autoComplete={`off`}
-                id={`domain-name-input`}
-                data-autofocus={!isEditing || undefined}
-                placeholder={`your-next-idea.com`}
-                className={`domain-editor-input`}
-                onChange={event => setField(`name`, event.target.value)}
-              />
-            </div>
-            {!isSynced && (
-                <div id={`domain-owner-field`} className={`domain-editor-field`}>
-                  <label id={`domain-owner-label`} className={`domain-editor-label`} htmlFor={`domain-owner-input`}>
-                    {`Registered to`}
-                  </label>
+              <div id={`domain-name-field`} className={`domain-editor-field`}>
+                <label id={`domain-name-label`} className={`domain-editor-label`} htmlFor={`domain-name-input`}>
+                  {`Domain name`}
+                </label>
+                <SettingsField
+                  disabled={saving}
+                  value={input.name}
+                  readOnly={isSynced}
+                  enabled={isEditing}
+                  label={`Domain Name`}
+                  id={`domain-name-setting`}
+                >
                   <input
                     required
-                    maxLength={120}
-                    value={input.owner}
-                    autoComplete={`name`}
-                    id={`domain-owner-input`}
-                    placeholder={`Your name or company`}
+                    maxLength={253}
+                    spellCheck={false}
+                    value={input.name}
+                    readOnly={isSynced}
+                    autoComplete={`off`}
+                    id={`domain-name-input`}
+                    data-autofocus={!isEditing || undefined}
+                    placeholder={`your-next-idea.com`}
                     className={`domain-editor-input`}
-                    onChange={event => setField(`owner`, event.target.value)}
+                    onChange={event => setField(`name`, event.target.value)}
                   />
-                </div>
-            )}
-            {!isEditing && (
-              <>
-                <div id={`domain-registrar-field`} className={`domain-editor-field`}>
-                  <label id={`domain-registrar-label`} className={`domain-editor-label`} htmlFor={`domain-registrar-input`}>
-                    {`Registrar`}
-                  </label>
-                  <div id={`domain-registrar-select-wrap`} className={`domain-editor-select-wrap`}>
-                    <select
+                </SettingsField>
+              </div>
+              {!isSynced && (
+                  <div id={`domain-owner-field`} className={`domain-editor-field`}>
+                    <label id={`domain-owner-label`} className={`domain-editor-label`} htmlFor={`domain-owner-input`}>
+                      {`Registered to`}
+                    </label>
+                    <SettingsField
                       disabled={saving}
-                      value={input.registrar}
-                      id={`domain-registrar-input`}
-                      className={`domain-editor-input domain-editor-select`}
-                      onChange={event => setField(`registrar`, event.target.value as typeof input.registrar)}
+                      value={input.owner}
+                      enabled={isEditing}
+                      label={`Registered To`}
+                      id={`domain-owner-setting`}
                     >
-                      <option value={``} id={`domain-registrar-option-unknown`} className={`domain-registrar-option`}>
-                        {`Unknown`}
-                      </option>
-                      {REGISTRARS.map(registrar => (
-                        <option
-                          key={registrar}
-                          value={registrar}
-                          className={`domain-editor-option`}
-                          id={`domain-registrar-option-${registrar.toLowerCase().replaceAll(` `, `-`)}`}
-                        >
-                          {registrar}
+                      <input
+                        required
+                        maxLength={120}
+                        value={input.owner}
+                        autoComplete={`name`}
+                        id={`domain-owner-input`}
+                        placeholder={`Your name or company`}
+                        className={`domain-editor-input`}
+                        onChange={event => setField(`owner`, event.target.value)}
+                      />
+                    </SettingsField>
+                  </div>
+              )}
+              {!isEditing && (
+                <>
+                  <div id={`domain-registrar-field`} className={`domain-editor-field`}>
+                    <label id={`domain-registrar-label`} className={`domain-editor-label`} htmlFor={`domain-registrar-input`}>
+                      {`Registrar`}
+                    </label>
+                    <div id={`domain-registrar-select-wrap`} className={`domain-editor-select-wrap`}>
+                      <select
+                        disabled={saving}
+                        value={input.registrar}
+                        id={`domain-registrar-input`}
+                        className={`domain-editor-input domain-editor-select`}
+                        onChange={event => setField(`registrar`, event.target.value as typeof input.registrar)}
+                      >
+                        <option value={``} id={`domain-registrar-option-unknown`} className={`domain-registrar-option`}>
+                          {`Unknown`}
                         </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={15} aria-hidden={`true`} id={`domain-registrar-select-chevron`} className={`domain-editor-select-chevron`} />
+                        {REGISTRARS.map(registrar => (
+                          <option
+                            key={registrar}
+                            value={registrar}
+                            className={`domain-editor-option`}
+                            id={`domain-registrar-option-${registrar.toLowerCase().replaceAll(` `, `-`)}`}
+                          >
+                            {registrar}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={15} aria-hidden={`true`} id={`domain-registrar-select-chevron`} className={`domain-editor-select-chevron`} />
+                    </div>
                   </div>
-                </div>
-                <div id={`domain-expiry-field`} className={`domain-editor-field`}>
-                  <label id={`domain-expiry-label`} className={`domain-editor-label`} htmlFor={`domain-expiry-input`}>
-                    {`Renewal date`}
-                  </label>
-                  <input
-                    type={`date`}
-                    value={input.expiresAt}
-                    id={`domain-expiry-input`}
-                    className={`domain-editor-input`}
-                    onChange={event => setField(`expiresAt`, event.target.value)}
-                  />
-                </div>
-                <div id={`domain-created-field`} className={`domain-editor-field`}>
-                  <label id={`domain-created-label`} className={`domain-editor-label`} htmlFor={`domain-created-input`}>
-                    {`Created`}
-                  </label>
-                  <input
-                    type={`date`}
-                    id={`domain-created-input`}
-                    value={input.createdAt ?? ``}
-                    className={`domain-editor-input`}
-                    onChange={event => setField(`createdAt`, event.target.value)}
-                  />
-                </div>
-              </>
-            )}
-            {!isSynced && (
-              <>
-                <div id={`domain-price-field`} className={`domain-editor-field`}>
-                  <label id={`domain-price-label`} className={`domain-editor-label`} htmlFor={`domain-price-input`}>
-                    {`Annual renewal · USD`}
-                  </label>
-                  <div id={`domain-price-input-wrap`} className={`domain-editor-price-wrap`}>
-                    <span id={`domain-price-prefix`} className={`domain-editor-price-prefix`} aria-hidden={`true`}>
-                      {`$`}
-                    </span>
+                  <div id={`domain-expiry-field`} className={`domain-editor-field`}>
+                    <label id={`domain-expiry-label`} className={`domain-editor-label`} htmlFor={`domain-expiry-input`}>
+                      {`Renewal date`}
+                    </label>
                     <input
-                      min={0}
-                      required
-                      step={0.01}
-                      type={`number`}
-                      inputMode={`decimal`}
-                      value={input.renewalPrice}
-                      id={`domain-price-input`}
-                      className={`domain-editor-input domain-editor-price-input`}
-                      onChange={event => setField(`renewalPrice`, Number(event.target.value))}
+                      type={`date`}
+                      value={input.expiresAt}
+                      id={`domain-expiry-input`}
+                      className={`domain-editor-input`}
+                      onChange={event => setField(`expiresAt`, event.target.value)}
                     />
                   </div>
-                </div>
-                <div id={`domain-auto-renew-field`} className={`domain-editor-field domain-editor-field-full domain-editor-renew-field`}>
-                  <label id={`domain-auto-renew-label`} className={`domain-editor-renew-label`} htmlFor={`domain-auto-renew-input`}>
+                  <div id={`domain-created-field`} className={`domain-editor-field`}>
+                    <label id={`domain-created-label`} className={`domain-editor-label`} htmlFor={`domain-created-input`}>
+                      {`Created`}
+                    </label>
                     <input
-                      type={`checkbox`}
-                      checked={input.autoRenew}
-                      id={`domain-auto-renew-input`}
-                      className={`domain-editor-renew-checkbox`}
-                      onChange={event => setField(`autoRenew`, event.target.checked)}
+                      type={`date`}
+                      id={`domain-created-input`}
+                      value={input.createdAt ?? ``}
+                      className={`domain-editor-input`}
+                      onChange={event => setField(`createdAt`, event.target.value)}
                     />
-                    <span id={`domain-auto-renew-copy`} className={`domain-editor-renew-copy`}>
-                      <span id={`domain-auto-renew-title`} className={`domain-editor-renew-title`}>
-                        {`Auto-renew is enabled`}
-                      </span>
+                  </div>
+                </>
+              )}
+              {!isSynced && (
+                <>
+                  <div id={`domain-price-field`} className={`domain-editor-field`}>
+                    <label id={`domain-price-label`} className={`domain-editor-label`} htmlFor={`domain-price-input`}>
+                      {`Annual renewal · USD`}
+                    </label>
+                    <SettingsField
+                      disabled={saving}
+                      enabled={isEditing}
+                      id={`domain-price-setting`}
+                      label={`Annual Renewal · USD`}
+                      value={`$${input.renewalPrice.toFixed(2)}`}
+                    >
+                      <div id={`domain-price-input-wrap`} className={`domain-editor-price-wrap`}>
+                        <span id={`domain-price-prefix`} className={`domain-editor-price-prefix`} aria-hidden={`true`}>
+                          {`$`}
+                        </span>
+                        <input
+                          min={0}
+                          required
+                          step={0.01}
+                          type={`number`}
+                          inputMode={`decimal`}
+                          value={input.renewalPrice}
+                          id={`domain-price-input`}
+                          className={`domain-editor-input domain-editor-price-input`}
+                          onChange={event => setField(`renewalPrice`, Number(event.target.value))}
+                        />
+                      </div>
+                    </SettingsField>
+                  </div>
+                  <div id={`domain-auto-renew-field`} className={`domain-editor-field domain-editor-field-full domain-editor-renew-field`}>
+                    {isEditing && (
+                      <label id={`domain-auto-renew-setting-label`} className={`domain-editor-label`} htmlFor={`domain-auto-renew-input`}>
+                        {`Auto-renew`}
+                      </label>
+                    )}
+                    <SettingsField
+                      disabled={saving}
+                      label={`Auto-Renew`}
+                      enabled={isEditing}
+                      id={`domain-auto-renew-setting`}
+                      value={input.autoRenew ? `On` : `Off`}
+                    >
+                      <label id={`domain-auto-renew-label`} className={`domain-editor-renew-label`} htmlFor={`domain-auto-renew-input`}>
+                        <input
+                          type={`checkbox`}
+                          checked={input.autoRenew}
+                          id={`domain-auto-renew-input`}
+                          className={`domain-editor-renew-checkbox`}
+                          onChange={event => setField(`autoRenew`, event.target.checked)}
+                        />
+                        <span id={`domain-auto-renew-copy`} className={`domain-editor-renew-copy`}>
+                          <span id={`domain-auto-renew-title`} className={`domain-editor-renew-title`}>
+                            {`Auto-renew is enabled`}
+                          </span>
+                          {!isEditing && (
+                            <span id={`domain-auto-renew-help`} className={`domain-editor-renew-help`}>
+                              {`Match the setting at your registrar`}
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    </SettingsField>
+                    {isEditing && (
                       <span id={`domain-auto-renew-help`} className={`domain-editor-renew-help`}>
                         {`Match the setting at your registrar`}
                       </span>
-                    </span>
+                    )}
+                  </div>
+                </>
+              )}
+              {isEditing && (
+                <div id={`domain-group-field`} className={`domain-editor-field domain-editor-field-full`}>
+                  <label id={`domain-group-label`} className={`domain-editor-label`} htmlFor={`domain-group-input`}>
+                    {`Group`}
                   </label>
-                </div>
-              </>
-            )}
-            {isEditing && (
-              <div id={`domain-group-field`} className={`domain-editor-field domain-editor-field-full`}>
-                <label id={`domain-group-label`} className={`domain-editor-label`} htmlFor={`domain-group-input`}>
-                  {`Group`}
-                </label>
-                <div id={`domain-group-select-wrap`} className={`domain-editor-select-wrap`}>
-                  <select
+                  <SettingsField
+                    label={`Group`}
                     disabled={saving}
-                    value={groupEditor.groupId}
-                    id={`domain-group-input`}
-                    className={`domain-editor-input domain-editor-select`}
-                    onChange={event => groupEditor.setGroupId(event.target.value)}
+                    enabled={isEditing}
+                    id={`domain-group-setting`}
+                    value={groupEditor.options.find(option => option.id === groupEditor.groupId)?.label}
                   >
-                    {groupEditor.options.map(option => (
-                      <option
-                        key={option.id}
-                        value={option.id}
-                        className={`domain-editor-option`}
-                        id={`domain-group-option-${option.id || `ungrouped`}`}
+                    <div id={`domain-group-select-wrap`} className={`domain-editor-select-wrap`}>
+                      <select
+                        disabled={saving}
+                        value={groupEditor.groupId}
+                        id={`domain-group-input`}
+                        className={`domain-editor-input domain-editor-select`}
+                        onChange={event => groupEditor.setGroupId(event.target.value)}
                       >
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={15} aria-hidden={`true`} id={`domain-group-select-chevron`} className={`domain-editor-select-chevron`} />
+                        {groupEditor.options.map(option => (
+                          <option
+                            key={option.id}
+                            value={option.id}
+                            className={`domain-editor-option`}
+                            id={`domain-group-option-${option.id || `ungrouped`}`}
+                          >
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown size={15} aria-hidden={`true`} id={`domain-group-select-chevron`} className={`domain-editor-select-chevron`} />
+                    </div>
+                  </SettingsField>
                 </div>
+              )}
+              <div id={`domain-status-field`} className={`domain-editor-field`}>
+                <label id={`domain-status-input-label`} className={`domain-editor-label`} htmlFor={`domain-status-input`}>
+                  {`Status`}
+                </label>
+                <SettingsField
+                  label={`Status`}
+                  disabled={saving}
+                  enabled={isEditing}
+                  id={`domain-status-setting`}
+                  value={<DomainProjectBadge field={`projectStatus`} value={input.projectStatus} id={`domain-status-setting-badge`} />}
+                >
+                  <ProjectSelect
+                    label={`Status`}
+                    disabled={saving}
+                    field={`projectStatus`}
+                    id={`domain-status-input`}
+                    value={input.projectStatus}
+                    placeholder={`Future`}
+                    options={DOMAIN_PROJECT_STATUSES}
+                    onChange={value => setField(`projectStatus`, normalizeDomainProjectStatus(value))}
+                  />
+                </SettingsField>
               </div>
+              <div id={`domain-difficulty-field`} className={`domain-editor-field`}>
+                <label id={`domain-difficulty-input-label`} className={`domain-editor-label`} htmlFor={`domain-difficulty-input`}>
+                  {`Difficulty Level`}
+                </label>
+                <SettingsField
+                  disabled={saving}
+                  enabled={isEditing}
+                  label={`Difficulty Level`}
+                  id={`domain-difficulty-setting`}
+                  value={input.difficulty ? <DomainProjectBadge field={`difficulty`} value={input.difficulty} id={`domain-difficulty-setting-badge`} /> : undefined}
+                >
+                  <ProjectSelect
+                    disabled={saving}
+                    field={`difficulty`}
+                    value={input.difficulty}
+                    label={`Difficulty Level`}
+                    id={`domain-difficulty-input`}
+                    options={DOMAIN_DIFFICULTIES}
+                    placeholder={`Select Difficulty Level`}
+                    onChange={value => setField(`difficulty`, normalizeDomainDifficulty(value))}
+                  />
+                </SettingsField>
+              </div>
+              <div id={`domain-mvp-field`} className={`domain-editor-field`}>
+                <label id={`domain-mvp-label`} className={`domain-editor-label`} htmlFor={`domain-mvp-input`}>
+                  {`MVP`}
+                </label>
+                <SettingsField
+                  label={`MVP`}
+                  disabled={saving}
+                  value={input.mvp}
+                  enabled={isEditing}
+                  id={`domain-mvp-setting`}
+                >
+                  <input
+                    maxLength={500}
+                    id={`domain-mvp-input`}
+                    value={input.mvp ?? ``}
+                    className={`domain-editor-input`}
+                    placeholder={`The first useful version`}
+                    onChange={event => setField(`mvp`, event.target.value)}
+                  />
+                </SettingsField>
+              </div>
+              <div id={`domain-future-field`} className={`domain-editor-field`}>
+                <label id={`domain-future-label`} className={`domain-editor-label`} htmlFor={`domain-future-input`}>
+                  {`Future`}
+                </label>
+                <SettingsField
+                  label={`Future`}
+                  disabled={saving}
+                  value={input.future}
+                  enabled={isEditing}
+                  id={`domain-future-setting`}
+                >
+                  <input
+                    maxLength={500}
+                    id={`domain-future-input`}
+                    value={input.future ?? ``}
+                    className={`domain-editor-input`}
+                    placeholder={`What comes after the MVP`}
+                    onChange={event => setField(`future`, event.target.value)}
+                  />
+                </SettingsField>
+              </div>
+              <div id={`domain-description-field`} className={`domain-editor-field domain-editor-field-full`}>
+                <label id={`domain-description-label`} className={`domain-editor-label`} htmlFor={`domain-description-input`}>
+                  {`Description`}
+                </label>
+                <SettingsField
+                  disabled={saving}
+                  enabled={isEditing}
+                  label={`Description`}
+                  value={input.description}
+                  id={`domain-description-setting`}
+                >
+                  <textarea
+                    rows={2}
+                    maxLength={2000}
+                    id={`domain-description-input`}
+                    value={input.description ?? ``}
+                    placeholder={`What is this domain for?`}
+                    className={`domain-editor-input domain-editor-textarea`}
+                    onChange={event => setField(`description`, event.target.value)}
+                  />
+                </SettingsField>
+              </div>
+            </div>
+            {isEditing && (
+              <DomainLinks
+                input={input}
+                disabled={saving}
+                onChange={setField}
+                id={`domain-editor-links-${domain?.id}`}
+              />
             )}
-            <div id={`domain-status-field`} className={`domain-editor-field`}>
-              <label id={`domain-status-input-label`} className={`domain-editor-label`} htmlFor={`domain-status-input`}>
-                {`Status`}
-              </label>
-              <ProjectSelect
-                label={`Status`}
-                disabled={saving}
-                field={`projectStatus`}
-                id={`domain-status-input`}
-                value={input.projectStatus}
-                placeholder={`Future`}
-                options={DOMAIN_PROJECT_STATUSES}
-                onChange={value => setField(`projectStatus`, normalizeDomainProjectStatus(value))}
-              />
-            </div>
-            <div id={`domain-difficulty-field`} className={`domain-editor-field`}>
-              <label id={`domain-difficulty-input-label`} className={`domain-editor-label`} htmlFor={`domain-difficulty-input`}>
-                {`Difficulty Level`}
-              </label>
-              <ProjectSelect
-                disabled={saving}
-                field={`difficulty`}
-                value={input.difficulty}
-                label={`Difficulty Level`}
-                id={`domain-difficulty-input`}
-                options={DOMAIN_DIFFICULTIES}
-                placeholder={`Select Difficulty Level`}
-                onChange={value => setField(`difficulty`, normalizeDomainDifficulty(value))}
-              />
-            </div>
-            <div id={`domain-mvp-field`} className={`domain-editor-field`}>
-              <label id={`domain-mvp-label`} className={`domain-editor-label`} htmlFor={`domain-mvp-input`}>
-                {`MVP`}
-              </label>
-              <input
-                maxLength={500}
-                id={`domain-mvp-input`}
-                value={input.mvp ?? ``}
-                className={`domain-editor-input`}
-                placeholder={`The first useful version`}
-                onChange={event => setField(`mvp`, event.target.value)}
-              />
-            </div>
-            <div id={`domain-future-field`} className={`domain-editor-field`}>
-              <label id={`domain-future-label`} className={`domain-editor-label`} htmlFor={`domain-future-input`}>
-                {`Future`}
-              </label>
-              <input
-                maxLength={500}
-                id={`domain-future-input`}
-                value={input.future ?? ``}
-                className={`domain-editor-input`}
-                placeholder={`What comes after the MVP`}
-                onChange={event => setField(`future`, event.target.value)}
-              />
-            </div>
-            <div id={`domain-description-field`} className={`domain-editor-field domain-editor-field-full`}>
-              <label id={`domain-description-label`} className={`domain-editor-label`} htmlFor={`domain-description-input`}>
-                {`Description`}
-              </label>
-              <textarea
-                rows={2}
-                maxLength={2000}
-                id={`domain-description-input`}
-                value={input.description ?? ``}
-                placeholder={`What is this domain for?`}
-                className={`domain-editor-input domain-editor-textarea`}
-                onChange={event => setField(`description`, event.target.value)}
-              />
-            </div>
           </div>
           {error && (
             <p role={`alert`} id={`domain-editor-error`} className={`domain-dialog-error`}>
