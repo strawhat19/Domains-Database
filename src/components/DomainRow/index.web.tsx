@@ -1,12 +1,13 @@
 import './styles.scss';
 import type { MouseEventHandler } from 'react';
+import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
 import { getDomainSource } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
-import { Check, Minus, Pencil, Trash2, ArrowUp, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
+import { Check, Minus, Trash2, ArrowUp, Settings, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
 import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
   DEFAULT_VISIBLE_COLUMNS,
@@ -135,8 +136,36 @@ const DomainRow = ({
                   />
                 )}
               </a>
+              <span aria-hidden={`true`} id={`${scope}-status-separator`} className={`domain-name-separator`}>
+                {` | `}
+              </span>
+              <DomainProjectBadge
+                field={`projectStatus`}
+                value={domain.projectStatus}
+                id={`${scope}-project-status`}
+                className={`domain-project-status`}
+              />
+              {!!domain.description && (
+                <>
+                  <span aria-hidden={`true`} id={`${scope}-description-separator`} className={`domain-name-separator`}>
+                    {` | `}
+                  </span>
+                  <span id={`${scope}-description`} title={domain.description} className={`domain-site-description`}>
+                    {domain.description}
+                  </span>
+                </>
+              )}
             </div>
           </div>
+        );
+      case `difficulty`:
+        return (
+          <DomainProjectBadge
+            field={field}
+            value={domain[field]}
+            id={`${scope}-${getDomainColumnKey(field)}-value`}
+            className={`domain-column-value-${getDomainColumnKey(field)}`}
+          />
         );
       case `registrar`:
         return (
@@ -272,17 +301,6 @@ const DomainRow = ({
           <button
             type={`button`}
             disabled={busy}
-            title={`Edit Domain`}
-            id={`${scope}-edit`}
-            onClick={() => onEdit(domain)}
-            className={`domain-row-action`}
-            aria-label={`Edit ${domain.name}`}
-          >
-            <Pencil size={14} aria-hidden={`true`} id={`${scope}-edit-icon`} className={`domain-row-action-icon`} />
-          </button>
-          <button
-            type={`button`}
-            disabled={busy}
             title={`Remove Domain`}
             id={`${scope}-remove`}
             onClick={() => onDelete(domain)}
@@ -290,6 +308,17 @@ const DomainRow = ({
             className={`domain-row-action domain-row-action-remove`}
           >
             <Trash2 size={14} aria-hidden={`true`} id={`${scope}-remove-icon`} className={`domain-row-action-icon`} />
+          </button>
+          <button
+            type={`button`}
+            disabled={busy}
+            title={`Edit Domain`}
+            id={`${scope}-edit`}
+            onClick={() => onEdit(domain)}
+            className={`domain-row-action`}
+            aria-label={`Edit ${domain.name}`}
+          >
+            <Settings size={14} aria-hidden={`true`} id={`${scope}-edit-icon`} className={`domain-row-action-icon`} />
           </button>
         </div>
       </td>

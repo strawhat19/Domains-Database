@@ -1,12 +1,14 @@
 import { createStyles } from './styles.native';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
+import DomainProjectBadge from '../DomainProjectBadge/index.native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { elementProps } from '../../shared/elementProps';
 import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
-import { Globe2, Pencil, RefreshCw, Trash2 } from 'lucide-react-native';
+import { normalizeDomainProjectStatus } from '../../shared/domainProject';
+import { Globe2, Trash2, Settings, RefreshCw, ArrowUpRight } from 'lucide-react-native';
 import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -65,6 +67,7 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
   if (!domain) return null;
 
   const status = getDomainStatus(domain);
+  const projectStatus = normalizeDomainProjectStatus(domain.projectStatus);
   const colors = statusColors[status];
   const days = getDaysUntil(domain.expiresAt);
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
@@ -142,23 +145,57 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
           )}
         </View>
         <View {...elementProps(`native-domain-name-group`, domain.id)} style={styles.nameGroup}>
-          <Pressable
-            {...elementProps(`native-domain-site-link`, domain.id)}
-            accessibilityRole={`link`}
-            accessibilityLabel={`Open ${domain.name}`}
-            onPress={() => void Linking.openURL(`https://${domain.name}`).catch(() => undefined)}
-          >
-            <Text {...elementProps(`native-domain-name`, domain.id)} style={styles.name} numberOfLines={1}>
-              {domain.name}
+          <View {...elementProps(`native-domain-name-line`, domain.id)} style={styles.nameLine}>
+            <Pressable
+              style={styles.siteLink}
+              accessibilityRole={`link`}
+              accessibilityLabel={`Open ${domain.name}`}
+              {...elementProps(`native-domain-site-link`, domain.id)}
+              onPress={() => void Linking.openURL(`https://${domain.name}`).catch(() => undefined)}
+            >
+              <Text {...elementProps(`native-domain-name`, domain.id)} style={styles.name} numberOfLines={1}>
+                {domain.name}
+              </Text>
+              <ArrowUpRight size={13} color={palette.accent} {...elementProps(`native-domain-site-link-icon`, domain.id)} />
+            </Pressable>
+            <Text
+              style={styles.nameSeparator}
+              {...elementProps(`native-domain-name-status-separator`, domain.id)}
+            >
+              {` | `}
             </Text>
-          </Pressable>
+            <DomainProjectBadge
+              value={projectStatus}
+              field={`projectStatus`}
+              id={`native-domain-name-status-${domain.id}`}
+            />
+            {!!domain.description?.trim() && (
+              <>
+                <Text
+                  style={styles.nameSeparator}
+                  {...elementProps(`native-domain-name-description-separator`, domain.id)}
+                >
+                  {` | `}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode={`tail`}
+                  style={styles.siteDescription}
+                  accessibilityLabel={domain.description}
+                  {...elementProps(`native-domain-site-description`, domain.id)}
+                >
+                  {domain.description}
+                </Text>
+              </>
+            )}
+          </View>
         </View>
         <View {...elementProps(`actionsCell`, domain.id)} style={styles.actionsCell}>
-          <Pressable {...elementProps(`native-domain-edit`, domain.id)} style={styles.actionButton} onPress={() => onEdit?.(domain)} accessibilityRole={`button`} accessibilityLabel={`Edit ${domain.name}`}>
-            <Pencil {...elementProps(`native-domain-edit-icon`, domain.id)} size={14} color={palette.muted} />
-          </Pressable>
           <Pressable {...elementProps(`native-domain-delete`, domain.id)} style={styles.actionButton} onPress={() => onDelete?.(domain)} accessibilityRole={`button`} accessibilityLabel={`Delete ${domain.name}`}>
             <Trash2 {...elementProps(`native-domain-delete-icon`, domain.id)} size={14} color={palette.muted} />
+          </Pressable>
+          <Pressable {...elementProps(`native-domain-edit`, domain.id)} style={styles.actionButton} onPress={() => onEdit?.(domain)} accessibilityRole={`button`} accessibilityLabel={`${domain.name} Settings`}>
+            <Settings {...elementProps(`native-domain-edit-icon`, domain.id)} size={14} color={palette.muted} />
           </Pressable>
         </View>
       </View>
@@ -263,6 +300,41 @@ const DomainCard = ({ index = 0, selected = false, loading = false, domain, onEd
           >
             {getWebsiteInsightsHint(domain, column.field)}
           </Text>
+        </View>
+      ))}
+      {PORTFOLIO_COLUMNS.filter(column => [`mvp`, `future`, `difficulty`].includes(column.field) && visibleColumns.includes(column.field)).map(column => (
+        <View
+          key={column.field}
+          style={styles.renewalEstimate}
+          {...elementProps(`native-domain-project-${column.field}`, domain.id)}
+        >
+          <View
+            style={styles.renewalEstimateHeading}
+            {...elementProps(`native-domain-project-heading-${column.field}`, domain.id)}
+          >
+            <Text
+              style={styles.renewalEstimateLabel}
+              {...elementProps(`native-domain-project-label-${column.field}`, domain.id)}
+            >
+              {column.label}
+            </Text>
+            {column.field === `difficulty` ? (
+              <DomainProjectBadge
+                field={column.field}
+                id={`native-domain-project-value-${column.field}-${domain.id}`}
+                value={domain.difficulty}
+              />
+            ) : (
+              <Text
+                numberOfLines={1}
+                ellipsizeMode={`tail`}
+                style={styles.projectValue}
+                {...elementProps(`native-domain-project-value-${column.field}`, domain.id)}
+              >
+                {getPortfolioColumnDisplay(domain, column.field)}
+              </Text>
+            )}
+          </View>
         </View>
       ))}
       <DomainAnalyticsButton suffix={`native-domain-card-${domain.id}`} domain={domain.name} />

@@ -27,15 +27,14 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
         id={`domain-collection-settings-dialog`}
         className={`domain-dialog domain-collection-settings`}
         aria-labelledby={`domain-collection-settings-title`}
-        aria-describedby={`domain-collection-settings-description`}
       >
         <header id={`domain-collection-settings-header`} className={`domain-dialog-header`}>
           <div id={`domain-collection-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-collection-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {`YOUR PORTFOLIO`}
+              {`SETTINGS`}
             </span>
             <h2 id={`domain-collection-settings-title`} className={`domain-dialog-title`}>
-              {`Edit collection`}
+              {collection.name}
             </h2>
           </div>
           <button
@@ -48,9 +47,6 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
             <X size={19} aria-hidden={`true`} id={`domain-collection-settings-close-icon`} className={`domain-dialog-close-icon`} />
           </button>
         </header>
-        <p id={`domain-collection-settings-description`} className={`domain-dialog-description`}>
-          {`Edit the title, optional description, and visibility of this collection.`}
-        </p>
         <form noValidate id={`domain-collection-settings-form`} className={`domain-collection-settings-form`} onSubmit={settings.handleSubmit}>
           <div id={`domain-collection-settings-fields`} className={`domain-collection-settings-fields`}>
             <div id={`domain-collection-settings-name-field`} className={`domain-editor-field`}>
@@ -75,6 +71,24 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
                 {`Collection titles must be unique, regardless of capitalization.`}
               </p>
             </div>
+            <div id={`domain-collection-settings-visibility-field`} className={`domain-editor-field`}>
+              <label id={`domain-collection-settings-visibility-label`} htmlFor={`domain-collection-settings-visibility`} className={`domain-editor-label`}>
+                {`Visibility`}
+              </label>
+              <select
+                value={settings.visibility}
+                id={`domain-collection-settings-visibility`}
+                className={`domain-editor-input domain-collection-settings-visibility-input`}
+                aria-describedby={`domain-collection-settings-visibility-help`}
+                onChange={event => settings.setVisibility(event.target.value === `public` ? `public` : `private`)}
+              >
+                <option id={`domain-collection-settings-visibility-private`} value={`private`}>{`Private`}</option>
+                <option id={`domain-collection-settings-visibility-public`} value={`public`}>{`Public / Published`}</option>
+              </select>
+              <p id={`domain-collection-settings-visibility-help`} className={`domain-collection-settings-help`}>
+                {`Private keeps this collection unpublished. Public / Published marks it for public sharing.`}
+              </p>
+            </div>
             <div id={`domain-collection-settings-description-field`} className={`domain-editor-field`}>
               <label id={`domain-collection-settings-description-label`} htmlFor={`domain-collection-settings-description-input`} className={`domain-editor-label`}>
                 {`Description (optional)`}
@@ -93,24 +107,6 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
               />
               <p id={`domain-collection-settings-description-help`} className={`domain-collection-settings-help`}>
                 {`Up to 280 characters, shown next to the collection title.`}
-              </p>
-            </div>
-            <div id={`domain-collection-settings-visibility-field`} className={`domain-editor-field`}>
-              <label id={`domain-collection-settings-visibility-label`} htmlFor={`domain-collection-settings-visibility`} className={`domain-editor-label`}>
-                {`Visibility`}
-              </label>
-              <select
-                value={settings.visibility}
-                id={`domain-collection-settings-visibility`}
-                className={`domain-editor-input domain-collection-settings-visibility-input`}
-                aria-describedby={`domain-collection-settings-visibility-help`}
-                onChange={event => settings.setVisibility(event.target.value === `public` ? `public` : `private`)}
-              >
-                <option id={`domain-collection-settings-visibility-private`} value={`private`}>{`Private`}</option>
-                <option id={`domain-collection-settings-visibility-public`} value={`public`}>{`Public / Published`}</option>
-              </select>
-              <p id={`domain-collection-settings-visibility-help`} className={`domain-collection-settings-help`}>
-                {`Private keeps this collection unpublished. Public / Published marks it for public sharing.`}
               </p>
             </div>
           </div>

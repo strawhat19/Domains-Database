@@ -5,6 +5,8 @@ import { REGISTRARS, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
+import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../../shared/domainProject';
+import { PORTFOLIO_COLUMNS, getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
@@ -21,11 +23,15 @@ const newDomain = (): DomainInput => {
   return {
     name: ``,
     notes: ``,
+    mvp: ``,
+    future: ``,
     autoRenew: true,
     description: ``,
     renewalPrice: 0,
     owner: `My Portfolio`,
     registrar: REGISTRARS[0],
+    projectStatus: DEFAULT_DOMAIN_PROJECT_STATUS,
+    createdAt: `${today.getFullYear()}-${month}-${day}`,
     expiresAt: `${year}-${month}-${day}`,
   };
 };
@@ -50,7 +56,12 @@ export const useNativePortfolio = (compact = false) => {
   const filteredDomains = useMemo(() => {
     const query = search.trim().toLowerCase();
     return context.domains
-      .filter(domain => (registrar === `All` || domain.registrar === registrar) && `${domain.name} ${domain.owner} ${domain.registrar}`.toLowerCase().includes(query))
+      .filter(domain => (registrar === `All` || domain.registrar === registrar) && [
+        domain.title,
+        normalizeDomainProjectStatus(domain.projectStatus),
+        domain.description,
+        ...PORTFOLIO_COLUMNS.map(column => getPortfolioColumnValue(domain, column.field)),
+      ].join(` `).toLowerCase().includes(query))
       .sort((first, second) => sortByName ? first.name.localeCompare(second.name) : first.expiresAt.localeCompare(second.expiresAt));
   }, [context.domains, search, registrar, sortByName]);
   const visibleDomains = compact ? filteredDomains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : filteredDomains;
@@ -71,12 +82,18 @@ export const useNativePortfolio = (compact = false) => {
     groupEditor.resetGroup(domain?.id);
     updateRenewalPrice(domain ? String(domain.renewalPrice) : ``);
     setInput(domain ? {
+      ...domain,
       meta: domain.meta,
+      mvp: domain.mvp ?? ``,
       name: domain.name,
       owner: domain.owner,
       notes: domain.notes,
+      future: domain.future ?? ``,
+      difficulty: domain.difficulty,
       registrar: domain.registrar,
-      expiresAt: domain.expiresAt.slice(0, 10),
+      projectStatus: normalizeDomainProjectStatus(domain.projectStatus),
+      createdAt: domain.createdAt,
+      expiresAt: domain.expiresAt,
       autoRenew: domain.autoRenew,
       renewalPrice: domain.renewalPrice,
       description: domain.description ?? ``,
@@ -94,7 +111,7 @@ export const useNativePortfolio = (compact = false) => {
     setInput(current => markDomainFieldsKnown(current, [`renewalPrice`]));
   };
   const updateInput = <K extends keyof DomainInput>(field: K, value: DomainInput[K]) => {
-    if (editingSyncedDomain && ![`meta`, `notes`, `description`].includes(field)) return;
+    if (editingSyncedDomain && ![`mvp`, `meta`, `future`, `difficulty`, `description`, `projectStatus`].includes(field)) return;
     setInput(current => {
       if (editingSyncedDomain && field === `meta`) {
         return { ...current, meta: { ...current.meta, siteIconUrl: getCustomSiteIconUrl({ meta: value as DomainInput[`meta`] }) } };
@@ -113,7 +130,10 @@ export const useNativePortfolio = (compact = false) => {
         ? context.domains.find(domain => domain.id === editingDomain.id) ?? editingDomain : null;
       const record: DomainInput = syncedDomain ? {
         ...syncedDomain,
-        notes: input.notes,
+        mvp: input.mvp,
+        future: input.future,
+        difficulty: input.difficulty,
+        projectStatus: normalizeDomainProjectStatus(input.projectStatus),
         description: input.description ?? ``,
         meta: { ...syncedDomain.meta, siteIconUrl: getCustomSiteIconUrl(input) },
       } : { ...input, renewalPrice: Number(renewalPrice || 0) };

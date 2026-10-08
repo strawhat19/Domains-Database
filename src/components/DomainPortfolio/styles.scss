@@ -258,6 +258,11 @@
 .domain-delete-dialog { max-width: 460px; }
 .domain-delete-name { margin: 24px 0 0; font-size: 16px; letter-spacing: -.02em; overflow-wrap: anywhere; }
 .domain-delete-footer { justify-content: flex-end; }
+@container portfolio-toolbar (max-width: 1050px) {
+  .portfolio-controls-row { display: contents; }
+  .portfolio-search-row { order: 1; width: auto; flex: 1 1 240px; }
+  .portfolio-toolbar-actions { order: 2; }
+}
 @media (min-width: 1200px) {
   .portfolio-heading { flex: 1; gap: 8px 20px; min-width: 0; display: grid; align-items: center; grid-template-columns: max-content minmax(0, 1fr); }
   .portfolio-eyebrow { grid-column: 1 / -1; }

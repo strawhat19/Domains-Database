@@ -208,6 +208,17 @@ const PortfolioCollection = ({
             </button>
           )}
           <button
+            disabled
+            type={`button`}
+            draggable={false}
+            id={`${scope}-share`}
+            className={`portfolio-collection-share`}
+            title={`Share ${collection.name} (Coming Soon)`}
+            aria-label={`Share ${collection.name} (Coming Soon)`}
+          >
+            <Share2 size={17} aria-hidden={`true`} id={`${scope}-share-icon`} className={`portfolio-collection-share-icon`} />
+          </button>
+          <button
             type={`button`}
             draggable={false}
             aria-haspopup={`dialog`}
@@ -218,17 +229,6 @@ const PortfolioCollection = ({
             onClick={() => state.setEditing(true)}
           >
             <Settings size={17} aria-hidden={`true`} id={`${scope}-settings-icon`} className={`portfolio-collection-settings-icon`} />
-          </button>
-          <button
-            disabled
-            type={`button`}
-            draggable={false}
-            id={`${scope}-share`}
-            className={`portfolio-collection-share`}
-            title={`Share ${collection.name} (Coming Soon)`}
-            aria-label={`Share ${collection.name} (Coming Soon)`}
-          >
-            <Share2 size={17} aria-hidden={`true`} id={`${scope}-share-icon`} className={`portfolio-collection-share-icon`} />
           </button>
         </div>
       </div>

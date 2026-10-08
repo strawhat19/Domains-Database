@@ -1,4 +1,5 @@
 import { api } from '../../api';
+import type { PublicDomainSummary } from '../../api';
 import { Types } from '../../types/types';
 import { authAPI } from '../../api/auth';
 import { genID } from '../common/ids';
@@ -8,7 +9,7 @@ import { Follow } from '../models/relationships/Follow';
 import { validatePostContent } from './content';
 import { getAppCollectionIDNumber } from '../common/ids';
 import type { PublicProfile } from '../models/users/User';
-import type { FeedView, FeedPost, PostInput, PublicPost, CommunitySnapshot } from './types';
+import type { FeedView, FeedPost, PostInput, PublicPost, PublicDomain, CommunitySnapshot } from './types';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 
 export const SOCIAL_STORAGE_KEY = `domains-database:social:v1`;
@@ -17,6 +18,20 @@ interface SocialStore { version: 1; posts: Post[]; follows: Follow[]; nextPostNu
 const emptyStore = (): SocialStore => ({ version: 1, posts: [], follows: [], nextPostNumber: 1, nextFollowNumber: 1 });
 const projectPost = (post: Post): PublicPost => ({ id: post.id, body: post.body, number: post.number, created: post.created, updated: post.updated, authorId: post.authorId, audience: post.audience });
 const publicProfile = (profile: PublicProfile): PublicProfile => ({ id: profile.id, name: profile.name, description: profile.description, color: { ...profile.color }, photoURL: profile.photoURL, publicDomains: profile.publicDomains, profilePrivacy: profile.profilePrivacy });
+const publicDomain = (domain: PublicDomainSummary): PublicDomain => ({
+  id: domain.id,
+  tld: domain.tld,
+  mvp: domain.mvp,
+  name: domain.name,
+  future: domain.future,
+  created: domain.created,
+  registrar: domain.registrar,
+  expiresAt: domain.expiresAt,
+  createdAt: domain.createdAt,
+  difficulty: domain.difficulty,
+  description: domain.description,
+  projectStatus: domain.projectStatus,
+});
 const requireUser = async (expectedViewerId?: string | null) => {
   if (!useLocalStorage) throw new Error(`Connect A Backend To Use Community`);
   const session = await authAPI.restoreSession();
@@ -88,7 +103,7 @@ export const getCommunity = (view: FeedView = `public`): Promise<CommunitySnapsh
     followingIds,
     storageEnabled: useLocalStorage,
     posts: posts.sort((a, b) => Date.parse(b.created) - Date.parse(a.created) || b.number - a.number),
-    profiles: profiles.map(profile => ({ ...profile, following: followed.has(profile.id), domains: domainResults.filter(domain => domain.userId === profile.id).map(domain => ({ id: domain.id, name: domain.name, registrar: domain.registrar })) })),
+    profiles: profiles.map(profile => ({ ...profile, following: followed.has(profile.id), domains: domainResults.filter(domain => domain.userId === profile.id).map(publicDomain) })),
   };
 });
 

@@ -43,7 +43,11 @@
   background: var(--canvas);
   border: 1px solid var(--line);
 }
-.domain-name-copy { min-width: 0; display: flex; flex-direction: column; }
+.domain-name-copy { flex: 1; gap: 6px; min-width: 0; display: flex; align-items: center; }
+.domain-name-copy .domain-site-link { flex-shrink: 1; }
+.domain-name-copy .domain-project-status { flex-shrink: 0; }
+.domain-name-separator { font-size: 12px; flex-shrink: 0; white-space: pre; color: var(--muted); }
+.domain-site-description { flex: 1; min-width: 0; color: #fff; font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .domain-name { font-size: 13px; white-space: nowrap; letter-spacing: -.025em; font-family: var(--font-bold); }
 @container portfolio-domain (min-width: 180px) {
   .domain-name { font-size: 14px; }
@@ -83,7 +87,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  &-notes, &-nameservers { min-width: 160px; white-space: normal; overflow-wrap: anywhere; }
+  &-nameservers { min-width: 160px; white-space: normal; overflow-wrap: anywhere; }
 }
 .domain-registrar { gap: 9px; display: flex; align-items: center; white-space: nowrap; }
 .domain-registrar-copy { gap: 3px; min-width: 0; display: flex; align-items: flex-start; flex-direction: column; }

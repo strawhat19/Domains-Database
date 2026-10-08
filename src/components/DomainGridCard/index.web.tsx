@@ -1,4 +1,5 @@
 import './styles.scss';
+import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
@@ -6,7 +7,7 @@ import { getDomainSource } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { getDomainRow, getDomainColumnKey, getDomainSelectionHandlers } from '../DomainRow/domainRow';
 import type { DomainItemProps, DomainDragProps } from '../DomainRow/domainRow';
-import { Check, Minus, Pencil, Trash2, ArrowUp, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
+import { Check, Minus, Trash2, ArrowUp, Settings, ArrowDown, GripVertical, ArrowUpRight } from 'lucide-react';
 import {
   PORTFOLIO_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
@@ -82,28 +83,49 @@ const DomainGridCard = ({
           id={`${scope}-symbol`}
           iconUrl={getCustomSiteIconUrl(domain)}
         />
-        <a
-          target={`_blank`}
-          draggable={false}
-          id={`${scope}-name`}
-          rel={`noopener noreferrer`}
-          href={`https://${domain.name}`}
-          className={`domain-grid-card-site-link`}
-          aria-label={`Open ${domain.name} in a new tab`}
-        >
-          <span id={`${scope}-site-link-label`} className={`domain-grid-card-site-link-label`}>
-            {domain.name.slice(0, lastDot)}
-            <span id={`${scope}-extension`} className={`domain-grid-card-extension`}>
-              {domain.name.slice(lastDot)}
+        <div id={`${scope}-name-copy`} className={`domain-grid-card-name-copy`}>
+          <a
+            target={`_blank`}
+            draggable={false}
+            id={`${scope}-name`}
+            rel={`noopener noreferrer`}
+            href={`https://${domain.name}`}
+            className={`domain-grid-card-site-link`}
+            aria-label={`Open ${domain.name} in a new tab`}
+          >
+            <span id={`${scope}-site-link-label`} className={`domain-grid-card-site-link-label`}>
+              {domain.name.slice(0, lastDot)}
+              <span id={`${scope}-extension`} className={`domain-grid-card-extension`}>
+                {domain.name.slice(lastDot)}
+              </span>
             </span>
+            <ArrowUpRight
+              size={13}
+              aria-hidden={`true`}
+              id={`${scope}-site-link-icon`}
+              className={`domain-grid-card-site-link-icon`}
+            />
+          </a>
+          <span aria-hidden={`true`} id={`${scope}-status-separator`} className={`domain-grid-card-name-separator`}>
+            {` | `}
           </span>
-          <ArrowUpRight
-            size={13}
-            aria-hidden={`true`}
-            id={`${scope}-site-link-icon`}
-            className={`domain-grid-card-site-link-icon`}
+          <DomainProjectBadge
+            field={`projectStatus`}
+            value={domain.projectStatus}
+            id={`${scope}-project-status`}
+            className={`domain-project-status`}
           />
-        </a>
+          {!!domain.description && (
+            <>
+              <span aria-hidden={`true`} id={`${scope}-description-separator`} className={`domain-grid-card-name-separator`}>
+                {` | `}
+              </span>
+              <span id={`${scope}-description`} title={domain.description} className={`domain-grid-card-description`}>
+                {domain.description}
+              </span>
+            </>
+          )}
+        </div>
       </div>
       {!!columns.length && (
         <dl id={`${scope}-details`} className={`domain-grid-card-details`}>
@@ -143,6 +165,12 @@ const DomainGridCard = ({
                         {autoRenew === undefined ? `Unknown` : autoRenew ? `On` : `Off`}
                       </span>
                     </button>
+                  ) : column.field === `difficulty` ? (
+                    <DomainProjectBadge
+                      field={column.field}
+                      value={domain[column.field]}
+                      id={`${scope}-${key}-text`}
+                    />
                   ) : (
                     <span title={getWebsiteInsightsHint(domain, column.field) || value} id={`${scope}-${key}-text`} className={`domain-grid-card-field-text`}>
                       {value}
@@ -204,17 +232,6 @@ const DomainGridCard = ({
           <button
             type={`button`}
             disabled={busy}
-            title={`Edit Domain`}
-            id={`${scope}-edit`}
-            onClick={() => onEdit(domain)}
-            aria-label={`Edit ${domain.name}`}
-            className={`domain-grid-card-action`}
-          >
-            <Pencil size={14} aria-hidden={`true`} id={`${scope}-edit-icon`} className={`domain-grid-card-action-icon`} />
-          </button>
-          <button
-            type={`button`}
-            disabled={busy}
             title={`Remove Domain`}
             id={`${scope}-remove`}
             onClick={() => onDelete(domain)}
@@ -222,6 +239,17 @@ const DomainGridCard = ({
             className={`domain-grid-card-action domain-grid-card-action-remove`}
           >
             <Trash2 size={14} aria-hidden={`true`} id={`${scope}-remove-icon`} className={`domain-grid-card-action-icon`} />
+          </button>
+          <button
+            type={`button`}
+            disabled={busy}
+            title={`Edit Domain`}
+            id={`${scope}-edit`}
+            onClick={() => onEdit(domain)}
+            aria-label={`Edit ${domain.name}`}
+            className={`domain-grid-card-action`}
+          >
+            <Settings size={14} aria-hidden={`true`} id={`${scope}-edit-icon`} className={`domain-grid-card-action-icon`} />
           </button>
         </div>
       </div>

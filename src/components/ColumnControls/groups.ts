@@ -11,6 +11,11 @@ export const COLUMN_GROUPS: {
     fields: [`name`, `tld`, `internationalName`, `status`, `owner`, `providerId`],
   },
   {
+    id: `project`,
+    label: `Project details`,
+    fields: [`mvp`, `future`, `difficulty`],
+  },
+  {
     id: `registration`,
     label: `Registration & renewals`,
     fields: [
@@ -41,7 +46,7 @@ export const COLUMN_GROUPS: {
   },
   {
     id: `costs`,
-    label: `Costs & notes`,
-    fields: [`renewalPrice`, `renewalEstimate`, `monthlyCost`, `currency`, `estimatedValue`, `notes`],
+    label: `Costs`,
+    fields: [`renewalPrice`, `renewalEstimate`, `monthlyCost`, `currency`, `estimatedValue`],
   },
 ];

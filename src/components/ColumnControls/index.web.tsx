@@ -139,6 +139,11 @@ const ColumnControls = ({
                           <span id={`${scope}-text`} className={`column-controls-option-text`}>
                             {column.label}
                           </span>
+                          {column.public && (
+                            <span id={`${scope}-public`} className={`column-controls-public-text`}>
+                              {`Public`}
+                            </span>
+                          )}
                           <span
                             id={`${scope}-count`}
                             title={countDescription}

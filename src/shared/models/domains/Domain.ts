@@ -2,6 +2,8 @@ import { Data } from '../Data';
 import type { JSONValue } from '../Data';
 import { Types } from '../../../types/types';
 import { isAppCollectionID } from '../../common/ids';
+import { normalizeDomainProjectStatus } from '../../domainProject';
+import type { DomainDifficulty, DomainProjectStatus } from '../../domainProject';
 
 export type Registrar = `Vercel` | `Porkbun` | `NameSilo` | `Hostinger` | `GoDaddy` | `GoDaddy Auctions` | `Namecheap` | `Squarespace`;
 export type { JSONValue } from '../Data';
@@ -21,8 +23,11 @@ export class Domain extends Data {
   autoRenew: boolean;
   renewalPrice: number;
   registrar: Registrar | ``;
+  projectStatus: DomainProjectStatus;
   tld?: string;
+  mvp?: string;
   status?: string;
+  future?: string;
   locked?: boolean;
   privacy?: boolean;
   dnssec?: boolean;
@@ -31,6 +36,7 @@ export class Domain extends Data {
   updatedAt?: string;
   providerId?: string;
   ownershipAt?: string;
+  difficulty?: DomainDifficulty;
   firstImportedAt?: string;
   firstExportedAt?: string;
   nameservers?: string[];
@@ -45,7 +51,9 @@ export class Domain extends Data {
     this.owner = data.owner ?? ``;
     this.notes = data.notes ?? ``;
     this.tld = data.tld;
+    this.mvp = data.mvp;
     this.status = data.status;
+    this.future = data.future;
     this.locked = data.locked;
     this.privacy = data.privacy;
     this.dnssec = data.dnssec;
@@ -53,10 +61,12 @@ export class Domain extends Data {
     this.createdAt = data.createdAt;
     this.updatedAt = data.updatedAt;
     this.ownershipAt = data.ownershipAt;
+    this.difficulty = data.difficulty;
     this.isSample = data.isSample === true;
     this.expiresAt = data.expiresAt ?? ``;
     this.firstImportedAt = data.firstImportedAt;
     this.firstExportedAt = data.firstExportedAt;
+    this.projectStatus = normalizeDomainProjectStatus(data.projectStatus);
     this.registrar = data.registrar ?? ``;
     this.autoRenew = data.autoRenew ?? false;
     this.renewalPrice = data.renewalPrice ?? 0;

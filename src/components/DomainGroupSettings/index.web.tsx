@@ -27,15 +27,14 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
         id={`domain-group-settings-dialog`}
         aria-labelledby={`domain-group-settings-title`}
         className={`domain-dialog domain-group-settings`}
-        aria-describedby={`domain-group-settings-description`}
       >
-        <header id={`domain-group-settings-header`} className={`domain-dialog-header`}>
+        <header id={`domain-group-settings-header`} className={`domain-dialog-header domain-group-settings-header`}>
           <div id={`domain-group-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-group-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {`YOUR PORTFOLIO`}
+              {`SETTINGS`}
             </span>
             <h2 id={`domain-group-settings-title`} className={`domain-dialog-title`}>
-              {`Edit group`}
+              {group.name}
             </h2>
           </div>
           <button
@@ -48,9 +47,6 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
             <X size={19} aria-hidden={`true`} id={`domain-group-settings-close-icon`} className={`domain-dialog-close-icon`} />
           </button>
         </header>
-        <p id={`domain-group-settings-description`} className={`domain-dialog-description`}>
-          {`Give your group a unique name, an optional description, and choose where to keep it.`}
-        </p>
         <form noValidate id={`domain-group-settings-form`} className={`domain-group-settings-form`} onSubmit={settings.handleSubmit}>
           <div id={`domain-group-settings-fields`} className={`domain-group-settings-fields`}>
             <div id={`domain-group-settings-name-field`} className={`domain-editor-field`}>
@@ -73,26 +69,6 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
               />
               <p id={`domain-group-settings-name-help`} className={`domain-group-settings-help`}>
                 {`Names must be unique, regardless of capitalization.`}
-              </p>
-            </div>
-            <div id={`domain-group-settings-description-field`} className={`domain-editor-field`}>
-              <label id={`domain-group-settings-description-label`} htmlFor={`domain-group-settings-description-input`} className={`domain-editor-label`}>
-                {`Description (optional)`}
-              </label>
-              <textarea
-                rows={3}
-                maxLength={280}
-                value={settings.description}
-                ref={settings.descriptionInputRef}
-                id={`domain-group-settings-description-input`}
-                placeholder={`A short note about this group…`}
-                aria-invalid={settings.invalidField === `description`}
-                className={`domain-editor-input domain-group-settings-description-input`}
-                onChange={event => settings.setDescription(event.target.value)}
-                aria-describedby={`domain-group-settings-description-help${settings.error ? ` domain-group-settings-error` : ``}`}
-              />
-              <p id={`domain-group-settings-description-help`} className={`domain-group-settings-help`}>
-                {`Up to 280 characters, shown next to the group title.`}
               </p>
             </div>
             <div id={`domain-group-settings-collection-field`} className={`domain-editor-field`}>
@@ -182,6 +158,26 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
                 </div>
               </fieldset>
             )}
+            <div id={`domain-group-settings-description-field`} className={`domain-editor-field`}>
+              <label id={`domain-group-settings-description-label`} htmlFor={`domain-group-settings-description-input`} className={`domain-editor-label`}>
+                {`Description (optional)`}
+              </label>
+              <textarea
+                rows={3}
+                maxLength={280}
+                value={settings.description}
+                ref={settings.descriptionInputRef}
+                id={`domain-group-settings-description-input`}
+                placeholder={`A short note about this group…`}
+                aria-invalid={settings.invalidField === `description`}
+                className={`domain-editor-input domain-group-settings-description-input`}
+                onChange={event => settings.setDescription(event.target.value)}
+                aria-describedby={`domain-group-settings-description-help${settings.error ? ` domain-group-settings-error` : ``}`}
+              />
+              <p id={`domain-group-settings-description-help`} className={`domain-group-settings-help`}>
+                {`Up to 280 characters, shown next to the group title.`}
+              </p>
+            </div>
           </div>
           {settings.error && (
             <p role={`alert`} id={`domain-group-settings-error`} className={`domain-dialog-error`}>

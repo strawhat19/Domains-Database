@@ -3,6 +3,8 @@ import RegistrarSetup from '../RegistrarSetup';
 import { createStyles } from './styles.native';
 import { REGISTRARS } from '../../shared/config';
 import DomainCard from '../DomainCard/index.native';
+import DomainSourceBadge from '../DomainSourceBadge/index.native';
+import DomainProjectSelect from '../DomainProjectSelect/index.native';
 import { useEffect, useMemo, useState } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { useNativePortfolio } from './useNativePortfolio';
@@ -11,6 +13,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
+import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, RefreshCw } from 'lucide-react-native';
@@ -18,7 +21,8 @@ import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, Chec
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
   { key: `owner`, label: `Registered to`, placeholder: `Your name or business`, hint: `` },
-  { key: `expiresAt`, label: `Expiry date`, placeholder: `YYYY-MM-DD`, hint: `Check this date in your registrar account` },
+  { key: `expiresAt`, label: `Renewal Date`, placeholder: `YYYY-MM-DD`, hint: `Check this date in your registrar account` },
+  { key: `createdAt`, label: `Created`, placeholder: `YYYY-MM-DD`, hint: `` },
 ] as const;
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
@@ -358,86 +362,40 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <View {...elementProps(`native-domain-editor-header`)} style={styles.modalHeader}>
                 <View {...elementProps(`native-domain-editor-heading`)} style={styles.modalHeading}>
                   <Text {...elementProps(`native-domain-editor-eyebrow`)} style={styles.modalEyebrow}>
-                    {`DOMAIN RECORD`}
+                    {state.editingDomain ? `SETTINGS` : `DOMAIN RECORD`}
                   </Text>
-                  <Text {...elementProps(`native-domain-editor-title`)} style={styles.modalTitle}>
-                    {state.editingDomain ? `Edit ${state.editingDomain.name}` : `Add domain`}
-                  </Text>
+                  <View
+                    style={styles.modalTitleRow}
+                    {...elementProps(`native-domain-editor-title-row`, state.editingId ?? `new`)}
+                  >
+                    <Text {...elementProps(`native-domain-editor-title`)} style={styles.modalTitle}>
+                      {state.editingDomain?.name ?? `Add domain`}
+                    </Text>
+                    {state.editingDomain && (
+                      <View
+                        style={styles.modalRegistrarInfo}
+                        {...elementProps(`native-domain-editor-registrar-info`, state.editingDomain.id)}
+                      >
+                        <Text
+                          numberOfLines={1}
+                          style={styles.modalRegistrar}
+                          {...elementProps(`native-domain-editor-registrar-name`, state.editingDomain.id)}
+                        >
+                          {state.editingDomain.registrar || `—`}
+                        </Text>
+                        <DomainSourceBadge
+                          domain={state.editingDomain}
+                          id={`native-domain-editor-source-${state.editingDomain.id}`}
+                        />
+                      </View>
+                    )}
+                  </View>
                 </View>
                 <Pressable {...elementProps(`native-domain-editor-close`)} style={styles.modalClose} disabled={state.saving} onPress={state.closeEditor} accessibilityRole={`button`} accessibilityLabel={`Close Domain Editor`}>
                   <X {...elementProps(`native-domain-editor-close-icon`)} size={17} color={palette.muted} />
                 </Pressable>
               </View>
               <ScrollView {...elementProps(`native-domain-editor-scroll`)} style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps={`handled`}>
-                {!editingSyncedDomain && <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />}
-                {!!state.formError && (
-                  <View {...elementProps(`native-domain-editor-error`)} style={styles.error} accessibilityRole={`alert`}>
-                    <Text {...elementProps(`native-domain-editor-error-text`)} style={styles.errorText}>
-                      {state.formError}
-                    </Text>
-                  </View>
-                )}
-                {state.editingDomain && (
-                  <View {...elementProps(`native-domain-editor-group-field`)} style={styles.field}>
-                    <Text {...elementProps(`native-domain-editor-group-label`)} style={styles.fieldLabel}>
-                      {`Custom Group`}
-                    </Text>
-                    <View
-                      accessibilityRole={`radiogroup`}
-                      accessibilityLabel={`Custom Domain Group`}
-                      style={styles.registrarChoices}
-                      {...elementProps(`native-domain-editor-group-choices`)}
-                    >
-                      {state.groupEditor.options.map(group => {
-                        const groupId = group.id || `ungrouped`;
-                        const selected = state.groupEditor.groupId === group.id;
-                        return (
-                          <Pressable
-                            key={groupId}
-                            disabled={state.saving}
-                            accessibilityRole={`radio`}
-                            accessibilityLabel={group.label}
-                            accessibilityState={{ checked: selected }}
-                            onPress={() => state.groupEditor.setGroupId(group.id)}
-                            {...elementProps(`native-domain-editor-group-choice`, groupId)}
-                            style={[styles.registrarButton, selected && styles.registrarButtonActive]}
-                          >
-                            <Text
-                              {...elementProps(`native-domain-editor-group-choice-text`, groupId)}
-                              style={[styles.registrarText, selected && styles.registrarTextActive]}
-                            >
-                              {group.label}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </View>
-                )}
-                {!editingSyncedDomain && textFields.map(field => (
-                  <View {...elementProps(`native-domain-editor-field`, field.key)} key={field.key} style={styles.field}>
-                    <Text {...elementProps(`native-domain-editor-field-label`, field.key)} style={styles.fieldLabel}>
-                      {field.label}
-                    </Text>
-                    <TextInput
-                      {...elementProps(`native-domain-editor-field-input`, field.key)}
-                      style={styles.fieldInput}
-                      editable={!state.saving}
-                      placeholder={field.placeholder}
-                      value={state.input[field.key]}
-                      accessibilityLabel={field.label}
-                      placeholderTextColor={palette.placeholder}
-                      autoCorrect={field.key === `owner`}
-                      autoCapitalize={field.key === `owner` ? `words` : `none`}
-                      onChangeText={value => state.updateInput(field.key, value)}
-                    />
-                    {!!field.hint && (
-                      <Text {...elementProps(`native-domain-editor-field-hint`, field.key)} style={styles.fieldHint}>
-                        {field.hint}
-                      </Text>
-                    )}
-                  </View>
-                ))}
                 <View {...elementProps(`native-domain-editor-site-icon-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-site-icon-label`)} style={styles.fieldLabel}>
                     {`Site Icon URL`}
@@ -477,28 +435,70 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     {`Use a public HTTP or HTTPS image URL. Leave blank to use the domain's favicon.`}
                   </Text>
                 </View>
-                {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-registrar-field`)} style={styles.field}>
+                {!editingSyncedDomain && <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />}
+                {!!state.formError && (
+                  <View {...elementProps(`native-domain-editor-error`)} style={styles.error} accessibilityRole={`alert`}>
+                    <Text {...elementProps(`native-domain-editor-error-text`)} style={styles.errorText}>
+                      {state.formError}
+                    </Text>
+                  </View>
+                )}
+                {textFields.filter(field => !state.editingDomain || ![`expiresAt`, `createdAt`].includes(field.key)).map(field => (
+                  <View {...elementProps(`native-domain-editor-field`, field.key)} key={field.key} style={styles.field}>
+                    <Text {...elementProps(`native-domain-editor-field-label`, field.key)} style={styles.fieldLabel}>
+                      {field.label}
+                    </Text>
+                    <TextInput
+                      {...elementProps(`native-domain-editor-field-input`, field.key)}
+                      placeholder={field.placeholder}
+                      value={state.input[field.key] ?? ``}
+                      accessibilityLabel={field.label}
+                      placeholderTextColor={palette.placeholder}
+                      autoCorrect={field.key === `owner`}
+                      editable={!state.saving && !editingSyncedDomain}
+                      autoCapitalize={field.key === `owner` ? `words` : `none`}
+                      onChangeText={value => state.updateInput(field.key, value)}
+                      style={[styles.fieldInput, editingSyncedDomain && styles.fieldReadonly]}
+                    />
+                    {(editingSyncedDomain || !!field.hint) && (
+                      <Text {...elementProps(`native-domain-editor-field-hint`, field.key)} style={styles.fieldHint}>
+                        {editingSyncedDomain ? `Managed by your registrar` : field.hint}
+                      </Text>
+                    )}
+                  </View>
+                ))}
+                {!state.editingDomain && <View {...elementProps(`native-domain-editor-registrar-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-registrar-label`)} style={styles.fieldLabel}>
                     {`Registrar`}
                   </Text>
-                  <View {...elementProps(`native-domain-editor-registrar-choices`)} style={styles.registrarChoices}>
-                    {REGISTRARS.map(registrar => (
-                      <Pressable
-                        {...elementProps(`native-domain-editor-registrar-choice`, registrar.toLowerCase().replace(/\s/g, `-`))}
-                        key={registrar}
-                        disabled={state.saving}
-                        accessibilityRole={`button`}
-                        accessibilityLabel={registrar}
-                        onPress={() => state.updateInput(`registrar`, registrar)}
-                        accessibilityState={{ selected: state.input.registrar === registrar }}
-                        style={[styles.registrarButton, state.input.registrar === registrar && styles.registrarButtonActive]}
-                      >
-                        <Text {...elementProps(`native-domain-editor-registrar-choice-text`, registrar.toLowerCase().replace(/\s/g, `-`))} style={[styles.registrarText, state.input.registrar === registrar && styles.registrarTextActive]}>
-                          {registrar}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                  {editingSyncedDomain ? (
+                    <TextInput
+                      editable={false}
+                      value={state.input.registrar}
+                      accessibilityLabel={`Registrar`}
+                      style={[styles.fieldInput, styles.fieldReadonly]}
+                      {...elementProps(`native-domain-editor-registrar-input`)}
+                    />
+                  ) : (
+                    <View {...elementProps(`native-domain-editor-registrar-choices`)} style={styles.registrarChoices}>
+                      {REGISTRARS.map(registrar => (
+                        <Pressable
+                          key={registrar}
+                          disabled={state.saving}
+                          accessibilityRole={`button`}
+                          accessibilityLabel={registrar}
+                          onPress={() => state.updateInput(`registrar`, registrar)}
+                          accessibilityState={{ selected: state.input.registrar === registrar }}
+                          {...elementProps(`native-domain-editor-registrar-choice`, registrar.toLowerCase().replace(/\s/g, `-`))}
+                          style={[styles.registrarButton, state.input.registrar === registrar && styles.registrarButtonActive]}
+                        >
+                          <Text {...elementProps(`native-domain-editor-registrar-choice-text`, registrar.toLowerCase().replace(/\s/g, `-`))} style={[styles.registrarText, state.input.registrar === registrar && styles.registrarTextActive]}>
+                            {registrar}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                 </View>}
                 {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-price-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-price-label`)} style={styles.fieldLabel}>
@@ -528,30 +528,121 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   </View>
                   <Switch {...elementProps(`native-domain-editor-auto-renew-switch`)} disabled={state.saving} value={state.input.autoRenew} onValueChange={value => state.updateInput(`autoRenew`, value)} trackColor={{ false: palette.line, true: palette.accent }} thumbColor={isDark ? palette.ink : `#ffffff`} ios_backgroundColor={palette.line} accessibilityLabel={`Auto-Renew Enabled In Registrar Account`} />
                 </View>}
-                <View {...elementProps(`native-domain-editor-notes-field`)} style={styles.field}>
-                  <Text {...elementProps(`native-domain-editor-notes-label`)} style={styles.fieldLabel}>
-                    {`Notes (optional)`}
-                  </Text>
-                  <TextInput {...elementProps(`native-domain-editor-notes-input`)} multiline style={[styles.fieldInput, styles.notesInput]} editable={!state.saving} value={state.input.notes} onChangeText={value => state.updateInput(`notes`, value)} placeholder={`What is this domain for?`} placeholderTextColor={palette.placeholder} accessibilityLabel={`Domain Notes`} />
-                </View>
-                {editingSyncedDomain && (
-                  <View {...elementProps(`native-domain-editor-description-field`)} style={styles.field}>
-                    <Text {...elementProps(`native-domain-editor-description-label`)} style={styles.fieldLabel}>
-                      {`Description (optional)`}
+                {state.editingDomain && (
+                  <View {...elementProps(`native-domain-editor-group-field`)} style={styles.field}>
+                    <Text {...elementProps(`native-domain-editor-group-label`)} style={styles.fieldLabel}>
+                      {`Custom Group`}
                     </Text>
-                    <TextInput
-                      multiline
-                      editable={!state.saving}
-                      value={state.input.description ?? ``}
-                      accessibilityLabel={`Domain Description`}
-                      placeholder={`Describe this domain's purpose`}
-                      placeholderTextColor={palette.placeholder}
-                      style={[styles.fieldInput, styles.notesInput]}
-                      {...elementProps(`native-domain-editor-description-input`)}
-                      onChangeText={value => state.updateInput(`description`, value)}
-                    />
+                    <View
+                      accessibilityRole={`radiogroup`}
+                      accessibilityLabel={`Custom Domain Group`}
+                      style={styles.registrarChoices}
+                      {...elementProps(`native-domain-editor-group-choices`)}
+                    >
+                      {state.groupEditor.options.map(group => {
+                        const groupId = group.id || `ungrouped`;
+                        const selected = state.groupEditor.groupId === group.id;
+                        return (
+                          <Pressable
+                            key={groupId}
+                            disabled={state.saving}
+                            accessibilityRole={`radio`}
+                            accessibilityLabel={group.label}
+                            accessibilityState={{ checked: selected }}
+                            onPress={() => state.groupEditor.setGroupId(group.id)}
+                            {...elementProps(`native-domain-editor-group-choice`, groupId)}
+                            style={[styles.registrarButton, selected && styles.registrarButtonActive]}
+                          >
+                            <Text
+                              {...elementProps(`native-domain-editor-group-choice-text`, groupId)}
+                              style={[styles.registrarText, selected && styles.registrarTextActive]}
+                            >
+                              {group.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
                   </View>
                 )}
+                <View {...elementProps(`native-domain-editor-project-fields`)} style={styles.fieldPair}>
+                  <View {...elementProps(`native-domain-editor-status-field`)} style={[styles.field, styles.pairedField]}>
+                    <Text {...elementProps(`native-domain-editor-status-label`)} style={styles.fieldLabel}>
+                      {`Status`}
+                    </Text>
+                    <DomainProjectSelect
+                      label={`Status`}
+                      field={`projectStatus`}
+                      disabled={state.saving}
+                      value={state.input.projectStatus}
+                      id={`native-domain-editor-status-input`}
+                      onChange={value => state.updateInput(`projectStatus`, normalizeDomainProjectStatus(value))}
+                    />
+                  </View>
+                  <View {...elementProps(`native-domain-editor-difficulty-field`)} style={[styles.field, styles.pairedField]}>
+                    <Text {...elementProps(`native-domain-editor-difficulty-label`)} style={styles.fieldLabel}>
+                      {`Difficulty Level`}
+                    </Text>
+                    <DomainProjectSelect
+                      field={`difficulty`}
+                      disabled={state.saving}
+                      label={`Difficulty Level`}
+                      value={state.input.difficulty}
+                      id={`native-domain-editor-difficulty-input`}
+                      onChange={value => state.updateInput(`difficulty`, normalizeDomainDifficulty(value))}
+                    />
+                  </View>
+                </View>
+                <View {...elementProps(`native-domain-editor-plan-fields`)} style={styles.fieldPair}>
+                  <View {...elementProps(`native-domain-editor-mvp-field`)} style={[styles.field, styles.pairedField]}>
+                    <Text {...elementProps(`native-domain-editor-mvp-label`)} style={styles.fieldLabel}>
+                      {`MVP`}
+                    </Text>
+                    <TextInput
+                      maxLength={500}
+                      style={styles.fieldInput}
+                      editable={!state.saving}
+                      value={state.input.mvp ?? ``}
+                      accessibilityLabel={`Domain MVP`}
+                      placeholder={`First version goals`}
+                      placeholderTextColor={palette.placeholder}
+                      {...elementProps(`native-domain-editor-mvp-input`)}
+                      onChangeText={value => state.updateInput(`mvp`, value)}
+                    />
+                  </View>
+                  <View {...elementProps(`native-domain-editor-future-field`)} style={[styles.field, styles.pairedField]}>
+                    <Text {...elementProps(`native-domain-editor-future-label`)} style={styles.fieldLabel}>
+                      {`Future`}
+                    </Text>
+                    <TextInput
+                      maxLength={500}
+                      style={styles.fieldInput}
+                      editable={!state.saving}
+                      value={state.input.future ?? ``}
+                      accessibilityLabel={`Domain Future`}
+                      placeholder={`Future plans`}
+                      placeholderTextColor={palette.placeholder}
+                      {...elementProps(`native-domain-editor-future-input`)}
+                      onChangeText={value => state.updateInput(`future`, value)}
+                    />
+                  </View>
+                </View>
+                <View {...elementProps(`native-domain-editor-description-field`)} style={styles.field}>
+                  <Text {...elementProps(`native-domain-editor-description-label`)} style={styles.fieldLabel}>
+                    {`Description (optional)`}
+                  </Text>
+                  <TextInput
+                    multiline
+                    editable={!state.saving}
+                    value={state.input.description ?? ``}
+                    accessibilityLabel={`Domain Description`}
+                    placeholder={`Describe this domain's purpose`}
+                    placeholderTextColor={palette.placeholder}
+                    style={[styles.fieldInput, styles.descriptionInput]}
+                    {...elementProps(`native-domain-editor-description-input`)}
+                    onChangeText={value => state.updateInput(`description`, value)}
+                  />
+                </View>
               </ScrollView>
               <View {...elementProps(`native-domain-editor-footer`)} style={styles.modalFooter}>
                 <Pressable {...elementProps(`native-domain-editor-save`)} style={[styles.primaryButton, state.saving && styles.disabled]} disabled={state.saving} onPress={() => void state.saveDomain()} accessibilityRole={`button`} accessibilityLabel={`Save Domain`}>

@@ -1,9 +1,12 @@
+import type { DomainRecord } from '../types';
 import type { PublicProfile } from '../models/users/User';
 import type { PostAudience, PostInput } from '../models/posts/Post';
 
 export type { PostAudience, PostInput };
 export type FeedView = `public` | `following` | `mine`;
-export interface PublicDomain { id: string; name: string; registrar: string }
+export type PublicDomain = Pick<DomainRecord,
+  `id` | `tld` | `mvp` | `name` | `future` | `created` | `registrar` | `expiresAt` | `createdAt` | `difficulty` | `description` | `projectStatus`
+>;
 export interface PublicPost {
   id: string;
   body: string;

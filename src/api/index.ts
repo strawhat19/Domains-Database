@@ -178,6 +178,14 @@ export interface PublicDomainSummary {
   name: string;
   userId: string;
   tld?: string;
+  mvp?: string;
+  future?: string;
+  created: string;
+  expiresAt: string;
+  createdAt?: string;
+  description: string;
+  difficulty?: DomainRecord[`difficulty`];
+  projectStatus: DomainRecord[`projectStatus`];
   registrar: DomainRecord[`registrar`];
 }
 
@@ -194,7 +202,21 @@ const getPublicDomainSummaries = async (userIds: string[]): Promise<PublicDomain
       ? saved !== null ? restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot, profile.id) : undefined
       : snapshots.get(profile.id);
     for (const domain of portfolio?.domains ?? []) {
-      if (!domain.isSample) summaries.push({ id: domain.id, userId: profile.id, name: domain.name, registrar: domain.registrar, tld: domain.tld });
+      if (!domain.isSample) summaries.push({
+        id: domain.id,
+        tld: domain.tld,
+        mvp: domain.mvp,
+        name: domain.name,
+        userId: profile.id,
+        future: domain.future,
+        created: domain.created,
+        registrar: domain.registrar,
+        expiresAt: domain.expiresAt,
+        createdAt: domain.createdAt,
+        difficulty: domain.difficulty,
+        description: domain.description,
+        projectStatus: domain.projectStatus,
+      });
     }
   }
   return summaries;
@@ -360,6 +382,10 @@ export const api = {
     const registrarManaged = getDomainSource(original) === `registrar`;
     const changes: Partial<DomainInput> = registrarManaged ? {
       notes: input?.notes ?? original.notes,
+      mvp: input?.mvp ?? original.mvp,
+      future: input?.future ?? original.future,
+      difficulty: input && `difficulty` in input ? input.difficulty : original.difficulty,
+      projectStatus: input && `projectStatus` in input ? input.projectStatus : original.projectStatus,
       description: input?.description ?? original.description,
       meta: {
         ...original.meta,
@@ -422,6 +448,7 @@ export const api = {
             notes: validated.notes || original.notes,
             registrar: validated.registrar || original.registrar,
             expiresAt: validated.expiresAt || original.expiresAt,
+            projectStatus: `projectStatus` in input ? validated.projectStatus : original.projectStatus,
             owner: validated.owner === `My Portfolio` ? original.owner : validated.owner,
             meta: { ...original.meta, ...validated.meta, domainSource: `csv` },
             firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt ?? importedAt,

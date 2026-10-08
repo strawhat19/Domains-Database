@@ -1,29 +1,35 @@
 import type { DomainRecord } from './types';
 import { normalizeWebsiteInsights } from './websiteInsights/values';
+import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty, normalizeDomainProjectStatus } from './domainProject';
 
 export type PortfolioColumn =
   | `name` | `registrar` | `expiresAt` | `autoRenew` | `renewalPrice` | `monthlyCost`
   | `renewalEstimate`
+  | `projectStatus` | `difficulty` | `mvp` | `future`
   | `trancoRank` | `websitePerformance` | `websiteInsightsCheckedAt`
   | `owner` | `tld` | `internationalName` | `providerId` | `status`
   | `createdAt` | `updatedAt` | `ownershipAt` | `locked` | `privacy`
   | `firstImportedAt` | `firstExportedAt`
   | `dnssec` | `nameservers` | `currency` | `registrantName`
-  | `registrantEmail` | `organization` | `country` | `notes`
+  | `registrantEmail` | `organization` | `country`
   | `forwardingUrl` | `protectionPlan` | `estimatedValue`;
 
 export type PortfolioColumnValue = string | number | boolean | string[] | undefined;
 
 export interface PortfolioColumnDefinition {
   price?: boolean;
+  public?: boolean;
   label: string;
   field: PortfolioColumn;
 }
 
 export const PORTFOLIO_COLUMNS: PortfolioColumnDefinition[] = [
-  { field: `name`, label: `Domain` },
-  { field: `registrar`, label: `Registrar` },
-  { field: `expiresAt`, label: `Renewal date` },
+  { field: `name`, label: `Domain`, public: true },
+  { field: `mvp`, label: `MVP`, public: true },
+  { field: `future`, label: `Future`, public: true },
+  { field: `difficulty`, label: `Difficulty Level`, public: true },
+  { field: `registrar`, label: `Registrar`, public: true },
+  { field: `expiresAt`, label: `Renewal date`, public: true },
   { field: `autoRenew`, label: `Auto-renew` },
   { field: `renewalPrice`, label: `Annual cost`, price: true },
   { field: `monthlyCost`, label: `Monthly cost`, price: true },
@@ -32,11 +38,11 @@ export const PORTFOLIO_COLUMNS: PortfolioColumnDefinition[] = [
   { field: `websitePerformance`, label: `Mobile performance` },
   { field: `websiteInsightsCheckedAt`, label: `Insights checked` },
   { field: `owner`, label: `Owner` },
-  { field: `tld`, label: `TLD` },
+  { field: `tld`, label: `TLD`, public: true },
   { field: `internationalName`, label: `International name` },
   { field: `providerId`, label: `Provider ID` },
   { field: `status`, label: `Provider status` },
-  { field: `createdAt`, label: `Created` },
+  { field: `createdAt`, label: `Created`, public: true },
   { field: `updatedAt`, label: `Last updated` },
   { field: `ownershipAt`, label: `Ownership date` },
   { field: `firstImportedAt`, label: `First imported` },
@@ -50,10 +56,14 @@ export const PORTFOLIO_COLUMNS: PortfolioColumnDefinition[] = [
   { field: `registrantEmail`, label: `Registrant email` },
   { field: `organization`, label: `Organization` },
   { field: `country`, label: `Country` },
-  { field: `notes`, label: `Notes` },
   { field: `forwardingUrl`, label: `Forwarding URL` },
   { field: `protectionPlan`, label: `Protection plan` },
   { field: `estimatedValue`, label: `Estimated value`, price: true },
+];
+
+export const PORTFOLIO_FIELDS: PortfolioColumnDefinition[] = [
+  ...PORTFOLIO_COLUMNS,
+  { field: `projectStatus`, label: `Status`, public: true },
 ];
 
 export const DEFAULT_VISIBLE_COLUMNS: PortfolioColumn[] = [
@@ -148,6 +158,9 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
   if (column === `autoRenew` && registrarSync?.autoRenewKnown === false) return undefined;
   if ((column === `renewalPrice` || column === `monthlyCost`) && registrarSync?.renewalPriceKnown === false && domain.renewalPrice === 0) return undefined;
   switch (column) {
+    case `createdAt`: return domain.createdAt ?? domain.created;
+    case `difficulty`: return normalizeDomainDifficulty(domain.difficulty);
+    case `projectStatus`: return normalizeDomainProjectStatus(domain.projectStatus);
     case `websitePerformance`: return getDomainWebsiteInsights(domain)?.performance?.score;
     case `websiteInsightsCheckedAt`: return getDomainWebsiteInsights(domain)?.checkedAt;
     case `trancoRank`: {
@@ -171,6 +184,8 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
 export const getPortfolioColumnDisplay = (domain: DomainRecord, column: PortfolioColumn) => {
   const value = getPortfolioColumnValue(domain, column);
   if (!hasPortfolioColumnValue(value, column)) return `—`;
+  if (column === `difficulty`) return DOMAIN_DIFFICULTIES.find(option => option.value === value)?.label ?? String(value);
+  if (column === `projectStatus`) return DOMAIN_PROJECT_STATUSES.find(option => option.value === value)?.label ?? String(value);
   if (column === `status` && typeof value === `string`) return value
     .replace(/([a-z\d])([A-Z])/g, `$1 $2`).replace(/[_\s-]+/g, ` `).trim().toLowerCase()
     .replace(/\b[a-z]/g, letter => letter.toUpperCase());

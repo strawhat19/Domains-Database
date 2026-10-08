@@ -2,6 +2,7 @@ import { genID } from './common/ids';
 import { REGISTRARS } from './config';
 import { Types } from '../types/types';
 import { normalizeSiteIconUrl } from './domainSiteIcon';
+import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from './domainProject';
 import type { JSONValue, DomainInput, DomainRecord, DomainSource, DomainStatus, DomainRegistrant } from './types';
 
 const DAY_IN_MS = 86_400_000;
@@ -120,6 +121,15 @@ export const normalizeDomainExtras = (input: Partial<DomainInput>): Partial<Doma
   for (const field of [`title`, `status`, `providerId`, `internationalName`] as const) {
     const value = normalizeOptionalText(input[field], field);
     if (value !== undefined) extras[field] = value;
+  }
+  if (`difficulty` in input) extras.difficulty = normalizeDomainDifficulty(input.difficulty);
+  extras.projectStatus = normalizeDomainProjectStatus(input.projectStatus);
+  for (const field of [`mvp`, `future`] as const) {
+    const value = input[field];
+    if (value != null) {
+      if (typeof value !== `string`) throw new Error(`${field === `mvp` ? `MVP` : `Future`} Must Be Text`);
+      extras[field] = value.trim();
+    }
   }
   if (input.description != null) {
     if (typeof input.description !== `string`) throw new Error(`Description Must Be Text`);

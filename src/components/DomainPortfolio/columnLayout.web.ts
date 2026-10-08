@@ -9,7 +9,7 @@ type TextFont = { font: string; spacing: number; transform: string };
 
 export const DEFAULT_COLUMN_WIDTHS = Object.fromEntries(PORTFOLIO_COLUMNS.map(({ field, price }) => [
   field,
-  field === `name` ? 230 : field === `registrar` ? 160 : field === `expiresAt` ? 155 : field === `autoRenew` ? 110 : price || field === `monthlyCost` ? 125 : 140,
+  field === `name` ? 320 : field === `registrar` ? 160 : field === `expiresAt` ? 155 : field === `autoRenew` ? 110 : price || field === `monthlyCost` ? 125 : 140,
 ])) as Record<PortfolioColumn, number>;
 
 export const getPortfolioColumnWidth = (field: PortfolioColumn, widths: ColumnWidths) => {
@@ -79,6 +79,7 @@ export const fitPortfolioColumns = (
       : field === `autoRenew` ? find(`.domain-auto-renew-text`, cell)
       : field === `renewalPrice` ? find(`.domain-annual-cost`, cell)
       : field === `renewalEstimate` ? find(`.domain-renewal-estimate`, cell)
+      : field === `difficulty` ? find(`.domain-project-badge-label`, cell)
       : find(`.domain-column-value-${key}`, cell);
     const font = readFont(textElement ?? cell, field === `name` ? 13 : field === `autoRenew` ? 11 : 12,
       family(field === `name` || field === `autoRenew` ? `--font-bold` : column.price ? `--font-mono` : `--font-body`));
@@ -92,6 +93,13 @@ export const fitPortfolioColumns = (
       + (reorder || !cell ? elementWidth(reorder, 36) + elementGap(identity, 9) : 0)
       + elementWidth(find(`.domain-site-link-icon`, cell), 13) + elementGap(link, 6);
     const attentionDecoration = elementWidth(find(`.domain-attention-dot`, cell), 5) + elementGap(link, 6);
+    const descriptionFont = readFont(find(`.domain-site-description`, cell), 12);
+    const nameGap = elementGap(find(`.domain-name-copy`, cell), 6);
+    const separatorWidth = measure(` | `, readFont(find(`.domain-name-separator`, cell), 12));
+    const projectBadge = find(`.domain-project-badge`, cell);
+    const projectFont = readFont(find(`.domain-project-badge-label`, projectBadge), 12);
+    const projectDecoration = horizontalBox(projectBadge)
+      + elementWidth(find(`.domain-project-badge-icon`, cell), 13) + elementGap(projectBadge, 6);
     const registrar = find(`.domain-registrar`, cell);
     const registrarDecoration = horizontalBox(registrar) + horizontalBox(find(`.domain-registrar-copy`, cell))
       + elementWidth(find(`.registrar-mark`, cell), 25) + elementGap(registrar, 9);
@@ -108,6 +116,9 @@ export const fitPortfolioColumns = (
       let width = measure(value, font);
       if (field === `name`) {
         width += nameDecoration;
+        width += measure(getPortfolioColumnDisplay(domain, `projectStatus`), projectFont)
+          + projectDecoration + separatorWidth + nameGap * 2;
+        if (domain.description?.trim()) width += Math.min(280, measure(domain.description.trim(), descriptionFont)) + separatorWidth + nameGap * 2;
         if (getDomainStatus(domain) !== `Active`) width += attentionDecoration;
       } else if (field === `registrar`) {
         width = Math.max(width, measure(getDomainSourceBadge(domain).label, secondaryFont) + sourceDecoration) + registrarDecoration;
@@ -115,6 +126,8 @@ export const fitPortfolioColumns = (
         width = Math.max(width, measure(getDomainStatus(domain), secondaryFont) + statusDecoration);
       } else if (field === `autoRenew`) {
         width = Math.max(width, measure(getPortfolioColumnValue(domain, field) === undefined ? `Unknown` : value, font)) + toggleDecoration;
+      } else if (field === `difficulty` && getPortfolioColumnValue(domain, field) !== undefined) {
+        width += projectDecoration;
       }
       contentWidth = Math.max(contentWidth, width + cellPadding);
     }

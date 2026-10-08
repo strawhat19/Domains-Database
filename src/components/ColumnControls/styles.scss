@@ -50,6 +50,7 @@
 .column-controls-option-required { cursor: default; }
 .column-controls-checkbox { margin: 0; width: 16px; height: 16px; flex-shrink: 0; cursor: inherit; accent-color: var(--accent); }
 .column-controls-option-text { min-width: 0; overflow-wrap: anywhere; }
+.column-controls-public-text { font-size: 10px; flex-shrink: 0; color: var(--success); }
 .column-controls-option-count { font-size: 11px; flex-shrink: 0; color: var(--muted); }
 .column-controls-required-text { font-size: 10px; color: var(--muted); margin-left: auto; }
 .column-controls-actions { gap: 8px; display: flex; flex-wrap: wrap; margin-top: 14px; align-items: center; justify-content: flex-end; }

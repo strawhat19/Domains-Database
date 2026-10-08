@@ -1,5 +1,6 @@
 import { REGISTRARS } from './config';
 import { validateDomainInput } from './domainUtils';
+import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from './domainProject';
 import type { DomainInput, DomainRecord } from './types';
 
 const readCsvRows = (text: string) => {
@@ -124,12 +125,16 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
       const wholesaleValue = parseOptionalPrice(get(getIndex(`valuationwholesaleamount`, `wholesalevalue`)));
       const registrantName = optional(`registrantname`, `contactname`) || [optional(`registrantfirstname`), optional(`registrantlastname`)].filter(Boolean).join(` `) || undefined;
       const nameservers = optional(`nameservers`, `dnsnameservers`);
-      return validateDomainInput({
+      const input = validateDomainInput({
         registrar,
         name: get(nameIndex),
         title: optional(`title`),
         color,
         description: optional(`description`),
+        ...(getIndex(`mvp`, `minimumviableproduct`) >= 0 ? { mvp: get(getIndex(`mvp`, `minimumviableproduct`)) } : {}),
+        ...(getIndex(`future`, `futureplans`) >= 0 ? { future: get(getIndex(`future`, `futureplans`)) } : {}),
+        ...(getIndex(`difficulty`, `difficultylevel`) >= 0 ? { difficulty: normalizeDomainDifficulty(optional(`difficulty`, `difficultylevel`)) } : {}),
+        ...(getIndex(`projectstatus`, `developmentstatus`) >= 0 ? { projectStatus: normalizeDomainProjectStatus(optional(`projectstatus`, `developmentstatus`)) } : {}),
         notes: get(notesIndex),
         expiresAt: normalizeCsvDate(get(dateIndex)),
         renewalPrice: Number(price || 0),
@@ -167,6 +172,9 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
           },
         },
       });
+      // Preserve existing progress when a registrar CSV omits project status.
+      if (getIndex(`projectstatus`, `developmentstatus`) < 0) delete input.projectStatus;
+      return input;
     } catch (error) {
       throw new Error(`Row ${index + 2}: ${error instanceof Error ? error.message : `Invalid Domain`}`);
     }
@@ -180,7 +188,7 @@ const csvField = (value: string | number | boolean) => {
 };
 
 export const exportDomainCsv = (domains: DomainRecord[]) => {
-  const headers = [`domain`, `registrar`, `expiry`, `owner`, `auto_renew`, `renewal_price`, `notes`, `provider_id`, `international_name`, `tld`, `status`, `created_at`, `updated_at`, `ownership_at`, `first_imported_at`, `first_exported_at`, `locked`, `privacy`, `dnssec`, `nameservers`, `currency`, `registrant_name`, `registrant_email`, `registrant_organization`, `registrant_country`, `meta`, `title`, `description`, `color`, `id`, `number`, `uuid`, `type`, `created`, `updated`];
+  const headers = [`domain`, `registrar`, `expiry`, `owner`, `auto_renew`, `renewal_price`, `notes`, `provider_id`, `international_name`, `tld`, `status`, `created_at`, `updated_at`, `ownership_at`, `first_imported_at`, `first_exported_at`, `locked`, `privacy`, `dnssec`, `nameservers`, `currency`, `registrant_name`, `registrant_email`, `registrant_organization`, `registrant_country`, `meta`, `title`, `description`, `color`, `id`, `number`, `uuid`, `type`, `created`, `updated`, `project_status`, `difficulty`, `mvp`, `future`];
   const rows = domains.map(domain => [
     domain.name, domain.registrar, domain.expiresAt, domain.owner, domain.autoRenew, domain.renewalPrice, domain.notes,
     domain.providerId ?? ``, domain.internationalName ?? ``, domain.tld ?? ``, domain.status ?? ``,
@@ -191,6 +199,7 @@ export const exportDomainCsv = (domains: DomainRecord[]) => {
     JSON.stringify(domain.meta ?? {}),
     domain.title, domain.description, JSON.stringify(domain.color),
     domain.id, domain.number, domain.uuid, domain.type, domain.created, domain.updated,
+    normalizeDomainProjectStatus(domain.projectStatus), domain.difficulty ?? ``, domain.mvp ?? ``, domain.future ?? ``,
   ]);
   return [headers, ...rows].map(row => row.map(csvField).join(`,`)).join(`\r\n`);
 };

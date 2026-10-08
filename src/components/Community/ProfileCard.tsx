@@ -127,6 +127,7 @@ const ProfileCard = ({ profile, viewerId, busy, onFollow }: ProfileCardProps) =>
             {`SHARED DOMAINS`}
           </Text>
           {(expanded ? profile.domains : profile.domains.slice(0, 4)).map(domain => {
+            const description = domain.description?.trim();
             const url = publicHttpsUrl(`https://${domain.name}`);
             return (
               <Pressable
@@ -140,14 +141,33 @@ const ProfileCard = ({ profile, viewerId, busy, onFollow }: ProfileCardProps) =>
               >
                 <Globe2 {...elementProps(`community-profile-domain-icon`, `${id}-${domain.id}`)} size={12} color={palette.muted} />
                 <View {...elementProps(`community-profile-domain-details`, `${id}-${domain.id}`)} style={styles.domainDetails}>
-                  <Text {...elementProps(`community-profile-domain-name`, `${id}-${domain.id}`)} style={styles.domainName} numberOfLines={1}>
-                    {domain.name}
-                  </Text>
+                  <View {...elementProps(`community-profile-domain-heading`, `${id}-${domain.id}`)} style={styles.domainHeading}>
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode={`tail`}
+                      style={styles.domainName}
+                      {...elementProps(`community-profile-domain-name`, `${id}-${domain.id}`)}
+                    >
+                      {domain.name}
+                    </Text>
+                    <View {...elementProps(`community-profile-domain-external-wrap`, `${id}-${domain.id}`)} style={styles.domainExternal}>
+                      <ExternalLink {...elementProps(`community-profile-domain-external`, `${id}-${domain.id}`)} size={11} color={palette.muted} />
+                    </View>
+                    {!!description && (
+                      <Text
+                        numberOfLines={1}
+                        ellipsizeMode={`tail`}
+                        style={styles.domainDescription}
+                        {...elementProps(`community-profile-domain-description`, `${id}-${domain.id}`)}
+                      >
+                        {` - ${description}`}
+                      </Text>
+                    )}
+                  </View>
                   <Text {...elementProps(`community-profile-domain-registrar`, `${id}-${domain.id}`)} style={styles.metaLabel}>
                     {domain.registrar || `Unknown registrar`}
                   </Text>
                 </View>
-                <ExternalLink {...elementProps(`community-profile-domain-external`, `${id}-${domain.id}`)} size={11} color={palette.muted} />
               </Pressable>
             );
           })}

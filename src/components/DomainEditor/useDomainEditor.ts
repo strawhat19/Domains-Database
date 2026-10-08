@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, RefObject } from 'react';
 import { REGISTRARS } from '../../shared/config';
 import { getDomainSource } from '../../shared/domainUtils';
+import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
@@ -16,7 +17,7 @@ export const useModalFocus = (container: RefObject<HTMLDivElement | null>, open:
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = `hidden`;
     const getFocusableElements = () => Array.from(container.current?.querySelectorAll<HTMLElement>(
-      `button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]`,
+      `button:not([disabled]):not([tabindex="-1"]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]`,
     ) ?? []).filter(element => element.offsetParent !== null);
     const frame = window.requestAnimationFrame(() => {
       const initialFocus = container.current?.querySelector<HTMLElement>(`[data-autofocus]`);
@@ -61,10 +62,15 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
     name: domain?.name ?? ``,
     notes: domain?.notes ?? ``,
     owner: domain?.owner ?? ``,
+    mvp: domain?.mvp ?? ``,
+    future: domain?.future ?? ``,
+    difficulty: domain?.difficulty,
+    projectStatus: normalizeDomainProjectStatus(domain?.projectStatus),
     description: domain?.description ?? ``,
     autoRenew: domain?.autoRenew ?? true,
     renewalPrice: domain?.renewalPrice ?? 0,
-    expiresAt: domain?.expiresAt?.slice(0, 10) ?? expiresAt,
+    createdAt: domain?.createdAt,
+    expiresAt: domain?.expiresAt ?? expiresAt,
     registrar: domain?.registrar ?? REGISTRARS?.[0] ?? `Namecheap`,
   };
 };
@@ -80,7 +86,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const close = () => { if (!saving) onClose(); };
   useModalFocus(modalRef, true, close);
   const setField = <Key extends keyof DomainInput>(field: Key, value: DomainInput[Key]) => {
-    if (isSynced && field !== `meta` && field !== `notes` && field !== `description`) return;
+    if (isSynced && ![`meta`, `mvp`, `future`, `difficulty`, `description`, `projectStatus`].includes(field)) return;
     setError(``);
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };
@@ -89,7 +95,14 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     if (saving) return;
     setError(``);
     setSaving(true);
-    const domainInput = { ...input, name: input.name.trim().toLowerCase(), owner: input.owner.trim(), notes: input.notes.trim(), description: input.description?.trim() ?? `` };
+    const domainInput = {
+      ...input,
+      mvp: input.mvp?.trim() ?? ``,
+      future: input.future?.trim() ?? ``,
+      owner: input.owner.trim(),
+      name: input.name.trim().toLowerCase(),
+      description: input.description?.trim() ?? ``,
+    };
     try {
       if (domain?.id) {
         groupEditor.validateGroup();

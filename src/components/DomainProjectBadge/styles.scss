@@ -1,0 +1,14 @@
+.domain-project-badge.rowStatus {
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+  max-width: 100%;
+  color: var(--ink);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+.domain-project-badge .domain-project-badge-icon-wrap { width: 13px; height: 13px; flex-shrink: 0; }
+.domain-project-badge-icon { display: block; flex-shrink: 0; }
+.domain-project-badge-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

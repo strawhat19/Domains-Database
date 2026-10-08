@@ -1,11 +1,11 @@
 import type { DomainRecord } from '../types';
 import type { PortfolioColumn } from '../portfolioColumns';
 import type { PortfolioPreferences, PortfolioGroup, PortfolioSections } from './types';
-import { getPortfolioColumnDisplay, getPortfolioColumnValue, hasPortfolioColumnValue, PORTFOLIO_COLUMNS } from '../portfolioColumns';
+import { getPortfolioColumnDisplay, getPortfolioColumnValue, hasPortfolioColumnValue, PORTFOLIO_FIELDS } from '../portfolioColumns';
 
 export type { PortfolioGroup } from './types';
 
-export const GROUPABLE_COLUMNS = PORTFOLIO_COLUMNS.filter(column => column.field !== `name` && column.field !== `notes`);
+export const GROUPABLE_COLUMNS = PORTFOLIO_FIELDS.filter(column => column.field !== `name`);
 
 export const applyDomainOrder = (domains: DomainRecord[], order: string[] = []) => {
   const positions = new Map(order.map((id, index) => [id, index]));
@@ -54,7 +54,7 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
   domains.forEach(domain => {
     const value = getPortfolioColumnValue(domain, groupBy);
     const missing = !hasPortfolioColumnValue(value, groupBy);
-    const identity = missing ? `unknown` : JSON.stringify([value, PORTFOLIO_COLUMNS.find(column => column.field === groupBy)?.price ? domain.currency?.trim().toUpperCase() || `USD` : ``]);
+    const identity = missing ? `unknown` : JSON.stringify([value, PORTFOLIO_FIELDS.find(column => column.field === groupBy)?.price ? domain.currency?.trim().toUpperCase() || `USD` : ``]);
     const key = `field:${groupBy}:${encodeURIComponent(identity)}`;
     const group = groups.get(key) ?? { key, label: missing ? `Unknown` : getPortfolioColumnDisplay(domain, groupBy), domains: [] };
     group.domains.push(domain);

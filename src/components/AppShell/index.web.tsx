@@ -23,6 +23,9 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn;
+  const navigationLinks = navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href);
+  const topRowCount = Math.ceil(navigationLinks.length / 2);
+  const bottomRowCount = Math.max(1, navigationLinks.length - topRowCount);
   const MenuIcon = mobileNavigation.open ? X : Menu;
 
   return (
@@ -67,8 +70,16 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
             className={`header-navigation${mobileNavigation.open ? ` header-navigation-open` : ``}`}
           >
             <div id={`header-navigation-content`} className={`header-navigation-content`}>
-              <div id={`header-navigation-links`} className={`header-navigation-links`}>
-                {navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href).map(item => {
+              <div
+                id={`header-navigation-links`}
+                className={`header-navigation-links`}
+                style={{
+                  [`--header-navigation-top-span`]: bottomRowCount,
+                  [`--header-navigation-bottom-span`]: topRowCount,
+                  [`--header-navigation-columns`]: topRowCount * bottomRowCount,
+                } as CSSProperties}
+              >
+                {navigationLinks.map((item, index) => {
                   const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, UsersRound }[item.icon];
                   const beta = `beta` in item && item.beta;
                   const active = pathname === item.href || (item.href === routes.blog.href && pathname.startsWith(`${item.href}/`));
@@ -76,7 +87,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                     <Link key={item.label} href={item.href} asChild>
                       <RouterAnchor
                         id={`header-link-${item.label.toLowerCase()}`}
-                        className={`header-link${active ? ` header-link-active` : ``}`}
+                        className={`header-link${index >= topRowCount ? ` header-link-bottom-row` : ``}${active ? ` header-link-active` : ``}`}
                         aria-label={beta ? `${item.label} (Beta)` : undefined}
                         aria-current={active ? `page` : undefined}
                       >

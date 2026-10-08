@@ -31,6 +31,23 @@
   justify-content: space-between;
 }
 .domain-dialog-heading { min-width: 0; }
+.domain-editor-settings .domain-dialog-header { margin-bottom: 25px; }
+.domain-editor-title-row {
+  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 7px;
+  align-items: center;
+}
+.domain-editor-title-row .domain-dialog-title { margin: 0; }
+.domain-editor-registrar-summary {
+  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+  align-items: center;
+}
 .domain-dialog-eyebrow {
   font-size: 10px;
   letter-spacing: .15em;
@@ -92,11 +109,21 @@
   &::placeholder { color: var(--placeholder); }
   &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 }
-.domain-editor-select { cursor: pointer; }
+.domain-editor-select { cursor: pointer; appearance: none; padding-right: 38px; }
+.domain-editor-select-wrap { position: relative; }
+.domain-editor-select-chevron {
+  top: 50%;
+  right: 12px;
+  position: absolute;
+  color: var(--muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.domain-editor-input:disabled, .domain-editor-input[readonly] { cursor: default; color: var(--muted); }
 .domain-editor-price-wrap { position: relative; }
 .domain-editor-price-prefix { top: 13px; left: 13px; font-size: 13px; position: absolute; color: var(--muted); }
 .domain-editor-price-input { padding-left: 27px; }
-.domain-editor-notes { resize: vertical; min-height: 76px; }
+.domain-editor-textarea { resize: vertical; min-height: 76px; }
 .domain-editor-icon-row { gap: 12px; display: flex; align-items: flex-start; }
 .domain-editor-icon-copy { gap: 7px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .domain-editor-icon-help { margin: 0; font-size: 11px; line-height: 1.5; color: var(--muted); }

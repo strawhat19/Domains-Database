@@ -53,6 +53,7 @@ export const usePortfolio = () => {
       domain.name,
       domain.title,
       domain.description,
+      domain.projectStatus,
       ...PORTFOLIO_COLUMNS.map(column => getPortfolioColumnValue(domain, column.field)),
     ].join(` `).toLowerCase().includes(search));
   }, [query, registrarDomains]);

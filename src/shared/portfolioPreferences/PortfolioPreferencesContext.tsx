@@ -1,6 +1,6 @@
 import { GROUPABLE_COLUMNS } from './groups';
 import type { PropsWithChildren } from 'react';
-import { PORTFOLIO_COLUMNS } from '../portfolioColumns';
+import { PORTFOLIO_FIELDS } from '../portfolioColumns';
 import { createOperationQueue } from '../common/storage';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { readPortfolioPreferences, savePortfolioPreferences } from './storage';
@@ -35,7 +35,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     seenCollectionNumbers.add(number);
     seenCollectionNames.add(name.toLowerCase());
     const description = typeof value.description === `string` ? value.description.trim() : ``;
-    const sortField = value.sortField === null ? null : PORTFOLIO_COLUMNS.some(column => column.field === value.sortField) ? value.sortField : `name`;
+    const sortField = value.sortField === null ? null : PORTFOLIO_FIELDS.some(column => column.field === value.sortField) ? value.sortField : `name`;
     return [{
       name,
       number,
@@ -319,7 +319,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const setCollectionSort = useCallback<PortfolioPreferencesContextValue[`setCollectionSort`]>((id, sortField, sortDirection) => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
     if (sortDirection !== `asc` && sortDirection !== `desc`) return false;
-    if (sortField !== null && !PORTFOLIO_COLUMNS.some(column => column.field === sortField)) return false;
+    if (sortField !== null && !PORTFOLIO_FIELDS.some(column => column.field === sortField)) return false;
     if (!preferenceRef.current.collections.some(collection => collection.id === id)) return false;
     change(current => ({ ...current, collections: current.collections.map(collection => collection.id === id ? { ...collection, sortField, sortDirection } : collection) }));
     return true;
