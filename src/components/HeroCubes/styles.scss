@@ -1,0 +1,27 @@
+.hero-cubes {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  --cube-glow: color-mix(in srgb, var(--accent, #5acfc6) 38%, #40f9df);
+  --cube-highlight: color-mix(in srgb, var(--accent, #5acfc6) 22%, #a7fff2);
+  --cube-side-light: color-mix(in srgb, var(--accent, #5acfc6) 45%, #11b8ba);
+}
+
+.hero-cubes-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: hidden;
+}
+
+.hero-cubes-floor-tile { fill: #09141b; stroke: #1a2a32; }
+.hero-cube-face { stroke: #1b2c34; stroke-linejoin: round; }
+.hero-cube-left { stroke: #13252c; }
+.hero-cube-right { stroke: #0b1b22; }
+.hero-cube-face-luminous { stroke: color-mix(in srgb, var(--cube-glow) 65%, transparent); }
+.hero-cube-top.hero-cube-face-luminous { stroke: var(--cube-highlight); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cubes { contain: paint; }
+}

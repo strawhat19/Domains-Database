@@ -1,7 +1,8 @@
+import HeroCubes from '../HeroCubes';
 import MagicTyping from '../MagicTyping';
-import DiscoveryBackdrop from '../DiscoveryBackdrop';
 import { useMemo, useState, useEffect, useContext } from 'react';
 import { Layers3, Search, History } from 'lucide-react-native';
+import Svg, { Defs, Rect, Stop, LinearGradient } from 'react-native-svg';
 import { useHeroSearch } from './useHeroSearch';
 import { useRecentsLayout } from '../RecentDomainSearches/useRecentsLayout';
 import ResponsiveDomainHeading from '../ResponsiveDomainHeading';
@@ -10,20 +11,53 @@ import { Text, View, Pressable, TextInput, useWindowDimensions } from 'react-nat
 import { elementProps } from '../../shared/elementProps';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { themePalettes } from '../../shared/themeContext/theme';
 
 const Hero = () => {
   const search = useHeroSearch();
   const recents = useRecentsLayout();
   const { width } = useWindowDimensions();
-  const { isDark, palette } = useTheme();
+  const { palette } = useTheme();
+  const heroPalette = themePalettes.dark;
+  const compact = width < 600;
+  const accentSize = Math.min(52, Math.max(28, (width - 48) * .105));
   const [searchFocused, setSearchFocused] = useState(false);
-  const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
 
   return (
-    <View {...elementProps(`landing-hero`)} style={styles.hero} onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}>
-      <DiscoveryBackdrop suffix={`hero`} variant={`landing`} />
+    <View {...elementProps(`landing-hero`)} style={[styles.hero, compact && styles.compactHero]} onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}>
+      <View
+        pointerEvents={`none`}
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility={`no-hide-descendants`}
+        {...elementProps(`hero-cube-art`)}
+        style={[styles.cubeArt, compact && styles.compactCubeArt]}
+      >
+        <HeroCubes />
+      </View>
+      <Svg
+        width={`100%`}
+        height={`100%`}
+        pointerEvents={`none`}
+        accessible={false}
+        accessibilityElementsHidden
+        importantForAccessibility={`no-hide-descendants`}
+        {...elementProps(`hero-content-fade`)}
+        style={styles.contentFade}
+      >
+        <Defs>
+          <LinearGradient id={`hero-native-content-fade`} x1={`0`} y1={`0`} x2={`0`} y2={`1`}>
+            <Stop offset={`0%`} stopColor={palette.strong} stopOpacity={.99} />
+            <Stop offset={`45%`} stopColor={palette.strong} stopOpacity={.96} />
+            <Stop offset={`75%`} stopColor={palette.strong} stopOpacity={.78} />
+            <Stop offset={`100%`} stopColor={palette.strong} stopOpacity={.12} />
+          </LinearGradient>
+        </Defs>
+        <Rect width={`100%`} height={`100%`} fill={`url(#hero-native-content-fade)`} />
+      </Svg>
       <Text {...elementProps(`hero-eyebrow`)} style={styles.eyebrow}>
         {`PERSONAL DOMAIN REGISTRY`}
       </Text>
@@ -34,7 +68,7 @@ const Hero = () => {
       >
         {`Your domains.`}
       </Text>
-      <Text {...elementProps(`hero-title-accent`)} style={styles.accent}>
+      <Text {...elementProps(`hero-title-accent`)} style={[styles.accent, compact && { fontSize: accentSize, lineHeight: accentSize * 1.08 }]}>
         {`Under control.`}
       </Text>
       <Text {...elementProps(`hero-description`)} style={styles.description}>
@@ -48,7 +82,9 @@ const Hero = () => {
           shortText={`Find your domain`}
           fullText={`Find your next domain`}
         />
-        <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+        <View {...elementProps(`hero-magic-typing-wrap`)} style={styles.magicTypingWrap}>
+          <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+        </View>
         <View {...elementProps(`hero-domain-search-row`)} style={styles.searchRow}>
           <TextInput
             autoCorrect={false}
@@ -62,7 +98,7 @@ const Hero = () => {
             onBlur={() => setSearchFocused(false)}
             onFocus={() => setSearchFocused(true)}
             placeholder={`your-next-domain.com`}
-            placeholderTextColor={palette.muted}
+            placeholderTextColor={heroPalette.placeholder}
             {...elementProps(`hero-domain-search-input`)}
             accessibilityLabel={`Search For A Domain`}
           />
@@ -73,7 +109,7 @@ const Hero = () => {
             {...elementProps(`hero-domain-search-submit`)}
             accessibilityLabel={`Search Domain Availability`}
           >
-            <Search {...elementProps(`hero-domain-search-icon`)} size={15} color={palette.contrast} />
+            <Search {...elementProps(`hero-domain-search-icon`)} size={15} color={heroPalette.accent} />
             <Text {...elementProps(`hero-domain-search-text`)} style={styles.searchButtonText}>{`Search`}</Text>
           </Pressable>
         </View>
@@ -83,7 +119,7 @@ const Hero = () => {
           {...elementProps(`hero-domain-recents`)}
         >
           <View accessible accessibilityLabel={`Recents`} {...elementProps(`hero-domain-recents-heading`)} style={styles.recentsHeading}>
-            <History {...elementProps(`hero-domain-recents-icon`)} size={12} color={palette.muted} />
+            <History {...elementProps(`hero-domain-recents-icon`)} size={12} color={heroPalette.muted} />
             {!recents.iconOnly && <Text {...elementProps(`hero-domain-recents-label`)} style={styles.recentsLabel}>{`Recents`}</Text>}
           </View>
           <View {...elementProps(`hero-domain-recents-items`)} style={styles.recentsItems} accessibilityLiveRegion={`polite`}>
@@ -98,7 +134,7 @@ const Hero = () => {
                 accessibilityLabel={`Search ${record.query} Again`}
                 style={({ pressed }) => [styles.recent, pressed && styles.recentPressed]}
               >
-                <Search {...elementProps(`hero-domain-recent-icon`, `${index}`)} size={10} color={palette.muted} />
+                <Search {...elementProps(`hero-domain-recent-icon`, `${index}`)} size={10} color={heroPalette.muted} />
                 <Text {...elementProps(`hero-domain-recent-query`, `${index}`)} style={styles.recentQuery} numberOfLines={1}>
                   {record.query}
                 </Text>
@@ -117,7 +153,7 @@ const Hero = () => {
         )}
       </View>
       <View {...elementProps(`hero-promise`)} style={styles.promise}>
-        <Layers3 {...elementProps(`hero-promise-icon`)} size={14} color={palette.accent} />
+        <Layers3 {...elementProps(`hero-promise-icon`)} size={14} color={heroPalette.accent} />
         <Text {...elementProps(`hero-promise-text`)} style={styles.promiseText}>
           {`Names. Renewals. Registrars.`}
         </Text>

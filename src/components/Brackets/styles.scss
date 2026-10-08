@@ -1,4 +1,4 @@
-.extension-index {
+.brackets {
   color: #fff;
   padding: 24px;
   overflow: hidden;
@@ -6,29 +6,29 @@
   background: var(--strong);
 }
 
-.extension-index-header,
-.extension-index-footer {
+.brackets-header,
+.brackets-footer {
   gap: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.extension-index-label,
-.extension-index-caption,
-.extension-index-symbol {
+.brackets-label,
+.brackets-caption,
+.brackets-symbol {
   font-size: 9px;
   line-height: 1.5;
   letter-spacing: .1em;
   font-family: var(--font-mono);
 }
 
-.extension-index-label { color: #b6cbd4; }
-.extension-index-arrow { color: #56d4cc; }
-.extension-index-caption { color: #b6cbd4; }
-.extension-index-symbol { color: #56d4cc; white-space: nowrap; }
+.brackets-label { color: #b6cbd4; }
+.brackets-arrow { color: #56d4cc; }
+.brackets-caption { color: #b6cbd4; }
+.brackets-symbol { color: #56d4cc; white-space: nowrap; }
 
-.extension-index-stacks {
+.brackets-stacks {
   gap: 9px;
   display: grid;
   margin: 34px 12px;
@@ -36,14 +36,14 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.extension-index-stack {
+.brackets-stack {
   gap: 8px;
   display: grid;
 
   &:last-child { transform: translateY(14px); }
 }
 
-.extension-record {
+.brackets-record {
   gap: 12px;
   height: 63px;
   display: flex;
@@ -55,13 +55,13 @@
   clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
 }
 
-.extension-record-label {
+.brackets-record-label {
   font-size: clamp(26px, 3vw, 39px);
   letter-spacing: -.06em;
   font-family: var(--font-bold);
 }
 
-.extension-record-dot {
+.brackets-record-dot {
   width: 10px;
   height: 10px;
   flex-shrink: 0;
@@ -70,14 +70,14 @@
 }
 
 @media (max-width: 1000px) {
-  .extension-index { padding: 20px; }
-  .extension-index-stacks { margin: 32px 0; }
-  .extension-record { height: 58px; padding: 8px 13px; }
+  .brackets { padding: 20px; }
+  .brackets-stacks { margin: 32px 0; }
+  .brackets-record { height: 58px; padding: 8px 13px; }
 }
 
 @media (max-width: 760px) {
-  .extension-index { padding: 20px 24px; }
-  .extension-index-stacks { margin: 26px auto 32px; max-width: 360px; }
-  .extension-record { height: 56px; }
-  .extension-record-label { font-size: clamp(24px, 8vw, 31px); }
+  .brackets { padding: 20px 24px; }
+  .brackets-stacks { margin: 26px auto 32px; max-width: 360px; }
+  .brackets-record { height: 56px; }
+  .brackets-record-label { font-size: clamp(24px, 8vw, 31px); }
 }

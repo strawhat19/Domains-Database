@@ -1,11 +1,13 @@
 import './styles.scss';
 import { useState } from 'react';
+import { Link } from 'expo-router';
+import HeroCubes from '../HeroCubes';
+import RouterAnchor from '../RouterAnchor';
 import MagicTyping from '../MagicTyping';
-import { Search, History } from 'lucide-react';
-import ExtensionIndex from '../ExtensionIndex';
 import { useHeroSearch } from './useHeroSearch';
+import { routes } from '../../shared/routes';
+import { Search, Globe2, History, ArrowUpRight } from 'lucide-react';
 import { useWindowDimensions } from 'react-native';
-import DiscoveryBackdrop from '../DiscoveryBackdrop';
 import ResponsiveDomainHeading from '../ResponsiveDomainHeading';
 
 const Hero = () => {
@@ -19,7 +21,9 @@ const Hero = () => {
     className={`landing-hero`}
     aria-labelledby={`hero-title`}
   >
-    <DiscoveryBackdrop suffix={`hero`} variant={`landing`} />
+    <div id={`hero-cube-scene`} className={`hero-cube-scene`} aria-hidden>
+      <HeroCubes />
+    </div>
     <div id={`hero-heading-group`} className={`hero-heading-group`}>
       <p id={`hero-eyebrow`} className={`hero-eyebrow`}>
         <span
@@ -30,8 +34,9 @@ const Hero = () => {
         {`PERSONAL DOMAIN REGISTRY`}
       </p>
       <h1 id={`hero-title`} className={`hero-title`}>
-        {`Your domains.`}
-        <br id={`hero-title-break`} className={`hero-title-break`} />
+        <span id={`hero-title-intro`} className={`hero-title-intro`}>
+          {`Your domains.`}
+        </span>
         <span id={`hero-title-accent`} className={`hero-title-accent`}>
           {`Under control.`}
         </span>
@@ -116,7 +121,22 @@ const Hero = () => {
         )}
       </div>
     </div>
-    <ExtensionIndex />
+    <div id={`hero-bottom-row`} className={`hero-bottom-row`}>
+      <p id={`hero-promise`} className={`hero-promise`}>
+        <Globe2 size={14} aria-hidden id={`hero-promise-icon`} className={`hero-promise-icon`} />
+        <span id={`hero-promise-text`} className={`hero-promise-text`}>
+          {`Names. Renewals. Registrars.`}
+        </span>
+      </p>
+      <Link href={routes.domains.href} asChild>
+        <RouterAnchor id={`hero-portfolio-link`} className={`hero-portfolio-link`}>
+          <span id={`hero-portfolio-link-text`} className={`hero-portfolio-link-text`}>
+            {`Explore your portfolio`}
+          </span>
+          <ArrowUpRight size={14} aria-hidden id={`hero-portfolio-link-icon`} className={`hero-portfolio-link-icon`} />
+        </RouterAnchor>
+      </Link>
+    </div>
   </section>
   );
 };

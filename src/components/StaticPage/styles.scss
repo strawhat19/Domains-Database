@@ -10,6 +10,7 @@
   min-height: var(--page-content-height, calc(100dvh - 230px));
 }
 .static-page-intro { min-width: 0; }
+.static-page-brackets { margin-top: 24px; max-width: 430px; }
 .static-page-back { gap: 8px; display: inline-flex; align-items: center; min-height: 36px; color: var(--muted); font-size: 12px; margin-bottom: 18px; }
 .static-page-brand-mark { width: 52px; height: 52px; display: grid; place-items: center; color: var(--accent); background: var(--subtle); border-radius: 14px; margin-bottom: 18px; }
 .static-page-eyebrow { color: var(--accent); font-size: 10px; letter-spacing: 1.5px; margin: 0 0 12px; font-family: var(--font-bold); }

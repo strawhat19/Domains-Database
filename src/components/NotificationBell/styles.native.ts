@@ -3,7 +3,12 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   list: { gap: 12 },
+  messageError: { color: palette.danger },
   scroll: { flexGrow: 0, flexShrink: 1 },
+  message: { fontSize: 12, lineHeight: 20, paddingVertical: 14, color: palette.muted, fontFamily: `DMSans_400Regular` },
+  footer: { paddingTop: 12, borderTopWidth: 1, borderTopColor: palette.line },
+  footerLinkText: { fontSize: 12, color: palette.accent, fontFamily: `DMSans_700Bold` },
+  footerLink: { gap: 8, minHeight: 44, borderRadius: 6, paddingVertical: 10, paddingHorizontal: 12, flexDirection: `row`, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.subtle },
   button: {
     width: 40,
     height: 40,
@@ -27,11 +32,11 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
     alignItems: `center`,
     justifyContent: `center`,
     borderColor: palette.paper,
-    backgroundColor: palette.accent,
+    backgroundColor: `#187565`,
   },
   badgeText: {
     fontSize: 9,
-    color: palette.contrast,
+    color: `#ffffff`,
     fontFamily: `DMSans_700Bold`,
   },
   overlay: {

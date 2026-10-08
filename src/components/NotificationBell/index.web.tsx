@@ -1,6 +1,9 @@
 import './styles.scss';
-import { Bell, X } from 'lucide-react';
+import { Link } from 'expo-router';
+import { X, Bell, List } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import RouterAnchor from '../RouterAnchor';
+import { routes } from '../../shared/routes';
 import NotificationCard from '../NotificationCard';
 import { useNotificationBell } from './useNotificationBell';
 
@@ -105,13 +108,35 @@ const NotificationBell = () => {
             className={`header-notifications-list`}
           >
             {state.loading
-              ? Array.from({ length: state.count }, (_, index) => (
-                <NotificationCard key={index} index={index} onSignUp={state.close} />
+              ? [0, 1].map(index => (
+                <NotificationCard key={index} index={index} />
               ))
-              : state.notifications.map(notification => (
-                <NotificationCard key={notification.id} notification={notification} onSignUp={state.close} />
-              ))}
+              : state.error ? (
+                <li id={`header-notifications-error`} className={`header-notifications-message header-notifications-message-error`} role={`alert`}>
+                  {state.error}
+                </li>
+              ) : state.notifications.length ? state.notifications.map(notification => (
+                <NotificationCard key={notification.id} notification={notification} onNavigate={state.close} />
+              )) : (
+                <li id={`header-notifications-empty`} className={`header-notifications-message`} role={`status`}>
+                  {`No Notifications Yet`}
+                </li>
+              )}
           </ul>
+          <div id={`header-notifications-footer`} className={`header-notifications-footer`}>
+            <Link href={routes.notifications.href} asChild>
+              <RouterAnchor
+                onClick={state.close}
+                id={`header-notifications-all-link`}
+                className={`header-notifications-all-link`}
+              >
+                <List size={14} aria-hidden id={`header-notifications-all-icon`} className={`header-notifications-all-icon`} />
+                <span id={`header-notifications-all-text`} className={`header-notifications-all-text`}>
+                  {`View All Notifications`}
+                </span>
+              </RouterAnchor>
+            </Link>
+          </div>
         </section>
       )}
     </div>

@@ -1,5 +1,6 @@
 import './styles.scss';
 import { Link } from 'expo-router';
+import Brackets from '../Brackets';
 import RouterAnchor from '../RouterAnchor';
 import { useStaticPage } from './useStaticPage';
 import type { PageName } from '../../shared/pages';
@@ -35,6 +36,11 @@ const StaticPage = ({ page }: { page: PageName }) => {
         <p id={`${page}-description`} className={`static-page-description`}>
           {state.content.description}
         </p>
+        {page === `about` && (
+          <div id={`about-brackets`} className={`static-page-brackets`}>
+            <Brackets suffix={`about`} />
+          </div>
+        )}
         {page === `contact` && (
           <a
             target={`_blank`}

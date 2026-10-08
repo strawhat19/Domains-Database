@@ -6,6 +6,7 @@ export const routes = {
   domains: { href: `/domains`, label: `Domains`, icon: `Globe2` },
   auction: { beta: true, href: `/auction`, label: `Auction`, icon: `Gavel` },
   watching: { href: `/watching`, label: `Watching`, icon: `Eye`, minRole: Roles.Subscriber },
+  notifications: { href: `/notifications`, label: `Notifications`, icon: `Bell`, redirects: [`alerts`, `updates`, `notification`, `announcement`, `announcements`] },
   community: { beta: true, href: `/community`, label: `Community`, icon: `UsersRound`, minRole: Roles.Subscriber },
   connections: { href: `/profile/connections`, label: `Connections`, icon: `PlugZap`, minRole: Roles.Subscriber },
   profile: { href: `/profile`, label: `Profile`, icon: `UserRound`, minRole: Roles.Subscriber, redirects: [`account`] },
@@ -18,6 +19,11 @@ export const routes = {
   contact: { href: `/contact`, label: `Contact`, icon: `Mail`, redirects: [`contact-us`] },
   privacy: { href: `/privacy`, label: `Privacy`, icon: `ShieldCheck`, redirects: [`privacy-policy`] },
 } as const;
+
+export const getNotificationHref = (id: string) => ({
+  params: { id },
+  pathname: `/notifications/[id]` as const,
+});
 
 export type AuthReturnPath = Exclude<(typeof routes)[keyof typeof routes][`href`], `/signin` | `/signup`>;
 const authReturnPaths = Object.values(routes).map(route => route.href)

@@ -73,7 +73,7 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
                 onPress={() => openItem(item)}
                 accessibilityRole={`link`}
                 accessibilityLabel={item.label}
-                accessibilityHint={item.external ? `Opens in browser` : `Opens sign up`}
+                accessibilityHint={item.external ? `Opens in browser` : `Opens notification details`}
                 {...elementProps(`native-domain-marquee-pill`, suffix)}
                 style={({ pressed }) => [styles.pill, teal ? styles.tealPill : styles.navyPill, useStackPill && styles.stackPill, pressed && styles.pressed]}
               >

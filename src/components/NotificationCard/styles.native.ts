@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  pressed: { opacity: .78 },
   copy: { gap: 6, flex: 1, minWidth: 0 },
   card: {
     gap: 12,
@@ -31,11 +32,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
     lineHeight: 20,
     color: palette.muted,
     fontFamily: `DMSans_400Regular`,
-  },
-  link: {
-    color: palette.accent,
-    textDecorationLine: `underline`,
-    fontFamily: `DMSans_600SemiBold`,
   },
   skeletonSymbol: {
     width: 32,

@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { routes } from '../../shared/routes';
+import { getNotificationHref } from '../../shared/routes';
 import type { DomainMarqueeItem } from './useDomainMarquee';
 import {
   Linking,
@@ -78,7 +78,7 @@ export const useMarquee = (contentKey: string) => {
   const openItem = (item: DomainMarqueeItem) => {
     if (dragged.current) return;
     if (item.external) void Linking.openURL(item.href).catch(() => undefined);
-    else router.push(routes.signup.href);
+    else router.push(getNotificationHref(item.id));
   };
   const pauseLayout = () => {
     layoutReadyRef.current = false;

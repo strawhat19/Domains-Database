@@ -32,6 +32,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
     <div
       id={`app-shell`}
       className={`app-shell`}
+      data-landing={pathname === routes.home.href || undefined}
       data-fit-view={fitViewport || undefined}
       data-search-viewport={searchViewport || undefined}
       style={{

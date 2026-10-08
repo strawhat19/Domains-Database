@@ -1,47 +1,43 @@
+import { Link } from 'expo-router';
 import { useMemo } from 'react';
 import { Info, Sparkles } from 'lucide-react-native';
-import { Text, View } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
 import { createStyles } from './styles.native';
+import type { NotificationCardProps } from './types';
 import { elementProps } from '../../shared/elementProps';
+import { getNotificationHref } from '../../shared/routes';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import type { HeaderNotification } from '../../shared/sampleNotifications';
 
-interface NotificationCardProps {
-  index?: number;
-  notification?: HeaderNotification;
-  onSignUp: () => void;
-}
-
-const NotificationCard = ({ index = 0, notification, onSignUp }: NotificationCardProps) => {
+const NotificationCard = ({ index = 0, notification, prefix = `header`, onNavigate }: NotificationCardProps) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const suffix = notification?.id ?? String(index);
+  const suffix = notification?.id ?? `skeleton-${index}`;
 
   if (!notification) return (
     <View
       style={styles.card}
       accessibilityLabel={`Loading Notification`}
-      {...elementProps(`native-notification-skeleton`, suffix)}
+      {...elementProps(`native-${prefix}-notification-skeleton`, suffix)}
     >
       <View
         style={styles.skeletonSymbol}
-        {...elementProps(`native-notification-skeleton-symbol`, suffix)}
+        {...elementProps(`native-${prefix}-notification-skeleton-symbol`, suffix)}
       />
       <View
         style={styles.copy}
-        {...elementProps(`native-notification-skeleton-copy`, suffix)}
+        {...elementProps(`native-${prefix}-notification-skeleton-copy`, suffix)}
       >
         <View
           style={styles.skeletonTitle}
-          {...elementProps(`native-notification-skeleton-title`, suffix)}
+          {...elementProps(`native-${prefix}-notification-skeleton-title`, suffix)}
         />
         <View
           style={styles.skeletonText}
-          {...elementProps(`native-notification-skeleton-text`, suffix)}
+          {...elementProps(`native-${prefix}-notification-skeleton-text`, suffix)}
         />
         <View
           style={styles.skeletonShortText}
-          {...elementProps(`native-notification-skeleton-short-text`, suffix)}
+          {...elementProps(`native-${prefix}-notification-skeleton-short-text`, suffix)}
         />
       </View>
     </View>
@@ -50,49 +46,47 @@ const NotificationCard = ({ index = 0, notification, onSignUp }: NotificationCar
   const Icon = notification.icon === `Info` ? Info : Sparkles;
 
   return (
-    <View
-      style={styles.card}
-      {...elementProps(`native-notification-card`, suffix)}
-    >
-      <View
-        style={styles.symbol}
-        {...elementProps(`native-notification-symbol`, suffix)}
+    <Link href={getNotificationHref(notification.id)} asChild>
+      <Pressable
+        onPress={onNavigate}
+        accessibilityRole={`link`}
+        {...elementProps(`native-${prefix}-notification-card`, suffix)}
+        accessibilityLabel={`Open Notification: ${notification.title}`}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
       >
-        <Icon
-          size={17}
-          color={palette.accent}
-          {...elementProps(`native-notification-icon`, suffix)}
-        />
-      </View>
-      <View
-        style={styles.copy}
-        {...elementProps(`native-notification-copy`, suffix)}
-      >
-        <Text
-          style={styles.title}
-          {...elementProps(`native-notification-title`, suffix)}
+        <View
+          style={styles.symbol}
+          {...elementProps(`native-${prefix}-notification-symbol`, suffix)}
         >
-          {notification.title}
-        </Text>
-        <Text
-          style={styles.text}
-          {...elementProps(`native-notification-text`, suffix)}
+          <Icon
+            size={17}
+            color={palette.accent}
+            {...elementProps(`native-${prefix}-notification-icon`, suffix)}
+          />
+        </View>
+        <View
+          style={styles.copy}
+          {...elementProps(`native-${prefix}-notification-copy`, suffix)}
         >
-          {notification.before}
           <Text
-            onPress={onSignUp}
-            style={styles.link}
-            accessibilityRole={`link`}
-            accessibilityLabel={`Sign up`}
-            {...elementProps(`native-notification-sign-up`, suffix)}
+            style={styles.title}
+            {...elementProps(`native-${prefix}-notification-title`, suffix)}
           >
-            {`sign up`}
+            {notification.title}
           </Text>
-          {notification.after}
-        </Text>
-      </View>
-    </View>
+          <Text
+            style={styles.text}
+            {...elementProps(`native-${prefix}-notification-text`, suffix)}
+          >
+            {notification.before}
+            {`sign up`}
+            {notification.after}
+          </Text>
+        </View>
+      </Pressable>
+    </Link>
   );
 };
 
 export default NotificationCard;
+export type { NotificationCardProps } from './types';

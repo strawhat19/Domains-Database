@@ -2,82 +2,92 @@ import './styles.scss';
 import { Link } from 'expo-router';
 import { Info, Sparkles } from 'lucide-react';
 import RouterAnchor from '../RouterAnchor';
-import { routes } from '../../shared/routes';
-import type { HeaderNotification } from '../../shared/sampleNotifications';
+import type { NotificationCardProps } from './types';
+import { getNotificationHref } from '../../shared/routes';
 
-interface NotificationCardProps {
-  index?: number;
-  onSignUp: () => void;
-  notification?: HeaderNotification;
-}
-
-const NotificationCard = ({ notification, index = 0, onSignUp }: NotificationCardProps) => {
+const NotificationCard = ({ notification, index = 0, prefix = `header`, onNavigate }: NotificationCardProps) => {
   const suffix = notification?.id ?? `skeleton-${index}`;
   const Icon = notification?.icon === `Sparkles` ? Sparkles : Info;
-
-  return (
-    <li
-      id={`header-notification-${suffix}`}
-      aria-hidden={notification ? undefined : true}
-      className={`header-notification-card${notification ? `` : ` header-notification-card-loading`}`}
-    >
+  const content = (
+    <>
       <span
-        id={`header-notification-symbol-${suffix}`}
+        id={`${prefix}-notification-symbol-${suffix}`}
         className={`header-notification-symbol`}
       >
         {notification && (
           <Icon
             size={16}
             aria-hidden={true}
-            id={`header-notification-icon-${suffix}`}
+            id={`${prefix}-notification-icon-${suffix}`}
             className={`header-notification-icon`}
           />
         )}
       </span>
       <div
-        id={`header-notification-copy-${suffix}`}
+        id={`${prefix}-notification-copy-${suffix}`}
         className={`header-notification-copy`}
       >
         {notification ? (
           <>
             <strong
-              id={`header-notification-title-${suffix}`}
+              id={`${prefix}-notification-title-${suffix}`}
               className={`header-notification-title`}
             >
               {notification.title}
             </strong>
             <p
-              id={`header-notification-text-${suffix}`}
+              id={`${prefix}-notification-text-${suffix}`}
               className={`header-notification-text`}
             >
               {notification.before}
-              <Link href={routes.signup.href} asChild>
-                <RouterAnchor
-                  onClick={onSignUp}
-                  id={`header-notification-sign-up-${suffix}`}
-                  className={`header-notification-link`}
-                >
-                  {`sign up`}
-                </RouterAnchor>
-              </Link>
+              {`sign up`}
               {notification.after}
             </p>
           </>
         ) : (
           <>
             <span
-              id={`header-notification-skeleton-title-${suffix}`}
+              id={`${prefix}-notification-skeleton-title-${suffix}`}
               className={`header-notification-skeleton header-notification-skeleton-title`}
             />
             <span
-              id={`header-notification-skeleton-text-${suffix}`}
+              id={`${prefix}-notification-skeleton-text-${suffix}`}
               className={`header-notification-skeleton header-notification-skeleton-text`}
             />
           </>
         )}
       </div>
+    </>
+  );
+
+  return (
+    <li
+      id={`${prefix}-notification-${suffix}`}
+      className={`header-notification-item`}
+      aria-hidden={notification ? undefined : true}
+    >
+      {notification ? (
+        <Link href={getNotificationHref(notification.id)} asChild>
+          <RouterAnchor
+            onClick={onNavigate}
+            className={`header-notification-card`}
+            id={`${prefix}-notification-card-${suffix}`}
+            aria-label={`Open Notification: ${notification.title}`}
+          >
+            {content}
+          </RouterAnchor>
+        </Link>
+      ) : (
+        <div
+          id={`${prefix}-notification-card-${suffix}`}
+          className={`header-notification-card header-notification-card-loading`}
+        >
+          {content}
+        </div>
+      )}
     </li>
   );
 };
 
 export default NotificationCard;
+export type { NotificationCardProps } from './types';

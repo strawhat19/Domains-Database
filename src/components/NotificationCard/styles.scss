@@ -1,3 +1,5 @@
+.header-notification-item { min-width: 0; }
+
 .header-notification-card {
   gap: 12px;
   display: flex;
@@ -5,6 +7,11 @@
   border-radius: 6px;
   background: var(--canvas);
   border: 1px solid var(--line);
+  transition: background .22s ease, border-color .22s ease;
+
+  &[href]:hover,
+  &[href]:focus-visible { background: var(--subtle); border-color: var(--accent); }
+  &[href]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 }
 
 .header-notification-symbol {
@@ -21,14 +28,6 @@
 .header-notification-copy { flex: 1; min-width: 0; }
 .header-notification-title { display: block; font-size: 12px; line-height: 1.5; color: var(--ink); font-family: var(--font-bold); }
 .header-notification-text { margin: 4px 0 0; font-size: 12px; line-height: 1.65; color: var(--muted); overflow-wrap: anywhere; }
-.header-notification-link {
-  color: var(--accent);
-  font-family: 'DMSans_600SemiBold', sans-serif;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-
-  &:hover { color: var(--accent-hover); }
-}
 
 .header-notification-card-loading .header-notification-symbol { background: var(--skeleton); }
 .header-notification-skeleton {
@@ -47,5 +46,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .header-notification-card { transition: none; }
   .header-notification-skeleton { animation: none; }
 }

@@ -4,7 +4,7 @@ import { useMarquee } from './useMarquee.web';
 import RouterAnchor from '../RouterAnchor';
 import DomainSiteIcon from '../DomainSiteIcon';
 import StackPillShape from '../StackPillShape';
-import { routes } from '../../shared/routes';
+import { getNotificationHref } from '../../shared/routes';
 import { useStackPill } from '../../shared/config';
 import { Globe2, Info, Sparkles } from 'lucide-react';
 import { sampleNotificationCount } from '../../shared/sampleNotifications';
@@ -82,7 +82,7 @@ const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
                 </RouterAnchor>
               );
               return item.external ? pill : (
-                <Link key={item.id} href={routes.signup.href} asChild>
+                <Link key={item.id} href={getNotificationHref(item.id)} asChild>
                   {pill}
                 </Link>
               );

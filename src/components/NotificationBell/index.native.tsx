@@ -1,25 +1,22 @@
 import { useMemo } from 'react';
-import { useRouter } from 'expo-router';
-import { Bell, X } from 'lucide-react-native';
+import { Link } from 'expo-router';
+import { X, Bell, List } from 'lucide-react-native';
 import { createStyles } from './styles.native';
 import NotificationCard from '../NotificationCard';
 import { routes } from '../../shared/routes';
 import { useNotificationBell } from './useNotificationBell';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useReducedMotion } from '../../shared/common/useReducedMotion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 const NotificationBell = () => {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { palette } = useTheme();
+  const reducedMotion = useReducedMotion();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const { open, loading, notifications, count, close, toggle } = useNotificationBell();
-  const onSignUp = () => {
-    close();
-    router.push(routes.signup.href);
-  };
+  const { open, error, loading, notifications, count, close, toggle } = useNotificationBell();
 
   return (
     <View {...elementProps(`native-header-notifications`)}>
@@ -53,7 +50,7 @@ const NotificationBell = () => {
       <Modal
         transparent
         visible={open}
-        animationType={`fade`}
+        animationType={reducedMotion ? `none` : `fade`}
         onRequestClose={close}
         {...elementProps(`native-header-notifications-modal`)}
       >
@@ -114,16 +111,43 @@ const NotificationBell = () => {
                 <NotificationCard
                   key={index}
                   index={index}
-                  onSignUp={onSignUp}
                 />
-              )) : notifications.map(notification => (
+              )) : error ? (
+                <Text
+                  accessibilityRole={`alert`}
+                  style={[styles.message, styles.messageError]}
+                  {...elementProps(`native-header-notifications-error`)}
+                >
+                  {error}
+                </Text>
+              ) : notifications.length ? notifications.map(notification => (
                 <NotificationCard
                   key={notification.id}
-                  onSignUp={onSignUp}
+                  onNavigate={close}
                   notification={notification}
                 />
-              ))}
+              )) : (
+                <Text style={styles.message} {...elementProps(`native-header-notifications-empty`)}>
+                  {`No Notifications Yet`}
+                </Text>
+              )}
             </ScrollView>
+            <View style={styles.footer} {...elementProps(`native-header-notifications-footer`)}>
+              <Link href={routes.notifications.href} asChild>
+                <Pressable
+                  onPress={close}
+                  accessibilityRole={`link`}
+                  accessibilityLabel={`View All Notifications`}
+                  {...elementProps(`native-header-notifications-all-link`)}
+                  style={({ pressed }) => [styles.footerLink, pressed && styles.pressed]}
+                >
+                  <List size={15} color={palette.accent} {...elementProps(`native-header-notifications-all-icon`)} />
+                  <Text style={styles.footerLinkText} {...elementProps(`native-header-notifications-all-text`)}>
+                    {`View All Notifications`}
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
           </View>
         </View>
       </Modal>

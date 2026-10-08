@@ -1,11 +1,10 @@
 import { routes } from '../../shared/routes';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useAppFonts } from '../../shared/useAppFonts';
-import { notificationsAPI } from '../../api/notifications';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
-import type { HeaderNotification } from '../../shared/sampleNotifications';
+import { useNotifications } from '../../shared/notifications/useNotifications';
 
 export interface DomainMarqueeItem {
   id: string;
@@ -22,20 +21,9 @@ export const useDomainMarquee = () => {
   const [fontsLoaded, fontError] = useAppFonts();
   const { user, loading: authLoading } = useAuth();
   const { domains, loading: domainsLoading } = useDomains();
-  const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
+  const { loading, notifications } = useNotifications();
   const userDomains = useMemo(() => domains.filter(domain => !domain.isSample), [domains]);
   const showDomains = !authLoading && !domainsLoading && Boolean(user?.id) && userDomains.length > 10;
-
-  useEffect(() => {
-    let mounted = true;
-    void notificationsAPI.getSampleNotifications().then(items => {
-      if (!mounted) return;
-      setNotifications(items);
-      setLoading(false);
-    });
-    return () => { mounted = false; };
-  }, []);
 
   const items = useMemo<DomainMarqueeItem[]>(() => {
     const values: DomainMarqueeItem[] = showDomains
@@ -53,7 +41,7 @@ export const useDomainMarquee = () => {
         external: false,
         id: notification.id,
         icon: notification.icon,
-        href: routes.signup.href,
+        href: `${routes.notifications.href}/${encodeURIComponent(notification.id)}`,
         title: notification.title,
         label: `${notification.before}sign up${notification.after}`,
       }));

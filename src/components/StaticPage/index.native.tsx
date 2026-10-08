@@ -1,4 +1,5 @@
 import { Link } from 'expo-router';
+import Brackets from '../Brackets';
 import { useMemo, useContext } from 'react';
 import { createStyles } from './styles.native';
 import { useStaticPage } from './useStaticPage';
@@ -106,6 +107,7 @@ const StaticPage = ({ page }: { page: PageName }) => {
             </Text>
           )}
         </View>
+        {page === `about` && <Brackets suffix={`about`} />}
         {page === `contact` && (
           <Pressable
             accessibilityRole={`link`}
