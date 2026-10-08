@@ -7,7 +7,7 @@ import { elementProps } from '../../shared/elementProps';
 import { useMemo, useRef, useEffect } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
 
-const MagicTyping = ({ suffix, paused = false }: MagicTypingProps) => {
+const MagicTyping = ({ suffix, label = `Imagine`, paused = false }: MagicTypingProps) => {
   const { palette } = useTheme();
   const { text, animateCaret } = useMagicTyping(paused);
   const opacity = useRef(new Animated.Value(1)).current;
@@ -30,7 +30,7 @@ const MagicTyping = ({ suffix, paused = false }: MagicTypingProps) => {
       style={styles.hint}
       accessibilityRole={`text`}
       accessibilityLiveRegion={`none`}
-      accessibilityLabel={`Imagine a domain name`}
+      accessibilityLabel={`${label} a domain name`}
       {...elementProps(`magic-typing`, suffix)}
     >
       <View
@@ -40,7 +40,7 @@ const MagicTyping = ({ suffix, paused = false }: MagicTypingProps) => {
         {...elementProps(`magic-typing-content`, suffix)}
       >
         <Sparkles {...elementProps(`magic-typing-icon`, suffix)} size={12} color={palette.accent} />
-        <Text {...elementProps(`magic-typing-label`, suffix)} style={styles.label}>{`Imagine`}</Text>
+        <Text {...elementProps(`magic-typing-label`, suffix)} style={styles.label}>{label}</Text>
         <View {...elementProps(`magic-typing-example`, suffix)} style={styles.example}>
           <Text {...elementProps(`magic-typing-domain`, suffix)} style={styles.domain} numberOfLines={1}>{text}</Text>
           <Animated.View {...elementProps(`magic-typing-caret`, suffix)} style={[styles.caret, { opacity }]} />

@@ -3,7 +3,7 @@ import { stackPillPath } from './shape';
 import type { StackPillShapeProps } from './shape';
 import { useEffect, useRef, useState } from 'react';
 
-const StackPillShape = ({ id, fill, stroke }: StackPillShapeProps) => {
+const StackPillShape = ({ id, fill, stroke, sharp = false }: StackPillShapeProps) => {
   const svg = useRef<SVGSVGElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
@@ -37,7 +37,7 @@ const StackPillShape = ({ id, fill, stroke }: StackPillShapeProps) => {
         vectorEffect={`non-scaling-stroke`}
         id={`${id}-stack-shape-path`}
         className={`stack-pill-shape-path`}
-        d={stackPillPath(size.width, size.height)}
+        d={stackPillPath(size.width, size.height, sharp)}
       />
     </svg>
   );

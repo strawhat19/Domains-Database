@@ -6,7 +6,7 @@ import type { StackPillShapeProps } from './shape';
 import { elementProps } from '../../shared/elementProps';
 import { View, type LayoutChangeEvent } from 'react-native';
 
-const StackPillShape = ({ id, fill = `transparent`, stroke = `transparent` }: StackPillShapeProps) => {
+const StackPillShape = ({ id, sharp = false, fill = `transparent`, stroke = `transparent` }: StackPillShapeProps) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const measure = ({ nativeEvent }: LayoutChangeEvent) => {
     const { width, height } = nativeEvent.layout;
@@ -31,7 +31,7 @@ const StackPillShape = ({ id, fill = `transparent`, stroke = `transparent` }: St
           fill={fill}
           stroke={stroke}
           strokeWidth={1}
-          d={stackPillPath(size.width, size.height)}
+          d={stackPillPath(size.width, size.height, sharp)}
           {...elementProps(`stack-pill-shape-path`, id)}
         />
       </Svg>

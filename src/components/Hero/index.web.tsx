@@ -3,16 +3,15 @@ import { useState } from 'react';
 import { Link } from 'expo-router';
 import HeroCubes from '../HeroCubes';
 import RouterAnchor from '../RouterAnchor';
+import StackPillShape from '../StackPillShape';
 import MagicTyping from '../MagicTyping';
 import { useHeroSearch } from './useHeroSearch';
 import { routes } from '../../shared/routes';
-import { Search, Globe2, History, ArrowUpRight } from 'lucide-react';
-import { useWindowDimensions } from 'react-native';
-import ResponsiveDomainHeading from '../ResponsiveDomainHeading';
+import { useStackPill } from '../../shared/config';
+import { Search, Globe2, History, TrendingUp, ArrowUpRight } from 'lucide-react';
 
 const Hero = () => {
   const search = useHeroSearch();
-  const { width } = useWindowDimensions();
   const [searchFocused, setSearchFocused] = useState(false);
 
   return (
@@ -28,19 +27,37 @@ const Hero = () => {
     </div>
     <div id={`hero-heading-group`} className={`hero-heading-group`}>
       <p id={`hero-eyebrow`} className={`hero-eyebrow`}>
-        <span
-          aria-hidden={`true`}
-          id={`hero-eyebrow-marker`}
-          className={`hero-eyebrow-marker`}
-        />
-        {`Domain Manager`}
+        <span id={`hero-eyebrow-copy`} className={`hero-eyebrow-copy`}>
+          <span
+            aria-hidden={`true`}
+            id={`hero-eyebrow-marker`}
+            className={`hero-eyebrow-marker`}
+          />
+          <span id={`hero-eyebrow-label`} className={`hero-eyebrow-label`}>{`Your Next Idea`}</span>
+        </span>
+        <Link href={routes.domains.href} asChild>
+          <RouterAnchor
+            aria-label={search.domainCount > 0 ? `Go To ${search.domainCount.toLocaleString()} Domains` : `Go To Domains`}
+            id={`hero-domains-link`}
+            className={`hero-domains-link${useStackPill ? ` hero-button-stack` : ``}`}
+          >
+            {useStackPill && <StackPillShape sharp id={`hero-domains-shape`} />}
+            <span id={`hero-domains-text`} className={`hero-domains-text`}>
+              {search.domainCount > 0 && (
+                <span id={`hero-domains-count`} className={`hero-cta-count`}>{`${search.domainCount.toLocaleString()} `}</span>
+              )}
+              {`Domains`}
+            </span>
+            <ArrowUpRight size={12} aria-hidden id={`hero-domains-icon`} className={`hero-domains-icon`} />
+          </RouterAnchor>
+        </Link>
       </p>
       <h1 id={`hero-title`} className={`hero-title`}>
         <span id={`hero-title-intro`} className={`hero-title-intro`}>
-          {`Your domains.`}
+          {`Planner & Manager`}
         </span>
         <span id={`hero-title-accent`} className={`hero-title-accent`}>
-          {`Under control.`}
+          {`Domains Database`}
         </span>
       </h1>
       <p id={`hero-description`} className={`hero-description`}>
@@ -52,28 +69,30 @@ const Hero = () => {
         className={`hero-domain-search`}
         onSubmit={event => { event.preventDefault(); search.submit(); }}
       >
-        <ResponsiveDomainHeading
-          forceCompact={width < 600}
-          shortText={`Find your domain`}
-          fullText={`Find your next domain`}
-          htmlFor={`hero-domain-search-input`}
-          id={`hero-domain-search-label`}
-          className={`hero-domain-search-label`}
-        />
-        <div id={`hero-domain-search-suggestions`} className={`hero-domain-search-suggestions`}>
-          <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
-          <Link href={routes.domains.href} asChild>
+        <div id={`hero-domain-search-trending-row`} className={`hero-domain-search-trending-row`}>
+          <MagicTyping label={`Get`} suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+          <Link href={routes.search.href} asChild>
             <RouterAnchor
-              aria-label={`Go To Domains`}
-              id={`hero-domain-search-domains-link`}
-              className={`hero-domain-search-domains-link`}
+              id={`hero-trending-link`}
+              className={`hero-trending-link${useStackPill ? ` hero-button-stack` : ``}`}
+              aria-label={search.trendingCount > 0 ? `Explore ${search.trendingCount.toLocaleString()} Trending Domains` : `Explore Trending Domains`}
             >
-              <span id={`hero-domain-search-domains-text`} className={`hero-domain-search-domains-text`}>{`Domains`}</span>
-              <ArrowUpRight size={12} aria-hidden id={`hero-domain-search-domains-icon`} className={`hero-domain-search-domains-icon`} />
+              {useStackPill && <StackPillShape sharp id={`hero-trending-shape`} />}
+              <span id={`hero-trending-text`} className={`hero-trending-text`}>
+                {search.trendingCount > 0 && (
+                  <span id={`hero-trending-count`} className={`hero-cta-count`}>{`${search.trendingCount.toLocaleString()} `}</span>
+                )}
+                {`Trending`}
+              </span>
+              <TrendingUp size={12} aria-hidden id={`hero-trending-icon`} className={`hero-trending-icon`} />
             </RouterAnchor>
           </Link>
         </div>
-        <div id={`hero-domain-search-row`} className={`hero-domain-search-row`}>
+        <div
+          id={`hero-domain-search-row`}
+          className={`hero-domain-search-row${useStackPill ? ` hero-search-stack` : ``}`}
+        >
+          {useStackPill && <StackPillShape id={`hero-domain-search-wrapper-shape`} />}
           <input
             required
             type={`text`}
@@ -81,6 +100,7 @@ const Hero = () => {
             autoComplete={`off`}
             value={search.query}
             autoCapitalize={`none`}
+            aria-label={`Search For A Domain`}
             placeholder={`your-next-domain.com`}
             id={`hero-domain-search-input`}
             onBlur={() => setSearchFocused(false)}
@@ -91,9 +111,10 @@ const Hero = () => {
           <button
             type={`submit`}
             id={`hero-domain-search-submit`}
-            className={`hero-domain-search-submit`}
+            className={`hero-domain-search-submit${useStackPill ? ` hero-button-stack` : ``}`}
             aria-label={`Search Domain Availability`}
           >
+            {useStackPill && <StackPillShape id={`hero-domain-search-submit-shape`} />}
             <Search size={15} aria-hidden id={`hero-domain-search-icon`} className={`hero-domain-search-icon`} />
             <span id={`hero-domain-search-text`} className={`hero-domain-search-text`}>{`Search`}</span>
           </button>

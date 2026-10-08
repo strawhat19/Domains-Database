@@ -1,33 +1,58 @@
 import HeroCubes from '../HeroCubes';
 import { Link } from 'expo-router';
 import MagicTyping from '../MagicTyping';
-import { useMemo, useState, useEffect, useContext } from 'react';
-import { Layers3, Search, History, ArrowUpRight } from 'lucide-react-native';
+import StackPillShape from '../StackPillShape';
+import { useRef, useMemo, useState, useEffect, useContext } from 'react';
+import { Search, Layers3, History, TrendingUp, ArrowUpRight } from 'lucide-react-native';
 import Svg, { Defs, Rect, Stop, LinearGradient } from 'react-native-svg';
 import { useHeroSearch } from './useHeroSearch';
 import { useRecentsLayout } from '../RecentDomainSearches/useRecentsLayout';
-import ResponsiveDomainHeading from '../ResponsiveDomainHeading';
 import { createStyles } from './styles.native';
-import { Text, View, Pressable, TextInput, useWindowDimensions } from 'react-native';
+import { Text, View, Easing, Animated, Pressable, TextInput, useWindowDimensions } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
 import { routes } from '../../shared/routes';
+import { useStackPill } from '../../shared/config';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { themePalettes } from '../../shared/themeContext/theme';
+import { useReducedMotion } from '../../shared/common/useReducedMotion';
 
 const Hero = () => {
   const search = useHeroSearch();
   const recents = useRecentsLayout();
+  const reducedMotion = useReducedMotion();
+  const radarPhases = useRef([new Animated.Value(0), new Animated.Value(0)]).current;
   const { width } = useWindowDimensions();
   const { isDark, palette } = useTheme();
   const heroPalette = isDark ? themePalettes.dark : palette;
   const heroBackground = isDark ? palette.strong : palette.paper;
+  const trendingFill = heroPalette.accent;
+  const trendingText = heroPalette.contrast;
+  const domainsLabel = search.domainCount > 0 ? `${search.domainCount.toLocaleString()} Domains` : `Domains`;
+  const trendingLabel = search.trendingCount > 0 ? `${search.trendingCount.toLocaleString()} Trending` : `Trending`;
   const compact = width < 600;
   const accentSize = Math.min(52, Math.max(28, (width - 48) * .105));
   const [searchFocused, setSearchFocused] = useState(false);
   const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
+  useEffect(() => {
+    radarPhases.forEach(phase => phase.setValue(0));
+    if (reducedMotion) return;
+
+    const animations = radarPhases.map((phase, index) => Animated.sequence([
+      Animated.delay(index * 1200),
+      Animated.loop(Animated.timing(phase, {
+        toValue: 1,
+        duration: 2400,
+        isInteraction: false,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.quad),
+      })),
+    ]));
+    animations.forEach(animation => animation.start());
+    return () => animations.forEach(animation => animation.stop());
+  }, [radarPhases, reducedMotion]);
 
   return (
     <View {...elementProps(`landing-hero`)} style={[styles.hero, compact && styles.compactHero]} onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}>
@@ -124,49 +149,124 @@ const Hero = () => {
           fill={`url(#hero-native-cube-top-fade)`}
         />
       </Svg>
-      <Text {...elementProps(`hero-eyebrow`)} style={styles.eyebrow}>
-        {`Domain Manager`}
-      </Text>
+      <View {...elementProps(`hero-eyebrow-row`)} style={styles.eyebrowRow}>
+        <View {...elementProps(`hero-eyebrow-label`)} style={styles.eyebrowLabel}>
+          <View
+            accessible={false}
+            pointerEvents={`none`}
+            {...elementProps(`hero-eyebrow-marker`)}
+            style={styles.eyebrowMarker}
+          >
+            {!reducedMotion && radarPhases.map((phase, index) => (
+              <Animated.View
+                key={index}
+                accessible={false}
+                {...elementProps(`hero-eyebrow-ring`, `${index}`)}
+                style={[
+                  styles.eyebrowRing,
+                  {
+                    opacity: phase.interpolate({ inputRange: [0, 1], outputRange: [.55, 0] }),
+                    transform: [{ scale: phase.interpolate({ inputRange: [0, 1], outputRange: [1, 4] }) }],
+                  },
+                ]}
+              />
+            ))}
+            <View {...elementProps(`hero-eyebrow-dot`)} accessible={false} style={styles.eyebrowDot} />
+          </View>
+          <Text {...elementProps(`hero-eyebrow`)} style={styles.eyebrow}>
+            {`Your Next Idea`}
+          </Text>
+        </View>
+        <Link asChild href={routes.domains.href}>
+          <Pressable
+            accessibilityRole={`link`}
+            accessibilityLabel={`Go To ${domainsLabel}`}
+            {...elementProps(`hero-domains-link`)}
+            style={({ pressed }) => [styles.domainsLink, useStackPill && styles.stackButton, pressed && styles.recentPressed]}
+          >
+            {useStackPill && (
+              <StackPillShape
+                sharp
+                fill={heroPalette.accent}
+                stroke={heroPalette.accent}
+                id={`hero-domains-shape`}
+              />
+            )}
+            <Text {...elementProps(`hero-domains-text`)} style={styles.domainsLinkText}>
+              {search.domainCount > 0 && (
+                <>
+                  <Text {...elementProps(`hero-domains-count`)} style={styles.ctaCount}>
+                    {search.domainCount.toLocaleString()}
+                  </Text>
+                  {` `}
+                </>
+              )}
+              {`Domains`}
+            </Text>
+            <ArrowUpRight {...elementProps(`hero-domains-icon`)} size={12} color={heroPalette.contrast} style={styles.buttonContent} />
+          </Pressable>
+        </Link>
+      </View>
       <Text
         {...elementProps(`hero-title`)}
         style={styles.title}
         accessibilityRole={`header`}
       >
-        {`Your domains.`}
+        {`Planner & Manager`}
       </Text>
       <Text {...elementProps(`hero-title-accent`)} style={[styles.accent, compact && { fontSize: accentSize, lineHeight: accentSize * 1.08 }]}>
-        {`Under control.`}
+        {`Domains Database`}
       </Text>
       <Text {...elementProps(`hero-description`)} style={styles.description}>
         {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
       </Text>
       <View {...elementProps(`hero-domain-search`)} style={styles.search}>
-        <ResponsiveDomainHeading
-          style={styles.searchLabel}
-          forceCompact={width < 600}
-          id={`hero-domain-search-label`}
-          shortText={`Find your domain`}
-          fullText={`Find your next domain`}
-        />
-        <View {...elementProps(`hero-domain-search-suggestions`)} style={styles.searchSuggestions}>
+        <View {...elementProps(`hero-domain-search-trending-row`)} style={styles.trendingRow}>
           <View {...elementProps(`hero-magic-typing-wrap`)} style={styles.magicTypingWrap}>
-            <MagicTyping suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
+            <MagicTyping
+              label={`Get`}
+              suffix={`hero`}
+              paused={searchFocused || Boolean(search.query)}
+            />
           </View>
-          <Link asChild href={routes.domains.href}>
+          <Link asChild href={routes.search.href}>
             <Pressable
               accessibilityRole={`link`}
-              accessibilityLabel={`Go To Domains`}
-              {...elementProps(`hero-domain-search-domains-link`)}
-              style={({ pressed }) => [styles.domainsLink, pressed && styles.recentPressed]}
+              accessibilityLabel={`Explore ${trendingLabel} Domains`}
+              {...elementProps(`hero-trending-link`)}
+              style={({ pressed }) => [styles.domainsLink, styles.trendingLink, useStackPill && styles.stackButton, pressed && styles.recentPressed]}
             >
-              <Text {...elementProps(`hero-domain-search-domains-text`)} style={styles.domainsLinkText}>
-                {`Domains`}
+              {useStackPill && (
+                <StackPillShape
+                  sharp
+                  fill={trendingFill}
+                  stroke={trendingFill}
+                  id={`hero-trending-shape`}
+                />
+              )}
+              <Text {...elementProps(`hero-trending-text`)} style={[styles.domainsLinkText, styles.trendingLinkText]}>
+                {search.trendingCount > 0 && (
+                  <>
+                    <Text {...elementProps(`hero-trending-count`)} style={styles.ctaCount}>
+                      {search.trendingCount.toLocaleString()}
+                    </Text>
+                    {` `}
+                  </>
+                )}
+                {`Trending`}
               </Text>
-              <ArrowUpRight {...elementProps(`hero-domain-search-domains-icon`)} size={12} color={heroPalette.contrast} />
+              <TrendingUp {...elementProps(`hero-trending-icon`)} size={12} color={trendingText} style={styles.buttonContent} />
             </Pressable>
           </Link>
         </View>
-        <View {...elementProps(`hero-domain-search-row`)} style={styles.searchRow}>
+        <View {...elementProps(`hero-domain-search-row`)} style={[styles.searchRow, useStackPill && styles.stackButton]}>
+          {useStackPill && (
+            <StackPillShape
+              fill={`${heroBackground}e6`}
+              stroke={`${heroPalette.accent}66`}
+              id={`hero-domain-search-wrapper-shape`}
+            />
+          )}
           <TextInput
             autoCorrect={false}
             value={search.query}
@@ -185,12 +285,18 @@ const Hero = () => {
           />
           <Pressable
             onPress={search.submit}
-            style={styles.searchButton}
+            style={[styles.searchButton, useStackPill && styles.stackButton]}
             accessibilityRole={`button`}
             {...elementProps(`hero-domain-search-submit`)}
             accessibilityLabel={`Search Domain Availability`}
           >
-            <Search {...elementProps(`hero-domain-search-icon`)} size={15} color={heroPalette.accent} />
+            {useStackPill && (
+              <StackPillShape
+                stroke={heroPalette.accent}
+                id={`hero-domain-search-submit-shape`}
+              />
+            )}
+            <Search {...elementProps(`hero-domain-search-icon`)} size={15} color={heroPalette.accent} style={styles.buttonContent} />
             <Text {...elementProps(`hero-domain-search-text`)} style={styles.searchButtonText}>{`Search`}</Text>
           </Pressable>
         </View>

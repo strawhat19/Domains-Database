@@ -5,6 +5,7 @@ export type PageMetaProps = {
   title: string;
   image?: string;
   noIndex?: boolean;
+  exactTitle?: boolean;
   description: string;
   publishedAt?: string;
   canonicalPath?: string;
@@ -12,8 +13,8 @@ export type PageMetaProps = {
   structuredData?: Record<string, unknown> | Record<string, unknown>[];
 };
 
-const PageMeta = ({ title, image, noIndex, description, publishedAt, canonicalPath, type = `website`, structuredData }: PageMetaProps) => {
-  const pageTitle = `${title} | Domains Database`;
+const PageMeta = ({ title, image, noIndex, exactTitle, description, publishedAt, canonicalPath, type = `website`, structuredData }: PageMetaProps) => {
+  const pageTitle = exactTitle ? title : `${title} | Domains Database`;
   const imageUrl = image ? absoluteSiteUrl(image) : undefined;
   const canonicalUrl = canonicalPath ? absoluteSiteUrl(canonicalPath) : undefined;
 

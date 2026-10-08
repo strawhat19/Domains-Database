@@ -4,7 +4,8 @@ import PageMeta from '../src/components/PageMeta';
 const HomePage = () => (
   <>
     <PageMeta
-      title={`Your Domains. Under Control.`}
+      exactTitle
+      title={`Domains Database | Idea, Plan, Manage, Execute, Launch`}
       description={`Keep track of every name, registrar, renewal, and yearly cost with Domain Manager.`}
     />
     <Hero />
