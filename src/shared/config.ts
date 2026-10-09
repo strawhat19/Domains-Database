@@ -1,6 +1,6 @@
 import type { Registrar } from './types';
 
-export const cubes = true;
+export const cubes = false;
 export const useLocalStorage = true;
 export const useSampleData = false;
 export const useStackPill = true;
