@@ -1,4 +1,5 @@
 import { styles } from './styles.native';
+import { roundedTilePath } from './shapes';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, AppState, Easing, View } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
@@ -77,7 +78,7 @@ const columns = Array.from({ length: gridSize * gridSize }, (_, index) => {
   && cube.y - halfHeight - Math.max(...cube.heights) - faceSkew <= viewBox.y + viewBox.height
 )).sort((first, second) => first.row + first.column - second.row - second.column || first.column - second.column);
 
-const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
+const HeroCubes = ({ cubes = true, suffix = `hero` }: { cubes?: boolean; suffix?: string }) => {
   const { isDark, palette } = useTheme();
   const cubePalette = cubePalettes[isDark ? `dark` : `light`];
   const reducedMotion = useReducedMotion();
@@ -88,6 +89,7 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
   const faces = useMemo(() => columns.map(cube => {
     const { x, y } = cube;
     const path = (face: `top` | `left` | `right`, height: number) => {
+      if (!cubes) return roundedTilePath(face, height, { x, y, depth: 8, faceSkew, halfWidth, halfHeight });
       const upperY = (y - halfHeight - height).toFixed(2);
       const leftY = (y - faceSkew - height).toFixed(2);
       const rightY = (y + faceSkew - height).toFixed(2);
@@ -116,7 +118,7 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
       glowOpacity: cube.lit ? phase.interpolate({ inputRange: phaseSteps, outputRange: cube.glow }) : 1,
       haloOpacity: cube.lit ? phase.interpolate({ inputRange: phaseSteps, outputRange: cube.halo }) : 0,
     };
-  }), [phase]);
+  }), [cubes, phase]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener(`change`, state => setActive(state !== `background` && state !== `inactive`));

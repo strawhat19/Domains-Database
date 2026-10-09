@@ -1,24 +1,23 @@
-import HeroCubes from '../HeroCubes';
 import { Link } from 'expo-router';
+import HeroCubes from '../HeroCubes';
 import MagicTyping from '../MagicTyping';
-import StackPillShape from '../StackPillShape';
-import { useRef, useMemo, useState, useEffect, useContext } from 'react';
-import { Search, Layers3, History, TrendingUp, ArrowUpRight } from 'lucide-react-native';
-import Svg, { Defs, Rect, Stop, LinearGradient } from 'react-native-svg';
-import { useHeroSearch } from './useHeroSearch';
-import { useRecentsLayout } from '../RecentDomainSearches/useRecentsLayout';
-import { createStyles } from './styles.native';
-import { Text, View, Easing, Animated, Pressable, TextInput, useWindowDimensions } from 'react-native';
-import { elementProps } from '../../shared/elementProps';
+import type { HeroProps } from './types';
 import { routes } from '../../shared/routes';
-import { useStackPill } from '../../shared/config';
-import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
+import StackPillShape from '../StackPillShape';
+import { createStyles } from './styles.native';
+import { elementProps } from '../../shared/elementProps';
+import { cubes, useStackPill } from '../../shared/config';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { themePalettes } from '../../shared/themeContext/theme';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
+import { useRef, useMemo, useState, useEffect, useContext } from 'react';
+import Svg, { Defs, Rect, Stop, LinearGradient } from 'react-native-svg';
+import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
+import { useRecentsLayout } from '../RecentDomainSearches/useRecentsLayout';
+import { Search, Layers3, History, TrendingUp, ArrowUpRight } from 'lucide-react-native';
+import { Text, View, Easing, Animated, Pressable, TextInput, useWindowDimensions } from 'react-native';
 
-const Hero = () => {
-  const search = useHeroSearch();
+const Hero = ({ search }: HeroProps) => {
   const recents = useRecentsLayout();
   const reducedMotion = useReducedMotion();
   const skeletonOpacity = useRef(new Animated.Value(1)).current;
@@ -76,7 +75,7 @@ const Hero = () => {
         {...elementProps(`hero-cube-art`)}
         style={[styles.cubeArt, compact && styles.compactCubeArt]}
       >
-        <HeroCubes />
+        <HeroCubes cubes={cubes} />
         <Svg
           width={`100%`}
           height={`100%`}

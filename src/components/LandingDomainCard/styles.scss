@@ -1,0 +1,58 @@
+.landing-domain-card {
+  border: 0;
+  gap: 17px;
+  height: 100%;
+  min-width: 0;
+  padding: 24px;
+  display: flex;
+  position: relative;
+  isolation: isolate;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: transparent;
+  --stack-pill-fill: var(--paper);
+  --stack-pill-border: var(--line);
+  transition: transform .25s ease;
+  > :not(.stack-pill-shape):not(.landing-domain-card-backing) { z-index: 1; position: relative; }
+  &:hover {
+    transform: translateY(-3px);
+    --stack-pill-border: color-mix(in srgb, var(--accent) 45%, var(--line));
+    .landing-domain-card-backing { transform: translate(9px, 8px); }
+  }
+}
+.landing-domain-card-backing { inset: 0; z-index: 0; position: absolute; pointer-events: none; transform: translate(7px, 6px); transition: transform .25s ease; --stack-pill-fill: var(--subtle); --stack-pill-border: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.landing-domain-card-top { gap: 12px; display: flex; align-items: center; justify-content: space-between; }
+.landing-domain-extension { font-size: 11px; padding: 5px 8px; border-radius: 5px; color: var(--accent); background: var(--subtle); font-family: var(--font-bold); }
+.landing-domain-trend { color: var(--accent); }
+.landing-domain-name { margin: 0; font-size: 21px; line-height: 1.35; overflow-wrap: anywhere; letter-spacing: -.035em; font-family: var(--font-bold); }
+.landing-domain-quote { gap: 7px; display: flex; margin-top: auto; flex-direction: column; }
+.landing-domain-registrar { font-size: 10px; color: var(--muted); }
+.landing-domain-price-row { gap: 7px; display: flex; flex-wrap: wrap; align-items: baseline; }
+.landing-domain-price { font-size: 25px; line-height: 1.3; letter-spacing: -.035em; font-family: var(--font-bold); }
+.landing-domain-term { font-size: 10px; color: var(--muted); }
+.landing-domain-actions { gap: 10px; display: flex; margin-top: 3px; padding-top: 14px; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); }
+.landing-domain-card .rowStatus { gap: 4px; margin: 0; display: flex; font-size: 10px; color: var(--success); align-items: center; }
+.landing-domain-card .statusDotWrap { width: 10px; height: 10px; display: grid; place-items: center; }
+.landing-domain-card .statusDot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.landing-domain-card .statusText { color: inherit; }
+.landing-domain-search {
+  gap: 6px;
+  border: 0;
+  display: flex;
+  font-size: 11px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  color: var(--accent);
+  align-items: center;
+  background: var(--subtle);
+  font-family: var(--font-bold);
+  transition: color .2s ease, background .2s ease;
+  &:hover { color: var(--contrast); background: var(--accent); }
+  &:focus-visible { outline-offset: 3px; outline: 2px solid var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-domain-card, .landing-domain-search, .landing-domain-card-backing { transition: none; }
+  .landing-domain-card:hover { transform: none; }
+  .landing-domain-card:hover .landing-domain-card-backing { transform: translate(7px, 6px); }
+}

@@ -24,7 +24,7 @@ export const createStyles = (palette: ThemePalette, isDark: boolean) => {
     contentFade: { ...StyleSheet.absoluteFillObject, zIndex: 0 },
     cubeArt: { zIndex: 0, right: -120, bottom: -90, width: `78%`, height: 560, minWidth: 620, opacity: .95, overflow: `hidden`, position: `absolute` },
     compactCubeArt: { right: -180, bottom: -70, height: 420, minWidth: 540 },
-    title: { zIndex: 1, fontSize: 20, lineHeight: 28, letterSpacing: -.4, color: heroPalette.muted, fontFamily: `DMSans_500Medium` },
+    title: { zIndex: 1, fontSize: 18, lineHeight: 26, letterSpacing: -.4, color: heroPalette.muted, fontFamily: `DMSans_500Medium` },
     accent: { zIndex: 1, fontSize: 52, lineHeight: 56, letterSpacing: -1.8, fontStyle: `italic`, textTransform: `uppercase`, color: heroPalette.accent, fontFamily: `DMSans_700Bold` },
     eyebrowRow: { zIndex: 1, width: `100%`, maxWidth: 430, marginBottom: 28, position: `relative`, alignItems: `center`, flexDirection: `row`, justifyContent: `space-between` },
     eyebrowLabel: { gap: 10, alignItems: `center`, flexDirection: `row` },

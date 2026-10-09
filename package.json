@@ -1,6 +1,6 @@
 {
   "name": "domains-database",
-  "version": "0.0.2.9",
+  "version": "0.0.3.0",
   "private": true,
   "main": "expo-router/entry",
   "engines": {

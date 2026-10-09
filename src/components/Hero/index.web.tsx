@@ -2,16 +2,15 @@ import './styles.scss';
 import { useState } from 'react';
 import { Link } from 'expo-router';
 import HeroCubes from '../HeroCubes';
-import RouterAnchor from '../RouterAnchor';
-import StackPillShape from '../StackPillShape';
 import MagicTyping from '../MagicTyping';
-import { useHeroSearch } from './useHeroSearch';
+import type { HeroProps } from './types';
+import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
-import { useStackPill } from '../../shared/config';
+import StackPillShape from '../StackPillShape';
+import { cubes, useStackPill } from '../../shared/config';
 import { Search, Globe2, History, TrendingUp, ArrowUpRight } from 'lucide-react';
 
-const Hero = () => {
-  const search = useHeroSearch();
+const Hero = ({ search }: HeroProps) => {
   const [searchFocused, setSearchFocused] = useState(false);
 
   return (
@@ -22,7 +21,7 @@ const Hero = () => {
   >
     <div id={`hero-cube-viewport`} className={`hero-cube-viewport`} aria-hidden>
       <div id={`hero-cube-scene`} className={`hero-cube-scene`}>
-        <HeroCubes />
+        <HeroCubes cubes={cubes} />
       </div>
     </div>
     <div id={`hero-heading-group`} className={`hero-heading-group`}>

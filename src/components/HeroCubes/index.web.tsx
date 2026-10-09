@@ -1,4 +1,5 @@
 import './styles.scss';
+import { roundedTilePath } from './shapes';
 import { memo, useId, useRef, useEffect } from 'react';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
 
@@ -9,7 +10,7 @@ const halfHeight = 32;
 const scene = { x: 40, y: 10, width: 900, height: 625 };
 const keyTimes = `0;.12;.55;.88;1`;
 const keySplines = `0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1`;
-const cubes = Array.from({ length: gridSize ** 2 }, (_, index) => {
+const tiles = Array.from({ length: gridSize ** 2 }, (_, index) => {
   const row = Math.floor(index / gridSize);
   const column = index % gridSize;
   const seed = row * 41 + column * 29;
@@ -35,29 +36,30 @@ const cubes = Array.from({ length: gridSize ** 2 }, (_, index) => {
   return cube.x + horizontalExtent >= scene.x && cube.x - horizontalExtent <= scene.x + scene.width
     && cube.y + lowerExtent >= scene.y && cube.y - upperExtent <= scene.y + scene.height;
 }).sort((left, right) => left.row + left.column - right.row - right.column || left.column - right.column);
-const luminousCubes = cubes.filter(cube => cube.luminous);
+const luminousCubes = tiles.filter(cube => cube.luminous);
 
 type CubeFace = `top` | `left` | `right`;
-type Cube = (typeof cubes)[number];
+type Cube = (typeof tiles)[number];
 
-const facePath = (face: CubeFace, height: number) => {
+const facePath = (face: CubeFace, height: number, rounded = false) => {
+  if (rounded) return roundedTilePath(face, height, { depth: 8, faceSkew, halfWidth, halfHeight });
   if (face === `top`) return `M0 ${-halfHeight - height}L${halfWidth} ${faceSkew - height}L0 ${halfHeight - height}L${-halfWidth} ${-faceSkew - height}Z`;
   if (face === `left`) return `M${-halfWidth} ${-faceSkew - height}L0 ${halfHeight - height}L0 ${halfHeight}L${-halfWidth} ${-faceSkew}Z`;
   return `M0 ${halfHeight - height}L${halfWidth} ${faceSkew - height}L${halfWidth} ${faceSkew}L0 ${halfHeight}Z`;
 };
 
-const Face = ({ cube, face, suffix, moving }: { cube: Cube; face: CubeFace; suffix: string; moving: boolean }) => {
+const Face = ({ cube, face, suffix, moving, rounded }: { cube: Cube; face: CubeFace; suffix: string; moving: boolean; rounded: boolean }) => {
   const top = face === `top`;
   const id = `hero-cube-${face}-${suffix}-${cube.index}`;
   const heights = [5, 5, cube.peak, 5, 5];
-  const values = heights.map(height => facePath(face, height)).join(`;`);
+  const values = heights.map(height => facePath(face, height, rounded)).join(`;`);
   const opacity = top ? `.48;.48;1;.48;.48` : `.18;.18;.95;.18;.18`;
 
   const shape = (
     <path
       id={id}
       strokeWidth={.7}
-      d={facePath(face, top ? 0 : cube.rest)}
+      d={facePath(face, top ? 0 : cube.rest, rounded)}
       fillOpacity={cube.luminous ? .85 : 1}
       className={`hero-cube-face hero-cube-${face}${cube.luminous ? ` hero-cube-face-luminous` : ``}`}
       fill={`url(#hero-cubes-${cube.luminous ? `light` : `dark`}-${face}-${suffix})`}
@@ -125,7 +127,7 @@ const Face = ({ cube, face, suffix, moving }: { cube: Cube; face: CubeFace; suff
   );
 };
 
-const HeroCubes = () => {
+const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
   const suffix = useId().replace(/[^a-zA-Z0-9_-]/g, ``);
   const reducedMotion = useReducedMotion();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -155,7 +157,7 @@ const HeroCubes = () => {
   }, [reducedMotion]);
 
   return (
-    <div aria-hidden id={`hero-cubes-${suffix}`} className={`hero-cubes`}>
+    <div aria-hidden id={`hero-cubes-${suffix}`} className={`hero-cubes`} data-shape={cubes ? `cubes` : `slabs`}>
       <svg
         ref={svgRef}
         width={`100%`}
@@ -205,11 +207,11 @@ const HeroCubes = () => {
         </defs>
         <ellipse cx={640} cy={340} rx={530} ry={350} fill={`url(#hero-cubes-atmosphere-${suffix})`} id={`hero-cubes-atmosphere-${suffix}-shape`} className={`hero-cubes-atmosphere`} />
         <g id={`hero-cubes-floor-${suffix}`} className={`hero-cubes-floor`}>
-          {cubes.map(cube => (
+          {tiles.map(cube => (
             <path
               key={cube.index}
               strokeWidth={.8}
-              d={facePath(`top`, 0)}
+              d={facePath(`top`, 0, !cubes)}
               className={`hero-cubes-floor-tile`}
               id={`hero-cubes-floor-tile-${suffix}-${cube.index}`}
               transform={`translate(${cube.x} ${cube.y})`}
@@ -247,16 +249,16 @@ const HeroCubes = () => {
           ))}
         </g>
         <g id={`hero-cubes-field-${suffix}`} className={`hero-cubes-field`}>
-          {cubes.map(cube => (
+          {tiles.map(cube => (
             <g
               key={cube.index}
               id={`hero-cube-${suffix}-${cube.index}`}
               transform={`translate(${cube.x} ${cube.y})`}
               className={`hero-cube${cube.luminous ? ` hero-cube-luminous` : ``}`}
             >
-              <Face face={`left`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} />
-              <Face face={`right`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} />
-              <Face face={`top`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} />
+              <Face face={`left`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} rounded={!cubes} />
+              <Face face={`right`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} rounded={!cubes} />
+              <Face face={`top`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} rounded={!cubes} />
             </g>
           ))}
         </g>

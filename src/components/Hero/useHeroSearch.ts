@@ -25,6 +25,7 @@ export const useHeroSearch = () => {
   return {
     query,
     submit,
+    discovery,
     setQuery,
     searchDomain,
     domainCount: domainsLoading ? 0 : domains.length,

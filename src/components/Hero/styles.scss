@@ -117,17 +117,23 @@
 
   &::before,
   &::after {
-    inset: 0;
+    top: 50%;
+    left: 50%;
     opacity: 0;
+    width: 100%;
+    height: 100%;
     content: '';
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
+    box-sizing: border-box;
+    transform-origin: center;
     border: 1px solid currentColor;
+    transform: translate(-50%, -50%);
   }
 }
 .hero-title { margin: 0; line-height: 1.02; letter-spacing: -.04em; font-family: var(--font-bold); }
-.hero-title-intro { display: block; font-weight: 400; line-height: 1.5; letter-spacing: -.025em; text-transform: uppercase; color: var(--hero-muted); font-family: var(--font-body); font-size: clamp(22px, 2.1vw, 34px); }
+.hero-title-intro { display: block; font-weight: 400; line-height: 1.5; letter-spacing: -.025em; text-transform: uppercase; color: var(--hero-muted); font-family: var(--font-body); font-size: clamp(20px, 1.9vw, 30px); }
 .hero-title-accent { display: block; font-weight: 700; font-style: italic; text-transform: uppercase; color: var(--hero-accent); text-shadow: 0 0 28px var(--hero-title-glow); font-size: clamp(42px, 4.7vw, 78px); }
 
 .hero-description { max-width: 420px; margin: 28px 0 0; line-height: 1.8; font-size: 14px; color: var(--hero-muted); }
@@ -323,7 +329,7 @@
   .landing-hero::after { background: linear-gradient(90deg, color-mix(in srgb, var(--hero-surface) 96%, transparent), color-mix(in srgb, var(--hero-surface) 76%, transparent) 55%, color-mix(in srgb, var(--hero-surface) 42%, transparent)); }
   .hero-heading-group { width: 100%; max-width: 460px; }
   .hero-cube-scene { right: -52%; width: 126%; opacity: .72; }
-  .hero-title-intro { font-size: 24px; }
+  .hero-title-intro { font-size: 22px; }
   .hero-title-accent { font-size: clamp(40px, 8.5vw, 58px); }
   .hero-eyebrow { font-size: 9px; margin-bottom: 26px; }
   .hero-description { max-width: 370px; font-size: 13px; margin-top: 24px; }
@@ -348,9 +354,9 @@
 }
 
 @keyframes hero-eyebrow-radar-pulse {
-  0% { opacity: .65; transform: scale(1); }
-  70% { opacity: .12; transform: scale(3.4); }
-  100% { opacity: 0; transform: scale(4); }
+  0% { opacity: .65; transform: translate(-50%, -50%) scale(1); }
+  70% { opacity: .12; transform: translate(-50%, -50%) scale(3.4); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(4); }
 }
 
 @keyframes hero-content-reveal {

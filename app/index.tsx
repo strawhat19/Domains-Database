@@ -1,4 +1,4 @@
-import Hero from '../src/components/Hero';
+import Landing from '../src/components/Landing';
 import PageMeta from '../src/components/PageMeta';
 
 const HomePage = () => (
@@ -8,7 +8,7 @@ const HomePage = () => (
       title={`Domains Database | Idea, Plan, Manage, Execute, Launch`}
       description={`Keep track of every name, registrar, renewal, and yearly cost with Domain Manager.`}
     />
-    <Hero />
+    <Landing />
   </>
 );
 
