@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import type { TagPickerProps } from './types';
-import { normalizeDomainTags } from '../../shared/domainTags';
+import { useEffect, useState } from 'react';
 import type { DomainTag } from '../../shared/domainTags';
+import { normalizeDomainTags } from '../../shared/domainTags';
 
 export const useTagPicker = ({ value, onChange, disabled = false }: TagPickerProps) => {
   const [open, setOpen] = useState(false);

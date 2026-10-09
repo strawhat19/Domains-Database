@@ -156,6 +156,21 @@ There is no reliable free universal API that reveals actual visits, visitors, or
 
 Provider access/pricing was reviewed October 2, 2026; final paid API costs depend on the quoted plan and requested data. The current app uses only the public performance/rank lookups. [firestore-plan.md](firestore-plan.md) remains the historical planning document; the Firebase behavior implemented now is described above.
 
+## Reusable Carousel
+
+`src/components/Carousel` accepts a unique `scope`, an accessible `label`, and `slides` with `id`, `label`, and React Native `content`. It defaults to automatic rotation every 7 seconds; `interval` and `autoplay` can be configured. It includes chevrons, connected pagination dots, keyboard navigation, web pointer dragging, and native horizontal swipes. Autoplay pauses during hover, focus, gestures, hidden/background states, and reduced motion. `ConnectionsInputGuide` supplies the registrar-specific text and title icons.
+
+```tsx
+<Carousel
+  scope={`setup-guide`}
+  label={`Setup Guide`}
+  slides={[
+    { id: `start`, label: `Getting Started`, content: <Text>{`Start Here`}</Text> },
+    { id: `next`, label: `Next Steps`, content: <Text>{`Continue Here`}</Text> },
+  ]}
+/>
+```
+
 ## Community and public sharing
 
 Cloud Community, public profile discovery, and public domain sharing are deliberately unavailable until a safe public projection and its audience rules are implemented. Profiles start private. Saving a Public preference does not publish a Firebase profile or portfolio. Private account records are not exposed through public queries.
@@ -165,6 +180,12 @@ In optional local mode, Community is shared only between accounts saved on the s
 Guest domains use their own device storage and are not adopted by Firebase accounts. Home and Domains always show the table, including its empty state, with no account gate.
 
 `ai/skills/structure/structure.md` documents the reusable folder tree and imports. The numbered guides in `ai/skills/` and AGENTS.md are portable to another repository and keep application-specific schemas out of shared instructions.
+
+## Blog Resources
+
+The blog includes a full-width history of the Internet and domain names, followed by portfolio/search actions, Reddit community links and recent discussions, and YouTube channel links and recent videos. `src/shared/blog/resources.ts` owns the curated sources; `GET /api/blog-feeds` reads their public publisher feeds with bounded requests and a 15-minute server cache. No API keys are required. Feed cards open the original discussion or video; source links remain available when feeds cannot load.
+
+Reddit [announced that RSS support ends November 13, 2026](https://support.reddithelp.com/hc/en-us/articles/54353370049684-Changelog-October-8-2026). After that cutoff, its community links remain usable but recent-discussion cards depend on Reddit providing an approved replacement. YouTube feed support is separate. No tests, builds, or UI checks were run for these blog changes.
 
 ## Web and mobile publishing
 

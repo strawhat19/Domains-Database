@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
-import type { FocusEvent } from 'react';
-import { Pause, Play } from 'lucide-react-native';
+import Carousel from '../Carousel';
+import { Text, View } from 'react-native';
 import { createStyles } from './styles.native';
-import { Animated, Platform, Pressable, Text, View } from 'react-native';
+import { Globe2, KeyRound, FileKey2 } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { useConnectionsInputGuide } from './useConnectionsInputGuide';
 import { connectionEnvInstructions, connectionInputInstructions } from '../../shared/connections/inputs';
 
 export interface ConnectionsInputGuideProps {
@@ -15,6 +14,7 @@ export interface ConnectionsInputGuideProps {
 const slides = [
   {
     id: `overview`,
+    Icon: Globe2,
     title: `Registrar Connections`,
     titleClass: `connections-title`,
     headingClass: `connections-heading`,
@@ -23,6 +23,7 @@ const slides = [
   },
   {
     id: `values`,
+    Icon: KeyRound,
     titleClass: `connections-input-guide-title`,
     copyClass: `connections-input-instructions`,
     title: `How To Enter Connection Values`,
@@ -30,6 +31,7 @@ const slides = [
   },
   {
     id: `env`,
+    Icon: FileKey2,
     title: `How To Add Values To .env`,
     titleClass: `connections-env-guide-title`,
     copyClass: `connections-env-instructions`,
@@ -40,109 +42,31 @@ const slides = [
 const ConnectionsInputGuide = ({ scope }: ConnectionsInputGuideProps) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const state = useConnectionsInputGuide(slides.length);
-  const PlaybackIcon = state.paused ? Play : Pause;
-  const pauseLabel = state.reducedMotion ? `Autoplay Disabled For Reduced Motion` : `${state.paused ? `Play` : `Pause`} Connection Instructions`;
-  const width = state.viewportWidth > 0 ? state.viewportWidth : `${100 / slides.length}%` as const;
-
   return (
-    <View
-      {...elementProps(`connections-input-guide`, scope)}
-      {...(Platform.OS === `web` ? {
-        role: `region` as const,
-        'aria-roledescription': `carousel`,
-        onPointerEnter: state.hoverIn,
-        onPointerLeave: state.hoverOut,
-        onFocusCapture: state.focusIn,
-        onBlurCapture: (event: FocusEvent<HTMLElement>) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) state.focusOut();
-        },
-      } : {})}
-      style={styles.guide}
-      accessibilityLabel={`Connection Instructions`}
-    >
-      <View
-        {...elementProps(`connections-guide-viewport`, scope)}
-        onLayout={state.onLayout}
-        style={styles.viewport}
-      >
-        <Animated.View
-          {...elementProps(`connections-guide-track`, scope)}
-          style={[styles.track, {
-            width: state.viewportWidth > 0 ? state.viewportWidth * slides.length : `${slides.length * 100}%`,
-            transform: [{ translateX: state.translateX }],
-          }]}
-        >
-          {slides.map((slide, index) => {
-            const selected = state.index === index;
-            const slideScope = `${scope}-${slide.id}-${index}`;
-            return (
-              <View
-                key={slide.id}
-                {...elementProps(`connections-guide-slide`, slideScope)}
-                {...(Platform.OS === `web` ? {
-                  inert: !selected,
-                  'aria-hidden': !selected,
-                  'aria-roledescription': `slide`,
-                } : {})}
-                style={[styles.slide, { width }]}
-                accessibilityElementsHidden={!selected}
-                importantForAccessibility={selected ? `auto` : `no-hide-descendants`}
-                accessibilityLabel={`${index + 1} Of ${slides.length}`}
-              >
-                <View {...elementProps(slide.headingClass ?? `connections-guide-heading`, slide.headingClass ? scope : slideScope)} style={styles.heading}>
-                  <Text {...elementProps(slide.titleClass, scope)} style={styles.title} accessibilityRole={`header`}>
-                    {slide.title}
-                  </Text>
+    <View {...elementProps(`connections-input-guide`, scope)} style={styles.guide}>
+      <Carousel
+        scope={`connections-guide-${scope}`}
+        label={`Connection Instructions`}
+        slides={slides.map((slide, index) => {
+          const Icon = slide.Icon;
+          const slideScope = `${scope}-${slide.id}-${index}`;
+          return {
+            id: slide.id,
+            label: slide.title,
+            content: (
+              <View {...elementProps(`connections-guide-content`, slideScope)} style={styles.content}>
+                <View {...elementProps(slide.headingClass ?? `connections-guide-heading`, slideScope)} style={styles.heading}>
+                  <View {...elementProps(`connections-guide-icon-wrap`, slideScope)} style={styles.icon}>
+                    <Icon {...elementProps(`connections-guide-title-icon`, slideScope)} size={16} color={palette.accent} />
+                  </View>
+                  <Text {...elementProps(slide.titleClass, slideScope)} style={styles.title} accessibilityRole={`header`}>{slide.title}</Text>
                 </View>
-                <Text {...elementProps(slide.copyClass, scope)} style={styles.copy}>
-                  {slide.copy}
-                </Text>
+                <Text {...elementProps(slide.copyClass, slideScope)} style={styles.copy}>{slide.copy}</Text>
               </View>
-            );
-          })}
-        </Animated.View>
-      </View>
-      <View {...elementProps(`connections-guide-controls`, scope)} style={styles.controls}>
-        <View {...elementProps(`connections-guide-pagination`, scope)} style={styles.pagination} accessibilityLabel={`Instruction Slides`}>
-          {slides.map((slide, index) => {
-            const selected = state.index === index;
-            const dotScope = `${scope}-${slide.id}-${index}`;
-            return (
-              <Pressable
-                key={slide.id}
-                {...elementProps(`connections-guide-dot-button`, dotScope)}
-                {...(Platform.OS === `web` ? {
-                  'aria-current': selected ? `true` as const : undefined,
-                  'aria-controls': `connections-guide-slide-${dotScope}`,
-                } : {})}
-                onPress={() => state.select(index)}
-                accessibilityRole={`button`}
-                accessibilityState={{ selected }}
-                style={({ pressed }) => [styles.dotButton, pressed && styles.pressed]}
-                accessibilityLabel={`Show ${slide.title}, Slide ${index + 1} Of ${slides.length}`}
-                onFocus={state.focusIn}
-                onBlur={state.focusOut}
-              >
-                <View {...elementProps(`connections-guide-dot`, dotScope)} style={[styles.dot, selected && styles.activeDot]} />
-              </Pressable>
-            );
-          })}
-        </View>
-        <Pressable
-          {...elementProps(`connections-guide-playback`, scope)}
-          disabled={state.reducedMotion}
-          onPress={state.togglePaused}
-          accessibilityRole={`button`}
-          accessibilityLabel={pauseLabel}
-          onFocus={state.focusIn}
-          onBlur={state.focusOut}
-          accessibilityState={{ disabled: state.reducedMotion }}
-          style={({ pressed }) => [styles.playback, (pressed || state.reducedMotion) && styles.pressed]}
-        >
-          <PlaybackIcon {...elementProps(`connections-guide-playback-icon`, scope)} size={14} color={palette.muted} />
-        </Pressable>
-      </View>
+            ),
+          };
+        })}
+      />
     </View>
   );
 };

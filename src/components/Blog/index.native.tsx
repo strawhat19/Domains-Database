@@ -1,15 +1,18 @@
 import BlogCard from '../BlogCard';
 import PageMeta from '../PageMeta';
+import { Link } from 'expo-router';
+import BlogResources from '../BlogResources';
 import { useMemo, useEffect, useContext } from 'react';
-import { BookOpen } from 'lucide-react-native';
-import { View, Text, useWindowDimensions } from 'react-native';
+import { BookOpen, ArrowLeft } from 'lucide-react-native';
+import { View, Text, Pressable, useWindowDimensions } from 'react-native';
 import { createStyles } from './styles.native';
+import { routes } from '../../shared/routes';
 import { absoluteSiteUrl } from '../../shared/seo';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { blogTitle, blogDescription } from '../../shared/blog/metadata';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
-import { blogArticles, regularBlogArticles, featuredBlogArticle } from '../../shared/blog/articles';
+import { blogArticles, historyBlogArticle, regularBlogArticles, featuredBlogArticle } from '../../shared/blog/articles';
 
 const Blog = () => {
   const { width } = useWindowDimensions();
@@ -17,11 +20,10 @@ const Blog = () => {
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const wide = width >= 700;
-  const sideBySide = width >= 1000;
   const padding = wide ? 32 : 20;
+  const columns = width >= 1000 ? 3 : wide ? 2 : 1;
   const contentWidth = Math.min(width, 1120) - padding * 2;
-  const cardWidth = (contentWidth - (wide ? 20 : 0)) / (wide ? 2 : 1);
-  const featuredWidth = sideBySide ? (contentWidth - 32) * .6 : cardWidth;
+  const cardWidth = (contentWidth - (columns - 1) * 20) / columns;
 
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
 
@@ -50,50 +52,49 @@ const Blog = () => {
         }}
       />
       <View {...elementProps(`native-blog-page`)} style={[styles.page, { paddingHorizontal: padding }]}>
-        <View
-          style={[styles.intro, sideBySide && styles.sideBySideIntro]}
-          {...elementProps(`native-blog-intro`)}
-          onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}
-        >
-          <View {...elementProps(`native-blog-intro-text`)} style={[styles.introText, sideBySide && styles.sideBySideText]}>
+        <View {...elementProps(`native-blog-intro`)} style={styles.intro}>
+          <Link asChild href={routes.domains.href}>
+            <Pressable {...elementProps(`native-blog-back-domains`)} style={styles.backLink} accessibilityRole={`link`}>
+              <ArrowLeft size={14} color={palette.muted} accessible={false} {...elementProps(`native-blog-back-icon`)} />
+              <Text {...elementProps(`native-blog-back-label`)} style={styles.backText}>{`Back To Domains`}</Text>
+            </Pressable>
+          </Link>
+          <View {...elementProps(`native-blog-intro-heading`)} style={[styles.introHeading, wide && styles.wideIntroHeading]}>
+            <View {...elementProps(`native-blog-intro-text`)} style={[styles.introText, wide && styles.wideIntroText]}>
+              <Text {...elementProps(`native-blog-title`)} style={styles.title} accessibilityRole={`header`}>{`Blog`}</Text>
+              <Text {...elementProps(`native-blog-description`)} style={styles.description}>{`Learn what domains are, explore the story of the internet, and find practical ways to choose, organize, and protect the names you own.`}</Text>
+            </View>
             <View {...elementProps(`native-blog-eyebrow`)} style={styles.eyebrow}>
               <BookOpen {...elementProps(`native-blog-eyebrow-icon`)} size={15} color={palette.accent} accessible={false} />
-              <Text {...elementProps(`native-blog-eyebrow-text`)} style={styles.eyebrowText}>
-                {`THE DOMAIN FIELD GUIDE`}
-              </Text>
-            </View>
-            <Text {...elementProps(`native-blog-title`)} style={[styles.title, wide && !sideBySide && styles.wideTitle]} accessibilityRole={`header`}>
-              {`Domains Database Blog`}
-            </Text>
-            <Text {...elementProps(`native-blog-description`)} style={styles.description}>
-              {`Good names deserve good decisions. Practical guides to finding, organizing, and protecting the domains you own.`}
-            </Text>
-            <View {...elementProps(`native-blog-intro-footer`)} style={[styles.introFooter, sideBySide && styles.sideBySideFooter]}>
-              <Text {...elementProps(`native-blog-count`)} style={styles.count}>
-                {`${blogArticles.length} guides · Built for domain owners`}
-              </Text>
-              <Text {...elementProps(`native-blog-intro-note`)} style={styles.note}>
-                {`Clear explanations. Useful checklists.`}
-              </Text>
+              <Text {...elementProps(`native-blog-eyebrow-text`)} style={styles.eyebrowText}>{`THE DOMAIN JOURNAL`}</Text>
             </View>
           </View>
-          <View {...elementProps(`native-blog-featured`)} style={[styles.featured, sideBySide && styles.sideBySideFeatured, { width: featuredWidth }]}>
-            <View {...elementProps(`native-blog-featured-label`)} style={styles.featuredLabel}>
-              <BookOpen {...elementProps(`native-blog-featured-icon`)} size={15} color={palette.accent} accessible={false} />
-              <Text {...elementProps(`native-blog-featured-title`)} style={styles.featuredTitle} accessibilityRole={`header`}>
-                {`Featured guide`}
-              </Text>
+        </View>
+        <View
+          {...elementProps(`native-blog-featured`)}
+          style={[styles.featured, { marginHorizontal: -padding, paddingHorizontal: padding }]}
+          onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}
+        >
+          <BlogCard story article={featuredBlogArticle} featured={wide} prefix={`blog-featured`} />
+        </View>
+        <View {...elementProps(`native-blog-guides`)} style={styles.guides}>
+          <View {...elementProps(`native-blog-guides-intro`)} style={styles.guidesIntro}>
+            <Text {...elementProps(`native-blog-guides-eyebrow`)} style={styles.eyebrowText}>{`KEEP EXPLORING`}</Text>
+            <Text {...elementProps(`native-blog-guides-title`)} style={styles.sectionTitle} accessibilityRole={`header`}>{`Good Names Start With Curiosity.`}</Text>
+            <Text {...elementProps(`native-blog-guides-description`)} style={styles.sectionDescription}>{`Practical guides to help you find a memorable address, make informed decisions, and give every domain a purpose.`}</Text>
+          </View>
+          <View {...elementProps(`native-blog-grid`)} style={styles.grid}>
+            {regularBlogArticles.map(article => (
+              <View key={article.slug} {...elementProps(`native-blog-card-slot`, article.slug)} style={{ width: cardWidth }}>
+                <BlogCard journal article={article} />
+              </View>
+            ))}
+            <View {...elementProps(`native-blog-history`)} style={{ width: contentWidth }}>
+              <BlogCard wide={wide} prefix={`blog-history`} article={historyBlogArticle} />
             </View>
-            <BlogCard article={featuredBlogArticle} featured={sideBySide} prefix={`blog-featured`} />
           </View>
         </View>
-        <View {...elementProps(`native-blog-grid`)} style={styles.grid}>
-          {regularBlogArticles.map(article => (
-            <View key={article.slug} {...elementProps(`native-blog-card-slot`, article.slug)} style={{ width: cardWidth }}>
-              <BlogCard article={article} />
-            </View>
-          ))}
-        </View>
+        <BlogResources />
       </View>
     </>
   );

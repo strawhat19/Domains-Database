@@ -1,3 +1,5 @@
+import { internetHistoryArticle } from './history';
+
 export type BlogSection = {
   id: string;
   title: string;
@@ -550,9 +552,11 @@ export const blogArticles: BlogArticle[] = [
       { label: `Google Search Central: Managing Multi-Regional and Multilingual Sites`, url: `https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites` },
     ],
   },
+  internetHistoryArticle,
 ];
 
 export const featuredBlogArticle = blogArticles[0];
-export const regularBlogArticles = blogArticles.filter(article => article.slug !== featuredBlogArticle.slug);
+export const historyBlogArticle = internetHistoryArticle;
+export const regularBlogArticles = blogArticles.filter(article => article.slug !== featuredBlogArticle.slug && article.slug !== historyBlogArticle.slug);
 
 export const getBlogArticle = (slug: string) => blogArticles.find(article => article.slug === slug);

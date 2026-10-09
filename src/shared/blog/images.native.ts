@@ -6,4 +6,5 @@ export const blogImages: Record<string, number> = {
   'domain-portfolio-management': require('../../../assets/blog/domain-portfolio-management.svg'),
   'how-to-choose-a-domain-name': require('../../../assets/blog/how-to-choose-a-domain-name.svg'),
   'domain-vs-hosting-vs-website': require('../../../assets/blog/domain-vs-hosting-vs-website.svg'),
+  'history-of-the-internet-and-domain-names': require('../../../assets/blog/history-of-the-internet-and-domain-names.svg'),
 };

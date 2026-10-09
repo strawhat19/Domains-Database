@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { createStyles } from './styles.native';
-import { useTagPicker } from './useTagPicker';
+import { useTagPicker } from './useTagPickerState';
 import type { TagPillsProps, TagPickerProps } from './types';
 import { Text, View, Pressable, ScrollView } from 'react-native';
 import { elementProps } from '../../shared/elementProps';

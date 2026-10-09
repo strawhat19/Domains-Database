@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" role="img" aria-labelledby="title desc">
+  <title id="title">From connected computers to memorable names</title>
+  <desc id="desc">Three diagrams show a packet network, a DNS hierarchy, and a web browser above a timeline of ARPANET, TCP/IP and DNS, the first .com, the Web, ICANN, and multilingual names.</desc>
+  <defs>
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.4" fill="#9ab4ae" opacity="0.2"/></pattern>
+  </defs>
+  <rect width="1200" height="750" fill="#f5f3e9"/>
+  <circle cx="1148" cy="12" r="285" fill="#dfefea" opacity="0.68"/>
+  <circle cx="-5" cy="714" r="228" fill="#ede8d8" opacity="0.75"/>
+  <rect x="800" y="389" width="316" height="269" fill="url(#grid)"/>
+  <g font-family="Arial, Helvetica, sans-serif" stroke-linecap="round" stroke-linejoin="round">
+    <text x="84" y="82" font-size="15" font-weight="600" fill="#5f7b81" letter-spacing="2.2">DOMAINS DATABASE / INTERNET HISTORY</text>
+    <text x="84" y="143" font-size="37" font-weight="650" fill="#133b50">From connected computers to memorable names</text>
+    <text x="84" y="183" font-size="18" fill="#5f7b81">Networks carry information. Names make the destination familiar.</text>
+    <rect x="84" y="233" width="314" height="295" rx="24" fill="#fffefa" stroke="#c6d8cd" stroke-width="2"/>
+    <rect x="443" y="233" width="314" height="295" rx="24" fill="#dfefea" stroke="#b7d5cb" stroke-width="2"/>
+    <rect x="802" y="233" width="314" height="295" rx="24" fill="#fffefa" stroke="#c6d8cd" stroke-width="2"/>
+    <text x="111" y="271" font-size="13" font-weight="700" fill="#5f7b81" letter-spacing="1.6">01 / CONNECT</text>
+    <text x="470" y="271" font-size="13" font-weight="700" fill="#5f7b81" letter-spacing="1.6">02 / NAME</text>
+    <text x="829" y="271" font-size="13" font-weight="700" fill="#5f7b81" letter-spacing="1.6">03 / EXPLORE</text>
+    <path d="M161 333 L316 333 L316 420 L161 420 Z M161 333 L316 420 M316 333 L161 420" fill="none" stroke="#89aaa0" stroke-width="2" stroke-dasharray="6 8"/>
+    <g fill="#dfefea" stroke="#138b8b" stroke-width="2">
+      <rect x="135" y="310" width="54" height="41" rx="7"/>
+      <rect x="288" y="310" width="54" height="41" rx="7"/>
+      <rect x="135" y="398" width="54" height="41" rx="7"/>
+      <rect x="288" y="398" width="54" height="41" rx="7"/>
+      <path d="M146 357 H178 M299 357 H331 M146 445 H178 M299 445 H331"/>
+    </g>
+    <rect x="231" y="367" width="18" height="14" rx="3" fill="#e4c07d"/>
+    <rect x="264" y="326" width="13" height="13" rx="3" fill="#138b8b"/>
+    <text x="241" y="486" font-size="23" font-weight="600" fill="#133b50" text-anchor="middle">A network of networks</text>
+    <path d="M600 324 V352 M513 390 V370 H688 V390 M513 431 V451 M688 431 V451" fill="none" stroke="#86b5ad" stroke-width="3"/>
+    <circle cx="600" cy="317" r="20" fill="#138b8b"/>
+    <text x="600" y="324" font-size="16" font-weight="700" fill="#fffefa" text-anchor="middle">DNS</text>
+    <rect x="471" y="389" width="85" height="42" rx="12" fill="#fffefa" stroke="#b7d5cb" stroke-width="2"/>
+    <rect x="645" y="389" width="85" height="42" rx="12" fill="#fffefa" stroke="#b7d5cb" stroke-width="2"/>
+    <text x="513" y="417" font-size="25" font-weight="600" fill="#133b50" text-anchor="middle">.com</text>
+    <text x="688" y="417" font-size="25" font-weight="600" fill="#133b50" text-anchor="middle">.org</text>
+    <circle cx="513" cy="455" r="6" fill="#e4c07d"/>
+    <circle cx="688" cy="455" r="6" fill="#e4c07d"/>
+    <text x="600" y="486" font-size="23" font-weight="600" fill="#133b50" text-anchor="middle">A shared naming tree</text>
+    <rect x="829" y="309" width="260" height="142" rx="12" fill="#dfefea" stroke="#86b5ad" stroke-width="2"/>
+    <path d="M829 343 H1089" stroke="#86b5ad" stroke-width="2"/>
+    <circle cx="847" cy="326" r="4" fill="#138b8b"/>
+    <circle cx="861" cy="326" r="4" fill="#e4c07d"/>
+    <circle cx="875" cy="326" r="4" fill="#b7d5cb"/>
+    <rect x="895" y="318" width="173" height="17" rx="6" fill="#fffefa"/>
+    <text x="981" y="331" font-size="12" font-weight="600" fill="#133b50" text-anchor="middle">example.com</text>
+    <rect x="849" y="363" width="88" height="66" rx="7" fill="#138b8b" opacity="0.8"/>
+    <path d="M954 371 H1065 M954 387 H1045 M954 404 H1065 M954 421 H1024" stroke="#86b5ad" stroke-width="6"/>
+    <path d="M869 390 H914 M902 379 L914 390 L902 401" fill="none" stroke="#fffefa" stroke-width="3"/>
+    <text x="959" y="486" font-size="23" font-weight="600" fill="#133b50" text-anchor="middle">A Web of linked pages</text>
+    <path d="M140 590 H1060" stroke="#b7d5cb" stroke-width="3"/>
+    <g fill="#138b8b" stroke="#f5f3e9" stroke-width="5">
+      <circle cx="140" cy="590" r="10"/>
+      <circle cx="324" cy="590" r="10"/>
+      <circle cx="508" cy="590" r="10"/>
+      <circle cx="692" cy="590" r="10"/>
+      <circle cx="876" cy="590" r="10"/>
+      <circle cx="1060" cy="590" r="10"/>
+    </g>
+    <g text-anchor="middle" font-size="22" font-weight="700" fill="#133b50">
+      <text x="140" y="629">1969</text><text x="324" y="629">1983</text><text x="508" y="629">1985</text>
+      <text x="692" y="629">1989 / 93</text><text x="876" y="629">1998</text><text x="1060" y="629">2010+</text>
+    </g>
+    <g text-anchor="middle" font-size="14" fill="#5f7b81">
+      <text x="140" y="653">ARPANET</text><text x="324" y="653">TCP/IP + DNS</text><text x="508" y="653">First .com</text>
+      <text x="692" y="653">The Web</text><text x="876" y="653">ICANN</text><text x="1060" y="653">More scripts</text>
+    </g>
+    <line x1="84" y1="692" x2="1116" y2="692" stroke="#ccd8cc" stroke-width="1"/>
+    <text x="84" y="724" font-size="13" font-weight="600" fill="#5f7b81" letter-spacing="2">DOMAIN NOTES</text>
+    <text x="1116" y="724" font-size="13" font-weight="600" fill="#5f7b81" letter-spacing="1.5" text-anchor="end">HISTORY / 01</text>
+  </g>
+</svg>

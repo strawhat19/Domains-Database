@@ -1,8 +1,8 @@
-import { useTagPicker } from './useTagPicker';
 import type { TagPickerProps } from './types';
-import { DOMAIN_TAGS } from '../../shared/domainTags';
 import { useEffect, useRef, useState } from 'react';
 import type { FocusEvent, KeyboardEvent } from 'react';
+import { useTagPicker } from './useTagPickerState';
+import { DOMAIN_TAGS } from '../../shared/domainTags';
 
 export const useWebTagPicker = (props: TagPickerProps) => {
   const picker = useTagPicker(props);
