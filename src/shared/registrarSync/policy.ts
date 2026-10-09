@@ -1,6 +1,7 @@
 import { authAPI } from '../../api/auth';
 import { connectionsAPI } from '../../api/connections';
 import { REGISTRARS, useLocalStorage } from '../config';
+import { SYNC_POLICY_STORAGE_KEY } from '../accountData/keys';
 import type { ConnectionProvider } from '../connections/types';
 import { accountStorageKey } from '../authentication/userScope';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
@@ -9,7 +10,7 @@ import type { RegistrarDomain, AccountSyncStatuses, ConnectionSyncStatus, Connec
 export const MANUAL_SYNC_LIMIT = 3;
 export const AUTO_SYNC_INTERVAL_MS = 144 * 60 * 1000;
 export const MANUAL_SYNC_WINDOW_MS = 3 * 60 * 1000;
-export const SYNC_POLICY_STORAGE_KEY = `domains-database:registrar-sync:v1`;
+export { SYNC_POLICY_STORAGE_KEY } from '../accountData/keys';
 
 export interface RegistrarSyncPolicy {
   version: 1;
@@ -21,6 +22,7 @@ export interface RegistrarSyncPolicy {
   statuses: ConnectionSyncStatuses;
   accountStatuses?: AccountSyncStatuses;
   successfulProviders: ConnectionProvider[];
+  automaticSyncPaused?: boolean;
 }
 
 export interface ManualSyncReservation {
@@ -29,7 +31,17 @@ export interface ManualSyncReservation {
 }
 
 const providers: ConnectionProvider[] = [`vercel`, `godaddy`, `porkbun`, `namesilo`, `hostinger`, `namecheap`, `squarespace`];
+const listeners = new Set<(userId: string) => void>();
 const serialize = createOperationQueue(SYNC_POLICY_STORAGE_KEY);
+export const subscribeSyncPolicy = (listener: (userId: string) => void) => {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+};
+const notifySyncPolicy = (userId: string) => {
+  for (const listener of listeners) {
+    try { listener(userId); } catch { /* Saved verification is independent of subscriber state. */ }
+  }
+};
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === `object` && !Array.isArray(value);
 const isTimestamp = (value: unknown): value is number => typeof value === `number` && Number.isSafeInteger(value) && value >= 0 && value <= 8.64e15;
 const isDateString = (value: unknown) => typeof value === `string` && (!value || Number.isFinite(Date.parse(value)));
@@ -62,6 +74,7 @@ const isStatus = (value: unknown): value is ConnectionSyncStatus => {
 };
 const isPolicy = (value: unknown, userId: string): value is RegistrarSyncPolicy => {
   if (!isRecord(value) || value.version !== 1 || value.userId !== userId || !isDateString(value.connectionsUpdated)) return false;
+  if (value.automaticSyncPaused !== undefined && typeof value.automaticSyncPaused !== `boolean`) return false;
   if (!isTimestamp(value.lastSyncedAt) || !isTimestamp(value.manualCooldownUntil)) return false;
   if (!Array.isArray(value.manualAttempts) || value.manualAttempts.length > MANUAL_SYNC_LIMIT || !value.manualAttempts.every(isTimestamp)) return false;
   if (!Array.isArray(value.successfulProviders) || new Set(value.successfulProviders).size !== value.successfulProviders.length) return false;
@@ -124,6 +137,7 @@ const writePolicy = async (policy: RegistrarSyncPolicy, current = () => true): P
   await requireSession(policy.userId);
   if (!current()) throw new Error(`Sync Changed — Please Try Again`);
   await writeStorage(accountStorageKey(SYNC_POLICY_STORAGE_KEY, policy.userId), serialized);
+  notifySyncPolicy(policy.userId);
   return stored;
 };
 
@@ -141,7 +155,7 @@ export const saveSyncCache = (userId: string, connectionsUpdated: string, status
   const connected = providers.filter(provider => statuses[provider]?.state === `connected`
     || latest.accounts.some(account => account.provider === provider && accountStatuses?.[account.id]?.state === `connected`));
   const syncedAt = lastSyncedAt || (sameConnections ? previous.lastSyncedAt : 0);
-  return writePolicy({ ...previous, statuses, accountStatuses, connectionsUpdated, lastSyncedAt: syncedAt, successfulProviders: [...new Set([...successful, ...connected])] }, current);
+  return writePolicy({ ...previous, statuses, accountStatuses, connectionsUpdated, lastSyncedAt: syncedAt, automaticSyncPaused: false, successfulProviders: [...new Set([...successful, ...connected])] }, current);
 });
 
 export const reserveManualSync = (userId: string): Promise<ManualSyncReservation> => serialize(async () => {

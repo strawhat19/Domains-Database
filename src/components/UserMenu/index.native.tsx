@@ -60,16 +60,33 @@ const UserMenu = () => {
                 onPress={state.close}
                 accessibilityRole={`link`}
                 {...elementProps(`user-menu-watching`)}
+                accessibilityLabel={state.watchingCount ? `Watching, ${state.watchingCount} Domain${state.watchingCount === 1 ? `` : `s`}` : `Watching`}
               >
                 <Eye {...elementProps(`user-menu-watching-icon`)} size={16} color={palette.ink} />
                 <Text {...elementProps(`user-menu-watching-text`)} style={styles.linkText}>{routes.watching.label}</Text>
+                {state.watchingCount > 0 && (
+                  <View {...elementProps(`user-menu-watching-badge`)} style={[styles.badge, { backgroundColor: state.badgeColors.backgroundColor }]} accessibilityElementsHidden importantForAccessibility={`no-hide-descendants`}>
+                    <Text {...elementProps(`user-menu-watching-count`)} style={[styles.badgeText, { color: state.badgeColors.color }]}>{state.watchingCount}</Text>
+                  </View>
+                )}
               </Pressable>
             </Link>
           )}
           <Link href={`/profile/connections`} asChild>
-            <Pressable {...elementProps(`user-menu-connections`)} style={styles.item} accessibilityRole={`link`}>
+            <Pressable
+              style={styles.item}
+              onPress={state.close}
+              accessibilityRole={`link`}
+              {...elementProps(`user-menu-connections`)}
+              accessibilityLabel={state.verifiedConnectionCount ? `Connections, ${state.verifiedConnectionCount} Verified Saved Connection${state.verifiedConnectionCount === 1 ? `` : `s`}` : `Connections`}
+            >
               <PlugZap {...elementProps(`user-menu-connections-icon`)} size={16} color={palette.ink} />
               <Text {...elementProps(`user-menu-connections-text`)} style={styles.linkText}>{`Connections`}</Text>
+              {!state.connectionsCountLoading && state.verifiedConnectionCount > 0 && (
+                <View {...elementProps(`user-menu-connections-badge`)} style={[styles.badge, { backgroundColor: state.badgeColors.backgroundColor }]} accessibilityElementsHidden importantForAccessibility={`no-hide-descendants`}>
+                  <Text {...elementProps(`user-menu-connections-count`)} style={[styles.badgeText, { color: state.badgeColors.color }]}>{state.verifiedConnectionCount}</Text>
+                </View>
+              )}
             </Pressable>
           </Link>
           {user.role === Roles.Owner && (

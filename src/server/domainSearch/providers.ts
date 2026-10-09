@@ -89,7 +89,7 @@ const goDaddy = async (auth: Extract<SearchCredentials, { provider: `godaddy` }>
   options.sort((first, second) => (years(first.period) ?? 99) - (years(second.period) ?? 99));
   const option = options?.[0];
   const registration = option?.price ? record(option.price) : undefined;
-  const renewal = option?.renewalPrice ? record(option.renewalPrice) : result.available ? registration : undefined;
+  const renewal = option?.renewalPrice ? record(option.renewalPrice) : undefined;
   return {
     available: result.available,
     registration: registration ? price(registration.value, registration.currencyCode, option?.period, 100) : undefined,
@@ -193,11 +193,15 @@ const namecheap = async (auth: Extract<SearchCredentials, { provider: `namecheap
       }
       return undefined;
     };
-    registration = await findPrice(`REGISTER`);
-    renewal = await findPrice(`RENEW`);
+    const [registrationResult, renewalResult] = await Promise.allSettled([findPrice(`REGISTER`), findPrice(`RENEW`)]);
+    registration = registrationResult.status === `fulfilled` ? registrationResult.value : undefined;
+    renewal = renewalResult.status === `fulfilled` ? renewalResult.value : undefined;
+    if (registrationResult.status === `rejected` || renewalResult.status === `rejected`) throw invalid();
   } catch {
     if (signal.aborted) throw new RegistrarRelayError(504, `Namecheap Search Timed Out Or Cancelled`);
-    note = `Availability Checked — Namecheap Pricing Was Unavailable; See Registrar For Prices`;
+    note = registration || renewal
+      ? `Availability Checked — Some Namecheap Prices Were Unavailable; Confirm Remaining Prices At Checkout`
+      : `Availability Checked — Namecheap Pricing Was Unavailable; See Registrar For Prices`;
   }
   if (result.IsPremiumName === `true`) {
     const currency = registration?.currency ?? renewal?.currency ?? ``;

@@ -5,7 +5,8 @@ import { Domain } from '../shared/models/domains/Domain';
 import type { WebsiteInsights } from '../shared/websiteInsights/types';
 import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
 import { createSampleDomains } from '../shared/sampleDomains';
-import { createOperationQueue } from '../shared/common/storage';
+import { writeStorage, createOperationQueue } from '../shared/common/storage';
+import { subscribeAccountDataReset } from '../shared/accountData/state';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { accountStorageKey } from '../shared/authentication/userScope';
 import type { RegistrarDomain } from '../shared/registrarSync/types';
@@ -15,6 +16,7 @@ import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared
 
 let userScope: string | null = null;
 const snapshots = new Map<string, PortfolioSnapshot>();
+subscribeAccountDataReset(userId => { snapshots.delete(userId); });
 const LEGACY_OWNER_KEY = `${PORTFOLIO_STORAGE_KEY}:legacy-owner`;
 const GUEST_STORAGE_KEY = `${PORTFOLIO_STORAGE_KEY}:guest`;
 const GUEST_OWNER_KEY = `${PORTFOLIO_STORAGE_KEY}:guest-owner`;
@@ -46,7 +48,7 @@ const saveSnapshot = async (next: PortfolioSnapshot) => {
   if (userScope) await requireScopeSession(userScope);
   if (useLocalStorage) {
     try {
-      await AsyncStorage.setItem(getStorageKey(), JSON.stringify(next));
+      await writeStorage(getStorageKey(), JSON.stringify(next));
     } catch {
       throw new Error(`Could Not Save Your Portfolio On This Device`);
     }

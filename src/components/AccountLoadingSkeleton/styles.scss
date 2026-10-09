@@ -1,0 +1,43 @@
+.account-loading-skeleton { box-sizing: border-box; padding-inline: 0 !important; }
+.account-loading-heading { background-image: linear-gradient(120deg, var(--paper) 40%, var(--subtle)); }
+.account-loading-placeholder { position: relative; }
+.account-loading-placeholder::after {
+  inset: 0;
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  transform: translateX(-100%);
+  background: linear-gradient(100deg, transparent 15%, color-mix(in srgb, var(--paper) 55%, transparent) 50%, transparent 85%);
+  animation: account-loading-shimmer 2.6s ease-in-out infinite;
+}
+.account-loading-avatar { animation: account-loading-breathe 2.4s ease-in-out infinite; }
+.account-loading-dot { animation: account-loading-dot 1.4s ease-in-out infinite; }
+.account-loading-dot:nth-child(2) { animation-delay: .16s; }
+.account-loading-dot:nth-child(3) { animation-delay: .32s; }
+.account-loading-summary-card:nth-child(2) .account-loading-placeholder::after { animation-delay: .12s; }
+.account-loading-summary-card:nth-child(3) .account-loading-placeholder::after { animation-delay: .24s; }
+
+@keyframes account-loading-shimmer { 65%, 100% { transform: translateX(100%); } }
+@keyframes account-loading-breathe { 50% { opacity: .7; } }
+@keyframes account-loading-dot { 50% { opacity: .35; transform: translateY(-2px); } }
+
+@media (min-width: 1100px) {
+  .account-loading-skeleton { padding-block: 20px !important; }
+  .account-loading-sidebar { width: 180px !important; }
+  .account-loading-panels { flex-direction: row !important; }
+  .account-loading-details { width: 260px !important; flex-direction: column !important; flex-wrap: nowrap !important; }
+}
+
+@media (max-width: 759px) {
+  .account-loading-skeleton { gap: 16px !important; padding-block: 16px !important; }
+  .account-loading-workspace { gap: 16px !important; }
+  .account-loading-details { gap: 12px !important; }
+  .account-loading-detail-card { padding: 18px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-loading-avatar,
+  .account-loading-dot,
+  .account-loading-placeholder::after { animation: none; }
+  .account-loading-placeholder::after { display: none; }
+}

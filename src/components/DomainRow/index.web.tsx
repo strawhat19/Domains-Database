@@ -11,19 +11,20 @@ import type { DomainItemProps, DomainDragProps } from './domainRow';
 import { getDomainSource } from '../../shared/domainUtils';
 import { getDomainPreviewLink, getDomainGithubRepoLink } from '../../shared/domainLinks';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
+import { useDomainAttentionPosition } from './useDomainAttentionPosition.web';
 import { Check, Minus, ArrowUp, Settings, ArrowDown, GripVertical } from 'lucide-react';
-import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
+import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, getDomainRenewalDetail, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
   DEFAULT_VISIBLE_COLUMNS,
   getPortfolioColumnDisplay,
   getPortfolioColumnValue,
   getOrderedPortfolioColumns,
-  getRenewalEstimateHint,
   getWebsiteInsightsHint,
   type PortfolioColumn,
 } from '../../shared/portfolioColumns';
 
 export interface DomainRowProps extends DomainItemProps, DomainDragProps<HTMLTableRowElement> {
+  showCosts?: boolean;
   onContextMenu?: MouseEventHandler<HTMLTableRowElement>;
   onChangeDescription: (domain: DomainItemProps[`domain`], description: string) => Promise<boolean>;
   onChangeProjectStatus: (domain: DomainItemProps[`domain`], status: DomainItemProps[`domain`][`projectStatus`]) => void;
@@ -50,6 +51,7 @@ const DomainRow = ({
   onChangeDescription,
   onChangeProjectStatus,
   selectionDescriptionId,
+  showCosts = false,
   reorderable = draggable,
   hideProjectDetails = false,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
@@ -61,6 +63,8 @@ const DomainRow = ({
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const registrarManaged = getDomainSource(domain) === `registrar`;
   const columns = getOrderedPortfolioColumns(visibleColumns);
+  const renewalDetail = getDomainRenewalDetail(domain, showCosts);
+  const rowRef = useDomainAttentionPosition(needsAttention, `${reorderable}:${visibleColumns.join(`|`)}`);
   const selectionHandlers = getDomainSelectionHandlers(domain.id, !!selected, onSelect);
 
   const handleRowClick: MouseEventHandler<HTMLTableRowElement> = event => {
@@ -137,14 +141,6 @@ const DomainRow = ({
                       {domain.name.slice(lastDot)}
                     </span>
                   </span>
-                  {needsAttention && (
-                    <span
-                      aria-hidden={`true`}
-                      id={`${scope}-attention-dot`}
-                      className={`domain-attention-dot`}
-                      title={`Needs Attention: ${status}`}
-                    />
-                  )}
                 </a>
                 {!hideProjectDetails && previewLink && (
                   <a
@@ -231,12 +227,18 @@ const DomainRow = ({
               {getPortfolioColumnDisplay(domain, field)}
             </span>
             {!hideProjectDetails && (
-              <span id={`${scope}-status`} className={`rowStatus rowStatus-${statusKey}`}>
-                <span id={`${scope}-status-dot-wrap`} className={`statusDotWrap`} aria-hidden={`true`}>
-                  <span id={`${scope}-status-dot`} className={`statusDot`} />
-                </span>
-                <span id={`${scope}-status-text`} className={`statusText`}>
-                  {status}
+              <span
+                title={renewalDetail.hint}
+                id={`${scope}-${renewalDetail.isCost ? `renewal-estimate` : `status`}`}
+                className={`rowStatus ${renewalDetail.isCost ? `domain-renewal-estimate` : `rowStatus-${statusKey}`}`}
+              >
+                {!renewalDetail.isCost && (
+                  <span id={`${scope}-status-dot-wrap`} className={`statusDotWrap`} aria-hidden={`true`}>
+                    <span id={`${scope}-status-dot`} className={`statusDot`} />
+                  </span>
+                )}
+                <span id={`${scope}-${renewalDetail.isCost ? `renewal-estimate` : `status`}-text`} className={`statusText`}>
+                  {renewalDetail.text}
                 </span>
               </span>
             )}
@@ -269,16 +271,6 @@ const DomainRow = ({
             {getPortfolioColumnDisplay(domain, field)}
           </span>
         );
-      case `renewalEstimate`:
-        return (
-          <span
-            id={`${scope}-renewal-estimate`}
-            title={getRenewalEstimateHint(domain)}
-            className={`domain-renewal-estimate`}
-          >
-            {getPortfolioColumnDisplay(domain, field)}
-          </span>
-        );
       default: {
         const key = getDomainColumnKey(field);
         const value = getPortfolioColumnDisplay(domain, field);
@@ -297,6 +289,7 @@ const DomainRow = ({
 
   return (
     <tr
+      ref={rowRef}
       id={scope}
       onDrop={onDrop}
       onClick={handleRowClick}
@@ -326,6 +319,14 @@ const DomainRow = ({
           aria-label={`Select ${domain.name}`}
           aria-describedby={selectionDescriptionId}
         />
+        {needsAttention && (
+          <span
+            aria-hidden={`true`}
+            id={`${scope}-attention-dot`}
+            className={`domain-attention-dot`}
+            title={`Needs Attention: ${status}`}
+          />
+        )}
       </td>
       {columns.map(column => {
         const key = getDomainColumnKey(column.field);

@@ -4,9 +4,36 @@ export type SearchResult = DomainSearchResult;
 export type SearchDomainResult = DomainSearchDomainResult;
 type SearchStatus = { label: string; state: `available` | `unavailable` | `unknown` | `error` | `pending` };
 
+const getRegistrationQuote = (result: SearchResult) => {
+  const price = result.registration;
+  return price && Number.isFinite(price.amount) && price.amount >= 0 && /^(?:[a-z]{3})?$/i.test(price.currency) ? price : undefined;
+};
+
+const compareRegistrationPrices = (first: SearchResult, second: SearchResult) => {
+  const firstPrice = getRegistrationQuote(first);
+  const secondPrice = getRegistrationQuote(second);
+  if (!firstPrice || !secondPrice) return Number(Boolean(secondPrice)) - Number(Boolean(firstPrice)) || first.label.localeCompare(second.label);
+  const firstCurrency = firstPrice.currency.toUpperCase();
+  const secondCurrency = secondPrice.currency.toUpperCase();
+  if (firstCurrency !== secondCurrency) {
+    return Number(!firstCurrency) - Number(!secondCurrency)
+      || Number(secondCurrency === `USD`) - Number(firstCurrency === `USD`)
+      || firstCurrency.localeCompare(secondCurrency);
+  }
+  return firstPrice.amount - secondPrice.amount || first.label.localeCompare(second.label);
+};
+
 export const getAvailableConnections = (result: SearchDomainResult) => result.connections.filter(connection => (
   connection.available === true && !connection.pending && !connection.error
-));
+)).sort(compareRegistrationPrices);
+
+export const getSearchPriceOrder = (connections: SearchResult[]) => {
+  const currencies = new Set(connections.flatMap(connection => {
+    const price = getRegistrationQuote(connection);
+    return price ? [price.currency.toUpperCase()] : [];
+  }));
+  return `${currencies.size > 1 ? `Grouped by currency · ` : ``}Registration price: low to high`;
+};
 
 export const getSearchStatus = (result: SearchResult): SearchStatus => {
   if (result.pending) return { label: `Checking…`, state: `pending` };
@@ -39,9 +66,9 @@ export const formatSearchPrice = (price: SearchResult[`registration`]) => {
   try {
     amount = currency
       ? new Intl.NumberFormat(`en-US`, { currency, style: `currency`, currencyDisplay: `symbol` }).format(price.amount)
-      : `$${new Intl.NumberFormat(`en-US`, { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(price.amount)}`;
+      : new Intl.NumberFormat(`en-US`, { minimumFractionDigits: 2, maximumFractionDigits: 6 }).format(price.amount);
   } catch {
-    amount = `${currency && currency !== `USD` ? `${currency} ` : `$`}${price.amount.toFixed(2)}`;
+    amount = `${currency === `USD` ? `$` : currency ? `${currency} ` : ``}${price.amount.toFixed(2)}`;
   }
   const years = price.years;
   const term = years && Number.isInteger(years) && years > 0 ? `${years} ${years === 1 ? `year` : `years`}` : `Term not provided`;

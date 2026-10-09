@@ -1,76 +1,30 @@
 import Toast from '../Toast';
-import { Image } from 'expo-image';
 import { useMemo, useContext } from 'react';
 import { createStyles } from './styles.native';
+import AuthOnboarding from '../AuthOnboarding';
+import GoogleAuthButton from '../GoogleAuthButton';
 import { useLocalStorage } from '../../shared/config';
 import { elementProps } from '../../shared/elementProps';
 import { useAuthForm, type AuthMode } from './useAuthForm';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
-import { Eye, Mail, EyeOff, LogIn, Globe2, Layers3, UserRound, ArrowRight, HardDrive, LockKeyhole } from 'lucide-react-native';
+import { Eye, Mail, EyeOff, LogIn, UserRound, ArrowRight, HardDrive, RotateCcw, LockKeyhole } from 'lucide-react-native';
 
 const AuthForm = ({ mode }: { mode: AuthMode }) => {
   const state = useAuthForm(mode);
   const { width, height } = useWindowDimensions();
   const pageContentHeight = useContext(ScrollContext)?.pageContentHeight;
-  const { isDark, palette } = useTheme();
+  const { palette } = useTheme();
   const availableHeight = pageContentHeight ?? Math.max(0, height - 200);
-  const compact = width < 900 || availableHeight < 260;
+  const compact = width <= 900 || availableHeight < 260;
   const condensed = availableHeight < 520;
   const landscape = width >= 620 && availableHeight < 260;
-  const styles = useMemo(() => createStyles(palette, compact, condensed, availableHeight, landscape), [palette, compact, condensed, availableHeight, landscape]);
+  const styles = useMemo(() => createStyles(palette, compact, condensed, availableHeight, width), [palette, compact, condensed, availableHeight, width]);
 
   return (
-    <View {...elementProps(`auth-form-page`, mode)} style={styles.page}>
-      {!compact && (
-        <View {...elementProps(`auth-form-story`, mode)} style={styles.story}>
-          <Image
-            style={styles.logo}
-            contentFit={`contain`}
-            accessibilityLabel={`Domains Database`}
-            {...elementProps(`auth-form-story-logo`, mode)}
-            source={isDark
-              ? require('../../../assets/icons/brand-logo-dark.svg')
-              : require('../../../assets/concepts/logos/v8/02-domain-record-stack-fill.svg')}
-          />
-          <View {...elementProps(`auth-form-story-heading`, mode)} style={styles.storyHeading}>
-            <Text {...elementProps(`auth-form-story-eyebrow`, mode)} style={styles.eyebrow}>
-              {`Domain Manager`}
-            </Text>
-            <Text {...elementProps(`auth-form-story-title`, mode)} style={styles.storyTitle} accessibilityRole={`header`}>
-              {`Your domains.\n`}
-              <Text {...elementProps(`auth-form-story-title-accent`, mode)} style={styles.storyAccent}>
-                {`In good order.`}
-              </Text>
-            </Text>
-            <Text {...elementProps(`auth-form-story-description`, mode)} style={styles.storyDescription}>
-              {`Keep every name, registrar, and renewal together. Make room for your next idea.`}
-            </Text>
-          </View>
-          {!condensed && (
-            <View {...elementProps(`auth-form-preview`, mode)} style={styles.preview}>
-              <View {...elementProps(`auth-form-preview-heading`, mode)} style={styles.previewHeading}>
-                <Layers3 {...elementProps(`auth-form-preview-icon`, mode)} size={18} color={palette.accent} />
-                <Text {...elementProps(`auth-form-preview-label`, mode)} style={styles.previewLabel}>
-                  {`PORTFOLIO PREVIEW`}
-                </Text>
-              </View>
-              {[`yourname.com`, `yourname.io`, `yourname.dev`].map((domain, index) => (
-                <View key={domain} {...elementProps(`auth-form-preview-record`, `${mode}-${index}`)} style={styles.previewRecord}>
-                  <View {...elementProps(`auth-form-preview-record-symbol`, `${mode}-${index}`)} style={styles.previewSymbol}>
-                    <Globe2 {...elementProps(`auth-form-preview-record-icon`, `${mode}-${index}`)} size={19} color={palette.accent} />
-                  </View>
-                  <Text {...elementProps(`auth-form-preview-record-name`, `${mode}-${index}`)} style={styles.previewName}>
-                    {domain}
-                  </Text>
-                  <View {...elementProps(`auth-form-preview-record-line`, `${mode}-${index}`)} style={styles.previewLine} />
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      )}
+    <View {...elementProps(`auth-form-page`, mode)} style={[styles.page, state.canReactivate && styles.reactivationPage]}>
+      {!landscape && <AuthOnboarding mode={mode} />}
       <View {...elementProps(`auth-form-panel`, mode)} style={styles.panel}>
         {!state.auth.user && (
           <View {...elementProps(`auth-form-modes`, mode)} style={styles.modes}>
@@ -108,6 +62,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
           <View {...elementProps(`auth-form-loading`, mode)} style={styles.loading} accessibilityLabel={`Loading Your Account`} accessibilityState={{ busy: true }}>
             <View {...elementProps(`auth-form-skeleton-title`, mode)} style={styles.skeletonTitle} />
             <View {...elementProps(`auth-form-skeleton-copy`, mode)} style={styles.skeletonCopy} />
+            <View {...elementProps(`auth-form-skeleton-google`, mode)} style={styles.skeletonField} />
             {[`email`, `password`].map(field => (
               <View key={field} {...elementProps(`auth-form-skeleton-field`, `${mode}-${field}`)} style={styles.skeletonField} />
             ))}
@@ -161,6 +116,14 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
                 )}
               </View>
             )}
+            <View {...elementProps(`auth-form-google`, mode)} style={styles.google}>
+              <GoogleAuthButton mode={mode} disabled={state.disabled} />
+              <View {...elementProps(`auth-form-email-divider`, mode)} style={styles.emailDivider}>
+                <View {...elementProps(`auth-form-email-divider-line`, `${mode}-start`)} style={styles.dividerLine} />
+                <Text {...elementProps(`auth-form-email-divider-label`, mode)} style={styles.dividerLabel}>{`or continue with email`}</Text>
+                <View {...elementProps(`auth-form-email-divider-line`, `${mode}-end`)} style={styles.dividerLine} />
+              </View>
+            </View>
             <View {...elementProps(`auth-form-fields`, mode)} style={styles.form}>
               <View {...elementProps(`auth-form-field`, `${mode}-email`)} style={styles.field}>
                 <Text {...elementProps(`auth-form-label`, `${mode}-email`)} style={styles.label}>
@@ -239,6 +202,28 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
                 <ArrowRight {...elementProps(`auth-form-submit-icon`, mode)} size={18} color={palette.contrast} />
               </Pressable>
             </View>
+            {state.canReactivate && (
+              <View {...elementProps(`auth-form-reactivation`, mode)} style={styles.reactivation} accessibilityLiveRegion={`polite`}>
+                <Text {...elementProps(`auth-form-reactivation-title`, mode)} style={styles.label}>{`Account Deactivated`}</Text>
+                <Text {...elementProps(`auth-form-reactivation-copy`, mode)} style={styles.description}>
+                  {`Your saved account data is retained. Reactivate your account to sign in again.`}
+                </Text>
+                <Pressable
+                  disabled={state.disabled}
+                  accessibilityRole={`button`}
+                  accessibilityLabel={`Reactivate Account`}
+                  onPress={() => void state.reactivate()}
+                  {...elementProps(`auth-form-reactivate`, mode)}
+                  style={[styles.submit, state.disabled && styles.disabled]}
+                  accessibilityHint={`Reactivate Your Account And Sign In With Your Retained Data`}
+                >
+                  <RotateCcw {...elementProps(`auth-form-reactivate-icon`, mode)} size={18} color={palette.contrast} />
+                  <Text {...elementProps(`auth-form-reactivate-text`, mode)} style={styles.submitText}>
+                    {state.auth.busy ? `Please Wait…` : `Reactivate Account`}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
             {!condensed && (
               <View {...elementProps(`auth-form-local-note`, mode)} style={styles.localNote}>
                 <HardDrive {...elementProps(`auth-form-local-note-icon`, mode)} size={16} color={palette.muted} />

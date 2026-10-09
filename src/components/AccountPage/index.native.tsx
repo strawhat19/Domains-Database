@@ -1,15 +1,19 @@
 import { Link } from 'expo-router';
 import { Roles } from '../../types/types';
+import AccountActions from '../AccountActions';
 import { useAccountPage } from './useAccountPage';
 import ProfileSettings from '../ProfileSettings';
 import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
-import { Text, Platform, Pressable, View, StyleSheet } from 'react-native';
+import ProfileThemePreference from '../ProfileThemePreference';
 import { PlugZap, UserRound, LayoutDashboard, ShieldCheck } from 'lucide-react-native';
+import { Text, Platform, Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | `dashboard` }) => {
   const state = useAccountPage(page);
   const { styles, palette, user } = state;
+  const { width } = useWindowDimensions();
+  const roomy = width >= 1100;
   const fields = [
     { key: `name`, label: `Name`, value: user?.name },
     { key: `email`, label: `Email`, value: user?.email },
@@ -71,6 +75,10 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
                 <ShieldCheck {...elementProps(`profile-device-icon`)} size={16} color={palette.accent} />
                 <Text {...elementProps(`profile-device-text`)} style={styles.noteText}>{`Local sign-in keeps records separate on this device. Accounts do not sync between devices.`}</Text>
               </View>
+            </View>
+            <View {...elementProps(`profile-account-preferences`)} style={[styles.panel, styles.preferences, roomy && styles.roomyPreferences]}>
+              <ProfileThemePreference roomy={roomy} />
+              <AccountActions />
             </View>
           </>
         ) : page === `connections` ? (

@@ -2,6 +2,7 @@ import { GROUPABLE_COLUMNS } from './groups';
 import type { PropsWithChildren } from 'react';
 import { PORTFOLIO_FIELDS } from '../portfolioColumns';
 import { createOperationQueue } from '../common/storage';
+import { subscribeAccountDataReset } from '../accountData/state';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { normalizeGroupDetails, restoreGroupDetails } from './details';
 import { readPortfolioPreferences, savePortfolioPreferences } from './storage';
@@ -14,6 +15,7 @@ const DEFAULT_PREFERENCES: PortfolioPreferences = {
   view: `table`,
   groupBy: `none`,
   collections: [],
+  showCosts: false,
   customGroups: [],
   collectionNumber: 0,
   hiddenGroupKeys: [],
@@ -85,6 +87,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     collections,
     customGroups,
     collectionNumber,
+    showCosts: saved.showCosts === true,
     showHiddenGroups: saved.showHiddenGroups === true,
     hiddenGroupKeys: uniqueIds(saved.hiddenGroupKeys),
     view: saved.view === `grid` ? `grid` : `table`,
@@ -115,12 +118,20 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const [ready, setReady] = useState(false);
   const revision = useRef(0);
   const active = useRef(enabled);
-  active.current = enabled;
+  if (!enabled) active.current = false;
   const changed = useRef(false);
   const preferenceRef = useRef(DEFAULT_PREFERENCES);
   const loadedUserId = useRef<string | null>(null);
   const storageQueue = useRef(createOperationQueue()).current;
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
+
+  useEffect(() => subscribeAccountDataReset(changedUserId => {
+    if (changedUserId !== userId) return;
+    active.current = false;
+    revision.current += 1;
+    loadedUserId.current = null;
+    setReady(false);
+  }), [userId]);
 
   useEffect(() => {
     let mounted = true;
@@ -170,6 +181,11 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const setGroupBy = useCallback<PortfolioPreferencesContextValue[`setGroupBy`]>(groupBy => {
     change(current => ({ ...current, groupBy }));
   }, [change]);
+
+  const setShowCosts = useCallback<PortfolioPreferencesContextValue[`setShowCosts`]>(showCosts => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
+    change(current => ({ ...current, showCosts }));
+  }, [ready, change, userId, enabled]);
 
   const setShowHiddenGroups = useCallback<PortfolioPreferencesContextValue[`setShowHiddenGroups`]>(showHiddenGroups => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
@@ -424,6 +440,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     renameGroup,
     deleteGroup,
     updateGroup,
+    setShowCosts,
     voteCollection,
     assignDomain,
     assignDomains,
@@ -437,7 +454,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     assignGroupCollection,
     setCollectionVisibility,
     updateGroupProjectStatus,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, voteCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, toggleGroupVisibility, assignGroupCollection, setCollectionVisibility, updateGroupProjectStatus]);
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, voteCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, toggleGroupVisibility, assignGroupCollection, setCollectionVisibility, updateGroupProjectStatus]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

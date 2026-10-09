@@ -1,9 +1,10 @@
 import { authAPI } from './auth';
 import { sampleNotifications } from '../shared/sampleNotifications';
 import { createCollection } from '../shared/common/collection';
+import { NOTIFICATIONS_STORAGE_KEY } from '../shared/accountData/keys';
 import { Notification } from '../shared/models/notifications/Notification';
 
-const collection = createCollection(`domains-database:notifications:v1`, Notification, async () => {
+const collection = createCollection(NOTIFICATIONS_STORAGE_KEY, Notification, async () => {
   const session = await authAPI.restoreSession();
   if (!session?.user) throw new Error(`Sign In To Access Notification(s)`);
   return session.user.id;

@@ -5,6 +5,7 @@ import { useLocalStorage } from '../config';
 import type { User } from '../models/users/User';
 import { createOperationQueue } from '../common/storage';
 import { AUTH_PRESENCE_KEYS } from '../authentication/accountPresence';
+import { AccountDataCleanupError, type AccountAction } from '../authentication/types';
 import { claimLegacyPortfolioPreferences } from '../portfolioPreferences/storage';
 import type { SignInInput, SignUpInput, AuthenticationResult } from '../authentication/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -14,6 +15,7 @@ interface AuthContextValue {
   loading: boolean;
   hasSavedAccount: boolean;
   loginRevision: number;
+  dataRevision: number;
   user: User | null;
   error: string | null;
   notice: string | null;
@@ -23,6 +25,7 @@ interface AuthContextValue {
   refreshUser: () => Promise<void>;
   signIn: (input: SignInInput) => Promise<User>;
   signUp: (input: SignUpInput) => Promise<User>;
+  manageAccount: (action: AccountAction) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -35,6 +38,7 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
   const queue = useRef(createOperationQueue()).current;
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dataRevision, setDataRevision] = useState(0);
   const [loginRevision, setLoginRevision] = useState(0);
   const [user, setUser] = useState<User | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
@@ -156,7 +160,7 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
     }
   }), [queue, applySession]);
 
-  const signIn = useCallback((input: SignInInput) => authenticate(() => authAPI.signIn(input), `Signed In Successfully`), [authenticate]);
+  const signIn = useCallback((input: SignInInput) => authenticate(() => authAPI.signIn(input), input.reactivate ? `Account Reactivated Successfully` : `Signed In Successfully`), [authenticate]);
   const signUp = useCallback((input: SignUpInput) => authenticate(() => authAPI.signUp(input), `Account Created Successfully`), [authenticate]);
 
   const signOut = useCallback((): Promise<void> => queue(async () => {
@@ -181,9 +185,44 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
     }
   }), [queue, applySession]);
 
+  const manageAccount = useCallback((action: AccountAction): Promise<void> => {
+    const expectedUserId = currentUser.current?.id ?? ``;
+    return queue(async () => {
+      if (mounted.current) { setBusy(true); setError(null); setNotice(null); }
+      try {
+        await authAPI.manageAccount(action, expectedUserId);
+        if (mounted.current && action !== `deactivate`) setDataRevision(current => current + 1);
+        await applySession(null);
+        if (mounted.current) {
+          setNotice(action === `deactivate` ? `Account Deactivated Successfully`
+            : action === `delete-account` ? `Account Deleted Successfully`
+            : action === `delete-data-connections` ? `Account Data And Connections Deleted Successfully`
+            : `Account Data Deleted Successfully`);
+        }
+      } catch (failure) {
+        if (mounted.current && failure instanceof AccountDataCleanupError) {
+          setLoading(true);
+          setDataRevision(current => current + 1);
+        }
+        try {
+          await applySession(await authAPI.restoreSession());
+        } catch {
+          currentUser.current = null;
+          if (mounted.current) { setLoading(true); setUser(null); setExpiresAt(null); }
+          await api.setUserScope(null).catch(() => undefined);
+          if (mounted.current) setLoading(false);
+        }
+        if (mounted.current) setError(messageFromError(failure));
+        throw failure;
+      } finally {
+        if (mounted.current) setBusy(false);
+      }
+    });
+  }, [queue, applySession]);
+
   const clearError = useCallback(() => setError(null), []);
   const clearNotice = useCallback(() => setNotice(null), []);
-  const value = useMemo(() => ({ user, busy, error, notice, loading: !enabled || loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [enabled, user, busy, error, notice, loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
+  const value = useMemo(() => ({ user, busy, error, notice, loading: !enabled || loading, dataRevision, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser, manageAccount }), [enabled, user, busy, error, notice, loading, dataRevision, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser, manageAccount]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

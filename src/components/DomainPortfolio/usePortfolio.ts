@@ -64,14 +64,20 @@ export const usePortfolio = () => {
       ...PORTFOLIO_COLUMNS.map(column => getPortfolioColumnValue(domain, column.field)),
     ].join(` `).toLowerCase().includes(search));
   }, [query, registrarDomains]);
-  const summary = useMemo(() => ({
-    count: data.domains.length,
-    registrarCounts: getRegistrarCounts(data.domains),
-    knownCostCount: data.domains.filter(domain => typeof getPortfolioColumnValue(domain, `renewalPrice`) === `number`).length,
-    annualCost: data.domains.reduce((total, domain) => total + domain.renewalPrice, 0),
-    attention: data.domains.filter(domain => getDomainStatus(domain) !== `Active`).length,
-    hasSampleData: data.domains.some(domain => domain.isSample),
-  }), [data.domains]);
+  const summary = useMemo(() => {
+    const knownCosts = data.domains.flatMap(domain => {
+      const cost = getPortfolioColumnValue(domain, `renewalPrice`);
+      return typeof cost === `number` && Number.isFinite(cost) ? [cost] : [];
+    });
+    return {
+      count: data.domains.length,
+      knownCostCount: knownCosts.length,
+      registrarCounts: getRegistrarCounts(data.domains),
+      annualCost: knownCosts.reduce((total, cost) => total + cost, 0),
+      attention: data.domains.filter(domain => getDomainStatus(domain) !== `Active`).length,
+      hasSampleData: data.domains.some(domain => domain.isSample),
+    };
+  }, [data.domains]);
   const changeSort = (field: SortField) => {
     if (sortField === field && sortDirection === `desc`) {
       setSortField(null);

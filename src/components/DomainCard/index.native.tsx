@@ -14,7 +14,7 @@ import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { formatDate, getDaysUntil, getDomainStatus } from '../../shared/domainUtils';
-import { PORTFOLIO_COLUMNS, getWebsiteInsightsHint, getRenewalEstimateHint, getPortfolioColumnValue, getPortfolioColumnDisplay } from '../../shared/portfolioColumns';
+import { PORTFOLIO_COLUMNS, getWebsiteInsightsHint, getPortfolioColumnValue, getPortfolioColumnDisplay } from '../../shared/portfolioColumns';
 
 interface DomainCardProps {
   index?: number;
@@ -82,8 +82,6 @@ const DomainCard = ({
   const autoRenew = getPortfolioColumnValue(domain, `autoRenew`);
   const annualPrice = getPortfolioColumnDisplay(domain, `renewalPrice`);
   const monthlyPrice = getPortfolioColumnDisplay(domain, `monthlyCost`);
-  const renewalEstimate = getPortfolioColumnDisplay(domain, `renewalEstimate`);
-  const renewalEstimateHint = getRenewalEstimateHint(domain);
   const autoRenewLabel = autoRenew === undefined ? `unknown` : getPortfolioColumnDisplay(domain, `autoRenew`).toLowerCase();
   const daysLabel = !Number.isFinite(days)
     ? `Expiry unknown`
@@ -242,53 +240,29 @@ const DomainCard = ({
             {daysLabel}
           </Text>
         </View>
-        <View {...elementProps(`native-domain-renewal`, domain.id)} style={styles.renewal}>
-          <Text {...elementProps(`native-domain-renewal-price`, domain.id)} style={styles.renewalPrice}>
-            {annualPrice === `—` ? annualPrice : `${annualPrice} / year`}
-          </Text>
-          {visibleColumns.includes(`monthlyCost`) && (
-            <Text {...elementProps(`native-domain-monthly-cost`, domain.id)} style={styles.renewalPrice}>
-              {monthlyPrice === `—` ? monthlyPrice : `${monthlyPrice} / month`}
-            </Text>
-          )}
-          <View {...elementProps(`native-domain-auto-renew`, domain.id)} style={styles.autoRenew}>
-            <RefreshCw {...elementProps(`native-domain-auto-renew-icon`, domain.id)} size={10} color={autoRenew === true ? palette.accent : palette.muted} />
-            <Text {...elementProps(`native-domain-auto-renew-text`, domain.id)} style={styles.autoRenewText}>
-              {`Auto-renew ${autoRenewLabel}`}
-            </Text>
+        {visibleColumns.some(field => [`renewalPrice`, `monthlyCost`, `autoRenew`].includes(field)) && (
+          <View {...elementProps(`native-domain-renewal`, domain.id)} style={styles.renewal}>
+            {visibleColumns.includes(`renewalPrice`) && (
+              <Text {...elementProps(`native-domain-renewal-price`, domain.id)} style={styles.renewalPrice}>
+                {annualPrice === `—` ? annualPrice : `${annualPrice} / year`}
+              </Text>
+            )}
+            {visibleColumns.includes(`monthlyCost`) && (
+              <Text {...elementProps(`native-domain-monthly-cost`, domain.id)} style={styles.renewalPrice}>
+                {monthlyPrice === `—` ? monthlyPrice : `${monthlyPrice} / month`}
+              </Text>
+            )}
+            {visibleColumns.includes(`autoRenew`) && (
+              <View {...elementProps(`native-domain-auto-renew`, domain.id)} style={styles.autoRenew}>
+                <RefreshCw {...elementProps(`native-domain-auto-renew-icon`, domain.id)} size={10} color={autoRenew === true ? palette.accent : palette.muted} />
+                <Text {...elementProps(`native-domain-auto-renew-text`, domain.id)} style={styles.autoRenewText}>
+                  {`Auto-renew ${autoRenewLabel}`}
+                </Text>
+              </View>
+            )}
           </View>
-        </View>
+        )}
       </View>
-      {visibleColumns.includes(`renewalEstimate`) && renewalEstimate !== `—` && (
-        <View
-          style={styles.renewalEstimate}
-          {...elementProps(`native-domain-renewal-estimate`, domain.id)}
-        >
-          <View
-            style={styles.renewalEstimateHeading}
-            {...elementProps(`native-domain-renewal-estimate-heading`, domain.id)}
-          >
-            <Text
-              style={styles.renewalEstimateLabel}
-              {...elementProps(`native-domain-renewal-estimate-label`, domain.id)}
-            >
-              {`Renewal estimate`}
-            </Text>
-            <Text
-              style={styles.renewalEstimatePrice}
-              {...elementProps(`native-domain-renewal-estimate-price`, domain.id)}
-            >
-              {renewalEstimate}
-            </Text>
-          </View>
-          <Text
-            style={styles.renewalEstimateHint}
-            {...elementProps(`native-domain-renewal-estimate-hint`, domain.id)}
-          >
-            {renewalEstimateHint}
-          </Text>
-        </View>
-      )}
       {PORTFOLIO_COLUMNS.filter(column => [`websitePerformance`, `trancoRank`, `websiteInsightsCheckedAt`].includes(column.field) && visibleColumns.includes(column.field)).map(column => (
         <View
           key={column.field}

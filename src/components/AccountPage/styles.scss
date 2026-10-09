@@ -2,7 +2,7 @@
 :is(.dashboard-stat-skeleton, [data-class='dashboard-stat-skeleton']), :is(.dashboard-users-skeleton, [data-class='dashboard-users-skeleton']), :is(.dashboard-roles-skeleton, [data-class='dashboard-roles-skeleton']) { animation: account-pulse 1.4s ease-in-out infinite; }
 :is(.profile-value, [data-class='profile-value']), :is(.dashboard-user-name, [data-class='dashboard-user-name']), :is(.dashboard-user-email, [data-class='dashboard-user-email']) { overflow-wrap: anywhere; }
 @media (min-width: 1100px) {
-  :is(.account-page, [data-class='account-page'])[data-page='connections'] {
+  :is(.account-page, [data-class='account-page']):is([data-page='profile'], [data-page='connections']) {
     gap: 24px !important;
     max-width: none !important;
     overflow: visible !important;
@@ -28,11 +28,51 @@
     :is(.account-title, [data-class='account-title']) { font-size: 30px !important; }
     :is(.account-description, [data-class='account-description']) { line-height: 20px !important; margin-bottom: 0 !important; align-self: center !important; }
   }
+
+  :is(.account-page, [data-class='account-page'])[data-page='profile'] {
+    :is(.account-content, [data-class='account-content']) {
+      gap: 8px 16px !important;
+      align-items: start !important;
+      grid-template-columns: auto minmax(0, 1fr) clamp(260px, 22vw, 340px);
+    }
+
+    :is(.account-eyebrow, [data-class='account-eyebrow']) { grid-column: 1 / -1; }
+    :is(.account-title, [data-class='account-title']) { grid-row: 2; grid-column: 1; }
+    :is(.account-description, [data-class='account-description']) { grid-row: 2; grid-column: 2 / -1; }
+    :is(.profile-settings, [data-class='profile-settings']) { grid-row: 3; min-width: 0; margin-top: 8px; grid-column: 1 / 3; }
+
+    :is(.profile-details, [data-class='profile-details']) {
+      gap: 12px !important;
+      grid-row: 3 / 5;
+      min-width: 0;
+      grid-column: 3;
+      margin-top: 8px;
+      padding: 16px !important;
+    }
+
+    :is(.profile-field, [data-class='profile-field']) { gap: 4px !important; padding-bottom: 10px !important; }
+    :is(.profile-device-text, [data-class='profile-device-text']) { line-height: 16px !important; }
+    :is(.profile-account-preferences, [data-class='profile-account-preferences']) {
+      grid-row: 4;
+      min-width: 0;
+      grid-column: 1 / 3;
+      margin-top: 8px;
+      padding: 16px !important;
+    }
+  }
+}
+@media (min-width: 1100px) and (min-height: 700px) {
+  :is(.account-page, [data-class='account-page'])[data-page='profile'] :is(.profile-details, [data-class='profile-details']) {
+    position: sticky !important;
+    overflow-y: auto !important;
+    top: calc(var(--site-header-offset, 0px) + 16px);
+    max-height: calc(100dvh - var(--site-header-offset, 0px) - 32px);
+  }
 }
 @media (max-width: 560px) {
   :is(.account-page, [data-class='account-page']) { padding-right: 16px !important; padding-left: 16px !important; }
   :is(.account-sidebar-title, [data-class='account-sidebar-title']) { flex-basis: 100%; }
   :is(.account-title, [data-class='account-title']) { font-size: 32px !important; }
-  :is(.profile-details, [data-class='profile-details']), :is(.dashboard-users, [data-class='dashboard-users']), :is(.dashboard-roles, [data-class='dashboard-roles']) { padding: 16px !important; }
+  :is(.profile-details, [data-class='profile-details']), :is(.profile-account-preferences, [data-class='profile-account-preferences']), :is(.dashboard-users, [data-class='dashboard-users']), :is(.dashboard-roles, [data-class='dashboard-roles']) { padding: 16px !important; }
 }
 @keyframes account-pulse { 50% { opacity: .45; } }

@@ -99,7 +99,7 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 ::selection { color: var(--ink); background: var(--selection); }
 
-input[type='checkbox'] {
+input[type='checkbox']:not([role='switch']) {
   margin: 0;
   border: 0;
   padding: 0;
@@ -150,7 +150,7 @@ input[type='checkbox'] {
 }
 
 @media (forced-colors: active) {
-  input[type='checkbox'] {
+  input[type='checkbox']:not([role='switch']) {
     appearance: auto;
     background: revert;
     border: revert;

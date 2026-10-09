@@ -1,12 +1,13 @@
 import { authAPI } from '../../api/auth';
 import { useLocalStorage } from '../config';
+import { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
 import { genID, isAppCollectionID } from '../common/ids';
 import { accountStorageKey } from '../authentication/userScope';
 import { connectionValues, normalizeConnections, normalizeConnectionAccounts } from './values';
 import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues, type ConnectionAccount, type ConnectionSnapshot } from './types';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 
-export const CONNECTIONS_STORAGE_KEY = `domains-database:connections:v1`;
+export { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
 const listeners = new Set<(userId: string) => void>();
 const serialize = createOperationQueue(CONNECTIONS_STORAGE_KEY);
 export const subscribeConnections = (listener: (userId: string) => void) => {

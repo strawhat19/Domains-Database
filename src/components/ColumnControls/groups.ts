@@ -47,6 +47,6 @@ export const COLUMN_GROUPS: {
   {
     id: `costs`,
     label: `Costs`,
-    fields: [`renewalPrice`, `renewalEstimate`, `monthlyCost`, `currency`, `estimatedValue`],
+    fields: [`renewalPrice`, `monthlyCost`, `currency`, `estimatedValue`],
   },
 ];

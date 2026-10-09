@@ -4,7 +4,6 @@ import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty
 
 export type PortfolioColumn =
   | `name` | `registrar` | `expiresAt` | `autoRenew` | `renewalPrice` | `monthlyCost`
-  | `renewalEstimate`
   | `projectStatus` | `difficulty` | `mvp` | `future`
   | `trancoRank` | `websitePerformance` | `websiteInsightsCheckedAt`
   | `owner` | `tld` | `internationalName` | `providerId` | `status`
@@ -33,7 +32,6 @@ export const PORTFOLIO_COLUMNS: PortfolioColumnDefinition[] = [
   { field: `autoRenew`, label: `Auto-renew` },
   { field: `renewalPrice`, label: `Annual cost`, price: true },
   { field: `monthlyCost`, label: `Monthly cost`, price: true },
-  { field: `renewalEstimate`, label: `Renewal estimate` },
   { field: `trancoRank`, label: `Tranco rank` },
   { field: `websitePerformance`, label: `Mobile performance` },
   { field: `websiteInsightsCheckedAt`, label: `Insights checked` },
@@ -67,7 +65,7 @@ export const PORTFOLIO_FIELDS: PortfolioColumnDefinition[] = [
 ];
 
 export const DEFAULT_VISIBLE_COLUMNS: PortfolioColumn[] = [
-  `name`, `registrar`, `expiresAt`, `autoRenew`, `renewalPrice`, `renewalEstimate`, `websitePerformance`, `trancoRank`,
+  `name`, `registrar`, `expiresAt`, `autoRenew`, `renewalPrice`, `websitePerformance`, `trancoRank`,
 ];
 export const getOrderedPortfolioColumns = (fields: readonly PortfolioColumn[]) => [...new Set(fields)].flatMap(field => {
   const column = PORTFOLIO_COLUMNS.find(item => item.field === field);
@@ -95,6 +93,15 @@ export const getRenewalEstimate = (domain: DomainRecord) => {
   const source = typeof estimate.source === `string` ? estimate.source.trim() : ``;
   const checkedAt = typeof estimate.checkedAt === `string` && Number.isFinite(Date.parse(estimate.checkedAt)) ? estimate.checkedAt : undefined;
   return { amount, source, currency, checkedAt };
+};
+
+export const getRenewalEstimateDisplay = (domain: DomainRecord) => {
+  const estimate = getRenewalEstimate(domain);
+  if (!estimate) return `—`;
+  return new Intl.NumberFormat(`en-US`, {
+    style: `currency`,
+    currency: estimate.currency,
+  }).format(estimate.amount);
 };
 
 export const getRenewalEstimateHint = (domain: DomainRecord) => {
@@ -167,7 +174,6 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
       const insights = getDomainWebsiteInsights(domain);
       return insights?.trancoRank ?? (insights?.trancoListed === false ? `Not listed` : undefined);
     }
-    case `renewalEstimate`: return getRenewalEstimate(domain)?.amount;
     case `monthlyCost`: return Number.isFinite(domain.renewalPrice) ? domain.renewalPrice / 12 : undefined;
     case `registrantName`: return domain.registrant?.name;
     case `registrantEmail`: return domain.registrant?.email;
@@ -181,6 +187,9 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
   }
 };
 
+export const getDefaultPortfolioColumns = (domains: readonly DomainRecord[]): PortfolioColumn[] => DEFAULT_VISIBLE_COLUMNS
+  .filter(field => field === `name` || domains.some(domain => hasPortfolioColumnValue(getPortfolioColumnValue(domain, field), field)));
+
 export const getPortfolioColumnDisplay = (domain: DomainRecord, column: PortfolioColumn) => {
   const value = getPortfolioColumnValue(domain, column);
   if (!hasPortfolioColumnValue(value, column)) return `—`;
@@ -191,14 +200,6 @@ export const getPortfolioColumnDisplay = (domain: DomainRecord, column: Portfoli
     .replace(/\b[a-z]/g, letter => letter.toUpperCase());
   if (column === `websitePerformance` && typeof value === `number`) return `${value} / 100`;
   if (column === `trancoRank` && typeof value === `number`) return `#${new Intl.NumberFormat(`en-US`).format(value)}`;
-  if (column === `renewalEstimate` && typeof value === `number`) {
-    const currency = getRenewalEstimate(domain)?.currency;
-    if (!currency) return `—`;
-    return new Intl.NumberFormat(`en-US`, {
-      style: `currency`,
-      currency,
-    }).format(value);
-  }
   if (Array.isArray(value)) return value.filter(entry => hasPortfolioColumnValue(entry)).join(`, `);
   if (typeof value === `boolean`) {
     if (column === `locked`) return value ? `Locked` : `Unlocked`;

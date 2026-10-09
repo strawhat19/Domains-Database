@@ -14,7 +14,6 @@ import {
   DEFAULT_VISIBLE_COLUMNS,
   getPortfolioColumnDisplay,
   getPortfolioColumnValue,
-  getRenewalEstimateHint,
   getWebsiteInsightsHint,
   type PortfolioColumn,
 } from '../../shared/portfolioColumns';
@@ -147,7 +146,7 @@ const DomainGridCard = ({
                 </dt>
                 <dd
                   id={`${scope}-${key}-value`}
-                  title={column.field === `renewalEstimate` ? getRenewalEstimateHint(domain) : getWebsiteInsightsHint(domain, column.field) || undefined}
+                  title={getWebsiteInsightsHint(domain, column.field) || undefined}
                   className={`domain-grid-card-field-value${column.price ? ` domain-grid-card-field-price` : ``}`}
                 >
                   {column.field === `autoRenew` ? (

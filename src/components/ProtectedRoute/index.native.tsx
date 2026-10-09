@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { Roles } from '../../types/types';
 import type { PropsWithChildren } from 'react';
-import LoadingScreen from '../LoadingScreen';
 import { createStyles } from './styles.native';
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { useProtectedRoute } from './useProtectedRoute';
 import { elementProps } from '../../shared/elementProps';
 import { LockKeyhole, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import AccountLoadingSkeleton from '../AccountLoadingSkeleton';
+import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 type ProtectedRouteProps = PropsWithChildren<{ minRole?: Roles }>;
 
@@ -19,11 +19,7 @@ const ProtectedRoute = ({ children, minRole = Roles.Subscriber }: ProtectedRoute
   const compact = width <= 600 && height <= 620;
   const landscape = width > 600 && height <= 500;
 
-  if (state.auth.loading) return (
-    <View {...elementProps(`protected-route-loading`)} style={styles.page} accessibilityLabel={`Loading Your Account`}>
-      <LoadingScreen compact suffix={`protected-route`} label={`Loading your account…`} />
-    </View>
-  );
+  if (state.auth.loading) return <AccountLoadingSkeleton />;
   if (state.allowed) return <>{children}</>;
 
   return (

@@ -7,7 +7,7 @@ import ColumnOptions from '../ColumnControls/ColumnOptions.web';
 import { PORTFOLIO_COLUMNS } from '../../shared/portfolioColumns';
 import { GROUPABLE_COLUMNS } from '../../shared/portfolioPreferences/groups';
 import type { PortfolioGroupBy } from '../../shared/portfolioPreferences/types';
-import { X, Eye, List, Check, Layers3, RotateCcw, LayoutGrid, ArrowDownAZ, GripVertical, MoveHorizontal } from 'lucide-react';
+import { X, Eye, List, Coins, Check, Layers3, RotateCcw, LayoutGrid, ArrowDownAZ, GripVertical, MoveHorizontal } from 'lucide-react';
 
 const TableSettings = ({
   onFit,
@@ -160,6 +160,26 @@ const TableSettings = ({
                   {`Show Hidden Groups`}
                 </span>
               </label>
+            </div>
+            <div id={`table-settings-costs`} className={`table-settings-field table-settings-costs`}>
+              <label htmlFor={`table-settings-show-costs`} id={`table-settings-show-costs-label`} className={`table-settings-costs-label`}>
+                <input
+                  type={`checkbox`}
+                  id={`table-settings-show-costs`}
+                  checked={settings.showCosts}
+                  disabled={settings.loading}
+                  aria-describedby={`table-settings-costs-help`}
+                  className={`column-controls-checkbox table-settings-costs-checkbox`}
+                  onChange={event => settings.setShowCosts(event.target.checked)}
+                />
+                <Coins size={14} aria-hidden={`true`} id={`table-settings-show-costs-icon`} className={`table-settings-field-icon`} />
+                <span id={`table-settings-show-costs-text`} className={`table-settings-costs-text`}>
+                  {`Show Costs`}
+                </span>
+              </label>
+              <p id={`table-settings-costs-help`} className={`table-settings-help`}>
+                {`Show registrar renewal estimates below active domain renewal dates. Renewal warnings stay visible.`}
+              </p>
             </div>
           </div>
           <ColumnOptions

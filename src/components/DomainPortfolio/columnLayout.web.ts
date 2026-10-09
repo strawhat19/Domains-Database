@@ -1,7 +1,6 @@
 import type { DomainRecord } from '../../shared/types';
-import { getDomainStatus } from '../../shared/domainUtils';
 import { getDomainPreviewLink, getDomainGithubRepoLink } from '../../shared/domainLinks';
-import { getDomainColumnKey } from '../DomainRow/domainRow';
+import { getDomainColumnKey, getDomainRenewalDetail } from '../DomainRow/domainRow';
 import { getDomainSourceBadge } from '../DomainSourceBadge/domainSourceBadge';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnDisplay, getPortfolioColumnValue, type PortfolioColumn, type PortfolioColumnDefinition } from '../../shared/portfolioColumns';
 
@@ -45,6 +44,7 @@ export const fitPortfolioColumns = (
   domains: readonly DomainRecord[],
   columns: readonly PortfolioColumnDefinition[],
   root: HTMLElement | null,
+  showCosts = false,
 ): ColumnWidths => {
   const document = root?.ownerDocument ?? (typeof window === `undefined` ? undefined : window.document);
   const context = document?.createElement(`canvas`).getContext(`2d`);
@@ -79,7 +79,6 @@ export const fitPortfolioColumns = (
       : field === `expiresAt` ? find(`.domain-renewal-date`, cell)
       : field === `autoRenew` ? find(`.domain-auto-renew-text`, cell)
       : field === `renewalPrice` ? find(`.domain-annual-cost`, cell)
-      : field === `renewalEstimate` ? find(`.domain-renewal-estimate`, cell)
       : field === `difficulty` ? find(`.domain-project-badge-label`, cell)
       : find(`.domain-column-value-${key}`, cell);
     const font = readFont(textElement ?? cell, field === `name` ? 13 : field === `autoRenew` ? 11 : 12,
@@ -100,7 +99,6 @@ export const fitPortfolioColumns = (
     const nameDecoration = horizontalBox(identity) + horizontalBox(nameCopy)
       + elementWidth(find(`.domain-site-icon`, cell), 28) + elementGap(identity, 9)
       + (reorder || !cell ? elementWidth(reorder, 36) + elementGap(identity, 9) : 0);
-    const attentionDecoration = elementWidth(find(`.domain-attention-dot`, cell), 5) + elementGap(link, 6);
     const descriptionFont = readFont(description?.querySelector(`.domain-site-description`), 12);
     const nameGap = elementGap(nameCopy, 6);
     const headingGap = elementGap(heading, 6);
@@ -135,7 +133,7 @@ export const fitPortfolioColumns = (
           ? Math.min(280, measure(domain.description?.trim() ?? ``, descriptionFont)) + descriptionDecoration
             + elementWidth(description?.querySelector(`.domain-description-edit-icon`), 12) + readMoreDecoration
           : elementWidth(find(`.domain-description-empty`, cell), 22);
-        const linkWidth = width + linkDecoration + (getDomainStatus(domain) !== `Active` ? attentionDecoration : 0);
+        const linkWidth = width + linkDecoration;
         const headingWidth = linkWidth + projectWidth + headingGap + horizontalBox(heading)
           + (getDomainPreviewLink(domain) ? previewWidth + headingGap : 0)
           + (getDomainGithubRepoLink(domain) ? githubWidth + headingGap : 0);
@@ -145,7 +143,8 @@ export const fitPortfolioColumns = (
       } else if (field === `registrar`) {
         width = Math.max(width, measure(getDomainSourceBadge(domain).label, secondaryFont) + sourceDecoration) + registrarDecoration;
       } else if (field === `expiresAt`) {
-        width = Math.max(width, measure(getDomainStatus(domain), secondaryFont) + statusDecoration);
+        const detail = getDomainRenewalDetail(domain, showCosts);
+        width = Math.max(width, measure(detail.text, secondaryFont) + (detail.isCost ? 0 : statusDecoration));
       } else if (field === `autoRenew`) {
         width = Math.max(width, measure(getPortfolioColumnValue(domain, field) === undefined ? `Unknown` : value, font)) + toggleDecoration;
       } else if (field === `difficulty` && getPortfolioColumnValue(domain, field) !== undefined) {

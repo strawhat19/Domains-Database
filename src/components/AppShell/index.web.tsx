@@ -18,7 +18,7 @@ import { useAppShell, footerLinks } from './useAppShell';
 import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
-  const { pathname, year, signedIn, navigation, fitViewport, searchViewport } = useAppShell();
+  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport } = useAppShell();
   const { isDark, error: themeError, clearError: clearThemeError } = useTheme();
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
@@ -34,9 +34,13 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       className={`app-shell`}
       data-landing={pathname === routes.home.href || undefined}
       data-fit-view={fitViewport || undefined}
+      data-auth-page={pathname === routes.signin.href || pathname === routes.signup.href || undefined}
+      data-profile-page={pathname === routes.profile.href || undefined}
       data-connections-page={pathname === routes.connections.href || undefined}
       data-search-viewport={searchViewport || undefined}
       style={{
+        [`--account-badge-color`]: badgeColors.color,
+        [`--account-badge-background`]: badgeColors.backgroundColor,
         [`--site-header-offset`]: `${scroll.headerHeight}px`,
         [`--site-footer-height`]: scroll.footerHeight ? `${scroll.footerHeight}px` : undefined,
         [`--shell-header-height`]: scroll.pageHeaderHeight ? `${scroll.pageHeaderHeight}px` : undefined,
@@ -106,7 +110,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                         >
                           {item.label}
                         </span>
-                        {(item.countLoading || item.count !== undefined) && (
+                        {(item.countLoading || (item.count ?? 0) > 0) && (
                           <span
                             aria-hidden
                             className={`header-link-count${item.countLoading ? ` header-link-count-skeleton` : ``}`}

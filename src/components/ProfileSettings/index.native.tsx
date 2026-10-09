@@ -31,6 +31,20 @@ const ProfileSettings = () => {
           placeholderTextColor={palette.placeholder}
         />
       </View>
+      <View {...elementProps(`profile-email-field`)} style={styles.field}>
+        <Text {...elementProps(`profile-email-label`)} style={styles.label}>{`Email`}</Text>
+        <TextInput
+          readOnly
+          aria-disabled={true}
+          value={state.email}
+          autoComplete={`email`}
+          autoCapitalize={`none`}
+          keyboardType={`email-address`}
+          accessibilityLabel={`Email Address`}
+          {...elementProps(`profile-email-input`)}
+          style={[styles.input, styles.disabledInput]}
+        />
+      </View>
       <View {...elementProps(`profile-bio-field`)} style={styles.field}>
         <Text {...elementProps(`profile-bio-label`)} style={styles.label}>{`Bio`}</Text>
         <TextInput

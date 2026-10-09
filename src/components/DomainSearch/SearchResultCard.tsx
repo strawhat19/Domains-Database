@@ -6,7 +6,7 @@ import { ArrowUpRight, Globe2 } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
 import { Text, View, Platform, Pressable } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
-import { getSearchStatus, getAvailableConnections, getDomainSearchStatus, formatSearchPrice, getPurchaseHref, type SearchResult, type SearchDomainResult } from './resultPresentation';
+import { getSearchStatus, getSearchPriceOrder, getAvailableConnections, getDomainSearchStatus, formatSearchPrice, getPurchaseHref, type SearchResult, type SearchDomainResult } from './resultPresentation';
 
 type SearchStyles = ReturnType<typeof createStyles>;
 type ResultCardProps = { suffix: string; styles: SearchStyles; palette: ThemePalette; result: SearchDomainResult };
@@ -119,17 +119,17 @@ const SearchResultCard = ({ result, palette, styles, suffix }: ResultCardProps) 
         </View>
       </View>
       <Text {...elementProps(`domain-search-result-summary`, suffix)} style={styles.resultNote}>
-        {status.summary}
+        {`${status.summary}${connections.length > 1 ? ` · ${getSearchPriceOrder(connections)}` : ``}`}
       </Text>
       <View {...elementProps(`domain-search-result-connections`, suffix)} style={styles.connections}>
-        {connections.map((connection, index) => (
+        {connections.map(connection => (
           <ConnectionResult
-            key={`${connection.provider}-${index}`}
+            key={connection.provider}
             styles={styles}
             palette={palette}
             result={connection}
             domainResult={result}
-            suffix={`${suffix}-${connection.provider}-${index}`}
+            suffix={`${suffix}-${connection.provider}`}
           />
         ))}
       </View>

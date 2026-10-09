@@ -2,6 +2,7 @@ import { usePathname } from 'expo-router';
 import { useWindowDimensions } from 'react-native';
 import { routes, navigation } from '../../shared/routes';
 import { useAuth } from '../../shared/authContext/useAuth';
+import { getAccountBadgeColors } from '../../shared/common/badges';
 import { useWatching } from '../../shared/watching/useWatching';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
@@ -24,6 +25,7 @@ export const useAppShell = () => {
     || (!signedIn && !isBlogPage && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href);
   const visibleNavigation = navigation.filter(item =>
     (item.href !== routes.search.href || eligible || connectionsLoading)
+    && (item.href !== routes.auction.href || signedIn)
     && (item.href !== routes.community.href || signedIn)).map(item => {
       const count = item.href === routes.domains.href ? domainCount : item.href === routes.watching.href ? watchingCount : undefined;
       const countLoading = item.href === routes.domains.href ? domainsLoading : item.href === routes.watching.href && watchingLoading;
@@ -32,5 +34,5 @@ export const useAppShell = () => {
         : `${item.label}, ${count} Domain${count === 1 ? `` : `s`}${item.href === routes.watching.href ? ` in Watch List` : ` in Table`}`;
       return { ...item, count, countLoading, accessibilityLabel };
     });
-  return { pathname, signedIn, fitViewport, searchViewport, year: new Date().getFullYear(), navigation: visibleNavigation };
+  return { pathname, signedIn, fitViewport, searchViewport, badgeColors: getAccountBadgeColors(user), year: new Date().getFullYear(), navigation: visibleNavigation };
 };

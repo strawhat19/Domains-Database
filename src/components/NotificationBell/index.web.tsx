@@ -54,13 +54,15 @@ const NotificationBell = () => {
           id={`header-notifications-icon`}
           className={`header-notifications-icon`}
         />
-        <span
-          aria-hidden={true}
-          id={`header-notifications-badge`}
-          className={`header-notifications-badge${state.loading ? ` header-notifications-badge-skeleton` : ``}`}
-        >
-          {state.loading ? null : state.count}
-        </span>
+        {(state.loading || state.count > 0) && (
+          <span
+            aria-hidden={true}
+            id={`header-notifications-badge`}
+            className={`header-notifications-badge${state.loading ? ` header-notifications-badge-skeleton` : ``}`}
+          >
+            {state.loading ? null : state.count}
+          </span>
+        )}
       </button>
       {state.open && (
         <section

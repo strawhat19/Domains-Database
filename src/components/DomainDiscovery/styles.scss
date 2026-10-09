@@ -37,6 +37,7 @@
 :is(.domain-discovery-price-amount, .domain-discovery-price-term, .domain-discovery-description, .domain-discovery-error, .domain-discovery-empty, .domain-discovery-badge-label, [data-class='domain-discovery-price-amount'], [data-class='domain-discovery-price-term'], [data-class='domain-discovery-description'], [data-class='domain-discovery-error'], [data-class='domain-discovery-empty'], [data-class='domain-discovery-badge-label']) {
   overflow-wrap: anywhere;
 }
+:is(.domain-discovery-registration-quote, .domain-discovery-renewal-quote, [data-class='domain-discovery-registration-quote'], [data-class='domain-discovery-renewal-quote']) { overflow-wrap: anywhere; }
 
 :is(.domain-discovery-skeleton, [data-class='domain-discovery-skeleton']) { animation: domain-discovery-pulse 1.5s ease-in-out infinite; }
 

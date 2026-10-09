@@ -1,8 +1,10 @@
 import './styles.scss';
 import Toast from '../Toast';
+import AuthOnboarding from '../AuthOnboarding';
+import GoogleAuthButton from '../GoogleAuthButton';
 import { useLocalStorage } from '../../shared/config';
 import { useAuthForm, type AuthMode } from './useAuthForm';
-import { Eye, EyeOff, Mail, Globe2, Layers3, UserRound, ArrowRight, LockKeyhole, HardDrive } from 'lucide-react';
+import { Eye, EyeOff, Mail, UserRound, ArrowRight, LockKeyhole, HardDrive, RotateCcw } from 'lucide-react';
 
 const inputFields = [
   { id: `email`, type: `email`, icon: Mail, label: `Email address`, placeholder: `you@example.com` },
@@ -18,52 +20,10 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
     <section
       id={`auth-form-page-${mode}`}
       className={`auth-form-page`}
+      data-reactivation={state.canReactivate || undefined}
       aria-labelledby={`auth-form-title-${mode}`}
     >
-      <aside id={`auth-form-story-${mode}`} className={`auth-form-story`} aria-labelledby={`auth-form-story-title-${mode}`}>
-        <p id={`auth-form-story-eyebrow-${mode}`} className={`auth-form-story-eyebrow`}>
-          <span id={`auth-form-story-marker-${mode}`} className={`auth-form-story-marker`} aria-hidden />
-          {`Domain Manager`}
-        </p>
-        <div id={`auth-form-preview-${mode}`} className={`auth-form-preview`}>
-          <div id={`auth-form-preview-heading-${mode}`} className={`auth-form-preview-heading`}>
-            <Layers3 id={`auth-form-preview-icon-${mode}`} className={`auth-form-preview-icon`} size={19} aria-hidden />
-            <span id={`auth-form-preview-label-${mode}`} className={`auth-form-preview-label`}>
-              {`PORTFOLIO PREVIEW`}
-            </span>
-          </div>
-          {[`com`, `io`, `dev`].map(extension => (
-            <div key={extension} id={`auth-form-preview-record-${mode}-${extension}`} className={`auth-form-preview-record`}>
-              <span id={`auth-form-preview-record-mark-${mode}-${extension}`} className={`auth-form-preview-record-mark`}>
-                <Globe2 id={`auth-form-preview-record-icon-${mode}-${extension}`} className={`auth-form-preview-record-icon`} size={17} aria-hidden />
-              </span>
-              <span id={`auth-form-preview-record-name-${mode}-${extension}`} className={`auth-form-preview-record-name`}>
-                {`yourname.${extension}`}
-              </span>
-              <span id={`auth-form-preview-record-extension-${mode}-${extension}`} className={`auth-form-preview-record-extension`}>
-                {`.${extension}`}
-              </span>
-            </div>
-          ))}
-          <div id={`auth-form-preview-footer-${mode}`} className={`auth-form-preview-footer`}>
-            <span id={`auth-form-preview-footer-dot-${mode}`} className={`auth-form-preview-footer-dot`} aria-hidden />
-            <span id={`auth-form-preview-footer-text-${mode}`} className={`auth-form-preview-footer-text`}>
-              {`Names. Renewals. Registrars.`}
-            </span>
-          </div>
-        </div>
-        <div id={`auth-form-story-copy-${mode}`} className={`auth-form-story-copy`}>
-          <h2 id={`auth-form-story-title-${mode}`} className={`auth-form-story-title`}>
-            {`Your domains.`}
-            <span id={`auth-form-story-accent-${mode}`} className={`auth-form-story-accent`}>
-              {`In good order.`}
-            </span>
-          </h2>
-          <p id={`auth-form-story-description-${mode}`} className={`auth-form-story-description`}>
-            {`Keep every name, registrar, and renewal together. Make room for your next idea.`}
-          </p>
-        </div>
-      </aside>
+      <AuthOnboarding mode={mode} />
       <div id={`auth-form-content-${mode}`} className={`auth-form-content`}>
         <nav id={`auth-form-mode-navigation-${mode}`} className={`auth-form-mode-navigation`} aria-label={`Account Access`}>
           {([`signin`, `signup`] as const).map(item => {
@@ -95,6 +55,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               <div id={`auth-form-skeleton-copy-${mode}`} className={`auth-form-skeleton auth-form-skeleton-copy`} />
             </div>
             <div id={`auth-form-skeleton-fields-${mode}`} className={`auth-form-fields`} aria-hidden>
+              <div id={`auth-form-skeleton-google-${mode}`} className={`auth-form-skeleton auth-form-skeleton-field`} />
               {fields.map(field => (
                 <div key={field.id} id={`auth-form-skeleton-field-${mode}-${field.id}`} className={`auth-form-skeleton auth-form-skeleton-field`} />
               ))}
@@ -138,6 +99,10 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               <p id={`auth-form-description-${mode}`} className={`auth-form-description`}>
                 {state.signingUp ? `Bring your domains together.` : `Pick up where you left off.`}
               </p>
+            </div>
+            <GoogleAuthButton mode={mode} disabled={state.disabled} />
+            <div id={`auth-form-divider-${mode}`} className={`auth-form-divider`}>
+              <span id={`auth-form-divider-text-${mode}`} className={`auth-form-divider-text`}>{`or continue with email`}</span>
             </div>
             <form
               noValidate
@@ -190,6 +155,25 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               {!!state.error && <Toast id={`auth-form-${mode}`} message={state.error} onDismiss={state.clearFeedback} />}
               {!!state.auth.notice && !state.error && (
                 <Toast id={`auth-form-notice-${mode}`} kind={`success`} message={state.auth.notice} onDismiss={state.auth.clearNotice} />
+              )}
+              {state.canReactivate && (
+                <div id={`auth-form-reactivation-${mode}`} className={`auth-form-reactivation`} role={`status`} aria-live={`polite`}>
+                  <p id={`auth-form-reactivation-title-${mode}`} className={`auth-form-reactivation-title`}>{`Account Deactivated`}</p>
+                  <p id={`auth-form-reactivation-copy-${mode}`} className={`auth-form-reactivation-copy`}>
+                    {`Your saved account data is retained. Reactivate your account to sign in again.`}
+                  </p>
+                  <button
+                    type={`button`}
+                    disabled={state.disabled}
+                    className={`auth-form-submit`}
+                    id={`auth-form-reactivate-${mode}`}
+                    onClick={() => void state.reactivate()}
+                    aria-describedby={`auth-form-reactivation-copy-${mode}`}
+                  >
+                    <RotateCcw id={`auth-form-reactivate-icon-${mode}`} className={`auth-form-button-icon`} size={17} aria-hidden />
+                    {state.auth.busy ? `Please Wait…` : `Reactivate Account`}
+                  </button>
+                </div>
               )}
               <button type={`submit`} id={`auth-form-submit-${mode}`} className={`auth-form-submit`} disabled={state.disabled}>
                 {state.auth.busy ? `Please wait…` : state.signingUp ? `Create account` : `Sign in`}

@@ -30,8 +30,8 @@
   position: absolute;
   border-radius: 50%;
   place-items: center;
-  color: #fff;
-  background: #187565;
+  color: var(--account-badge-color, #fff);
+  background: var(--account-badge-background, #187565);
   font-family: var(--font-bold);
   border: 2px solid var(--paper);
 }

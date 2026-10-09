@@ -56,7 +56,8 @@ const requestVercel = async (operation: `search` | `extensions`, signal: AbortSi
   }
 };
 
-const price = (value: unknown, years: number): DomainSearchPrice => {
+const price = (value: unknown, years: number): DomainSearchPrice | undefined => {
+  if (value == null) return undefined;
   if (typeof value !== `number` || !Number.isFinite(value) || value < 0 || value > 1_000_000_000) throw invalid();
   return { years, amount: value, currency: `USD` };
 };

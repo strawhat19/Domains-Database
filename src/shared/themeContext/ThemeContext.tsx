@@ -14,6 +14,7 @@ interface ThemeContextValue {
   palette: ThemePalette;
   clearError: () => void;
   toggleTheme: () => void;
+  setThemePreference: (theme: ThemeMode) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -111,10 +112,9 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     };
   }, [theme, palette, ready]);
 
-  const toggleTheme = useCallback(() => {
-    if (!ready) return;
+  const setThemePreference = useCallback((nextTheme: ThemeMode) => {
+    if (!ready || nextTheme === currentTheme.current) return;
     preferenceChanged.current = true;
-    const nextTheme = currentTheme.current === `light` ? `dark` : `light`;
     const revision = ++mutationRevision.current;
     currentTheme.current = nextTheme;
     setTheme(nextTheme);
@@ -126,6 +126,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     });
   }, [ready, scope, userId]);
 
+  const toggleTheme = useCallback(() => setThemePreference(currentTheme.current === `light` ? `dark` : `light`), [setThemePreference]);
   const clearError = useCallback(() => setError(``), []);
 
   const value = useMemo(() => ({
@@ -135,8 +136,9 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     palette,
     clearError,
     toggleTheme,
+    setThemePreference,
     error: ready ? error : ``,
-  }), [ready, theme, isDark, palette, error, clearError, toggleTheme]);
+  }), [ready, theme, isDark, palette, error, clearError, toggleTheme, setThemePreference]);
 
   return (
     <ThemeContext.Provider value={value}>

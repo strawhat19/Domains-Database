@@ -51,7 +51,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const sticky = useStickyPortfolio(`${preferences.view}|${tableVisible}|${showMainRecords}|${visibleColumns.join(`|`)}`);
   const columns = getOrderedPortfolioColumns(visibleColumns);
   const columnCounts = useMemo(() => getPortfolioColumnCounts(portfolio.domains), [portfolio.domains]);
-  const showAnnualSpend = columns.some(column => column.price);
+  const showAnnualSpend = visibleColumns.some(field => field === `renewalPrice` || field === `monthlyCost`)
+    && (portfolio.loading || portfolio.summary.knownCostCount > 0);
   const showMonthlySpend = visibleColumns.includes(`monthlyCost`);
   const mainVisibleIds = useMemo(() => {
     const domains = mainGroups.flatMap(group => group.domains);
@@ -75,7 +76,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const collectionReorder = useCollectionReorder(!portfolio.loading && !portfolio.pendingId);
   const mainHandlers = collectionReorder.handlers(null);
   const manualSyncBlocked = portfolio.loading || portfolio.syncing || portfolio.manualSyncWaitSeconds > 0;
-  const fitColumns = () => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current) });
+  const fitColumns = () => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current, preferences.showCosts) });
   const manualSyncLabel = portfolio.syncing ? `Syncing…` : portfolio.manualSyncWaitSeconds > 0
     ? `Wait ${Math.floor(portfolio.manualSyncWaitSeconds / 60)}:${String(portfolio.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const displayedError = portfolio.localError || portfolio.insightError || portfolio.error;
@@ -184,7 +185,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   {`·`}
                 </span>
                 <span id={`portfolio-annual-spend`} className={`portfolio-summary-item`}>
-                  {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-annual-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / year`}</> : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost)} / year`}
+                  {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-annual-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / year`}</> : `${formatCurrency(portfolio.summary.annualCost)} / year`}
                 </span>
                 {showMonthlySpend && (
                   <>
@@ -192,7 +193,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       {`·`}
                     </span>
                     <span id={`portfolio-monthly-spend`} className={`portfolio-summary-item`}>
-                      {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-monthly-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / month`}</> : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
+                      {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-monthly-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / month`}</> : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
                     </span>
                   </>
                 )}

@@ -30,5 +30,5 @@ const authReturnPaths = Object.values(routes).map(route => route.href)
   .filter((href): href is AuthReturnPath => href !== routes.signin.href && href !== routes.signup.href);
 export const resolveAuthReturnTo = (value: unknown): AuthReturnPath => authReturnPaths.find(href => href === value) ?? routes.domains.href;
 
-export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.watching, routes.search, routes.auction, routes.community, routes.contact];
+export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.search, routes.watching, routes.auction, routes.community, routes.contact];
 export const footerLinks = [routes.terms, routes.privacy];

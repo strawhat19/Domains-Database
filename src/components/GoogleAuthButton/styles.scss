@@ -1,0 +1,13 @@
+:is(.google-auth-group, [data-class='google-auth-group']) { min-width: 0; max-width: 100%; }
+:is(.google-auth-button, [data-class='google-auth-button']) { box-sizing: border-box; cursor: pointer; transition: border-color .18s ease, box-shadow .18s ease, opacity .18s ease; }
+:is(.google-auth-button, [data-class='google-auth-button']):hover:not([aria-disabled='true']) { border-color: #1f1f1f !important; box-shadow: 0 1px 3px rgba(60, 64, 67, .18); }
+:is(.google-auth-button, [data-class='google-auth-button']):focus-visible { outline: 2px solid #4285f4; outline-offset: 3px; }
+:is(.google-auth-button, [data-class='google-auth-button'])[aria-disabled='true'] { cursor: not-allowed; }
+:is(.google-auth-logo, [data-class='google-auth-logo']) { flex-shrink: 0; }
+:is(.google-auth-label, [data-class='google-auth-label']) { font-family: 'Google Sans', Roboto, Arial, sans-serif !important; font-weight: 500; }
+:is(.google-auth-notice-text, [data-class='google-auth-notice-text']) { overflow-wrap: anywhere; }
+:is(.google-auth-notice-dismiss, [data-class='google-auth-notice-dismiss']) { flex-shrink: 0; cursor: pointer; }
+:is(.google-auth-notice-dismiss, [data-class='google-auth-notice-dismiss']):focus-visible { outline: 2px solid #4285f4; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  :is(.google-auth-button, [data-class='google-auth-button']) { transition: none; }
+}

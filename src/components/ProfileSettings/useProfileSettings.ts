@@ -36,5 +36,5 @@ export const useProfileSettings = () => {
       setError(failure instanceof Error ? failure.message : `Could Not Save Profile`);
     } finally { setBusy(false); }
   };
-  return { name, busy, error, notice, privacy, description, publicDomains, save, dismiss, setName, setDescription, changePrivacy, setPublicDomains };
+  return { name, busy, error, notice, privacy, description, publicDomains, save, dismiss, setName, setDescription, changePrivacy, setPublicDomains, email: user?.email ?? `` };
 };

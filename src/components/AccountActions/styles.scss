@@ -1,0 +1,17 @@
+:is(.account-actions-chevron, [data-class='account-actions-chevron']) { transition: transform .22s ease; }
+:is(.account-action, [data-class='account-action'], .account-signout, [data-class='account-signout'], .account-action-cancel, [data-class='account-action-cancel'], .account-action-confirm, [data-class='account-action-confirm']) {
+  transition: background-color .22s ease, border-color .22s ease, opacity .22s ease;
+  &:not([aria-disabled='true']):hover { border-color: var(--danger) !important; background: var(--danger-bg) !important; }
+}
+:is(.account-action-icon, [data-class='account-action-icon'], .account-action-confirm-icon, [data-class='account-action-confirm-icon']) { flex-shrink: 0; }
+:is(.account-action-dialog, [data-class='account-action-dialog']) { min-height: 0; max-height: min(92dvh, calc(100dvh - 32px)) !important; box-shadow: 0 18px 56px var(--shadow); }
+:is(.account-action-dialog-scroll, [data-class='account-action-dialog-scroll']) { min-height: 0; overscroll-behavior: contain; scrollbar-gutter: stable; }
+@media (min-width: 1440px) {
+  :is(.account-actions-grid, [data-class='account-actions-grid']) { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  :is(.account-action-dialog-scroll, [data-class='account-action-dialog-scroll']) > div { padding: 12px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.account-actions-chevron, [data-class='account-actions-chevron'], .account-action, [data-class='account-action'], .account-signout, [data-class='account-signout'], .account-action-cancel, [data-class='account-action-cancel'], .account-action-confirm, [data-class='account-action-confirm']) { transition: none; }
+}

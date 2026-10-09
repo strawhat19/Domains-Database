@@ -4,9 +4,9 @@ import { Animated, AppState, Easing, View } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
-import Svg, { Defs, G, LinearGradient, Polygon, Stop } from 'react-native-svg';
+import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
 
-const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 const gridSize = 20;
 const halfWidth = 29;
 const halfHeight = 21;
@@ -87,28 +87,34 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
   const darkGradient = `hero-cubes-dark-gradient-${suffix}`;
   const faces = useMemo(() => columns.map(cube => {
     const { x, y } = cube;
-    const points = (face: `top` | `left` | `right`, height: number) => {
+    const path = (face: `top` | `left` | `right`, height: number) => {
       const upperY = (y - halfHeight - height).toFixed(2);
       const leftY = (y - faceSkew - height).toFixed(2);
       const rightY = (y + faceSkew - height).toFixed(2);
       const lowerY = (y + halfHeight - height).toFixed(2);
 
-      if (face === `left`) return `${x - halfWidth},${leftY} ${x},${lowerY} ${x},${y + halfHeight} ${x - halfWidth},${y - faceSkew}`;
-      if (face === `right`) return `${x},${lowerY} ${x + halfWidth},${rightY} ${x + halfWidth},${y + faceSkew} ${x},${y + halfHeight}`;
-      return `${x},${upperY} ${x + halfWidth},${rightY} ${x},${lowerY} ${x - halfWidth},${leftY}`;
+      if (face === `left`) return `M${x - halfWidth},${leftY} ${x},${lowerY} ${x},${y + halfHeight} ${x - halfWidth},${y - faceSkew}z`;
+      if (face === `right`) return `M${x},${lowerY} ${x + halfWidth},${rightY} ${x + halfWidth},${y + faceSkew} ${x},${y + halfHeight}z`;
+      return `M${x},${upperY} ${x + halfWidth},${rightY} ${x},${lowerY} ${x - halfWidth},${leftY}z`;
     };
+    const animated = cube.lit || (cube.row + cube.column) % 2 === 0;
+    if (!animated) {
+      const height = cube.heights[0] ?? 0;
+      return { ...cube, animated: false as const, top: path(`top`, height), left: path(`left`, height), right: path(`right`, height) };
+    }
     const animateFace = (face: `top` | `left` | `right`) => phase.interpolate({
       inputRange: phaseSteps,
-      outputRange: cube.heights.map(height => points(face, height)),
+      outputRange: cube.heights.map(height => path(face, height)),
     });
 
     return {
       ...cube,
+      animated: true as const,
       top: animateFace(`top`),
       left: animateFace(`left`),
       right: animateFace(`right`),
-      glowOpacity: phase.interpolate({ inputRange: phaseSteps, outputRange: cube.glow }),
-      haloOpacity: phase.interpolate({ inputRange: phaseSteps, outputRange: cube.halo }),
+      glowOpacity: cube.lit ? phase.interpolate({ inputRange: phaseSteps, outputRange: cube.glow }) : 1,
+      haloOpacity: cube.lit ? phase.interpolate({ inputRange: phaseSteps, outputRange: cube.halo }) : 0,
     };
   }), [phase]);
 
@@ -121,7 +127,7 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
     if (reducedMotion) { phase.setValue(0); return; }
     if (!active) return;
     phase.setValue(0);
-    // Every column samples the same clock with its own phase and height; the fixed bases stay grounded.
+    // Moving columns share the same clock with their own phase and height; the fixed bases stay grounded.
     const animation = Animated.loop(Animated.timing(phase, {
       toValue: 1,
       duration: 14000,
@@ -176,40 +182,65 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
         <G {...elementProps(`native-hero-cubes-grid`, suffix)}>
           {faces.map(cube => {
             const cubeSuffix = `${suffix}-${cube.index}`;
+            if (!cube.animated) return (
+              <G key={cube.index} {...elementProps(`native-hero-cube`, cubeSuffix)}>
+                <Path
+                  d={cube.left}
+                  strokeWidth={.65}
+                  fill={cubePalette.left}
+                  stroke={cubePalette.leftStroke}
+                  {...elementProps(`native-hero-cube-left`, cubeSuffix)}
+                />
+                <Path
+                  d={cube.right}
+                  strokeWidth={.65}
+                  fill={cubePalette.right}
+                  stroke={cubePalette.rightStroke}
+                  {...elementProps(`native-hero-cube-right`, cubeSuffix)}
+                />
+                <Path
+                  d={cube.top}
+                  strokeWidth={.8}
+                  fill={`url(#${darkGradient})`}
+                  stroke={cubePalette.topStroke}
+                  {...elementProps(`native-hero-cube-top`, cubeSuffix)}
+                />
+              </G>
+            );
             const opacity = cube.lit ? cube.glowOpacity : 1;
 
             return (
               <G key={cube.index} {...elementProps(`native-hero-cube`, cubeSuffix)}>
-                <AnimatedPolygon
+                <AnimatedPath
+                  d={cube.left}
                   opacity={opacity}
-                  points={cube.left}
                   strokeWidth={.65}
                   fill={cube.lit ? cubePalette.litLeft : cubePalette.left}
                   stroke={cube.lit ? cubePalette.litLeftStroke : cubePalette.leftStroke}
                   {...elementProps(`native-hero-cube-left`, cubeSuffix)}
                 />
-                <AnimatedPolygon
+                <AnimatedPath
+                  d={cube.right}
                   opacity={opacity}
-                  points={cube.right}
                   strokeWidth={.65}
                   fill={cube.lit ? cubePalette.litRight : cubePalette.right}
                   stroke={cube.lit ? cubePalette.litRightStroke : cubePalette.rightStroke}
                   {...elementProps(`native-hero-cube-right`, cubeSuffix)}
                 />
                 {cube.lit && (
-                  <AnimatedPolygon
+                  <AnimatedPath
+                    d={cube.top}
                     fill={cubePalette.halo}
                     strokeWidth={7}
-                    points={cube.top}
                     stroke={cubePalette.halo}
                     strokeLinejoin={`round`}
                     opacity={cube.haloOpacity}
                     {...elementProps(`native-hero-cube-glow`, cubeSuffix)}
                   />
                 )}
-                <AnimatedPolygon
+                <AnimatedPath
+                  d={cube.top}
                   opacity={opacity}
-                  points={cube.top}
                   strokeWidth={.8}
                   fill={`url(#${cube.lit ? topGradient : darkGradient})`}
                   stroke={cube.lit ? cubePalette.litTopStroke : cubePalette.topStroke}

@@ -5,6 +5,7 @@ import { useAuth } from '../authContext/useAuth';
 import { connectionsAPI } from '../../api/connections';
 import { supportsRegistrarSync } from '../connections/inputs';
 import { CONNECTIONS_STORAGE_KEY } from '../connections/service';
+import { subscribeAccountDataReset } from '../accountData/state';
 import { accountStorageKey } from '../authentication/userScope';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccountSyncStatuses, ConnectionSyncStatus, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
@@ -31,6 +32,9 @@ const snapshotAccountStatuses = (snapshot: ConnectionSnapshot, statuses: Account
   }));
 const hasSuccessfulConnection = (policy: RegistrarSyncPolicy, snapshot: ConnectionSnapshot) => policy.successfulProviders.some(provider =>
   snapshot.accounts.some(account => account.provider === provider && supportsRegistrarSync(account) && Boolean(account.values.trim())));
+const canResumeSync = (policy: RegistrarSyncPolicy, snapshot: ConnectionSnapshot) => policy.automaticSyncPaused === true
+  ? snapshot.accounts.some(account => supportsRegistrarSync(account) && Boolean(account.values.trim()))
+  : policy.connectionsUpdated === snapshot.updated && hasSuccessfulConnection(policy, snapshot);
 
 const aggregateStatuses = (accounts: readonly ConnectionAccount[], statuses: AccountSyncStatuses): ConnectionSyncStatuses => {
   const result = emptyStatuses();
@@ -106,8 +110,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
   const applyPolicy = useCallback((policy: RegistrarSyncPolicy, snapshot: ConnectionSnapshot) => {
     setClock(Date.now());
     setCooldownUntil(policy.manualCooldownUntil);
-    setCanSyncManually(policy.connectionsUpdated === snapshot.updated
-      && hasSuccessfulConnection(policy, snapshot));
+    setCanSyncManually(canResumeSync(policy, snapshot));
     if (snapshot.accounts.some(account => !supportsRegistrarSync(account))) {
       setAccountStatuses(previous => snapshotAccountStatuses(snapshot, previous));
       if (!syncingRef.current) setConnectionStatuses(previous => ({
@@ -137,6 +140,11 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (!current()) return empty;
       if (snapshot.userId !== userId) throw new Error(`Sign In To Sync Your Domains`);
       applyPolicy(policy, snapshot);
+      if (automatic && policy.automaticSyncPaused) {
+        setConnectionStatuses(emptyStatuses());
+        setAccountStatuses({});
+        return empty;
+      }
       const syncAccounts = snapshot.accounts.filter(supportsRegistrarSync);
       const savedOnlyAccounts = snapshot.accounts.filter(account => !supportsRegistrarSync(account));
       const accountNext = snapshotAccountStatuses(snapshot, policy.accountStatuses);
@@ -274,8 +282,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       const policy = await getSyncPolicy(userId);
       if (!current()) return;
       applyPolicy(policy, snapshot);
-      if (policy.connectionsUpdated !== snapshot.updated
-        || !hasSuccessfulConnection(policy, snapshot)) {
+      if (!canResumeSync(policy, snapshot)) {
         setManualNotice(`Save A Successful Registrar Connection Before Syncing`);
         return;
       }
@@ -356,6 +363,12 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
     else resetSyncState();
     return () => { active.current = false; cancelRequests(); };
   }, [enabled, loginRevision, runSync, cancelRequests, resetSyncState]);
+
+  useEffect(() => subscribeAccountDataReset(changedUserId => {
+    if (changedUserId !== userId) return;
+    active.current = false;
+    resetSyncState();
+  }), [userId, resetSyncState]);
 
   const syncConnections = useCallback((snapshot?: ConnectionSnapshot, connectionIds?: readonly string[]) => runSync(snapshot, false, connectionIds), [runSync]);
   const manualSyncWaitSeconds = enabled && canSyncManually ? Math.max(0, Math.ceil((cooldownUntil - clock) / 1000)) : 0;

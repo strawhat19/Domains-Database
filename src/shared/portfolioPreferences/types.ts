@@ -56,6 +56,7 @@ export interface GroupSettingsInput extends PortfolioGroupDetails {
 
 export interface PortfolioPreferences {
   view: PortfolioView;
+  showCosts: boolean;
   groupBy: PortfolioGroupBy;
   hiddenGroupKeys: string[];
   showHiddenGroups: boolean;
@@ -92,6 +93,7 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   resetOrder: (groupKey: string) => void;
   deleteGroup: (groupId: string) => void;
   setGroupBy: (groupBy: PortfolioGroupBy) => void;
+  setShowCosts: (value: boolean) => void;
   renameGroup: (groupId: string, name: string) => boolean;
   toggleGroupStar: (groupId: string) => boolean;
   setShowHiddenGroups: (value: boolean) => void;

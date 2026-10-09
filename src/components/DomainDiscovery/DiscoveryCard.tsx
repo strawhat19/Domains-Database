@@ -5,9 +5,9 @@ import type { DiscoveryCardDensity } from './useDiscoveryShelf';
 import { elementProps } from '../../shared/elementProps';
 import { discoveryIcons, getDiscoveryStatusTone } from './presentation';
 import type { ThemePalette } from '../../shared/themeContext/theme';
-import { discoveryStatuses, isValueRegistration } from '../../shared/domainSearch/discovery';
-import { formatSearchPrice, getAvailableConnections } from '../DomainSearch/resultPresentation';
+import { discoveryStatuses } from '../../shared/domainSearch/discovery';
 import type { DomainDiscoveryResult, DomainDiscoveryStatus } from '../../shared/domainSearch/discovery';
+import { formatSearchPrice, getAvailableConnections, getSearchPriceOrder, type SearchResult } from '../DomainSearch/resultPresentation';
 
 interface DiscoveryCardProps {
   suffix: string;
@@ -75,24 +75,41 @@ const AvailabilityStatus = ({ styles, suffix, providerLabel, showLabel = true }:
   </View>
 );
 
+const formatDiscoveryQuote = (quote: SearchResult[`registration`]) => {
+  const price = formatSearchPrice(quote);
+  const years = quote?.years;
+  const term = years && Number.isInteger(years) && years > 0 ? `/${years}y` : `/?y`;
+  return {
+    text: price.amount === `—` ? `—` : `${price.amount}${term}${price.currencyNote ? ` ?` : ``}`,
+    description: price.amount === `—` ? `Price Not Provided` : `${price.amount}, ${price.term}${price.currencyNote ? `, ${price.currencyNote}` : ``}`,
+  };
+};
+
 const DiscoveryCard = ({ result, styles, suffix, palette, disabled, onSearch, onWatchPromptChange, sidebar = false, fillShelf = false, density = `full`, hiddenFromAccessibility = false }: DiscoveryCardProps) => {
   const connections = getAvailableConnections(result);
-  const valueConnection = result.statuses.includes(`value`)
-    ? connections.find(value => isValueRegistration(value.registration))
-    : undefined;
-  const connection = valueConnection ?? connections.find(value => value.registration) ?? connections[0];
+  const connection = connections?.[0];
   if (!connection) return null;
-  const price = formatSearchPrice(connection.registration);
+  const price = formatDiscoveryQuote(connection.registration);
+  const priceOrder = getSearchPriceOrder(connections);
+  const currency = connection.registration?.currency?.toUpperCase();
+  const comparable = connections.length > 1 && Boolean(currency) && connections.every(value => (
+    value.registration && Number.isFinite(value.registration.amount) && value.registration.amount >= 0
+      && /^[a-z]{3}$/i.test(value.registration.currency) && value.registration.currency.toUpperCase() === currency
+  ));
+  const platformCount = `${connections.length} ${connections.length === 1 ? `Platform` : `Platforms`}`;
+  const quoteSummary = connections.map(value => (
+    `${value.label}, Registration ${formatDiscoveryQuote(value.registration).description}, Renewal ${formatDiscoveryQuote(value.renewal).description}`
+  )).join(`; `);
+  const missingCurrency = connections.some(value => [value.registration, value.renewal].some(quote => quote && !quote.currency));
+  const missingTerm = connections.some(value => [value.registration, value.renewal].some(quote => quote && (!quote.years || !Number.isInteger(quote.years) || quote.years < 1)));
   const statusDefinitions = discoveryStatuses.filter(value => result.statuses.includes(value.id));
   const category = result.statuses.find(status => status === `hot` || status === `trending` || status === `new`);
-  const years = connection.registration?.years;
-  const term = years && Number.isInteger(years) && years > 0 ? `${years}y` : ``;
-  const concisePrice = connection.registration ? `${price.amount}${term ? ` · ${term}` : ``}` : `At registrar`;
+  const concisePrice = price.text === `—` ? `At registrar` : `${comparable ? `From ` : ``}${price.text}`;
 
   return (
     <View
       {...elementProps(`domain-discovery-card`, suffix)}
-      style={[styles.card, sidebar && styles.sidebarCard, density === `compact` && styles.compactCard, density === `pill` && styles.pillCard, fillShelf && styles.filledSidebarCard, disabled && styles.faded]}
+      style={[styles.card, sidebar && styles.sidebarCard, density === `full` && styles.fullCard, density === `compact` && styles.compactCard, density === `pill` && styles.pillCard, fillShelf && styles.filledSidebarCard, disabled && styles.faded]}
     >
       <Pressable
         disabled={disabled}
@@ -104,14 +121,14 @@ const DiscoveryCard = ({ result, styles, suffix, palette, disabled, onSearch, on
         {...elementProps(`domain-discovery-compare`, suffix)}
         {...(Platform.OS === `web` && hiddenFromAccessibility ? { tabIndex: -1 as const } : {})}
         style={({ pressed }) => [styles.compareControl, pressed && styles.comparePressed]}
-        accessibilityHint={statusDefinitions.map(value => `${value.label}: ${value.description}`).join(`. `)}
-        accessibilityLabel={`Compare ${result.domain}, ${statusDefinitions.map(value => value.label).join(`, `)}, Available At ${connection.label}, Registration ${connection.registration ? `${price.amount}, ${price.term}${price.currencyNote ? `, ${price.currencyNote}` : ``}` : `Price At Registrar`}`}
+        accessibilityHint={`Opens Full Registration And Renewal Comparison. ${priceOrder}. ${statusDefinitions.map(value => `${value.label}: ${value.description}`).join(`. `)}`}
+        accessibilityLabel={`Compare ${result.domain}, ${platformCount} Available: ${quoteSummary}`}
       />
       <View
         accessibilityElementsHidden
         importantForAccessibility={`no-hide-descendants`}
         {...elementProps(`domain-discovery-card-content`, suffix)}
-        style={[styles.cardContent, sidebar && styles.sidebarContent, density === `compact` && styles.compactContent, density === `pill` && styles.pillContent, { pointerEvents: `none` }]}
+        style={[styles.cardContent, sidebar && styles.sidebarContent, density === `full` && styles.fullContent, density === `compact` && styles.compactContent, density === `pill` && styles.pillContent, { pointerEvents: `none` }]}
       >
         {density === `pill` && (
           <>
@@ -121,15 +138,16 @@ const DiscoveryCard = ({ result, styles, suffix, palette, disabled, onSearch, on
             </Text>
             {!!category && <DiscoveryBadge small iconOnly status={category} styles={styles} suffix={suffix} palette={palette} />}
             <Text numberOfLines={1} {...elementProps(`domain-discovery-price-amount`, suffix)} style={[styles.priceAmount, styles.pillPriceAmount]}>
-              {connection.registration ? price.amount : `At registrar`}
+              {concisePrice}
             </Text>
+            {connections.length > 1 && <Text {...elementProps(`domain-discovery-platform-count`, suffix)} style={styles.platformCount}>{`+${connections.length - 1}`}</Text>}
           </>
         )}
         {density !== `pill` && (
           <View {...elementProps(`domain-discovery-card-heading`, suffix)} style={[styles.cardHeading, density === `full` ? styles.watchHeading : styles.compactWatchHeading]}>
             <Text
               numberOfLines={1}
-              style={[styles.domain, density === `compact` && styles.compactDomain]}
+              style={[styles.domain, density === `full` && styles.fullDomain, density === `compact` && styles.compactDomain]}
               {...elementProps(`domain-discovery-domain`, suffix)}
             >
               {result.domain}
@@ -146,6 +164,7 @@ const DiscoveryCard = ({ result, styles, suffix, palette, disabled, onSearch, on
               <Text numberOfLines={1} {...elementProps(`domain-discovery-price-amount`, suffix)} style={[styles.priceAmount, styles.compactPriceAmount]}>
                 {concisePrice}
               </Text>
+              <Text {...elementProps(`domain-discovery-platform-count`, suffix)} style={styles.platformCount}>{`Compare ${platformCount}`}</Text>
             </View>
           </>
         )}
@@ -153,25 +172,31 @@ const DiscoveryCard = ({ result, styles, suffix, palette, disabled, onSearch, on
           <>
             <View {...elementProps(`domain-discovery-badges`, suffix)} style={styles.badges}>
               {result.statuses.map(status => (
-                <DiscoveryBadge key={status} status={status} styles={styles} suffix={suffix} palette={palette} />
+                <DiscoveryBadge small key={status} status={status} styles={styles} suffix={suffix} palette={palette} />
               ))}
             </View>
-            <AvailabilityStatus styles={styles} suffix={suffix} providerLabel={connection.label} />
-            <View {...elementProps(`domain-discovery-price`, suffix)} style={styles.price}>
-              <Text {...elementProps(`domain-discovery-price-label`, suffix)} style={styles.detail}>
-                {`Registration`}
+            <View {...elementProps(`domain-discovery-platforms`, suffix)} style={styles.platforms}>
+              <Text numberOfLines={1} {...elementProps(`domain-discovery-price-order`, suffix)} style={styles.detail}>
+                {`${platformCount} · ${priceOrder.startsWith(`Grouped by currency`) ? `By Currency & Quote` : `Quote Low To High`}`}
               </Text>
-              <Text
-                style={styles.priceAmount}
-                {...elementProps(`domain-discovery-price-amount`, suffix)}
-              >
-                {connection.registration ? price.amount : `Price at registrar`}
+              <View {...elementProps(`domain-discovery-platform-heading`, suffix)} style={styles.platformRow}>
+                <Text {...elementProps(`domain-discovery-platform-label`, suffix)} style={[styles.platformLabel, styles.detail]}>{`Platform`}</Text>
+                <Text {...elementProps(`domain-discovery-registration-label`, suffix)} style={[styles.platformPrice, styles.detail]}>{`Registration`}</Text>
+                <Text {...elementProps(`domain-discovery-renewal-label`, suffix)} style={[styles.platformPrice, styles.detail]}>{`Renewal`}</Text>
+              </View>
+              {connections.map((value, index) => {
+                const quoteSuffix = `${suffix}-${value.provider}-${index}`;
+                return (
+                  <View key={`${value.provider}-${index}`} {...elementProps(`domain-discovery-platform`, quoteSuffix)} style={styles.platformRow}>
+                    <Text numberOfLines={1} {...elementProps(`domain-discovery-platform-name`, quoteSuffix)} style={styles.platformLabel}>{value.label}</Text>
+                    <Text {...elementProps(`domain-discovery-registration-quote`, quoteSuffix)} style={styles.platformPrice}>{formatDiscoveryQuote(value.registration).text}</Text>
+                    <Text {...elementProps(`domain-discovery-renewal-quote`, quoteSuffix)} style={styles.platformPrice}>{formatDiscoveryQuote(value.renewal).text}</Text>
+                  </View>
+                );
+              })}
+              <Text {...elementProps(`domain-discovery-comparison-note`, suffix)} style={styles.detail}>
+                {missingCurrency || missingTerm ? `? ${missingCurrency && missingTerm ? `Currency or term` : missingCurrency ? `Currency` : `Term`} not supplied · Open comparison` : `Open Full Comparison`}
               </Text>
-              {!!connection.registration && (
-                <Text {...elementProps(`domain-discovery-price-term`, suffix)} style={styles.detail}>
-                  {`${price.term}${price.currencyNote ? ` · ${price.currencyNote}` : ``}`}
-                </Text>
-              )}
             </View>
           </>
         )}

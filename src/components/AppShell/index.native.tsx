@@ -22,7 +22,7 @@ import { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, User
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
-  const { pathname, year, signedIn, navigation, fitViewport, searchViewport } = useAppShell();
+  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [viewportHeight, setViewportHeight] = useState(height);
@@ -117,15 +117,15 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>
                     {label}
                   </Text>
-                  {(item.countLoading || item.count !== undefined) && (
+                  {(item.countLoading || (item.count ?? 0) > 0) && (
                     <View
                       accessible={false}
                       accessibilityElementsHidden
-                      style={[styles.navigationCount, item.countLoading && { backgroundColor: palette.skeleton }]}
+                      style={[styles.navigationCount, { backgroundColor: item.countLoading ? palette.skeleton : badgeColors.backgroundColor }]}
                       importantForAccessibility={`no-hide-descendants`}
                       {...elementProps(`native-navigation-count`, label.toLowerCase())}
                     >
-                      <Text {...elementProps(`native-navigation-count-text`, label.toLowerCase())} style={styles.navigationCountText}>
+                      <Text {...elementProps(`native-navigation-count-text`, label.toLowerCase())} style={[styles.navigationCountText, { color: badgeColors.color }]}>
                         {item.countLoading ? `` : item.count}
                       </Text>
                     </View>
@@ -134,11 +134,11 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                     <View
                       accessible={false}
                       accessibilityElementsHidden
-                      style={styles.navigationBeta}
+                      style={[styles.navigationBeta, { borderColor: badgeColors.backgroundColor, backgroundColor: badgeColors.backgroundColor }]}
                       importantForAccessibility={`no-hide-descendants`}
                       {...elementProps(`native-navigation-beta`, label.toLowerCase())}
                     >
-                      <Text {...elementProps(`native-navigation-beta-text`, label.toLowerCase())} style={styles.navigationBetaText}>
+                      <Text {...elementProps(`native-navigation-beta-text`, label.toLowerCase())} style={[styles.navigationBetaText, { color: badgeColors.color }]}>
                         {`Beta`}
                       </Text>
                     </View>

@@ -513,6 +513,7 @@ const PortfolioRecords = ({
                   domain={domain}
                   onEdit={onEdit}
                   onSelect={onSelect}
+                  showCosts={preferences.showCosts}
                   selected={selectedIds.has(domain.id)}
                   position={positions.get(domain.id) ?? 1}
                   visibleColumns={visibleColumns}

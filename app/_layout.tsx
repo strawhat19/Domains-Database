@@ -43,7 +43,7 @@ const RootLayout = () => {
 };
 
 const AccountContent = ({ dataReady }: { dataReady: boolean }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, dataRevision } = useAuth();
   const lastAccount = useRef<string | null>(null);
   const [accountRevision, setAccountRevision] = useState(0);
   const accountScope = loading ? null : user?.id ?? `guest`;
@@ -56,15 +56,15 @@ const AccountContent = ({ dataReady }: { dataReady: boolean }) => {
   }, [accountScope]);
   return (
     <ConnectionAvailabilityProvider enabled={dataReady}>
-      <ColumnProvider key={accountRevision} enabled={enabled} userId={user?.id ?? null}>
-        <DomainProvider enabled={enabled}>
+      <DomainProvider key={`${accountRevision}-${dataRevision}`} enabled={enabled}>
+        <ColumnProvider enabled={enabled} userId={user?.id ?? null}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>
             <WatchingProvider enabled={enabled}>
               <RootContent />
             </WatchingProvider>
           </PortfolioPreferencesProvider>
-        </DomainProvider>
-      </ColumnProvider>
+        </ColumnProvider>
+      </DomainProvider>
     </ConnectionAvailabilityProvider>
   );
 };

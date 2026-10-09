@@ -3,11 +3,16 @@ import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useWatching } from '../../shared/watching/useWatching';
+import { getAccountBadgeColors } from '../../shared/common/badges';
+import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 
 export const useUserMenu = () => {
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
+  const { records, loading: watchingLoading } = useWatching();
+  const { verifiedConnectionCount, connectionsCountLoading } = useConnectionAvailability();
   const { palette } = useTheme();
   const [open, setOpen] = useState(false);
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -35,5 +40,18 @@ export const useUserMenu = () => {
       router.replace(`/`);
     } catch {}
   };
-  return { ...auth, open, styles, palette, signOut, guestAuth, close: () => setOpen(false), toggle: () => setOpen(current => !current) };
+  return {
+    ...auth,
+    open,
+    styles,
+    palette,
+    signOut,
+    guestAuth,
+    connectionsCountLoading,
+    verifiedConnectionCount,
+    badgeColors: getAccountBadgeColors(auth.user),
+    watchingCount: watchingLoading ? 0 : records.filter(record => record.listName === `Watching`).length,
+    close: () => setOpen(false),
+    toggle: () => setOpen(current => !current),
+  };
 };

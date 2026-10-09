@@ -1,7 +1,7 @@
 import type { DomainRecord } from '../../shared/types';
 import { getDomainStatus } from '../../shared/domainUtils';
-import type { PortfolioColumn } from '../../shared/portfolioColumns';
 import type { MouseEvent, ChangeEvent, KeyboardEvent, DragEventHandler } from 'react';
+import { getRenewalEstimateHint, getRenewalEstimateDisplay, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 export interface DomainItemProps {
   busy?: boolean;
@@ -65,6 +65,17 @@ export const getDomainColumnKey = (column: PortfolioColumn) => {
 export const getDomainSkeletonKey = (column: PortfolioColumn) => (
   column === `renewalPrice` ? `cost` : getDomainColumnKey(column)
 );
+
+export const getDomainRenewalDetail = (domain: DomainRecord, showCosts = false) => {
+  const status = getDomainStatus(domain);
+  const isCost = showCosts && status === `Active`;
+  const estimate = isCost ? getRenewalEstimateDisplay(domain) : `—`;
+  return {
+    isCost,
+    text: isCost ? estimate === `—` ? `Cost Unavailable` : `Est. ${estimate}` : status,
+    hint: isCost ? getRenewalEstimateHint(domain) || `Renewal Estimate Not Provided By Registrar` : undefined,
+  };
+};
 
 export const getDomainRow = (domain: DomainRecord) => {
   const status = getDomainStatus(domain);

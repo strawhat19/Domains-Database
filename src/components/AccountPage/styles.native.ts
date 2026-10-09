@@ -14,6 +14,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   linkText: { color: palette.ink, fontSize: 12, fontFamily: `DMSans_600SemiBold` },
   activeLink: { backgroundColor: palette.subtle },
   panel: { gap: 18, padding: 24, borderRadius: 12, backgroundColor: palette.paper, borderWidth: 1, borderColor: palette.line },
+  preferences: { gap: 16 },
+  roomyPreferences: { alignItems: `flex-start`, flexDirection: `row` },
   panelTitle: { fontSize: 15, color: palette.ink, fontFamily: `DMSans_700Bold` },
   field: { gap: 6, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: palette.line },
   label: { fontSize: 11, lineHeight: 18, color: palette.muted, fontFamily: `DMSans_400Regular` },

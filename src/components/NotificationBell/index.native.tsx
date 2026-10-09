@@ -16,7 +16,7 @@ const NotificationBell = () => {
   const { palette } = useTheme();
   const reducedMotion = useReducedMotion();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const { open, error, loading, notifications, count, close, toggle } = useNotificationBell();
+  const { open, error, loading, notifications, count, close, toggle, badgeColors } = useNotificationBell();
 
   return (
     <View {...elementProps(`native-header-notifications`)}>
@@ -33,19 +33,21 @@ const NotificationBell = () => {
           color={palette.accent}
           {...elementProps(`native-header-notifications-icon`)}
         />
-        <View
-          style={[styles.badge, loading && { backgroundColor: palette.skeleton }]}
-          accessibilityElementsHidden
-          importantForAccessibility={`no-hide-descendants`}
-          {...elementProps(`native-header-notifications-badge`)}
-        >
-          <Text
-            style={styles.badgeText}
-            {...elementProps(`native-header-notifications-badge-text`)}
+        {(loading || count > 0) && (
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility={`no-hide-descendants`}
+            {...elementProps(`native-header-notifications-badge`)}
+            style={[styles.badge, { backgroundColor: loading ? palette.skeleton : badgeColors.backgroundColor }]}
           >
-            {loading ? `` : count}
-          </Text>
-        </View>
+            <Text
+              style={[styles.badgeText, { color: badgeColors.color }]}
+              {...elementProps(`native-header-notifications-badge-text`)}
+            >
+              {loading ? `` : count}
+            </Text>
+          </View>
+        )}
       </Pressable>
       <Modal
         transparent

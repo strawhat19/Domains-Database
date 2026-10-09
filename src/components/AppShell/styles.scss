@@ -87,7 +87,7 @@
   right: -4px;
   height: 19px;
   display: grid;
-  color: #fff;
+  color: var(--account-badge-color, #fff);
   padding: 0 6px;
   min-width: 19px;
   font-size: 9px;
@@ -96,7 +96,7 @@
   border-radius: 999px;
   letter-spacing: .3px;
   place-items: center;
-  background: #187565;
+  background: var(--account-badge-background, #187565);
   pointer-events: none;
   border: 2px solid var(--paper);
   font-family: 'DMSans_700Bold', sans-serif;
@@ -129,7 +129,17 @@
   .site-footer { margin-top: 0; }
 }
 
+@media (min-width: 901px) {
+  .app-shell[data-auth-page='true'] {
+    .main-content {
+      padding-inline: 0;
+      background: radial-gradient(ellipse at 15% 25%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 55%), linear-gradient(115deg, var(--subtle), var(--paper) 65%);
+    }
+  }
+}
+
 @media (min-width: 1100px) {
+  .app-shell[data-profile-page='true'],
   .app-shell[data-connections-page='true'] {
     .main-content { padding-bottom: 16px; }
     .site-footer { margin-top: 16px; }

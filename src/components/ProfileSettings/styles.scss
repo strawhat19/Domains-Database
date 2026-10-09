@@ -1,10 +1,38 @@
 :is(.profile-settings-save, [data-class='profile-settings-save']):hover { filter: brightness(1.06); }
 :is(.profile-privacy-option, [data-class='profile-privacy-option']):hover { border-color: var(--accent) !important; }
 :is(.profile-name-input, [data-class='profile-name-input']):focus, :is(.profile-bio-input, [data-class='profile-bio-input']):focus { border-color: var(--accent) !important; }
-:is(.profile-name-input, [data-class='profile-name-input']), :is(.profile-bio-input, [data-class='profile-bio-input']), :is(.profile-privacy-text, [data-class='profile-privacy-text']), :is(.profile-domains-sharing-text, [data-class='profile-domains-sharing-text']) { min-width: 0; }
+:is(.profile-name-input, [data-class='profile-name-input']), :is(.profile-email-input, [data-class='profile-email-input']), :is(.profile-bio-input, [data-class='profile-bio-input']), :is(.profile-privacy-text, [data-class='profile-privacy-text']), :is(.profile-domains-sharing-text, [data-class='profile-domains-sharing-text']) { min-width: 0; }
+@media (min-width: 1100px) {
+  :is(.account-page, [data-class='account-page'])[data-page='profile'] :is(.profile-settings, [data-class='profile-settings']) {
+    gap: 12px !important;
+    padding: 16px !important;
+    overflow: visible !important;
+
+    :is(.profile-privacy-option, [data-class='profile-privacy-option'], .profile-domains-sharing, [data-class='profile-domains-sharing']) { gap: 10px !important; padding: 12px !important; }
+    :is(.profile-privacy-copy, [data-class='profile-privacy-copy'], .profile-domains-sharing-copy, [data-class='profile-domains-sharing-copy'], .profile-sharing-note, [data-class='profile-sharing-note']) { line-height: 16px !important; }
+    :is(.profile-settings-save, [data-class='profile-settings-save']) { min-height: 38px; padding: 9px 12px !important; }
+  }
+}
+@media (min-width: 1440px) {
+  :is(.account-page, [data-class='account-page'])[data-page='profile'] :is(.profile-settings, [data-class='profile-settings']) {
+    display: grid !important;
+    align-items: start !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    :is(.profile-settings-title, [data-class='profile-settings-title']) { grid-column: 1 / -1; }
+    :is(.profile-name-field, [data-class='profile-name-field']) { grid-row: 2; grid-column: 1; }
+    :is(.profile-email-field, [data-class='profile-email-field']) { grid-row: 3; grid-column: 1; }
+    :is(.profile-bio-field, [data-class='profile-bio-field']) { grid-column: 1; grid-row: 4; align-self: stretch !important; }
+    :is(.profile-bio-input, [data-class='profile-bio-input']) { flex: 1 !important; min-height: 128px !important; }
+    :is(.profile-privacy-options, [data-class='profile-privacy-options']) { grid-column: 2; grid-row: 2 / 4; }
+    :is(.profile-domains-sharing, [data-class='profile-domains-sharing']) { grid-row: 4; grid-column: 2; }
+    :is(.profile-sharing-note, [data-class='profile-sharing-note']) { grid-row: 5; grid-column: 2; }
+    :is(.profile-settings-save, [data-class='profile-settings-save']) { grid-row: 5; grid-column: 1; justify-self: start; }
+  }
+}
 @media (max-width: 560px) {
   :is(.profile-settings, [data-class='profile-settings']) { padding: 16px !important; }
-  :is(.profile-name-input, [data-class='profile-name-input']), :is(.profile-bio-input, [data-class='profile-bio-input']) { font-size: 16px !important; }
+  :is(.profile-name-input, [data-class='profile-name-input']), :is(.profile-email-input, [data-class='profile-email-input']), :is(.profile-bio-input, [data-class='profile-bio-input']) { font-size: 16px !important; }
   :is(.profile-privacy-option, [data-class='profile-privacy-option']), :is(.profile-domains-sharing, [data-class='profile-domains-sharing']) { padding: 12px !important; }
   :is(.profile-settings-save, [data-class='profile-settings-save']) { width: 100%; justify-content: center !important; }
 }

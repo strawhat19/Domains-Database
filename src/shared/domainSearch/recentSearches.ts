@@ -1,5 +1,6 @@
 import { authAPI } from '../../api/auth';
 import { useLocalStorage } from '../config';
+import { RECENT_SEARCHES_STORAGE_KEY } from '../accountData/keys';
 import { normalizeDomainSearchQuery } from './query';
 import { accountStorageKey } from '../authentication/userScope';
 import { readStorage, writeStorage, removeStorage, createOperationQueue } from '../common/storage';
@@ -16,7 +17,7 @@ interface RecentSearchSnapshot {
 }
 
 export const RECENT_SEARCHES_LIMIT = 12;
-export const RECENT_SEARCHES_STORAGE_KEY = `domains-database:recent-searches:v1`;
+export { RECENT_SEARCHES_STORAGE_KEY } from '../accountData/keys';
 const serialize = createOperationQueue(RECENT_SEARCHES_STORAGE_KEY);
 const listeners = new Set<(storageKey: string) => void>();
 

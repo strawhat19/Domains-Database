@@ -4,6 +4,7 @@ import { Types } from '../../types/types';
 import { authAPI } from '../../api/auth';
 import { genID } from '../common/ids';
 import { useLocalStorage } from '../config';
+import { SOCIAL_STORAGE_KEY } from '../accountData/keys';
 import { Post } from '../models/posts/Post';
 import { Follow } from '../models/relationships/Follow';
 import { validatePostContent } from './content';
@@ -12,7 +13,7 @@ import type { PublicProfile } from '../models/users/User';
 import type { FeedView, FeedPost, PostInput, PublicPost, PublicDomain, CommunitySnapshot } from './types';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 
-export const SOCIAL_STORAGE_KEY = `domains-database:social:v1`;
+export { SOCIAL_STORAGE_KEY } from '../accountData/keys';
 const serialize = createOperationQueue(SOCIAL_STORAGE_KEY);
 interface SocialStore { version: 1; posts: Post[]; follows: Follow[]; nextPostNumber: number; nextFollowNumber: number }
 const emptyStore = (): SocialStore => ({ version: 1, posts: [], follows: [], nextPostNumber: 1, nextFollowNumber: 1 });

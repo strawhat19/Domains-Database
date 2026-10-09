@@ -3,6 +3,7 @@ import { useLocalStorage } from '../../shared/config';
 import { routes, resolveAuthReturnTo } from '../../shared/routes';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { AccountDeactivatedError } from '../../shared/authentication/types';
 
 export type AuthMode = `signin` | `signup`;
 type Field = `email` | `password`;
@@ -15,18 +16,20 @@ export const useAuthForm = (mode: AuthMode) => {
   const query = returnTo === routes.search.href && typeof params.q === `string` ? params.q.trim().slice(0, 253) : ``;
   const [feedback, setFeedback] = useState(``);
   const [showPassword, setShowPassword] = useState(false);
+  const [canReactivate, setCanReactivate] = useState(false);
   const [fields, setFields] = useState({ email: ``, password: `` });
   const disabled = auth.loading || auth.busy;
   const signingUp = mode === `signup`;
 
   const updateField = (field: Field, value: string) => {
     setFeedback(``);
+    setCanReactivate(false);
     auth.clearError();
     auth.clearNotice();
     setFields(current => ({ ...current, [field]: value }));
   };
 
-  const submit = async () => {
+  const authenticate = async (reactivate = false) => {
     if (disabled) return;
     setFeedback(``);
     auth.clearError();
@@ -37,13 +40,18 @@ export const useAuthForm = (mode: AuthMode) => {
     try {
       const input = { email: fields.email.trim(), password: fields.password };
       if (signingUp) await auth.signUp(input);
-      else await auth.signIn(input);
+      else await auth.signIn({ ...input, ...(reactivate ? { reactivate: true } : {}) });
+      setCanReactivate(false);
       setFields({ email: ``, password: `` });
       router.replace(query ? { pathname: routes.search.href, params: { q: query } } : returnTo);
     } catch (error) {
+      setCanReactivate(!signingUp && error instanceof AccountDeactivatedError);
       setFeedback(error instanceof Error ? error.message : `Could Not Access Your Account`);
     }
   };
+
+  const submit = () => authenticate();
+  const reactivate = () => { if (canReactivate && !signingUp) return authenticate(true); };
 
   const navigate = (href: `/signin` | `/signup` | `/profile`) => {
     if (disabled) return;
@@ -59,10 +67,12 @@ export const useAuthForm = (mode: AuthMode) => {
     submit,
     disabled,
     navigate,
+    reactivate,
     signingUp,
     updateField,
     clearFeedback,
     showPassword,
+    canReactivate,
     setShowPassword,
     error: feedback || auth.error,
   };

@@ -11,6 +11,10 @@ export const usePortfolioActionsVisibility = () => {
     let frame: number | null = null;
     const measure = () => {
       frame = null;
+      if (document.documentElement.hasAttribute(`data-theme-changing`)) {
+        frame = window.requestAnimationFrame(measure);
+        return;
+      }
       const bounds = actions.getBoundingClientRect();
       const headerPosition = header ? window.getComputedStyle(header).position : ``;
       const headerBottom = header && (headerPosition === `sticky` || headerPosition === `fixed`)
@@ -45,7 +49,9 @@ export const usePortfolioActionsVisibility = () => {
     if (main) observer?.observe(main);
     window.addEventListener(`scroll`, schedule, { passive: true });
     window.addEventListener(`resize`, schedule, { passive: true });
-    measure();
+    frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(measure);
+    });
 
     return () => {
       observer?.disconnect();

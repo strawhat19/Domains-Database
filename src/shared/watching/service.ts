@@ -1,6 +1,7 @@
 import { authAPI } from '../../api/auth';
 import { Types } from '../../types/types';
 import { useLocalStorage } from '../config';
+import { WATCHING_STORAGE_KEY } from '../accountData/keys';
 import { normalizeDomainName } from '../domainUtils';
 import { getAppCollectionIDNumber } from '../common/ids';
 import { accountStorageKey } from '../authentication/userScope';
@@ -9,7 +10,7 @@ import { domainSearchFields, registrarPurchaseUrl } from '../domainSearch/types'
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 import type { DomainSearchPrice, DomainSearchResult, DomainSearchDomainResult } from '../domainSearch/types';
 
-export const WATCHING_STORAGE_KEY = `domains-database:watching:v1`;
+export { WATCHING_STORAGE_KEY } from '../accountData/keys';
 const serialize = createOperationQueue(WATCHING_STORAGE_KEY);
 
 interface WatchingSnapshot {

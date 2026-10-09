@@ -36,7 +36,10 @@ export const createCollection = <T extends Data>(key: string, model: new (data: 
     snapshot.nextNumber = Math.max(snapshot.nextNumber, ...snapshot.records.map(record => record.number + 1));
     return { snapshot, storageKey, userId };
   };
-  const save = (key: string, snapshot: CollectionSnapshot<T>) => writeStorage(key, JSON.stringify(snapshot));
+  const save = async (key: string, snapshot: CollectionSnapshot<T>, userId: string) => {
+    if (await getUserId() !== userId) throw new Error(`Your Account Changed — Try Again`);
+    await writeStorage(key, JSON.stringify(snapshot));
+  };
   return {
     get: () => serialize(async () => (await read()).snapshot.records),
     create: (input: Partial<T>) => serialize(async () => {
@@ -44,7 +47,7 @@ export const createCollection = <T extends Data>(key: string, model: new (data: 
       const record = new model({ ...input, id: undefined, uuid: undefined, uid: userId, number: snapshot.nextNumber, created: new Date().toISOString(), updated: undefined });
       snapshot.nextNumber += 1;
       snapshot.records.push(record);
-      await save(storageKey, snapshot);
+      await save(storageKey, snapshot, userId);
       return record;
     }),
     update: (id: string, input: Partial<T>) => serialize(async () => {
@@ -53,14 +56,14 @@ export const createCollection = <T extends Data>(key: string, model: new (data: 
       if (!original) throw new Error(`Record Could Not Be Found`);
       const record = new model({ ...original, ...input, id, uid: userId, uuid: original.uuid, number: original.number, created: original.created, updated: new Date().toISOString() });
       snapshot.records = snapshot.records.map(current => current.id === id ? record : current);
-      await save(storageKey, snapshot);
+      await save(storageKey, snapshot, userId);
       return record;
     }),
     remove: (id: string) => serialize(async () => {
-      const { snapshot, storageKey } = await read();
+      const { snapshot, storageKey, userId } = await read();
       if (!snapshot.records.some(record => record.id === id)) throw new Error(`Record Could Not Be Found`);
       snapshot.records = snapshot.records.filter(record => record.id !== id);
-      await save(storageKey, snapshot);
+      await save(storageKey, snapshot, userId);
     }),
   };
 };

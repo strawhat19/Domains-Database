@@ -6,10 +6,9 @@ const halfWidth = 45;
 const faceSkew = 6;
 const gridSize = 22;
 const halfHeight = 32;
-const sceneMargin = 160;
 const scene = { x: 40, y: 10, width: 900, height: 625 };
-const keyTimes = `0;.12;.4;.55;.88;1`;
-const keySplines = `0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1`;
+const keyTimes = `0;.12;.55;.88;1`;
+const keySplines = `0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1`;
 const cubes = Array.from({ length: gridSize ** 2 }, (_, index) => {
   const row = Math.floor(index / gridSize);
   const column = index % gridSize;
@@ -22,18 +21,21 @@ const cubes = Array.from({ length: gridSize ** 2 }, (_, index) => {
     index,
     column,
     luminous,
+    animated: luminous || (row + column) % 2 === 0,
     x: 590 + (column - row) * 47,
     y: 10 + column * 40 + row * 27,
     delay: seed % 143 / 20,
     duration: 5.5 + seed % 7 * .5,
     rest: luminous ? 28 + seed % 4 * 10 : 7 + seed % 6 * 7,
   };
-}).filter(cube => (
-  cube.x >= scene.x - sceneMargin
-  && cube.y >= scene.y - sceneMargin
-  && cube.x <= scene.x + scene.width + sceneMargin
-  && cube.y <= scene.y + scene.height + sceneMargin
-)).sort((left, right) => left.row + left.column - right.row - right.column || left.column - right.column);
+}).filter(cube => {
+  const horizontalExtent = cube.luminous ? 91 : halfWidth;
+  const lowerExtent = cube.luminous ? 80 : halfHeight;
+  const upperExtent = (cube.luminous ? 40 : halfHeight) + Math.max(cube.peak, cube.rest);
+  return cube.x + horizontalExtent >= scene.x && cube.x - horizontalExtent <= scene.x + scene.width
+    && cube.y + lowerExtent >= scene.y && cube.y - upperExtent <= scene.y + scene.height;
+}).sort((left, right) => left.row + left.column - right.row - right.column || left.column - right.column);
+const luminousCubes = cubes.filter(cube => cube.luminous);
 
 type CubeFace = `top` | `left` | `right`;
 type Cube = (typeof cubes)[number];
@@ -45,22 +47,22 @@ const facePath = (face: CubeFace, height: number) => {
 };
 
 const Face = ({ cube, face, suffix, moving }: { cube: Cube; face: CubeFace; suffix: string; moving: boolean }) => {
+  const top = face === `top`;
   const id = `hero-cube-${face}-${suffix}-${cube.index}`;
-  const heights = [5, 5, cube.peak * .72, cube.peak, 5, 5];
+  const heights = [5, 5, cube.peak, 5, 5];
   const values = heights.map(height => facePath(face, height)).join(`;`);
-  const opacity = face === `top` ? `.48;.48;.8;1;.48;.48` : `.18;.18;.6;.95;.18;.18`;
+  const opacity = top ? `.48;.48;1;.48;.48` : `.18;.18;.95;.18;.18`;
 
-  return (
+  const shape = (
     <path
       id={id}
       strokeWidth={.7}
-      d={facePath(face, cube.rest)}
+      d={facePath(face, top ? 0 : cube.rest)}
       fillOpacity={cube.luminous ? .85 : 1}
       className={`hero-cube-face hero-cube-${face}${cube.luminous ? ` hero-cube-face-luminous` : ``}`}
       fill={`url(#hero-cubes-${cube.luminous ? `light` : `dark`}-${face}-${suffix})`}
-      filter={cube.luminous && face === `top` ? `url(#hero-cubes-bloom-${suffix})` : undefined}
     >
-      {moving && (
+      {moving && !top && (
         <animate
           values={values}
           keyTimes={keyTimes}
@@ -89,6 +91,37 @@ const Face = ({ cube, face, suffix, moving }: { cube: Cube; face: CubeFace; suff
         />
       )}
     </path>
+  );
+  if (!top) return shape;
+  return (
+    <g id={`${id}-motion`} className={`hero-cube-top-motion`} transform={`translate(0 ${-cube.rest})`}>
+      {cube.luminous && (
+        <ellipse
+          ry={40}
+          rx={70}
+          fillOpacity={.3}
+          id={`${id}-halo`}
+          className={`hero-cube-top-halo`}
+          fill={`url(#hero-cubes-floor-light-${suffix})`}
+        />
+      )}
+      {shape}
+      {moving && (
+        <animateTransform
+          type={`translate`}
+          keyTimes={keyTimes}
+          calcMode={`spline`}
+          keySplines={keySplines}
+          attributeName={`transform`}
+          repeatCount={`indefinite`}
+          dur={`${cube.duration}s`}
+          begin={`${-cube.delay}s`}
+          id={`${id}-lift`}
+          className={`hero-cube-lift`}
+          values={heights.map(height => `0 ${-height}`).join(`;`)}
+        />
+      )}
+    </g>
   );
 };
 
@@ -169,13 +202,6 @@ const HeroCubes = () => {
             <stop offset={`0%`} stopColor={`var(--cube-side-light)`} />
             <stop offset={`100%`} stopColor={`var(--cube-light-right-end)`} />
           </linearGradient>
-          <filter x={`-80%`} y={`-120%`} width={`260%`} height={`340%`} id={`hero-cubes-bloom-${suffix}`} className={`hero-cubes-bloom-filter`}>
-            <feGaussianBlur stdDeviation={5} result={`bloom`} />
-            <feMerge>
-              <feMergeNode in={`bloom`} />
-              <feMergeNode in={`SourceGraphic`} />
-            </feMerge>
-          </filter>
         </defs>
         <ellipse cx={640} cy={340} rx={530} ry={350} fill={`url(#hero-cubes-atmosphere-${suffix})`} id={`hero-cubes-atmosphere-${suffix}-shape`} className={`hero-cubes-atmosphere`} />
         <g id={`hero-cubes-floor-${suffix}`} className={`hero-cubes-floor`}>
@@ -191,7 +217,7 @@ const HeroCubes = () => {
           ))}
         </g>
         <g id={`hero-cubes-floor-glows-${suffix}`} className={`hero-cubes-floor-glows`}>
-          {cubes.filter(cube => cube.luminous).map(cube => (
+          {luminousCubes.map(cube => (
             <ellipse
               rx={91}
               ry={64}
@@ -212,7 +238,7 @@ const HeroCubes = () => {
                   dur={`${cube.duration}s`}
                   begin={`${-cube.delay}s`}
                   attributeName={`fill-opacity`}
-                  values={`.12;.12;.55;.9;.12;.12`}
+                  values={`.12;.12;.9;.12;.12`}
                   className={`hero-cubes-floor-glow-pulse`}
                   id={`hero-cubes-floor-glow-pulse-${suffix}-${cube.index}`}
                 />
@@ -228,9 +254,9 @@ const HeroCubes = () => {
               transform={`translate(${cube.x} ${cube.y})`}
               className={`hero-cube${cube.luminous ? ` hero-cube-luminous` : ``}`}
             >
-              <Face face={`left`} cube={cube} suffix={suffix} moving={!reducedMotion} />
-              <Face face={`right`} cube={cube} suffix={suffix} moving={!reducedMotion} />
-              <Face face={`top`} cube={cube} suffix={suffix} moving={!reducedMotion} />
+              <Face face={`left`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} />
+              <Face face={`right`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} />
+              <Face face={`top`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} />
             </g>
           ))}
         </g>

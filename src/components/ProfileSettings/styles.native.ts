@@ -3,6 +3,7 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   field: { gap: 8 },
+  disabledInput: { color: palette.muted, backgroundColor: palette.subtle },
   optionText: { flex: 1, gap: 4, minWidth: 0 },
   selected: { borderColor: palette.accent, backgroundColor: palette.subtle },
   bio: { minHeight: 96, textAlignVertical: `top` },

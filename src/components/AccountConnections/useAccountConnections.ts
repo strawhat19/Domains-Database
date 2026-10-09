@@ -1,3 +1,5 @@
+import { useRouter } from 'expo-router';
+import { routes } from '../../shared/routes';
 import { useRef, useEffect, useState } from 'react';
 import { connectionsAPI } from '../../api/connections';
 import { useAuth } from '../../shared/authContext/useAuth';
@@ -16,6 +18,7 @@ const syncNotice = (label: string, result: ConnectionSyncResult) =>
   formatSyncNotice(result, `${label}${result.errors.length ? ` — Sync Finished With Errors` : ``}`);
 
 export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProps, `providers`> = {}) => {
+  const router = useRouter();
   const { user, loginRevision } = useAuth();
   const { syncing, syncConnections, accountStatuses, resetConnectionSync } = useDomains();
   const actorKey = `${user?.id ?? `guest`}:${loginRevision}`;
@@ -131,7 +134,9 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
       setVisibility({});
       const syncable = (savedAccount ? [savedAccount] : snapshot.accounts).some(supportsRegistrarSync);
       setNotice(syncable ? `Connections Saved — Checking Domains…` : `Developer OAuth Credentials Saved`);
-      const result = await syncConnections(snapshot, savedAccount ? [savedAccount.id] : undefined);
+      const syncRequest = syncConnections(snapshot, savedAccount ? [savedAccount.id] : undefined);
+      router.replace(routes.domains.href);
+      const result = await syncRequest;
       if (!isCurrent(operation)) return;
       setHasSyncedDomains(result.count > 0);
       setNotice(syncable ? syncNotice(`Connections Saved`, result)

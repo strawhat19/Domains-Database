@@ -2,8 +2,10 @@ import { genID } from '../common/ids';
 import { Platform } from 'react-native';
 import { useLocalStorage } from '../config';
 import { User } from '../models/users/User';
+import { clearAccountData } from '../accountData/service';
 import { Roles, Types, Providers } from '../../types/types';
 import type { ProfileInput, PublicProfile } from '../models/users/User';
+import { AccountDeactivatedError, AccountDataCleanupError, type AccountAction } from './types';
 import { readStorage, writeStorage, removeStorage, createOperationQueue } from '../common/storage';
 import type { LocalAccount, LocalSession, SignInInput, SignUpInput, AccountSnapshot, AuthenticationResult } from './types';
 import { secureRandomHex, sessionTokenHash, createSecureUuid, verifyPassword, verifySessionToken, isPasswordCredential, createPasswordCredential } from './password';
@@ -152,8 +154,12 @@ export const signIn = (input: SignInInput): Promise<AuthenticationResult> => run
   const email = normalizeEmail(input?.email);
   validatePassword(input?.password);
   const snapshot = await readAccounts();
-  const account = snapshot.accounts.find(item => item.user.email === email && item.user.active !== false);
+  const account = snapshot.accounts.find(item => item.user.email === email);
   if (!account || !await verifyPassword(input.password, account.credential)) throw new Error(`Email Or Password Is Incorrect`);
+  if (account.user.active === false) {
+    if (input.reactivate !== true) throw new AccountDeactivatedError();
+    account.user = new User({ ...account.user, active: true });
+  }
   return beginSession(snapshot, account);
 });
 
@@ -183,6 +189,30 @@ export const signOut = (): Promise<void> => runOperation(async () => {
   if (account?.sessionTokenHash) {
     delete account.sessionTokenHash;
     await saveAccounts(snapshot);
+  }
+});
+
+export const manageAccount = (action: AccountAction, expectedUserId: string): Promise<null> => runOperation(async () => {
+  requireLocalAuthentication();
+  if (![`deactivate`, `delete-data`, `delete-data-connections`, `delete-account`].includes(action)) throw new Error(`Choose A Valid Account Action`);
+  const snapshot = await readAccounts();
+  const account = (await readSessionAccount(snapshot))?.account;
+  if (!account || !expectedUserId || account.user.id !== expectedUserId) throw new Error(`Sign In To Manage Your Account`);
+  const now = new Date().toISOString();
+  account.user = new User({ ...account.user, updated: now, lastUpdated: now, signedIn: false, active: action !== `deactivate` });
+  if (action !== `deactivate`) account.legacyPortfolioClaimed = true;
+  delete account.sessionTokenHash;
+  await saveAccounts(snapshot);
+  await removeStorage(AUTH_SESSION_KEY);
+  if (action === `deactivate`) return null;
+  try {
+    await clearAccountData(expectedUserId, action !== `delete-data`);
+    if (action === `delete-account`) snapshot.accounts = snapshot.accounts.filter(item => item.user.id !== expectedUserId);
+    else account.user = new User({ ...account.user, description: ``, publicDomains: false, profilePrivacy: `private` });
+    await saveAccounts(snapshot);
+    return null;
+  } catch (failure) {
+    throw new AccountDataCleanupError(failure instanceof Error ? failure.message : `Account Data Could Not Be Deleted`);
   }
 });
 

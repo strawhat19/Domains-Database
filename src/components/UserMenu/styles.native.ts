@@ -18,6 +18,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   name: { fontSize: 14, color: palette.ink, fontFamily: `DMSans_700Bold` },
   email: { fontSize: 11, color: palette.muted, fontFamily: `DMSans_400Regular` },
   item: { gap: 10, padding: 12, borderRadius: 6, flexDirection: `row`, alignItems: `center` },
+  badgeText: { fontSize: 9, fontFamily: `DMSans_700Bold` },
+  badge: { height: 20, minWidth: 20, marginLeft: `auto`, borderRadius: 999, paddingHorizontal: 5, alignItems: `center`, justifyContent: `center` },
   signout: { marginTop: 4, borderTopWidth: 1, borderTopColor: palette.line },
   signoutText: { fontSize: 12, color: palette.danger, fontFamily: `DMSans_600SemiBold` },
   error: { fontSize: 11, padding: 10, color: palette.danger, fontFamily: `DMSans_400Regular` },
