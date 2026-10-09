@@ -11,9 +11,11 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 export interface DomainContextValue {
   error: string;
   notice: string;
+  loaded: boolean;
   loading: boolean;
   syncing: boolean;
   canSyncManually: boolean;
+  canSyncConnections: boolean;
   manualSyncMessage: string;
   manualSyncWaitSeconds: number;
   syncManually: () => Promise<void>;
@@ -40,24 +42,30 @@ export interface DomainContextValue {
 
 export const DomainContext = createContext<DomainContextValue | undefined>(undefined);
 
-export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{ enabled?: boolean }>) => {
+export const DomainProvider = ({ children, enabled = true, requested = false }: PropsWithChildren<{ enabled?: boolean; requested?: boolean }>) => {
+  const [requestedOnce, setRequestedOnce] = useState(false);
+  const domainEnabled = enabled && (requested || requestedOnce);
   const active = useRef(false);
   const revision = useRef(0);
-  if (!enabled) active.current = false;
+  if (!domainEnabled) active.current = false;
   const [error, setError] = useState(``);
   const [notice, setNotice] = useState(``);
   const [loading, setLoading] = useState(true);
   const [domains, setDomains] = useState<DomainRecord[]>([]);
 
   useEffect(() => {
+    if (enabled && requested) setRequestedOnce(true);
+  }, [enabled, requested]);
+
+  useEffect(() => {
     let mounted = true;
     const run = ++revision.current;
-    active.current = enabled;
+    active.current = domainEnabled;
     setLoading(true);
     setDomains([]);
     setError(``);
     setNotice(``);
-    if (!enabled) return () => { active.current = false; ++revision.current; };
+    if (!domainEnabled) return () => { active.current = false; ++revision.current; };
     const isCurrent = () => mounted && active.current && run === revision.current;
     api.getDomains().then(records => {
       if (isCurrent()) setDomains(records);
@@ -67,25 +75,25 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
       if (isCurrent()) setLoading(false);
     });
     return () => { mounted = false; active.current = false; ++revision.current; };
-  }, [enabled]);
+  }, [domainEnabled]);
 
   const refreshDomains = useCallback(async () => {
-    if (!enabled || !active.current) return;
+    if (!domainEnabled || !active.current) return;
     const run = revision.current;
     const records = await api.getDomains();
     if (active.current && run === revision.current) setDomains(records);
-  }, [enabled]);
-  const syncReady = useAfterPaint(enabled && !loading);
+  }, [domainEnabled]);
+  const syncReady = useAfterPaint(domainEnabled && !loading);
   const sync = useRegistrarSync(refreshDomains, syncReady);
-  const insights = useWebsiteInsights(refreshDomains, enabled);
+  const insights = useWebsiteInsights(refreshDomains, domainEnabled);
   const refreshWebsiteInsights = useCallback(async (records: DomainRecord[]) => {
-    if (!enabled || !active.current) return;
+    if (!domainEnabled || !active.current) return;
     await insights.refreshWebsiteInsights(records);
-  }, [enabled, insights.refreshWebsiteInsights]);
+  }, [domainEnabled, insights.refreshWebsiteInsights]);
   const clearNotice = useCallback(() => { setNotice(``); sync.clearSyncNotice(); }, [sync.clearSyncNotice]);
 
   const mutate = useCallback(async <T,>(operation: () => Promise<T>, message: string): Promise<T> => {
-    if (!enabled || !active.current) throw new Error(`Portfolio Changed, Please Try Again`);
+    if (!domainEnabled || !active.current) throw new Error(`Open Domains To Load Your Portfolio`);
     const run = revision.current;
     const isCurrent = () => active.current && run === revision.current;
     try {
@@ -102,7 +110,7 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
       if (isCurrent()) setError(message);
       throw new Error(message);
     }
-  }, [enabled]);
+  }, [domainEnabled]);
 
   const addDomain = useCallback((input: DomainInput) => mutate(() => api.createDomain(input), `Domain Added`), [mutate]);
   const deleteDomain = useCallback((id: string) => mutate(() => api.deleteDomain(id), `Domain Removed`), [mutate]);
@@ -114,18 +122,20 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
 
   const value = useMemo(() => ({
     ...insights,
-    loading: !enabled || loading,
-    domains: enabled ? domains : [],
+    loaded: domainEnabled && !loading,
+    loading: !enabled || (domainEnabled && loading),
+    domains: domainEnabled ? domains : [],
     syncing: sync.syncing,
     syncManually: sync.syncManually,
     canSyncManually: sync.canSyncManually,
+    canSyncConnections: syncReady,
     manualSyncMessage: sync.manualSyncMessage,
     manualSyncWaitSeconds: sync.manualSyncWaitSeconds,
-    refreshing: enabled && insights.refreshing,
-    error: enabled ? error || sync.syncError : ``,
-    notice: enabled ? notice || sync.syncNotice : ``,
-    insightError: enabled ? insights.insightError : ``,
-    insightNotice: enabled ? insights.insightNotice : ``,
+    refreshing: domainEnabled && insights.refreshing,
+    error: domainEnabled ? error || sync.syncError : ``,
+    notice: domainEnabled ? notice || sync.syncNotice : ``,
+    insightError: domainEnabled ? insights.insightError : ``,
+    insightNotice: domainEnabled ? insights.insightNotice : ``,
     addDomain,
     clearNotice,
     deleteDomain,
@@ -139,7 +149,7 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
     accountStatuses: sync.accountStatuses,
     connectionStatuses: sync.connectionStatuses,
     resetConnectionSync: sync.resetConnectionSync,
-  }), [enabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, toggleDomainStar, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.accountStatuses, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
+  }), [enabled, syncReady, domainEnabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, toggleDomainStar, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.accountStatuses, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
 
   return (
     <DomainContext.Provider value={value}>

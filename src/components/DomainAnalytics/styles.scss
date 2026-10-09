@@ -31,7 +31,7 @@
 .domain-analytics-title { margin: 9px 0 0; font-size: 25px; color: var(--ink); overflow-wrap: anywhere; }
 .domain-analytics-close { width: 34px; height: 34px; display: grid; border: 0; flex-shrink: 0; border-radius: 7px; color: var(--muted); place-items: center; background: transparent; }
 .domain-analytics-close:hover { color: var(--ink); background: var(--subtle); }
-.domain-analytics-body { padding: 22px; overflow-y: auto; }
+.domain-analytics-body { min-height: 0; padding: 22px; overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
 .domain-analytics-description { margin: 0 0 20px; font-size: 12px; line-height: 1.7; color: var(--muted); }
 .domain-analytics-section { padding-top: 18px; margin-top: 20px; border-top: 1px solid var(--line); }
 .domain-analytics-section-title { gap: 8px; display: flex; margin: 0 0 14px; font-size: 14px; color: var(--ink); align-items: center; }

@@ -7,6 +7,7 @@ import { useDomainReorder } from './useDomainReorder';
 import type { DomainRecord } from '../../shared/types';
 import type { CSSProperties, KeyboardEvent } from 'react';
 import DomainRow, { DomainRowSkeleton } from '../DomainRow';
+import DomainDescription from '../DomainDescription/index.web';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainContextMenu from '../DomainContextMenu/index.web';
 import PortfolioGroupLinks from '../PortfolioGroupLinks/index.web';
@@ -242,17 +243,27 @@ const PortfolioRecords = ({
                 editLabel={`Change Project Status For ${label}`}
                 onChange={value => { preferences.updateGroupProjectStatus(customGroup.id, value); }}
               />
+              <DomainDescription
+                maxLength={280}
+                domainName={label}
+                busy={busy || loading}
+                id={`${scope}-description`}
+                value={customGroup.description}
+                onReadMore={() => setEditingGroup(customGroup)}
+                readMoreLabel={`Read More In Group Settings For ${label}`}
+                onSave={async value => {
+                  const current = preferences.customGroups.find(item => item.id === customGroup.id);
+                  return current ? preferences.updateGroup(current.id, current.name, value) : false;
+                }}
+              />
               <PortfolioGroupLinks group={customGroup} id={`${scope}-links`} />
             </>
           )}
-          {description && (
+          {!customGroup && description && (
             <span id={`${scope}-description`} className={`portfolio-group-description`}>
               {description}
             </span>
           )}
-          <span id={`${scope}-count`} className={`portfolio-group-count`}>
-            {group.domains.length}
-          </span>
           {hidden && (
             <span id={`${scope}-visibility-state`} className={`portfolio-group-hidden-state`}>
               {`Hidden`}
@@ -260,6 +271,14 @@ const PortfolioRecords = ({
           )}
         </div>
         <div id={`${scope}-actions`} className={`actionsCell portfolio-group-actions`}>
+          <span
+            id={`${scope}-count`}
+            className={`portfolio-group-count`}
+            title={`${group.domains.length} Domain(s) In ${label}`}
+            aria-label={`${group.domains.length} Domain(s) In ${label}`}
+          >
+            {group.domains.length}
+          </span>
           {searching && onToggleGroupSearch && (
             <button
               type={`button`}

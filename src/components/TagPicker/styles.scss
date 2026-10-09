@@ -1,16 +1,16 @@
 .tag-picker { min-width: 0; position: relative; }
 .tag-picker-trigger {
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   min-width: 0;
   display: flex;
   flex-wrap: wrap;
-  min-height: 43px;
+  min-height: 34px;
   font-size: 13px;
   cursor: pointer;
   text-align: left;
   color: var(--ink);
-  padding: 10px 12px;
+  padding: 6px 10px;
   border-radius: 8px;
   align-items: center;
   background: var(--input);
@@ -69,6 +69,9 @@
   &-selected .tag-picker-pill { color: var(--contrast); background: var(--accent); }
 }
 .tag-picker-option-selection { font-size: 10px; color: var(--accent); }
+@media (pointer: coarse) {
+  .tag-picker-trigger { min-height: 44px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .tag-picker-option, .tag-picker-trigger { transition: none; }
 }

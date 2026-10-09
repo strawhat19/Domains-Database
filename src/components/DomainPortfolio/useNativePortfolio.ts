@@ -145,8 +145,9 @@ export const useNativePortfolio = (compact = false) => {
     });
   };
 
-  const saveDomain = async () => {
+  const saveDomain = async (title?: string) => {
     if (loading || saving || mutationPending.current || deleteConfirmationOpen.current) return;
+    if (title !== undefined && !editingSyncedDomain) updateInput(`name`, title);
     mutationPending.current = true;
     setSaving(true);
     setFormError(``);
@@ -166,7 +167,7 @@ export const useNativePortfolio = (compact = false) => {
         projectStatus: normalizeDomainProjectStatus(input.projectStatus),
         description: input.description ?? ``,
         meta: { ...syncedDomain.meta, siteIconUrl: getCustomSiteIconUrl(input) },
-      } : { ...input, renewalPrice: Number(renewalPrice || 0) };
+      } : { ...input, name: title ?? input.name, renewalPrice: Number(renewalPrice || 0) };
       if (editingId) {
         await context.updateDomain(editingId, record);
         await groupEditor.saveGroup(editingId);

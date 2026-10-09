@@ -1,4 +1,5 @@
 import './styles.scss';
+import DomainDescription from '../DomainDescription/index.web';
 import { usePortfolioCollection } from './usePortfolioCollection';
 import type { CSSProperties, DragEventHandler } from 'react';
 import DomainCollectionSettings from '../DomainCollectionSettings/index.web';
@@ -47,6 +48,7 @@ const PortfolioCollection = ({
   const scope = `portfolio-collection-${collection.id}`;
   const state = usePortfolioCollection(collection, records.visibleColumns, globalToolbarHeight);
   const visibility = collection.visibility ?? `private`;
+  const domainCount = records.domains.length;
   const VisibilityIcon = visibility === `public` ? Globe : Lock;
   const OrderIcon = collection.sortField ? GripVertical : ArrowDownAZ;
   const searchToggleLabel = showAllDomains ? `Show only search matches in ${collection.name}` : `Show all domains in ${collection.name}`;
@@ -137,12 +139,19 @@ const PortfolioCollection = ({
               </select>
               <ChevronDown size={11} aria-hidden={`true`} id={`${scope}-visibility-chevron`} className={`portfolio-collection-visibility-chevron`} />
             </label>
+            <div id={`${scope}-description-field`} className={`portfolio-collection-description`}>
+              <DomainDescription
+                maxLength={280}
+                domainName={collection.name}
+                value={collection.description}
+                id={`${scope}-description`}
+                onSave={state.setDescription}
+                busy={records.loading || records.busy}
+                onReadMore={() => state.setEditing(true)}
+                readMoreLabel={`Read More In Collection Settings For ${collection.name}`}
+              />
+            </div>
           </div>
-          {collection.description && (
-            <p id={`${scope}-description`} className={`portfolio-collection-description`}>
-              {collection.description}
-            </p>
-          )}
         </div>
         {visibility === `public` && (
           <div role={`group`} id={`${scope}-votes`} aria-label={`Votes for ${collection.name}`} className={`portfolio-collection-votes`}>
@@ -193,6 +202,14 @@ const PortfolioCollection = ({
               {collection.sortField ? `Manual` : `Sort A–Z`}
             </span>
           </button>
+          <span
+            id={`${scope}-domain-count`}
+            className={`portfolio-collection-count`}
+            title={`${domainCount} Domain(s) In ${collection.name}`}
+            aria-label={`${domainCount} Domain(s) In ${collection.name}`}
+          >
+            {domainCount}
+          </span>
           {records.searching && onToggleSearch && (
             <button
               type={`button`}

@@ -60,7 +60,8 @@ const readUser = (record: Record<string, unknown>, authUser: FirebaseUser) => {
     || record.uid !== authUser.uid || record.firebase_uid !== authUser.uid || !Object.values(Roles).includes(record.role as Roles)) {
     throw new Error(`Saved Firebase Account Data Is Incomplete`);
   }
-  return new User({ ...record, signedIn: true });
+  const photoURL = authUser.photoURL || authUser.providerData?.find(provider => provider.providerId === `google.com`)?.photoURL;
+  return new User({ ...record, signedIn: true, ...(photoURL ? { photoURL, avatar: photoURL, imageURL: photoURL, image: photoURL } : {}) });
 };
 const sessionResult = (user: User): AuthenticationResult => ({ user, claimLegacy: false, expiresAt: Date.now() + SESSION_DURATION });
 

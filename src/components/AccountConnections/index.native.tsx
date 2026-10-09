@@ -148,7 +148,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                   {...(Platform.OS === `web` ? {
                     tabIndex: selected ? 0 as const : -1 as const,
                     ...(field.available ? { 'aria-controls': `connection-provider-${providerScope}` } : {}),
-                    title: !field.available ? `${field.label} — Coming Soon On Pro Plan` : field.pro ? `On Pro Plan` : undefined,
+                    title: !field.available ? `${field.label} — Coming Soon${field.pro ? ` On Pro Plan` : ``}` : field.pro ? `On Pro Plan` : undefined,
                     onKeyDown: (event: KeyboardEvent<HTMLElement>) => handleTabKeyDown(event, field.id),
                   } : {})}
                   accessibilityRole={`tab`}
@@ -166,6 +166,11 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                     <View {...elementProps(`connection-pro-badge`, providerScope)} style={styles.proBadge}>
                       <LockKeyhole {...elementProps(`connection-pro-badge-icon`, providerScope)} size={11} color={palette.accent} />
                       <Text {...elementProps(`connection-pro-badge-text`, providerScope)} style={styles.proBadgeText}>{`On Pro Plan`}</Text>
+                    </View>
+                  )}
+                  {!field.pro && !field.available && (
+                    <View {...elementProps(`connection-coming-soon-badge`, providerScope)} style={styles.proBadge}>
+                      <Text {...elementProps(`connection-coming-soon-badge-text`, providerScope)} style={styles.proBadgeText}>{`Coming Soon`}</Text>
                     </View>
                   )}
                 </Pressable>

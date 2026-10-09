@@ -7,13 +7,16 @@ import LandingOverview from '../LandingOverview';
 import { useMemo, useState, useEffect } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { getBlogHref } from '../../shared/blog/metadata';
+import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
 import { activityCells, domainBasics, landingPlans, ctaActivityCells } from './content';
 import { Text, View, Easing, Animated, Pressable, useWindowDimensions } from 'react-native';
 import { Check, LockKeyhole, Globe2, Server, PanelTop, ArrowUpRight } from 'lucide-react-native';
 
 const LandingSections = () => {
+  const { user } = useAuth();
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
@@ -164,7 +167,7 @@ const LandingSections = () => {
 
       <LandingOverview />
 
-      <View {...elementProps(`landing-pricing`)} style={[styles.section, compact && styles.compactSection]}>
+      {!hasUnlimitedPlanAccess(user) && <View {...elementProps(`landing-pricing`)} style={[styles.section, compact && styles.compactSection]}>
         <View {...elementProps(`landing-pricing-inner`)} style={styles.inner}>
           <View {...elementProps(`landing-pricing-heading-row`)} style={[styles.pricingHeadingRow, width >= 900 && styles.widePricingHeadingRow]}>
             <View {...elementProps(`landing-pricing-heading-copy`)} style={[styles.pricingHeadingCopy, width >= 900 && styles.widePricingHeadingCopy]}>
@@ -223,7 +226,7 @@ const LandingSections = () => {
           </View>
           <Text {...elementProps(`landing-pricing-note`)} style={styles.note}>{`Pro and Team are coming soon. Planned features and pricing may change. Domain registration and hosting are purchased separately.`}</Text>
         </View>
-      </View>
+      </View>}
 
       <View {...elementProps(`landing-final-cta`)} style={[styles.section, styles.alternateSection, compact && styles.compactSection]}>
         <View {...elementProps(`landing-final-cta-inner`)} style={[styles.inner, styles.finalCta]}>

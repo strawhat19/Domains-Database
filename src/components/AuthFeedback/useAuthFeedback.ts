@@ -10,7 +10,7 @@ export const useAuthFeedback = () => {
   const visible = pathname !== `/signin` && pathname !== `/signup`;
   const newAccount = Boolean(auth.notice && auth.user && auth.newAccountId === auth.user.id);
   const waitingForDomains = newAccount && (!visible || auth.loading || portfolio.loading);
-  const showConnections = newAccount && !waitingForDomains && !portfolio.error && !portfolio.domains.length && !auth.error;
+  const showConnections = newAccount && portfolio.loaded && !waitingForDomains && !portfolio.error && !portfolio.domains.length && !auth.error;
   useEffect(() => {
     if (!auth.notice || waitingForDomains) return;
     const timer = setTimeout(auth.clearNotice, showConnections ? 12000 : 4500);

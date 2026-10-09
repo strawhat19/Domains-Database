@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router';
 import { routes } from '../../shared/routes';
-import { Roles } from '../../types/types';
 import type { ToastStackNotice } from '../ToastStack/types';
 import { useLocalStorage } from '../../shared/config';
 import { useRef, useEffect, useState } from 'react';
@@ -8,8 +7,10 @@ import { connectionsAPI } from '../../api/connections';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { formatSyncNotice } from '../../shared/registrarSync/messages';
+import { resumeAutomaticSync } from '../../shared/registrarSync/policy';
 import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
 import { createConnectionDraft } from '../../shared/connections/values';
+import { hasProPlanAccess, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { MAX_CONNECTION_ENV_SIZE, parseConnectionEnvironment } from '../../shared/connections/file';
 import { connectionTabs, proConnectionProviders, type ConnectionTabProvider } from '../../shared/connections/catalog';
 import { TOAST_ENTRY_DELAY, TOAST_EXIT_DELAY, TOAST_ENTER_DURATION, TOAST_VISIBLE_DURATION, TOAST_REMINDER_DURATION } from '../ToastStack/motion';
@@ -26,7 +27,9 @@ const syncNotice = (label: string, result: ConnectionSyncResult) =>
 export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProps, `providers`> = {}) => {
   const router = useRouter();
   const { user, loginRevision } = useAuth();
-  const { syncing, syncConnections, accountStatuses } = useDomains();
+  const { syncing, syncConnections, accountStatuses, canSyncConnections } = useDomains();
+  const connectionSync = useRef({ syncConnections, canSyncConnections });
+  connectionSync.current = { syncConnections, canSyncConnections };
   const actorKey = `${user?.id ?? `guest`}:${loginRevision}`;
   const mounted = useRef(true);
   const dirty = useRef(false);
@@ -52,12 +55,13 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   const [hasSyncedDomains, setHasSyncedDomains] = useState(false);
   const [accounts, setAccounts] = useState<ConnectionAccount[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<ConnectionProvider>(connectionFields[0].id);
-  const hasProAccess = user?.role === Roles.Owner || user?.plan?.trim().toLowerCase() === `pro`;
+  const hasProAccess = hasProPlanAccess(user);
+  const unlimitedPlanAccess = hasUnlimitedPlanAccess(user);
   const canUseProvider = (provider: ConnectionProvider) => hasProAccess || !proConnectionProviders.includes(provider);
   const fields = connectionFields.filter(field => !providers || providers.includes(field.id));
   const allowedFields = fields.filter(field => canUseProvider(field.id));
   const tabs = connectionTabs.filter(tab => !providers || providers.some(provider => provider === tab.id))
-    .map(tab => ({ ...tab, locked: !tab.available || (tab.pro && !hasProAccess) }));
+    .map(tab => ({ ...tab, pro: tab.pro && !unlimitedPlanAccess, locked: !tab.available || (tab.pro && !hasProAccess) }));
   const activeProvider = allowedFields.find(field => field.id === selectedProvider)?.id ?? allowedFields[0]?.id;
   const isCurrent = (operation?: number) => mounted.current && currentActor.current === actorKey
     && (operation === undefined || operation === revision.current);
@@ -317,8 +321,15 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
       setVisibility({});
       const syncAccounts = savedAccount ? [savedAccount] : snapshot.accounts.filter(account => canUseProvider(account.provider));
       const syncable = syncAccounts.some(supportsRegistrarSync);
+      if (!connectionSync.current.canSyncConnections) {
+        if (syncable) await resumeAutomaticSync(userId, () => isCurrent(operation));
+        if (!isCurrent(operation)) return;
+        setNotice(`${syncable ? `Connections Saved — Open Domains To Sync` : `Developer OAuth Credentials Saved`}${deferredNotice}`);
+        if (!deferred.length) router.replace(routes.domains.href);
+        return;
+      }
       setNotice(`${syncable ? `Connections Saved — Checking Domains…` : `Developer OAuth Credentials Saved`}${deferredNotice}`);
-      const syncRequest = syncConnections(snapshot, syncAccounts.map(account => account.id));
+      const syncRequest = connectionSync.current.syncConnections(snapshot, syncAccounts.map(account => account.id));
       if (!deferred.length) router.replace(routes.domains.href);
       const result = await syncRequest;
       if (!isCurrent(operation)) return;

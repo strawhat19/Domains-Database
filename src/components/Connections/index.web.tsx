@@ -48,6 +48,7 @@ const Connections = ({ onClose, onImport, onDownloadTemplate }: ConnectionsProps
             <X size={19} aria-hidden={`true`} id={`connections-close-icon`} className={`domain-dialog-close-icon`} />
           </button>
         </header>
+        <div id={`connections-body`} className={`domain-dialog-body`}>
         <p id={`connections-description`} className={`domain-dialog-description`}>
           {`Gather the domains from each account. Connect supported registrars from your account, add records by hand, or import them with our CSV template.`}
         </p>
@@ -96,6 +97,7 @@ const Connections = ({ onClose, onImport, onDownloadTemplate }: ConnectionsProps
               {`Manual entry and CSV import need no API keys. Save supported registrar connections in your private account settings for read-only domain checks. Portfolio edits do not change registrar settings.`}
             </p>
           </div>
+        </div>
         </div>
         <footer id={`connections-footer`} className={`domain-dialog-footer connections-footer`}>
           <button

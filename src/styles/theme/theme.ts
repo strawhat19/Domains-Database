@@ -25,6 +25,7 @@ export const getRandomUnusedColor = (options = Object.values(colors)): DataColor
 
 export type ThemeMode = `light` | `dark`;
 export const THEME_STORAGE_KEY = `domains-database:theme:v1`;
+export const THEME_BOOTSTRAP_KEY = `domains-database:theme-preview:v1`;
 
 const lightPalette = {
   ink: `#133b50`,

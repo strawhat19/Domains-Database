@@ -23,8 +23,8 @@
 .domain-group-settings-fields { gap: 18px; display: grid; }
 .domain-group-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .domain-group-settings-type-controls {
-  gap: 4px;
-  padding: 4px;
+  gap: 3px;
+  padding: 3px;
   display: grid;
   border-radius: 8px;
   background: var(--input);
@@ -32,13 +32,13 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .domain-group-settings-type-button {
-  gap: 7px;
+  gap: 6px;
   border: 0;
   display: flex;
   cursor: pointer;
-  min-height: 36px;
+  min-height: 28px;
   font-size: 12px;
-  padding: 8px 12px;
+  padding: 5px 10px;
   border-radius: 5px;
   color: var(--muted);
   align-items: center;
@@ -71,8 +71,18 @@
   &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 }
 
+@media (min-width: 801px) {
+  .domain-group-settings .domain-dialog-body { padding: 0; display: flex; overflow: hidden; flex-direction: column; scrollbar-gutter: auto; }
+  .domain-group-settings-content { gap: 0; flex: 1; min-height: 0; overflow: hidden; align-items: stretch; grid-template-rows: minmax(0, 1fr); }
+  .domain-group-settings-fields { min-height: 0; padding: 4px 20px 4px 4px; overflow-y: auto; align-content: start; scrollbar-gutter: stable; overscroll-behavior: contain; }
+}
+
 @media (max-width: 800px) {
   .domain-group-settings-content { gap: 20px; grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (pointer: coarse) {
+  .domain-group-settings-type-button { min-height: 36px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

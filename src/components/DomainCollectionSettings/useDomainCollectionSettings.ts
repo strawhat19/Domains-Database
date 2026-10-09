@@ -8,11 +8,12 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
   const [name, setNameValue] = useState(collection.name);
+  const [nameFocusRequest, setNameFocusRequest] = useState(0);
   const [visibility, setVisibilityValue] = useState<CollectionVisibility>(collection.visibility ?? `private`);
   const [invalidField, setInvalidField] = useState<`name` | `description` | null>(null);
   const [description, setDescriptionValue] = useState(collection.description ?? ``);
   const modalRef = useRef<HTMLDivElement>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLTextAreaElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const missingCollection = !preferences.collections.some(current => current.id === collection.id);
   const availabilityError = missingCollection ? `This Collection Is No Longer Available` : ``;
@@ -58,9 +59,9 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     const duplicateName = preferences.collections.some(current => current.id !== collection.id
       && current.name.trim().toLowerCase() === trimmedName.toLowerCase());
     if (!trimmedName || trimmedName.length > 80 || duplicateName) {
+      setNameFocusRequest(current => current + 1);
       setInvalidField(`name`);
       setError(duplicateName ? `A Collection With This Title Already Exists` : `Enter A Collection Title Between 1 And 80 Characters`);
-      nameInputRef.current?.focus();
       return;
     }
     if (trimmedDescription.length > 280) {
@@ -84,6 +85,7 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     description,
     invalidField,
     nameInputRef,
+    nameFocusRequest,
     handleSubmit,
     setVisibility,
     setDescription,

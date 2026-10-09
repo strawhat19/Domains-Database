@@ -48,7 +48,7 @@ const DomainAnalytics = ({ domain, suffix, onClose }: DomainAnalyticsProps) => {
               <X {...elementProps(`domain-analytics-close-icon`, scope)} size={19} color={palette.muted} />
             </Pressable>
           </View>
-          <ScrollView {...elementProps(`domain-analytics-body`, scope)} contentContainerStyle={styles.body}>
+          <ScrollView {...elementProps(`domain-analytics-body`, scope)} style={styles.scroll} contentContainerStyle={styles.body}>
             <Text {...elementProps(`domain-analytics-description`, scope)} style={styles.description}>
               {`Public registration and DNS checks, domain name statistics, and keyword research.`}
             </Text>

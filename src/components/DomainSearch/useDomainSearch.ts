@@ -88,7 +88,7 @@ export const useDomainSearch = () => {
   const clear = () => setQuery(``);
 
   const search = async (append: boolean, input = query, fromRoute = false) => {
-    if (authLoading || !availability.eligible || (!fromRoute && (loading || loadingMore)) || !mounted.current || currentActor.current !== actorKey) return;
+    if (authLoading || !recentSearches.ready || !availability.eligible || (!fromRoute && (loading || loadingMore)) || !mounted.current || currentActor.current !== actorKey) return;
     if (append && (!variants || !results || results.results.length >= variants.domains.length)) return;
     let name: string;
     try {
@@ -135,12 +135,12 @@ export const useDomainSearch = () => {
 
   const incomingQuery = typeof params.q === `string` ? params.q.trim().slice(0, 253) : ``;
   useEffect(() => {
-    if (authLoading || !incomingQuery || !availability.eligible || !mounted.current) return;
+    if (authLoading || !recentSearches.ready || !incomingQuery || !availability.eligible || !mounted.current) return;
     const key = `${actorKey}:${incomingQuery}`;
     if (appliedQuery.current === key) return;
     appliedQuery.current = key;
     void search(false, incomingQuery, true);
-  }, [actorKey, authLoading, availability.eligible, incomingQuery]);
+  }, [actorKey, authLoading, availability.eligible, recentSearches.ready, incomingQuery]);
 
   return {
     user, note, query, error, results, loading, loadingMore, clear, setQuery,
@@ -151,7 +151,7 @@ export const useDomainSearch = () => {
     recentSearchesError: recentSearches.error,
     recentSearchesLoading: recentSearches.loading,
     eligible: availability.eligible,
-    accessLoading: authLoading || availability.loading,
+    accessLoading: authLoading || availability.loading || !recentSearches.ready,
     totalVariants: variants?.domains.length ?? 0,
     hasMore: !!results && results.results.length < (variants?.domains.length ?? 0),
     submit: () => search(false),

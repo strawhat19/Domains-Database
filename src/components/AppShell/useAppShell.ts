@@ -13,10 +13,10 @@ export const useAppShell = () => {
   const { width } = useWindowDimensions();
   const { user, loading } = useAuth();
   const { eligible, loading: connectionsLoading } = useConnectionAvailability();
-  const { domains, loading: domainsLoading } = useDomains();
+  const { domains, loaded: domainsLoaded, loading: domainsLoading } = useDomains();
   const { records, loading: watchingLoading } = useWatching();
   const signedIn = !loading && Boolean(user?.id);
-  const domainCount = domainsLoading ? undefined : domains.length;
+  const domainCount = domainsLoaded && !domainsLoading ? domains.length : undefined;
   const watchingCount = watchingLoading ? undefined : records.filter(record => record.listName === `Watching`).length;
   const isBlogPage = pathname === routes.blog.href || pathname.startsWith(`${routes.blog.href}/`);
   const searchViewport = pathname === routes.search.href && width >= 1000;

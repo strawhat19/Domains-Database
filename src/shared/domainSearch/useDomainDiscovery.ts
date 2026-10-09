@@ -1,3 +1,5 @@
+import { routes } from '../routes';
+import { usePathname } from 'expo-router';
 import { useAuth } from '../authContext/useAuth';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useConnectionAvailability } from '../connections/useConnectionAvailability';
@@ -11,6 +13,7 @@ interface DiscoveryState {
 }
 
 export const useDomainDiscovery = (paused = false) => {
+  const searchActive = usePathname() === routes.search.href;
   const availability = useConnectionAvailability();
   const { user, loading: authLoading, loginRevision } = useAuth();
   const [tldFilter, setTldFilter] = useState(`all`);
@@ -20,7 +23,8 @@ export const useDomainDiscovery = (paused = false) => {
   const scopeKey = `${userId ?? `guest`}:${loginRevision}:${availability.revision}`;
   const viewKey = `${scopeKey}:${refreshRevision}`;
   const accessLoading = authLoading || availability.loading;
-  const requestKey = `${viewKey}:${paused}:${availability.eligible}:${accessLoading}`;
+  const requestPaused = paused || !searchActive;
+  const requestKey = `${viewKey}:${searchActive}:${requestPaused}:${availability.eligible}:${accessLoading}`;
   const currentRequest = useRef(requestKey);
   const cacheScope = useRef(scopeKey);
   const cache = useRef<DomainDiscoveryResults | null>(null);
@@ -37,7 +41,7 @@ export const useDomainDiscovery = (paused = false) => {
       setState({ key: viewKey, error: ``, result: null, loading: false });
       return;
     }
-    if (paused) {
+    if (requestPaused) {
       setState(current => current.key === viewKey
         ? { ...current, loading: false }
         : { key: viewKey, error: ``, result: null, loading: false });
@@ -74,16 +78,16 @@ export const useDomainDiscovery = (paused = false) => {
       request.abort();
       if (controller.current === request) controller.current = null;
     };
-  }, [paused, userId, viewKey, scopeKey, requestKey, accessLoading, availability.eligible]);
+  }, [userId, viewKey, scopeKey, requestKey, requestPaused, accessLoading, availability.eligible]);
 
   const refresh = useCallback(() => {
-    if (paused || accessLoading || !availability.eligible || currentRequest.current !== requestKey) return;
+    if (requestPaused || accessLoading || !availability.eligible || currentRequest.current !== requestKey) return;
     cache.current = null;
     controller.current?.abort();
     setRefreshRevision(current => current + 1);
-  }, [paused, requestKey, accessLoading, availability.eligible]);
+  }, [requestKey, requestPaused, accessLoading, availability.eligible]);
 
-  const visible = !accessLoading && availability.eligible && state.key === viewKey;
+  const visible = searchActive && !accessLoading && availability.eligible && state.key === viewKey;
   const results = visible ? [...(state.result?.results ?? [])].sort((first, second) => (
     Number(second.extension === `com`) - Number(first.extension === `com`)
   )) : [];
@@ -96,11 +100,12 @@ export const useDomainDiscovery = (paused = false) => {
     setFilter,
     setTldFilter,
     statusResults,
-    accessLoading,
+    paused: requestPaused,
+    accessLoading: searchActive && accessLoading,
     eligible: availability.eligible,
     filteredResults: tldFilter === `all` ? statusResults : statusResults.filter(result => result.extension === tldFilter),
     checkedAt: visible ? state.result?.searchedAt ?? `` : ``,
-    loading: !paused && !accessLoading && availability.eligible && (!visible || state.loading),
-    error: visible ? state.error : !accessLoading && !availability.eligible ? availability.error : ``,
+    loading: !requestPaused && !accessLoading && availability.eligible && (!visible || state.loading),
+    error: visible ? state.error : searchActive && !accessLoading && !availability.eligible ? availability.error : ``,
   };
 };

@@ -1,4 +1,6 @@
 :is(.user-menu, [data-class='user-menu']) { z-index: 40; }
+.user-menu-photo { inset: 0; width: 100%; height: 100%; opacity: 0; position: absolute; object-fit: cover; border-radius: inherit; pointer-events: none; transition: opacity .18s ease; }
+.user-menu-photo-loaded { opacity: 1; }
 :is(.user-menu-options, [data-class='user-menu-options']) { animation: user-menu-enter .18s ease; }
 :is(.user-menu-button, [data-class='user-menu-button']):hover { border-color: var(--accent) !important; background: var(--subtle) !important; }
 :is(.user-menu-profile, [data-class='user-menu-profile']):hover, :is(.user-menu-watching, [data-class='user-menu-watching']):hover, :is(.user-menu-dashboard, [data-class='user-menu-dashboard']):hover, :is(.user-menu-connections, [data-class='user-menu-connections']):hover { background: var(--subtle) !important; }

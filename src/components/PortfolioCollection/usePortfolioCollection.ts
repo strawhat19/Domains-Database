@@ -35,6 +35,10 @@ export const usePortfolioCollection = (
   const voteUp = () => preferences.voteCollection(collection.id, `up`);
   const voteDown = () => preferences.voteCollection(collection.id, `down`);
   const setVisibility = (visibility: CollectionVisibility) => preferences.setCollectionVisibility(collection.id, visibility);
+  const setDescription = async (description: string) => {
+    const current = preferences.collections.find(item => item.id === collection.id);
+    return current ? preferences.updateCollection(current.id, current.name, description, current.visibility) : false;
+  };
 
-  return { sticky, voteUp, editing, onSort, voteDown, setEditing, setVisibility, recordsSticky, toggleManualOrder };
+  return { sticky, voteUp, editing, onSort, voteDown, setEditing, setVisibility, recordsSticky, setDescription, toggleManualOrder };
 };

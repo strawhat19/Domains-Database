@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { routes } from '../../shared/routes';
-import { useAfterPaint } from '../../shared/common/useAfterPaint';
+import { useTheme } from '../../shared/themeContext/useTheme';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { useDomainDiscovery } from '../../shared/domainSearch/useDomainDiscovery';
 import { useRecentSearches } from '../../shared/domainSearch/useRecentSearches';
 
 export const useHeroSearch = () => {
   const router = useRouter();
+  const { ready: themeReady } = useTheme();
   const recent = useRecentSearches();
   const { domains, loading: domainsLoading } = useDomains();
-  const discoveryReady = useAfterPaint(!domainsLoading);
-  const discovery = useDomainDiscovery(!discoveryReady);
+  const discovery = useDomainDiscovery(true);
   const [query, setQuery] = useState(``);
   const searchDomain = (value: string) => {
     const name = value.trim();
@@ -31,9 +31,9 @@ export const useHeroSearch = () => {
     domainCount: domainsLoading ? 0 : domains.length,
     trendingCount: discovery.results.length,
     recentSearches: recent.records,
-    domainCountLoading: domainsLoading,
+    domainCountLoading: themeReady && domainsLoading,
     recentSearchesError: recent.error,
-    recentSearchesLoading: recent.loading,
-    trendingCountLoading: !discoveryReady || discovery.accessLoading || discovery.loading,
+    recentSearchesLoading: themeReady && recent.loading,
+    trendingCountLoading: themeReady && !discovery.paused && (discovery.accessLoading || discovery.loading),
   };
 };

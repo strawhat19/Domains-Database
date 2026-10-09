@@ -142,6 +142,11 @@ const writePolicy = async (policy: RegistrarSyncPolicy, current = () => true): P
 };
 
 export const getSyncPolicy = (userId: string): Promise<RegistrarSyncPolicy> => serialize(() => readPolicy(userId));
+export const resumeAutomaticSync = (userId: string, current: () => boolean): Promise<RegistrarSyncPolicy> => serialize(async () => {
+  const previous = await readPolicy(userId);
+  if (!current()) throw new Error(`Your Account Changed — Try Again`);
+  return previous.automaticSyncPaused ? writePolicy({ ...previous, automaticSyncPaused: false }, current) : previous;
+});
 export const isSyncCacheFresh = (policy: RegistrarSyncPolicy, connectionsUpdated: string, now = Date.now()) => policy.lastSyncedAt > 0
   && policy.connectionsUpdated === connectionsUpdated && now >= policy.lastSyncedAt && now - policy.lastSyncedAt < AUTO_SYNC_INTERVAL_MS;
 

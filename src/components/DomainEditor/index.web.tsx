@@ -1,6 +1,7 @@
 import './styles.scss';
 import ConnectRegistrar from './ConnectRegistrar';
 import TagPicker from '../TagPicker/index.web';
+import ModalTitle from '../ModalTitle/index.web';
 import DomainLinks from '../DomainLinks/index.web';
 import CurrencyField from '../CurrencyField/index.web';
 import SettingsField from '../SettingsField/index.web';
@@ -32,11 +33,13 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
     deleting,
     setField,
     modalRef,
+    nameInvalid,
     groupEditor,
     handleDelete,
     cancelDelete,
     requestDelete,
     handleSubmit,
+    nameFocusRequest,
     deleteButtonRef,
     deleteCancelRef,
     confirmingDelete,
@@ -69,9 +72,22 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               {isEditing ? `DOMAIN SETTINGS` : `YOUR PORTFOLIO`}
             </span>
             <div id={`domain-editor-title-row`} className={`domain-editor-title-row`}>
-              <h2 id={`domain-editor-title`} className={`domain-dialog-title`}>
-                {isEditing ? domain?.name ?? input.name : `Add a domain`}
-              </h2>
+              {isEditing ? (
+                <ModalTitle
+                  maxLength={253}
+                  value={input.name}
+                  disabled={saving}
+                  readOnly={isSynced}
+                  label={`Domain Name`}
+                  invalid={nameInvalid}
+                  id={`domain-editor-title`}
+                  form={`domain-editor-form`}
+                  focusRequest={nameFocusRequest}
+                  placeholder={`your-next-idea.com`}
+                  describedBy={error ? `domain-editor-error` : undefined}
+                  onChange={value => setField(`name`, value)}
+                />
+              ) : <h2 id={`domain-editor-title`} className={`domain-dialog-title`}>{`Add a domain`}</h2>}
               {isEditing && domain && (
                 <div id={`domain-editor-registrar-summary`} className={`domain-editor-registrar-summary`}>
                   <span id={`domain-editor-registrar-name`} className={`domain-editor-registrar-name`}>
@@ -109,13 +125,14 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
             </button>
           </div>
         </header>
+        <form id={`domain-editor-form`} className={`domain-dialog-form domain-editor-form`} onSubmit={handleSubmit}>
+          <div id={`domain-editor-body`} className={`domain-dialog-body`}>
         {!isEditing && (
           <p id={`domain-editor-description`} className={`domain-dialog-description`}>
             {`A little detail now. A lot less searching later.`}
           </p>
         )}
         {!isEditing && !isSynced && <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />}
-        <form id={`domain-editor-form`} className={`domain-editor-form`} onSubmit={handleSubmit}>
           <div id={`domain-editor-content`} className={`domain-editor-content`}>
             <div id={`domain-editor-fields`} className={`domain-editor-fields`}>
               <div id={`domain-site-icon-field`} className={`domain-editor-field domain-editor-field-full`}>
@@ -195,7 +212,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   </div>
                 </div>
               </div>
-              <div id={`domain-name-field`} className={`domain-editor-field`}>
+              {!isEditing && <div id={`domain-name-field`} className={`domain-editor-field`}>
                 <label id={`domain-name-label`} className={`domain-editor-label`} htmlFor={`domain-name-input`}>
                   {`Domain name`}
                 </label>
@@ -221,7 +238,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                     onChange={event => setField(`name`, event.target.value)}
                   />
                 </SettingsField>
-              </div>
+              </div>}
               {!isSynced && (
                   <div id={`domain-owner-field`} className={`domain-editor-field`}>
                     <label id={`domain-owner-label`} className={`domain-editor-label`} htmlFor={`domain-owner-input`}>
@@ -567,18 +584,8 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   />
                 </SettingsField>
               </div>
-            </div>
-            {isEditing && (
-              <DomainLinks
-                input={input}
-                disabled={saving}
-                onChange={setField}
-                id={`domain-editor-links-${domain?.id}`}
-              />
-            )}
-          </div>
           {error && (
-            <p role={`alert`} id={`domain-editor-error`} className={`domain-dialog-error`}>
+            <p role={`alert`} id={`domain-editor-error`} className={`domain-dialog-error domain-editor-field-full`}>
               {error}
             </p>
           )}
@@ -586,7 +593,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
             <div
               role={`group`}
               id={`${deleteId}-confirmation`}
-              className={`domain-editor-delete-confirmation`}
+              className={`domain-editor-delete-confirmation domain-editor-field-full`}
               aria-labelledby={`${deleteId}-confirmation-title`}
               aria-describedby={`${deleteId}-confirmation-description`}
             >
@@ -627,6 +634,17 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               </div>
             </div>
           )}
+            </div>
+            {isEditing && (
+              <DomainLinks
+                input={input}
+                disabled={saving}
+                onChange={setField}
+                id={`domain-editor-links-${domain?.id}`}
+              />
+            )}
+          </div>
+          </div>
           <footer id={`domain-editor-footer`} className={`domain-dialog-footer`}>
             {isEditing && (
               <div id={`${deleteId}-action`} className={`domain-editor-delete-action`}>
@@ -676,7 +694,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   ? <Check size={16} aria-hidden={`true`} id={`domain-editor-submit-icon`} className={`portfolio-button-icon`} />
                   : <Plus size={16} aria-hidden={`true`} id={`domain-editor-submit-icon`} className={`portfolio-button-icon`} />}
                 <span id={`domain-editor-submit-text`} className={`portfolio-button-text`}>
-                  {saving && !deleting ? `Saving…` : isEditing ? `Save Changes` : `Add Domain`}
+                  {saving && !deleting ? `Saving…` : isEditing ? `Save` : `Add Domain`}
                 </span>
               </button>
             </div>

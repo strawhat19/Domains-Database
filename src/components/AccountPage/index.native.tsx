@@ -9,6 +9,7 @@ import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
 import ProfileThemePreference from '../ProfileThemePreference';
 import { firebaseEnabled } from '../../shared/firebase/config';
+import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { Text, Image, Platform, Pressable, View, StyleSheet } from 'react-native';
 import { PlugZap, UserRound, BadgeCheck, ShieldCheck, CalendarDays, LayoutDashboard } from 'lucide-react-native';
 
@@ -24,7 +25,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
     { key: `plan`, label: `Plan`, Icon: BadgeCheck, value: user?.plan === `free` ? `Free` : user?.plan },
     { key: `created`, label: `Joined`, Icon: CalendarDays, value: user?.created ? new Date(user.created).toLocaleDateString() : `` },
     { key: `id`, label: `Account ID`, value: user?.id },
-  ];
+  ].filter(field => field.key !== `plan` || !hasUnlimitedPlanAccess(user));
   const headings = {
     profile: { eyebrow: `A LITTLE ABOUT YOU`, title: `Your profile.`, copy: `Set your profile visibility and keep your account details together.` },
     connections: { eyebrow: `PRIVATE CONNECTIONS`, title: `Connections.`, copy: `Prepare your registrar connections in one place.` },

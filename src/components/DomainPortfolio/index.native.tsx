@@ -9,7 +9,7 @@ import DomainSiteIcon from '../DomainSiteIcon/index.native';
 import DomainStarButton from '../DomainStarButton/index.native';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
 import DomainProjectSelect from '../DomainProjectSelect/index.native';
-import { useEffect, useMemo, useState } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { useNativePortfolio } from './useNativePortfolio';
 import { useAuth } from '../../shared/authContext/useAuth';
@@ -19,6 +19,7 @@ import { normalizeDomainLink } from '../../shared/domainLinks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { getDomainDeletionRestriction } from '../../shared/domainUtils';
+import ModalTitle, { type NativeModalTitleHandle } from '../ModalTitle/index.native';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
@@ -45,6 +46,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const [editorIconFailed, setEditorIconFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionToolsWidth, setSelectionToolsWidth] = useState(0);
+  const editorTitleRef = useRef<NativeModalTitleHandle>(null);
   const insets = useSafeAreaInsets();
   const SortIcon = state.sortByName ? ArrowDownAZ : ArrowDownWideNarrow;
   const manualSyncBlocked = state.loading || state.syncing || state.manualSyncWaitSeconds > 0;
@@ -428,9 +430,20 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     style={styles.modalTitleRow}
                     {...elementProps(`native-domain-editor-title-row`, state.editingId ?? `new`)}
                   >
-                    <Text {...elementProps(`native-domain-editor-title`)} style={styles.modalTitle}>
-                      {state.editingDomain?.name ?? `Add domain`}
-                    </Text>
+                    {state.editingDomain ? state.editorOpen && (
+                      <ModalTitle
+                        maxLength={253}
+                        key={state.editingDomain.id}
+                        label={`Domain Name`}
+                        titleRef={editorTitleRef}
+                        value={state.input.name}
+                        disabled={state.saving}
+                        readOnly={editingSyncedDomain}
+                        placeholder={`yourdomain.com`}
+                        id={`native-domain-editor-title-${state.editingDomain.id}`}
+                        onChange={value => state.updateInput(`name`, value)}
+                      />
+                    ) : <Text {...elementProps(`native-domain-editor-title`)} style={styles.modalTitle}>{`Add domain`}</Text>}
                     {state.editingDomain && (
                       <View
                         style={styles.modalRegistrarInfo}
@@ -557,7 +570,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     </Text>
                   </View>
                 )}
-                {textFields.filter(field => !state.editingDomain || ![`expiresAt`, `createdAt`].includes(field.key)).map(field => (
+                {textFields.filter(field => !state.editingDomain || ![`name`, `expiresAt`, `createdAt`].includes(field.key)).map(field => (
                   <View {...elementProps(`native-domain-editor-field`, field.key)} key={field.key} style={styles.field}>
                     <Text {...elementProps(`native-domain-editor-field-label`, field.key)} style={styles.fieldLabel}>
                       {field.label}
@@ -870,7 +883,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 </View>
               </ScrollView>
               <View {...elementProps(`native-domain-editor-footer`)} style={styles.modalFooter}>
-                <Pressable {...elementProps(`native-domain-editor-save`)} style={[styles.primaryButton, state.saving && styles.disabled]} disabled={state.saving} onPress={() => void state.saveDomain()} accessibilityRole={`button`} accessibilityLabel={`Save Domain`}>
+                <Pressable {...elementProps(`native-domain-editor-save`)} style={[styles.primaryButton, state.saving && styles.disabled]} disabled={state.saving} onPress={() => void state.saveDomain(state.editingDomain && !editingSyncedDomain ? editorTitleRef.current?.getValue() : undefined)} accessibilityRole={`button`} accessibilityLabel={`Save Domain`}>
                   {state.saving && !state.deleting ? <ActivityIndicator {...elementProps(`native-domain-editor-save-progress`)} size={`small`} color={`#ffffff`} /> : <Save {...elementProps(`native-domain-editor-save-icon`)} size={14} color={`#ffffff`} />}
                   <Text {...elementProps(`native-domain-editor-save-text`)} style={styles.primaryButtonText}>
                     {state.saving && !state.deleting ? `Saving…` : `Save domain`}

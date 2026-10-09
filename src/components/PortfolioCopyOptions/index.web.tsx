@@ -73,6 +73,7 @@ const PortfolioCopyOptions = ({ busy, count, error, onCopy, onClose, treeAvailab
             <X size={19} aria-hidden={`true`} id={`portfolio-copy-options-close-icon`} className={`domain-dialog-close-icon`} />
           </button>
         </header>
+        <div id={`portfolio-copy-options-body`} className={`domain-dialog-body`}>
         <p id={`portfolio-copy-options-description`} className={`domain-dialog-description`}>
           {`Choose a numbered format for the ${count} ${count === 1 ? `domain` : `domains`} currently displayed.`}
         </p>
@@ -106,6 +107,7 @@ const PortfolioCopyOptions = ({ busy, count, error, onCopy, onClose, treeAvailab
           </p>
         )}
         {error && <p role={`alert`} id={`portfolio-copy-options-error`} className={`domain-dialog-error`}>{error}</p>}
+        </div>
         <footer id={`portfolio-copy-options-footer`} className={`domain-dialog-footer portfolio-copy-options-footer`}>
           <button
             type={`button`}

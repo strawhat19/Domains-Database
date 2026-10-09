@@ -14,5 +14,5 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   options: { padding: 4, borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.paper },
   option: { gap: 8, padding: 10, minHeight: 44, borderRadius: 4, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
   pill: { fontSize: 10, lineHeight: 16, paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, letterSpacing: .4, color: palette.accent, backgroundColor: palette.subtle, overflow: `hidden`, fontFamily: `DMSans_500Medium` },
-  trigger: { gap: 8, minHeight: 45, padding: 12, borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.input, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
+  trigger: { gap: 6, minHeight: 44, paddingVertical: 6, paddingHorizontal: 10, borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.input, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
 });

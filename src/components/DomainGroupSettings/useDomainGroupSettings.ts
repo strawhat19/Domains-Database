@@ -34,6 +34,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const [error, setError] = useState(``);
   const [collectionName, setCollectionNameValue] = useState(``);
   const [name, setNameValue] = useState(group.name);
+  const [nameFocusRequest, setNameFocusRequest] = useState(0);
   const [collectionDescription, setCollectionDescriptionValue] = useState(``);
   const [description, setDescriptionValue] = useState(group.description ?? ``);
   const [collectionId, setCollectionIdValue] = useState(group.collectionId ?? MAIN_DATABASE_COLLECTION_OPTION);
@@ -55,7 +56,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     projectStatus: normalizeDomainProjectStatus(group.projectStatus),
   }));
   const modalRef = useRef<HTMLDivElement>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLTextAreaElement>(null);
   const siteIconInputRef = useRef<HTMLInputElement>(null);
   const collectionSelectRef = useRef<HTMLSelectElement>(null);
   const collectionNameInputRef = useRef<HTMLInputElement>(null);
@@ -134,11 +135,11 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     const duplicateName = preferences.customGroups.some(current => current.id !== group.id
       && current.name.trim().toLowerCase() === trimmedName.toLowerCase());
     if (!trimmedName || trimmedName.length > 80 || duplicateName || reservedName) {
+      setNameFocusRequest(current => current + 1);
       setInvalidField(`name`);
       setError(reservedName
         ? `Ungrouped Is Reserved For Domains Without A Group`
         : duplicateName ? `A Group With This Name Already Exists` : `Enter A Group Name Between 1 And 80 Characters`);
-      nameInputRef.current?.focus();
       return;
     }
     if (trimmedDescription.length > 280) {
@@ -160,7 +161,8 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
       if (!trimmedCollectionName || trimmedCollectionName.length > 80 || duplicateCollectionName) {
         setInvalidField(convertingToCollection ? `name` : `collectionName`);
         setError(duplicateCollectionName ? `A Collection With This Title Already Exists` : `Enter A Collection Title Between 1 And 80 Characters`);
-        (convertingToCollection ? nameInputRef : collectionNameInputRef).current?.focus();
+        if (convertingToCollection) setNameFocusRequest(current => current + 1);
+        else collectionNameInputRef.current?.focus();
         return;
       }
       if (trimmedCollectionDescription.length > 280) {
@@ -215,6 +217,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     description,
     invalidField,
     nameInputRef,
+    nameFocusRequest,
     siteIconInputRef,
     handleSubmit,
     collectionName,

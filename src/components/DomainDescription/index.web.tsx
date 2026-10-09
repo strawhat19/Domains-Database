@@ -6,12 +6,14 @@ interface DomainDescriptionProps {
   id: string;
   busy?: boolean;
   value?: string;
+  maxLength?: number;
   domainName: string;
+  readMoreLabel?: string;
   onReadMore: () => void;
   onSave: (value: string) => Promise<boolean>;
 }
 
-const DomainDescription = ({ id, busy, value, onSave, domainName, onReadMore }: DomainDescriptionProps) => {
+const DomainDescription = ({ id, busy, value, onSave, maxLength, domainName, onReadMore, readMoreLabel }: DomainDescriptionProps) => {
   const description = useDomainDescription({ busy, value, onSave });
   const label = `${value ? `Edit` : `Add`} Description For ${domainName}`;
 
@@ -36,6 +38,7 @@ const DomainDescription = ({ id, busy, value, onSave, domainName, onReadMore }: 
         >
           <textarea
             rows={2}
+            maxLength={maxLength}
             aria-label={label}
             id={`${id}-input`}
             value={description.draft}
@@ -119,7 +122,7 @@ const DomainDescription = ({ id, busy, value, onSave, domainName, onReadMore }: 
               disabled={description.disabled}
               ref={description.readMoreRef}
               className={`domain-description-read-more`}
-              aria-label={`Read More In Domain Settings For ${domainName}`}
+              aria-label={readMoreLabel ?? `Read More In Domain Settings For ${domainName}`}
             >
               <BookOpen size={12} aria-hidden={`true`} id={`${id}-read-more-icon`} className={`domain-description-read-more-icon`} />
               <span id={`${id}-read-more-label`} className={`domain-description-read-more-label`}>

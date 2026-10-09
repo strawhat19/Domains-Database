@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, RefObject } from 'react';
 import { REGISTRARS } from '../../shared/config';
 import { normalizeDomainTags } from '../../shared/domainTags';
-import { getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
+import { getDomainSource, normalizeDomainName, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
 
 export const useModalFocus = (
@@ -106,6 +106,8 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const [error, setError] = useState(``);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [nameInvalid, setNameInvalid] = useState(false);
+  const [nameFocusRequest, setNameFocusRequest] = useState(0);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const pendingActionRef = useRef(false);
@@ -155,11 +157,21 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     if (pendingActionRef.current) return;
     if (isSynced && ![`mvp`, `meta`, `tags`, `future`, `childLinks`, `parentLink`, `difficulty`, `startingBid`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `estimatedRevenue`, `developmentLinks`, `socialMediaLinks`].includes(field)) return;
     setError(``);
+    if (field === `name`) setNameInvalid(false);
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (confirmingDelete || pendingActionRef.current) return;
+    if (domain?.id && !isSynced) {
+      try { normalizeDomainName(input.name); }
+      catch (caught) {
+        setNameInvalid(true);
+        setNameFocusRequest(current => current + 1);
+        setError(caught instanceof Error ? caught.message : `Enter A Valid Domain Name`);
+        return;
+      }
+    }
     pendingActionRef.current = true;
     setError(``);
     setSaving(true);
@@ -192,11 +204,13 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     deleting,
     setField,
     modalRef,
+    nameInvalid,
     groupEditor,
     handleDelete,
     cancelDelete,
     requestDelete,
     handleSubmit,
+    nameFocusRequest,
     deleteButtonRef,
     deleteCancelRef,
     confirmingDelete,

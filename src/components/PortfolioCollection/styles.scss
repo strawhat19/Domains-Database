@@ -36,7 +36,10 @@
 .portfolio-collection-copy { flex: 1; min-width: 0; }
 .portfolio-collection-heading { gap: 8px; display: flex; flex-wrap: wrap; align-items: center; }
 .portfolio-collection-title { margin: 0; font-size: 16px; color: var(--ink); overflow-wrap: anywhere; font-family: var(--font-bold); }
-.portfolio-collection-description { margin: 4px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
+.portfolio-collection-description { flex: 0 0 22px; min-width: 22px; font-size: 12px; color: var(--muted); }
+.portfolio-collection-copy .domain-description .domain-site-description { color: var(--muted); }
+.portfolio-collection-description:has(.domain-site-description) { flex: 1 1 160px; }
+.portfolio-collection-description:has(.domain-description-editing) { flex: 1 1 100%; }
 .portfolio-collection-visibility {
   gap: 6px;
   padding: 0 9px;
@@ -95,6 +98,7 @@
 .portfolio-collection-vote-active { color: var(--accent); background: var(--subtle); }
 .portfolio-collection-vote-count { font-variant-numeric: tabular-nums; }
 .portfolio-collection-actions { gap: 6px; display: flex; flex-shrink: 0; align-items: center; }
+.portfolio-collection-count { min-width: 24px; padding: 3px 8px; flex-shrink: 0; font-size: 10px; text-align: center; color: var(--muted); border-radius: 999px; box-sizing: border-box; background: var(--paper); border: 1px solid var(--line); font-family: var(--font-mono); }
 .portfolio-collection-order-toggle { padding: 8px 10px; }
 .portfolio-collection-share, .portfolio-collection-settings, .portfolio-collection-search-toggle {
   border: 0;

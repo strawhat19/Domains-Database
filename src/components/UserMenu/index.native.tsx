@@ -3,7 +3,7 @@ import { Roles } from '../../types/types';
 import { useUserMenu } from './useUserMenu';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
-import { Image, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { Eye, LogIn, LogOut, PlugZap, UserRound, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
 
 const UserMenu = () => {
@@ -40,16 +40,32 @@ const UserMenu = () => {
             {(user.name?.trim()?.[0] || `U`).toUpperCase()}
           </Text>
           {!!state.photoURL && (
-            <Image
-              key={state.photoKey}
-              style={styles.photo}
-              resizeMode={`cover`}
-              onError={state.onPhotoError}
-              source={{ uri: state.photoURL }}
-              {...elementProps(`user-menu-photo`)}
-              accessibilityElementsHidden
-              importantForAccessibility={`no-hide-descendants`}
-            />
+            Platform.OS === `web` ? (
+              <img
+                alt={``}
+                aria-hidden
+                draggable={false}
+                id={`user-menu-photo`}
+                src={state.photoURL}
+                key={state.photoRequestKey}
+                referrerPolicy={`no-referrer`}
+                onError={state.onPhotoError}
+                onLoad={event => event.currentTarget.naturalWidth > 0 ? state.onPhotoLoad() : state.onPhotoError()}
+                className={`user-menu-photo${state.photoLoaded ? ` user-menu-photo-loaded` : ``}`}
+              />
+            ) : (
+              <Image
+                resizeMode={`cover`}
+                key={state.photoRequestKey}
+                onLoad={state.onPhotoLoad}
+                onError={state.onPhotoError}
+                source={{ uri: state.photoURL }}
+                accessibilityElementsHidden
+                style={[styles.photo, { opacity: state.photoLoaded ? 1 : 0 }]}
+                importantForAccessibility={`no-hide-descendants`}
+                {...elementProps(`user-menu-photo`)}
+              />
+            )
           )}
         </View>
       </Pressable>
@@ -59,12 +75,14 @@ const UserMenu = () => {
             <Text {...elementProps(`user-menu-name`)} style={styles.name} numberOfLines={1}>{user.name}</Text>
             <Text {...elementProps(`user-menu-email`)} style={styles.email} numberOfLines={1}>{user.email}</Text>
           </View>
-          <Link href={`/profile`} asChild>
-            <Pressable {...elementProps(`user-menu-profile`)} style={styles.item} accessibilityRole={`link`}>
-              <UserRound {...elementProps(`user-menu-profile-icon`)} size={16} color={palette.ink} />
-              <Text {...elementProps(`user-menu-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
-            </Pressable>
-          </Link>
+          {user.role === Roles.Owner && (
+            <Link href={`/dashboard`} asChild>
+              <Pressable {...elementProps(`user-menu-dashboard`)} style={styles.item} accessibilityRole={`link`}>
+                <LayoutDashboard {...elementProps(`user-menu-dashboard-icon`)} size={16} color={palette.ink} />
+                <Text {...elementProps(`user-menu-dashboard-text`)} style={styles.linkText}>{`Dashboard`}</Text>
+              </Pressable>
+            </Link>
+          )}
           {width <= 1360 && (
             <Link href={routes.watching.href} asChild>
               <Pressable
@@ -84,6 +102,12 @@ const UserMenu = () => {
               </Pressable>
             </Link>
           )}
+          <Link href={`/profile`} asChild>
+            <Pressable {...elementProps(`user-menu-profile`)} style={styles.item} accessibilityRole={`link`}>
+              <UserRound {...elementProps(`user-menu-profile-icon`)} size={16} color={palette.ink} />
+              <Text {...elementProps(`user-menu-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
+            </Pressable>
+          </Link>
           <Link href={`/profile/connections`} asChild>
             <Pressable
               style={styles.item}
@@ -101,14 +125,6 @@ const UserMenu = () => {
               )}
             </Pressable>
           </Link>
-          {user.role === Roles.Owner && (
-            <Link href={`/dashboard`} asChild>
-              <Pressable {...elementProps(`user-menu-dashboard`)} style={styles.item} accessibilityRole={`link`}>
-                <LayoutDashboard {...elementProps(`user-menu-dashboard-icon`)} size={16} color={palette.ink} />
-                <Text {...elementProps(`user-menu-dashboard-text`)} style={styles.linkText}>{`Dashboard`}</Text>
-              </Pressable>
-            </Link>
-          )}
           {!!state.error && <Text {...elementProps(`user-menu-error`)} style={styles.error} accessibilityRole={`alert`}>{state.error}</Text>}
           <Pressable {...elementProps(`user-menu-signout`)} style={[styles.item, styles.signout]} disabled={state.busy} onPress={() => void state.signOut()}>
             <LogOut {...elementProps(`user-menu-signout-icon`)} size={16} color={palette.danger} />

@@ -1,9 +1,10 @@
 import type { PropsWithChildren } from 'react';
-import { themePalettes, THEME_STORAGE_KEY } from '../src/shared/themeContext/theme';
+import { themePalettes, THEME_STORAGE_KEY, THEME_BOOTSTRAP_KEY } from '../src/shared/themeContext/theme';
 
 const themeBootstrap = `
 try {
-  const saved = localStorage.getItem(\`${THEME_STORAGE_KEY}\`);
+  const cached = localStorage.getItem(\`${THEME_BOOTSTRAP_KEY}\`);
+  const saved = cached === \`light\` || cached === \`dark\` ? cached : localStorage.getItem(\`${THEME_STORAGE_KEY}\`);
   const theme = saved === \`light\` ? \`light\` : \`dark\`;
   document.documentElement.dataset.theme = theme;
   document.getElementById(\`domains-theme\`)?.setAttribute(

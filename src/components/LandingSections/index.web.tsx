@@ -6,13 +6,16 @@ import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
 import LandingOverview from '../LandingOverview';
 import { getBlogHref } from '../../shared/blog/metadata';
+import { useAuth } from '../../shared/authContext/useAuth';
 import { useLandingActivity } from './useLandingActivity.web';
+import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { activityCells, domainBasics, landingPlans, ctaActivityCells } from './content';
 import { Check, Globe2, Server, LayoutTemplate, BookOpen, ArrowRight, ArrowUpRight, LockKeyhole } from 'lucide-react';
 
 const basicIcons = { domain: Globe2, hosting: Server, website: LayoutTemplate };
 
 const LandingSections = () => {
+  const { user } = useAuth();
   const activity = useLandingActivity();
   const ctaActivity = useLandingActivity();
   const renderCardShape = (id: string) => (
@@ -103,7 +106,7 @@ const LandingSections = () => {
 
       <LandingOverview />
 
-      <section id={`landing-pricing`} className={`landing-section landing-pricing`} aria-labelledby={`landing-pricing-title`}>
+      {!hasUnlimitedPlanAccess(user) && <section id={`landing-pricing`} className={`landing-section landing-pricing`} aria-labelledby={`landing-pricing-title`}>
         <div id={`landing-pricing-inner`} className={`landing-section-inner`}>
           <div id={`landing-pricing-heading`} className={`landing-section-heading landing-pricing-heading`}>
             <div id={`landing-pricing-copy`} className={`landing-heading-copy`}>
@@ -165,7 +168,7 @@ const LandingSections = () => {
           </div>
           <p id={`landing-pricing-note`} className={`landing-section-note`}>{`Pro and Team are planned tiers and are not available to purchase yet. Domain registrations and hosting are billed separately by your providers.`}</p>
         </div>
-      </section>
+      </section>}
 
       <section id={`landing-final-cta`} className={`landing-section landing-final-cta`} aria-labelledby={`landing-final-title`}>
         <div id={`landing-final-inner`} className={`landing-section-inner landing-final-inner`}>

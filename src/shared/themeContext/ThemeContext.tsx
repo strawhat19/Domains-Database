@@ -1,10 +1,9 @@
 import type { PropsWithChildren } from 'react';
-import { useLocalStorage } from '../config';
 import { useAuth } from '../authContext/useAuth';
 import { AppState, Appearance, Platform } from 'react-native';
-import { getSavedTheme, saveTheme, getThemeStorageKey } from './preferences';
 import { themePalettes, THEME_STORAGE_KEY, type ThemeMode, type ThemePalette } from './theme';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
+import { getSavedTheme, saveTheme, getThemePreview, saveThemePreview, getThemeStorageKey } from './preferences';
 
 interface ThemeContextValue {
   error: string;
@@ -39,10 +38,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
 
   useThemeLayoutEffect(() => {
     if (Platform.OS !== `web` || typeof document === `undefined`) return;
-    let saved = document.documentElement.dataset.theme;
-    try {
-      if (useLocalStorage) saved = window.localStorage.getItem(THEME_STORAGE_KEY) ?? saved;
-    } catch {}
+    const saved = getThemePreview() ?? document.documentElement.dataset.theme;
     if (!preferenceChanged.current && (saved === `light` || saved === `dark`)) {
       setTheme(saved);
     }
@@ -95,6 +91,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
       return;
     }
     if (!ready || typeof document === `undefined`) return;
+    saveThemePreview(theme);
     const root = document.documentElement;
     root.dataset.themeChanging = `true`;
     root.dataset.theme = theme;

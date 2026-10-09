@@ -4,8 +4,9 @@ import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
 import { Eye, X, LogIn, UserRoundPlus } from 'lucide-react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DomainSearchDomainResult } from '../../shared/domainSearch/types';
-import { Modal, Platform, Pressable, Text, View, ActivityIndicator } from 'react-native';
+import { Modal, Platform, Pressable, Text, View, ScrollView, ActivityIndicator, useWindowDimensions } from 'react-native';
 
 type WatchButtonProps = {
   suffix: string;
@@ -28,7 +29,14 @@ const WatchButton = ({
 }: WatchButtonProps) => {
   const state = useWatchButton(result);
   const { palette } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const overlayPadding = {
+    paddingTop: Math.max(24, insets.top), paddingLeft: Math.max(24, insets.left),
+    paddingRight: Math.max(24, insets.right), paddingBottom: Math.max(24, insets.bottom),
+  };
+  const dialogMaxHeight = Math.max(0, height - overlayPadding.paddingTop - overlayPadding.paddingBottom);
   const buttonDisabled = disabled || state.disabled;
   const actionLabel = state.watched ? `View ${result.domain} In Watching` : `Watch ${result.domain}`;
 
@@ -81,14 +89,14 @@ const WatchButton = ({
         visible={state.promptOpen}
         onRequestClose={state.dismissPrompt}
       >
-        <View {...elementProps(`watch-signin-overlay`, suffix)} style={styles.overlay}>
+        <View {...elementProps(`watch-signin-overlay`, suffix)} style={[styles.overlay, overlayPadding]}>
           <Pressable
             {...elementProps(`watch-signin-backdrop`, suffix)}
             style={styles.backdrop}
             onPress={state.dismissPrompt}
             accessibilityLabel={`Close Sign In Prompt`}
           />
-          <View {...elementProps(`watch-signin-dialog`, suffix)} style={styles.dialog} accessibilityViewIsModal>
+          <View {...elementProps(`watch-signin-dialog`, suffix)} style={[styles.dialog, { maxHeight: dialogMaxHeight }]} accessibilityViewIsModal>
             <View {...elementProps(`watch-signin-heading`, suffix)} style={styles.heading}>
               <Eye {...elementProps(`watch-signin-icon`, suffix)} size={23} color={palette.accent} />
               <Pressable
@@ -103,9 +111,15 @@ const WatchButton = ({
             <Text {...elementProps(`watch-signin-title`, suffix)} style={styles.title} accessibilityRole={`header`}>
               {`Sign in to watch domains`}
             </Text>
-            <Text {...elementProps(`watch-signin-description`, suffix)} style={styles.description}>
-              {`Save ${result.domain} to your Watching list and compare registrar availability and prices. Sign in or create an account, then choose Watch to save it.`}
-            </Text>
+            <ScrollView
+              style={styles.bodyScroll}
+              keyboardShouldPersistTaps={`handled`}
+              {...elementProps(`watch-signin-body`, suffix)}
+            >
+              <Text {...elementProps(`watch-signin-description`, suffix)} style={styles.description}>
+                {`Save ${result.domain} to your Watching list and compare registrar availability and prices. Sign in or create an account, then choose Watch to save it.`}
+              </Text>
+            </ScrollView>
             <View {...elementProps(`watch-signin-actions`, suffix)} style={styles.actions}>
               <Pressable
                 {...elementProps(`watch-signin-link`, suffix)}

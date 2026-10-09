@@ -86,13 +86,10 @@ export const useStickyPortfolioGroup = (
             first = middle + 1;
           } else last = middle - 1;
         }
-        next = dragging ? active : groups[index];
-        if (next && !dragging) {
-          const boundary = groups[index + 1]?.top ?? next.bottom;
-          nextOffset = Math.min(0, boundary - position - next.height);
-        }
+        const editing = Boolean(active?.row.querySelector(`.domain-description-editing`));
+        next = dragging || editing ? active : groups[index];
+        if (!dragging && next?.heading.querySelector(`.domain-description-editing`)) next = undefined;
       }
-      const nextHeight = next?.height ?? 0;
       const nextLeft = Math.max(0, Math.min(scroll.scrollLeft, maxScrollLeft));
       let focusId: string | undefined;
       if (next !== active) {
@@ -114,10 +111,15 @@ export const useStickyPortfolioGroup = (
         clip.hidden = !next;
         active = next;
       }
+      if (nextWidth !== width && nextWidth >= 0) mirror.style.width = `${nextWidth}px`;
+      const nextHeight = next?.row.getBoundingClientRect().height || next?.height || 0;
+      if (next && !dragging && !next.row.querySelector(`.domain-description-editing`)) {
+        const boundary = groups[groups.indexOf(next) + 1]?.top ?? next.bottom;
+        nextOffset = Math.min(0, boundary - (top - bounds.top) - nextHeight);
+      }
       // All group visibility and geometry changes happen together, without a table render.
       if (nextHeight !== height) clip.style.height = `${nextHeight}px`;
       if (nextOffset !== offset) clip.style.transform = `translate3d(0, ${nextOffset}px, 0)`;
-      if (nextWidth !== width && nextWidth >= 0) mirror.style.width = `${nextWidth}px`;
       if (nextLeft !== left) mirror.style.transform = `translate3d(${-nextLeft}px, 0, 0)`;
       height = nextHeight;
       offset = nextOffset;
@@ -139,6 +141,7 @@ export const useStickyPortfolioGroup = (
     const observer = typeof ResizeObserver === `undefined` ? null : new ResizeObserver(invalidate);
     observer?.observe(table);
     observer?.observe(scroll);
+    observer?.observe(mirror);
     observer?.observe(columnHeader);
     groups.forEach(group => {
       observer?.observe(group.body);

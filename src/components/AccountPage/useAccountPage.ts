@@ -13,7 +13,7 @@ import { getDomainStatus, formatCurrency } from '../../shared/domainUtils';
 
 export const useAccountPage = (page: `profile` | `connections` | `dashboard`) => {
   const { user } = useAuth();
-  const { domains, loading: domainsLoading } = useDomains();
+  const { domains, loaded: domainsLoaded, loading: domainsLoading } = useDomains();
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -31,9 +31,9 @@ export const useAccountPage = (page: `profile` | `connections` | `dashboard`) =>
   }, [page, user?.id, user?.role]);
   const stats = [
     { id: `accounts`, label: firebaseEnabled && !useLocalStorage ? `Accounts` : `Local accounts`, value: users.length },
-    { id: `domains`, label: `Your domains`, value: domains.length },
-    { id: `renewals`, label: `Renewing soon`, value: domains.filter(domain => getDomainStatus(domain) === `Renewing Soon`).length },
-    { id: `cost`, label: `Your annual cost`, value: formatCurrency(domains.reduce((total, domain) => total + domain.renewalPrice, 0)) },
+    { id: `domains`, label: `Your domains`, value: domainsLoaded ? domains.length : `—` },
+    { id: `renewals`, label: `Renewing soon`, value: domainsLoaded ? domains.filter(domain => getDomainStatus(domain) === `Renewing Soon`).length : `—` },
+    { id: `cost`, label: `Your annual cost`, value: domainsLoaded ? formatCurrency(domains.reduce((total, domain) => total + domain.renewalPrice, 0)) : `—` },
   ];
   const roles = Object.values(Roles).map(role => ({ role, count: users.filter(account => account.role === role).length })).filter(item => item.count);
   return { user, users, error, roles, stats, styles, palette, compact: width < 760, loading: loading || domainsLoading };

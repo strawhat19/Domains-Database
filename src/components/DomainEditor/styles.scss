@@ -4,7 +4,7 @@
   display: flex;
   padding: 24px;
   position: fixed;
-  overflow-y: auto;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(7px);
@@ -15,22 +15,35 @@
   width: 100%;
   min-width: 0;
   padding: 28px;
+  display: flex;
   max-width: 570px;
   color: var(--ink);
+  overflow: hidden;
   border-radius: 20px;
+  flex-direction: column;
   background: var(--paper);
   max-height: calc(100dvh - 48px);
-  overflow-y: auto;
   box-shadow: 0 22px 100px var(--shadow);
   animation: domain-dialog-enter .25s cubic-bezier(.2, .8, .2, 1) both;
 }
 .domain-dialog-header {
   gap: 20px;
   display: flex;
+  flex-shrink: 0;
   align-items: flex-start;
   justify-content: space-between;
 }
 .domain-dialog-heading { min-width: 0; }
+.domain-dialog-form { min-height: 0; display: flex; overflow: hidden; flex-direction: column; }
+.domain-dialog-body { min-height: 0; padding: 4px; overflow-y: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
+.domain-dialog * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) var(--canvas);
+  &::-webkit-scrollbar { width: 10px; height: 10px; }
+  &::-webkit-scrollbar-track, &::-webkit-scrollbar-corner { background: var(--canvas); }
+  &::-webkit-scrollbar-thumb { border-radius: 6px; background: var(--line-strong); border: 2px solid var(--canvas); }
+  &::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+}
 .domain-editor-header-actions { gap: 8px; display: flex; flex-shrink: 0; align-items: center; }
 .domain-editor-settings .domain-dialog-header { margin-bottom: 25px; }
 .domain-editor-title-row {
@@ -161,6 +174,7 @@
 .domain-dialog-footer {
   gap: 15px;
   display: flex;
+  flex-shrink: 0;
   margin-top: 24px;
   padding-top: 20px;
   align-items: center;
@@ -198,6 +212,13 @@
   .domain-dialog { max-width: 820px; }
   .domain-editor-settings { max-width: 1100px; }
 }
+@media (min-width: 801px) {
+  .domain-editor-settings {
+    .domain-dialog-body { padding: 0; display: flex; overflow: hidden; flex-direction: column; scrollbar-gutter: auto; }
+    .domain-editor-content { gap: 0; flex: 1; min-height: 0; overflow: hidden; align-items: stretch; grid-template-rows: minmax(0, 1fr); }
+    .domain-editor-fields { min-height: 0; padding: 4px 20px 4px 4px; overflow-y: auto; align-content: start; scrollbar-gutter: stable; overscroll-behavior: contain; }
+  }
+}
 @media (max-width: 800px) {
   .domain-editor-settings .domain-editor-content { grid-template-columns: minmax(0, 1fr); }
   .domain-editor-delete-confirmation { align-items: flex-start; flex-direction: column; }
@@ -209,10 +230,10 @@
   .domain-dialog-title { font-size: 30px; }
   .domain-editor-fields { gap: 16px; grid-template-columns: 1fr; }
   .domain-editor-input { font-size: 16px; }
-  .domain-dialog-footer { gap: 12px; align-items: flex-start; flex-direction: column-reverse; }
-  .domain-dialog-actions { width: 100%; align-items: stretch; flex-direction: column; }
+  .domain-dialog-footer { gap: 12px; flex-wrap: wrap; }
+  .domain-dialog-actions { width: 100%; flex-wrap: wrap; align-items: stretch; }
   .domain-dialog .portfolio-button { min-width: 0; max-width: 100%; white-space: normal; }
-  .domain-dialog-actions .portfolio-button { width: 100%; }
+  .domain-dialog-actions .portfolio-button { flex: 1; }
   .domain-editor-delete-action, .domain-editor-delete-confirmation-actions { width: 100%; }
   .domain-editor-delete-confirmation-actions { flex-direction: column; }
 }

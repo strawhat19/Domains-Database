@@ -1,10 +1,25 @@
-import { useLocalStorage, persistenceEnabled } from '../config';
 import { authAPI } from '../../api/auth';
-import { THEME_STORAGE_KEY, type ThemeMode } from './theme';
 import { accountStorageKey } from '../authentication/userScope';
+import { useLocalStorage, persistenceEnabled } from '../config';
+import { THEME_STORAGE_KEY, THEME_BOOTSTRAP_KEY, type ThemeMode } from './theme';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 
 const serialize = createOperationQueue(THEME_STORAGE_KEY);
+
+export const getThemePreview = (): ThemeMode | null => {
+  if (typeof window === `undefined`) return null;
+  try {
+    const cached = window.localStorage.getItem(THEME_BOOTSTRAP_KEY);
+    if (cached === `light` || cached === `dark`) return cached;
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return saved === `light` || saved === `dark` ? saved : null;
+  } catch { return null; }
+};
+
+export const saveThemePreview = (theme: ThemeMode) => {
+  if ((theme !== `light` && theme !== `dark`) || typeof window === `undefined`) return;
+  try { window.localStorage.setItem(THEME_BOOTSTRAP_KEY, theme); } catch {}
+};
 
 export const getThemeStorageKey = (userId: string | null) => userId === null
   ? THEME_STORAGE_KEY

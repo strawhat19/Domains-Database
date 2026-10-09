@@ -1,5 +1,6 @@
-import { Slot } from 'expo-router';
+import { Slot, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { routes } from '../src/shared/routes';
 import { useEffect, useRef, useState } from 'react';
 import AppShell from '../src/components/AppShell';
 import { useAppFonts } from '../src/shared/useAppFonts';
@@ -30,24 +31,25 @@ const RootContent = () => {
 
 const RootLayout = () => {
   useAppFonts();
-  const dataReady = useAfterPaint();
   return (
     <SafeAreaProvider>
-      <AuthProvider enabled={dataReady}>
+      <AuthProvider>
         <ThemeProvider>
-          <AccountContent dataReady={dataReady} />
+          <AccountContent />
         </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
 };
 
-const AccountContent = ({ dataReady }: { dataReady: boolean }) => {
+const AccountContent = () => {
+  const pathname = usePathname();
+  const { ready: themeReady } = useTheme();
   const { user, loading, dataRevision } = useAuth();
   const lastAccount = useRef<string | null>(null);
   const [accountRevision, setAccountRevision] = useState(0);
   const accountScope = loading ? null : user?.id ?? `guest`;
-  const enabled = useAfterPaint(!loading);
+  const enabled = useAfterPaint(!loading && themeReady);
   useEffect(() => {
     if (accountScope === null) return;
     // Keep the initial UI mounted; reset account views only when the actor changes.
@@ -55,8 +57,12 @@ const AccountContent = ({ dataReady }: { dataReady: boolean }) => {
     lastAccount.current = accountScope;
   }, [accountScope]);
   return (
-    <ConnectionAvailabilityProvider enabled={dataReady}>
-      <DomainProvider key={`${accountRevision}-${dataRevision}`} enabled={enabled}>
+    <ConnectionAvailabilityProvider enabled={enabled}>
+      <DomainProvider
+        enabled={enabled}
+        key={`${accountRevision}-${dataRevision}`}
+        requested={pathname === routes.domains.href}
+      >
         <ColumnProvider enabled={enabled} userId={user?.id ?? null}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>
             <WatchingProvider enabled={enabled}>
