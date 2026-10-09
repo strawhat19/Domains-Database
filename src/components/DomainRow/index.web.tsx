@@ -230,7 +230,7 @@ const DomainRow = ({
               <span
                 title={renewalDetail.hint}
                 id={`${scope}-${renewalDetail.isCost ? `renewal-estimate` : `status`}`}
-                className={`rowStatus ${renewalDetail.isCost ? `domain-renewal-estimate` : `rowStatus-${statusKey}`}`}
+                className={`rowStatus rowStatus-${statusKey}${renewalDetail.isCost ? ` domain-renewal-estimate` : ``}`}
               >
                 {!renewalDetail.isCost && (
                   <span id={`${scope}-status-dot-wrap`} className={`statusDotWrap`} aria-hidden={`true`}>
@@ -238,7 +238,9 @@ const DomainRow = ({
                   </span>
                 )}
                 <span id={`${scope}-${renewalDetail.isCost ? `renewal-estimate` : `status`}-text`} className={`statusText`}>
-                  {renewalDetail.text}
+                  {renewalDetail.isCost ? renewalDetail.text.split(/(\p{Sc})/u).map((part, index) => /\p{Sc}/u.test(part) ? (
+                    <span key={index} id={`${scope}-renewal-currency-${index}`} className={`domain-renewal-currency`}>{part}</span>
+                  ) : part) : renewalDetail.text}
                 </span>
               </span>
             )}

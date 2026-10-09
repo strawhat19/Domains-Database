@@ -110,7 +110,15 @@ const PortfolioRecords = ({
     + (flexibleColumns.includes(column.field) && flexibleCount ? unusedWidth / flexibleCount : 0));
   const widths = [38, 36, ...dataWidths, flexibleCount ? 0 : unusedWidth, 116];
   const tableWidth = widths.reduce((total, width) => total + width, 0);
-  const tableStyle: CSSProperties = { width: tableWidth, minWidth: tableWidth, tableLayout: `fixed` };
+  const loadingWeight = columns.reduce((total, column) => total + (column.field === `name` ? 2 : 1), 0) || 1;
+  const loadingDataWidths = columns.map(column => {
+    const share = (column.field === `name` ? 2 : 1) / loadingWeight;
+    return `calc(${share * 100}% - ${share * 190}px)`;
+  });
+  const renderedWidths = loading ? [38, 36, ...loadingDataWidths, 0, 116] : widths;
+  const tableStyle: CSSProperties = loading
+    ? { width: `100%`, minWidth: 0, tableLayout: `fixed` }
+    : { width: tableWidth, minWidth: tableWidth, tableLayout: `fixed` };
   const stickyHeaderReady = sticky.header.headHeight > 0 && sticky.header.columnWidths.length === columns.length + 4;
   const grouped = Boolean(collectionId) || preferences.groupBy !== `none`;
   const empty = !loading && !groups.some(group => group.domains.length);
@@ -411,7 +419,7 @@ const PortfolioRecords = ({
               sortField={sortField}
               idPrefix={`${idPrefix}-sticky`}
               sortDirection={sortDirection}
-              columnWidths={widths}
+              columnWidths={loading ? sticky.header.columnWidths : widths}
               allSelected={allSelected}
               someSelected={someSelected}
               onSelectAll={onSelectAll}
@@ -468,13 +476,13 @@ const PortfolioRecords = ({
             {`Your saved domain records. Monthly costs are annual costs divided by twelve. Auto-renew settings are a record only.`}
           </caption>
           <colgroup id={`${idPrefix}-table-columns`}>
-            <col id={`${idPrefix}-column-position`} style={{ width: widths[0] }} />
-            <col id={`${idPrefix}-column-selection`} style={{ width: widths[1] }} />
+            <col id={`${idPrefix}-column-position`} style={{ width: renderedWidths[0] }} />
+            <col id={`${idPrefix}-column-selection`} style={{ width: renderedWidths[1] }} />
             {columns.map((column, index) => (
-              <col key={column.field} id={`${idPrefix}-column-${column.field}`} style={{ width: widths[index + 2] }} />
+              <col key={column.field} id={`${idPrefix}-column-${column.field}`} style={{ width: renderedWidths[index + 2] }} />
             ))}
-            <col id={`${idPrefix}-column-space`} style={{ width: widths[columns.length + 2] }} />
-            <col id={`${idPrefix}-column-actions`} style={{ width: 116 }} />
+            <col id={`${idPrefix}-column-space`} style={{ width: renderedWidths[columns.length + 2] }} />
+            <col id={`${idPrefix}-column-actions`} style={{ width: renderedWidths[columns.length + 3] }} />
           </colgroup>
           <PortfolioTableHead
             columns={columns}
@@ -487,7 +495,7 @@ const PortfolioRecords = ({
             allSelected={allSelected}
             someSelected={someSelected}
             onSelectAll={onSelectAll}
-            columnWidths={widths}
+            columnWidths={loading ? undefined : widths}
           />
           {loading || (empty && !showGroupHeadings) ? (
             <tbody id={`${idPrefix}-table-body`} className={`portfolio-table-body`}>

@@ -63,6 +63,7 @@
 .portfolio-group-empty { padding: 12px 16px; font-size: 12px; color: var(--muted); }
 .portfolio-records-table { position: relative; }
 .portfolio-table-scroll[data-loading='true'] { overflow-x: hidden; }
+.portfolio-table-scroll[data-loading='true'] .portfolio-table-heading { min-width: 0; }
 .portfolio-records-empty { padding: 35px 20px; border-top: 1px solid var(--line); }
 .portfolio-hidden-groups-notice { margin: 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
 .portfolio-sticky-head { z-index: 4; position: sticky; background: var(--input); box-shadow: 0 1px 0 var(--line); }

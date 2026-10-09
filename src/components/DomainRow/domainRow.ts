@@ -72,7 +72,7 @@ export const getDomainRenewalDetail = (domain: DomainRecord, showCosts = false) 
   const estimate = isCost ? getRenewalEstimateDisplay(domain) : `—`;
   return {
     isCost,
-    text: isCost ? estimate === `—` ? `Cost Unavailable` : `Est. ${estimate}` : status,
+    text: isCost ? estimate === `—` ? `Cost Unavailable` : estimate : status,
     hint: isCost ? getRenewalEstimateHint(domain) || `Renewal Estimate Not Provided By Registrar` : undefined,
   };
 };
