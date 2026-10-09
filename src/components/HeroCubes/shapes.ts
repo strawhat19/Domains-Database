@@ -2,6 +2,12 @@ type TileFace = `top` | `left` | `right`;
 type TilePoint = { x: number; y: number };
 type TileGeometry = { x?: number; y?: number; depth: number; faceSkew: number; halfWidth: number; halfHeight: number };
 
+export const getTileDepth = (row: number, column: number) => {
+  const depthIndex = (row * 7 + column * 11) % 10;
+  const variation = (row * 37 + column * 19) % 101 / 100;
+  return depthIndex < 7 ? 6 + variation * 4 : depthIndex < 9 ? 12 + variation * 8 : 22 + variation * 10;
+};
+
 const blendPoint = (start: TilePoint, end: TilePoint, amount: number): TilePoint => ({
   x: start.x + (end.x - start.x) * amount,
   y: start.y + (end.y - start.y) * amount,

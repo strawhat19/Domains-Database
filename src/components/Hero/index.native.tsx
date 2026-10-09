@@ -5,6 +5,7 @@ import type { HeroProps } from './types';
 import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
 import { createStyles } from './styles.native';
+import HeroDomainStack from '../HeroDomainStack';
 import { elementProps } from '../../shared/elementProps';
 import { cubes, useStackPill } from '../../shared/config';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -226,19 +227,24 @@ const Hero = ({ search }: HeroProps) => {
           </Pressable>
         </Link>
       </View>
-      <Text
-        {...elementProps(`hero-title`)}
-        style={styles.title}
-        accessibilityRole={`header`}
-      >
-        {`Planner & Manager`}
-      </Text>
-      <Text {...elementProps(`hero-title-accent`)} style={[styles.accent, compact && { fontSize: accentSize, lineHeight: accentSize * 1.08 }]}>
-        {`Domains Database`}
-      </Text>
-      <Text {...elementProps(`hero-description`)} style={styles.description}>
-        {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
-      </Text>
+      <View {...elementProps(`hero-copy-stack-row`)} style={[styles.copyStackRow, compact && styles.compactCopyStackRow]}>
+        <View {...elementProps(`hero-copy`)} style={styles.copy}>
+          <Text
+            {...elementProps(`hero-title`)}
+            style={styles.title}
+            accessibilityRole={`header`}
+          >
+            {`Planner `}<Text {...elementProps(`hero-title-separator`)} style={styles.separator}>{`//`}</Text>{` Manager`}
+          </Text>
+          <Text {...elementProps(`hero-title-accent`)} style={[styles.accent, compact && { fontSize: accentSize, lineHeight: accentSize * 1.08 }]}>
+            {`Domains `}<Text {...elementProps(`hero-title-database`)} style={styles.database}>{`Database`}</Text>
+          </Text>
+          <Text {...elementProps(`hero-description`)} style={styles.description}>
+            {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
+          </Text>
+        </View>
+        <HeroDomainStack compact={compact} />
+      </View>
       <View {...elementProps(`hero-domain-search`)} style={styles.search}>
         <View {...elementProps(`hero-domain-search-trending-row`)} style={styles.trendingRow}>
           <View {...elementProps(`hero-magic-typing-wrap`)} style={styles.magicTypingWrap}>

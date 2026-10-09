@@ -87,6 +87,8 @@
 }
 .hero-cube-scene { top: 0; right: -10%; width: 72%; height: 100%; position: absolute; pointer-events: none; }
 .hero-heading-group { z-index: 2; width: 48%; min-width: 0; max-width: 620px; position: relative; }
+.hero-statement { gap: 8px; display: grid; max-width: 440px; min-height: 232px; position: relative; align-items: center; grid-template-columns: minmax(0, 1fr) 76px; }
+.hero-statement-copy { width: 100%; min-width: 0; }
 
 .hero-eyebrow {
   gap: 10px;
@@ -133,8 +135,10 @@
   }
 }
 .hero-title { margin: 0; line-height: 1.02; letter-spacing: -.04em; font-family: var(--font-bold); }
-.hero-title-intro { display: block; font-weight: 400; line-height: 1.5; letter-spacing: -.025em; text-transform: uppercase; color: var(--hero-muted); font-family: var(--font-body); font-size: clamp(20px, 1.9vw, 30px); }
-.hero-title-accent { display: block; font-weight: 700; font-style: italic; text-transform: uppercase; color: var(--hero-accent); text-shadow: 0 0 28px var(--hero-title-glow); font-size: clamp(42px, 4.7vw, 78px); }
+.hero-title-intro { display: block; font-weight: 400; line-height: 1.5; letter-spacing: -.025em; text-transform: uppercase; color: var(--hero-muted); font-family: var(--font-body); font-size: clamp(16px, 1.5vw, 24px); }
+.hero-title-separator { color: var(--hero-accent); }
+.hero-title-accent { display: block; font-weight: 700; font-style: italic; text-transform: uppercase; color: var(--hero-accent); text-shadow: 0 0 28px var(--hero-title-glow); font-size: clamp(42px, 4.7vw, 72px); }
+.hero-title-database { color: var(--hero-muted); text-shadow: none; }
 
 .hero-description { max-width: 420px; margin: 28px 0 0; line-height: 1.8; font-size: 14px; color: var(--hero-muted); }
 .hero-domain-search { gap: 10px; display: flex; margin-top: 30px; max-width: 440px; flex-direction: column; }
@@ -325,11 +329,12 @@
 }
 
 @media (max-width: 760px) {
-  .landing-hero { min-height: 700px; padding: 52px var(--shell-gutter) 100px; }
+  .landing-hero { min-height: 0; justify-content: flex-start; padding: 32px var(--shell-gutter) 100px; }
   .landing-hero::after { background: linear-gradient(90deg, color-mix(in srgb, var(--hero-surface) 96%, transparent), color-mix(in srgb, var(--hero-surface) 76%, transparent) 55%, color-mix(in srgb, var(--hero-surface) 42%, transparent)); }
   .hero-heading-group { width: 100%; max-width: 460px; }
+  .hero-statement { gap: 6px; min-height: 190px; grid-template-columns: minmax(0, 1fr) 68px; }
   .hero-cube-scene { right: -52%; width: 126%; opacity: .72; }
-  .hero-title-intro { font-size: 22px; }
+  .hero-title-intro { font-size: 18px; }
   .hero-title-accent { font-size: clamp(40px, 8.5vw, 58px); }
   .hero-eyebrow { font-size: 9px; margin-bottom: 26px; }
   .hero-description { max-width: 370px; font-size: 13px; margin-top: 24px; }

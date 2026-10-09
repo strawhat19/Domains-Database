@@ -1,0 +1,25 @@
+.hero-domain-stack { gap: 7px; width: 76px; display: flex; flex-shrink: 0; pointer-events: none; flex-direction: column; --hero-extension-label-color: var(--paper); }
+:root[data-theme='dark'] .hero-domain-stack { --hero-extension-label-color: var(--canvas); }
+.hero-extension-tile {
+  gap: 8px;
+  height: 32px;
+  padding: 0 9px;
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: space-between;
+  --stack-pill-fill: var(--ink);
+  --stack-pill-border: transparent;
+}
+.hero-extension-label { z-index: 1; font-size: 19px; line-height: 1; position: relative; letter-spacing: -.045em; font-family: var(--font-bold); color: var(--hero-extension-label-color); transition: color .26s ease; }
+.hero-extension-dot { z-index: 1; width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; position: relative; background: #19aeab; }
+
+@media (max-width: 760px) {
+  .hero-domain-stack { gap: 6px; width: 68px; }
+  .hero-extension-tile { gap: 5px; height: 25px; padding-inline: 8px; }
+  .hero-extension-label { font-size: 17px; }
+  .hero-extension-dot { width: 4px; height: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-extension-label { transition: none; }
+}

@@ -1,5 +1,6 @@
 import './styles.scss';
 import { memo } from 'react';
+import { cubes } from '../../shared/config';
 import HeroCubes from '../HeroCubes/index.web';
 import { Search, Plug, Globe2, Layers3, ArrowUpRight } from 'lucide-react';
 import { onboardingCopy, workspacePreview, onboardingBenefits, type AuthOnboardingProps } from './content';
@@ -13,7 +14,7 @@ const AuthOnboarding = ({ mode }: AuthOnboardingProps) => {
   return (
     <aside id={scope} className={`auth-onboarding`} aria-labelledby={`${scope}-title`}>
       <div id={`${scope}-art`} className={`auth-onboarding-art`} aria-hidden>
-        <HeroCubes />
+        <HeroCubes cubes={cubes} />
       </div>
       <div id={`${scope}-heading`} className={`auth-onboarding-heading`}>
         <p id={`${scope}-eyebrow`} className={`auth-onboarding-eyebrow`}>

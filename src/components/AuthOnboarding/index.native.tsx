@@ -1,3 +1,4 @@
+import { cubes } from '../../shared/config';
 import { createStyles } from './styles.native';
 import { useMemo, memo, useContext } from 'react';
 import HeroCubes from '../HeroCubes/index.native';
@@ -40,7 +41,7 @@ const AuthOnboarding = ({ mode }: AuthOnboardingProps) => {
           importantForAccessibility={`no-hide-descendants`}
         >
           <View {...elementProps(`auth-onboarding-art-scene`, mode)} style={styles.artScene}>
-            <HeroCubes suffix={`auth-onboarding-${mode}`} />
+            <HeroCubes cubes={cubes} suffix={`auth-onboarding-${mode}`} />
           </View>
           <Svg
             width={`100%`}

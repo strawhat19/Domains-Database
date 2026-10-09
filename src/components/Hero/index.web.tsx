@@ -7,6 +7,7 @@ import type { HeroProps } from './types';
 import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
+import HeroDomainStack from '../HeroDomainStack';
 import { cubes, useStackPill } from '../../shared/config';
 import { Search, Globe2, History, TrendingUp, ArrowUpRight } from 'lucide-react';
 
@@ -58,17 +59,23 @@ const Hero = ({ search }: HeroProps) => {
           </RouterAnchor>
         </Link>
       </p>
-      <h1 id={`hero-title`} className={`hero-title`}>
-        <span id={`hero-title-intro`} className={`hero-title-intro`}>
-          {`Planner & Manager`}
-        </span>
-        <span id={`hero-title-accent`} className={`hero-title-accent`}>
-          {`Domains Database`}
-        </span>
-      </h1>
-      <p id={`hero-description`} className={`hero-description`}>
-        {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
-      </p>
+      <div id={`hero-statement`} className={`hero-statement`}>
+        <div id={`hero-statement-copy`} className={`hero-statement-copy`}>
+          <h1 id={`hero-title`} className={`hero-title`}>
+            <span id={`hero-title-intro`} className={`hero-title-intro`}>
+              {`Planner `}<span id={`hero-title-separator`} className={`hero-title-separator`}>{`//`}</span>{` Manager`}
+            </span>
+            <span id={`hero-title-accent`} className={`hero-title-accent`}>
+              {`Domains `}
+              <span id={`hero-title-database`} className={`hero-title-database`}>{`Database`}</span>
+            </span>
+          </h1>
+          <p id={`hero-description`} className={`hero-description`}>
+            {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
+          </p>
+        </div>
+        <HeroDomainStack />
+      </div>
       <form
         role={`search`}
         id={`hero-domain-search`}

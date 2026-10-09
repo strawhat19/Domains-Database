@@ -6,9 +6,9 @@
   --cube-scene-mask: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, .25) 4%, rgba(0, 0, 0, .75) 10%, #000 18%, #000 100%);
   -webkit-mask-image: var(--cube-scene-mask);
   mask-image: var(--cube-scene-mask);
-  --cube-glow: #169d91;
-  --cube-highlight: #85ead6;
-  --cube-side-light: #168b89;
+  --cube-glow: var(--hero-accent, var(--accent, #138b8b));
+  --cube-highlight: color-mix(in srgb, var(--cube-glow) 88%, #d5fff0);
+  --cube-side-light: color-mix(in srgb, var(--cube-glow) 85%, #073c35);
   --cube-floor: #e2ebec;
   --cube-floor-stroke: #bcced2;
   --cube-top-stroke: #9bb1b9;
@@ -20,14 +20,45 @@
   --cube-dark-left-end: #9eafb8;
   --cube-dark-right-start: #a8bcc5;
   --cube-dark-right-end: #8299a6;
+  --cube-teal-top-start: #e5f3ec;
+  --cube-teal-top-end: #c2d8ce;
+  --cube-teal-left-start: #b5ccc0;
+  --cube-teal-left-end: #869e91;
+  --cube-teal-right-start: #a1b9ad;
+  --cube-teal-right-end: #748d7f;
+  --cube-forest-top-start: #dff3e8;
+  --cube-forest-top-end: #bbdcca;
+  --cube-forest-left-start: #abd0bb;
+  --cube-forest-left-end: #79a78e;
+  --cube-forest-right-start: #94bca7;
+  --cube-forest-right-end: #648f79;
+  --cube-emerald-top-start: #dcf5e9;
+  --cube-emerald-top-end: #addfc8;
+  --cube-emerald-left-start: #9ed0b7;
+  --cube-emerald-left-end: #68a68a;
+  --cube-emerald-right-start: #85bca2;
+  --cube-emerald-right-end: #568e74;
+  --cube-light-top-start: var(--cube-glow);
+  --cube-light-top-end: var(--cube-glow);
+  --cube-light-left-start: var(--cube-glow);
+  --cube-light-right-start: var(--cube-side-light);
   --cube-light-left-end: #377c7a;
   --cube-light-right-end: #275966;
+  --cube-spring-top-start: #9aeabc;
+  --cube-spring-top-end: #33b878;
+  --cube-spring-left-start: #2c9b67;
+  --cube-spring-left-end: #246d4b;
+  --cube-spring-right-start: #237d55;
+  --cube-spring-right-end: #1d533b;
+  --cube-jade-top-start: #81d9b1;
+  --cube-jade-top-end: #279963;
+  --cube-jade-left-start: #23825a;
+  --cube-jade-left-end: #1b583d;
+  --cube-jade-right-start: #1d6749;
+  --cube-jade-right-end: #174632;
 }
 
 :root[data-theme='dark'] .hero-cubes {
-  --cube-glow: color-mix(in srgb, var(--accent, #5acfc6) 38%, #40f9df);
-  --cube-highlight: color-mix(in srgb, var(--accent, #5acfc6) 22%, #a7fff2);
-  --cube-side-light: color-mix(in srgb, var(--accent, #5acfc6) 45%, #11b8ba);
   --cube-floor: #09141b;
   --cube-floor-stroke: #1a2a32;
   --cube-top-stroke: #1b2c34;
@@ -39,8 +70,38 @@
   --cube-dark-left-end: #060f15;
   --cube-dark-right-start: #071219;
   --cube-dark-right-end: #030a10;
+  --cube-teal-top-start: #12382d;
+  --cube-teal-top-end: #071f18;
+  --cube-teal-left-start: #09271d;
+  --cube-teal-left-end: #04180f;
+  --cube-teal-right-start: #071e17;
+  --cube-teal-right-end: #03120c;
+  --cube-forest-top-start: #10422b;
+  --cube-forest-top-end: #08261a;
+  --cube-forest-left-start: #082f1d;
+  --cube-forest-left-end: #041c11;
+  --cube-forest-right-start: #062419;
+  --cube-forest-right-end: #03170f;
+  --cube-emerald-top-start: #0f4c35;
+  --cube-emerald-top-end: #082d20;
+  --cube-emerald-left-start: #073925;
+  --cube-emerald-left-end: #042116;
+  --cube-emerald-right-start: #062d1f;
+  --cube-emerald-right-end: #031b12;
   --cube-light-left-end: #07383b;
   --cube-light-right-end: #03242b;
+  --cube-spring-top-start: #7fffc3;
+  --cube-spring-top-end: #20d982;
+  --cube-spring-left-start: #13794f;
+  --cube-spring-left-end: #075a35;
+  --cube-spring-right-start: #0a593b;
+  --cube-spring-right-end: #043e2a;
+  --cube-jade-top-start: #6af5a9;
+  --cube-jade-top-end: #10b96d;
+  --cube-jade-left-start: #0d6742;
+  --cube-jade-left-end: #06462d;
+  --cube-jade-right-start: #08472f;
+  --cube-jade-right-end: #043321;
 
   .hero-cubes-atmosphere,
   .hero-cubes-floor-glows { opacity: 1; }
@@ -61,6 +122,8 @@
 .hero-cube-right { stroke: var(--cube-right-stroke); }
 .hero-cube-face-luminous { stroke: color-mix(in srgb, var(--cube-glow) 65%, transparent); }
 .hero-cube-top.hero-cube-face-luminous { stroke: var(--cube-highlight); }
+.hero-cube[data-light-tone='spring'] { --cube-highlight: var(--cube-spring-top-start); --cube-glow: var(--cube-spring-top-end); }
+.hero-cube[data-light-tone='jade'] { --cube-highlight: var(--cube-jade-top-start); --cube-glow: var(--cube-jade-top-end); }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-cubes { contain: paint; }

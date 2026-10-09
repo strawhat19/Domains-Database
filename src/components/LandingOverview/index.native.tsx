@@ -54,7 +54,7 @@ const LandingOverview = () => {
         <View {...elementProps(`landing-overview-intro`)} style={[styles.intro, wide && styles.wideIntro]}>
           <View {...elementProps(`landing-overview-copy`)} style={[styles.copy, wide && styles.wideCopy]}>
             <Text {...elementProps(`landing-overview-eyebrow`)} style={styles.eyebrow}>{`PLAN IT. MANAGE IT.`}</Text>
-            <Text {...elementProps(`landing-overview-title`)} style={styles.title} accessibilityRole={`header`}>{overviewTitle}</Text>
+            <Text {...elementProps(`landing-overview-title`)} adjustsFontSizeToFit numberOfLines={1} style={styles.title} accessibilityRole={`header`}>{overviewTitle}</Text>
             <Text {...elementProps(`landing-overview-description`)} style={styles.description}>{overviewDescription}</Text>
           </View>
           <View {...elementProps(`landing-overview-illustration-frame`)} style={[styles.illustrationFrame, { width: illustrationWidth }]}>
