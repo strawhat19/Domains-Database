@@ -13,7 +13,7 @@ export interface ConnectionInputField {
 
 export const connectionInputInstructions = `Paste only the value in each field, on one line, with no extra spaces. Leave out variable names such as VERCEL_API_TOKEN=, surrounding quotes, and authorization headers such as Bearer or sso-key. Keep any prefix that is part of the issued token. Examples are fake; replace them with your own values.`;
 
-export const connectionEnvInstructions = `For .env, add one NAME=value line using the exact names below, without an EXPO_PUBLIC_ prefix. Replace fake examples and restart the server. .env supports Domain Search; profile connections require saving these fields.`;
+export const connectionEnvInstructions = `Use one NAME=value line with the exact names below, without an EXPO_PUBLIC_ prefix. Import From .env lets you choose or drop a file to fill the fields automatically; pasted contents use Load Keys. Review the fields, then choose Save All Connections or Save & Sync for one connection. For server Domain Search, configure these variables in the app's server environment and restart the server after changing its .env.`;
 
 export interface ConnectionEnvGuidance {
   note: string;
@@ -146,11 +146,11 @@ export const connectionInputFields: Record<ConnectionInputKey, ConnectionInputFi
   },
   HOSTINGER_EXTERNAL_DOMAINS: {
     secret: false,
-    label: `Confirmed External Domains`,
+    label: `Legacy External Domains`,
     example: `example.com, example.org`,
     placeholder: `example.com, example.org`,
     format: `Enter up to 200 domain names separated by commas, without a trailing comma. Leave out https://, paths, ports, and wildcards. Use ASCII or Punycode domain names. Spaces around commas are allowed.`,
-    hint: `Optional. Include only reviewed domains you own that were found through this account's hosting`,
+    hint: `Optional legacy setting. Eligible hosted domains are now included automatically`,
   },
   SQUARESPACE_CLIENT_SECRET: {
     secret: true,
@@ -183,13 +183,13 @@ const connectionEnvNotes: Partial<Record<ConnectionInputKey, string>> = {
   VERCEL_TEAM_ID: `Optional server Domain Search team setting; leave it out for your personal account`,
   GODADDY_API_KEY: `Used by server Domain Search with the matching API Secret when no valid PAT is configured`,
   GODADDY_API_SECRET: `Used by server Domain Search with the matching API Key when no valid PAT is configured`,
-  GODADDY_SHOPPER_ID: `Ignored in server .env. Enter this optional ID in your profile for inventory renewal estimates`,
-  GODADDY_CUSTOMER_ID: `Ignored in server .env. Enter this optional UUID in your profile for inventory renewal estimates`,
-  HOSTINGER_EXTERNAL_DOMAINS: `Ignored in server .env. Legacy profile setting; eligible hosted domains are now included automatically`,
-  SQUARESPACE_CLIENT_ID: `Ignored in server .env. Your profile saves Developer OAuth credentials only; they do not connect a website or sync domains`,
-  SQUARESPACE_CLIENT_SECRET: `Ignored in server .env. Your profile saves Developer OAuth credentials only; they do not connect a website or sync domains`,
-  SQUARESPACE_RESELLER_CLIENT_ID: `Ignored in server .env. Save the approved reseller ID and secret in your profile to sync its domain inventory`,
-  SQUARESPACE_RESELLER_CLIENT_SECRET: `Ignored in server .env. Save the approved reseller ID and secret in your profile to sync its domain inventory`,
+  GODADDY_SHOPPER_ID: `Optional inventory ID for renewal estimates; available through .env import and unused by public Domain Search`,
+  GODADDY_CUSTOMER_ID: `Optional inventory UUID for renewal estimates; available through .env import and unused by public Domain Search`,
+  HOSTINGER_EXTERNAL_DOMAINS: `Legacy profile setting available through .env import; eligible hosted domains are now included automatically`,
+  SQUARESPACE_CLIENT_ID: `Available through .env import as Developer OAuth credentials; they do not connect a website or sync domains`,
+  SQUARESPACE_CLIENT_SECRET: `Available through .env import as Developer OAuth credentials; they do not connect a website or sync domains`,
+  SQUARESPACE_RESELLER_CLIENT_ID: `Available through .env import; save the approved reseller ID and secret to sync its domain inventory`,
+  SQUARESPACE_RESELLER_CLIENT_SECRET: `Available through .env import; save the approved reseller ID and secret to sync its domain inventory`,
 };
 
 export const connectionEnvGuidance = (key: ConnectionInputKey): ConnectionEnvGuidance => {
@@ -201,7 +201,7 @@ export const connectionEnvGuidance = (key: ConnectionInputKey): ConnectionEnvGui
   };
 };
 
-export const connectionInputSections = (provider: ConnectionProvider): ConnectionInputSection[] => provider === `squarespace` ? [
+export const connectionInputSections = (provider: ConnectionProvider, includeLegacyKeys = false): ConnectionInputSection[] => provider === `squarespace` ? [
   {
     id: `developer-oauth`,
     label: `Developer OAuth — Save Only`,
@@ -214,7 +214,7 @@ export const connectionInputSections = (provider: ConnectionProvider): Connectio
     keys: [`SQUARESPACE_RESELLER_CLIENT_ID`, `SQUARESPACE_RESELLER_CLIENT_SECRET`],
     hint: `Credentials issued by your Partner Solutions Architect after reseller approval. If you previously saved approved reseller credentials in the generic Client ID and Client Secret fields, enter them here to enable domain sync`,
   },
-] : [{ id: `credentials`, keys: connectionFields.find(field => field.id === provider)?.keys.filter(key => key !== `HOSTINGER_EXTERNAL_DOMAINS`) ?? [] }];
+] : [{ id: `credentials`, keys: connectionFields.find(field => field.id === provider)?.keys.filter(key => includeLegacyKeys || key !== `HOSTINGER_EXTERNAL_DOMAINS`) ?? [] }];
 
 const bareInputKeys = {
   vercel: `VERCEL_API_TOKEN`,

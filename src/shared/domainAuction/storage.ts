@@ -1,10 +1,13 @@
 import type { AuctionRecord, AuctionInventoryMetrics } from './types';
-import { useLocalStorage } from '../config';
+import { authAPI } from '../../api/auth';
+import { AUCTION_STORAGE_KEY } from '../accountData/keys';
+import { useLocalStorage, persistenceEnabled } from '../config';
+import { accountStorageKey } from '../authentication/userScope';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 import { parseAuctionInventory, normalizeAuctionDomain, parseAuctionTimestamp, getInventoryListingHref, MAX_AUCTION_IMPORT_RECORDS } from './import';
 
-export const AUCTION_STORAGE_KEY = `domains-database:auction-inventory:v1`;
+export { AUCTION_STORAGE_KEY } from '../accountData/keys';
 const serialize = createOperationQueue(AUCTION_STORAGE_KEY);
 type StoredAuctionRecord = AuctionRecord & { number: number };
 
@@ -14,8 +17,15 @@ interface AuctionSnapshot {
   nextNumber: number;
 }
 
-const requireStorage = () => {
-  if (!useLocalStorage) throw new Error(`Connect A Backend To Save Auction Inventory`);
+const requireStorage = async () => {
+  if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Auction Inventory`);
+  const userId = (await authAPI.restoreSession())?.user.id ?? null;
+  return { userId, storageKey: userId && !useLocalStorage ? accountStorageKey(AUCTION_STORAGE_KEY, userId) : AUCTION_STORAGE_KEY };
+};
+const saveSnapshot = async (snapshot: AuctionSnapshot, scope: { storageKey: string; userId: string | null }) => {
+  const actor = await requireStorage();
+  if (actor.userId !== scope.userId || actor.storageKey !== scope.storageKey) throw new Error(`Your Account Changed — Try Again`);
+  await writeStorage(scope.storageKey, JSON.stringify(snapshot));
 };
 const isNullableNumber = (value: unknown, integer = false) => value === null
   || (typeof value === `number` && Number.isFinite(value) && value >= 0 && (!integer || Number.isSafeInteger(value)));
@@ -38,10 +48,10 @@ const validateMetrics = (value: unknown): value is AuctionInventoryMetrics => {
   });
 };
 
-const readSnapshot = async (): Promise<AuctionSnapshot> => {
-  requireStorage();
-  const saved = await readStorage(AUCTION_STORAGE_KEY);
-  if (saved === null) return { version: 1, records: [], nextNumber: 1 };
+const readSnapshot = async (): Promise<AuctionSnapshot & { storageKey: string; userId: string | null }> => {
+  const scope = await requireStorage();
+  const saved = await readStorage(scope.storageKey);
+  if (saved === null) return { ...scope, version: 1, records: [], nextNumber: 1 };
   try {
     const snapshot = JSON.parse(saved) as AuctionSnapshot;
     if (snapshot?.version !== 1 || !Array.isArray(snapshot.records)
@@ -72,6 +82,7 @@ const readSnapshot = async (): Promise<AuctionSnapshot> => {
     }
     return {
       ...snapshot,
+      ...scope,
       nextNumber: Math.max(snapshot.nextNumber, ...snapshot.records.map(record => record.number + 1)),
     };
   } catch {
@@ -92,17 +103,17 @@ export const importAuctionInventory = (text: string) => serialize(async () => {
     const id = existing?.id ?? genID(`Auction`, number, input.domain, new Date(importedAt)).id;
     return { ...input, id, number, importedAt };
   });
-  await writeStorage(AUCTION_STORAGE_KEY, JSON.stringify({ version: 1, records, nextNumber: snapshot.nextNumber }));
+  await saveSnapshot({ version: 1, records, nextNumber: snapshot.nextNumber }, snapshot);
   return { records, importedCount: records.length, skippedCount: imported.skippedCount, sourceCheckedAt: imported.sourceCheckedAt };
 });
 
 export const clearAuctionInventory = (): Promise<void> => serialize(async () => {
-  requireStorage();
+  const scope = await requireStorage();
   let nextNumber = 1;
   try {
     nextNumber = (await readSnapshot()).nextNumber;
   } catch {
     // Explicit clearing also permits recovery from unreadable imported inventory.
   }
-  await writeStorage(AUCTION_STORAGE_KEY, JSON.stringify({ version: 1, records: [], nextNumber }));
+  await saveSnapshot({ version: 1, records: [], nextNumber }, scope);
 });

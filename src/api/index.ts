@@ -5,14 +5,16 @@ import { Domain } from '../shared/models/domains/Domain';
 import type { WebsiteInsights } from '../shared/websiteInsights/types';
 import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
 import { createSampleDomains } from '../shared/sampleDomains';
-import { writeStorage, createOperationQueue } from '../shared/common/storage';
+import { readStorage, writeStorage, createOperationQueue } from '../shared/common/storage';
 import { subscribeAccountDataReset } from '../shared/accountData/state';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { accountStorageKey } from '../shared/authentication/userScope';
 import type { RegistrarDomain } from '../shared/registrarSync/types';
 import { normalizeWebsiteInsights } from '../shared/websiteInsights/values';
 import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
-import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage } from '../shared/config';
+import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../shared/config';
+import { firebaseEnabled } from '../shared/firebase/config';
+import { clearFirestoreStorageCache } from '../shared/firebase/storage';
 
 let userScope: string | null = null;
 const snapshots = new Map<string, PortfolioSnapshot>();
@@ -46,11 +48,11 @@ const requireScopeSession = async (userId: string) => {
 const saveSnapshot = async (next: PortfolioSnapshot) => {
   const scope = getScope();
   if (userScope) await requireScopeSession(userScope);
-  if (useLocalStorage) {
+  if (persistenceEnabled) {
     try {
       await writeStorage(getStorageKey(), JSON.stringify(next));
-    } catch {
-      throw new Error(`Could Not Save Your Portfolio On This Device`);
+    } catch (error) {
+      throw new Error(firebaseEnabled && error instanceof Error ? error.message : `Could Not Save Your Portfolio On This Device`);
     }
   }
   snapshots.set(scope, next);
@@ -83,7 +85,7 @@ const readSnapshot = async (): Promise<PortfolioSnapshot> => {
   const scope = getScope();
   if (userScope) await requireScopeSession(userScope);
   const cached = snapshots.get(scope);
-  if (cached && !useLocalStorage) {
+  if (cached && !persistenceEnabled) {
     const domains = useSampleData ? cached.domains : cached.domains.filter(domain => !domain.isSample);
     if (domains.length !== cached.domains.length) {
       const filtered = { ...cached, domains };
@@ -93,11 +95,11 @@ const readSnapshot = async (): Promise<PortfolioSnapshot> => {
     return cached;
   }
   let saved: string | null = null;
-  if (useLocalStorage) {
+  if (persistenceEnabled) {
     try {
-      saved = await AsyncStorage.getItem(getStorageKey());
-    } catch {
-      throw new Error(`Could Not Load Your Portfolio From This Device`);
+      saved = await readStorage(getStorageKey());
+    } catch (error) {
+      throw new Error(firebaseEnabled && error instanceof Error ? error.message : `Could Not Load Your Portfolio From This Device`);
     }
   }
   if (saved !== null) {
@@ -107,7 +109,7 @@ const readSnapshot = async (): Promise<PortfolioSnapshot> => {
     } catch {
       throw new Error(`Saved Portfolio Data Could Not Be Read`);
     }
-    if (JSON.stringify(restored) !== saved) await saveSnapshot(restored);
+    if (useLocalStorage && JSON.stringify(restored) !== saved) await saveSnapshot(restored);
     else snapshots.set(scope, restored);
     return restored;
   }
@@ -146,7 +148,7 @@ const claimLegacyPortfolio = async () => {
 };
 
 const adoptGuestPortfolio = async () => {
-  if (!userScope) return;
+  if (!useLocalStorage || !userScope) return;
   const session = await authAPI.restoreSession();
   if (session?.user.id !== userScope || session.user.number !== 1) return;
   const userId = userScope;
@@ -199,6 +201,7 @@ export interface PublicDomainSummary {
 }
 
 const getPublicDomainSummaries = async (userIds: string[]): Promise<PublicDomainSummary[]> => {
+  if (firebaseEnabled && !useLocalStorage) return [];
   const requested = new Set(userIds);
   const profiles = await authAPI.getPublicProfiles();
   const eligible = profiles.filter(profile => requested.has(profile.id) && profile.publicDomains && profile.profilePrivacy === `public`);
@@ -324,6 +327,7 @@ export const API_ROUTES = [
   `/api/website-insights`,
   `/api/registrars/search`,
   `/api/registrars/extensions`,
+  `/api/connections/environment`,
   `/api/notifications/:id`,
   ...(useSampleData ? [`/api/domains/sample`] : []),
 ];
@@ -335,8 +339,8 @@ const getStatus = async () => ({
     title: `Domains Database`,
     routes: [...API_ROUTES],
     datetime: new Date().toISOString(),
-    mode: useLocalStorage ? `Device Storage` : `Session Storage`,
-    message: `Local Portfolio API Ready`,
+    mode: firebaseEnabled && !useLocalStorage ? `Cloud Firestore` : useLocalStorage ? `Device Storage` : `Session Storage`,
+    message: firebaseEnabled && !useLocalStorage ? `Firestore Portfolio API Ready` : `Local Portfolio API Ready`,
 });
 
 export const api = {
@@ -346,6 +350,7 @@ export const api = {
   setUserScope: (userId: string | null, options: { claimLegacy?: boolean; adoptGuest?: boolean } = {}) => serialize(async () => {
     const nextScope = userId?.trim() || null;
     const session = nextScope ? await requireScopeSession(nextScope) : null;
+    if (nextScope !== userScope) { snapshots.clear(); clearFirestoreStorageCache(); }
     userScope = nextScope;
     if (session?.user.number === 1) {
       if (options.claimLegacy) await claimLegacyPortfolio();

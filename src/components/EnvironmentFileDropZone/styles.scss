@@ -1,0 +1,19 @@
+.environment-file-drop {
+  min-width: 0;
+  border-radius: 8px;
+  outline-offset: 3px;
+  outline: 2px solid transparent;
+  transition: outline-color .18s ease, background-color .18s ease;
+}
+.environment-file-drop-button { display: inline-flex; min-width: 0; max-width: 100%; }
+.environment-file-drop-panel { width: 100%; min-width: 0; }
+.environment-file-drop-active {
+  outline-color: var(--accent);
+  background-color: var(--subtle);
+
+  > * { border-color: var(--accent) !important; background-color: var(--subtle) !important; }
+}
+.environment-file-drop-disabled { cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  .environment-file-drop { transition: none; }
+}

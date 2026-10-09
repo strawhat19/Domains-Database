@@ -4,6 +4,7 @@ import AuthOnboarding from '../AuthOnboarding';
 import GoogleAuthButton from '../GoogleAuthButton';
 import { useLocalStorage } from '../../shared/config';
 import { useAuthForm, type AuthMode } from './useAuthForm';
+import { firebaseEnabled } from '../../shared/firebase/config';
 import { Eye, EyeOff, Mail, UserRound, ArrowRight, LockKeyhole, HardDrive, RotateCcw } from 'lucide-react';
 
 const inputFields = [
@@ -100,7 +101,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
                 {state.signingUp ? `Bring your domains together.` : `Pick up where you left off.`}
               </p>
             </div>
-            <GoogleAuthButton mode={mode} disabled={state.disabled} />
+            <GoogleAuthButton mode={mode} disabled={state.disabled} onPress={state.signInWithGoogle} />
             <div id={`auth-form-divider-${mode}`} className={`auth-form-divider`}>
               <span id={`auth-form-divider-text-${mode}`} className={`auth-form-divider-text`}>{`or continue with email`}</span>
             </div>
@@ -185,7 +186,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
         <div id={`auth-form-local-note-${mode}`} className={`auth-form-local-note`}>
           <HardDrive id={`auth-form-local-note-icon-${mode}`} className={`auth-form-local-note-icon`} size={15} aria-hidden />
           <p id={`auth-form-local-note-copy-${mode}`} className={`auth-form-local-copy`}>
-            {useLocalStorage ? `Manage your portfolio with your account.` : `Accounts are available once the service is connected.`}
+            {useLocalStorage || firebaseEnabled ? `Manage your portfolio and connections with your account.` : `Accounts are available once the service is connected.`}
           </p>
         </div>
       </div>

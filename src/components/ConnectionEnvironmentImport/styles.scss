@@ -1,0 +1,9 @@
+.connection-env-file-wrap { display: grid; gap: 8px; min-width: 0; }
+.connection-env-file-label { color: var(--ink); font-size: 12px; font-weight: 600; }
+.connection-env-file { width: 100%; min-width: 0; color: var(--muted); font: inherit; font-size: 12px; }
+.connection-env-file::file-selector-button { margin-right: 12px; padding: 10px 12px; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; }
+.connection-env-file:disabled { opacity: .55; }
+.connection-env-file:focus-visible, .connection-env-file::file-selector-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.connection-env-contents { resize: vertical; }
+:is(.connection-env-load, .connection-env-server, .connection-env-close):not([aria-disabled='true']):hover { filter: brightness(1.06); }
+:is(.connection-env-load, .connection-env-server, .connection-env-close):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

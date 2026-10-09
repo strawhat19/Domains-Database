@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useLocalStorage } from '../../shared/config';
+import { persistenceEnabled } from '../../shared/config';
 import { useWatching } from '../../shared/watching/useWatching';
 import { getDomainSearchStatus } from '../DomainSearch/resultPresentation';
 
@@ -14,7 +14,7 @@ export const useWatchingPage = () => {
   }, [query, records]);
   const availableCount = records.filter(record => getDomainSearchStatus(record).state === `available`).length;
   const disabled = watching.loading || watching.busy || watching.syncing;
-  const storageMessage = useLocalStorage
+  const storageMessage = persistenceEnabled
     ? `Watching keeps your saved domains together.`
     : `Connect a backend to save Watching.`;
 

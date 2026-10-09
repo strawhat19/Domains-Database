@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useLocalStorage } from '../../shared/config';
-import { routes, resolveAuthReturnTo } from '../../shared/routes';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { firebaseEnabled } from '../../shared/firebase/config';
+import { routes, resolveAuthReturnTo } from '../../shared/routes';
 import { AccountDeactivatedError } from '../../shared/authentication/types';
 
 export type AuthMode = `signin` | `signup`;
@@ -29,23 +30,41 @@ export const useAuthForm = (mode: AuthMode) => {
     setFields(current => ({ ...current, [field]: value }));
   };
 
+  const finishAuthentication = () => {
+    setCanReactivate(false);
+    setFields({ email: ``, password: `` });
+    router.replace(query ? { pathname: routes.search.href, params: { q: query } } : returnTo);
+  };
+
+  const signInWithGoogle = async () => {
+    if (disabled) return;
+    setFeedback(``);
+    setCanReactivate(false);
+    auth.clearError();
+    auth.clearNotice();
+    try {
+      await auth.signInWithGoogle();
+      finishAuthentication();
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : `Could Not Sign In With Google`);
+    }
+  };
+
   const authenticate = async (reactivate = false) => {
     if (disabled) return;
     setFeedback(``);
     auth.clearError();
     auth.clearNotice();
-    if (!useLocalStorage) { setFeedback(`Backend Is Not Connected`); return; }
+    if (!useLocalStorage && !firebaseEnabled) { setFeedback(`Backend Is Not Connected`); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email.trim())) { setFeedback(`Enter A Valid Email Address`); return; }
     if (!fields.password) { setFeedback(`Enter A Password`); return; }
     try {
       const input = { email: fields.email.trim(), password: fields.password };
       if (signingUp) await auth.signUp(input);
       else await auth.signIn({ ...input, ...(reactivate ? { reactivate: true } : {}) });
-      setCanReactivate(false);
-      setFields({ email: ``, password: `` });
-      router.replace(query ? { pathname: routes.search.href, params: { q: query } } : returnTo);
+      finishAuthentication();
     } catch (error) {
-      setCanReactivate(!signingUp && error instanceof AccountDeactivatedError);
+      setCanReactivate(useLocalStorage && !signingUp && error instanceof AccountDeactivatedError);
       setFeedback(error instanceof Error ? error.message : `Could Not Access Your Account`);
     }
   };
@@ -74,6 +93,7 @@ export const useAuthForm = (mode: AuthMode) => {
     showPassword,
     canReactivate,
     setShowPassword,
+    signInWithGoogle,
     error: feedback || auth.error,
   };
 };

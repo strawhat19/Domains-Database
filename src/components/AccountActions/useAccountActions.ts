@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { accountActions } from './actions';
 import { routes } from '../../shared/routes';
 import { useWindowDimensions } from 'react-native';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AccountAction } from '../../shared/authentication/types';
+import { accountActions, cloudAccountActions, accountActionScope } from './actions';
 
 export { accountActions } from './actions';
 
@@ -24,7 +24,7 @@ export const useAccountActions = () => {
   const roomy = width >= 1100;
 
   const selectAction = (id: AccountAction) => {
-    if (disabled || pending.current) return;
+    if (disabled || pending.current || !accountActions.some(action => action.id === id)) return;
     auth.clearError();
     auth.clearNotice();
     setError(``);
@@ -52,11 +52,11 @@ export const useAccountActions = () => {
     }
   };
   const confirmAction = async () => {
-    if (disabled || pending.current || !selectedId) return;
+    if (disabled || pending.current || !selected) return;
     pending.current = true;
     setError(``);
     try {
-      await auth.manageAccount(selectedId);
+      await auth.manageAccount(selected.id);
       setSelectedId(null);
       router.replace(routes.signin.href);
     } catch (failure) {
@@ -71,6 +71,7 @@ export const useAccountActions = () => {
     paddingRight: Math.max(16, insets.right), paddingBottom: Math.max(16, insets.bottom),
   };
   return {
+    accountActions, cloudAccountActions, accountActionScope,
     open, error, roomy, signOut, selected, disabled, signOutError, selectAction, confirmAction, closeConfirmation,
     dialogPadding, wideDialog: width >= 800, compactDialog: height < 500, extraWideDialog: width >= 1200,
     dialogMaxHeight: Math.max(0, Math.min(height * .92, height - dialogPadding.paddingTop - dialogPadding.paddingBottom)),

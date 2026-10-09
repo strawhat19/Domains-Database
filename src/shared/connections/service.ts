@@ -1,11 +1,12 @@
 import { authAPI } from '../../api/auth';
-import { useLocalStorage } from '../config';
-import { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
 import { genID, isAppCollectionID } from '../common/ids';
+import { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
+import { useLocalStorage, persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
-import { connectionValues, normalizeConnections, normalizeConnectionAccounts } from './values';
-import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues, type ConnectionAccount, type ConnectionSnapshot } from './types';
+import { requestEnvironmentConnectionsImport } from './environment';
 import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
+import { connectionValues, normalizeConnections, normalizeConnectionAccounts } from './values';
+import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues, type ConnectionAccount, type ConnectionSnapshot, type ConnectionProvider, type EnvironmentImportResult } from './types';
 
 export { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
 const listeners = new Set<(userId: string) => void>();
@@ -20,7 +21,7 @@ const notifyConnections = (userId: string) => {
   }
 };
 const sessionUser = async (expectedUserId?: string) => {
-  if (!useLocalStorage) throw new Error(`Connect A Backend To Save Connections`);
+  if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Connections`);
   const session = await authAPI.restoreSession();
   const userId = session?.user.id;
   if (!userId || (expectedUserId && userId !== expectedUserId)) throw new Error(`Sign In To Manage Connections`);
@@ -68,6 +69,16 @@ export const getConnections = (expectedUserId?: string): Promise<ConnectionSnaps
   const snapshot = await readConnections(userId);
   await sessionUser(userId);
   return snapshot;
+});
+
+export const importEnvironmentConnections = (providers?: readonly ConnectionProvider[], expectedUserId?: string, signal?: AbortSignal): Promise<EnvironmentImportResult> => serialize(async () => {
+  if (useLocalStorage) throw new Error(`Connect Firebase To Import Server Connections`);
+  const session = await authAPI.restoreSession();
+  const user = session?.user;
+  if (!user?.id || !user.active || !user.firebase_uid || (expectedUserId && user.id !== expectedUserId)) throw new Error(`Sign In To Import Connections`);
+  const result = await requestEnvironmentConnectionsImport(user.id, user.firebase_uid, providers, signal);
+  await sessionUser(user.id);
+  return result;
 });
 
 export const saveConnections = (input: ConnectionValues | readonly ConnectionAccount[], expectedUserId?: string): Promise<ConnectionSnapshot> => serialize(async () => {

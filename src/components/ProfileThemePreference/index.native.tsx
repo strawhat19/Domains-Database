@@ -15,24 +15,25 @@ const ProfileThemePreference = ({ roomy = false }: { roomy?: boolean }) => {
   const styles = useMemo(() => createStyles(palette), [palette]);
   return (
     <View {...elementProps(`profile-theme-preference`)} style={[styles.root, roomy && styles.roomy]}>
-      <Text {...elementProps(`profile-theme-title`)} style={styles.title} accessibilityRole={`header`}>{`Theme Preference`}</Text>
-      <Text {...elementProps(`profile-theme-copy`)} style={styles.copy}>{`Choose the appearance saved for your account`}</Text>
-      <View {...elementProps(`profile-theme-options`)} style={styles.options} accessibilityRole={`radiogroup`} accessibilityLabel={`Theme Preference`}>
-        {themeOptions.map(({ value, label, Icon }) => (
-          <Pressable
-            key={value}
-            disabled={!ready}
-            accessibilityRole={`radio`}
-            accessibilityLabel={`${label} Theme`}
-            onPress={() => setThemePreference(value)}
-            {...elementProps(`profile-theme-option`, value)}
-            accessibilityState={{ checked: theme === value, disabled: !ready }}
-            style={[styles.option, theme === value && styles.selected, !ready && styles.disabled]}
-          >
-            <Icon {...elementProps(`profile-theme-option-icon`, value)} size={16} color={theme === value ? palette.accent : palette.muted} />
-            <Text {...elementProps(`profile-theme-option-text`, value)} style={styles.label}>{label}</Text>
-          </Pressable>
-        ))}
+      <View {...elementProps(`profile-theme-heading`)} style={styles.heading}>
+        <Text {...elementProps(`profile-theme-title`)} style={styles.title} accessibilityRole={`header`}>{`Theme`}</Text>
+        <View {...elementProps(`profile-theme-options`)} style={styles.options} accessibilityRole={`radiogroup`} accessibilityLabel={`Theme`}>
+          {themeOptions.map(({ value, label, Icon }) => (
+            <Pressable
+              key={value}
+              disabled={!ready}
+              accessibilityRole={`radio`}
+              accessibilityLabel={`${label} Theme`}
+              onPress={() => setThemePreference(value)}
+              {...elementProps(`profile-theme-option`, value)}
+              accessibilityState={{ checked: theme === value, disabled: !ready }}
+              style={[styles.option, theme === value && styles.selected, !ready && styles.disabled]}
+            >
+              <Icon {...elementProps(`profile-theme-option-icon`, value)} size={16} color={theme === value ? palette.accent : palette.muted} />
+              <Text {...elementProps(`profile-theme-option-text`, value)} style={styles.label}>{label}</Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
       {Boolean(error) && <Text {...elementProps(`profile-theme-error`)} style={styles.error} accessibilityRole={`alert`}>{error}</Text>}
     </View>

@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from 'react';
+import Toast from '../../components/Toast';
 import { useDomains } from '../domainContext/useDomains';
 import { subscribeAccountDataReset } from '../accountData/state';
 import { portfolioStorageKey } from '../portfolioPreferences/storage';
@@ -50,13 +51,15 @@ export const ColumnContext = createContext<ColumnContextValue | undefined>(undef
 export const ColumnProvider = ({ children, enabled = true, userId = null }: PropsWithChildren<{ enabled?: boolean; userId?: string | null }>) => {
   const { domains, loading: domainsLoading } = useDomains();
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(``);
+  const storageReady = useRef(false);
   const revision = useRef(0);
   const active = useRef(enabled);
   if (!enabled) active.current = false;
   const preferenceChanged = useRef(false);
   const loadedUserId = useRef<string | null>(null);
   const storageQueue = useRef(createOperationQueue()).current;
-  const [flexibleColumns, setFlexibleColumns] = useState<PortfolioColumn[]>([]);
+  const [flexibleColumns, setFlexibleColumns] = useState<PortfolioColumn[]>([`name`]);
   const [columnWidths, updateColumnWidths] = useState<Partial<Record<PortfolioColumn, number>>>({});
   const [columnSelection, setColumnSelection] = useState<{ columns: PortfolioColumn[]; useDefaultColumns: boolean }>({ columns: [`name`], useDefaultColumns: true });
   const scopedReady = enabled && ready && !domainsLoading && loadedUserId.current === userId;
@@ -69,7 +72,9 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
     active.current = false;
     revision.current += 1;
     loadedUserId.current = null;
+    storageReady.current = false;
     setReady(false);
+    setError(``);
   }), [userId]);
 
   useEffect(() => {
@@ -78,47 +83,60 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
     active.current = enabled;
     const capturedUserId = userId;
     setReady(false);
+    setError(``);
+    storageReady.current = false;
     loadedUserId.current = null;
     preferenceChanged.current = false;
     updateColumnWidths({});
-    setFlexibleColumns([]);
+    setFlexibleColumns([`name`]);
     setColumnSelection({ columns: [`name`], useDefaultColumns: true });
     if (!enabled) return () => { active.current = false; ++revision.current; };
     const isCurrent = () => mounted && active.current && run === revision.current;
     const read = readStorage(portfolioStorageKey(COLUMN_STORAGE_KEY, capturedUserId));
     read.then(saved => {
-      if (!isCurrent() || preferenceChanged.current || !saved) return;
+      if (!isCurrent() || preferenceChanged.current) return;
+      if (!saved) { storageReady.current = true; return; }
       const parsed: unknown = JSON.parse(saved);
-      if (!parsed || typeof parsed !== `object`) return;
+      if (!parsed || typeof parsed !== `object`) throw new Error(`Saved Column Preferences Could Not Be Read`);
       const version = `version` in parsed ? Number(parsed.version) : undefined;
       const savedColumns = Array.isArray(parsed) ? parsed
         : version && [1, 2, 3, 4, 5, 6].includes(version) && `columns` in parsed && Array.isArray(parsed.columns) ? parsed.columns : undefined;
-      if (!savedColumns) return;
+      if (!savedColumns) throw new Error(`Saved Column Preferences Could Not Be Read`);
       const columns = normalizeColumns(savedColumns);
       const useDefaultColumns = version === 6 ? `useDefaultColumns` in parsed && parsed.useDefaultColumns === true : isLegacyDefaultSelection(savedColumns, version);
       setColumnSelection({ columns, useDefaultColumns });
       if (version && version >= 4 && `widths` in parsed) updateColumnWidths(normalizeWidths(parsed.widths));
       if (version && version >= 5 && `flexibleColumns` in parsed && Array.isArray(parsed.flexibleColumns)) setFlexibleColumns(normalizeColumnFields(parsed.flexibleColumns));
-    }).catch(() => undefined).finally(() => {
-      if (isCurrent()) { loadedUserId.current = capturedUserId; setReady(true); }
+      storageReady.current = true;
+    }).catch(reason => {
+      if (isCurrent()) {
+        active.current = false;
+        setError(reason instanceof Error ? reason.message : `Could Not Load Column Preferences`);
+      }
+    }).finally(() => {
+      if (mounted && enabled && run === revision.current) { loadedUserId.current = capturedUserId; setReady(true); }
     });
     return () => { mounted = false; active.current = false; ++revision.current; };
   }, [enabled, userId]);
 
   useEffect(() => {
-    if (!enabled || !ready || domainsLoading || loadedUserId.current !== userId) return;
+    if (!enabled || !ready || !storageReady.current || !preferenceChanged.current || domainsLoading || loadedUserId.current !== userId) return;
     const run = revision.current;
     const capturedUserId = userId;
     void storageQueue(() => active.current && run === revision.current
       ? writeStorage(portfolioStorageKey(COLUMN_STORAGE_KEY, capturedUserId), serializedColumns)
-      : Promise.resolve()).catch(() => undefined);
+      : Promise.resolve()).then(() => {
+      if (active.current && run === revision.current) setError(``);
+    }).catch(reason => {
+      if (active.current && run === revision.current) setError(reason instanceof Error ? reason.message : `Could Not Save Column Preferences`);
+    });
   }, [ready, enabled, userId, domainsLoading, serializedColumns, storageQueue]);
 
   const resetColumns = useCallback(() => {
     if (!enabled || !active.current || !ready || domainsLoading || loadedUserId.current !== userId) return;
     preferenceChanged.current = true;
     updateColumnWidths({});
-    setFlexibleColumns([]);
+    setFlexibleColumns([`name`]);
     setColumnSelection({ columns: defaultColumns, useDefaultColumns: true });
   }, [ready, userId, enabled, domainsLoading, defaultColumns]);
 
@@ -183,6 +201,7 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
   return (
     <ColumnContext.Provider value={value}>
       {children}
+      <Toast id={`column-preferences-error`} message={enabled ? error : ``} onDismiss={() => setError(``)} />
     </ColumnContext.Provider>
   );
 };

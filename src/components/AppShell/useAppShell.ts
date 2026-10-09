@@ -34,5 +34,5 @@ export const useAppShell = () => {
         : `${item.label}, ${count} Domain${count === 1 ? `` : `s`}${item.href === routes.watching.href ? ` in Watch List` : ` in Table`}`;
       return { ...item, count, countLoading, accessibilityLabel };
     });
-  return { pathname, signedIn, fitViewport, searchViewport, badgeColors: getAccountBadgeColors(user), year: new Date().getFullYear(), navigation: visibleNavigation };
+  return { pathname, signedIn, fitViewport, searchViewport, authLoading: loading, badgeColors: getAccountBadgeColors(user), year: new Date().getFullYear(), navigation: visibleNavigation };
 };

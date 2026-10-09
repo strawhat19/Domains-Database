@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { domainAuctionAPI } from '../../api/domainAuction';
-import { useLocalStorage } from '../../shared/config';
+import { persistenceEnabled } from '../../shared/config';
 import { defaultAuctionFilters } from '../../shared/domainAuction/values';
 import type { AuctionRecord, AuctionFilters } from '../../shared/domainAuction/types';
 import { filterAuctionRecords, getAuctionFilterCount } from '../../shared/domainAuction/filter';
@@ -111,6 +111,6 @@ export const useDomainAuction = () => {
     reportError: setError,
     clearNotice: () => setNotice(``),
     reloadListings: () => { setPreview(false); setRevision(current => current + 1); },
-    storageMessage: useLocalStorage ? `Imported inventory is saved as a snapshot.` : `Connect a backend to save auction inventory.`,
+    storageMessage: persistenceEnabled ? `Imported inventory is saved as a snapshot.` : `Connect a backend to save auction inventory.`,
   };
 };

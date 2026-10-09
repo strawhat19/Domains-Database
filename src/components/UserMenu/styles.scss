@@ -1,6 +1,5 @@
 :is(.user-menu, [data-class='user-menu']) { z-index: 40; }
 :is(.user-menu-options, [data-class='user-menu-options']) { animation: user-menu-enter .18s ease; }
-:is(.user-menu-button, [data-class='user-menu-button']):focus-visible { border-radius: 5px; }
 :is(.user-menu-button, [data-class='user-menu-button']):hover { border-color: var(--accent) !important; background: var(--subtle) !important; }
 :is(.user-menu-profile, [data-class='user-menu-profile']):hover, :is(.user-menu-watching, [data-class='user-menu-watching']):hover, :is(.user-menu-dashboard, [data-class='user-menu-dashboard']):hover, :is(.user-menu-connections, [data-class='user-menu-connections']):hover { background: var(--subtle) !important; }
 :is(.user-menu-signout, [data-class='user-menu-signout']):hover { background: var(--danger-bg) !important; }

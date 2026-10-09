@@ -1,0 +1,32 @@
+import { StyleSheet } from 'react-native';
+import type { ThemePalette } from '../../shared/themeContext/theme';
+
+export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  list: { gap: 12 },
+  intro: { gap: 6, flex: 1 },
+  disabled: { opacity: .55 },
+  centered: { textAlign: `center` },
+  titleRow: { gap: 9, flexDirection: `row`, alignItems: `center` },
+  statusCell: { gap: 7, flexDirection: `row`, alignItems: `center` },
+  statusOptions: { gap: 8, flexWrap: `wrap`, flexDirection: `row` },
+  expand: { gap: 6, alignSelf: `flex-start`, flexDirection: `row`, alignItems: `center` },
+  privacy: { gap: 7, flexDirection: `row`, alignItems: `center`, flexWrap: `wrap` },
+  dot: { width: 6, height: 6, borderRadius: 6 },
+  cardHeading: { gap: 12, flexDirection: `row`, justifyContent: `space-between`, flexWrap: `wrap` },
+  empty: { gap: 10, paddingVertical: 25, alignItems: `center` },
+  selectedOption: { borderColor: palette.accent, backgroundColor: palette.subtle },
+  skeleton: { height: 70, borderRadius: 6, backgroundColor: palette.skeleton },
+  title: { fontSize: 15, color: palette.ink, fontFamily: `DMSans_700Bold` },
+  name: { fontSize: 13, color: palette.ink, fontFamily: `DMSans_600SemiBold`, flexShrink: 1 },
+  label: { fontSize: 11, lineHeight: 18, color: palette.muted, fontFamily: `DMSans_400Regular` },
+  copy: { fontSize: 11, lineHeight: 18, color: palette.muted, fontFamily: `DMSans_400Regular` },
+  subject: { fontSize: 13, lineHeight: 20, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  message: { fontSize: 12, lineHeight: 20, color: palette.ink, fontFamily: `DMSans_400Regular` },
+  optionLabel: { fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  expandLabel: { fontSize: 11, color: palette.accent, fontFamily: `DMSans_600SemiBold` },
+  heading: { gap: 12, flexDirection: `row`, alignItems: `flex-start`, flexWrap: `wrap` },
+  card: { gap: 10, padding: 14, borderWidth: 1, borderRadius: 8, borderColor: palette.line },
+  refresh: { gap: 6, padding: 10, borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.input, flexDirection: `row`, alignItems: `center` },
+  statusOption: { gap: 5, padding: 8, borderWidth: 1, borderRadius: 5, borderColor: palette.line, backgroundColor: palette.input, flexDirection: `row`, alignItems: `center` },
+  root: { gap: 18, padding: 20, borderWidth: 1, borderRadius: 12, borderColor: palette.line, backgroundColor: palette.paper },
+});

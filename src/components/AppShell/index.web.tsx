@@ -21,12 +21,12 @@ import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileT
 const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.auction.href, routes.community.href];
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
-  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport } = useAppShell();
+  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
   const { isDark, error: themeError, clearError: clearThemeError } = useTheme();
   const domainsMenu = useDomainsMenu(pathname);
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
-  const mobileSignIn = mobileNavigation.compact && !signedIn;
+  const mobileSignIn = mobileNavigation.compact && !signedIn && !authLoading;
   const navigationLinks = navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href);
   const MenuIcon = mobileNavigation.open ? X : Menu;
   const domainSubmenuLinks = navigationLinks.filter(item => domainSubmenuPaths.includes(item.href));

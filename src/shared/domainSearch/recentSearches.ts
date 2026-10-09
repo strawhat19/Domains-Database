@@ -1,5 +1,5 @@
 import { authAPI } from '../../api/auth';
-import { useLocalStorage } from '../config';
+import { useLocalStorage, persistenceEnabled } from '../config';
 import { RECENT_SEARCHES_STORAGE_KEY } from '../accountData/keys';
 import { normalizeDomainSearchQuery } from './query';
 import { accountStorageKey } from '../authentication/userScope';
@@ -26,7 +26,7 @@ export const recentSearchesStorageKey = (userId: string | null) => userId
   : RECENT_SEARCHES_STORAGE_KEY;
 
 const requireActor = async (expectedUserId?: string | null) => {
-  if (!useLocalStorage) throw new Error(`Connect A Backend To Use Recent Searches`);
+  if (!persistenceEnabled) throw new Error(`Connect A Backend To Use Recent Searches`);
   const session = await authAPI.restoreSession();
   const userId = session?.user?.id ?? null;
   if (expectedUserId !== undefined && userId !== expectedUserId) throw new Error(`Your Account Changed — Try Again`);
@@ -55,7 +55,7 @@ const readSnapshot = async (userId: string | null): Promise<RecentDomainSearch[]
 
 const readRecentSearches = async (userId: string | null) => {
   const saved = await readSnapshot(userId);
-  return saved ?? (userId ? await readSnapshot(null) : null) ?? [];
+  return saved ?? (userId && useLocalStorage ? await readSnapshot(null) : null) ?? [];
 };
 
 const notifyRecentSearches = (storageKey: string) => {
@@ -93,7 +93,10 @@ export const clearRecentSearches = (expectedUserId?: string | null): Promise<voi
   const userId = await requireActor(expectedUserId);
   const storageKey = recentSearchesStorageKey(userId);
   await requireActor(userId);
-  if (userId) await writeStorage(storageKey, JSON.stringify({ version: 1, userId, records: [] }));
+  if (userId) {
+    await readSnapshot(userId);
+    await writeStorage(storageKey, JSON.stringify({ version: 1, userId, records: [] }));
+  }
   else await removeStorage(storageKey);
   notifyRecentSearches(storageKey);
 });

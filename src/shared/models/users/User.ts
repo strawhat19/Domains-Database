@@ -1,6 +1,6 @@
-import { Data, type JSONValue, type DataColor } from '../Data';
 import { isAppCollectionID } from '../../common/ids';
 import { capWords, toTimestamp } from '../../common/values';
+import { Data, type JSONValue, type DataColor } from '../Data';
 import { Roles, Types, Providers } from '../../../types/types';
 
 export const minRole = (currentRole: Roles | string, requiredRole: Roles | string) => {
@@ -47,6 +47,7 @@ export interface ProfileInput {
 }
 
 export class User extends Data {
+  plan: string;
   active: boolean;
   source: string;
   verified: boolean;
@@ -59,6 +60,7 @@ export class User extends Data {
   avatar?: string;
   imageURL?: string;
   photoURL?: string;
+  firebase_uid?: string;
   value?: string | number;
   userIDs: string[];
   roles: (Roles | string)[];
@@ -95,6 +97,8 @@ export class User extends Data {
     this.providerId = data.providerId || auth?.providerId || (!appID && data.id !== undefined ? String(data.id) : undefined);
     this.provider = data.provider || (this.providerId?.includes(`google`) ? Providers.Google : auth ? Providers.Firebase : Providers.Local);
     this.source = data.source || this.provider;
+    this.plan = data.plan || `free`;
+    this.firebase_uid = data.firebase_uid || auth?.uid;
     this.phone = data.phone;
     this.active = data.active ?? true;
     this.anonymous = data.anonymous ?? false;

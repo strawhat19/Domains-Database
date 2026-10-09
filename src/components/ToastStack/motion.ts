@@ -1,0 +1,6 @@
+export const TOAST_ENTER_DURATION = 360;
+export const TOAST_EXIT_DURATION = 260;
+export const TOAST_ENTRY_DELAY = 420;
+export const TOAST_EXIT_DELAY = 700;
+export const TOAST_VISIBLE_DURATION = 4_000;
+export const TOAST_REMINDER_DURATION = 8_000;

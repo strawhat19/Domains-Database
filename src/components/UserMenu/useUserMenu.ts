@@ -15,6 +15,8 @@ export const useUserMenu = () => {
   const { verifiedConnectionCount, connectionsCountLoading } = useConnectionAvailability();
   const { palette } = useTheme();
   const [open, setOpen] = useState(false);
+  const [failedPhoto, setFailedPhoto] = useState<string>();
+  const photoKey = `${auth.user?.id ?? ``}:${auth.user?.photoURL ?? ``}`;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const guestAuth = auth.hasSavedAccount
     ? { href: `/signin` as const, label: `Sign in` }
@@ -47,8 +49,11 @@ export const useUserMenu = () => {
     palette,
     signOut,
     guestAuth,
+    photoKey,
     connectionsCountLoading,
     verifiedConnectionCount,
+    photoURL: failedPhoto === photoKey ? undefined : auth.user?.photoURL,
+    onPhotoError: () => setFailedPhoto(photoKey),
     badgeColors: getAccountBadgeColors(auth.user),
     watchingCount: watchingLoading ? 0 : records.filter(record => record.listName === `Watching`).length,
     close: () => setOpen(false),

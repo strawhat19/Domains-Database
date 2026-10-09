@@ -1,0 +1,63 @@
+.form-submissions {
+  gap: 18px;
+  padding: 24px;
+  display: flex;
+  min-width: 0;
+  border-radius: 12px;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  .form-submissions-heading { gap: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .form-submissions-title { gap: 9px; margin: 0; display: flex; font-size: 15px; color: var(--ink); align-items: center; font-weight: 700; }
+  .form-submissions-description { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
+  .form-submissions-refresh, .form-submission-expand {
+    gap: 6px;
+    display: flex;
+    cursor: pointer;
+    font-size: 11px;
+    align-items: center;
+    font-family: inherit;
+    transition: color .2s ease, background .2s ease, border-color .2s ease;
+  }
+  .form-submissions-refresh { padding: 9px 11px; flex-shrink: 0; border-radius: 6px; color: var(--ink); background: var(--input); border: 1px solid var(--line); }
+  .form-submissions-refresh:hover { border-color: var(--accent); background: var(--subtle); }
+  .form-submission-expand { padding: 0; border: 0; margin-top: 7px; color: var(--accent); background: transparent; }
+  .form-submissions-refresh:disabled, .form-submission-status-select:disabled { opacity: .55; cursor: wait; }
+  .form-submissions-refresh:focus-visible, .form-submission-expand:focus-visible, .form-submission-status-select:focus-visible { outline-offset: 3px; outline: 2px solid var(--accent); }
+  .form-submissions-table-wrap { max-width: 100%; overflow-x: auto; border-radius: 8px; border: 1px solid var(--line); }
+  .form-submissions-table { width: 100%; min-width: 900px; border-collapse: collapse; text-align: left; }
+  .form-submissions-caption { padding: 10px 12px; font-size: 11px; text-align: left; color: var(--muted); }
+  .form-submissions-table th { font-size: 10px; font-weight: 700; color: var(--muted); background: var(--input); }
+  .form-submissions-table th, .form-submissions-table td { padding: 12px; vertical-align: top; border-top: 1px solid var(--line); }
+  .form-submissions-table td { color: var(--ink); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+  .form-submission-name { min-width: 95px; max-width: 140px; font-weight: 600; }
+  .form-submission-email { min-width: 130px; max-width: 200px; }
+  .form-submission-subject { min-width: 130px; max-width: 210px; font-weight: 600; }
+  .form-submission-message-cell { min-width: 220px; max-width: 350px; }
+  .form-submission-created { width: 120px; min-width: 100px; }
+  .form-submission-message { margin: 0; display: -webkit-box; overflow: hidden; white-space: pre-wrap; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+  .form-submission-message.expanded { display: block; overflow: visible; }
+  .form-submission-status-cell { min-width: 120px; }
+  .form-submission-status { gap: 7px; display: flex; align-items: center; }
+  .statusDotWrap { display: flex; }
+  .statusDot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .status-success { color: var(--success); }
+  .status-danger { color: var(--danger); }
+  .status-muted { color: var(--muted); }
+  .form-submission-status-select { width: 100%; padding: 7px; margin-top: 8px; border-radius: 5px; font-size: 11px; color: var(--ink); background: var(--input); font-family: inherit; border: 1px solid var(--line); }
+  .form-submissions-privacy { gap: 7px; margin: 0; display: flex; font-size: 10px; line-height: 1.6; color: var(--muted); align-items: center; }
+  .form-submissions-empty { gap: 9px; display: flex; padding: 30px 10px; text-align: center; color: var(--muted); align-items: center; flex-direction: column; }
+  .form-submissions-empty-title { margin: 0; font-size: 13px; color: var(--ink); }
+  .form-submissions-empty-copy { margin: 0; font-size: 11px; line-height: 1.7; }
+  .form-submissions-loading { gap: 12px; display: flex; flex-direction: column; }
+  .form-submissions-skeleton { height: 42px; border-radius: 6px; background: var(--skeleton); animation: submissions-pulse 1.4s ease-in-out infinite; }
+}
+@media (max-width: 560px) {
+  .form-submissions { padding: 16px; }
+  .form-submissions .form-submissions-heading { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .form-submissions .form-submissions-skeleton { animation: none; }
+  .form-submissions .form-submissions-refresh, .form-submissions .form-submission-expand { transition: none; }
+}
+@keyframes submissions-pulse { 50% { opacity: .45; } }

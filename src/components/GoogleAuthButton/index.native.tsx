@@ -9,15 +9,15 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 
 const googleLogo = require('../../../assets/icons/google-g.png');
 
-const GoogleAuthButton = ({ mode, disabled = false }: GoogleAuthButtonProps) => {
+const GoogleAuthButton = ({ mode, onPress, disabled = false }: GoogleAuthButtonProps) => {
   const { palette } = useTheme();
-  const state = useGoogleAuthButton({ mode, disabled });
+  const state = useGoogleAuthButton({ mode, onPress, disabled });
   const styles = useMemo(() => createStyles(palette), [palette]);
   return (
     <View {...elementProps(`google-auth-group`, mode)} style={styles.group}>
       <Pressable
         disabled={disabled}
-        onPress={state.showNotice}
+        onPress={state.press}
         accessibilityRole={`button`}
         accessibilityLabel={state.label}
         accessibilityState={{ disabled }}

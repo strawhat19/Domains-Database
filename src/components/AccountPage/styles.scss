@@ -1,6 +1,8 @@
 :is(.account-sidebar-profile, [data-class='account-sidebar-profile']):hover, :is(.account-sidebar-dashboard, [data-class='account-sidebar-dashboard']):hover, :is(.account-sidebar-connections, [data-class='account-sidebar-connections']):hover { background: var(--subtle) !important; }
 :is(.dashboard-stat-skeleton, [data-class='dashboard-stat-skeleton']), :is(.dashboard-users-skeleton, [data-class='dashboard-users-skeleton']), :is(.dashboard-roles-skeleton, [data-class='dashboard-roles-skeleton']) { animation: account-pulse 1.4s ease-in-out infinite; }
 :is(.profile-value, [data-class='profile-value']), :is(.dashboard-user-name, [data-class='dashboard-user-name']), :is(.dashboard-user-email, [data-class='dashboard-user-email']) { overflow-wrap: anywhere; }
+:is(.profile-value-row, [data-class='profile-value-row']) { min-width: 0; }
+:is(.profile-value-icon, [data-class='profile-value-icon']) { flex-shrink: 0; }
 @media (min-width: 1100px) {
   :is(.account-page, [data-class='account-page']):is([data-page='profile'], [data-page='connections']) {
     gap: 24px !important;
@@ -41,32 +43,26 @@
     :is(.account-description, [data-class='account-description']) { grid-row: 2; grid-column: 2 / -1; }
     :is(.profile-settings, [data-class='profile-settings']) { grid-row: 3; min-width: 0; margin-top: 8px; grid-column: 1 / 3; }
 
-    :is(.profile-details, [data-class='profile-details']) {
-      gap: 12px !important;
-      grid-row: 3 / 5;
+    :is(.profile-details-column, [data-class='profile-details-column']) {
+      gap: 16px !important;
+      grid-row: 3;
       min-width: 0;
       grid-column: 3;
       margin-top: 8px;
+    }
+
+    :is(.profile-details, [data-class='profile-details']) {
+      gap: 12px !important;
+      min-width: 0;
       padding: 16px !important;
     }
 
     :is(.profile-field, [data-class='profile-field']) { gap: 4px !important; padding-bottom: 10px !important; }
     :is(.profile-device-text, [data-class='profile-device-text']) { line-height: 16px !important; }
     :is(.profile-account-preferences, [data-class='profile-account-preferences']) {
-      grid-row: 4;
       min-width: 0;
-      grid-column: 1 / 3;
-      margin-top: 8px;
       padding: 16px !important;
     }
-  }
-}
-@media (min-width: 1100px) and (min-height: 700px) {
-  :is(.account-page, [data-class='account-page'])[data-page='profile'] :is(.profile-details, [data-class='profile-details']) {
-    position: sticky !important;
-    overflow-y: auto !important;
-    top: calc(var(--site-header-offset, 0px) + 16px);
-    max-height: calc(100dvh - var(--site-header-offset, 0px) - 32px);
   }
 }
 @media (max-width: 560px) {

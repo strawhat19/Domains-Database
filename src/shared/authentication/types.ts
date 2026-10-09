@@ -37,6 +37,7 @@ export interface AuthenticationResult {
   user: User;
   expiresAt: number;
   claimLegacy: boolean;
+  newAccount?: boolean;
 }
 
 export interface LocalAccount {

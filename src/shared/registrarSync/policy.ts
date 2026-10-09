@@ -1,6 +1,6 @@
 import { authAPI } from '../../api/auth';
 import { connectionsAPI } from '../../api/connections';
-import { REGISTRARS, useLocalStorage } from '../config';
+import { REGISTRARS, persistenceEnabled } from '../config';
 import { SYNC_POLICY_STORAGE_KEY } from '../accountData/keys';
 import type { ConnectionProvider } from '../connections/types';
 import { accountStorageKey } from '../authentication/userScope';
@@ -112,7 +112,7 @@ const emptyPolicy = (userId: string): RegistrarSyncPolicy => ({
   successfulProviders: [],
 });
 const requireSession = async (userId: string) => {
-  if (!useLocalStorage) throw new Error(`Connect A Backend To Save Sync Settings`);
+  if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Sync Settings`);
   const session = await authAPI.restoreSession();
   if (!userId?.trim() || session?.user?.id !== userId) throw new Error(`Sign In To Sync Your Domains`);
 };

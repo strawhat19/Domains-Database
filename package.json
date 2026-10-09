@@ -1,6 +1,6 @@
 {
   "name": "domains-database",
-  "version": "0.0.3.2",
+  "version": "0.0.3.3",
   "private": true,
   "main": "expo-router/entry",
   "engines": {
@@ -34,6 +34,7 @@
     "expo-status-bar": "~57.0.1",
     "fast-xml-parser": "^5.11.2",
     "fast-xml-validator": "^1.4.2",
+    "firebase": "12.10.0",
     "lucide-react": "^1.49.0",
     "lucide-react-native": "^1.49.0",
     "react": "19.2.3",

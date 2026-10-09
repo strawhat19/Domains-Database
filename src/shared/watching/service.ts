@@ -1,6 +1,6 @@
 import { authAPI } from '../../api/auth';
 import { Types } from '../../types/types';
-import { useLocalStorage } from '../config';
+import { persistenceEnabled } from '../config';
 import { WATCHING_STORAGE_KEY } from '../accountData/keys';
 import { normalizeDomainName } from '../domainUtils';
 import { getAppCollectionIDNumber } from '../common/ids';
@@ -21,7 +21,7 @@ interface WatchingSnapshot {
 }
 
 const requireUser = async (expectedUserId?: string | null) => {
-  if (!useLocalStorage) throw new Error(`Connect A Backend To Save Watching`);
+  if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Watching`);
   const session = await authAPI.restoreSession();
   const userId = session?.user.id;
   if (!userId) throw new Error(`Sign In To Watch Domains`);

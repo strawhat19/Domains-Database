@@ -11,7 +11,11 @@ const UserMenu = () => {
   const { width } = useWindowDimensions();
   const { user, styles, palette } = state;
   const GuestIcon = state.hasSavedAccount ? LogIn : UserRoundPlus;
-  if (state.loading) return <View {...elementProps(`user-menu-loading`)} style={styles.skeleton} />;
+  if (state.loading && !user) return (
+    <View {...elementProps(`user-menu-loading`)} style={styles.skeleton} accessibilityLabel={`Loading Account`} accessibilityRole={`progressbar`}>
+      <UserRound {...elementProps(`user-menu-loading-icon`)} size={20} color={palette.muted} />
+    </View>
+  );
   if (!user) return (
     <Link href={state.guestAuth.href} asChild>
       <Pressable {...elementProps(`user-menu-signin`)} style={styles.signin} accessibilityRole={`link`}>
@@ -31,15 +35,23 @@ const UserMenu = () => {
         accessibilityLabel={`${user.name} Account Menu`}
         accessibilityState={{ expanded: state.open }}
       >
-        {user.photoURL ? (
-          <Image {...elementProps(`user-menu-avatar`)} style={styles.avatar} source={{ uri: user.photoURL }} accessibilityLabel={user.name} />
-        ) : (
-          <View {...elementProps(`user-menu-avatar`)} style={[styles.avatar, { backgroundColor: user.color.color }]}>
-            <Text {...elementProps(`user-menu-initial`)} style={[styles.initial, { color: user.color.type === `light` ? `#133b50` : `#ffffff` }]}>
-              {(user.name?.[0] || `U`).toUpperCase()}
-            </Text>
-          </View>
-        )}
+        <View {...elementProps(`user-menu-avatar`)} style={[styles.avatar, { backgroundColor: user.color?.color || `#138b8b` }]}>
+          <Text {...elementProps(`user-menu-initial`)} style={[styles.initial, { color: user.color?.type === `light` ? `#133b50` : `#ffffff` }]}>
+            {(user.name?.trim()?.[0] || `U`).toUpperCase()}
+          </Text>
+          {!!state.photoURL && (
+            <Image
+              key={state.photoKey}
+              style={styles.photo}
+              resizeMode={`cover`}
+              onError={state.onPhotoError}
+              source={{ uri: state.photoURL }}
+              {...elementProps(`user-menu-photo`)}
+              accessibilityElementsHidden
+              importantForAccessibility={`no-hide-descendants`}
+            />
+          )}
+        </View>
       </Pressable>
       {state.open && (
         <View {...elementProps(`user-menu-options`)} style={styles.options}>

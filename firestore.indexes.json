@@ -1,0 +1,9 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "data", "fieldPath": "value", "indexes": [] },
+    { "collectionGroup": "connections", "fieldPath": "values", "indexes": [] },
+    { "collectionGroup": "formSubmissions", "fieldPath": "message", "indexes": [] },
+    { "collectionGroup": "snapshots", "fieldPath": "snapshot", "indexes": [] }
+  ]
+}

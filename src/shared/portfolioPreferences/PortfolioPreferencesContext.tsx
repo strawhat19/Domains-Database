@@ -1,4 +1,5 @@
 import { GROUPABLE_COLUMNS } from './groups';
+import Toast from '../../components/Toast';
 import type { PropsWithChildren } from 'react';
 import { PORTFOLIO_FIELDS } from '../portfolioColumns';
 import { createOperationQueue } from '../common/storage';
@@ -26,7 +27,7 @@ const uniqueIds = (value: unknown): string[] => Array.isArray(value)
   : [];
 
 const restorePreferences = (value: unknown): PortfolioPreferences => {
-  if (!value || typeof value !== `object` || Array.isArray(value)) return DEFAULT_PREFERENCES;
+  if (!value || typeof value !== `object` || Array.isArray(value)) throw new Error(`Saved Portfolio Preferences Could Not Be Read`);
   const saved = value as Record<string, unknown>;
   const seenCollections = new Set<string>();
   const seenCollectionNames = new Set<string>();
@@ -116,6 +117,8 @@ export const PortfolioPreferencesContext = createContext<PortfolioPreferencesCon
 
 export const PortfolioPreferencesProvider = ({ children, enabled = true, userId = null }: PropsWithChildren<{ enabled?: boolean; userId?: string | null }>) => {
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(``);
+  const storageReady = useRef(false);
   const revision = useRef(0);
   const active = useRef(enabled);
   if (!enabled) active.current = false;
@@ -130,7 +133,9 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     active.current = false;
     revision.current += 1;
     loadedUserId.current = null;
+    storageReady.current = false;
     setReady(false);
+    setError(``);
   }), [userId]);
 
   useEffect(() => {
@@ -139,6 +144,8 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     active.current = enabled;
     const capturedUserId = userId;
     setReady(false);
+    setError(``);
+    storageReady.current = false;
     changed.current = false;
     loadedUserId.current = null;
     preferenceRef.current = DEFAULT_PREFERENCES;
@@ -146,28 +153,43 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     if (!enabled) return () => { active.current = false; ++revision.current; };
     const isCurrent = () => mounted && active.current && run === revision.current;
     readPortfolioPreferences(capturedUserId).then(saved => {
-      if (!isCurrent() || changed.current || !saved) return;
-      const restored = restorePreferences(JSON.parse(saved));
-      preferenceRef.current = restored;
-      setPreferences(restored);
-    }).catch(() => undefined).finally(() => {
-      if (isCurrent()) { loadedUserId.current = capturedUserId; setReady(true); }
+      if (!isCurrent() || changed.current) return;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const restored = restorePreferences(parsed);
+        if ((Array.isArray(parsed.collections) && restored.collections.length !== parsed.collections.length)
+          || (Array.isArray(parsed.customGroups) && restored.customGroups.length !== parsed.customGroups.length)) throw new Error(`Saved Portfolio Preferences Could Not Be Read`);
+        preferenceRef.current = restored;
+        setPreferences(restored);
+      }
+      storageReady.current = true;
+    }).catch(reason => {
+      if (isCurrent()) {
+        active.current = false;
+        setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio Preferences`);
+      }
+    }).finally(() => {
+      if (mounted && enabled && run === revision.current) { loadedUserId.current = capturedUserId; setReady(true); }
     });
     return () => { mounted = false; active.current = false; ++revision.current; };
   }, [enabled, userId]);
 
   useEffect(() => {
-    if (!enabled || !ready || loadedUserId.current !== userId) return;
+    if (!enabled || !ready || !storageReady.current || !changed.current || loadedUserId.current !== userId) return;
     const run = revision.current;
     const capturedUserId = userId;
     const capturedPreferences = preferences;
     void storageQueue(() => active.current && run === revision.current
       ? savePortfolioPreferences(capturedPreferences, capturedUserId)
-      : Promise.resolve()).catch(() => undefined);
+      : Promise.resolve()).then(() => {
+      if (active.current && run === revision.current) setError(``);
+    }).catch(reason => {
+      if (active.current && run === revision.current) setError(reason instanceof Error ? reason.message : `Could Not Save Portfolio Preferences`);
+    });
   }, [ready, enabled, userId, preferences, storageQueue]);
 
   const change = useCallback((update: (current: PortfolioPreferences) => PortfolioPreferences) => {
-    if (!enabled || !active.current) return;
+    if (!enabled || !active.current || !storageReady.current) return;
     changed.current = true;
     const next = update(preferenceRef.current);
     preferenceRef.current = next;
@@ -459,6 +481,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   return (
     <PortfolioPreferencesContext.Provider value={value}>
       {children}
+      <Toast id={`portfolio-preferences-error`} message={enabled ? error : ``} onDismiss={() => setError(``)} />
     </PortfolioPreferencesContext.Provider>
   );
 };

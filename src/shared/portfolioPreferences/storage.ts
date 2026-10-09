@@ -11,12 +11,10 @@ export const portfolioStorageKey = (baseKey: string, userId: string | null = nul
   : `${baseKey}:guest`;
 
 export const readPortfolioPreferences = (userId: string | null = null) => {
-  if (!useLocalStorage) return Promise.resolve(null);
   return readStorage(portfolioStorageKey(PREFERENCES_STORAGE_KEY, userId));
 };
 
 export const savePortfolioPreferences = (preferences: PortfolioPreferences, userId: string | null = null) => {
-  if (!useLocalStorage) return Promise.resolve();
   return writeStorage(portfolioStorageKey(PREFERENCES_STORAGE_KEY, userId), JSON.stringify(preferences));
 };
 

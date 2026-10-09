@@ -467,6 +467,7 @@ const PortfolioRecords = ({
       <div
         ref={sticky.scrollRef}
         id={`${idPrefix}-table-scroll`}
+        data-empty={empty || undefined}
         data-loading={loading || undefined}
         className={`portfolio-table-scroll`}
         style={{ marginTop: stickyHeaderReady ? -sticky.header.headHeight : 0 }}

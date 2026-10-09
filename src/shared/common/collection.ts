@@ -1,5 +1,5 @@
 import { Data } from '../models/Data';
-import { useLocalStorage } from '../config';
+import { persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
 import { readStorage, writeStorage, createOperationQueue } from './storage';
 
@@ -12,7 +12,7 @@ interface CollectionSnapshot<T> {
 export const createCollection = <T extends Data>(key: string, model: new (data: Partial<T>) => T, getUserId: () => Promise<string>) => {
   const serialize = createOperationQueue(key);
   const read = async () => {
-    if (!useLocalStorage) throw new Error(`Connect A Backend To Save Record(s)`);
+    if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Record(s)`);
     const userId = await getUserId();
     const storageKey = accountStorageKey(key, userId);
     const saved = await readStorage(storageKey);

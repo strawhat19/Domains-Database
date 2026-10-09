@@ -1,24 +1,28 @@
 import { Link } from 'expo-router';
 import { Roles } from '../../types/types';
 import AccountActions from '../AccountActions';
+import FormSubmissions from '../FormSubmissions';
 import { useAccountPage } from './useAccountPage';
 import ProfileSettings from '../ProfileSettings';
+import { useLocalStorage } from '../../shared/config';
 import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
 import ProfileThemePreference from '../ProfileThemePreference';
-import { PlugZap, UserRound, LayoutDashboard, ShieldCheck } from 'lucide-react-native';
-import { Text, Platform, Pressable, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { firebaseEnabled } from '../../shared/firebase/config';
+import { Text, Image, Platform, Pressable, View, StyleSheet } from 'react-native';
+import { PlugZap, UserRound, BadgeCheck, ShieldCheck, CalendarDays, LayoutDashboard } from 'lucide-react-native';
+
+const googleLogo = require('../../../assets/icons/google-g.png');
 
 const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | `dashboard` }) => {
   const state = useAccountPage(page);
   const { styles, palette, user } = state;
-  const { width } = useWindowDimensions();
-  const roomy = width >= 1100;
   const fields = [
     { key: `name`, label: `Name`, value: user?.name },
     { key: `email`, label: `Email`, value: user?.email },
-    { key: `role`, label: `Role`, value: user?.role },
-    { key: `created`, label: `Joined`, value: user?.created ? new Date(user.created).toLocaleDateString() : `` },
+    { key: `role`, label: `Role`, Icon: ShieldCheck, value: user?.role },
+    { key: `plan`, label: `Plan`, Icon: BadgeCheck, value: user?.plan === `free` ? `Free` : user?.plan },
+    { key: `created`, label: `Joined`, Icon: CalendarDays, value: user?.created ? new Date(user.created).toLocaleDateString() : `` },
     { key: `id`, label: `Account ID`, value: user?.id },
   ];
   const headings = {
@@ -64,21 +68,37 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
         {page === `profile` ? (
           <>
             <ProfileSettings />
-            <View {...elementProps(`profile-details`)} style={styles.panel}>
-              {fields.map(field => (
-                <View key={field.key} {...elementProps(`profile-field`, field.key)} style={styles.field}>
-                  <Text {...elementProps(`profile-label`, field.key)} style={styles.label}>{field.label}</Text>
-                  <Text {...elementProps(`profile-value`, field.key)} style={styles.value} selectable>{field.value || `—`}</Text>
-                </View>
-              ))}
-              <View {...elementProps(`profile-device-note`)} style={styles.note}>
-                <ShieldCheck {...elementProps(`profile-device-icon`)} size={16} color={palette.accent} />
-                <Text {...elementProps(`profile-device-text`)} style={styles.noteText}>{`Local sign-in keeps records separate on this device. Accounts do not sync between devices.`}</Text>
+            <View {...elementProps(`profile-details-column`)} style={styles.profileDetailsColumn}>
+              <View {...elementProps(`profile-details`)} style={styles.panel}>
+                {fields.map(field => {
+                  const Icon = field.Icon;
+                  return (
+                    <View key={field.key} {...elementProps(`profile-field`, field.key)} style={styles.field}>
+                      <Text {...elementProps(`profile-label`, field.key)} style={styles.label}>{field.label}</Text>
+                      <View {...elementProps(`profile-value-row`, field.key)} style={styles.valueRow}>
+                        {field.key === `email` && (
+                          <Image
+                            accessible={false}
+                            source={googleLogo}
+                            style={styles.valueIcon}
+                            resizeMode={`contain`}
+                            accessibilityElementsHidden
+                            accessibilityIgnoresInvertColors
+                            importantForAccessibility={`no`}
+                            {...elementProps(`profile-value-icon`, field.key)}
+                          />
+                        )}
+                        {Icon && <Icon {...elementProps(`profile-value-icon`, field.key)} size={16} color={palette.accent} style={styles.valueIcon} accessible={false} />}
+                        <Text {...elementProps(`profile-value`, field.key)} style={[styles.value, styles.valueText]} selectable>{field.value || `—`}</Text>
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
-            </View>
-            <View {...elementProps(`profile-account-preferences`)} style={[styles.panel, styles.preferences, roomy && styles.roomyPreferences]}>
-              <ProfileThemePreference roomy={roomy} />
-              <AccountActions />
+              <View {...elementProps(`profile-account-preferences`)} style={[styles.panel, styles.preferences]}>
+                <ProfileThemePreference />
+                <AccountActions stacked />
+              </View>
             </View>
           </>
         ) : page === `connections` ? (
@@ -108,7 +128,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
               ))}
             </View>
             <View {...elementProps(`dashboard-users`)} style={styles.panel}>
-              <Text {...elementProps(`dashboard-users-title`)} style={styles.panelTitle}>{`Local users`}</Text>
+              <Text {...elementProps(`dashboard-users-title`)} style={styles.panelTitle}>{firebaseEnabled && !useLocalStorage ? `Users` : `Local users`}</Text>
               {state.loading ? <View {...elementProps(`dashboard-users-skeleton`)} style={styles.skeleton} /> : state.users.map(account => (
                 <View key={account.id} {...elementProps(`dashboard-user`, account.id)} style={styles.userRow}>
                   <View {...elementProps(`dashboard-user-details`, account.id)} style={styles.userDetails}>
@@ -126,6 +146,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
                 </View>
               ))}
             </View>
+            <FormSubmissions />
           </>
         )}
       </View>

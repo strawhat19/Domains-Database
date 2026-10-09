@@ -22,7 +22,7 @@ import { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, User
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
-  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport } = useAppShell();
+  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [viewportHeight, setViewportHeight] = useState(height);
@@ -95,7 +95,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             </View>
             <ThemeToggle />
             <NotificationBell />
-            {signedIn && <UserMenu />}
+            {(signedIn || authLoading) && <UserMenu />}
           </View>
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
@@ -147,7 +147,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
               </Link>
             );
           })}
-          {!signedIn && (
+          {!signedIn && !authLoading && (
             <View {...elementProps(`native-navigation-signin`)}>
               <UserMenu />
             </View>

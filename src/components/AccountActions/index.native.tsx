@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
-import { accountActionScope } from './actions';
 import { createStyles } from './styles.native';
+import { useAccountActions } from './useAccountActions';
 import { elementProps } from '../../shared/elementProps';
-import { Modal, Text, View, Pressable, ScrollView } from 'react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { useAccountActions, accountActions } from './useAccountActions';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
+import { Modal, Text, View, Platform, Pressable, ScrollView } from 'react-native';
 import { X, UserX, Trash2, Unplug, LogOut, Database, CirclePause, ChevronDown } from 'lucide-react-native';
 
 const actionIcons = {
@@ -15,7 +14,7 @@ const actionIcons = {
   [`delete-data-connections`]: Unplug,
 };
 
-const AccountActions = () => {
+const AccountActions = ({ stacked = false }: { stacked?: boolean }) => {
   const state = useAccountActions();
   const { palette } = useTheme();
   const reducedMotion = useReducedMotion();
@@ -29,25 +28,29 @@ const AccountActions = () => {
     : sections.map(section => [section]);
 
   return (
-    <View {...elementProps(`account-actions`)} style={[styles.root, state.roomy && styles.roomyRoot]}>
+    <View
+      {...elementProps(`account-actions`)}
+      style={[styles.root, state.roomy && !stacked && styles.roomyRoot]}
+      {...(Platform.OS === `web` ? { dataSet: { class: `account-actions`, stacked: String(stacked) } } : {})}
+    >
       <View {...elementProps(`account-actions-heading`)} style={styles.heading}>
         {state.roomy ? (
           <View {...elementProps(`account-actions-summary`)} style={[styles.heading, styles.headingText]}>
             <UserX {...elementProps(`account-actions-icon`)} size={16} color={palette.danger} />
-            <Text {...elementProps(`account-actions-title`)} style={styles.text} accessibilityRole={`header`}>{`Account Actions`}</Text>
+            <Text {...elementProps(`account-actions-title`)} style={styles.text} accessibilityRole={`header`}>{`Account`}</Text>
           </View>
         ) : (
           <Pressable
             disabled={state.disabled}
             onPress={state.toggleOpen}
             accessibilityRole={`button`}
-            accessibilityLabel={`Account Actions`}
+            accessibilityLabel={`Account`}
             {...elementProps(`account-actions-toggle`)}
             style={[styles.heading, styles.headingText]}
             accessibilityState={{ expanded: state.open, disabled: state.disabled }}
           >
             <UserX {...elementProps(`account-actions-icon`)} size={16} color={palette.danger} />
-            <Text {...elementProps(`account-actions-title`)} style={[styles.text, styles.headingText]}>{`Account Actions`}</Text>
+            <Text {...elementProps(`account-actions-title`)} style={[styles.text, styles.headingText]}>{`Account`}</Text>
             <ChevronDown {...elementProps(`account-actions-chevron`)} size={16} color={palette.muted} style={{ transform: [{ rotate: state.open ? `180deg` : `0deg` }] }} />
           </Pressable>
         )}
@@ -59,16 +62,15 @@ const AccountActions = () => {
           {...elementProps(`account-signout`)}
           style={[styles.button, state.disabled && styles.disabled]}
         >
-          <LogOut {...elementProps(`account-signout-icon`)} size={16} color={palette.ink} />
+          <LogOut {...elementProps(`account-signout-icon`)} size={16} color={palette.danger} />
           <Text {...elementProps(`account-signout-text`)} style={styles.text}>{`Sign Out`}</Text>
         </Pressable>
       </View>
       {Boolean(state.signOutError) && <Text {...elementProps(`account-signout-error`)} style={styles.error} accessibilityRole={`alert`}>{state.signOutError}</Text>}
       {state.expanded && (
         <View {...elementProps(`account-actions-options`)} style={styles.body}>
-          <Text {...elementProps(`account-actions-copy`)} style={styles.copy}>{`Manage your account and saved data on this device`}</Text>
-          <View {...elementProps(`account-actions-grid`)} style={[styles.body, state.roomy && styles.roomyGrid]}>
-            {accountActions.map(action => {
+          <View {...elementProps(`account-actions-grid`)} style={[styles.body, state.roomy && !stacked && styles.roomyGrid]}>
+            {state.accountActions.map(action => {
               const Icon = actionIcons[action.id];
               return (
                 <Pressable
@@ -78,7 +80,7 @@ const AccountActions = () => {
                   accessibilityLabel={action.label}
                   {...elementProps(`account-action`, action.id)}
                   onPress={() => state.selectAction(action.id)}
-                  style={[styles.button, state.roomy && styles.roomyButton, state.disabled && styles.disabled]}
+                  style={[styles.button, state.roomy && !stacked && styles.roomyButton, state.disabled && styles.disabled]}
                 >
                   <Icon {...elementProps(`account-action-icon`, action.id)} size={16} color={palette.danger} />
                   <Text {...elementProps(`account-action-text`, action.id)} style={[styles.text, styles.buttonText, styles.dangerText]}>{action.label}</Text>
@@ -141,7 +143,7 @@ const AccountActions = () => {
               </View>
               <View {...elementProps(`account-action-scope`, scope)} style={styles.details}>
                 <Text {...elementProps(`account-action-scope-title`, scope)} style={styles.detailsTitle} accessibilityRole={`header`}>{`Scope`}</Text>
-                <Text {...elementProps(`account-action-scope-copy`, scope)} style={styles.dialogCopy}>{accountActionScope}</Text>
+                <Text {...elementProps(`account-action-scope-copy`, scope)} style={styles.dialogCopy}>{state.accountActionScope}</Text>
               </View>
               {Boolean(state.error) && <Text {...elementProps(`account-action-error`, scope)} style={styles.error} accessibilityRole={`alert`}>{state.error}</Text>}
             </ScrollView>

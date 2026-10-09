@@ -8,7 +8,10 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
     default: { elevation: 8, shadowColor: `#000`, shadowOpacity: .15, shadowRadius: 12, shadowOffset: { width: 0, height: 4 } },
   }) },
   content: { gap: 10, flex: 1, minWidth: 0 },
+  inline: { left: 0, right: 0, bottom: 0, width: `100%`, maxWidth: `100%`, position: `relative` },
   withAction: { alignItems: `flex-start` },
   message: { fontSize: 12, lineHeight: 19, fontFamily: `DMSans_500Medium` },
+  reminder: { borderWidth: 2, borderColor: palette.accent, backgroundColor: palette.subtle },
+  reminderMessage: { fontSize: 13, lineHeight: 20, fontFamily: `DMSans_700Bold` },
   dismiss: { padding: 5 },
 });

@@ -1,5 +1,6 @@
 export type DomainProjectStatus =
   | `Future`
+  | `Idea`
   | `To Do`
   | `Concepting`
   | `Concept Finalize`
@@ -30,7 +31,8 @@ interface DomainProjectOption<Value extends string> {
 }
 
 export const DOMAIN_PROJECT_STATUSES: readonly DomainProjectOption<DomainProjectStatus>[] = [
-  { icon: `Lightbulb`, tone: `neutral`, value: `Future`, label: `Future` },
+  { icon: `Clock`, tone: `neutral`, value: `Future`, label: `Future` },
+  { icon: `Lightbulb`, tone: `neutral`, value: `Idea`, label: `Idea` },
   { icon: `ListTodo`, tone: `neutral`, value: `To Do`, label: `To Do` },
   { icon: `Brain`, tone: `neutral`, value: `Concepting`, label: `Concepting` },
   { icon: `CheckCheck`, tone: `neutral`, value: `Concept Finalize`, label: `Concept Finalize` },

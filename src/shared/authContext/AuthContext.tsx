@@ -2,6 +2,7 @@ import { api } from '../../api';
 import { AppState } from 'react-native';
 import { authAPI } from '../../api/auth';
 import { useLocalStorage } from '../config';
+import { firebaseEnabled } from '../firebase/config';
 import type { User } from '../models/users/User';
 import { createOperationQueue } from '../common/storage';
 import { AUTH_PRESENCE_KEYS } from '../authentication/accountPresence';
@@ -19,9 +20,11 @@ interface AuthContextValue {
   user: User | null;
   error: string | null;
   notice: string | null;
+  newAccountId: string | null;
   clearError: () => void;
   clearNotice: () => void;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<User>;
   refreshUser: () => Promise<void>;
   signIn: (input: SignInInput) => Promise<User>;
   signUp: (input: SignUpInput) => Promise<User>;
@@ -44,6 +47,7 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [newAccountId, setNewAccountId] = useState<string | null>(null);
   const [hasSavedAccount, setHasSavedAccount] = useState(true);
 
   const refreshSavedAccount = useCallback(async (accountUser: User | null) => {
@@ -69,7 +73,7 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
     if (mounted.current) { setLoading(true); setUser(null); setExpiresAt(null); }
     try {
       await refreshSavedAccount(result?.user ?? null);
-      await api.setUserScope(userId, { claimLegacy: result?.claimLegacy ?? false, adoptGuest: result?.user.number === 1 });
+      await api.setUserScope(userId, { claimLegacy: result?.claimLegacy ?? false, adoptGuest: useLocalStorage && result?.user.number === 1 });
       if (result?.claimLegacy && userId) {
         await claimLegacyPortfolioPreferences(userId);
         await authAPI.completeLegacyClaim(userId);
@@ -105,17 +109,19 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
     mounted.current = true;
     if (!enabled) return () => { mounted.current = false; };
     void refreshUser().catch(() => undefined);
+    const unsubscribeAuth = authAPI.subscribeAuthState(() => { void refreshUser().catch(() => undefined); });
     const syncSession = (event: StorageEvent) => {
       if (event.key === null || AUTH_PRESENCE_KEYS.includes(event.key)) void refreshUser().catch(() => undefined);
     };
     const resumeSession = () => { void refreshUser().catch(() => undefined); };
     const subscription = AppState.addEventListener(`change`, state => { if (state === `active`) resumeSession(); });
-    if (useLocalStorage && typeof window !== `undefined`) {
+    if ((useLocalStorage || firebaseEnabled) && typeof window !== `undefined`) {
       window.addEventListener(`focus`, resumeSession);
       window.addEventListener(`storage`, syncSession);
     }
     return () => {
       mounted.current = false;
+      unsubscribeAuth();
       subscription.remove();
       if (typeof window !== `undefined`) {
         window.removeEventListener(`focus`, resumeSession);
@@ -137,14 +143,14 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
   }, [user?.id, expiresAt, refreshUser]);
 
   const authenticate = useCallback((operation: () => Promise<AuthenticationResult>, message: string): Promise<User> => queue(async () => {
-    if (mounted.current) { setBusy(true); setError(null); setNotice(null); }
+    if (mounted.current) { setBusy(true); setError(null); setNotice(null); setNewAccountId(null); }
     let sessionCreated = false;
     try {
       const result = await operation();
       sessionCreated = true;
       const authenticatedUser = await applySession(result);
       if (!authenticatedUser) throw new Error(`Sign In To Access Your Saved Data`);
-      if (mounted.current) { setNotice(message); setLoginRevision(current => current + 1); }
+      if (mounted.current) { setNotice(message); setNewAccountId(result.newAccount ? authenticatedUser.id : null); setLoginRevision(current => current + 1); }
       return authenticatedUser;
     } catch (failure) {
       if (sessionCreated) {
@@ -162,9 +168,15 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
 
   const signIn = useCallback((input: SignInInput) => authenticate(() => authAPI.signIn(input), input.reactivate ? `Account Reactivated Successfully` : `Signed In Successfully`), [authenticate]);
   const signUp = useCallback((input: SignUpInput) => authenticate(() => authAPI.signUp(input), `Account Created Successfully`), [authenticate]);
+  const signInWithGoogle = useCallback(() => {
+    if (mounted.current) { setBusy(true); setError(null); setNotice(null); setNewAccountId(null); }
+    const operation = authAPI.signInWithGoogle();
+    void operation.catch(() => undefined);
+    return authenticate(() => operation, `Signed In With Google Successfully`);
+  }, [authenticate]);
 
   const signOut = useCallback((): Promise<void> => queue(async () => {
-    if (mounted.current) { setBusy(true); setError(null); setNotice(null); }
+    if (mounted.current) { setBusy(true); setError(null); setNotice(null); setNewAccountId(null); }
     try {
       await authAPI.signOut();
       await applySession(null);
@@ -188,7 +200,8 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
   const manageAccount = useCallback((action: AccountAction): Promise<void> => {
     const expectedUserId = currentUser.current?.id ?? ``;
     return queue(async () => {
-      if (mounted.current) { setBusy(true); setError(null); setNotice(null); }
+      if (mounted.current) { setBusy(true); setError(null); setNotice(null); setNewAccountId(null); }
+      if (mounted.current && firebaseEnabled && !useLocalStorage && [`delete-data`, `delete-data-connections`].includes(action)) setLoading(true);
       try {
         await authAPI.manageAccount(action, expectedUserId);
         if (mounted.current && action !== `deactivate`) setDataRevision(current => current + 1);
@@ -215,14 +228,14 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
         if (mounted.current) setError(messageFromError(failure));
         throw failure;
       } finally {
-        if (mounted.current) setBusy(false);
+        if (mounted.current) { setBusy(false); setLoading(false); }
       }
     });
   }, [queue, applySession]);
 
   const clearError = useCallback(() => setError(null), []);
-  const clearNotice = useCallback(() => setNotice(null), []);
-  const value = useMemo(() => ({ user, busy, error, notice, loading: !enabled || loading, dataRevision, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser, manageAccount }), [enabled, user, busy, error, notice, loading, dataRevision, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser, manageAccount]);
+  const clearNotice = useCallback(() => { setNotice(null); setNewAccountId(null); }, []);
+  const value = useMemo(() => ({ user, busy, error, notice, newAccountId, loading: !enabled || loading, dataRevision, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser, manageAccount, signInWithGoogle }), [enabled, user, busy, error, notice, newAccountId, loading, dataRevision, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser, manageAccount, signInWithGoogle]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

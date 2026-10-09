@@ -1,29 +1,37 @@
 import { useMemo, type ReactNode } from 'react';
 import { createStyles } from './styles.native';
-import { Pressable, Text, View } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
+import { Pressable, Text, View, Platform } from 'react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { CheckCircle2, TriangleAlert, X } from 'lucide-react-native';
+import { CheckCircle2, TriangleAlert, Save, X } from 'lucide-react-native';
 
 interface ToastProps {
   id?: string;
+  inline?: boolean;
   message: string;
   action?: ReactNode;
   onDismiss?: () => void;
-  kind?: `success` | `error`;
+  kind?: `success` | `error` | `reminder`;
 }
 
-const Toast = ({ action, message, onDismiss, kind = `error`, id = `toast` }: ToastProps) => {
+const Toast = ({ action, message, onDismiss, inline = false, kind = `error`, id = `toast` }: ToastProps) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   if (!message) return null;
-  const Icon = kind === `error` ? TriangleAlert : CheckCircle2;
-  const color = kind === `error` ? palette.danger : palette.success;
+  const reminder = kind === `reminder`;
+  const Icon = kind === `error` ? TriangleAlert : reminder ? Save : CheckCircle2;
+  const color = kind === `error` ? palette.danger : reminder ? palette.accent : palette.success;
   return (
-    <View {...elementProps(`toast`, id)} style={[styles.toast, !!action && styles.withAction]} accessibilityRole={`alert`} accessibilityLiveRegion={`polite`}>
+    <View
+      {...elementProps(`toast`, id)}
+      accessibilityRole={`alert`}
+      accessibilityLiveRegion={`polite`}
+      style={[styles.toast, inline && styles.inline, reminder && styles.reminder, !!action && styles.withAction]}
+      {...(Platform.OS === `web` && inline ? { dataSet: { class: `toast`, inline: `true` } } : {})}
+    >
       <Icon {...elementProps(`toast-icon`, id)} size={17} color={color} />
       <View {...elementProps(`toast-content`, id)} style={styles.content}>
-        <Text {...elementProps(`toast-message`, id)} style={[styles.message, { color }]}>{message}</Text>
+        <Text {...elementProps(`toast-message`, id)} style={[styles.message, reminder && styles.reminderMessage, { color }]}>{message}</Text>
         {action}
       </View>
       {onDismiss && (

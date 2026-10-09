@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function identityPath() { return /databases/$(database)/documents/identities/$(request.auth.uid); }
+    function userPath(userId) { return /databases/$(database)/documents/users/$(userId); }
+    function counterPath() { return /databases/$(database)/documents/counters/users; }
+    function submissionCounterPath() { return /databases/$(database)/documents/counters/formSubmissions; }
+    function submissionPath(submissionId) { return /databases/$(database)/documents/formSubmissions/$(submissionId); }
+    function ownsAccount(userId) {
+      return signedIn() && exists(identityPath()) && get(identityPath()).data.id == userId
+        && get(userPath(userId)).data.firebase_uid == request.auth.uid && get(userPath(userId)).data.active == true;
+    }
+    function isOwner() {
+      return signedIn() && exists(identityPath()) && ownsAccount(get(identityPath()).data.id)
+        && get(userPath(get(identityPath()).data.id)).data.role == 'Owner';
+    }
+    function recordIdentity(recordId, recordType) {
+      return request.resource.data.id == recordId && request.resource.data.number is int
+        && request.resource.data.number > 0 && recordId.matches(recordType + '_' + string(request.resource.data.number) + '_.*');
+    }
+    function newIdentity() {
+      return signedIn() && !exists(identityPath()) && getAfter(identityPath()).data.firebase_uid == request.auth.uid
+        && getAfter(identityPath()).data.number == getAfter(counterPath()).data.number
+        && getAfter(counterPath()).data.number == (exists(counterPath()) ? get(counterPath()).data.number + 1 : 1);
+    }
+    function profileValues() {
+      return request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
+        && request.resource.data.description is string && request.resource.data.description.size() <= 2000
+        && request.resource.data.profilePrivacy in ['public', 'private'] && request.resource.data.publicDomains is bool
+        && request.resource.data.verified == request.auth.token.email_verified
+        && request.resource.data.emailVerified == request.auth.token.email_verified;
+    }
+    function submissionValues() {
+      return request.resource.data.keys().hasAll(['id', 'uid', 'form', 'name', 'type', 'email', 'number', 'status', 'subject', 'message', 'created', 'updated'])
+        && request.resource.data.keys().hasOnly(['id', 'uid', 'form', 'name', 'type', 'email', 'number', 'status', 'subject', 'message', 'created', 'updated'])
+        && request.resource.data.form == 'contact' && request.resource.data.type == 'FormSubmission'
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
+        && request.resource.data.email is string && request.resource.data.email.size() > 0 && request.resource.data.email.size() <= 254
+        && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+[.][^\\s@]+$')
+        && request.resource.data.subject is string && request.resource.data.subject.size() > 0 && request.resource.data.subject.size() <= 200
+        && request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 5000
+        && request.resource.data.status == 'new' && request.resource.data.uid == (signedIn() ? request.auth.uid : '')
+        && request.resource.data.created == request.time && request.resource.data.updated == request.time;
+    }
+    function newSubmissionCounter() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['number', 'lastSubmissionId']) && data.keys().hasOnly(['number', 'lastSubmissionId'])
+        && data.number is int && data.number > 0 && data.lastSubmissionId is string && data.lastSubmissionId.size() < 200
+        && data.number == (exists(submissionCounterPath()) ? get(submissionCounterPath()).data.number + 1 : 1)
+        && !exists(submissionPath(data.lastSubmissionId))
+        && getAfter(submissionPath(data.lastSubmissionId)).data.id == data.lastSubmissionId
+        && getAfter(submissionPath(data.lastSubmissionId)).data.number == data.number;
+    }
+    match /identities/{firebaseUid} {
+      allow get: if signedIn() && firebaseUid == request.auth.uid;
+      allow create: if firebaseUid == request.auth.uid && newIdentity()
+        && request.resource.data.keys().hasOnly(['id', 'number', 'firebase_uid'])
+        && getAfter(userPath(request.resource.data.id)).data.firebase_uid == firebaseUid
+        && getAfter(userPath(request.resource.data.id)).data.number == request.resource.data.number;
+    }
+    match /counters/users {
+      allow get: if signedIn();
+      allow create: if newIdentity() && request.resource.data.keys().hasOnly(['number']) && request.resource.data.number == 1;
+      allow update: if newIdentity() && request.resource.data.keys().hasOnly(['number'])
+        && request.resource.data.number is int && request.resource.data.number == resource.data.number + 1;
+    }
+    match /counters/formSubmissions {
+      allow get: if true;
+      allow create, update: if newSubmissionCounter();
+    }
+    match /formSubmissions/{submissionId} {
+      allow read: if isOwner();
+      allow create: if submissionValues() && recordIdentity(submissionId, 'FormSubmission')
+        && submissionId.matches('FormSubmission_' + string(request.resource.data.number) + '_Contact_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
+        && getAfter(submissionCounterPath()).data.lastSubmissionId == submissionId
+        && getAfter(submissionCounterPath()).data.number == request.resource.data.number
+        && getAfter(submissionCounterPath()).data.number == (exists(submissionCounterPath()) ? get(submissionCounterPath()).data.number + 1 : 1);
+      allow update: if isOwner() && request.resource.data.status in ['new', 'read', 'archived']
+        && request.resource.data.updated == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated']);
+    }
+    match /users/{userId} {
+      allow get: if signedIn() && resource.data.firebase_uid == request.auth.uid;
+      allow create: if newIdentity() && recordIdentity(userId, 'User') && profileValues()
+        && request.resource.data.type == 'User' && request.resource.data.uid == request.auth.uid
+        && request.resource.data.firebase_uid == request.auth.uid && request.resource.data.number == getAfter(counterPath()).data.number
+        && getAfter(identityPath()).data.id == userId && request.resource.data.active == true
+        && request.resource.data.role == 'Subscriber' && request.resource.data.roles == ['Subscriber']
+        && request.resource.data.plan == 'free' && request.resource.data.profilePrivacy == 'private'
+        && request.resource.data.publicDomains == false && request.resource.data.email == request.auth.token.email;
+      allow update: if ownsAccount(userId) && profileValues()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'updated', 'verified', 'displayName', 'description', 'lastSignIn', 'lastUpdated',
+          'publicDomains', 'emailVerified', 'profilePrivacy', 'lastSignInTime'
+        ]);
+      match /domains/{recordId} {
+        allow read, delete: if ownsAccount(userId);
+        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Domain') && request.resource.data.uid == userId;
+      }
+      match /connections/{recordId} {
+        allow read, delete: if ownsAccount(userId);
+        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Connection')
+          && request.resource.data.keys().hasOnly(['id', 'number', 'provider', 'values'])
+          && request.resource.data.values is string
+          && request.resource.data.provider in ['vercel', 'godaddy', 'hostinger', 'namecheap', 'porkbun', 'namesilo', 'squarespace'];
+      }
+      match /auctionInventory/{recordId} {
+        allow read, delete: if ownsAccount(userId);
+        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Auction');
+      }
+      match /data/{recordId} {
+        allow read, delete: if ownsAccount(userId);
+        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Data') && request.resource.data.uid == userId
+          && request.resource.data.key is string && request.resource.data.value is string
+          && request.resource.data.revision is int && request.resource.data.revision > 0;
+      }
+      match /storageKeys/{keyId} {
+        allow read, delete: if ownsAccount(userId);
+        allow create, update: if ownsAccount(userId) && request.resource.data.keys().hasOnly(['id', 'key', 'number'])
+          && request.resource.data.id is string && request.resource.data.key is string
+          && request.resource.data.number is int && request.resource.data.number > 0;
+      }
+      match /snapshots/{snapshotId} {
+        allow read, delete: if ownsAccount(userId);
+        allow create, update: if ownsAccount(userId) && snapshotId in ['storage', 'portfolio', 'connections', 'auctionInventory'];
+      }
+    }
+    match /{document=**} {
+      allow read, write: if isOwner();
+    }
+  }
+}

@@ -6,6 +6,7 @@ import GoogleAuthButton from '../GoogleAuthButton';
 import { useLocalStorage } from '../../shared/config';
 import { elementProps } from '../../shared/elementProps';
 import { useAuthForm, type AuthMode } from './useAuthForm';
+import { firebaseEnabled } from '../../shared/firebase/config';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
@@ -117,7 +118,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               </View>
             )}
             <View {...elementProps(`auth-form-google`, mode)} style={styles.google}>
-              <GoogleAuthButton mode={mode} disabled={state.disabled} />
+              <GoogleAuthButton mode={mode} disabled={state.disabled} onPress={state.signInWithGoogle} />
               <View {...elementProps(`auth-form-email-divider`, mode)} style={styles.emailDivider}>
                 <View {...elementProps(`auth-form-email-divider-line`, `${mode}-start`)} style={styles.dividerLine} />
                 <Text {...elementProps(`auth-form-email-divider-label`, mode)} style={styles.dividerLabel}>{`or continue with email`}</Text>
@@ -228,7 +229,7 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               <View {...elementProps(`auth-form-local-note`, mode)} style={styles.localNote}>
                 <HardDrive {...elementProps(`auth-form-local-note-icon`, mode)} size={16} color={palette.muted} />
                 <Text {...elementProps(`auth-form-local-note-copy`, mode)} style={styles.localCopy}>
-                  {useLocalStorage ? `Manage your portfolio with your account.` : `Accounts are available once the service is connected.`}
+                  {useLocalStorage || firebaseEnabled ? `Manage your portfolio and connections with your account.` : `Accounts are available once the service is connected.`}
                 </Text>
               </View>
             )}

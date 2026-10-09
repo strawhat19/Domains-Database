@@ -1,0 +1,20 @@
+:is(.toast-stack, [data-class='toast-stack']) {
+  left: auto !important;
+  position: fixed !important;
+  max-height: calc(100dvh - 48px) !important;
+  width: min(720px, calc(100vw - 48px)) !important;
+}
+:is(.toast-stack-scroll, [data-class='toast-stack-scroll']) { max-height: calc(100dvh - 48px) !important; }
+:is(.toast-stack-item, [data-class='toast-stack-item']) :is(.toast, [data-class='toast']) { animation: none !important; }
+@media (max-width: 600px) {
+  :is(.toast-stack, [data-class='toast-stack']) {
+    right: 16px !important;
+    width: calc(100vw - 32px) !important;
+    bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    max-height: calc(100dvh - 32px - env(safe-area-inset-bottom)) !important;
+  }
+  :is(.toast-stack-scroll, [data-class='toast-stack-scroll']) { max-height: calc(100dvh - 32px - env(safe-area-inset-bottom)) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.toast-stack, [data-class='toast-stack']) :is(.toast, [data-class='toast']) { animation: none; }
+}

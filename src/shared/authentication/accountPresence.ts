@@ -1,4 +1,7 @@
+import { useLocalStorage } from '../config';
 import { readStorage } from '../common/storage';
+import { firebaseEnabled } from '../firebase/config';
+import { hasSavedAccount as hasFirebaseAccount } from './firebase';
 import { AUTH_ACCOUNTS_KEY, AUTH_SESSION_KEY } from './service';
 
 export const AUTH_PRESENCE_KEYS = [`user`, `users`, AUTH_SESSION_KEY, AUTH_ACCOUNTS_KEY];
@@ -12,6 +15,7 @@ const containsUser = (value: unknown): boolean => {
 };
 
 export const hasSavedAccount = async (): Promise<boolean> => {
+  if (firebaseEnabled && !useLocalStorage) return hasFirebaseAccount();
   const storedValues = await Promise.all(AUTH_PRESENCE_KEYS.map(readStorage));
   return storedValues.some(stored => {
     if (!stored?.trim()) return false;

@@ -1,3 +1,3 @@
-import StaticRoute from '../src/components/StaticRoute';
+import ContactPage from '../src/components/ContactPage';
 
-export default function ContactPage() { return <StaticRoute page={`contact`} />; }
+export default ContactPage;
