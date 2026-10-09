@@ -10,23 +10,75 @@ import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
 import NotificationBell from '../NotificationBell';
 import { routes } from '../../shared/routes';
+import { useDomainsMenu } from './useDomainsMenu';
 import type { CSSProperties, PropsWithChildren } from 'react';
 import { useShellScroll } from './useShellScroll.web';
 import { useMobileNavigation } from './useMobileNavigation';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, footerLinks } from './useAppShell';
-import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck } from 'lucide-react';
+
+const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.auction.href, routes.community.href];
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
   const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport } = useAppShell();
   const { isDark, error: themeError, clearError: clearThemeError } = useTheme();
+  const domainsMenu = useDomainsMenu(pathname);
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn;
   const navigationLinks = navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href);
-  const topRowCount = Math.ceil(navigationLinks.length / 2);
-  const bottomRowCount = Math.max(1, navigationLinks.length - topRowCount);
   const MenuIcon = mobileNavigation.open ? X : Menu;
+  const domainSubmenuLinks = navigationLinks.filter(item => domainSubmenuPaths.includes(item.href));
+  const headerLinks = navigationLinks.filter(item => !domainsMenu.grouped || !domainSubmenuPaths.includes(item.href));
+  const renderNavigationLink = (item: (typeof navigation)[number]) => {
+    const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, UsersRound }[item.icon];
+    const beta = `beta` in item && item.beta;
+    const active = pathname === item.href || (item.href === routes.blog.href && pathname.startsWith(`${item.href}/`));
+    return (
+      <Link key={item.label} href={item.href} asChild>
+        <RouterAnchor
+          onClick={domainsMenu.close}
+          id={`header-link-${item.label.toLowerCase()}`}
+          aria-label={item.accessibilityLabel}
+          aria-busy={item.countLoading || undefined}
+          aria-current={active ? `page` : undefined}
+          className={`header-link${active ? ` header-link-active` : ``}`}
+        >
+          <Icon
+            size={14}
+            aria-hidden={`true`}
+            className={`header-link-icon`}
+            id={`header-link-icon-${item.label.toLowerCase()}`}
+          />
+          <span
+            className={`header-link-text`}
+            id={`header-link-text-${item.label.toLowerCase()}`}
+          >
+            {item.label}
+          </span>
+          {(item.countLoading || (item.count ?? 0) > 0) && (
+            <span
+              aria-hidden
+              className={`header-link-count${item.countLoading ? ` header-link-count-skeleton` : ``}`}
+              id={`header-link-count-${item.label.toLowerCase()}`}
+            >
+              {item.countLoading ? null : item.count}
+            </span>
+          )}
+          {beta && (
+            <span
+              aria-hidden
+              className={`header-link-beta`}
+              id={`header-link-beta-${item.label.toLowerCase()}`}
+            >
+              {`Beta`}
+            </span>
+          )}
+        </RouterAnchor>
+      </Link>
+    );
+  };
 
   return (
     <div
@@ -79,57 +131,47 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
               <div
                 id={`header-navigation-links`}
                 className={`header-navigation-links`}
-                style={{
-                  [`--header-navigation-top-span`]: bottomRowCount,
-                  [`--header-navigation-bottom-span`]: topRowCount,
-                  [`--header-navigation-columns`]: topRowCount * bottomRowCount,
-                } as CSSProperties}
               >
-                {navigationLinks.map((item, index) => {
-                  const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, UsersRound }[item.icon];
-                  const beta = `beta` in item && item.beta;
-                  const active = pathname === item.href || (item.href === routes.blog.href && pathname.startsWith(`${item.href}/`));
+                {headerLinks.map(item => {
+                  if (item.href !== routes.domains.href || !domainsMenu.grouped || !domainSubmenuLinks.length) return renderNavigationLink(item);
                   return (
-                    <Link key={item.label} href={item.href} asChild>
-                      <RouterAnchor
-                        id={`header-link-${item.label.toLowerCase()}`}
-                        className={`header-link${index >= topRowCount ? ` header-link-bottom-row` : ``}${active ? ` header-link-active` : ``}`}
-                        aria-label={item.accessibilityLabel}
-                        aria-busy={item.countLoading || undefined}
-                        aria-current={active ? `page` : undefined}
-                      >
-                        <Icon
-                          size={14}
-                          aria-hidden={`true`}
-                          className={`header-link-icon`}
-                          id={`header-link-icon-${item.label.toLowerCase()}`}
-                        />
-                        <span
-                          className={`header-link-text`}
-                          id={`header-link-text-${item.label.toLowerCase()}`}
+                    <div
+                      key={item.label}
+                      ref={domainsMenu.rootRef}
+                      id={`header-domains-menu`}
+                      className={`header-domains-menu`}
+                      data-open={domainsMenu.open || undefined}
+                      data-active={pathname === item.href || domainSubmenuLinks.some(link => pathname === link.href) || undefined}
+                      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) domainsMenu.close(); }}
+                      onPointerEnter={event => { if (event.pointerType === `mouse`) domainsMenu.expand(); }}
+                      onPointerLeave={event => { if (!event.currentTarget.querySelector(`#header-domains-submenu`)?.contains(document.activeElement)) domainsMenu.close(); }}
+                    >
+                      <div id={`header-domains-parent`} className={`header-domains-parent`}>
+                        {renderNavigationLink(item)}
+                        <button
+                          type={`button`}
+                          ref={domainsMenu.toggleRef}
+                          onClick={domainsMenu.toggle}
+                          id={`header-domains-toggle`}
+                          className={`header-domains-toggle`}
+                          aria-expanded={domainsMenu.open}
+                          aria-controls={`header-domains-submenu`}
+                          aria-label={domainsMenu.open ? `Collapse Domains Submenu` : `Expand Domains Submenu`}
                         >
-                          {item.label}
-                        </span>
-                        {(item.countLoading || (item.count ?? 0) > 0) && (
-                          <span
-                            aria-hidden
-                            className={`header-link-count${item.countLoading ? ` header-link-count-skeleton` : ``}`}
-                            id={`header-link-count-${item.label.toLowerCase()}`}
-                          >
-                            {item.countLoading ? null : item.count}
-                          </span>
-                        )}
-                        {beta && (
-                          <span
-                            aria-hidden
-                            className={`header-link-beta`}
-                            id={`header-link-beta-${item.label.toLowerCase()}`}
-                          >
-                            {`Beta`}
-                          </span>
-                        )}
-                      </RouterAnchor>
-                    </Link>
+                          <ChevronDown size={14} aria-hidden id={`header-domains-chevron`} className={`header-domains-chevron`} />
+                        </button>
+                      </div>
+                      <div
+                        role={`group`}
+                        inert={!domainsMenu.open}
+                        id={`header-domains-submenu`}
+                        className={`header-domains-submenu`}
+                        aria-hidden={!domainsMenu.open}
+                        aria-label={`Domains Submenu`}
+                      >
+                        {domainSubmenuLinks.map(renderNavigationLink)}
+                      </div>
+                    </div>
                   );
                 })}
               </div>

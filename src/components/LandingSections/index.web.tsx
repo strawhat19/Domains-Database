@@ -7,13 +7,14 @@ import StackPillShape from '../StackPillShape';
 import LandingOverview from '../LandingOverview';
 import { getBlogHref } from '../../shared/blog/metadata';
 import { useLandingActivity } from './useLandingActivity.web';
-import { activityCells, domainBasics, landingPlans } from './content';
+import { activityCells, domainBasics, landingPlans, ctaActivityCells } from './content';
 import { Check, Globe2, Server, LayoutTemplate, BookOpen, ArrowRight, ArrowUpRight, LockKeyhole } from 'lucide-react';
 
 const basicIcons = { domain: Globe2, hosting: Server, website: LayoutTemplate };
 
 const LandingSections = () => {
   const activity = useLandingActivity();
+  const ctaActivity = useLandingActivity();
   const renderCardShape = (id: string) => (
     <>
       <div aria-hidden id={`${id}-backing`} className={`landing-card-backing`}>
@@ -25,25 +26,6 @@ const LandingSections = () => {
 
   return (
     <div id={`landing-sections`} className={`landing-sections`}>
-      <LandingOverview />
-
-      <section id={`landing-portfolio-cta`} className={`landing-section landing-portfolio-cta`} aria-labelledby={`landing-cta-title`}>
-        <div id={`landing-cta-inner`} className={`landing-section-inner landing-cta-inner`}>
-          <div id={`landing-cta-copy`} className={`landing-heading-copy`}>
-            <p id={`landing-cta-eyebrow`} className={`landing-eyebrow`}>{`Less Scattered. More Sorted.`}</p>
-            <h2 id={`landing-cta-title`} className={`landing-section-title`}>{`Your next idea deserves a place.`}</h2>
-            <p id={`landing-cta-description`} className={`landing-section-description`}>{`Bring your domains, projects, registrars, and renewal dates together. Leave a little more room for what comes next.`}</p>
-          </div>
-          <Link asChild href={routes.domains.href}>
-            <RouterAnchor id={`landing-cta-button`} className={`landing-button landing-button-primary`}>
-              <Globe2 size={16} aria-hidden id={`landing-cta-icon`} className={`landing-link-icon`} />
-              <span id={`landing-cta-label`} className={`landing-link-label`}>{`Explore Your Portfolio`}</span>
-              <ArrowRight size={16} aria-hidden id={`landing-cta-arrow`} className={`landing-link-icon`} />
-            </RouterAnchor>
-          </Link>
-        </div>
-      </section>
-
       <section id={`landing-domain-basics`} className={`landing-section landing-domain-basics`} aria-labelledby={`landing-basics-title`}>
         <div id={`landing-basics-inner`} className={`landing-section-inner`}>
           <div id={`landing-basics-heading`} className={`landing-section-heading`}>
@@ -83,6 +65,43 @@ const LandingSections = () => {
           </p>
         </div>
       </section>
+
+      <section id={`landing-portfolio-cta`} className={`landing-section landing-portfolio-cta`} aria-labelledby={`landing-cta-title`}>
+        <div id={`landing-cta-inner`} className={`landing-section-inner landing-cta-inner`}>
+          <div id={`landing-cta-copy`} className={`landing-heading-copy`}>
+            <p id={`landing-cta-eyebrow`} className={`landing-eyebrow`}>{`Less Scattered. More Sorted.`}</p>
+            <h2 id={`landing-cta-title`} className={`landing-section-title`}>{`Your next idea deserves a place.`}</h2>
+            <p id={`landing-cta-description`} className={`landing-section-description`}>{`Bring your domains, projects, registrars, and renewal dates together. Leave a little more room for what comes next.`}</p>
+          </div>
+          <div id={`landing-cta-actions`} className={`landing-cta-actions`}>
+            <div
+              aria-hidden
+              ref={ctaActivity.gridRef}
+              data-paused={ctaActivity.paused}
+              id={`landing-cta-activity-grid`}
+              className={`landing-activity-grid landing-cta-activity-grid`}
+            >
+              {ctaActivityCells.map(cell => (
+                <span
+                  key={cell.index}
+                  id={`landing-cta-activity-cell-${cell.index}`}
+                  className={`landing-activity-cell landing-activity-level-${cell.level}`}
+                  style={{ [`--activity-delay`]: `${-(Math.floor(cell.index / 7) * .18 + cell.index % 7 * .32)}s` } as CSSProperties}
+                />
+              ))}
+            </div>
+            <Link asChild href={routes.domains.href}>
+              <RouterAnchor id={`landing-cta-button`} className={`landing-button landing-button-primary`} aria-label={`Explore Your Portfolio`}>
+                <Globe2 size={16} aria-hidden id={`landing-cta-icon`} className={`landing-link-icon`} />
+                <span id={`landing-cta-label`} className={`landing-link-label`}>{`Explore`}</span>
+                <ArrowRight size={16} aria-hidden id={`landing-cta-arrow`} className={`landing-link-icon`} />
+              </RouterAnchor>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <LandingOverview />
 
       <section id={`landing-pricing`} className={`landing-section landing-pricing`} aria-labelledby={`landing-pricing-title`}>
         <div id={`landing-pricing-inner`} className={`landing-section-inner`}>

@@ -89,7 +89,7 @@ const Hero = ({ search }: HeroProps) => {
               aria-busy={search.trendingCountLoading}
               id={`hero-trending-link`}
               className={`hero-trending-link${useStackPill ? ` hero-button-stack` : ``}`}
-              aria-label={search.trendingCount > 0 ? `Explore ${search.trendingCount.toLocaleString()} Trending Domains` : `Explore Trending Domains`}
+              aria-label={search.trendingCount > 0 ? `Discover ${search.trendingCount.toLocaleString()} Domains` : `Discover Domains`}
             >
               {useStackPill && <StackPillShape sharp id={`hero-trending-shape`} />}
               <span id={`hero-trending-text`} className={`hero-trending-text`}>
@@ -102,7 +102,7 @@ const Hero = ({ search }: HeroProps) => {
                 ) : search.trendingCount > 0 && (
                   <span id={`hero-trending-count`} className={`hero-cta-count`}>{`${search.trendingCount.toLocaleString()} `}</span>
                 )}
-                {`Trending`}
+                {`Discover`}
               </span>
               <TrendingUp size={12} aria-hidden id={`hero-trending-icon`} className={`hero-trending-icon`} />
             </RouterAnchor>

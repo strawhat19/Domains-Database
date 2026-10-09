@@ -30,7 +30,7 @@ const Hero = ({ search }: HeroProps) => {
   const trendingFill = heroPalette.accent;
   const trendingText = heroPalette.contrast;
   const domainsLabel = search.domainCount > 0 ? `${search.domainCount.toLocaleString()} Domains` : `Domains`;
-  const trendingLabel = search.trendingCount > 0 ? `${search.trendingCount.toLocaleString()} Trending` : `Trending`;
+  const trendingLabel = search.trendingCount > 0 ? `${search.trendingCount.toLocaleString()} Domains` : `Domains`;
   const compact = width < 600;
   const accentSize = Math.min(52, Math.max(28, (width - 48) * .105));
   const [searchFocused, setSearchFocused] = useState(false);
@@ -258,7 +258,7 @@ const Hero = ({ search }: HeroProps) => {
             <Pressable
               accessibilityRole={`link`}
               accessibilityState={{ busy: search.trendingCountLoading }}
-              accessibilityLabel={`Explore ${trendingLabel} Domains`}
+              accessibilityLabel={`Discover ${trendingLabel}`}
               {...elementProps(`hero-trending-link`)}
               style={({ pressed }) => [styles.domainsLink, styles.trendingLink, useStackPill && styles.stackButton, pressed && styles.recentPressed]}
             >
@@ -286,7 +286,7 @@ const Hero = ({ search }: HeroProps) => {
                     {` `}
                   </>
                 )}
-                {`Trending`}
+                {`Discover`}
               </Text>
               <TrendingUp {...elementProps(`hero-trending-icon`)} size={12} color={trendingText} style={styles.buttonContent} />
             </Pressable>

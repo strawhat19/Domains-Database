@@ -1,8 +1,8 @@
 import { Data } from '../Data';
 import type { JSONValue } from '../Data';
 import { Types } from '../../../types/types';
-import { isAppCollectionID } from '../../common/ids';
 import type { DomainTag } from '../../domainTags';
+import { isAppCollectionID } from '../../common/ids';
 import { normalizeDomainTags } from '../../domainTags';
 import { restoreDomainPrice } from '../../domainPricing';
 import { normalizeDomainProjectStatus } from '../../domainProject';

@@ -66,3 +66,5 @@ export const activityCells = Array.from({ length: 196 }, (_, index) => {
     duration: 5 + seed % 5,
   };
 });
+
+export const ctaActivityCells = activityCells.filter(cell => cell.index % 7 < 4);

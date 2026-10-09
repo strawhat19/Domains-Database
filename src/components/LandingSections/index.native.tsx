@@ -9,7 +9,7 @@ import { elementProps } from '../../shared/elementProps';
 import { getBlogHref } from '../../shared/blog/metadata';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
-import { activityCells, domainBasics, landingPlans } from './content';
+import { activityCells, domainBasics, landingPlans, ctaActivityCells } from './content';
 import { Text, View, Easing, Animated, Pressable, useWindowDimensions } from 'react-native';
 import { Check, LockKeyhole, Globe2, Server, PanelTop, ArrowUpRight } from 'lucide-react-native';
 
@@ -23,6 +23,7 @@ const LandingSections = () => {
   const columns = width >= 900 ? 3 : 1;
   const contentWidth = Math.max(0, Math.min(width, 1120) - (compact ? 40 : 64));
   const cardWidth = (contentWidth - (columns - 1) * 14) / columns;
+  const ctaActivityRows = Array.from({ length: 4 }, (_, row) => ctaActivityCells.filter(cell => cell.index % 7 === row));
   const activityRows = Array.from({ length: 7 }, (_, row) => activityCells.filter(cell => cell.index % 7 === row));
   const activityColors = [palette.line, `${palette.accent}40`, `${palette.accent}70`, `${palette.accent}b0`, palette.accent];
 
@@ -89,19 +90,6 @@ const LandingSections = () => {
 
   return (
     <View {...elementProps(`landing-sections`)} style={styles.sections}>
-      <LandingOverview />
-
-      <View {...elementProps(`landing-portfolio-cta`)} style={[styles.section, styles.alternateSection, compact && styles.compactSection]}>
-        <View {...elementProps(`landing-portfolio-cta-inner`)} style={[styles.inner, styles.cta, width >= 800 && styles.wideCta]}>
-          <View {...elementProps(`landing-portfolio-cta-copy`)} style={styles.ctaCopy}>
-            <Text {...elementProps(`landing-portfolio-cta-eyebrow`)} style={styles.eyebrow}>{`PUT YOUR IDEAS IN ORDER`}</Text>
-            <Text {...elementProps(`landing-portfolio-cta-title`)} style={styles.title} accessibilityRole={`header`}>{`Good names deserve a place to grow`}</Text>
-            <Text {...elementProps(`landing-portfolio-cta-description`)} style={styles.description}>{`Bring your domains, registrars, and renewal dates together. Keep your next move in view.`}</Text>
-          </View>
-          {renderLink(`landing-open-portfolio-link`, routes.domains.href, `Open Your Portfolio`)}
-        </View>
-      </View>
-
       <View {...elementProps(`landing-domain-basics`)} style={[styles.section, compact && styles.compactSection]}>
         <View {...elementProps(`landing-domain-basics-inner`)} style={styles.inner}>
           {renderHeading(`landing-domain-basics`, `THE BASICS`, `What are domains?`, `Your address, your hosting, and your website work together. Each has a different job.`)}
@@ -127,6 +115,54 @@ const LandingSections = () => {
           </View>
         </View>
       </View>
+
+      <View {...elementProps(`landing-portfolio-cta`)} style={[styles.section, styles.alternateSection, compact && styles.compactSection]}>
+        <View {...elementProps(`landing-portfolio-cta-inner`)} style={[styles.inner, styles.cta, width >= 800 && styles.wideCta]}>
+          <View {...elementProps(`landing-portfolio-cta-copy`)} style={styles.ctaCopy}>
+            <Text {...elementProps(`landing-portfolio-cta-eyebrow`)} style={styles.eyebrow}>{`PUT YOUR IDEAS IN ORDER`}</Text>
+            <Text {...elementProps(`landing-portfolio-cta-title`)} style={styles.title} accessibilityRole={`header`}>{`Good names deserve a place to grow`}</Text>
+            <Text {...elementProps(`landing-portfolio-cta-description`)} style={styles.description}>{`Bring your domains, registrars, and renewal dates together. Keep your next move in view.`}</Text>
+          </View>
+          <View {...elementProps(`landing-portfolio-cta-actions`)} style={[styles.ctaActions, width >= 800 && styles.wideCtaActions]}>
+            <View
+              accessible={false}
+              pointerEvents={`none`}
+              accessibilityElementsHidden
+              importantForAccessibility={`no-hide-descendants`}
+              {...elementProps(`landing-cta-activity-grid`)}
+              style={styles.ctaActivityGrid}
+            >
+              {ctaActivityRows.map((row, index) => (
+                <View key={index} {...elementProps(`landing-cta-activity-row`, `${index}`)} style={styles.ctaActivityRow}>
+                  {row.map(cell => {
+                    const phase = phases[Math.floor(cell.index / 7) % phases.length];
+                    return (
+                      <Animated.View
+                        key={cell.index}
+                        accessible={false}
+                        {...elementProps(`landing-cta-activity-cell`, `${cell.index}`)}
+                        style={[
+                          styles.ctaActivityCell,
+                          {
+                            opacity: cell.level ? phase : .4,
+                            backgroundColor: activityColors[cell.level],
+                            transform: [{ scale: cell.level ? phase.interpolate({ inputRange: [.35, 1], outputRange: [.65, 1] }) : 1 }],
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+            <View {...elementProps(`landing-portfolio-cta-action-link`)} style={[styles.ctaActionLink, width >= 800 && styles.wideCtaActionLink]}>
+              {renderLink(`landing-open-portfolio-link`, routes.domains.href, `Explore`)}
+            </View>
+          </View>
+        </View>
+      </View>
+
+      <LandingOverview />
 
       <View {...elementProps(`landing-pricing`)} style={[styles.section, compact && styles.compactSection]}>
         <View {...elementProps(`landing-pricing-inner`)} style={styles.inner}>
