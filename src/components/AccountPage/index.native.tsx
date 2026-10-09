@@ -78,17 +78,27 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
                       <View {...elementProps(`profile-value-row`, field.key)} style={styles.valueRow}>
                         {field.key === `email` && (
                           <Image
-                            accessible={false}
                             source={googleLogo}
                             style={styles.valueIcon}
                             resizeMode={`contain`}
-                            accessibilityElementsHidden
-                            accessibilityIgnoresInvertColors
-                            importantForAccessibility={`no`}
                             {...elementProps(`profile-value-icon`, field.key)}
+                            {...(Platform.OS === `web` ? { 'aria-hidden': true } : {
+                              accessible: false,
+                              accessibilityElementsHidden: true,
+                              accessibilityIgnoresInvertColors: true,
+                              importantForAccessibility: `no` as const,
+                            })}
                           />
                         )}
-                        {Icon && <Icon {...elementProps(`profile-value-icon`, field.key)} size={16} color={palette.accent} style={styles.valueIcon} accessible={false} />}
+                        {Icon && (
+                          <Icon
+                            size={16}
+                            color={palette.accent}
+                            style={styles.valueIcon}
+                            {...elementProps(`profile-value-icon`, field.key)}
+                            {...(Platform.OS === `web` ? { 'aria-hidden': true } : { accessible: false })}
+                          />
+                        )}
                         <Text {...elementProps(`profile-value`, field.key)} style={[styles.value, styles.valueText]} selectable>{field.value || `—`}</Text>
                       </View>
                     </View>
