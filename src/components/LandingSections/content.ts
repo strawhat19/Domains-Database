@@ -22,13 +22,6 @@ export const domainBasics = [
   },
 ];
 
-export const portfolioSteps = [
-  { id: `idea`, label: `Idea`, description: `Find a name with potential` },
-  { id: `plan`, label: `Plan`, description: `Give every name a purpose` },
-  { id: `manage`, label: `Manage`, description: `Keep renewals in view` },
-  { id: `launch`, label: `Launch`, description: `Make the next move` },
-];
-
 export const landingPlans = [
   {
     id: `free`,

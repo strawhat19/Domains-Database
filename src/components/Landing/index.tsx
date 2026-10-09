@@ -4,7 +4,7 @@ import { useHeroSearch } from '../Hero/useHeroSearch';
 
 const Landing = () => {
   const search = useHeroSearch();
-  return <><Hero search={search} /><LandingSections search={search} /></>;
+  return <><Hero search={search} /><LandingSections /></>;
 };
 
 export default Landing;
