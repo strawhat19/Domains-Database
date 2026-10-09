@@ -1,27 +1,13 @@
 import { useRef, useEffect, useState } from 'react';
 import { connectionsAPI } from '../../api/connections';
 import { useAuth } from '../../shared/authContext/useAuth';
-import { normalizeDomainName } from '../../shared/domainUtils';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { formatSyncNotice } from '../../shared/registrarSync/messages';
 import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
 import { createConnectionDraft } from '../../shared/connections/values';
-import { connectionInputValue, connectionInputFields, supportsRegistrarSync, withConnectionInputValue, type ConnectionInputKey } from '../../shared/connections/inputs';
+import { connectionInputValue, supportsRegistrarSync, withConnectionInputValue, type ConnectionInputKey } from '../../shared/connections/inputs';
 import { connectionFields, type AccountConnectionsProps, type ConnectionAccount, type ConnectionProvider } from '../../shared/connections/types';
 
-const externalDomainLine = /^\s*(?:export\s+)?HOSTINGER_EXTERNAL_DOMAINS\s*=/;
-const externalDomains = (values: string) => {
-  const line = values.split(/\r?\n/).find(value => externalDomainLine.test(value));
-  const raw = line?.slice(line.indexOf(`=`) + 1)?.trim() ?? ``;
-  const names = raw.match(/^(['"])([\s\S]*)\1$/)?.[2] ?? raw;
-  return [...new Set(names.split(`,`).map(name => name.trim().toLowerCase()).filter(Boolean))];
-};
-const includeExternalDomain = (values: string, name: string) => {
-  const names = [...new Set([...externalDomains(values), name])];
-  if (names.length > 200) throw new Error(`Hostinger Supports Up To 200 Confirmed External Domains`);
-  const lines = values.split(/\r?\n/).filter(line => !externalDomainLine.test(line));
-  return [...lines, `HOSTINGER_EXTERNAL_DOMAINS=${names.join(`,`)}`].filter(Boolean).join(`\n`);
-};
 const withDrafts = (accounts: readonly ConnectionAccount[]) => [
   ...accounts,
   ...connectionFields.filter(field => !accounts.some(account => account.provider === field.id)).map(field => createConnectionDraft(field.id)),
@@ -45,7 +31,6 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   const [notice, setNotice] = useState(``);
   const [visibility, setVisibility] = useState<Record<string, boolean>>({});
   const [viewActor, setViewActor] = useState(actorKey);
-  const [includingKey, setIncludingKey] = useState(``);
   const [hasSyncedDomains, setHasSyncedDomains] = useState(false);
   const [accounts, setAccounts] = useState<ConnectionAccount[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<ConnectionProvider>(connectionFields[0].id);
@@ -63,7 +48,6 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     setLoading(true);
     setViewActor(actorKey);
     setAccounts([]);
-    setIncludingKey(``);
     setError(``);
     setNotice(``);
     setVisibility({});
@@ -98,7 +82,6 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   const finishOperation = (operation: number) => {
     if (!isCurrent(operation)) return;
     operationBusy.current = false;
-    setIncludingKey(``);
     setBusy(false);
   };
   const editAccount = (id: string, change: (account: ConnectionAccount) => ConnectionAccount) => {
@@ -112,7 +95,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   const change = (id: string, key: ConnectionInputKey, value: string) => {
     if (!isCurrent() || operationBusy.current || loading || syncing) return;
     if (/[\r\n\u0000]/.test(value)) { setError(`Enter One Connection Value Per Field`); return; }
-    if (connectionInputFields[key].secret) setVisibility(current => ({ ...current, [`${id}:${key}`]: true }));
+    setVisibility(current => ({ ...current, [`${id}:${key}`]: true }));
     editAccount(id, account => ({ ...account, values: withConnectionInputValue(account, key, value) }));
   };
   const add = (provider: ConnectionProvider) => {
@@ -198,56 +181,24 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     } catch { if (isCurrent(operation)) setError(`Could Not Remove Connections`); }
     finally { finishOperation(operation); }
   };
-  const includeDomain = async (accountId: string, candidateName: string) => {
-    if (!accountStatuses[accountId]?.discoveredDomains?.some(domain => domain.name === candidateName)) return;
-    const request = beginOperation();
-    if (!request) return;
-    const { operation, userId } = request;
-    try {
-      const name = normalizeDomainName(candidateName);
-      setIncludingKey(`${accountId}:${name}`);
-      const latest = await connectionsAPI.getConnections(userId);
-      if (!isCurrent(operation) || latest.userId !== userId) return;
-      const account = latest.accounts.find(value => value.id === accountId && value.provider === `hostinger`);
-      if (!account) throw new Error(`Save Your Hostinger Connection Before Including Domains`);
-      const values = includeExternalDomain(account.values, name);
-      const snapshot = await connectionsAPI.saveConnections(latest.accounts.map(value => value.id === accountId ? { ...value, values } : value), userId);
-      if (!isCurrent(operation) || snapshot.userId !== userId) return;
-      setAccounts(current => current.map(value => {
-        if (value.id !== accountId) return value;
-        try { return { ...value, values: includeExternalDomain(value.values, name) }; }
-        catch { return value; }
-      }));
-      setNotice(`Ownership Confirmed — Checking Domains…`);
-      const result = await syncConnections(snapshot, [accountId]);
-      if (!isCurrent(operation)) return;
-      setHasSyncedDomains(result.count > 0);
-      setNotice(syncNotice(`Ownership Confirmed`, result));
-      setError(result.errors.join(`\n`));
-    } catch (failure) {
-      if (isCurrent(operation)) setError(failure instanceof Error ? failure.message : `Could Not Include Domain`);
-    } finally { finishOperation(operation); }
-  };
   const dismiss = () => { setError(``); setNotice(``); setHasSyncedDomains(false); };
   const currentView = viewActor === actorKey;
   const inputValue = (account: ConnectionAccount, key: ConnectionInputKey) => currentView ? connectionInputValue(account, key) : ``;
   const isVisible = (account: ConnectionAccount, key: ConnectionInputKey) => currentView
-    && (!connectionInputFields[key].secret || !inputValue(account, key).trim() || (visibility[`${account.id}:${key}`] ?? !account.number));
+    && (!inputValue(account, key).trim() || (visibility[`${account.id}:${key}`] ?? !account.number));
   const toggleVisibility = (account: ConnectionAccount, key: ConnectionInputKey) => {
-    if (!isCurrent() || operationBusy.current || loading || syncing || !connectionInputFields[key].secret || !inputValue(account, key).trim()) return;
+    if (!isCurrent() || operationBusy.current || loading || syncing || !inputValue(account, key).trim()) return;
     setVisibility(current => ({ ...current, [`${account.id}:${key}`]: !isVisible(account, key) }));
   };
-  const discoveredDomains = (account: ConnectionAccount) => currentView ? (accountStatuses[account.id]?.discoveredDomains ?? [])
-    .filter(domain => !externalDomains(account.values).includes(domain.name.toLowerCase())) : [];
   return {
-    add, save, clear, change, remove, dismiss, syncing, isVisible, inputValue, includeDomain, toggleVisibility,
-    accountStatuses, discoveredDomains,
+    add, save, clear, change, remove, dismiss, syncing, isVisible, inputValue, toggleVisibility,
+    accountStatuses,
     fields, activeProvider,
     selectProvider: setSelectedProvider,
     signedIn: !!user?.id,
     busy: currentView && busy, loading: !currentView || loading,
     showDomainsLink: currentView && !busy && hasSyncedDomains,
-    error: currentView ? error : ``, notice: currentView ? notice : ``, includingKey: currentView ? includingKey : ``,
+    error: currentView ? error : ``, notice: currentView ? notice : ``,
     accounts: currentView ? accounts.filter(account => !providers || providers.includes(account.provider)) : [],
   };
 };

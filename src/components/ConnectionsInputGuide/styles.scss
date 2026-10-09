@@ -1,0 +1,34 @@
+:is(.connections-guide-dot-button, [data-class='connections-guide-dot-button']),
+:is(.connections-guide-playback, [data-class='connections-guide-playback']) {
+  cursor: pointer;
+  transition: background-color .18s ease, opacity .18s ease;
+
+  &:hover {
+    background-color: var(--subtle);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  &[aria-disabled='true'] {
+    cursor: default;
+  }
+}
+
+:is(.connections-guide-dot, [data-class='connections-guide-dot']) {
+  transition: background-color .18s ease;
+}
+
+:is(.connections-guide-slide, [data-class='connections-guide-slide']) {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.connections-guide-dot, [data-class='connections-guide-dot']),
+  :is(.connections-guide-playback, [data-class='connections-guide-playback']),
+  :is(.connections-guide-dot-button, [data-class='connections-guide-dot-button']) {
+    transition: none;
+  }
+}

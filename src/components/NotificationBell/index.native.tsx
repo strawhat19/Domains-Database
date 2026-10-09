@@ -23,9 +23,9 @@ const NotificationBell = () => {
       <Pressable
         onPress={toggle}
         accessibilityRole={`button`}
-        accessibilityState={{ expanded: open }}
+        accessibilityState={{ busy: loading, expanded: open }}
         {...elementProps(`native-header-notifications-toggle`)}
-        accessibilityLabel={`Notifications, ${count} updates`}
+        accessibilityLabel={loading ? `Notifications, Loading Updates` : `Notifications, ${count} updates`}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       >
         <Bell
@@ -34,7 +34,7 @@ const NotificationBell = () => {
           {...elementProps(`native-header-notifications-icon`)}
         />
         <View
-          style={styles.badge}
+          style={[styles.badge, loading && { backgroundColor: palette.skeleton }]}
           accessibilityElementsHidden
           importantForAccessibility={`no-hide-descendants`}
           {...elementProps(`native-header-notifications-badge`)}
@@ -43,7 +43,7 @@ const NotificationBell = () => {
             style={styles.badgeText}
             {...elementProps(`native-header-notifications-badge-text`)}
           >
-            {count}
+            {loading ? `` : count}
           </Text>
         </View>
       </Pressable>
@@ -81,12 +81,18 @@ const NotificationBell = () => {
               >
                 {`Notifications`}
               </Text>
-              <Text
+              {loading ? (
+                <View
+                  accessible={false}
+                  style={styles.countSkeleton}
+                  {...elementProps(`native-header-notifications-count-skeleton`)}
+                />
+              ) : <Text
                 style={styles.count}
                 {...elementProps(`native-header-notifications-count`)}
               >
                 {`${count} updates`}
-              </Text>
+              </Text>}
               <Pressable
                 onPress={close}
                 accessibilityRole={`button`}

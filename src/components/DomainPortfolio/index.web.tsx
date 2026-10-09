@@ -120,12 +120,18 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     <section
       ref={portfolioRef}
       id={`domain-portfolio`}
+      aria-busy={portfolio.loading}
       aria-labelledby={`portfolio-title`}
       className={`domain-portfolio${compact ? `` : ` domain-portfolio-full`}`}
     >
       <p id={`portfolio-selection-help`} className={`portfolio-sr-only`}>
         {`Use Space to toggle a focused checkbox. Use Shift-click or Shift+Space to select or clear a range from your last selection. Use Shift+F10 or the Menu key in a table row to open actions for all selected domains.`}
       </p>
+      {portfolio.loading && (
+        <p role={`status`} id={`portfolio-loading-status`} className={`portfolio-sr-only`}>
+          {`Loading Domains…`}
+        </p>
+      )}
       <div id={`portfolio-heading-row`} className={`portfolio-heading-row`}>
         <div id={`portfolio-heading`} className={`portfolio-heading`}>
           <span id={`portfolio-eyebrow`} className={`portfolio-eyebrow`}>
@@ -137,7 +143,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           <div id={`portfolio-summary`} className={`portfolio-summary`}>
             <span id={`portfolio-domain-total`} className={`portfolio-summary-item`}>
               <span id={`portfolio-domain-count`} className={`portfolio-summary-value`}>
-                {portfolio.loading ? `—` : portfolio.summary.count}
+                {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-domain-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} /> : portfolio.summary.count}
               </span>
               {` ${portfolio.summary.count === 1 ? `Domain` : `Domains`}`}
             </span>
@@ -170,7 +176,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </span>
             <span id={`portfolio-attention`} className={`portfolio-summary-item ${portfolio.summary.attention ? `portfolio-summary-attention` : ``}`}>
               <span id={`portfolio-attention-dot`} className={`portfolio-attention-dot`} aria-hidden={`true`} />
-              {portfolio.loading ? `— need attention` : `${portfolio.summary.attention} need attention`}
+              {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-attention-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} />{` need attention`}</> : `${portfolio.summary.attention} need attention`}
             </span>
             {showAnnualSpend && (
               <>
@@ -178,7 +184,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   {`·`}
                 </span>
                 <span id={`portfolio-annual-spend`} className={`portfolio-summary-item`}>
-                  {portfolio.loading ? `— / year` : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost)} / year`}
+                  {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-annual-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / year`}</> : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost)} / year`}
                 </span>
                 {showMonthlySpend && (
                   <>
@@ -186,7 +192,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       {`·`}
                     </span>
                     <span id={`portfolio-monthly-spend`} className={`portfolio-summary-item`}>
-                      {portfolio.loading ? `— / month` : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
+                      {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-monthly-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / month`}</> : portfolio.domains.length && !portfolio.summary.knownCostCount ? `Cost Not Set` : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
                     </span>
                   </>
                 )}
@@ -312,11 +318,15 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       <div id={`portfolio-card`} className={`portfolio-card`}>
         <div ref={sticky.toolbarRef} id={`portfolio-toolbar`} className={`portfolio-toolbar`}>
           <div id={`portfolio-controls-row`} className={`portfolio-controls-row`}>
-            <PortfolioSelection
-              totalCount={portfolio.domains.length}
-              count={selection.selectedIds.size}
-              visibleCount={selection.visibleSelectedCount}
-            />
+            {portfolio.loading ? (
+              <span aria-hidden={`true`} id={`portfolio-selection-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-selection`} />
+            ) : (
+              <PortfolioSelection
+                totalCount={portfolio.domains.length}
+                count={selection.selectedIds.size}
+                visibleCount={selection.visibleSelectedCount}
+              />
+            )}
             {useSampleData && portfolio.summary.hasSampleData && (
               <div id={`portfolio-toolbar-meta`} className={`portfolio-toolbar-meta`}>
                 <span id={`portfolio-sample-label`} className={`portfolio-sample-label`} title={`Illustrative Records, Not Connected Accounts`}>
@@ -680,7 +690,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         )}
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
           <span id={`portfolio-visible-count`} className={`portfolio-visible-count`}>
-            {`Showing ${visibleIds.length} Of ${search.searching ? portfolio.registrarDomains.length : portfolio.filteredDomains.length}`}
+            {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-visible-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-footer`} /> : `Showing ${visibleIds.length} Of ${search.searching ? portfolio.registrarDomains.length : portfolio.filteredDomains.length}`}
           </span>
           <button type={`button`} disabled={portfolio.loading} onClick={portfolio.openSetup} id={`portfolio-connect-registrar`} className={`portfolio-button portfolio-button-quiet`}>
             <Link2 size={13} aria-hidden={`true`} id={`portfolio-connect-registrar-icon`} className={`portfolio-button-icon`} />
@@ -706,10 +716,10 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         onChange={portfolio.handleImport}
         aria-label={`Import Domain CSV`}
       />
-      {portfolio.editorOpen && (
+      {portfolio.editorOpen && !portfolio.loading && (
         <DomainEditor domain={portfolio.editingDomain} onClose={() => portfolio.setEditorOpen(false)} />
       )}
-      {portfolio.setupOpen && (
+      {portfolio.setupOpen && !portfolio.loading && (
         <RegistrarSetup onClose={portfolio.closeSetup} onManual={() => portfolio.openEditor()} />
       )}
       {toolbar.settingsOpen && (

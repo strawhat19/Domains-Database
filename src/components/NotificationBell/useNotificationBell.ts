@@ -1,6 +1,5 @@
 import { usePathname } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
-import { sampleNotificationCount } from '../../shared/sampleNotifications';
 import { useNotifications } from '../../shared/notifications/useNotifications';
 
 export const useNotificationBell = () => {
@@ -17,6 +16,6 @@ export const useNotificationBell = () => {
     open,
     close,
     toggle,
-    count: state.loading ? sampleNotificationCount : state.notifications.length,
+    count: state.notifications.length,
   };
 };

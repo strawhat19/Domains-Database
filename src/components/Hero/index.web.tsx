@@ -37,13 +37,20 @@ const Hero = () => {
         </span>
         <Link href={routes.domains.href} asChild>
           <RouterAnchor
+            aria-busy={search.domainCountLoading}
             aria-label={search.domainCount > 0 ? `Go To ${search.domainCount.toLocaleString()} Domains` : `Go To Domains`}
             id={`hero-domains-link`}
             className={`hero-domains-link${useStackPill ? ` hero-button-stack` : ``}`}
           >
             {useStackPill && <StackPillShape sharp id={`hero-domains-shape`} />}
             <span id={`hero-domains-text`} className={`hero-domains-text`}>
-              {search.domainCount > 0 && (
+              {search.domainCountLoading ? (
+                <span
+                  aria-hidden={`true`}
+                  id={`hero-domains-count-skeleton`}
+                  className={`hero-data-skeleton hero-count-skeleton`}
+                />
+              ) : search.domainCount > 0 && (
                 <span id={`hero-domains-count`} className={`hero-cta-count`}>{`${search.domainCount.toLocaleString()} `}</span>
               )}
               {`Domains`}
@@ -73,13 +80,20 @@ const Hero = () => {
           <MagicTyping label={`Get`} suffix={`hero`} paused={searchFocused || Boolean(search.query)} />
           <Link href={routes.search.href} asChild>
             <RouterAnchor
+              aria-busy={search.trendingCountLoading}
               id={`hero-trending-link`}
               className={`hero-trending-link${useStackPill ? ` hero-button-stack` : ``}`}
               aria-label={search.trendingCount > 0 ? `Explore ${search.trendingCount.toLocaleString()} Trending Domains` : `Explore Trending Domains`}
             >
               {useStackPill && <StackPillShape sharp id={`hero-trending-shape`} />}
               <span id={`hero-trending-text`} className={`hero-trending-text`}>
-                {search.trendingCount > 0 && (
+                {search.trendingCountLoading ? (
+                  <span
+                    aria-hidden={`true`}
+                    id={`hero-trending-count-skeleton`}
+                    className={`hero-data-skeleton hero-count-skeleton`}
+                  />
+                ) : search.trendingCount > 0 && (
                   <span id={`hero-trending-count`} className={`hero-cta-count`}>{`${search.trendingCount.toLocaleString()} `}</span>
                 )}
                 {`Trending`}
@@ -126,10 +140,22 @@ const Hero = () => {
             <History size={12} aria-hidden id={`hero-domain-recents-icon`} className={`hero-domain-recents-icon`} />
             <span id={`hero-domain-recents-label`} className={`hero-domain-recents-label`}>{`Recents`}</span>
           </div>
-          <div id={`hero-domain-recents-items`} className={`hero-domain-recents-items`} aria-live={`polite`}>
-            {search.recentSearchesLoading ? (
-              <span id={`hero-domain-recents-loading`} className={`hero-domain-recents-message`}>{`Loading…`}</span>
-            ) : search.recentSearches.length ? search.recentSearches.slice(0, 3).map((record, index) => (
+          <div
+            aria-live={`polite`}
+            id={`hero-domain-recents-items`}
+            className={`hero-domain-recents-items`}
+            aria-busy={search.recentSearchesLoading}
+            aria-label={search.recentSearchesLoading ? `Loading Recent Domain Searches` : undefined}
+          >
+            {search.recentSearchesLoading ? [78, 96, 68].map((width, index) => (
+              <span
+                key={index}
+                style={{ width }}
+                aria-hidden={`true`}
+                id={`hero-domain-recent-skeleton-${index}`}
+                className={`hero-data-skeleton hero-recent-skeleton`}
+              />
+            )) : search.recentSearches.length ? search.recentSearches.slice(0, 3).map((record, index) => (
               <button
                 type={`button`}
                 key={record.query}

@@ -110,23 +110,23 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   {...elementProps(`native-navigation-link`, label.toLowerCase())}
                   accessibilityRole={`link`}
                   accessibilityLabel={item.accessibilityLabel}
-                  accessibilityState={{ selected: active }}
+                  accessibilityState={{ busy: item.countLoading, selected: active }}
                   style={StyleSheet.flatten([styles.navigationLink, active && styles.navigationLinkActive])}
                 >
                   <Icon {...elementProps(`native-navigation-icon`, label.toLowerCase())} size={14} color={active ? `#ffffff` : palette.muted} />
                   <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>
                     {label}
                   </Text>
-                  {item.count !== undefined && (
+                  {(item.countLoading || item.count !== undefined) && (
                     <View
                       accessible={false}
                       accessibilityElementsHidden
-                      style={styles.navigationCount}
+                      style={[styles.navigationCount, item.countLoading && { backgroundColor: palette.skeleton }]}
                       importantForAccessibility={`no-hide-descendants`}
                       {...elementProps(`native-navigation-count`, label.toLowerCase())}
                     >
                       <Text {...elementProps(`native-navigation-count-text`, label.toLowerCase())} style={styles.navigationCountText}>
-                        {item.count}
+                        {item.countLoading ? `` : item.count}
                       </Text>
                     </View>
                   )}

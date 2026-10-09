@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
+import { useAfterPaint } from '../common/useAfterPaint';
 import { notificationsAPI } from '../../api/notifications';
 import type { HeaderNotification } from '../sampleNotifications';
 
 export const useNotifications = () => {
+  const ready = useAfterPaint();
   const [error, setError] = useState(``);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
 
   useEffect(() => {
+    if (!ready) return;
     let mounted = true;
     void notificationsAPI.getSampleNotifications().then(items => {
       if (mounted) setNotifications(items);
@@ -17,7 +20,7 @@ export const useNotifications = () => {
       if (mounted) setLoading(false);
     });
     return () => { mounted = false; };
-  }, []);
+  }, [ready]);
 
   return { error, loading, notifications };
 };

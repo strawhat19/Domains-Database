@@ -413,6 +413,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const clearOrders = useCallback(() => change(current => ({ ...current, orders: {} })), [change]);
   const value = useMemo(() => ({
     ...(enabled && ready && loadedUserId.current === userId ? preferences : DEFAULT_PREFERENCES),
+    loading: !enabled || !ready || loadedUserId.current !== userId,
     setView,
     moveGroup,
     moveDomain,

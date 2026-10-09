@@ -32,6 +32,7 @@ export const WatchingProvider = ({ children, enabled = true }: PropsWithChildren
   const request = useRef(0);
   const mutationBusy = useRef(false);
   const currentUserId = useRef(userId);
+  const loadedUserId = useRef<string | null>(null);
   currentUserId.current = userId;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(``);
@@ -46,9 +47,9 @@ export const WatchingProvider = ({ children, enabled = true }: PropsWithChildren
     const isCurrent = () => mounted.current && currentUserId.current === userId && request.current === revision;
     try {
       const records = await watchingAPI.getWatching(userId);
-      if (isCurrent()) { setRecords(records); setError(``); }
+      if (isCurrent()) { loadedUserId.current = userId; setRecords(records); setError(``); }
     } catch (failure) {
-      if (isCurrent()) { setRecords([]); setError(failure instanceof Error ? failure.message : `Could Not Load Watching`); }
+      if (isCurrent()) { loadedUserId.current = userId; setRecords([]); setError(failure instanceof Error ? failure.message : `Could Not Load Watching`); }
       throw failure;
     } finally {
       if (isCurrent()) setLoading(false);
@@ -57,6 +58,7 @@ export const WatchingProvider = ({ children, enabled = true }: PropsWithChildren
 
   useEffect(() => {
     mounted.current = true;
+    loadedUserId.current = null;
     setRecords([]);
     setError(``);
     setNotice(``);
@@ -112,11 +114,11 @@ export const WatchingProvider = ({ children, enabled = true }: PropsWithChildren
     syncing,
     error: userId ? error : ``,
     notice: userId ? notice : ``,
-    records: userId ? records : [],
-    loading: !enabled || authLoading || loading,
+    records: userId && loadedUserId.current === userId ? records : [],
+    loading: !enabled || authLoading || loading || loadedUserId.current !== userId,
     clearError: () => setError(``),
     clearNotice: () => setNotice(``),
-    isWatching: (domain: string) => !!userId && records.some(record => record.domain === domain.trim().toLowerCase()),
+    isWatching: (domain: string) => !!userId && loadedUserId.current === userId && records.some(record => record.domain === domain.trim().toLowerCase()),
     removeWatch: (id: string) => mutate(() => watchingAPI.removeWatch(id, userId), `Domain Removed From Watching`),
     watchDomain: (result: DomainSearchDomainResult) => mutate(() => watchingAPI.watchDomain(result, userId), `Domain Added To Watching`),
     syncManually: () => mutate(() => watchingAPI.syncWatching(userId), `Watching Refreshed With Mock Data`, true),

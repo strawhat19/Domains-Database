@@ -57,6 +57,8 @@
 .header-notifications-heading-row { gap: 8px; display: flex; align-items: center; }
 .header-notifications-heading { font-size: 14px; font-family: var(--font-bold); }
 .header-notifications-count { font-size: 11px; color: var(--accent); }
+.header-notifications-badge-skeleton { background: var(--skeleton); }
+.header-notifications-count-skeleton { width: 58px; height: 11px; display: inline-block; border-radius: 4px; background: var(--skeleton); }
 .header-notifications-close {
   width: 28px;
   height: 28px;

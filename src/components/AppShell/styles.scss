@@ -102,6 +102,8 @@
   font-family: 'DMSans_700Bold', sans-serif;
 }
 
+.header-link-count-skeleton { background: var(--skeleton); }
+
 .main-content {
   flex: 1;
   width: 100%;
@@ -125,6 +127,14 @@
   --page-content-height: calc(100dvh - var(--shell-header-height, 128px) - var(--site-footer-height, 84px));
   .main-content { padding-block: 0; justify-content: flex-start; }
   .site-footer { margin-top: 0; }
+}
+
+@media (min-width: 1100px) {
+  .app-shell[data-connections-page='true'] {
+    .main-content { padding-bottom: 16px; }
+    .site-footer { margin-top: 16px; }
+    .footer-inner { min-height: 64px; padding-block: 10px; }
+  }
 }
 
 .site-footer { margin-top: 32px; border-top: 1px solid var(--line); }

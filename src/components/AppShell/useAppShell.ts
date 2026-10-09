@@ -11,7 +11,7 @@ export const useAppShell = () => {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const { user, loading } = useAuth();
-  const { eligible } = useConnectionAvailability();
+  const { eligible, loading: connectionsLoading } = useConnectionAvailability();
   const { domains, loading: domainsLoading } = useDomains();
   const { records, loading: watchingLoading } = useWatching();
   const signedIn = !loading && Boolean(user?.id);
@@ -23,13 +23,14 @@ export const useAppShell = () => {
   const fitViewport = publicPages.includes(pathname)
     || (!signedIn && !isBlogPage && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href);
   const visibleNavigation = navigation.filter(item =>
-    (item.href !== routes.search.href || eligible)
+    (item.href !== routes.search.href || eligible || connectionsLoading)
     && (item.href !== routes.community.href || signedIn)).map(item => {
       const count = item.href === routes.domains.href ? domainCount : item.href === routes.watching.href ? watchingCount : undefined;
+      const countLoading = item.href === routes.domains.href ? domainsLoading : item.href === routes.watching.href && watchingLoading;
       const accessibilityLabel = count === undefined
         ? `${item.label}${`beta` in item && item.beta ? ` (Beta)` : ``}`
         : `${item.label}, ${count} Domain${count === 1 ? `` : `s`}${item.href === routes.watching.href ? ` in Watch List` : ` in Table`}`;
-      return { ...item, count, accessibilityLabel };
+      return { ...item, count, countLoading, accessibilityLabel };
     });
   return { pathname, signedIn, fitViewport, searchViewport, year: new Date().getFullYear(), navigation: visibleNavigation };
 };

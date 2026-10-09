@@ -1,5 +1,5 @@
 import './styles.scss';
-import { useId, useRef, useEffect } from 'react';
+import { memo, useId, useRef, useEffect } from 'react';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
 
 const halfWidth = 45;
@@ -239,4 +239,4 @@ const HeroCubes = () => {
   );
 };
 
-export default HeroCubes;
+export default memo(HeroCubes);

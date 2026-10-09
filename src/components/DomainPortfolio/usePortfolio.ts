@@ -1,11 +1,13 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { getCsvFile } from '../../shared/csvFiles.web';
 import { useDomains } from '../../shared/domainContext/useDomains';
+import { useColumns } from '../../shared/columnContext/useColumns';
 import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { sortPortfolioDomains } from '../../shared/portfolioPreferences/groups';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { PORTFOLIO_COLUMNS, getPortfolioColumnValue, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 export type SortField = PortfolioColumn;
@@ -25,6 +27,9 @@ const downloadCsv = (text: string, filename: string) => {
 
 export const usePortfolio = () => {
   const data = useDomains();
+  const { loading: columnsLoading } = useColumns();
+  const { loading: preferencesLoading } = usePortfolioPreferences();
+  const loading = data.loading || columnsLoading || preferencesLoading;
   const [query, setQuery] = useState(``);
   const [localError, setLocalError] = useState(``);
   const [sortField, setSortField] = useState<SortField | null>(`name`);
@@ -38,6 +43,13 @@ export const usePortfolio = () => {
   const [pendingId, setPendingId] = useState(``);
   const importingRef = useRef(false);
   const importInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!loading) return;
+    setLocalError(``);
+    setSetupOpen(false);
+    setEditorOpen(false);
+    setEditingDomain(null);
+  }, [loading]);
   const sortedDomains = useMemo(() => sortPortfolioDomains(data.domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [data.domains, sortField, sortDirection]);
   const registrarDomains = useMemo(() => sortedDomains.filter(domain => (
     registrarFilter === `All Registrars` || domain.registrar === registrarFilter
@@ -73,10 +85,12 @@ export const usePortfolio = () => {
     setSortDirection(`asc`);
   };
   const openEditor = (domain?: DomainRecord) => {
+    if (loading) return;
     setEditingDomain(domain ?? null);
     setEditorOpen(true);
   };
   const openSetup = () => {
+    if (loading) return;
     setQuery(``);
     setLocalError(``);
     setRegistrarFilter(`All Registrars`);
@@ -88,7 +102,7 @@ export const usePortfolio = () => {
   };
   const clearError = () => setLocalError(``);
   const importFiles = async (files: File[]) => {
-    if (importingRef.current || data.loading) return;
+    if (importingRef.current || loading) return;
     setLocalError(``);
     data.clearNotice();
     try {
@@ -112,7 +126,7 @@ export const usePortfolio = () => {
     if (files.length) await importFiles(files);
   };
   const exportDomains = async () => {
-    if (exporting) return;
+    if (exporting || loading) return;
     setExporting(true);
     setLocalError(``);
     try {
@@ -126,7 +140,7 @@ export const usePortfolio = () => {
   };
   const downloadTemplate = () => downloadCsv(exportDomainCsv([]), `domains-template.csv`);
   const toggleAutoRenew = async (domain: DomainRecord) => {
-    if (pendingId || getDomainSource(domain) === `registrar`) return;
+    if (loading || pendingId || getDomainSource(domain) === `registrar`) return;
     setPendingId(domain.id);
     setLocalError(``);
     try {
@@ -138,7 +152,7 @@ export const usePortfolio = () => {
     }
   };
   const changeProjectStatus = async (domain: DomainRecord, projectStatus: DomainRecord[`projectStatus`]) => {
-    if (pendingId || projectStatus === domain.projectStatus) return;
+    if (loading || pendingId || projectStatus === domain.projectStatus) return;
     setPendingId(domain.id);
     setLocalError(``);
     try {
@@ -152,7 +166,7 @@ export const usePortfolio = () => {
   const changeDescription = async (domain: DomainRecord, description: string): Promise<boolean> => {
     const nextDescription = description.trim();
     if (nextDescription === (domain.description ?? ``)) return true;
-    if (pendingId) return false;
+    if (loading || pendingId) return false;
     setPendingId(domain.id);
     setLocalError(``);
     try {
@@ -166,7 +180,7 @@ export const usePortfolio = () => {
     }
   };
   return {
-    ...data, query, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
+    ...data, query, loading, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
     clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain, registrarFilter,
     importInputRef, requestImport, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
     setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, setRegistrarFilter, toggleAutoRenew, toggleManualOrder, changeProjectStatus,

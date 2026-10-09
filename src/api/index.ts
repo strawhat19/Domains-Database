@@ -237,7 +237,10 @@ type RegistrarPatch = Partial<DomainInput> & Pick<DomainInput, `name` | `registr
 const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): RegistrarPatch => {
   if (!input || typeof input !== `object` || Array.isArray(input)) throw new Error(`Registrar Domain Must Be An Object`);
   if (typeof input.name !== `string` || typeof input.registrar !== `string`) throw new Error(`Registrar Domain Must Include A Name And Registrar`);
-  if (!input.registrar && !(input.meta?.externalRegistration === true && input.meta?.ownershipConfirmed === true)) throw new Error(`Confirm External Domain Ownership Before Importing`);
+  const hostingerHosted = input.meta?.source === `Hostinger Hosting API`
+    && input.meta?.hostingProvider === `Hostinger` && input.meta?.registrarProvider === `hostinger`
+    && input.meta?.externalRegistration === true && input.meta?.automaticallyIncluded === true;
+  if (!input.registrar && !(input.meta?.externalRegistration === true && (input.meta?.ownershipConfirmed === true || hostingerHosted))) throw new Error(`Confirm External Domain Ownership Before Importing`);
   const metadata: NonNullable<DomainInput[`meta`]> = {};
   for (const field of [`source`, `registrarName`, `hostingProvider`, `registrarSource`, `registrarProvider`, `registrarCheckedAt`, `registrarConnectionId`] as const) {
     const value = input.meta?.[field];
@@ -246,7 +249,7 @@ const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): Regist
       metadata[field] = value;
     }
   }
-  for (const field of [`externalRegistration`, `ownershipConfirmed`] as const) {
+  for (const field of [`externalRegistration`, `ownershipConfirmed`, `automaticallyIncluded`] as const) {
     const value = input.meta?.[field];
     if (value !== undefined) {
       if (typeof value !== `boolean`) throw new Error(`Registrar Returned Invalid Source Metadata`);
@@ -259,7 +262,7 @@ const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): Regist
     if (typeof identifier !== `number` || !Number.isSafeInteger(identifier) || identifier < 1) throw new Error(`Registrar Returned Invalid Registrar ID`);
     metadata.registrarIanaId = identifier;
   }
-  if (metadata.externalRegistration === true && metadata.ownershipConfirmed !== true) throw new Error(`Confirm External Domain Ownership Before Importing`);
+  if (metadata.externalRegistration === true && metadata.ownershipConfirmed !== true && !hostingerHosted) throw new Error(`Confirm External Domain Ownership Before Importing`);
   for (const field of [`status`, `expiresAt`, `createdAt`, `providerId`] as const) {
     if (input[field] !== undefined && typeof input[field] !== `string`) throw new Error(`${field} Must Be Text`);
   }

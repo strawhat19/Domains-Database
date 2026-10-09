@@ -29,7 +29,7 @@ interface ServerAvailabilityState {
 
 export const ConnectionAvailabilityContext = createContext<ConnectionAvailability | null>(null);
 
-export const ConnectionAvailabilityProvider = ({ children }: { children: ReactNode }) => {
+export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) => {
   const { user, loading: authLoading, loginRevision } = useAuth();
   const actorKey = `${user?.id ?? `guest`}:${loginRevision}`;
   const currentActor = useRef(actorKey);
@@ -49,6 +49,7 @@ export const ConnectionAvailabilityProvider = ({ children }: { children: ReactNo
   });
 
   useEffect(() => {
+    if (!enabled) return;
     let active = true;
     let operation = 0;
     let snapshotVersion = ``;
@@ -93,7 +94,7 @@ export const ConnectionAvailabilityProvider = ({ children }: { children: ReactNo
       subscription.remove();
       if (typeof window !== `undefined`) window.removeEventListener(`focus`, refresh);
     };
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     let active = true;
@@ -102,7 +103,7 @@ export const ConnectionAvailabilityProvider = ({ children }: { children: ReactNo
     const userId = user?.id;
     const isCurrent = (request: number) => active && request === operation && currentActor.current === actorKey;
     setState(current => ({ ...current, actorKey, error: ``, loading: !!userId || authLoading, hasConnections: false }));
-    if (!userId || authLoading) return () => { active = false; };
+    if (!enabled || !userId || authLoading) return () => { active = false; };
 
     const refresh = (invalidate = false) => {
       const request = ++operation;
@@ -146,12 +147,12 @@ export const ConnectionAvailabilityProvider = ({ children }: { children: ReactNo
         window.removeEventListener(`storage`, storageChanged);
       }
     };
-  }, [actorKey, authLoading]);
+  }, [enabled, actorKey, authLoading]);
 
   const currentView = state.actorKey === actorKey;
-  const privateLoading = authLoading || !currentView || state.loading;
-  const hasConnections = currentView && !!user?.id && state.hasConnections;
-  const hasServerConnections = serverState.hasConnections;
+  const privateLoading = !enabled || authLoading || !currentView || state.loading;
+  const hasConnections = enabled && currentView && !!user?.id && state.hasConnections;
+  const hasServerConnections = enabled && serverState.hasConnections;
   const eligible = hasServerConnections || (!privateLoading && hasConnections);
   const loading = !eligible && (serverState.loading || privateLoading);
   const error = !eligible && !loading

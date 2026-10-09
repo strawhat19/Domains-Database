@@ -85,8 +85,8 @@ export const getHostingerDomains = async (authorization: string, context: Regist
     const remaining = MAX_DOMAINS - domains.length;
     appendDomains(domains, discovery.domains.slice(0, remaining), `hostinger`, seen);
     warnings.push(...(discovery.warnings ?? []));
-    if (discovery.domains.length > remaining) warnings.push(`Confirmed External Domains Exceed The 10,000 Domain Sync Limit`);
-    return { domains, warnings, discoveredDomains: discovery.discoveredDomains };
+    if (discovery.domains.length > remaining) warnings.push(`Externally Hosted Domains Exceed The 10,000 Domain Sync Limit`);
+    return { domains, warnings };
   } catch {
     warnings.push(`Registered Inventory Synced — External Hosting Discovery Is Unavailable; Try Again Later`);
     return { domains, warnings };

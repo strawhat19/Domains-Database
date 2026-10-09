@@ -1,6 +1,7 @@
 import { api } from '../../api';
 import type { PropsWithChildren } from 'react';
 import type { DomainInput, DomainRecord } from '../types';
+import { useAfterPaint } from '../common/useAfterPaint';
 import type { ConnectionSnapshot } from '../connections/types';
 import { useWebsiteInsights } from '../websiteInsights/useWebsiteInsights';
 import { useRegistrarSync } from '../registrarSync/useRegistrarSync';
@@ -74,7 +75,8 @@ export const DomainProvider = ({ children, enabled = true }: PropsWithChildren<{
     const records = await api.getDomains();
     if (active.current && run === revision.current) setDomains(records);
   }, [enabled]);
-  const sync = useRegistrarSync(refreshDomains, enabled);
+  const syncReady = useAfterPaint(enabled && !loading);
+  const sync = useRegistrarSync(refreshDomains, syncReady);
   const insights = useWebsiteInsights(refreshDomains, enabled);
   const refreshWebsiteInsights = useCallback(async (records: DomainRecord[]) => {
     if (!enabled || !active.current) return;

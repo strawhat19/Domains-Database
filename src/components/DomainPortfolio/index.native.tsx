@@ -104,9 +104,18 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         <View {...elementProps(`native-portfolio-heading-bottom`)} style={styles.headingBottom}>
           <View {...elementProps(`native-portfolio-counts`)} style={styles.counts}>
             <View {...elementProps(`native-portfolio-count-summary`)} style={styles.countSummary}>
-              <Text {...elementProps(`native-portfolio-domain-count`)} style={styles.countText}>
-                {state.loading ? `Loading portfolio…` : `${state.domains.length} ${state.domains.length === 1 ? `Domain` : `Domains`} · ${new Set(state.domains.map(domain => domain.registrar).filter(Boolean)).size} registrar(s)`}
-              </Text>
+              {state.loading ? (
+                <View
+                  {...elementProps(`native-portfolio-domain-count-skeleton`)}
+                  accessibilityLabel={`Loading Domain Counts`}
+                  accessibilityState={{ busy: true }}
+                  style={[styles.valueSkeleton, styles.countSkeleton]}
+                />
+              ) : (
+                <Text {...elementProps(`native-portfolio-domain-count`)} style={styles.countText}>
+                  {`${state.domains.length} ${state.domains.length === 1 ? `Domain` : `Domains`} · ${new Set(state.domains.map(domain => domain.registrar).filter(Boolean)).size} registrar(s)`}
+                </Text>
+              )}
               {!state.loading && state.registrarCounts.map(({ registrar, count }) => {
                 const slug = registrar.toLowerCase().replace(/\s+/g, `-`);
                 return (
@@ -132,9 +141,17 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               })}
             </View>
             <View {...elementProps(`native-portfolio-counts-details`)} style={styles.countsDetails}>
-              <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
-                {state.loading ? `— need attention` : `${state.dueSoon} need attention`}
-              </Text>
+              {state.loading ? (
+                <View
+                  {...elementProps(`native-portfolio-attention-skeleton`)}
+                  accessibilityLabel={`Loading Domains Needing Attention`}
+                  style={[styles.valueSkeleton, styles.attentionSkeleton]}
+                />
+              ) : (
+                <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
+                  {`${state.dueSoon} need attention`}
+                </Text>
+              )}
               {state.syncing && (
                 <View
                   accessible
@@ -312,15 +329,23 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </Text>
           </Pressable>
           <View {...elementProps(`native-portfolio-selected-count`)} style={styles.secondaryButton} accessibilityLiveRegion={`polite`}>
-            <Text {...elementProps(`native-portfolio-selected-count-text`)} style={styles.secondaryButtonText}>
-              {selectedIds.length
-                ? `${selectedIds.length} SELECTED${selectionToolsWidth >= 640 ? ` / ${state.domains.length} TOTAL` : ``}`
-                : `${state.domains.length} TOTAL`}
-            </Text>
+            {state.loading ? (
+              <View
+                {...elementProps(`native-portfolio-selected-count-skeleton`)}
+                accessibilityLabel={`Loading Domain Total`}
+                style={[styles.valueSkeleton, styles.selectionSkeleton]}
+              />
+            ) : (
+              <Text {...elementProps(`native-portfolio-selected-count-text`)} style={styles.secondaryButtonText}>
+                {selectedIds.length
+                  ? `${selectedIds.length} SELECTED${selectionToolsWidth >= 640 ? ` / ${state.domains.length} TOTAL` : ``}`
+                  : `${state.domains.length} TOTAL`}
+              </Text>
+            )}
           </View>
         </ScrollView>
       </View>
-      <View {...elementProps(`native-portfolio-records`)} style={styles.records}>
+      <View {...elementProps(`native-portfolio-records`)} style={styles.records} accessibilityState={{ busy: state.loading }}>
         {state.loading ? [0, 1, 2].map(index => <DomainCard key={index} index={index} loading />) : state.visibleDomains.map((domain, index) => (
           <DomainCard
             key={domain.id}
@@ -360,14 +385,24 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         )}
       </View>
       <View {...elementProps(`native-portfolio-bottom`)} style={styles.bottom}>
-        <Text {...elementProps(`native-portfolio-showing`)} numberOfLines={1} style={styles.bottomText}>
-          {state.loading ? `Loading…` : `Showing ${state.visibleDomains.length} Of ${state.filteredDomains.length}`}
-        </Text>
+        {state.loading ? (
+          <View {...elementProps(`native-portfolio-showing-loading`)} style={styles.bottomLoading}>
+            <View
+              {...elementProps(`native-portfolio-showing-skeleton`)}
+              accessibilityLabel={`Loading Visible Domain Count`}
+              style={[styles.valueSkeleton, styles.footerSkeleton]}
+            />
+          </View>
+        ) : (
+          <Text {...elementProps(`native-portfolio-showing`)} numberOfLines={1} style={styles.bottomText}>
+            {`Showing ${state.visibleDomains.length} Of ${state.filteredDomains.length}`}
+          </Text>
+        )}
         {compact ? (
           <Link href={`/domains`} asChild>
             <Pressable {...elementProps(`native-portfolio-view-all`)} style={styles.textButton} accessibilityLabel={`View Full Portfolio`}>
               <Text {...elementProps(`native-portfolio-view-all-text`)} style={styles.textButtonText}>
-                {`View all ${state.filteredDomains.length}`}
+                {state.loading ? `View all domains` : `View all ${state.filteredDomains.length}`}
               </Text>
               <ArrowRight {...elementProps(`native-portfolio-view-all-icon`)} size={12} color={palette.accent} />
             </Pressable>
@@ -379,8 +414,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Pressable>
         )}
       </View>
-      {state.setupOpen && <RegistrarSetup onClose={state.closeSetup} onManual={() => state.openEditor()} />}
-      <Modal visible={state.editorOpen} transparent animationType={`fade`} onRequestClose={state.closeEditor}>
+      {state.setupOpen && !state.loading && <RegistrarSetup onClose={state.closeSetup} onManual={() => state.openEditor()} />}
+      <Modal visible={state.editorOpen && !state.loading} transparent animationType={`fade`} onRequestClose={state.closeEditor}>
         <View {...elementProps(`native-domain-editor-overlay`)} style={[styles.overlay, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
           <KeyboardAvoidingView {...elementProps(`native-domain-editor-keyboard`)} style={styles.keyboard} behavior={Platform.OS === `ios` ? `padding` : `height`}>
             <View {...elementProps(`native-domain-editor`)} style={styles.modal} accessibilityViewIsModal>

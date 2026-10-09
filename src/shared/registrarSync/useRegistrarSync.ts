@@ -145,8 +145,39 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
           const status = policy.accountStatuses?.[account.id];
           return status && ![`idle`, `checking`].includes(status.state);
         })) {
-        const statuses = { ...policy.statuses, squarespace: aggregateStatuses(snapshot.accounts, accountNext).squarespace };
-        if (savedOnlyAccounts.some(account => {
+        let includedCount = 0;
+        for (const account of syncAccounts.filter(value => value.provider === `hostinger`)) {
+          const status = accountNext[account.id];
+          if (!status) continue;
+          const discovered = status.discoveredDomains ?? [];
+          const included = discovered.filter(domain => domain.meta?.externalRegistration === true
+            && domain.meta?.hostingProvider === `Hostinger` && domain.meta?.source === `Hostinger Hosting API`);
+          if (!included.length) continue;
+          const latest = await connectionsAPI.getConnections(userId);
+          if (!current()) return empty;
+          if (latest.updated !== snapshot.updated || latest.accounts.find(value => value.id === account.id)?.values !== account.values) throw new Error(`Connections Changed — Save Again To Sync`);
+          const count = await api.syncRegistrarDomains(included.map(domain => ({
+            ...domain,
+            meta: { ...domain.meta, automaticallyIncluded: true, registrarProvider: account.provider, registrarConnectionId: account.id },
+          })), userId, owner.current);
+          if (!current()) return empty;
+          includedCount += count;
+          const countNext = status.count + count;
+          const includedNames = new Set(included.map(domain => domain.name));
+          accountNext[account.id] = {
+            ...status,
+            count: countNext,
+            message: formatSyncNotice({ count: countNext }),
+            discoveredDomains: discovered.filter(domain => !includedNames.has(domain.name)),
+          };
+        }
+        if (includedCount) {
+          await refreshDomains();
+          if (!current()) return empty;
+        }
+        const statuses = includedCount ? aggregateStatuses(snapshot.accounts, accountNext)
+          : { ...policy.statuses, squarespace: aggregateStatuses(snapshot.accounts, accountNext).squarespace };
+        if (includedCount || savedOnlyAccounts.some(account => {
           const status = policy.accountStatuses?.[account.id];
           return status?.state !== `idle` || status?.message !== savedOnlyMessage || status?.count !== 0;
         })) {
@@ -156,7 +187,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
         }
         setConnectionStatuses(statuses);
         setAccountStatuses(accountNext);
-        return empty;
+        return { ...empty, count: includedCount };
       }
       const accounts = syncAccounts.filter(account => !connectionIds || connectionIds.includes(account.id));
       setSyncing(Boolean(accounts.length));

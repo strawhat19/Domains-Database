@@ -1,6 +1,6 @@
 import { Alert } from 'react-native';
 import * as Sharing from 'expo-sharing';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { REGISTRARS, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
@@ -11,8 +11,10 @@ import { PORTFOLIO_COLUMNS, getPortfolioColumnValue } from '../../shared/portfol
 import { getDomainSource, getDomainStatus, getRegistrarCounts, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
+import { useColumns } from '../../shared/columnContext/useColumns';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
 import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import type { DomainInput, DomainRecord, Registrar } from '../../shared/types';
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : `Something Went Wrong`;
@@ -41,6 +43,9 @@ const newDomain = (): DomainInput => {
 
 export const useNativePortfolio = (compact = false) => {
   const context = useDomains();
+  const { loading: columnsLoading } = useColumns();
+  const { loading: preferencesLoading } = usePortfolioPreferences();
+  const loading = context.loading || columnsLoading || preferencesLoading;
   const registrarCounts = useMemo(() => getRegistrarCounts(context.domains), [context.domains]);
   const [search, setSearch] = useState(``);
   const [saving, setSaving] = useState(false);
@@ -58,8 +63,16 @@ export const useNativePortfolio = (compact = false) => {
   const mutationPending = useRef(false);
   const deleteConfirmationOpen = useRef(false);
   const currentEditor = useRef({ open: editorOpen, id: editingId });
-  currentEditor.current = { open: editorOpen, id: editingId };
+  currentEditor.current = { open: !loading && editorOpen, id: loading ? undefined : editingId };
   const groupEditor = useDomainGroupEditor(editingId);
+  useEffect(() => {
+    if (!loading) return;
+    setFormError(``);
+    setSetupOpen(false);
+    setEditorOpen(false);
+    setEditingId(undefined);
+    setEditingDomain(null);
+  }, [loading]);
   const editingSyncedDomain = Boolean(editingDomain && getDomainSource(editingDomain) === `registrar`);
   const filteredDomains = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -75,6 +88,7 @@ export const useNativePortfolio = (compact = false) => {
   const visibleDomains = compact ? filteredDomains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : filteredDomains;
   const dueSoon = context.domains.filter(domain => getDomainStatus(domain) !== `Active`).length;
   const openSetup = () => {
+    if (loading) return;
     context.clearNotice();
     setSearch(``);
     setRegistrar(`All`);
@@ -83,7 +97,7 @@ export const useNativePortfolio = (compact = false) => {
   const closeSetup = () => setSetupOpen(false);
 
   const openEditor = (domain?: DomainRecord) => {
-    if (mutationPending.current || deleteConfirmationOpen.current) return;
+    if (loading || mutationPending.current || deleteConfirmationOpen.current) return;
     context.clearNotice();
     setFormError(``);
     setEditingId(domain?.id);
@@ -132,7 +146,7 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const saveDomain = async () => {
-    if (saving || mutationPending.current || deleteConfirmationOpen.current) return;
+    if (loading || saving || mutationPending.current || deleteConfirmationOpen.current) return;
     mutationPending.current = true;
     setSaving(true);
     setFormError(``);
@@ -168,7 +182,7 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const requestDelete = () => {
-    if (!editorOpen || !editingId || !editingDomain || editingDomain.id !== editingId
+    if (loading || !editorOpen || !editingId || !editingDomain || editingDomain.id !== editingId
       || saving || mutationPending.current || deleteConfirmationOpen.current) return;
     const domain = context.domains.find(record => record.id === editingId) ?? editingDomain;
     const restriction = getDomainDeletionRestriction(domain);
@@ -205,7 +219,7 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const importCsv = async () => {
-    if (working) return;
+    if (working || loading) return;
     setWorking(true);
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -229,7 +243,7 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const exportCsv = async () => {
-    if (working) return;
+    if (working || loading) return;
     setWorking(true);
     try {
       if (!await Sharing.isAvailableAsync()) throw new Error(`Sharing Is Unavailable On This Device`);
@@ -263,6 +277,7 @@ export const useNativePortfolio = (compact = false) => {
   return {
     ...context,
     input,
+    loading,
     groupEditor,
     search,
     dueSoon,

@@ -1,7 +1,9 @@
 import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useRef, useState } from 'react';
 import AppShell from '../src/components/AppShell';
 import { useAppFonts } from '../src/shared/useAppFonts';
+import { useAfterPaint } from '../src/shared/common/useAfterPaint';
 import { useAuth } from '../src/shared/authContext/useAuth';
 import { useTheme } from '../src/shared/themeContext/useTheme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -28,27 +30,36 @@ const RootContent = () => {
 
 const RootLayout = () => {
   useAppFonts();
+  const dataReady = useAfterPaint();
   return (
     <SafeAreaProvider>
-      <AuthProvider>
+      <AuthProvider enabled={dataReady}>
         <ThemeProvider>
-          <AccountContent />
+          <AccountContent dataReady={dataReady} />
         </ThemeProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
 };
 
-const AccountContent = () => {
+const AccountContent = ({ dataReady }: { dataReady: boolean }) => {
   const { user, loading } = useAuth();
-  const enabled = !loading;
-  const accountKey = loading ? `pending` : user?.id || `guest`;
+  const lastAccount = useRef<string | null>(null);
+  const [accountRevision, setAccountRevision] = useState(0);
+  const accountScope = loading ? null : user?.id ?? `guest`;
+  const enabled = useAfterPaint(!loading);
+  useEffect(() => {
+    if (accountScope === null) return;
+    // Keep the initial UI mounted; reset account views only when the actor changes.
+    if (lastAccount.current !== null && lastAccount.current !== accountScope) setAccountRevision(current => current + 1);
+    lastAccount.current = accountScope;
+  }, [accountScope]);
   return (
-    <ConnectionAvailabilityProvider>
-      <ColumnProvider key={accountKey} enabled={enabled} userId={user?.id ?? null}>
+    <ConnectionAvailabilityProvider enabled={dataReady}>
+      <ColumnProvider key={accountRevision} enabled={enabled} userId={user?.id ?? null}>
         <DomainProvider enabled={enabled}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>
-            <WatchingProvider key={accountKey} enabled={enabled}>
+            <WatchingProvider enabled={enabled}>
               <RootContent />
             </WatchingProvider>
           </PortfolioPreferencesProvider>

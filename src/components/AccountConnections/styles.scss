@@ -7,9 +7,6 @@
 :is(.connection-reveal, [data-class='connection-reveal']) { transition: background-color .22s ease, opacity .22s ease; }
 :is(.connection-reveal, [data-class='connection-reveal']):not([aria-disabled='true']):hover { background: var(--paper) !important; }
 :is(.connection-reveal, [data-class='connection-reveal']):focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-:is(.hosted-domain-include, [data-class='hosted-domain-include']) { transition: background-color .22s ease, border-color .22s ease, opacity .22s ease; }
-:is(.hosted-domain-include, [data-class='hosted-domain-include']):hover { border-color: var(--accent) !important; }
-:is(.hosted-domain-include, [data-class='hosted-domain-include']):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 :is(.connection-input, [data-class='connection-input']) { width: 100%; min-width: 0; }
 :is(.connection-tab, [data-class='connection-tab']) { transition: color .22s ease, border-color .22s ease, background-color .22s ease; }
 :is(.connection-tab, [data-class='connection-tab']):hover { border-bottom-color: var(--accent) !important; background: var(--subtle) !important; }
@@ -19,21 +16,140 @@
 :is(.connection-tab, [data-class='connection-tab']):hover :is(.connection-tab-text, [data-class='connection-tab-text']) { color: var(--accent) !important; }
 :is(.account-connections, [data-class='account-connections'])[data-embedded='true'] { padding: 0 !important; }
 :is(.account-connections, [data-class='account-connections']) :is(.statusText, [data-class='statusText']) { white-space: pre-line; }
-:is(.connection-hint, [data-class='connection-hint']), :is(.account-connections, [data-class='account-connections']) :is(.statusText, [data-class='statusText']), :is(.hosted-domain-name, [data-class='hosted-domain-name']), :is(.hosted-domain-details, [data-class='hosted-domain-details']), :is(.hosted-domain-source, [data-class='hosted-domain-source']) { overflow-wrap: anywhere; }
+:is(.connection-hint, [data-class='connection-hint']), :is(.account-connections, [data-class='account-connections']) :is(.statusText, [data-class='statusText']) { overflow-wrap: anywhere; }
+:is(.connection-format-help, [data-class='connection-format-help']) > * { overflow-wrap: anywhere; }
+:is(.connection-field-row, [data-class='connection-field-row']) {
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  flex-direction: column !important;
+}
+:is(.connection-input-column, [data-class='connection-input-column'], .connection-format-help, [data-class='connection-format-help']) { width: 100%; min-width: 0; flex-grow: 0 !important; flex-basis: auto !important; }
+@media (min-width: 720px) {
+  :is(.account-page, [data-class='account-page'])[data-page='connections'] :is(.account-connections, [data-class='account-connections'])[data-embedded='false'] {
+    :is(.connection-input-section, [data-class='connection-input-section']) {
+      gap: 12px !important;
+      display: grid !important;
+      align-items: start !important;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+
+      > :is(.connection-input-section-title, [data-class='connection-input-section-title'], .connection-hint, [data-class='connection-hint']) { grid-column: 1 / -1; }
+    }
+
+    :is(.connection-key-field, [data-class='connection-key-field']) { min-width: 0; }
+    :is(.connection-format, [data-class='connection-format'], .connection-example, [data-class='connection-example']) { overflow-wrap: anywhere; }
+  }
+}
+@media (min-width: 1100px) {
+  :is(.account-page, [data-class='account-page'])[data-page='connections'] :is(.account-connections, [data-class='account-connections'])[data-embedded='false'] {
+    gap: 12px !important;
+    display: grid !important;
+    padding: 16px !important;
+    overflow: visible !important;
+    grid-template-columns: minmax(0, 1fr);
+
+    :is(.connections-layout, [data-class='connections-layout']) {
+      gap: 16px !important;
+      display: grid !important;
+      overflow: visible !important;
+      grid-column: 1 / -1;
+      align-items: start !important;
+      grid-template-columns: minmax(0, 1fr) clamp(220px, 20vw, 280px);
+    }
+
+    :is(.connections-sidebar, [data-class='connections-sidebar']) {
+      gap: 12px !important;
+      grid-row: 1;
+      grid-column: 2;
+      position: sticky !important;
+      overflow: visible !important;
+      align-self: start !important;
+      top: calc(var(--site-header-offset, 0px) + 12px);
+    }
+
+    :is(.connection-tabs, [data-class='connection-tabs']) {
+      gap: 4px !important;
+      padding: 4px !important;
+      flex-wrap: nowrap !important;
+      flex-direction: column !important;
+    }
+
+    :is(.connection-tab, [data-class='connection-tab']) {
+      flex-grow: 0 !important;
+      min-height: 36px !important;
+      padding: 7px 10px !important;
+      justify-content: flex-start !important;
+    }
+
+    :is(.connections-content, [data-class='connections-content']) {
+      grid-row: 1;
+      grid-column: 1;
+      gap: 12px !important;
+      overflow: visible !important;
+    }
+    :is(.connection-provider, [data-class='connection-provider']) { overflow: visible !important; }
+
+    :is(.connection-provider-heading, [data-class='connection-provider-heading']) {
+      z-index: 2;
+      position: sticky !important;
+      padding-block: 6px !important;
+      background: var(--paper) !important;
+      top: calc(var(--site-header-offset, 0px) + 12px);
+    }
+
+    :is(.connection-accounts, [data-class='connection-accounts']) {
+      display: grid !important;
+      align-items: start !important;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
+    }
+
+    :is(.connection-field, [data-class='connection-field']) {
+      gap: 10px !important;
+      display: grid !important;
+      padding: 12px !important;
+      align-items: start !important;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+
+      > :is(.connection-account-heading, [data-class='connection-account-heading'], .connection-hint, [data-class='connection-hint'], .connection-token-link, [data-class='connection-token-link'], .actionsCell, [data-class='actionsCell'], .connection-account-actions, [data-class='connection-account-actions']) { grid-column: 1 / -1; }
+    }
+
+    :is(.connection-input-section, [data-class='connection-input-section']) {
+      gap: 12px !important;
+      display: grid !important;
+      align-items: start !important;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+
+      > :is(.connection-input-section-title, [data-class='connection-input-section-title'], .connection-hint, [data-class='connection-hint']) { grid-column: 1 / -1; }
+    }
+
+    :is(.connection-key-field, [data-class='connection-key-field']) { gap: 6px !important; min-width: 0; }
+    :is(.connection-input, [data-class='connection-input']) { min-height: 44px !important; padding-block: 10px !important; }
+    :is(.connection-skeleton, [data-class='connection-skeleton']) { height: 44px !important; }
+    :is(.connection-reveal, [data-class='connection-reveal']) { top: 0 !important; }
+    :is(.connection-format, [data-class='connection-format'], .connection-example, [data-class='connection-example'], .connection-env-note, [data-class='connection-env-note'], .connection-env-example, [data-class='connection-env-example'], .connection-hint, [data-class='connection-hint']) { line-height: 16px !important; overflow-wrap: anywhere; }
+    :is(.connection-add, [data-class='connection-add'], .connection-save, [data-class='connection-save'], .connection-remove, [data-class='connection-remove'], .connection-token-link, [data-class='connection-token-link'], .connection-access-link, [data-class='connection-access-link'], .connections-save, [data-class='connections-save'], .connections-clear, [data-class='connections-clear']) { min-height: 38px; padding: 9px 12px !important; }
+
+    :is(.connections-actions, [data-class='connections-actions']) {
+      bottom: 12px;
+      z-index: 3;
+      position: sticky !important;
+      padding: 8px !important;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--paper) !important;
+    }
+
+    :is(.connections-private-copy, [data-class='connections-private-copy']) { line-height: 16px !important; }
+  }
+}
 @media (max-width: 560px) {
   :is(.account-connections, [data-class='account-connections']):not([data-embedded='true']) { padding: 16px !important; }
   :is(.connection-input, [data-class='connection-input']) { font-size: 16px !important; }
-  :is(.connections-heading, [data-class='connections-heading']), :is(.connections-actions, [data-class='connections-actions']) { align-items: stretch !important; flex-direction: column !important; }
-  :is(.connections-title, [data-class='connections-title']) { min-width: 0 !important; }
+  :is(.connections-actions, [data-class='connections-actions']) { align-items: stretch !important; flex-direction: column !important; }
   :is(.connections-save, [data-class='connections-save']), :is(.connections-clear, [data-class='connections-clear']) { width: 100%; justify-content: center !important; }
-  :is(.hosted-domain-review, [data-class='hosted-domain-review']) { padding: 12px !important; }
-  :is(.hosted-domain-review-title, [data-class='hosted-domain-review-title']) { flex: 1; min-width: 0; }
-  :is(.hosted-domain-copy, [data-class='hosted-domain-copy']) { min-width: 0 !important; flex-basis: 100% !important; }
-  :is(.hosted-domain-include, [data-class='hosted-domain-include']) { width: 100%; justify-content: center !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   :is(.connection-tab, [data-class='connection-tab']), :is(.connection-tab-text, [data-class='connection-tab-text']) { transition: none; }
-  :is(.connection-reveal, [data-class='connection-reveal']), :is(.hosted-domain-include, [data-class='hosted-domain-include']), :is(.connections-view-domains, [data-class='connections-view-domains']) { transition: none; }
+  :is(.connection-reveal, [data-class='connection-reveal']), :is(.connections-view-domains, [data-class='connections-view-domains']) { transition: none; }
   :is(.connections-sync-spinner, [data-class='connections-sync-spinner'], .connections-save-spinner, [data-class='connections-save-spinner']) > div { animation: none !important; }
 }
 

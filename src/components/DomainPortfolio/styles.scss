@@ -22,6 +22,20 @@
 .portfolio-registrar-total { white-space: nowrap; }
 .portfolio-registrar-separator { margin-right: 8px; }
 .portfolio-summary-value { color: var(--ink); font-family: var(--font-bold); }
+.portfolio-value-skeleton {
+  height: 11px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  display: inline-block;
+  vertical-align: middle;
+  background: var(--line);
+  animation: portfolio-value-pulse 1.6s ease-in-out infinite;
+}
+.portfolio-value-skeleton-count { width: 22px; }
+.portfolio-value-skeleton-spend { width: 52px; }
+.portfolio-value-skeleton-footer { width: 112px; }
+.portfolio-value-skeleton-selection { width: 64px; margin-right: auto; }
+@keyframes portfolio-value-pulse { 50% { opacity: .45; } }
 .portfolio-summary-separator { font-size: 12px; color: var(--placeholder); }
 .portfolio-summary-attention { color: var(--warning); }
 .portfolio-sync-status { gap: 8px; display: flex; flex-shrink: 0; color: var(--muted); font-size: 12px; white-space: nowrap; align-items: center; }
@@ -324,6 +338,7 @@
   .portfolio-summary-item { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .portfolio-value-skeleton { animation: none; }
   .portfolio-sync-spinner { animation: none; }
   .portfolio-registrar-filter-panel { animation: none; }
   .portfolio-button, .portfolio-sort-icon, .portfolio-search-wrap, .portfolio-view-all, .portfolio-view-option, .portfolio-view-all-icon, .portfolio-registrar-filter, .portfolio-main-database-heading, .portfolio-toolbar-domain-actions { transition: none; }

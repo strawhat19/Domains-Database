@@ -65,11 +65,9 @@ export const discoverHostingerDomains = async (
   let limitedLookups = 0;
   const warnings: string[] = [];
   const domains: RegistrarDomain[] = [];
-  const discoveredDomains: RegistrarDomain[] = [];
   for (let index = 0; index < names.length; index += 4) {
     const batch = names.slice(index, index + 4);
     const results = await Promise.all(batch.map(async name => {
-      const include = confirmed.has(name);
       let registration: Awaited<ReturnType<typeof getDomainRegistration>> = { registrar: `` };
       if (context.signal.aborted || Date.now() + 6000 >= context.deadline) limitedLookups++;
       else {
@@ -80,9 +78,10 @@ export const discoverHostingerDomains = async (
       if (registration.registered === false) { unregistered++; return undefined; }
       const meta: Record<string, JSONValue> = {
         externalRegistration: true,
-        ownershipConfirmed: include,
         hostingProvider: `Hostinger`,
+        automaticallyIncluded: true,
         source: `Hostinger Hosting API`,
+        ownershipConfirmed: confirmed.has(name),
       };
       if (registration.registrarName) meta.registrarName = registration.registrarName;
       if (registration.registrarIanaId) meta.registrarIanaId = registration.registrarIanaId;
@@ -94,16 +93,15 @@ export const discoverHostingerDomains = async (
     }));
     for (const record of results) {
       if (!record) continue;
-      if (confirmed.has(record.name)) domains.push(record);
-      else discoveredDomains.push(record);
+      domains.push(record);
     }
   }
   const missing = confirmedNames.filter(name => !hosted.names.includes(name) && !registeredNames.has(name)).length;
   if (missing) warnings.push(`${missing} Confirmed External Domain(s) Not Found In Accessible Hostinger Websites`);
   if (hosted.skipped) warnings.push(`${hosted.skipped} Temporary, Unnamed, Or Subdomain Hosting Record(s) Excluded`);
   if (unregistered) warnings.push(`${unregistered} Hosting Name(s) Have No Matching Registry Registration`);
-  if (unresolved || limitedLookups) warnings.push(`${unresolved + limitedLookups} Hosted Domain Registrar(s) Could Not Be Verified — Review Before Importing`);
+  if (unresolved || limitedLookups) warnings.push(`${unresolved + limitedLookups} Hosted Domain Registrar(s) Could Not Be Verified`);
   if (availableNames.length > names.length) warnings.push(`${availableNames.length - names.length} Hosted Name(s) Exceed The 200 Domain Discovery Limit`);
-  if (discoveredDomains.length) warnings.push(`${discoveredDomains.length} Externally Hosted Domain(s) Await Ownership Confirmation — Shared Websites May Be Included`);
-  return { domains, warnings, discoveredDomains };
+  if (domains.length) warnings.push(`${domains.length} Externally Hosted Domain(s) Automatically Included`);
+  return { domains, warnings };
 };

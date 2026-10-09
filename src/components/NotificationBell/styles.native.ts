@@ -3,6 +3,7 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   list: { gap: 12 },
+  countSkeleton: { width: 58, height: 20, borderRadius: 6, backgroundColor: palette.skeleton },
   messageError: { color: palette.danger },
   scroll: { flexGrow: 0, flexShrink: 1 },
   message: { fontSize: 12, lineHeight: 20, paddingVertical: 14, color: palette.muted, fontFamily: `DMSans_400Regular` },

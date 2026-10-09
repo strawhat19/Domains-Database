@@ -21,6 +21,7 @@ const Hero = () => {
   const search = useHeroSearch();
   const recents = useRecentsLayout();
   const reducedMotion = useReducedMotion();
+  const skeletonOpacity = useRef(new Animated.Value(1)).current;
   const radarPhases = useRef([new Animated.Value(0), new Animated.Value(0)]).current;
   const { width } = useWindowDimensions();
   const { isDark, palette } = useTheme();
@@ -33,9 +34,20 @@ const Hero = () => {
   const compact = width < 600;
   const accentSize = Math.min(52, Math.max(28, (width - 48) * .105));
   const [searchFocused, setSearchFocused] = useState(false);
+  const dataLoading = search.domainCountLoading || search.trendingCountLoading || search.recentSearchesLoading;
   const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
+  useEffect(() => {
+    skeletonOpacity.setValue(1);
+    if (reducedMotion || !dataLoading) return;
+    const animation = Animated.loop(Animated.sequence([
+      Animated.timing(skeletonOpacity, { toValue: .45, duration: 800, isInteraction: false, useNativeDriver: true }),
+      Animated.timing(skeletonOpacity, { toValue: 1, duration: 800, isInteraction: false, useNativeDriver: true }),
+    ]));
+    animation.start();
+    return () => animation.stop();
+  }, [dataLoading, reducedMotion, skeletonOpacity]);
   useEffect(() => {
     radarPhases.forEach(phase => phase.setValue(0));
     if (reducedMotion) return;
@@ -180,6 +192,7 @@ const Hero = () => {
         <Link asChild href={routes.domains.href}>
           <Pressable
             accessibilityRole={`link`}
+            accessibilityState={{ busy: search.domainCountLoading }}
             accessibilityLabel={`Go To ${domainsLabel}`}
             {...elementProps(`hero-domains-link`)}
             style={({ pressed }) => [styles.domainsLink, useStackPill && styles.stackButton, pressed && styles.recentPressed]}
@@ -192,8 +205,15 @@ const Hero = () => {
                 id={`hero-domains-shape`}
               />
             )}
+            {search.domainCountLoading && (
+              <Animated.View
+                accessible={false}
+                {...elementProps(`hero-domains-count-skeleton`)}
+                style={[styles.countSkeleton, { opacity: skeletonOpacity }]}
+              />
+            )}
             <Text {...elementProps(`hero-domains-text`)} style={styles.domainsLinkText}>
-              {search.domainCount > 0 && (
+              {!search.domainCountLoading && search.domainCount > 0 && (
                 <>
                   <Text {...elementProps(`hero-domains-count`)} style={styles.ctaCount}>
                     {search.domainCount.toLocaleString()}
@@ -232,6 +252,7 @@ const Hero = () => {
           <Link asChild href={routes.search.href}>
             <Pressable
               accessibilityRole={`link`}
+              accessibilityState={{ busy: search.trendingCountLoading }}
               accessibilityLabel={`Explore ${trendingLabel} Domains`}
               {...elementProps(`hero-trending-link`)}
               style={({ pressed }) => [styles.domainsLink, styles.trendingLink, useStackPill && styles.stackButton, pressed && styles.recentPressed]}
@@ -244,8 +265,15 @@ const Hero = () => {
                   id={`hero-trending-shape`}
                 />
               )}
+              {search.trendingCountLoading && (
+                <Animated.View
+                  accessible={false}
+                  {...elementProps(`hero-trending-count-skeleton`)}
+                  style={[styles.countSkeleton, { opacity: skeletonOpacity }]}
+                />
+              )}
               <Text {...elementProps(`hero-trending-text`)} style={[styles.domainsLinkText, styles.trendingLinkText]}>
-                {search.trendingCount > 0 && (
+                {!search.trendingCountLoading && search.trendingCount > 0 && (
                   <>
                     <Text {...elementProps(`hero-trending-count`)} style={styles.ctaCount}>
                       {search.trendingCount.toLocaleString()}
@@ -309,10 +337,22 @@ const Hero = () => {
             <History {...elementProps(`hero-domain-recents-icon`)} size={12} color={heroPalette.muted} />
             {!recents.iconOnly && <Text {...elementProps(`hero-domain-recents-label`)} style={styles.recentsLabel}>{`Recents`}</Text>}
           </View>
-          <View {...elementProps(`hero-domain-recents-items`)} style={styles.recentsItems} accessibilityLiveRegion={`polite`}>
-            {search.recentSearchesLoading ? (
-              <Text {...elementProps(`hero-domain-recents-loading`)} style={styles.recentsMessage}>{`Loading…`}</Text>
-            ) : search.recentSearches.length ? search.recentSearches.slice(0, 3).map((record, index) => (
+          <View
+            style={styles.recentsItems}
+            accessibilityLiveRegion={`polite`}
+            {...elementProps(`hero-domain-recents-items`)}
+            accessible={search.recentSearchesLoading}
+            accessibilityState={{ busy: search.recentSearchesLoading }}
+            accessibilityLabel={search.recentSearchesLoading ? `Loading Recent Domain Searches` : undefined}
+          >
+            {search.recentSearchesLoading ? [78, 96, 68].map((width, index) => (
+              <Animated.View
+                key={index}
+                accessible={false}
+                {...elementProps(`hero-domain-recent-skeleton`, `${index}`)}
+                style={[styles.recentSkeleton, { width, opacity: skeletonOpacity }]}
+              />
+            )) : search.recentSearches.length ? search.recentSearches.slice(0, 3).map((record, index) => (
               <Pressable
                 key={record.query}
                 accessibilityRole={`button`}

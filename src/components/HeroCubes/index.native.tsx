@@ -1,5 +1,5 @@
 import { styles } from './styles.native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, AppState, Easing, View } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -224,4 +224,4 @@ const HeroCubes = ({ suffix = `hero` }: { suffix?: string }) => {
   );
 };
 
-export default HeroCubes;
+export default memo(HeroCubes);

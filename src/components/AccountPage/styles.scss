@@ -1,6 +1,34 @@
 :is(.account-sidebar-profile, [data-class='account-sidebar-profile']):hover, :is(.account-sidebar-dashboard, [data-class='account-sidebar-dashboard']):hover, :is(.account-sidebar-connections, [data-class='account-sidebar-connections']):hover { background: var(--subtle) !important; }
 :is(.dashboard-stat-skeleton, [data-class='dashboard-stat-skeleton']), :is(.dashboard-users-skeleton, [data-class='dashboard-users-skeleton']), :is(.dashboard-roles-skeleton, [data-class='dashboard-roles-skeleton']) { animation: account-pulse 1.4s ease-in-out infinite; }
 :is(.profile-value, [data-class='profile-value']), :is(.dashboard-user-name, [data-class='dashboard-user-name']), :is(.dashboard-user-email, [data-class='dashboard-user-email']) { overflow-wrap: anywhere; }
+@media (min-width: 1100px) {
+  :is(.account-page, [data-class='account-page'])[data-page='connections'] {
+    gap: 24px !important;
+    max-width: none !important;
+    overflow: visible !important;
+    padding: 20px 0 0 !important;
+    align-items: flex-start !important;
+
+    :is(.account-sidebar, [data-class='account-sidebar']) {
+      width: 160px !important;
+      position: sticky !important;
+      align-self: flex-start !important;
+      top: calc(var(--site-header-offset, 0px) + 16px);
+    }
+
+    :is(.account-content, [data-class='account-content']) {
+      gap: 8px 16px !important;
+      display: grid !important;
+      overflow: visible !important;
+      align-content: start !important;
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    :is(.account-eyebrow, [data-class='account-eyebrow'], .account-connections, [data-class='account-connections'], .connections-signup-prompt, [data-class='connections-signup-prompt']) { grid-column: 1 / -1; }
+    :is(.account-title, [data-class='account-title']) { font-size: 30px !important; }
+    :is(.account-description, [data-class='account-description']) { line-height: 20px !important; margin-bottom: 0 !important; align-self: center !important; }
+  }
+}
 @media (max-width: 560px) {
   :is(.account-page, [data-class='account-page']) { padding-right: 16px !important; padding-left: 16px !important; }
   :is(.account-sidebar-title, [data-class='account-sidebar-title']) { flex-basis: 100%; }

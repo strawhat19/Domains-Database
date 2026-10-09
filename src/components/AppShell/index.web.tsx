@@ -34,6 +34,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       className={`app-shell`}
       data-landing={pathname === routes.home.href || undefined}
       data-fit-view={fitViewport || undefined}
+      data-connections-page={pathname === routes.connections.href || undefined}
       data-search-viewport={searchViewport || undefined}
       style={{
         [`--site-header-offset`]: `${scroll.headerHeight}px`,
@@ -90,6 +91,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                         id={`header-link-${item.label.toLowerCase()}`}
                         className={`header-link${index >= topRowCount ? ` header-link-bottom-row` : ``}${active ? ` header-link-active` : ``}`}
                         aria-label={item.accessibilityLabel}
+                        aria-busy={item.countLoading || undefined}
                         aria-current={active ? `page` : undefined}
                       >
                         <Icon
@@ -104,13 +106,13 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                         >
                           {item.label}
                         </span>
-                        {item.count !== undefined && (
+                        {(item.countLoading || item.count !== undefined) && (
                           <span
                             aria-hidden
-                            className={`header-link-count`}
+                            className={`header-link-count${item.countLoading ? ` header-link-count-skeleton` : ``}`}
                             id={`header-link-count-${item.label.toLowerCase()}`}
                           >
-                            {item.count}
+                            {item.countLoading ? null : item.count}
                           </span>
                         )}
                         {beta && (

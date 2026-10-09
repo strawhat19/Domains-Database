@@ -5,6 +5,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 import { COLUMN_STORAGE_KEY, DEFAULT_VISIBLE_COLUMNS, PORTFOLIO_COLUMNS, type PortfolioColumn } from '../portfolioColumns';
 
 interface ColumnContextValue {
+  loading: boolean;
   resetColumns: () => void;
   visibleColumns: PortfolioColumn[];
   flexibleColumns: PortfolioColumn[];
@@ -90,27 +91,27 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
   }, [ready, enabled, userId, columnWidths, visibleColumns, flexibleColumns, storageQueue]);
 
   const resetColumns = useCallback(() => {
-    if (!enabled || !active.current) return;
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
     preferenceChanged.current = true;
     updateColumnWidths({});
     setFlexibleColumns([]);
     setVisibleColumns([...DEFAULT_VISIBLE_COLUMNS]);
-  }, [enabled]);
+  }, [ready, userId, enabled]);
 
   const toggleColumn = useCallback((column: PortfolioColumn) => {
-    if (!enabled || !active.current || column === `name` || !columnFields.has(column)) return;
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId || column === `name` || !columnFields.has(column)) return;
     preferenceChanged.current = true;
     setVisibleColumns(current => current.includes(column) ? current.filter(field => field !== column) : [...current, column]);
-  }, [enabled]);
+  }, [ready, userId, enabled]);
 
   const toggleColumnFlex = useCallback((column: PortfolioColumn) => {
-    if (!enabled || !active.current || !columnFields.has(column)) return;
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId || !columnFields.has(column)) return;
     preferenceChanged.current = true;
     setFlexibleColumns(current => current.includes(column) ? current.filter(field => field !== column) : [...current, column]);
-  }, [enabled]);
+  }, [ready, userId, enabled]);
 
   const moveColumn = useCallback((source: PortfolioColumn, target: PortfolioColumn) => {
-    if (!enabled || !active.current || source === target || !columnFields.has(source) || !columnFields.has(target)) return;
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId || source === target || !columnFields.has(source) || !columnFields.has(target)) return;
     preferenceChanged.current = true;
     setVisibleColumns(current => {
       const sourceIndex = current.indexOf(source);
@@ -121,24 +122,25 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
       columns.splice(targetIndex, 0, source);
       return columns;
     });
-  }, [enabled]);
+  }, [ready, userId, enabled]);
 
   const resizeColumn = useCallback((column: PortfolioColumn, width: number) => {
-    if (!enabled || !active.current || !columnFields.has(column) || !Number.isFinite(width)) return;
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId || !columnFields.has(column) || !Number.isFinite(width)) return;
     preferenceChanged.current = true;
     const nextWidth = Math.max(72, Math.min(10000, Math.round(width)));
     setFlexibleColumns(current => current.includes(column) ? current.filter(field => field !== column) : current);
     updateColumnWidths(current => current[column] === nextWidth ? current : { ...current, [column]: nextWidth });
-  }, [enabled]);
+  }, [ready, userId, enabled]);
 
   const setColumnWidths = useCallback((widths: Partial<Record<PortfolioColumn, number>>) => {
-    if (!enabled || !active.current) return;
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
     preferenceChanged.current = true;
     setFlexibleColumns([]);
     updateColumnWidths(normalizeWidths(widths));
-  }, [enabled]);
+  }, [ready, userId, enabled]);
 
   const value = useMemo(() => ({
+    loading: !enabled || !ready || loadedUserId.current !== userId,
     moveColumn,
     resetColumns,
     resizeColumn,

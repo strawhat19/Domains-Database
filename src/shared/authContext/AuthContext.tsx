@@ -28,7 +28,7 @@ interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | null>(null);
 const messageFromError = (error: unknown) => error instanceof Error ? error.message : `Authentication Is Unavailable`;
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) => {
   const mounted = useRef(false);
   const initialized = useRef(false);
   const currentUser = useRef<User | null>(null);
@@ -99,6 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     mounted.current = true;
+    if (!enabled) return () => { mounted.current = false; };
     void refreshUser().catch(() => undefined);
     const syncSession = (event: StorageEvent) => {
       if (event.key === null || AUTH_PRESENCE_KEYS.includes(event.key)) void refreshUser().catch(() => undefined);
@@ -117,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         window.removeEventListener(`storage`, syncSession);
       }
     };
-  }, [refreshUser]);
+  }, [enabled, refreshUser]);
 
   useEffect(() => {
     if (!user || expiresAt === null) return;
@@ -182,7 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const clearError = useCallback(() => setError(null), []);
   const clearNotice = useCallback(() => setNotice(null), []);
-  const value = useMemo(() => ({ user, busy, error, notice, loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [user, busy, error, notice, loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
+  const value = useMemo(() => ({ user, busy, error, notice, loading: !enabled || loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser }), [enabled, user, busy, error, notice, loading, loginRevision, hasSavedAccount, signIn, signUp, signOut, clearError, clearNotice, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

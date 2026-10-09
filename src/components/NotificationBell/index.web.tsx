@@ -41,11 +41,12 @@ const NotificationBell = () => {
         ref={toggleRef}
         title={`Notifications`}
         onClick={state.toggle}
+        aria-busy={state.loading}
         aria-expanded={state.open}
         id={`header-notifications-toggle`}
         className={`header-notifications-toggle`}
         aria-controls={`header-notifications-panel`}
-        aria-label={`Notifications, ${state.count} updates`}
+        aria-label={state.loading ? `Notifications, Loading Updates` : `Notifications, ${state.count} updates`}
       >
         <Bell
           size={18}
@@ -56,9 +57,9 @@ const NotificationBell = () => {
         <span
           aria-hidden={true}
           id={`header-notifications-badge`}
-          className={`header-notifications-badge`}
+          className={`header-notifications-badge${state.loading ? ` header-notifications-badge-skeleton` : ``}`}
         >
-          {state.count}
+          {state.loading ? null : state.count}
         </span>
       </button>
       {state.open && (
@@ -83,7 +84,7 @@ const NotificationBell = () => {
               id={`header-notifications-count`}
               className={`header-notifications-count`}
             >
-              {`${state.count} updates`}
+              {state.loading ? <span aria-hidden id={`header-notifications-count-skeleton`} className={`header-notifications-count-skeleton`} /> : `${state.count} updates`}
             </span>
             <button
               type={`button`}

@@ -86,6 +86,7 @@ export interface PortfolioSections {
 }
 
 export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
+  loading: boolean;
   clearOrders: () => void;
   setView: (view: PortfolioView) => void;
   resetOrder: (groupKey: string) => void;

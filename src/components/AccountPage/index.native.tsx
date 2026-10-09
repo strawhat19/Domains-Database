@@ -4,7 +4,7 @@ import { useAccountPage } from './useAccountPage';
 import ProfileSettings from '../ProfileSettings';
 import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
-import { Text, Pressable, View, StyleSheet } from 'react-native';
+import { Text, Platform, Pressable, View, StyleSheet } from 'react-native';
 import { PlugZap, UserRound, LayoutDashboard, ShieldCheck } from 'lucide-react-native';
 
 const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | `dashboard` }) => {
@@ -23,7 +23,11 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
     dashboard: { eyebrow: `ACCOUNT OVERVIEW`, title: `Dashboard.`, copy: `Account activity and an overview of your own portfolio.` },
   };
   return (
-    <View {...elementProps(`account-page`, page)} style={[styles.root, state.compact && styles.compact]}>
+    <View
+      {...elementProps(`account-page`, page)}
+      style={[styles.root, state.compact && styles.compact]}
+      {...(Platform.OS === `web` ? { dataSet: { class: `account-page`, page } } : {})}
+    >
       <View {...elementProps(`account-sidebar`)} style={[styles.sidebar, state.compact && styles.compactSidebar]}>
         <Text {...elementProps(`account-sidebar-title`)} style={styles.eyebrow}>{`YOUR ACCOUNT`}</Text>
         <Link href={`/profile`} asChild>

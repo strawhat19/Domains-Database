@@ -40,6 +40,7 @@ export const createStyles = (palette: ThemePalette, isDark: boolean) => {
     domainsLink: { gap: 4, right: 6, top: `50%`, height: 22, minHeight: 22, borderWidth: 1, borderRadius: 0, paddingVertical: 2, alignItems: `center`, position: `absolute`, flexDirection: `row`, paddingHorizontal: 8, paddingRight: 16, borderColor: heroPalette.accent, backgroundColor: heroPalette.accent, transform: [{ translateY: -11 }] },
     domainsLinkText: { zIndex: 1, fontSize: 11, color: heroPalette.contrast, fontFamily: `DMSans_700Bold` },
     ctaCount: { color: isDark ? `#164e42` : `#d9ffe4`, textDecorationLine: `underline` },
+    countSkeleton: { width: 24, height: 10, zIndex: 1, borderRadius: 2, backgroundColor: `${heroPalette.contrast}40` },
     trendingLink: { borderColor: trendingFill, backgroundColor: trendingFill },
     trendingLinkText: { color: trendingText },
     searchInput: { flex: 1, zIndex: 1, minWidth: 0, fontSize: 12, paddingVertical: 10, paddingHorizontal: 8, color: heroPalette.ink, fontFamily: `DMSans_500Medium` },
@@ -56,6 +57,7 @@ export const createStyles = (palette: ThemePalette, isDark: boolean) => {
     recentsLabel: { fontSize: 10, color: heroPalette.muted, fontFamily: `DMSans_500Medium` },
     recentsError: { fontSize: 10, color: heroPalette.danger, fontFamily: `DMSans_400Regular` },
     recentsMessage: { fontSize: 10, color: heroPalette.muted, fontFamily: `DMSans_400Regular` },
+    recentSkeleton: { height: 24, borderRadius: 2, backgroundColor: heroPalette.skeleton },
     recentQuery: { flexShrink: 1, fontSize: 10, color: heroPalette.muted, fontFamily: `DMSans_500Medium` },
     recent: { gap: 4, minWidth: 0, maxWidth: 130, borderWidth: 1, borderRadius: 2, paddingVertical: 4, paddingHorizontal: 6, alignItems: `center`, flexDirection: `row`, borderColor: `${heroPalette.accent}40`, backgroundColor: `${heroBackground}e6` },
   });
