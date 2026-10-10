@@ -158,6 +158,7 @@ export const updateSubmissionStatus = (id: string, status: SubmissionStatus): Pr
     const snapshot = await readLocal();
     const original = snapshot.records.find(record => record.id === id);
     if (!original) throw new Error(`Submission Could Not Be Found`);
+    if (original.status === status) return original;
     const record = new FormSubmission({ ...original, status, updated: new Date().toISOString() });
     snapshot.records = snapshot.records.map(current => current.id === id ? record : current);
     await saveLocal(snapshot);
@@ -169,8 +170,9 @@ export const updateSubmissionStatus = (id: string, status: SubmissionStatus): Pr
     const saved = await transaction.get(reference);
     if (!saved.exists()) throw new Error(`Submission Could Not Be Found`);
     const original = readRecord(saved.data(), id);
-    const record = new FormSubmission({ ...original, status, updated: new Date().toISOString() });
     assertActor(actor);
+    if (original.status === status) return original;
+    const record = new FormSubmission({ ...original, status, updated: new Date().toISOString() });
     transaction.update(reference, { status, updated: serverTimestamp() });
     return record;
   });

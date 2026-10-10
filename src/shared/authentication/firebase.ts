@@ -346,13 +346,16 @@ export const updateProfile = (input: ProfileInput, expectedUserId?: string): Pro
   const name = input.name === undefined ? user.name : input.name.trim().replace(/\s+/g, ` `);
   const description = input.description === undefined ? user.description : input.description.trim();
   const profilePrivacy = input.profilePrivacy ?? user.profilePrivacy;
+  const publicDomains = input.publicDomains ?? user.publicDomains;
   if (!name || name.length > 100) throw new Error(`Enter A Name Of 1 To 100 Characters`);
   if (typeof description !== `string` || description.length > 2000) throw new Error(`Use A Bio Of Up To 2000 Characters`);
   if (![`public`, `private`].includes(profilePrivacy)) throw new Error(`Choose Public Or Private`);
   if (input.publicDomains !== undefined && typeof input.publicDomains !== `boolean`) throw new Error(`Choose Whether To Share Domains`);
-  const now = new Date().toISOString();
-  const changes = { name, description, profilePrivacy, displayName: name, updated: now, lastUpdated: now, publicDomains: input.publicDomains ?? user.publicDomains };
   assertActor(user.firebase_uid ?? ``);
+  if (name === user.name && name === user.displayName && description === user.description
+    && profilePrivacy === user.profilePrivacy && publicDomains === user.publicDomains) return user;
+  const now = new Date().toISOString();
+  const changes = { name, description, publicDomains, profilePrivacy, displayName: name, updated: now, lastUpdated: now };
   await updateDoc(doc(getFirebaseDb(), `users`, user.id), changes);
   assertActor(user.firebase_uid ?? ``);
   const updated = new User({ ...user, ...changes, signedIn: true });

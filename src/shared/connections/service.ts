@@ -100,8 +100,14 @@ export const saveConnections = (input: ConnectionValues | readonly ConnectionAcc
     const label = connectionFields.find(field => field.id === account.provider)?.label ?? account.provider;
     return { ...account, number, id: genID(`Connection`, number, label).id };
   });
-  const snapshot: ConnectionSnapshot = { userId, version: 2, nextNumber, accounts, updated: new Date().toISOString(), values: connectionValues(accounts) };
   await sessionUser(userId);
+  if (nextNumber === previous.nextNumber && accounts.length === previous.accounts.length
+    && accounts.every((account, index) => {
+      const existing = previous.accounts[index];
+      return account.id === existing?.id && account.number === existing?.number
+        && account.values === existing?.values && account.provider === existing?.provider;
+    })) return previous;
+  const snapshot: ConnectionSnapshot = { userId, version: 2, nextNumber, accounts, updated: new Date().toISOString(), values: connectionValues(accounts) };
   await writeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), storedSnapshot(snapshot));
   notifyConnections(userId);
   return snapshot;
@@ -110,8 +116,9 @@ export const saveConnections = (input: ConnectionValues | readonly ConnectionAcc
 export const clearConnections = (expectedUserId?: string): Promise<void> => serialize(async () => {
   const userId = await sessionUser(expectedUserId);
   const previous = await readConnections(userId);
-  const snapshot = { ...emptySnapshot(userId), nextNumber: previous.nextNumber, updated: new Date().toISOString() };
   await sessionUser(userId);
+  if (!previous.accounts.length) return;
+  const snapshot = { ...emptySnapshot(userId), nextNumber: previous.nextNumber, updated: new Date().toISOString() };
   await writeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), storedSnapshot(snapshot));
   notifyConnections(userId);
 });

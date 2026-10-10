@@ -1,7 +1,7 @@
-import { routes } from '../../shared/routes';
 import { useMemo } from 'react';
-import { useAuth } from '../../shared/authContext/useAuth';
+import { routes } from '../../shared/routes';
 import { useAppFonts } from '../../shared/useAppFonts';
+import { useAuth } from '../../shared/authContext/useAuth';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { useNotifications } from '../../shared/notifications/useNotifications';
@@ -20,8 +20,8 @@ export interface DomainMarqueeItem {
 export const useDomainMarquee = () => {
   const [fontsLoaded, fontError] = useAppFonts();
   const { user, loading: authLoading } = useAuth();
-  const { domains, loaded } = useDomains();
-  const { loading, notifications } = useNotifications();
+  const { domains, loaded, loading: domainLoading } = useDomains();
+  const { notifications, loading: notificationLoading } = useNotifications();
   const userDomains = useMemo(() => domains.filter(domain => !domain.isSample), [domains]);
   const showDomains = !authLoading && loaded && Boolean(user?.id) && userDomains.length > 10;
 
@@ -51,6 +51,6 @@ export const useDomainMarquee = () => {
   return {
     items,
     showDomains,
-    loading: (!fontsLoaded && !fontError) || (!items.length && loading),
+    loading: authLoading || (!fontsLoaded && !fontError) || (Boolean(user?.id) && domainLoading) || (!items.length && notificationLoading),
   };
 };

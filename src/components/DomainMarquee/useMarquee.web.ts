@@ -24,7 +24,8 @@ export const useMarquee = (contentKey: string) => {
   const gesture = useRef<DragGesture | null>(null);
   const [copyCount, setCopyCount] = useState(3);
   const [dragging, setDragging] = useState(false);
-  const [measured, setMeasured] = useState(false);
+  const [measuredKey, setMeasuredKey] = useState<string | null>(null);
+  const measured = measuredKey === contentKey;
   const clickTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const paint = useCallback(() => {
@@ -33,6 +34,8 @@ export const useMarquee = (contentKey: string) => {
   }, []);
 
   useEffect(() => {
+    focused.current = false;
+    setMeasuredKey(null);
     let frame = 0;
     let lastFrame = 0;
     let layoutReady = false;
@@ -56,7 +59,7 @@ export const useMarquee = (contentKey: string) => {
       if (fontsReady) settleTimer = setTimeout(() => {
         if (cancelled || !fontsReady) return;
         paint();
-        setMeasured(true);
+        setMeasuredKey(contentKey);
         layoutReady = true;
         lastFrame = 0;
       }, 250);
@@ -64,6 +67,8 @@ export const useMarquee = (contentKey: string) => {
     const onFontLoading = () => {
       fontsReady = false;
       layoutReady = false;
+      focused.current = false;
+      setMeasuredKey(null);
       if (settleTimer !== undefined) clearTimeout(settleTimer);
       settleTimer = undefined;
     };
@@ -107,7 +112,7 @@ export const useMarquee = (contentKey: string) => {
   }, [contentKey, paint]);
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (!event.isPrimary || event.button !== 0) return;
+    if (!measured || !event.isPrimary || event.button !== 0) return;
     const target = event.target instanceof Element ? event.target.closest(`a`) : null;
     const captureTarget = target ?? event.currentTarget;
     suppressClick.current = false;
@@ -158,7 +163,7 @@ export const useMarquee = (contentKey: string) => {
   };
 
   const onClickCapture = (event: MouseEvent<HTMLDivElement>) => {
-    if (!suppressClick.current) return;
+    if (measured && !suppressClick.current) return;
     event.preventDefault();
     event.stopPropagation();
     suppressClick.current = false;

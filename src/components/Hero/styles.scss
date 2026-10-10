@@ -316,7 +316,8 @@
 .hero-promise { gap: 9px; margin: 0; display: flex; font-size: 10px; align-items: center; letter-spacing: .06em; color: var(--hero-muted); }
 .hero-promise-icon { color: var(--hero-accent); }
 .hero-portfolio-link { gap: 7px; display: flex; min-height: 44px; font-size: 10px; align-items: center; letter-spacing: .04em; color: var(--hero-accent); transition: color .24s ease; }
-.hero-portfolio-link:hover { color: var(--hero-text); }
+.hero-portfolio-link-text { color: #fff; }
+.hero-portfolio-link-icon { color: var(--hero-accent); }
 
 @container hero-domain-recents (width < 320px) {
   .hero-domain-recents-label { display: none; }

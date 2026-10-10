@@ -1,12 +1,14 @@
 import { getFirebaseDb, getFirebaseAuth } from './client';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { doc, runTransaction, type Transaction, type DocumentData } from 'firebase/firestore';
+import { getRecordTimestamps, packRecordTimestamps, withoutRecordTimestamps, type RecordTimestamps } from './recordTimestamps';
 import { splitSnapshots, readCloudSnapshot, clearCloudSnapshots, publishCloudSnapshot, subscribeCloudSnapshot, storageWriteBaselines, storageSubscribedBaselines, type SavedValue, type StorageScope, type SplitSnapshot } from './snapshots';
 
 interface RecordChange { id: string; record?: DocumentData }
 const savedValues = storageWriteBaselines;
 export const clearFirestoreStorageCache = clearCloudSnapshots;
 const RECORDS_PER_TRANSACTION = 400;
+const MAX_TIMESTAMP_SNAPSHOT_LENGTH = 200_000;
 const isRecord = (value: unknown): value is DocumentData => Boolean(value) && typeof value === `object` && !Array.isArray(value);
 export const getFirestoreStorageScope = (key: string): StorageScope | null => {
   const index = key.lastIndexOf(`:user:`);
@@ -58,6 +60,13 @@ const parseRecord = (value: string | null) => {
 const canonicalValue = (value: unknown): unknown => Array.isArray(value)
   ? value.map(canonicalValue)
   : isRecord(value) ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonicalValue(value[key])])) : value;
+const sameRecord = (left: unknown, right: unknown) => JSON.stringify(canonicalValue(left)) === JSON.stringify(canonicalValue(right));
+const sameValue = (left: string | null, right: string | null) => {
+  if (left === right) return true;
+  if (left === null || right === null) return false;
+  try { return sameRecord(JSON.parse(left), JSON.parse(right)); }
+  catch { return false; }
+};
 const assertCounter = (previous: DocumentData | null, next: DocumentData | null) => {
   for (const field of [`nextNumber`, `collectionNumber`, `nextPostNumber`, `nextFollowNumber`]) {
     if (typeof previous?.[field] === `number` && (typeof next?.[field] !== `number` || next[field] < previous[field])) throw new Error(`Saved Record Number Changed — Refresh And Try Again`);
@@ -73,18 +82,36 @@ const splitWritePlan = (scope: StorageScope, split: SplitSnapshot, value: string
   const ids = new Set<string>();
   const numbers = new Set<number>();
   const writes: RecordChange[] = [];
+  const timestampRecords = new Map<string, DocumentData>();
+  const recordTimestamps: Record<string, RecordTimestamps> = {};
   for (const record of records) {
     if (!isRecord(record) || getAppCollectionIDNumber(record.id, split.type) !== record.number
       || !Number.isSafeInteger(record.number) || record.number < 1 || record.number >= parsed.nextNumber
       || ids.has(record.id) || numbers.has(record.number)
       || (split.type === `Domain` && record.uid !== scope.userId)) throw new Error(`Cloud Record ID And Number Must Match`);
     ids.add(record.id); numbers.add(record.number);
-    if (JSON.stringify(canonicalValue(record)) !== JSON.stringify(canonicalValue(oldRecords.get(record.id)))) writes.push({ id: record.id, record });
+    const original = oldRecords.get(record.id);
+    if (sameRecord(record, original)) {
+      if (previous.recordTimestamps?.[record.id]) recordTimestamps[record.id] = previous.recordTimestamps[record.id];
+      continue;
+    }
+    const times = split.type === `Domain` && original && getRecordTimestamps(original)
+      ? getRecordTimestamps(record, previous.recordTimestamps?.[record.id]?.baseUpdated ?? original.updated) : undefined;
+    if (times && original && sameRecord(withoutRecordTimestamps(record), withoutRecordTimestamps(original))) {
+      timestampRecords.set(record.id, record);
+      recordTimestamps[record.id] = times;
+    } else writes.push({ id: record.id, record });
   }
   const removed: RecordChange[] = [...oldRecords.keys()].filter(id => !ids.has(id)).map(id => ({ id }));
-  return { ids: [...ids], snapshot, oldRecords, changes: [...removed, ...writes] };
+  // Materialize timestamps when the shared metadata would grow too large for Firestore.
+  if (JSON.stringify({ snapshot, ids: [...ids], recordTimestamps: packRecordTimestamps(recordTimestamps) }).length > MAX_TIMESTAMP_SNAPSHOT_LENGTH) {
+    for (const record of records) if (recordTimestamps[record.id]) writes.push({ id: record.id, record });
+    timestampRecords.clear();
+    for (const id of Object.keys(recordTimestamps)) delete recordTimestamps[id];
+  }
+  return { snapshot, oldRecords, recordTimestamps, timestampRecords, ids: [...ids], changes: [...removed, ...writes] };
 };
-const writeSplitChunk = async (transaction: Transaction, scope: StorageScope, split: SplitSnapshot, snapshot: DocumentData, records: Map<string, DocumentData>, changes: RecordChange[], previous: SavedValue, firebaseUid: string) => {
+const writeSplitChunk = async (transaction: Transaction, scope: StorageScope, split: SplitSnapshot, snapshot: DocumentData, records: Map<string, DocumentData>, recordTimestamps: Record<string, RecordTimestamps>, changes: RecordChange[], previous: SavedValue, firebaseUid: string) => {
   const current = (await transaction.get(snapshotRef(scope, split.name))).data();
   const revision = revisionOf(current);
   assertRevision(previous, revision, firebaseUid);
@@ -93,22 +120,26 @@ const writeSplitChunk = async (transaction: Transaction, scope: StorageScope, sp
     if (change.record) transaction.set(recordRef(scope, split, change.id), change.record);
     else transaction.delete(recordRef(scope, split, change.id));
   }
-  transaction.set(snapshotRef(scope, split.name), { snapshot, ids: [...records.keys()], revision: revision + 1 });
+  const timestamps = packRecordTimestamps(recordTimestamps);
+  transaction.set(snapshotRef(scope, split.name), { snapshot, ids: [...records.keys()], revision: revision + 1, ...(timestamps.length ? { recordTimestamps: timestamps } : {}) });
   return revision + 1;
 };
 const writeSplitSnapshot = async (key: string, scope: StorageScope, split: SplitSnapshot, value: string, previous: SavedValue, firebaseUid: string) => {
-  const { ids, snapshot, oldRecords, changes } = splitWritePlan(scope, split, value, previous);
+  const { ids, snapshot, oldRecords, changes, timestampRecords, recordTimestamps } = splitWritePlan(scope, split, value, previous);
   let committedChunks = 0;
   let baseline = previous;
-  let currentRecords = oldRecords;
+  let currentRecords = new Map([...oldRecords, ...timestampRecords]);
+  let currentTimestamps = { ...previous.recordTimestamps, ...recordTimestamps };
   try {
     for (let offset = 0; offset < Math.max(changes.length, 1); offset += RECORDS_PER_TRANSACTION) {
       assertActor(firebaseUid);
       const chunk = changes.slice(offset, offset + RECORDS_PER_TRANSACTION);
       const changedRecords = new Map(currentRecords);
+      const timestamps = { ...currentTimestamps };
       for (const change of chunk) {
         if (change.record) changedRecords.set(change.id, change.record);
         else changedRecords.delete(change.id);
+        delete timestamps[change.id];
       }
       const records = new Map<string, DocumentData>();
       for (const id of ids) {
@@ -119,11 +150,12 @@ const writeSplitSnapshot = async (key: string, scope: StorageScope, split: Split
       const storedValue = JSON.stringify({ ...snapshot, [split.field]: [...records.values()] });
       const revision = await runTransaction(getFirebaseDb(), transaction => {
         assertActor(firebaseUid);
-        return writeSplitChunk(transaction, scope, split, snapshot, records, chunk, baseline, firebaseUid);
+        return writeSplitChunk(transaction, scope, split, snapshot, records, timestamps, chunk, baseline, firebaseUid);
       });
       committedChunks += 1;
-      baseline = { revision, firebaseUid, value: storedValue };
+      baseline = { revision, firebaseUid, recordTimestamps: timestamps, value: storedValue };
       currentRecords = records;
+      currentTimestamps = timestamps;
       assertActor(firebaseUid);
       publishCloudSnapshot(scope, baseline);
     }
@@ -166,10 +198,14 @@ export const writeFirestoreStorage = async (key: string, value: string, reset = 
   const firebaseUid = requireActor();
   if (reset) await readFirestoreStorage(key);
   const previous = savedValues.get(key) ?? storageSubscribedBaselines.get(key);
-  savedValues.delete(key);
   if (!previous) throw new Error(`Load Your Saved Data Before Saving — Refresh And Try Again`);
   if (previous.firebaseUid !== firebaseUid) throw new Error(`Your Account Changed — Try Again`);
-  if (previous.value === value && (await readCloudSnapshot(scope)).value === value) return;
+  if (sameValue(previous.value, value)) {
+    const latest = await readCloudSnapshot(scope);
+    assertActor(firebaseUid);
+    if (sameValue(latest.value, value)) { savedValues.set(key, latest); return; }
+  }
+  savedValues.delete(key);
   const split = splitSnapshots[scope.key];
   if (split) return writeSplitSnapshot(key, scope, split, value, previous, firebaseUid);
   const revision = await runTransaction(getFirebaseDb(), async transaction => {
@@ -186,6 +222,11 @@ export const removeFirestoreStorage = async (key: string): Promise<void> => {
   const firebaseUid = requireActor();
   if (!savedValues.has(key)) await readFirestoreStorage(key);
   const previous = savedValues.get(key) ?? storageSubscribedBaselines.get(key);
+  if (previous?.value === null) {
+    const latest = await readCloudSnapshot(scope);
+    assertActor(firebaseUid);
+    if (latest.value === null) { savedValues.set(key, latest); return; }
+  }
   savedValues.delete(key);
   await runTransaction(getFirebaseDb(), async transaction => {
     const index = (await transaction.get(keyRef(scope))).data();
@@ -194,7 +235,7 @@ export const removeFirestoreStorage = async (key: string): Promise<void> => {
     assertRevision(previous, revisionOf(current), firebaseUid);
     assertActor(firebaseUid);
     if (reference) transaction.delete(reference);
-    transaction.delete(keyRef(scope));
+    if (index) transaction.delete(keyRef(scope));
   });
   assertActor(firebaseUid);
   publishCloudSnapshot(scope, { value: null, revision: 0, firebaseUid });

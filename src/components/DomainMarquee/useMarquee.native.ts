@@ -26,6 +26,8 @@ export const useMarquee = (contentKey: string) => {
   const previousCycleWidth = useRef(0);
   const layoutReadyRef = useRef(false);
   const [layoutReady, setLayoutReady] = useState(false);
+  const [readyKey, setReadyKey] = useState<string | null>(null);
+  const [measuredKey, setMeasuredKey] = useState<string | null>(null);
   const [cycleWidth, setCycleWidth] = useState(0);
   const [contentWidth, setContentWidth] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -34,6 +36,7 @@ export const useMarquee = (contentKey: string) => {
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyCount = cycleWidth > 0 ? Math.max(3, Math.ceil(viewportWidth / cycleWidth) + 3) : 3;
   const copies = Array.from({ length: copyCount }, (_, index) => index);
+  const ready = layoutReady && readyKey === contentKey;
 
   const clearResumeTimer = () => {
     if (resumeTimer.current === null) return;
@@ -76,7 +79,7 @@ export const useMarquee = (contentKey: string) => {
     dragged.current = true;
   };
   const openItem = (item: DomainMarqueeItem) => {
-    if (dragged.current) return;
+    if (!ready || dragged.current) return;
     if (item.external) void Linking.openURL(item.href).catch(() => undefined);
     else router.push(getNotificationHref(item.id));
   };
@@ -86,7 +89,9 @@ export const useMarquee = (contentKey: string) => {
   };
   const measureCycle = (event: LayoutChangeEvent) => {
     const width = event.nativeEvent.layout.width;
-    if (!Number.isFinite(width) || width <= 0 || width === cycleWidth) return;
+    if (!Number.isFinite(width) || width <= 0) return;
+    setMeasuredKey(contentKey);
+    if (width === cycleWidth) return;
     pauseLayout();
     setCycleWidth(width);
   };
@@ -127,7 +132,7 @@ export const useMarquee = (contentKey: string) => {
   useEffect(() => {
     layoutReadyRef.current = false;
     setLayoutReady(false);
-    if (cycleWidth <= 0 || viewportWidth <= 0 || contentWidth + copyCount < cycleWidth * copyCount) return;
+    if (measuredKey !== contentKey || cycleWidth <= 0 || viewportWidth <= 0 || Math.abs(contentWidth - cycleWidth * copyCount) > copyCount) return;
     const previousWidth = previousCycleWidth.current;
     if (previousWidth !== cycleWidth) {
       const phase = previousWidth > 0 ? ((offset.current - previousWidth) % previousWidth + previousWidth) % previousWidth / previousWidth : 0;
@@ -138,13 +143,14 @@ export const useMarquee = (contentKey: string) => {
     const timer = setTimeout(() => {
       if (!interacting.current) wrapOffset();
       layoutReadyRef.current = true;
+      setReadyKey(contentKey);
       setLayoutReady(true);
     }, 250);
     return () => clearTimeout(timer);
-  }, [cycleWidth, contentWidth, copyCount, viewportWidth, contentKey]);
+  }, [cycleWidth, contentWidth, copyCount, measuredKey, viewportWidth, contentKey]);
 
   useEffect(() => {
-    if (reduceMotion || !appActive || !layoutReady || cycleWidth <= 0) return;
+    if (reduceMotion || !appActive || !ready || cycleWidth <= 0) return;
     let frame = 0;
     let previousTime: number | null = null;
     const animate = (time: number) => {
@@ -159,9 +165,10 @@ export const useMarquee = (contentKey: string) => {
     };
     frame = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frame);
-  }, [appActive, cycleWidth, reduceMotion, layoutReady]);
+  }, [ready, appActive, cycleWidth, reduceMotion]);
 
   return {
+    ready,
     copies,
     scroll,
     onScroll,

@@ -2,8 +2,11 @@
   "indexes": [],
   "fieldOverrides": [
     { "collectionGroup": "data", "fieldPath": "value", "indexes": [] },
+    { "collectionGroup": "domains", "fieldPath": "meta", "indexes": [] },
     { "collectionGroup": "connections", "fieldPath": "values", "indexes": [] },
+    { "collectionGroup": "snapshots", "fieldPath": "ids", "indexes": [] },
     { "collectionGroup": "formSubmissions", "fieldPath": "message", "indexes": [] },
-    { "collectionGroup": "snapshots", "fieldPath": "snapshot", "indexes": [] }
+    { "collectionGroup": "snapshots", "fieldPath": "snapshot", "indexes": [] },
+    { "collectionGroup": "snapshots", "fieldPath": "recordTimestamps", "indexes": [] }
   ]
 }

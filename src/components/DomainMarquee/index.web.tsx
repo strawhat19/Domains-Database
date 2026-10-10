@@ -1,20 +1,41 @@
 import './styles.scss';
 import { Link } from 'expo-router';
-import { useMarquee } from './useMarquee.web';
 import RouterAnchor from '../RouterAnchor';
 import DomainSiteIcon from '../DomainSiteIcon';
 import StackPillShape from '../StackPillShape';
-import { getNotificationHref } from '../../shared/routes';
+import { useMarquee } from './useMarquee.web';
 import { useStackPill } from '../../shared/config';
 import { Globe2, Info, Sparkles } from 'lucide-react';
+import { getNotificationHref } from '../../shared/routes';
 import { sampleNotificationCount } from '../../shared/sampleNotifications';
 import { useDomainMarquee, type DomainMarqueeItem } from './useDomainMarquee';
 
-const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
+const MarqueeLoading = ({ compact = false, overlay = false, loading = true }: { compact?: boolean; overlay?: boolean; loading?: boolean }) => (
+  <div
+    aria-hidden={true}
+    id={`domain-marquee-loading`}
+    data-compact={compact || undefined}
+    data-loading={overlay ? loading : undefined}
+    className={`domain-marquee-loading${overlay ? ` domain-marquee-loading-overlay` : ``}`}
+  >
+    {Array.from({ length: compact ? 12 : Math.max(6, sampleNotificationCount) }, (_, index) => (
+      <span
+        key={index}
+        id={`domain-marquee-skeleton-${index}`}
+        className={`domain-marquee-skeleton${useStackPill ? ` domain-marquee-skeleton-stack` : ``}`}
+      >
+        {useStackPill && <StackPillShape id={`domain-marquee-skeleton-shape-${index}`} />}
+      </span>
+    ))}
+  </div>
+);
+
+const MarqueeTrack = ({ items, compact }: { items: DomainMarqueeItem[]; compact: boolean }) => {
   const state = useMarquee(JSON.stringify(items.map(item => [item.id, item.label])));
   return (
     <div
       ref={state.viewport}
+      aria-busy={!state.measured}
       id={`domain-marquee-viewport`}
       className={`domain-marquee-viewport`}
       onPointerUp={state.onPointerUp}
@@ -29,7 +50,13 @@ const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
       onDragStart={event => event.preventDefault()}
       onLostPointerCapture={state.onLostPointerCapture}
     >
-      <div ref={state.track} id={`domain-marquee-track`} className={`domain-marquee-track`}>
+      <div
+        ref={state.track}
+        inert={!state.measured}
+        id={`domain-marquee-track`}
+        className={`domain-marquee-track`}
+        aria-hidden={!state.measured || undefined}
+      >
         {Array.from({ length: state.copyCount }, (_, copyIndex) => (
           <div
             key={copyIndex}
@@ -52,7 +79,7 @@ const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
                   className={`domain-marquee-pill${useStackPill ? ` domain-marquee-pill-stack` : ``}`}
                   rel={item.external ? `noopener noreferrer` : undefined}
                   target={item.external ? `_blank` : undefined}
-                  tabIndex={copyIndex === 1 ? undefined : -1}
+                  tabIndex={state.measured && copyIndex === 1 ? undefined : -1}
                   data-marquee-original={copyIndex === 1 ? true : undefined}
                   aria-label={item.external ? `${item.label} (opens in a new tab)` : item.label}
                 >
@@ -91,6 +118,7 @@ const MarqueeTrack = ({ items }: { items: DomainMarqueeItem[] }) => {
           </div>
         ))}
       </div>
+      <MarqueeLoading compact={compact} overlay loading={!state.measured} />
     </div>
   );
 };
@@ -105,19 +133,9 @@ const DomainMarquee = () => {
       aria-label={showDomains ? `Your Domains` : `Notifications`}
     >
       {loading ? (
-        <div id={`domain-marquee-loading`} className={`domain-marquee-loading`} aria-hidden={true}>
-          {Array.from({ length: sampleNotificationCount }, (_, index) => (
-            <span
-              key={index}
-              id={`domain-marquee-skeleton-${index}`}
-              className={`domain-marquee-skeleton${useStackPill ? ` domain-marquee-skeleton-stack` : ``}`}
-            >
-              {useStackPill && <StackPillShape id={`domain-marquee-skeleton-shape-${index}`} />}
-            </span>
-          ))}
-        </div>
+        <MarqueeLoading compact={showDomains} />
       ) : items.length > 0 && (
-        <MarqueeTrack key={showDomains ? `domains` : `notifications`} items={items} />
+        <MarqueeTrack key={showDomains ? `domains` : `notifications`} items={items} compact={showDomains} />
       )}
     </section>
   );

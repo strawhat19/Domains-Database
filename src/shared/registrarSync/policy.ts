@@ -134,12 +134,13 @@ const readPolicy = async (userId: string): Promise<RegistrarSyncPolicy> => {
   await requireSession(userId);
   return policy;
 };
-const writePolicy = async (policy: RegistrarSyncPolicy, current = () => true): Promise<RegistrarSyncPolicy> => {
+const writePolicy = async (policy: RegistrarSyncPolicy, current = () => true, previous?: RegistrarSyncPolicy): Promise<RegistrarSyncPolicy> => {
   const serialized = JSON.stringify(policy);
   const stored: unknown = JSON.parse(serialized);
   if (!isPolicy(stored, policy.userId)) throw new Error(`Sync Settings Could Not Be Saved`);
   await requireSession(policy.userId);
   if (!current()) throw new Error(`Sync Changed — Please Try Again`);
+  if (serialized === JSON.stringify(previous)) return stored;
   await writeStorage(accountStorageKey(SYNC_POLICY_STORAGE_KEY, policy.userId), serialized);
   notifySyncPolicy(policy.userId);
   return stored;
@@ -149,7 +150,7 @@ export const getSyncPolicy = (userId: string): Promise<RegistrarSyncPolicy> => s
 export const resumeAutomaticSync = (userId: string, current: () => boolean): Promise<RegistrarSyncPolicy> => serialize(async () => {
   const previous = await readPolicy(userId);
   if (!current()) throw new Error(`Your Account Changed — Try Again`);
-  return previous.automaticSyncPaused ? writePolicy({ ...previous, automaticSyncPaused: false }, current) : previous;
+  return previous.automaticSyncPaused ? writePolicy({ ...previous, automaticSyncPaused: false }, current, previous) : previous;
 });
 export const isSyncCacheFresh = (policy: RegistrarSyncPolicy, connectionsUpdated: string, now = Date.now()) => policy.lastSyncedAt > 0
   && policy.connectionsUpdated === connectionsUpdated && now >= policy.lastSyncedAt && now - policy.lastSyncedAt < AUTO_SYNC_INTERVAL_MS;
@@ -164,7 +165,7 @@ export const saveSyncCache = (userId: string, connectionsUpdated: string, status
   const connected = providers.filter(provider => statuses[provider]?.state === `connected`
     || latest.accounts.some(account => account.provider === provider && accountStatuses?.[account.id]?.state === `connected`));
   const syncedAt = lastSyncedAt || (sameConnections ? previous.lastSyncedAt : 0);
-  return writePolicy({ ...previous, statuses, accountStatuses, connectionsUpdated, lastSyncedAt: syncedAt, automaticSyncPaused: false, successfulProviders: [...new Set([...successful, ...connected])] }, current);
+  return writePolicy({ ...previous, statuses, accountStatuses, connectionsUpdated, lastSyncedAt: syncedAt, automaticSyncPaused: false, successfulProviders: [...new Set([...successful, ...connected])] }, current, previous);
 });
 
 export const reserveManualSync = (userId: string): Promise<ManualSyncReservation> => serialize(async () => {
@@ -174,16 +175,16 @@ export const reserveManualSync = (userId: string): Promise<ManualSyncReservation
   const attempts = previous.manualCooldownUntil > 0 ? [] : previous.manualAttempts.filter(timestamp => timestamp > now - MANUAL_SYNC_WINDOW_MS);
   if (attempts.length >= MANUAL_SYNC_LIMIT) {
     const manualCooldownUntil = Math.max(...attempts) + MANUAL_SYNC_WINDOW_MS;
-    const policy = await writePolicy({ ...previous, manualAttempts: attempts, manualCooldownUntil });
+    const policy = await writePolicy({ ...previous, manualAttempts: attempts, manualCooldownUntil }, undefined, previous);
     return { allowed: false, policy };
   }
   const manualAttempts = [...attempts, now];
   const manualCooldownUntil = manualAttempts.length === MANUAL_SYNC_LIMIT ? now + MANUAL_SYNC_WINDOW_MS : 0;
-  const policy = await writePolicy({ ...previous, manualAttempts, manualCooldownUntil });
+  const policy = await writePolicy({ ...previous, manualAttempts, manualCooldownUntil }, undefined, previous);
   return { allowed: true, policy };
 });
 
 export const clearSyncCache = (userId: string): Promise<RegistrarSyncPolicy> => serialize(async () => {
   const previous = await readPolicy(userId);
-  return writePolicy({ ...previous, lastSyncedAt: 0, connectionsUpdated: ``, accountStatuses: {}, statuses: emptyStatuses(), successfulProviders: [] });
+  return writePolicy({ ...previous, lastSyncedAt: 0, connectionsUpdated: ``, accountStatuses: {}, statuses: emptyStatuses(), successfulProviders: [] }, undefined, previous);
 });

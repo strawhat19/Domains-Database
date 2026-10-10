@@ -383,6 +383,7 @@ export const api = {
     const current = await readSnapshot();
     const index = current.domains.findIndex(domain => domain.id === id && domain.name === name);
     if (index < 0) throw new Error(`Domain Changed — Refresh Website Info Again`);
+    if (JSON.stringify(current.domains[index].meta?.websiteInsights) === JSON.stringify(normalized)) return;
     const domains = copyDomains(current.domains);
     const original = domains[index];
     domains[index] = new Domain({ ...original, meta: { ...original.meta, websiteInsights: JSON.parse(JSON.stringify(normalized)) } });

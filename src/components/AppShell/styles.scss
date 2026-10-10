@@ -21,7 +21,7 @@
     backdrop-filter: blur(16px);
     background: color-mix(in srgb, var(--paper) 86%, transparent);
     box-shadow: 0 4px 18px color-mix(in srgb, var(--shadow) 35%, transparent);
-    .domain-marquee { background: transparent; }
+    .domain-marquee { background: color-mix(in srgb, var(--canvas) 86%, transparent); }
   }
 }
 

@@ -192,13 +192,13 @@ const Hero = ({ search }: HeroProps) => {
       <p id={`hero-promise`} className={`hero-promise`}>
         <Globe2 size={14} aria-hidden id={`hero-promise-icon`} className={`hero-promise-icon`} />
         <span id={`hero-promise-text`} className={`hero-promise-text`}>
-          {`Names. Renewals. Registrars.`}
+          {`Domains. Websites. Applications.`}
         </span>
       </p>
       <Link href={routes.domains.href} asChild>
         <RouterAnchor id={`hero-portfolio-link`} className={`hero-portfolio-link`}>
           <span id={`hero-portfolio-link-text`} className={`hero-portfolio-link-text`}>
-            {`Explore your portfolio`}
+            {`Explore`}
           </span>
           <ArrowUpRight size={14} aria-hidden id={`hero-portfolio-link-icon`} className={`hero-portfolio-link-icon`} />
         </RouterAnchor>

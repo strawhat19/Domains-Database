@@ -387,7 +387,7 @@ const Hero = ({ search }: HeroProps) => {
       <View {...elementProps(`hero-promise`)} style={styles.promise}>
         <Layers3 {...elementProps(`hero-promise-icon`)} size={14} color={heroPalette.accent} />
         <Text {...elementProps(`hero-promise-text`)} style={styles.promiseText}>
-          {`Names. Renewals. Registrars.`}
+          {`Domains. Websites. Applications.`}
         </Text>
       </View>
     </View>

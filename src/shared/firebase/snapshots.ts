@@ -2,23 +2,28 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { getFirebaseDb, getFirebaseAuth } from './client';
 import { getAppCollectionIDNumber } from '../common/ids';
 import { collection, onSnapshot, onSnapshotsInSync, type DocumentData } from 'firebase/firestore';
+import { readRecordTimestamps, applyRecordTimestamps, type RecordTimestamps } from './recordTimestamps';
 
 export interface StorageScope { key: string; userId: string }
-export interface SavedValue { revision: number; value: string | null; firebaseUid: string }
+export interface SavedValue { revision: number; value: string | null; firebaseUid: string; recordTimestamps?: Record<string, RecordTimestamps> }
 export interface SplitSnapshot { name: string; field: string; collection: string; type: string }
 interface Subscriber { next: (value: string | null) => boolean | void; error?: (error: Error) => void; value?: string | null }
 interface PendingRead { resolve: (value: SavedValue) => void; reject: (error: Error) => void }
 interface StorageSnapshot {
   scope: StorageScope;
   value?: SavedValue;
+  composed?: SavedValue;
   committed?: SavedValue;
   error?: Error;
+  sources?: string;
   reads: Set<PendingRead>;
   subscribers: Set<Subscriber>;
 }
 interface CollectionSnapshot {
   ready: boolean;
+  dirty: boolean;
   pending: boolean;
+  version: number;
   retryAt: number;
   error?: Error;
   stop: () => void;
@@ -74,6 +79,11 @@ const deliver = (state: StorageSnapshot, value: SavedValue) => {
     } catch { /* One subscriber cannot interrupt other consumers. */ }
   }
 };
+const cacheComposition = (state: StorageSnapshot, sources: string, value: SavedValue) => {
+  state.sources = sources;
+  state.composed = value;
+  return value;
+};
 const compose = (account: AccountSnapshot, state: StorageSnapshot): SavedValue | undefined => {
   const split = splitSnapshots[state.scope.key];
   const names = split ? [`snapshots`, split.collection] : [`data`, `storageKeys`];
@@ -81,32 +91,41 @@ const compose = (account: AccountSnapshot, state: StorageSnapshot): SavedValue |
   const failure = sources.find(source => source?.error)?.error;
   if (failure) throw failure;
   if (sources.some(source => !source?.ready || source.pending)) return;
+  const versions = sources.map(source => source?.version).join(`:`);
+  if (state.sources === versions && !state.error) return state.composed;
   const [metadata, records] = sources as CollectionSnapshot[];
   if (split) {
     const record = metadata.records.get(split.name);
-    if (!record) return { value: null, revision: 0, firebaseUid: account.uid };
+    if (!record) return cacheComposition(state, versions, { value: null, revision: 0, firebaseUid: account.uid });
     const revision = revisionOf(record);
     if (!isRecord(record.snapshot) || !Array.isArray(record.ids)
       || new Set(record.ids).size !== record.ids.length
       || record.ids.some((id: unknown) => typeof id !== `string` || getAppCollectionIDNumber(id, split.type) < 1)) throw unreadable();
     if (!Number.isSafeInteger(record.snapshot.nextNumber) || record.snapshot.nextNumber < 1) throw unreadable();
     const indexed = new Set<string>(record.ids);
-    const ids = [...record.ids.filter((id: string) => records.records.has(id)), ...[...records.records.keys()].filter(id => !indexed.has(id))];
+    const ids = [...record.ids.filter((id: string) => records.records.has(id)), ...[...records.records.keys()].filter(id => !indexed.has(id)).sort()];
+    const timestamps = split.type === `Domain` ? readRecordTimestamps(record.recordTimestamps) : {};
+    const numbers = new Set<number>();
+    const recordTimestamps: Record<string, RecordTimestamps> = {};
     const values = ids.map((id: string) => {
       const value = records.records.get(id);
       if (!value || value.id !== id || getAppCollectionIDNumber(id, split.type) < 1
-        || value.number !== getAppCollectionIDNumber(id, split.type)) throw unreadable();
-      return value;
+        || numbers.has(value.number) || value.number !== getAppCollectionIDNumber(id, split.type)) throw unreadable();
+      numbers.add(value.number);
+      const times = timestamps[value.number];
+      if (!times || !indexed.has(id) || value.updated !== times.baseUpdated) return value;
+      recordTimestamps[id] = times;
+      return applyRecordTimestamps(value, times);
     });
     const nextNumber = values.reduce((next, value) => Math.max(next, value.number + 1), record.snapshot.nextNumber as number);
-    return { revision, firebaseUid: account.uid, value: JSON.stringify({ ...record.snapshot, nextNumber, [split.field]: values }) };
+    return cacheComposition(state, versions, { revision, recordTimestamps, firebaseUid: account.uid, value: JSON.stringify({ ...record.snapshot, nextNumber, [split.field]: values }) });
   }
   const index = records.records.get(encodeURIComponent(state.scope.key));
-  if (!index) return { value: null, revision: 0, firebaseUid: account.uid };
+  if (!index) return cacheComposition(state, versions, { value: null, revision: 0, firebaseUid: account.uid });
   if (typeof index.id !== `string` || getAppCollectionIDNumber(index.id, `Data`) !== index.number) throw unreadable();
   const record = metadata.records.get(index.id);
   if (!record || record.id !== index.id || record.key !== state.scope.key || typeof record.value !== `string`) throw unreadable();
-  return { value: record.value, revision: revisionOf(record), firebaseUid: account.uid };
+  return cacheComposition(state, versions, { value: record.value, revision: revisionOf(record), firebaseUid: account.uid });
 };
 const flush = (userId: string, account: AccountSnapshot) => {
   if (accounts.get(userId) !== account || getFirebaseAuth().currentUser?.uid !== account.uid) return;
@@ -146,15 +165,27 @@ const watchCollection = (userId: string, account: AccountSnapshot, name: string)
   const previous = account.collections.get(name);
   if (previous && (!previous.error || Date.now() < previous.retryAt)) return;
   previous?.stop();
-  const source: CollectionSnapshot = { ready: false, pending: false, retryAt: 0, records: new Map(), stop: () => {} };
+  const source: CollectionSnapshot = { ready: false, dirty: true, pending: false, retryAt: 0, records: new Map(), stop: () => {}, version: (previous?.version ?? 0) + 1 };
   account.collections.set(name, source);
   source.stop = onSnapshot(collection(getFirebaseDb(), `users`, userId, name), { includeMetadataChanges: true }, snapshot => {
     if (accounts.get(userId) !== account) return;
+    if (source.pending !== snapshot.metadata.hasPendingWrites) source.version += 1;
     source.pending = snapshot.metadata.hasPendingWrites;
-    if (snapshot.metadata.fromCache || source.pending) return;
+    if (snapshot.metadata.fromCache || source.pending) { source.dirty = true; return; }
+    const changes = snapshot.docChanges();
+    if (!source.ready || source.dirty || source.error) {
+      source.records = new Map(snapshot.docs.map(record => [record.id, record.data()]));
+      source.version += 1;
+    } else if (changes.length) {
+      for (const change of changes) {
+        if (change.type === `removed`) source.records.delete(change.doc.id);
+        else source.records.set(change.doc.id, change.doc.data());
+      }
+      source.version += 1;
+    }
     source.error = undefined;
+    source.dirty = false;
     source.ready = true;
-    source.records = new Map(snapshot.docs.map(record => [record.id, record.data()]));
   }, failure => {
     source.error = failure;
     source.retryAt = Date.now() + 60_000;

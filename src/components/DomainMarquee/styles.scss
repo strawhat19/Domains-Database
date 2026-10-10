@@ -3,24 +3,29 @@
   padding: 4px 0;
   min-height: 40px;
   align-items: center;
-  background: var(--paper);
+  background: var(--canvas);
   border-bottom: 1px solid var(--line);
+  transition: background-color .24s ease;
 }
 
 .domain-marquee-viewport {
   flex: 1;
   min-width: 0;
-  cursor: grab;
+  cursor: default;
   padding: 2px 0;
   overflow: hidden;
+  position: relative;
   touch-action: pan-y;
   --marquee-fade-width: clamp(32px, 5vw, 72px);
   --marquee-fade-mask: linear-gradient(to right, transparent, #000 var(--marquee-fade-width), #000 calc(100% - var(--marquee-fade-width)), transparent);
   mask-image: var(--marquee-fade-mask);
   -webkit-mask-image: var(--marquee-fade-mask);
 
+  &[data-measured='true'] {
+    cursor: grab;
+    .domain-marquee-track { opacity: 1; pointer-events: auto; }
+  }
   &[data-dragging='true'] { cursor: grabbing; }
-  &[data-measured='true'] .domain-marquee-track { opacity: 1; }
   &:focus-within { mask-image: none; -webkit-mask-image: none; }
 }
 
@@ -28,6 +33,7 @@
   opacity: 0;
   display: flex;
   width: max-content;
+  pointer-events: none;
   will-change: transform;
   transition: opacity .22s ease;
 }
@@ -96,5 +102,14 @@
   }
 }
 .domain-marquee-loading { gap: 10px; width: 100%; display: flex; overflow: hidden; padding: 2px var(--shell-gutter); }
-.domain-marquee-skeleton { flex: none; width: 370px; height: 26px; border-radius: 999px; background: var(--skeleton); }
+.domain-marquee-loading-overlay {
+  inset: 0;
+  position: absolute;
+  align-items: center;
+  pointer-events: none;
+  transition: opacity .22s ease;
+  &[data-loading='false'] { opacity: 0; }
+}
+.domain-marquee-loading[data-compact='true'] .domain-marquee-skeleton { width: 130px; &:nth-child(even) { width: 170px; } }
+.domain-marquee-skeleton { flex: 1 0 auto; width: 370px; height: 26px; border-radius: 999px; background: var(--skeleton); }
 .domain-marquee-skeleton-stack { position: relative; border-radius: 4px; background: transparent; --stack-pill-fill: var(--skeleton); --stack-pill-border: var(--skeleton); }
