@@ -1,8 +1,8 @@
 import { onAuthStateChanged } from 'firebase/auth';
 import { getFirebaseDb, getFirebaseAuth } from './client';
 import { getAppCollectionIDNumber } from '../common/ids';
-import { collection, onSnapshot, onSnapshotsInSync, type DocumentData } from 'firebase/firestore';
 import { readRecordTimestamps, applyRecordTimestamps, type RecordTimestamps } from './recordTimestamps';
+import { doc, collection, onSnapshot, onSnapshotsInSync, type DocumentData, type QuerySnapshot, type DocumentSnapshot } from 'firebase/firestore';
 
 export interface StorageScope { key: string; userId: string }
 export interface SavedValue { revision: number; value: string | null; firebaseUid: string; recordTimestamps?: Record<string, RecordTimestamps> }
@@ -11,11 +11,13 @@ interface Subscriber { next: (value: string | null) => boolean | void; error?: (
 interface PendingRead { resolve: (value: SavedValue) => void; reject: (error: Error) => void }
 interface StorageSnapshot {
   scope: StorageScope;
+  readers: number;
   value?: SavedValue;
   composed?: SavedValue;
   committed?: SavedValue;
   error?: Error;
   sources?: string;
+  releaseTimer?: ReturnType<typeof setTimeout>;
   reads: Set<PendingRead>;
   subscribers: Set<Subscriber>;
 }
@@ -42,10 +44,15 @@ export const splitSnapshots: Record<string, SplitSnapshot> = {
   [`domains-database:auction-inventory:v1`]: { name: `auctionInventory`, field: `records`, collection: `auctionInventory`, type: `Auction` },
 };
 const accounts = new Map<string, AccountSnapshot>();
+const LISTENER_GRACE_PERIOD = 30_000;
 export const storageWriteBaselines = new Map<string, SavedValue>();
 export const storageSubscribedBaselines = new Map<string, SavedValue>();
 let observingAuth = false;
 const unreadable = () => new Error(`Saved Cloud Data Could Not Be Read`);
+const sourceNames = (scope: StorageScope) => {
+  const split = splitSnapshots[scope.key];
+  return split ? [`snapshots/${split.name}`, split.collection] : [`data`, `storageKeys`];
+};
 const isRecord = (value: unknown): value is DocumentData => Boolean(value) && typeof value === `object` && !Array.isArray(value);
 const revisionOf = (record?: DocumentData) => {
   if (!record) return 0;
@@ -86,7 +93,7 @@ const cacheComposition = (state: StorageSnapshot, sources: string, value: SavedV
 };
 const compose = (account: AccountSnapshot, state: StorageSnapshot): SavedValue | undefined => {
   const split = splitSnapshots[state.scope.key];
-  const names = split ? [`snapshots`, split.collection] : [`data`, `storageKeys`];
+  const names = sourceNames(state.scope);
   const sources = names.map(name => account.collections.get(name));
   const failure = sources.find(source => source?.error)?.error;
   if (failure) throw failure;
@@ -148,11 +155,29 @@ export const clearCloudSnapshots = () => {
     account.stop();
     for (const source of account.collections.values()) source.stop();
     for (const state of account.storage.values()) {
+      if (state.releaseTimer) clearTimeout(state.releaseTimer);
       reportError(state, new Error(`Your Account Changed — Try Again`));
       state.subscribers.clear();
     }
   }
   accounts.clear();
+};
+const releaseUnusedSnapshot = (state: StorageSnapshot) => {
+  if (state.readers || state.subscribers.size || state.releaseTimer) return;
+  state.releaseTimer = setTimeout(() => {
+    state.releaseTimer = undefined;
+    const account = accounts.get(state.scope.userId);
+    if (!account || account.storage.get(state.scope.key) !== state || state.readers || state.subscribers.size) return;
+    account.storage.delete(state.scope.key);
+    storageSubscribedBaselines.delete(`${state.scope.key}:user:${state.scope.userId}`);
+    const needed = new Set([...account.storage.values()].flatMap(saved => sourceNames(saved.scope)));
+    for (const [name, source] of account.collections) {
+      if (needed.has(name)) continue;
+      source.stop();
+      account.collections.delete(name);
+    }
+    if (!account.storage.size) { account.stop(); accounts.delete(state.scope.userId); }
+  }, LISTENER_GRACE_PERIOD);
 };
 const observeAuth = () => {
   if (observingAuth) return;
@@ -167,15 +192,25 @@ const watchCollection = (userId: string, account: AccountSnapshot, name: string)
   previous?.stop();
   const source: CollectionSnapshot = { ready: false, dirty: true, pending: false, retryAt: 0, records: new Map(), stop: () => {}, version: (previous?.version ?? 0) + 1 };
   account.collections.set(name, source);
-  source.stop = onSnapshot(collection(getFirebaseDb(), `users`, userId, name), { includeMetadataChanges: true }, snapshot => {
-    if (accounts.get(userId) !== account) return;
+  const [collectionName, recordId] = name.split(`/`);
+  const reference = collection(getFirebaseDb(), `users`, userId, collectionName);
+  const receive = (snapshot: QuerySnapshot<DocumentData> | DocumentSnapshot<DocumentData>) => {
+    if (accounts.get(userId) !== account || account.collections.get(name) !== source) return;
     if (source.pending !== snapshot.metadata.hasPendingWrites) source.version += 1;
     source.pending = snapshot.metadata.hasPendingWrites;
     if (snapshot.metadata.fromCache || source.pending) { source.dirty = true; return; }
-    const changes = snapshot.docChanges();
+    const records = `docs` in snapshot ? snapshot.docs : snapshot.exists() ? [snapshot] : [];
+    const changes = `docChanges` in snapshot ? snapshot.docChanges() : [];
     if (!source.ready || source.dirty || source.error) {
-      source.records = new Map(snapshot.docs.map(record => [record.id, record.data()]));
+      source.records = new Map(records.map(record => [record.id, record.data()!]));
       source.version += 1;
+    } else if (!(`docs` in snapshot)) {
+      const previousRecord = source.records.get(snapshot.id);
+      const record = snapshot.data();
+      if (JSON.stringify(previousRecord) !== JSON.stringify(record)) {
+        source.records = new Map(records.map(document => [document.id, document.data()!]));
+        source.version += 1;
+      }
     } else if (changes.length) {
       for (const change of changes) {
         if (change.type === `removed`) source.records.delete(change.doc.id);
@@ -186,11 +221,16 @@ const watchCollection = (userId: string, account: AccountSnapshot, name: string)
     source.error = undefined;
     source.dirty = false;
     source.ready = true;
-  }, failure => {
+  };
+  const fail = (failure: Error) => {
+    if (accounts.get(userId) !== account || account.collections.get(name) !== source) return;
     source.error = failure;
     source.retryAt = Date.now() + 60_000;
     flush(userId, account);
-  });
+  };
+  source.stop = recordId
+    ? onSnapshot(doc(reference, recordId), { includeMetadataChanges: true }, receive, fail)
+    : onSnapshot(reference, { includeMetadataChanges: true }, receive, fail);
 };
 const getStorageSnapshot = (scope: StorageScope) => {
   const uid = getFirebaseAuth().currentUser?.uid;
@@ -207,21 +247,24 @@ const getStorageSnapshot = (scope: StorageScope) => {
   }
   let state = account.storage.get(scope.key);
   if (!state) {
-    state = { scope, reads: new Set(), subscribers: new Set() };
+    state = { scope, readers: 0, reads: new Set(), subscribers: new Set() };
     account.storage.set(scope.key, state);
   }
-  const split = splitSnapshots[scope.key];
-  const names = split ? [`snapshots`, split.collection] : [`data`, `storageKeys`];
+  if (state.releaseTimer) { clearTimeout(state.releaseTimer); state.releaseTimer = undefined; }
+  const names = sourceNames(scope);
   for (const name of names) watchCollection(scope.userId, account, name);
   if (state.error && names.every(name => !account?.collections.get(name)?.error)) state.error = undefined;
   flush(scope.userId, account);
   return state;
 };
-export const readCloudSnapshot = (scope: StorageScope): Promise<SavedValue> => {
+export const readCloudSnapshot = async (scope: StorageScope): Promise<SavedValue> => {
   const state = getStorageSnapshot(scope);
-  if (state.error) return Promise.reject(state.error);
-  if (state.value) return Promise.resolve(state.value);
-  return new Promise((resolve, reject) => { state.reads.add({ resolve, reject }); });
+  state.readers += 1;
+  try {
+    if (state.error) throw state.error;
+    if (state.value) return state.value;
+    return await new Promise<SavedValue>((resolve, reject) => { state.reads.add({ resolve, reject }); });
+  } finally { state.readers -= 1; releaseUnusedSnapshot(state); }
 };
 export const subscribeCloudSnapshot = (scope: StorageScope, next: Subscriber[`next`], error?: Subscriber[`error`]) => {
   const state = getStorageSnapshot(scope);
@@ -232,7 +275,7 @@ export const subscribeCloudSnapshot = (scope: StorageScope, next: Subscriber[`ne
     subscriber.value = state.value.value;
     if (next(state.value.value) !== false) storageSubscribedBaselines.set(`${scope.key}:user:${scope.userId}`, state.value);
   }
-  return () => { state.subscribers.delete(subscriber); };
+  return () => { state.subscribers.delete(subscriber); releaseUnusedSnapshot(state); };
 };
 export const publishCloudSnapshot = (scope: StorageScope, value: SavedValue) => {
   const account = accounts.get(scope.userId);

@@ -1,12 +1,19 @@
 {
   "indexes": [],
   "fieldOverrides": [
-    { "collectionGroup": "data", "fieldPath": "value", "indexes": [] },
-    { "collectionGroup": "domains", "fieldPath": "meta", "indexes": [] },
-    { "collectionGroup": "connections", "fieldPath": "values", "indexes": [] },
-    { "collectionGroup": "snapshots", "fieldPath": "ids", "indexes": [] },
-    { "collectionGroup": "formSubmissions", "fieldPath": "message", "indexes": [] },
-    { "collectionGroup": "snapshots", "fieldPath": "snapshot", "indexes": [] },
-    { "collectionGroup": "snapshots", "fieldPath": "recordTimestamps", "indexes": [] }
+    { "collectionGroup": "data", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "users", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "domains", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "counters", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "snapshots", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "identities", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "connections", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "storageKeys", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "notifications", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "formSubmissions", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "auctionInventory", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "users", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "notifications", "fieldPath": "active", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "formSubmissions", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] }
   ]
 }

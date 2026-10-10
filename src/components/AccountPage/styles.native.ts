@@ -2,6 +2,10 @@ import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  disabled: { opacity: .55 },
+  pagination: { gap: 10, flexDirection: `row`, alignItems: `center`, flexWrap: `wrap` },
+  pageButtonText: { fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  pageButton: { gap: 6, padding: 10, borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.input, flexDirection: `row`, alignItems: `center` },
   root: { gap: 36, paddingVertical: 48, paddingHorizontal: 24, flexDirection: `row`, width: `100%`, maxWidth: 1160, alignSelf: `center` },
   compact: { gap: 24, paddingVertical: 28, flexDirection: `column` },
   content: { gap: 14, flex: 1, minWidth: 0 },

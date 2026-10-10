@@ -1,3 +1,4 @@
+import { utf8ToBytes } from '@noble/hashes/utils.js';
 import { getFirebaseDb, getFirebaseAuth } from './client';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { doc, runTransaction, type Transaction, type DocumentData } from 'firebase/firestore';
@@ -8,7 +9,14 @@ interface RecordChange { id: string; record?: DocumentData }
 const savedValues = storageWriteBaselines;
 export const clearFirestoreStorageCache = clearCloudSnapshots;
 const RECORDS_PER_TRANSACTION = 400;
-const MAX_TIMESTAMP_SNAPSHOT_LENGTH = 200_000;
+const MAX_CLOUD_DOCUMENT_BYTES = 750_000;
+const MAX_TRANSACTION_RECORD_BYTES = 3_000_000;
+const MAX_TIMESTAMP_SNAPSHOT_BYTES = 200_000;
+const assertDocumentSize = (record: DocumentData) => {
+  if (utf8ToBytes(JSON.stringify(record)).byteLength > MAX_CLOUD_DOCUMENT_BYTES) {
+    throw new Error(`Saved Data Is Too Large For One Cloud Document — Export And Reduce It Before Saving`);
+  }
+};
 const isRecord = (value: unknown): value is DocumentData => Boolean(value) && typeof value === `object` && !Array.isArray(value);
 export const getFirestoreStorageScope = (key: string): StorageScope | null => {
   const index = key.lastIndexOf(`:user:`);
@@ -100,12 +108,12 @@ const splitWritePlan = (scope: StorageScope, split: SplitSnapshot, value: string
     if (times && original && sameRecord(withoutRecordTimestamps(record), withoutRecordTimestamps(original))) {
       timestampRecords.set(record.id, record);
       recordTimestamps[record.id] = times;
-    } else writes.push({ id: record.id, record });
+    } else { assertDocumentSize(record); writes.push({ id: record.id, record }); }
   }
   const removed: RecordChange[] = [...oldRecords.keys()].filter(id => !ids.has(id)).map(id => ({ id }));
   // Materialize timestamps when the shared metadata would grow too large for Firestore.
-  if (JSON.stringify({ snapshot, ids: [...ids], recordTimestamps: packRecordTimestamps(recordTimestamps) }).length > MAX_TIMESTAMP_SNAPSHOT_LENGTH) {
-    for (const record of records) if (recordTimestamps[record.id]) writes.push({ id: record.id, record });
+  if (utf8ToBytes(JSON.stringify({ snapshot, ids: [...ids], recordTimestamps: packRecordTimestamps(recordTimestamps) })).byteLength > MAX_TIMESTAMP_SNAPSHOT_BYTES) {
+    for (const record of records) if (recordTimestamps[record.id]) { assertDocumentSize(record); writes.push({ id: record.id, record }); }
     timestampRecords.clear();
     for (const id of Object.keys(recordTimestamps)) delete recordTimestamps[id];
   }
@@ -124,16 +132,41 @@ const writeSplitChunk = async (transaction: Transaction, scope: StorageScope, sp
   transaction.set(snapshotRef(scope, split.name), { snapshot, ids: [...records.keys()], revision: revision + 1, ...(timestamps.length ? { recordTimestamps: timestamps } : {}) });
   return revision + 1;
 };
+const splitWriteChunks = (changes: RecordChange[], oldRecords: Map<string, DocumentData>) => {
+  const chunks: RecordChange[][] = [];
+  let chunk: RecordChange[] = [];
+  let bytes = 0;
+  for (const change of changes) {
+    const recordBytes = utf8ToBytes(JSON.stringify(change.record ?? oldRecords.get(change.id) ?? {})).byteLength + 500;
+    if (chunk.length && (chunk.length >= RECORDS_PER_TRANSACTION || bytes + recordBytes > MAX_TRANSACTION_RECORD_BYTES)) {
+      chunks.push(chunk); chunk = []; bytes = 0;
+    }
+    chunk.push(change);
+    bytes += recordBytes;
+  }
+  if (chunk.length || !chunks.length) chunks.push(chunk);
+  return chunks;
+};
 const writeSplitSnapshot = async (key: string, scope: StorageScope, split: SplitSnapshot, value: string, previous: SavedValue, firebaseUid: string) => {
   const { ids, snapshot, oldRecords, changes, timestampRecords, recordTimestamps } = splitWritePlan(scope, split, value, previous);
+  const chunks = splitWriteChunks(changes, oldRecords);
+  const plannedIds = new Set(oldRecords.keys());
+  const plannedTimestamps = { ...previous.recordTimestamps, ...recordTimestamps };
+  for (const chunk of chunks) {
+    for (const change of chunk) {
+      if (change.record) plannedIds.add(change.id);
+      else plannedIds.delete(change.id);
+      delete plannedTimestamps[change.id];
+    }
+    assertDocumentSize({ snapshot, ids: [...plannedIds], revision: previous.revision + 1, recordTimestamps: packRecordTimestamps(plannedTimestamps) });
+  }
   let committedChunks = 0;
   let baseline = previous;
   let currentRecords = new Map([...oldRecords, ...timestampRecords]);
   let currentTimestamps = { ...previous.recordTimestamps, ...recordTimestamps };
   try {
-    for (let offset = 0; offset < Math.max(changes.length, 1); offset += RECORDS_PER_TRANSACTION) {
+    for (const chunk of chunks) {
       assertActor(firebaseUid);
-      const chunk = changes.slice(offset, offset + RECORDS_PER_TRANSACTION);
       const changedRecords = new Map(currentRecords);
       const timestamps = { ...currentTimestamps };
       for (const change of chunk) {
@@ -175,7 +208,9 @@ const writeValue = async (transaction: Transaction, scope: StorageScope, value: 
   if (index) {
     if (!reference || !current || current.id !== index.id || current.key !== scope.key) throw new Error(`Saved Cloud Data Could Not Be Read`);
     assertActor(firebaseUid);
-    transaction.set(reference, { ...current, value, revision: revision + 1, updated: new Date().toISOString() });
+    const record = { ...current, value, revision: revision + 1, updated: new Date().toISOString() };
+    assertDocumentSize(record);
+    transaction.set(reference, record);
   } else {
     const counterReference = snapshotRef(scope, `storage`);
     const counter = (await transaction.get(counterReference)).data();
@@ -208,6 +243,7 @@ export const writeFirestoreStorage = async (key: string, value: string, reset = 
   savedValues.delete(key);
   const split = splitSnapshots[scope.key];
   if (split) return writeSplitSnapshot(key, scope, split, value, previous, firebaseUid);
+  assertDocumentSize({ value, key: scope.key });
   const revision = await runTransaction(getFirebaseDb(), async transaction => {
     assertActor(firebaseUid);
     return writeValue(transaction, scope, value, previous, firebaseUid);

@@ -1,8 +1,9 @@
 import { Roles } from '../../types/types';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { formSubmissionsAPI } from '../../api/formSubmissions';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCollectionPage } from '../../shared/firebase/useCollectionPage';
 import type { FormSubmission } from '../../shared/models/forms/FormSubmission';
 
 export const submissionStatuses = [
@@ -16,67 +17,52 @@ export const submissionDate = (value: string) => {
   return Number.isNaN(date.getTime()) ? `—` : date.toLocaleString();
 };
 
-interface SubmissionState {
-  actor: string;
-  error: string;
-  loading: boolean;
-  savingId: string;
-  submissions: FormSubmission[];
-}
-
-const emptyState = (actor: string): SubmissionState => ({ actor, error: ``, loading: !!actor, savingId: ``, submissions: [] });
 const errorMessage = (failure: unknown, fallback: string) => failure instanceof Error ? failure.message : fallback;
 
 export const useFormSubmissions = () => {
   const { palette } = useTheme();
   const { user, loading: authLoading } = useAuth();
   const actor = !authLoading && user?.active && user.role === Roles.Owner ? user.id : ``;
-  const actorRef = useRef(actor);
-  const revision = useRef(0);
+  const pageState = useCollectionPage(actor, formSubmissionsAPI.subscribeSubmissionsPage);
+  const requestRef = useRef(pageState.request);
   const pending = useRef(``);
-  const [reloadRevision, setReloadRevision] = useState(0);
-  const [state, setState] = useState(() => emptyState(actor));
-  actorRef.current = actor;
-
-  const refresh = useCallback(async () => {
-    if (!actor || actorRef.current !== actor || pending.current) return;
-    setReloadRevision(current => current + 1);
-  }, [actor]);
-
+  const [mutation, setMutation] = useState({ request: pageState.request, savingId: ``, error: `` });
+  requestRef.current = pageState.request;
   useEffect(() => {
-    revision.current++;
     pending.current = ``;
-    setState(emptyState(actor));
-    if (!actor) return;
-    const request = revision.current;
-    const current = () => actorRef.current === actor && revision.current === request;
-    const unsubscribe = formSubmissionsAPI.subscribeSubmissions(submissions => {
-      if (current()) setState(saved => ({ ...saved, submissions, error: ``, loading: false }));
-    }, failure => {
-      if (current()) setState(saved => ({ ...saved, submissions: [], loading: false, error: errorMessage(failure, `Could Not Load Form Submission(s)`) }));
-    });
-    return () => { revision.current++; unsubscribe(); };
-  }, [actor, reloadRevision]);
+    setMutation({ request: pageState.request, savingId: ``, error: `` });
+  }, [pageState.request]);
+  const scoped = mutation.request === pageState.request ? mutation : { savingId: ``, error: `` };
+  const disabled = pageState.loading || !!scoped.savingId;
 
   const updateStatus = async (id: string, status: FormSubmission[`status`]) => {
-    const saved = state.submissions.find(submission => submission.id === id);
-    if (!actor || actorRef.current !== actor || state.actor !== actor || state.loading || pending.current || !saved || saved.status === status) return;
-    const request = revision.current;
-    const operation = `${actor}:${id}:${request}`;
-    const current = () => actorRef.current === actor && revision.current === request;
+    const saved = pageState.records.find(submission => submission.id === id);
+    if (!actor || disabled || pending.current || !saved || saved.status === status) return;
+    const request = pageState.request;
+    const operation = `${request}:${id}`;
+    const current = () => requestRef.current === request;
     pending.current = operation;
-    setState(previous => ({ ...previous, error: ``, savingId: id }));
+    setMutation({ request, savingId: id, error: `` });
     try {
-      const submission = await formSubmissionsAPI.updateSubmissionStatus(id, status);
-      if (current()) setState(previous => ({ ...previous, submissions: previous.submissions.map(record => record.id === id ? submission : record) }));
+      await formSubmissionsAPI.updateSubmissionStatus(id, status);
     } catch (failure) {
-      if (current()) setState(previous => ({ ...previous, error: errorMessage(failure, `Could Not Update Submission Status`) }));
+      if (current()) setMutation(previous => ({ ...previous, error: errorMessage(failure, `Could Not Update Submission Status`) }));
     } finally {
       if (pending.current === operation) pending.current = ``;
-      if (current()) setState(previous => ({ ...previous, savingId: `` }));
+      if (current()) setMutation(previous => ({ ...previous, savingId: `` }));
     }
   };
-
-  const scoped = state.actor === actor ? state : emptyState(actor);
-  return { ...scoped, palette, refresh, updateStatus, allowed: !!actor, disabled: scoped.loading || !!scoped.savingId };
+  return {
+    ...pageState,
+    palette,
+    disabled,
+    updateStatus,
+    allowed: !!actor,
+    savingId: scoped.savingId,
+    submissions: pageState.records,
+    error: scoped.error || pageState.error,
+    nextPage: () => { if (!disabled) pageState.nextPage(); },
+    previousPage: () => { if (!disabled) pageState.previousPage(); },
+    refresh: () => { if (!disabled) pageState.refresh(); },
+  };
 };

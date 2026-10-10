@@ -5,11 +5,11 @@ import { Roles, Types } from '../../types/types';
 import { firebaseEnabled } from '../firebase/config';
 import { getAppCollectionIDNumber } from '../common/ids';
 import { assertOwnerSession } from '../authentication/firebase';
-import { createFirestoreCollection } from '../firebase/collection';
 import { restoreSession, subscribeAuthState } from '../authentication/service';
 import { FormSubmission } from '../models/forms/FormSubmission';
 import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
 import type { ContactSubmissionInput, SubmissionStatus } from './types';
+import { createFirestoreCollection, numberCollectionPage, type CollectionPage } from '../firebase/collection';
 import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import { doc, collection, runTransaction, serverTimestamp, Timestamp, type DocumentData } from 'firebase/firestore';
 
@@ -125,30 +125,31 @@ export const submitContact = (input: ContactSubmissionInput): Promise<FormSubmis
 
 const submissionsCollection = createFirestoreCollection(
   () => collection(getFirebaseDb(), `formSubmissions`),
-  snapshot => snapshot.docs.map(record => readRecord(record.data({ serverTimestamps: `estimate` }), record.id))
-    .sort((first, second) => second.number - first.number),
+  snapshot => snapshot.docs.map(record => readRecord(record.data({ serverTimestamps: `estimate` }), record.id)),
   requireOwner,
   assertOwnerSession,
   subscribeAuthState,
   submissionError,
 );
-export const getSubmissions = (): Promise<FormSubmission[]> => runOperation(async () => {
+export const getSubmissionsPage = (cursor: number | null = null): Promise<CollectionPage<FormSubmission>> => runOperation(async () => {
   await requireOwner();
-  if (!cloudEnabled) return serialize(async () => (await readLocal()).records.sort((first, second) => second.number - first.number));
-  return submissionsCollection.get();
+  if (!cloudEnabled) return serialize(async () => numberCollectionPage((await readLocal()).records, cursor));
+  return submissionsCollection.getPage(cursor);
 });
-export const subscribeSubmissions = (onValue: (submissions: FormSubmission[]) => void, onError?: (error: Error) => void) => {
-  if (cloudEnabled) return submissionsCollection.subscribe(onValue, onError);
+export const getSubmissions = async (): Promise<FormSubmission[]> => (await getSubmissionsPage()).records;
+export const subscribeSubmissionsPage = (onValue: (page: CollectionPage<FormSubmission>) => void, onError?: (error: Error) => void, cursor: number | null = null) => {
+  if (cloudEnabled) return submissionsCollection.subscribePage(onValue, onError, cursor);
   let active = true;
   let revision = 0;
   const unsubscribe = subscribeStorage(SUBMISSIONS_STORAGE_KEY, saved => {
     const request = ++revision;
     void requireOwner().then(() => {
-      if (active && revision === request) onValue(restoreLocal(saved).records.sort((first, second) => second.number - first.number));
+      if (active && revision === request) onValue(numberCollectionPage(restoreLocal(saved).records, cursor));
     }).catch(failure => { if (active && revision === request) onError?.(submissionError(failure)); });
   }, onError);
   return () => { active = false; revision++; unsubscribe(); };
 };
+export const subscribeSubmissions = (onValue: (submissions: FormSubmission[]) => void, onError?: (error: Error) => void) => subscribeSubmissionsPage(page => onValue(page.records), onError);
 
 export const updateSubmissionStatus = (id: string, status: SubmissionStatus): Promise<FormSubmission> => runOperation(async () => {
   if (!statuses.includes(status)) throw new Error(`Choose A Valid Submission Status`);

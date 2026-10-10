@@ -5,6 +5,7 @@ import { Slot, usePathname } from 'expo-router';
 import AppShell from '../src/components/AppShell';
 import { useAppFonts } from '../src/shared/useAppFonts';
 import { useAuth } from '../src/shared/authContext/useAuth';
+import VercelAnalytics from '../src/components/VercelAnalytics';
 import { useTheme } from '../src/shared/themeContext/useTheme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAfterPaint } from '../src/shared/common/useAfterPaint';
@@ -38,6 +39,7 @@ const RootLayout = () => {
           <AccountContent />
         </ThemeProvider>
       </AuthProvider>
+      <VercelAnalytics />
     </SafeAreaProvider>
   );
 };

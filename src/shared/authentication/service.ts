@@ -4,6 +4,7 @@ import { useLocalStorage } from '../config';
 import { firebaseEnabled } from '../firebase/config';
 import type { User } from '../models/users/User';
 import { subscribeStorage } from '../common/storage';
+import { numberCollectionPage, type CollectionPage } from '../firebase/collection';
 
 const useFirebaseAuthentication = firebaseEnabled && !useLocalStorage;
 const service = useFirebaseAuthentication ? firebase : local;
@@ -38,4 +39,10 @@ export const subscribeUsers = (onValue: (users: User[]) => void, onError?: (erro
   const stopAccounts = subscribeStorage(AUTH_ACCOUNTS_KEY, refresh, onError);
   const stopSession = subscribeStorage(AUTH_SESSION_KEY, refresh, onError);
   return () => { active = false; revision++; stopAccounts(); stopSession(); };
+};
+export const getUsersPage = async (cursor: number | null = null): Promise<CollectionPage<User>> => useFirebaseAuthentication
+  ? firebase.getUsersPage(cursor) : numberCollectionPage(await local.getUsers(), cursor);
+export const subscribeUsersPage = (onValue: (page: CollectionPage<User>) => void, onError?: (error: Error) => void, cursor: number | null = null) => {
+  if (useFirebaseAuthentication) return firebase.subscribeUsersPage(onValue, onError, cursor);
+  return subscribeUsers(users => onValue(numberCollectionPage(users, cursor)), onError);
 };

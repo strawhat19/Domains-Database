@@ -7,6 +7,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   disabled: { opacity: .55 },
   centered: { textAlign: `center` },
   titleRow: { gap: 9, flexDirection: `row`, alignItems: `center` },
+  pagination: { gap: 10, flexDirection: `row`, alignItems: `center`, flexWrap: `wrap` },
   statusCell: { gap: 7, flexDirection: `row`, alignItems: `center` },
   statusOptions: { gap: 8, flexWrap: `wrap`, flexDirection: `row` },
   expand: { gap: 6, alignSelf: `flex-start`, flexDirection: `row`, alignItems: `center` },

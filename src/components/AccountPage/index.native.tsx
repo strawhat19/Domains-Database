@@ -11,7 +11,7 @@ import ProfileThemePreference from '../ProfileThemePreference';
 import { firebaseEnabled } from '../../shared/firebase/config';
 import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { Text, Image, Platform, Pressable, View, StyleSheet } from 'react-native';
-import { PlugZap, UserRound, BadgeCheck, ShieldCheck, CalendarDays, LayoutDashboard } from 'lucide-react-native';
+import { PlugZap, UserRound, RefreshCw, ArrowLeft, ArrowRight, BadgeCheck, ShieldCheck, CalendarDays, LayoutDashboard } from 'lucide-react-native';
 
 const googleLogo = require('../../../assets/icons/google-g.png');
 
@@ -128,7 +128,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
             </View>
             {!!state.error && <Text {...elementProps(`dashboard-error`)} style={styles.error} accessibilityRole={`alert`}>{state.error}</Text>}
             <View {...elementProps(`dashboard-roles`)} style={styles.panel}>
-              <Text {...elementProps(`dashboard-roles-title`)} style={styles.panelTitle}>{`Accounts by role`}</Text>
+              <Text {...elementProps(`dashboard-roles-title`)} style={styles.panelTitle}>{`Accounts by role · This page`}</Text>
               {state.loading ? <View {...elementProps(`dashboard-roles-skeleton`)} style={styles.skeleton} /> : state.roles.map(item => (
                 <View key={item.role} {...elementProps(`dashboard-role`, item.role.toLowerCase())} style={styles.roleRow}>
                   <Text {...elementProps(`dashboard-role-label`, item.role.toLowerCase())} style={styles.label}>{`${item.role} · ${item.count}`}</Text>
@@ -140,6 +140,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
             </View>
             <View {...elementProps(`dashboard-users`)} style={styles.panel}>
               <Text {...elementProps(`dashboard-users-title`)} style={styles.panelTitle}>{firebaseEnabled && !useLocalStorage ? `Users` : `Local users`}</Text>
+              <Text {...elementProps(`dashboard-users-scope`)} style={styles.label}>{`Up to 50 users per page, newest first. Account and role counts describe this page.`}</Text>
               {state.loading ? <View {...elementProps(`dashboard-users-skeleton`)} style={styles.skeleton} /> : state.users.map(account => (
                 <View key={account.id} {...elementProps(`dashboard-user`, account.id)} style={styles.userRow}>
                   <View {...elementProps(`dashboard-user-details`, account.id)} style={styles.userDetails}>
@@ -156,6 +157,21 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | 
                   </View>
                 </View>
               ))}
+              <View {...elementProps(`dashboard-users-pagination`)} style={styles.pagination}>
+                <Text {...elementProps(`dashboard-users-page`)} style={styles.label}>{`Page ${state.userPage.page}`}</Text>
+                <Pressable {...elementProps(`dashboard-users-latest`)} style={[styles.pageButton, state.userPage.loading && styles.disabled]} disabled={state.userPage.loading} accessibilityRole={`button`} accessibilityState={{ disabled: state.userPage.loading }} onPress={state.userPage.refresh}>
+                  <RefreshCw {...elementProps(`dashboard-users-latest-icon`)} size={14} color={palette.ink} />
+                  <Text {...elementProps(`dashboard-users-latest-label`)} style={styles.pageButtonText}>{`Latest`}</Text>
+                </Pressable>
+                <Pressable {...elementProps(`dashboard-users-previous`)} style={[styles.pageButton, (state.userPage.loading || !state.userPage.hasPrevious) && styles.disabled]} disabled={state.userPage.loading || !state.userPage.hasPrevious} accessibilityRole={`button`} accessibilityState={{ disabled: state.userPage.loading || !state.userPage.hasPrevious }} onPress={state.userPage.previousPage}>
+                  <ArrowLeft {...elementProps(`dashboard-users-previous-icon`)} size={14} color={palette.ink} />
+                  <Text {...elementProps(`dashboard-users-previous-label`)} style={styles.pageButtonText}>{`Newer`}</Text>
+                </Pressable>
+                <Pressable {...elementProps(`dashboard-users-next`)} style={[styles.pageButton, (state.userPage.loading || !state.userPage.hasNext) && styles.disabled]} disabled={state.userPage.loading || !state.userPage.hasNext} accessibilityRole={`button`} accessibilityState={{ disabled: state.userPage.loading || !state.userPage.hasNext }} onPress={state.userPage.nextPage}>
+                  <Text {...elementProps(`dashboard-users-next-label`)} style={styles.pageButtonText}>{`Older`}</Text>
+                  <ArrowRight {...elementProps(`dashboard-users-next-icon`)} size={14} color={palette.ink} />
+                </Pressable>
+              </View>
             </View>
             <FormSubmissions />
           </>

@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
 import { FirebaseError } from 'firebase/app';
 import { User } from '../models/users/User';
-import { genID, isAppCollectionID } from '../common/ids';
 import { clearAccountData } from '../accountData/service';
 import { Roles, Types, Providers } from '../../types/types';
+import { genID, isAppCollectionID, getAppCollectionIDNumber } from '../common/ids';
 import { createFirestoreCollection } from '../firebase/collection';
 import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
 import type { ProfileInput, PublicProfile } from '../models/users/User';
@@ -67,6 +67,7 @@ const runAuthentication = (operation: () => Promise<AuthenticationResult>): Prom
 };
 const readUser = (record: Record<string, unknown>, authUser: FirebaseUser) => {
   if (!isAppCollectionID(record.id, Types.User) || !Number.isSafeInteger(record.number) || Number(record.number) < 1
+    || getAppCollectionIDNumber(record.id, Types.User) !== record.number
     || record.uid !== authUser.uid || record.firebase_uid !== authUser.uid || !Object.values(Roles).includes(record.role as Roles)) {
     throw new Error(`Saved Firebase Account Data Is Incomplete`);
   }
@@ -325,7 +326,7 @@ const usersCollection = createFirestoreCollection(
   () => collection(getFirebaseDb(), `users`),
   snapshot => snapshot.docs.map(record => {
     const saved = record.data();
-    if (saved.id !== record.id || !isAppCollectionID(saved.id, Types.User)) throw new Error(`Saved User Data Could Not Be Read`);
+    if (saved.id !== record.id || !isAppCollectionID(saved.id, Types.User) || getAppCollectionIDNumber(saved.id, Types.User) !== saved.number) throw new Error(`Saved User Data Could Not Be Read`);
     return new User({ ...saved, signedIn: record.id === cachedSession?.result.user.id });
   }),
   requireOwner,
@@ -335,6 +336,8 @@ const usersCollection = createFirestoreCollection(
 );
 export const getUsers = (): Promise<User[]> => runOperation(usersCollection.get);
 export const subscribeUsers = usersCollection.subscribe;
+export const getUsersPage = (cursor: number | null = null) => runOperation(() => usersCollection.getPage(cursor));
+export const subscribeUsersPage = usersCollection.subscribePage;
 export const getPublicProfiles = async (): Promise<PublicProfile[]> => [];
 
 export const updateProfile = (input: ProfileInput, expectedUserId?: string): Promise<User> => runOperation(async () => {

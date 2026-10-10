@@ -72,3 +72,8 @@
   :is(.profile-details, [data-class='profile-details']), :is(.profile-account-preferences, [data-class='profile-account-preferences']), :is(.dashboard-users, [data-class='dashboard-users']), :is(.dashboard-roles, [data-class='dashboard-roles']) { padding: 16px !important; }
 }
 @keyframes account-pulse { 50% { opacity: .45; } }
+:is(.dashboard-users-latest, [data-class='dashboard-users-latest'], .dashboard-users-previous, [data-class='dashboard-users-previous'], .dashboard-users-next, [data-class='dashboard-users-next']) { transition: background .2s ease, border-color .2s ease; }
+:is(.dashboard-users-latest, [data-class='dashboard-users-latest'], .dashboard-users-previous, [data-class='dashboard-users-previous'], .dashboard-users-next, [data-class='dashboard-users-next']):focus-visible { outline-offset: 3px; outline: 2px solid var(--accent); }
+@media (prefers-reduced-motion: reduce) {
+  :is(.dashboard-users-latest, [data-class='dashboard-users-latest'], .dashboard-users-previous, [data-class='dashboard-users-previous'], .dashboard-users-next, [data-class='dashboard-users-next']) { transition: none; }
+}

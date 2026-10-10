@@ -1,3 +1,3 @@
-import { submitContact, getSubmissions, subscribeSubmissions, updateSubmissionStatus } from '../shared/formSubmissions/service';
+import { submitContact, getSubmissions, getSubmissionsPage, subscribeSubmissions, updateSubmissionStatus, subscribeSubmissionsPage } from '../shared/formSubmissions/service';
 
-export const formSubmissionsAPI = { submitContact, getSubmissions, subscribeSubmissions, updateSubmissionStatus };
+export const formSubmissionsAPI = { submitContact, getSubmissions, getSubmissionsPage, subscribeSubmissions, updateSubmissionStatus, subscribeSubmissionsPage };
