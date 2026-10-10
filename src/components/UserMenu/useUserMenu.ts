@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { routes } from '../../shared/routes';
 import { createStyles } from './styles.native';
 import { usePathname, useRouter } from 'expo-router';
 import { useAuth } from '../../shared/authContext/useAuth';
@@ -25,9 +26,9 @@ export const useUserMenu = () => {
   const currentPhotoRequest = useRef(photoRequestKey);
   currentPhotoRequest.current = photoRequestKey;
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const guestAuth = auth.hasSavedAccount
-    ? { href: `/signin` as const, label: `Sign in` }
-    : { href: `/signup` as const, label: `Sign up` };
+  const isSignInPage = pathname === routes.signin.href || routes.signin.redirects.some(alias => pathname === `/${alias}`);
+  const isSignUpPage = pathname === routes.signup.href || routes.signup.redirects.some(alias => pathname === `/${alias}`);
+  const guestAuth = isSignInPage ? routes.signup : isSignUpPage || auth.hasSavedAccount ? routes.signin : routes.signup;
   useEffect(() => setOpen(false), [pathname, auth.user?.id]);
   useEffect(() => {
     if (!photoFailed || photoAttempt >= 2) return;

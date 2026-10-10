@@ -19,8 +19,10 @@ const DEFAULT_PREFERENCES: PortfolioPreferences = {
   showCosts: false,
   customGroups: [],
   collectionNumber: 0,
+  hiddenDomainIds: [],
   hiddenGroupKeys: [],
   showHiddenGroups: false,
+  showHiddenDomains: false,
 };
 const uniqueIds = (value: unknown): string[] => Array.isArray(value)
   ? [...new Set(value.filter((id): id is string => typeof id === `string` && Boolean(id)))]
@@ -94,6 +96,8 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     collectionNumber,
     showCosts: saved.showCosts === true,
     showHiddenGroups: saved.showHiddenGroups === true,
+    showHiddenDomains: saved.showHiddenDomains === true,
+    hiddenDomainIds: uniqueIds(saved.hiddenDomainIds),
     hiddenGroupKeys: uniqueIds(saved.hiddenGroupKeys),
     view: saved.view === `grid` ? `grid` : `table`,
   };
@@ -258,6 +262,11 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     change(current => ({ ...current, showHiddenGroups }));
   }, [ready, change, userId, enabled]);
 
+  const setShowHiddenDomains = useCallback<PortfolioPreferencesContextValue[`setShowHiddenDomains`]>(showHiddenDomains => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
+    change(current => ({ ...current, showHiddenDomains }));
+  }, [ready, change, userId, enabled]);
+
   const toggleGroupVisibility = useCallback<PortfolioPreferencesContextValue[`toggleGroupVisibility`]>(groupKey => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
     if (!groupKey.trim() || groupKey === `all`) return false;
@@ -266,6 +275,18 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
       hiddenGroupKeys: current.hiddenGroupKeys.includes(groupKey)
         ? current.hiddenGroupKeys.filter(key => key !== groupKey)
         : [...current.hiddenGroupKeys, groupKey],
+    }));
+    return true;
+  }, [ready, change, userId, enabled]);
+
+  const toggleDomainVisibility = useCallback<PortfolioPreferencesContextValue[`toggleDomainVisibility`]>(domainId => {
+    if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
+    if (!domainId.trim()) return false;
+    change(current => ({
+      ...current,
+      hiddenDomainIds: current.hiddenDomainIds.includes(domainId)
+        ? current.hiddenDomainIds.filter(id => id !== domainId)
+        : [...current.hiddenDomainIds, domainId],
     }));
     return true;
   }, [ready, change, userId, enabled]);
@@ -521,11 +542,13 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     saveGroupSettings,
     setCollectionSort,
     setShowHiddenGroups,
+    setShowHiddenDomains,
     toggleGroupVisibility,
     assignGroupCollection,
+    toggleDomainVisibility,
     setCollectionVisibility,
     updateGroupProjectStatus,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, voteCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, toggleGroupVisibility, assignGroupCollection, setCollectionVisibility, updateGroupProjectStatus]);
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, voteCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, setShowHiddenDomains, toggleGroupVisibility, assignGroupCollection, toggleDomainVisibility, setCollectionVisibility, updateGroupProjectStatus]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

@@ -11,6 +11,7 @@ import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainStarButton from '../DomainStarButton/index.web';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
+import DomainAnalyticsButton from '../DomainAnalyticsButton/index.web';
 import { REGISTRARS } from '../../shared/config';
 import { useDomainEditor } from './useDomainEditor';
 import type { DomainRecord } from '../../shared/types';
@@ -105,13 +106,19 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
             className={`domain-editor-header-actions`}
           >
             {isEditing && domain && (
-              <DomainStarButton
-                size={34}
-                disabled={saving}
-                domainId={domain.id}
-                domainName={domain.name}
-                id={`domain-editor-star-${domain.id}`}
-              />
+              <>
+                <DomainAnalyticsButton
+                  domain={domain.name}
+                  suffix={`domain-editor-${domain.id}`}
+                />
+                <DomainStarButton
+                  size={34}
+                  disabled={saving}
+                  domainId={domain.id}
+                  domainName={domain.name}
+                  id={`domain-editor-star-${domain.id}`}
+                />
+              </>
             )}
             <button
               type={`button`}

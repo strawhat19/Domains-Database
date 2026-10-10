@@ -160,6 +160,20 @@ const TableSettings = ({
                   {`Show Hidden Groups`}
                 </span>
               </label>
+              <label htmlFor={`table-settings-show-hidden-domains`} id={`table-settings-show-hidden-domains-label`} className={`table-settings-hidden-label`}>
+                <input
+                  type={`checkbox`}
+                  id={`table-settings-show-hidden-domains`}
+                  checked={settings.showHiddenDomains}
+                  disabled={settings.loading}
+                  className={`column-controls-checkbox table-settings-hidden-checkbox`}
+                  onChange={event => settings.setShowHiddenDomains(event.target.checked)}
+                />
+                <Eye size={14} aria-hidden={`true`} id={`table-settings-show-hidden-domains-icon`} className={`table-settings-field-icon`} />
+                <span id={`table-settings-show-hidden-domains-text`} className={`table-settings-hidden-text`}>
+                  {`Show Hidden Domains`}
+                </span>
+              </label>
             </div>
             <div id={`table-settings-costs`} className={`table-settings-field table-settings-costs`}>
               <label htmlFor={`table-settings-show-costs`} id={`table-settings-show-costs-label`} className={`table-settings-costs-label`}>

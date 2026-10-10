@@ -1,0 +1,12 @@
+.portfolio-collapse {
+  opacity: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows .24s ease, opacity .24s ease;
+}
+.portfolio-collapse-content { min-width: 0; min-height: 0; overflow: visible; }
+.portfolio-collapse-closed { opacity: 0; pointer-events: none; grid-template-rows: 0fr; }
+.portfolio-collapse-closed > .portfolio-collapse-content,
+.portfolio-collapse-transitioning > .portfolio-collapse-content { overflow: hidden; }
+@media (prefers-reduced-motion: reduce) { .portfolio-collapse { transition: none; } }

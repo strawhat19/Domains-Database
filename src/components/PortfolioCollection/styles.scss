@@ -1,18 +1,15 @@
-.portfolio-collection { margin-top: 24px; }
-.portfolio-toolbar + .portfolio-collection { margin-top: 0; }
+.portfolio-collection-heading-cell { padding: 0; font-weight: 400; text-align: left; border-top: 1px solid var(--line); }
 .portfolio-collection-titlebar {
-  gap: 12px;
-  z-index: 5;
+  gap: 9px;
+  z-index: 1;
   display: flex;
-  position: sticky;
-  min-height: 66px;
-  padding: 14px 20px;
+  position: relative;
+  min-height: 48px;
+  padding: 5px 16px;
   align-items: center;
-  border-radius: 6px 6px 0 0;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   background: color-mix(in srgb, var(--success-bg) 92%, transparent);
-  top: calc(var(--site-header-offset, 0px) + var(--portfolio-sticky-gap, 12px) + var(--portfolio-global-toolbar-height, 0px));
   transition: background .2s ease, box-shadow .2s ease;
 }
 .portfolio-collection-titlebar[draggable='true'] { cursor: grab; }
@@ -34,9 +31,9 @@
   &:disabled { opacity: .3; cursor: default; }
 }
 .portfolio-collection-copy { flex: 1; min-width: 0; }
-.portfolio-collection-heading { gap: 8px; display: flex; flex-wrap: wrap; align-items: center; }
+.portfolio-collection-heading { gap: 9px; display: flex; flex-wrap: wrap; align-items: center; }
 .portfolio-collection-title {
-  gap: 7px;
+  gap: 9px;
   margin: 0;
   min-width: 0;
   font-size: 16px;
@@ -48,6 +45,7 @@
   font-family: var(--font-bold);
 }
 .portfolio-collection-name { min-width: 0; }
+.portfolio-collection-symbol { width: 28px; height: 28px; }
 .portfolio-collection-folder-icon { display: block; flex-shrink: 0; color: var(--accent); }
 .portfolio-collection-description { flex: 0 0 22px; min-width: 22px; font-size: 12px; color: var(--muted); }
 .portfolio-collection-copy .domain-description .domain-site-description { color: var(--muted); }
@@ -73,8 +71,8 @@
 .portfolio-collection-vote-active { color: var(--accent); background: var(--subtle); }
 .portfolio-collection-vote-count { font-variant-numeric: tabular-nums; }
 .portfolio-collection-actions { gap: 6px; display: flex; flex-shrink: 0; align-items: center; }
-.portfolio-collection-count { min-width: 24px; padding: 3px 8px; flex-shrink: 0; font-size: 10px; text-align: center; color: var(--muted); border-radius: 999px; box-sizing: border-box; background: var(--paper); border: 1px solid var(--line); font-family: var(--font-mono); }
-.portfolio-collection-share, .portfolio-collection-settings, .portfolio-collection-search-toggle {
+.portfolio-collection-count { min-width: 26px; padding: 3px 9px; font-size: 11px; font-weight: 600; flex-shrink: 0; text-align: center; border-radius: 999px; box-sizing: border-box; font-family: var(--font-mono); color: color-mix(in srgb, var(--accent) 75%, var(--ink)); background: color-mix(in srgb, var(--accent) 18%, var(--paper)); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.portfolio-collection-share, .portfolio-collection-settings, .portfolio-collection-search-toggle, .portfolio-collection-collapse-toggle {
   border: 0;
   width: 32px;
   height: 32px;
@@ -90,12 +88,15 @@
   &:disabled:hover { color: var(--muted); background: transparent; }
 }
 .portfolio-collection-search-toggle-active { color: var(--accent); background: var(--subtle); }
+.portfolio-collection-collapse-toggle { cursor: pointer; }
+.portfolio-collection-collapse-icon { transition: transform .24s ease; }
+.portfolio-collection-collapse-toggle-collapsed .portfolio-collection-collapse-icon { transform: rotate(-90deg); }
 @media (max-width: 760px) {
   .portfolio-collection-titlebar { flex-wrap: wrap; }
   .portfolio-collection-copy { flex-basis: calc(100% - 50px); }
   .portfolio-collection-actions { margin-left: auto; }
 }
-@media (max-width: 560px) { .portfolio-collection-titlebar { padding: 12px 14px; } }
+@media (max-width: 560px) { .portfolio-collection-titlebar { padding: 5px 14px; } }
 @media (prefers-reduced-motion: reduce) {
-  .portfolio-collection-vote, .portfolio-collection-titlebar, .portfolio-collection-settings, .portfolio-collection-share, .portfolio-collection-search-toggle { transition: none; }
+  .portfolio-collection-vote, .portfolio-collection-titlebar, .portfolio-collection-settings, .portfolio-collection-share, .portfolio-collection-search-toggle, .portfolio-collection-collapse-toggle, .portfolio-collection-collapse-icon { transition: none; }
 }

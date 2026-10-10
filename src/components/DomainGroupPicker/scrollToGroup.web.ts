@@ -3,7 +3,8 @@ export const scrollToPortfolioGroup = (groupId: string | null, collectionId?: st
   window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
     const scope = collectionId ? `portfolio-collection-${collectionId}` : `portfolio`;
     const key = `custom:${groupId ?? `ungrouped`}`;
-    const heading = document.getElementById(`${scope}-group-${encodeURIComponent(key)}-heading`);
+    const heading = document.getElementById(`portfolio-group-${encodeURIComponent(key)}-heading`)
+      ?? document.getElementById(`${scope}-group-${encodeURIComponent(key)}-heading`);
     if (!heading) return;
     const tableHeader = heading.closest(`.portfolio-records-table`)?.querySelector<HTMLElement>(`.portfolio-sticky-head:not([hidden])`);
     const collectionToolbar = heading.closest(`.portfolio-collection`)?.querySelector<HTMLElement>(`.portfolio-collection-titlebar`);

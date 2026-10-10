@@ -9,6 +9,8 @@ interface DomainReorderOptions {
   selectedIds?: Set<string>;
   onGrouped?: () => void;
   availableIds?: string[];
+  disabledGroupKeys?: Set<string>;
+  groupScopes?: Map<string, string | null>;
 }
 
 type DragSource = {
@@ -24,7 +26,7 @@ type DragSource = {
 export const useDomainReorder = (
   groups: PortfolioGroup[],
   enabled: boolean,
-  { groupEnabled = false, selectedIds, onGrouped, availableIds }: DomainReorderOptions = {},
+  { groupEnabled = false, selectedIds, onGrouped, availableIds, disabledGroupKeys, groupScopes }: DomainReorderOptions = {},
 ) => {
   const preferences = usePortfolioPreferences();
   const source = useRef<DragSource | null>(null);
@@ -42,7 +44,7 @@ export const useDomainReorder = (
   };
 
   const move = (groupKey: string, domainId: string, target: string, placement: `before` | `after` = `before`) => {
-    if (!enabled) return;
+    if (!enabled || disabledGroupKeys?.has(groupKey)) return;
     const group = groups.find(item => item.key === groupKey);
     if (!group) return;
     preferences.moveDomain(groupKey, domainId, target, group.domains.map(domain => domain.id), placement);
@@ -50,13 +52,14 @@ export const useDomainReorder = (
 
   const handlers = (groupKey: string, domainId: string, visibleIds: string[]) => {
     const index = visibleIds.indexOf(domainId);
+    const canReorder = enabled && !disabledGroupKeys?.has(groupKey);
     return {
-      reorderable: enabled,
-      draggable: enabled || groupEnabled,
+      reorderable: canReorder,
+      draggable: canReorder || groupEnabled,
       dragging: draggingId === domainId,
       dropTarget: targetId === domainId,
       onDragStart: (event: DragEvent<HTMLElement>) => {
-        if (!enabled && !groupEnabled) { event.preventDefault(); return; }
+        if (!canReorder && !groupEnabled) { event.preventDefault(); return; }
         const domainIds = selectedIds?.has(domainId)
           ? (availableIds ?? groups.flatMap(group => group.domains).map(domain => domain.id)).filter(id => selectedIds?.has(id))
           : [domainId];
@@ -70,7 +73,7 @@ export const useDomainReorder = (
       onDragEnd: clear,
       onDragOver: (event: DragEvent<HTMLElement>) => {
         const current = source.current;
-        if (!enabled || current?.kind !== `domain` || current.groupKey !== groupKey || current.domainId === domainId) return;
+        if (!canReorder || current?.kind !== `domain` || current.groupKey !== groupKey || current.domainId === domainId) return;
         event.preventDefault();
         event.dataTransfer.dropEffect = `move`;
         setTargetId(domainId);
@@ -78,20 +81,21 @@ export const useDomainReorder = (
       },
       onDrop: (event: DragEvent<HTMLElement>) => {
         const current = source.current;
-        if (!enabled || current?.kind !== `domain` || current.groupKey !== groupKey) return;
+        if (!canReorder || current?.kind !== `domain` || current.groupKey !== groupKey) return;
         event.preventDefault();
         const bounds = event.currentTarget.getBoundingClientRect();
         const placement = event.clientY > bounds.top + bounds.height / 2 ? `after` : `before`;
         move(groupKey, current.domainId, domainId, placement);
         clear();
       },
-      onMoveUp: enabled && index > 0 ? () => move(groupKey, domainId, visibleIds[index - 1]) : undefined,
-      onMoveDown: enabled && index < visibleIds.length - 1 ? () => move(groupKey, domainId, visibleIds[index + 1], `after`) : undefined,
+      onMoveUp: canReorder && index > 0 ? () => move(groupKey, domainId, visibleIds[index - 1]) : undefined,
+      onMoveDown: canReorder && index < visibleIds.length - 1 ? () => move(groupKey, domainId, visibleIds[index + 1], `after`) : undefined,
     };
   };
 
   const groupMoves = (groupId: string) => {
-    const groupIds = groups.flatMap(group => group.customGroupId ? [group.customGroupId] : []);
+    const scope = groupScopes?.get(`custom:${groupId}`);
+    const groupIds = groups.flatMap(group => group.customGroupId && (!groupScopes || groupScopes.get(group.key) === scope) ? [group.customGroupId] : []);
     const index = groupIds.indexOf(groupId);
     return {
       onMoveUp: groupEnabled && index > 0

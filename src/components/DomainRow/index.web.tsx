@@ -1,18 +1,19 @@
 import './styles.scss';
 import type { MouseEventHandler } from 'react';
-import DomainProjectBadge from '../DomainProjectBadge/index.web';
-import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import LinkSiteIcon from '../LinkSiteIcon/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import { getDomainSource } from '../../shared/domainUtils';
 import DomainStarButton from '../DomainStarButton/index.web';
+import PortfolioCollapse from '../PortfolioCollapse/index.web';
 import DomainDescription from '../DomainDescription/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
-import type { DomainItemProps, DomainDragProps } from './domainRow';
-import { getDomainSource } from '../../shared/domainUtils';
-import { getDomainPreviewLink, getDomainGithubRepoLink } from '../../shared/domainLinks';
+import DomainProjectBadge from '../DomainProjectBadge/index.web';
+import DomainVisibilityButton from '../DomainVisibilityButton/index.web';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
+import type { DomainItemProps, DomainDragProps } from './domainRow';
 import { useDomainAttentionPosition } from './useDomainAttentionPosition.web';
 import { Check, Minus, ArrowUp, Settings, ArrowDown, GripVertical } from 'lucide-react';
+import { getDomainPreviewLink, getDomainGithubRepoLink } from '../../shared/domainLinks';
 import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, getDomainRenewalDetail, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
 import {
   DEFAULT_VISIBLE_COLUMNS,
@@ -24,6 +25,7 @@ import {
 } from '../../shared/portfolioColumns';
 
 export interface DomainRowProps extends DomainItemProps, DomainDragProps<HTMLTableRowElement> {
+  collapsed?: boolean;
   showCosts?: boolean;
   onContextMenu?: MouseEventHandler<HTMLTableRowElement>;
   onChangeDescription: (domain: DomainItemProps[`domain`], description: string) => Promise<boolean>;
@@ -51,6 +53,7 @@ const DomainRow = ({
   onChangeDescription,
   onChangeProjectStatus,
   selectionDescriptionId,
+  collapsed = false,
   showCosts = false,
   reorderable = draggable,
   hideProjectDetails = false,
@@ -68,13 +71,13 @@ const DomainRow = ({
   const selectionHandlers = getDomainSelectionHandlers(domain.id, !!selected, onSelect);
 
   const handleRowClick: MouseEventHandler<HTMLTableRowElement> = event => {
-    if (busy || !onSelect || !isDomainSelectionTarget(event.target, event.currentTarget)) return;
+    if (busy || collapsed || !onSelect || !isDomainSelectionTarget(event.target, event.currentTarget)) return;
     onSelect(domain.id, !selected, event.shiftKey);
     event.currentTarget.querySelector<HTMLInputElement>(`.domain-selection`)?.focus({ preventScroll: true });
   };
 
   const handleRowMouseDown: MouseEventHandler<HTMLTableRowElement> = event => {
-    if (busy || !onSelect || event.button !== 0 || !event.shiftKey) return;
+    if (busy || collapsed || !onSelect || event.button !== 0 || !event.shiftKey) return;
     if (isDomainSelectionTarget(event.target, event.currentTarget)) event.preventDefault();
   };
 
@@ -293,34 +296,41 @@ const DomainRow = ({
     <tr
       ref={rowRef}
       id={scope}
-      onDrop={onDrop}
-      onClick={handleRowClick}
+      inert={collapsed}
+      aria-hidden={collapsed || undefined}
+      data-collapsed={collapsed}
+      onDrop={collapsed ? undefined : onDrop}
+      onClick={collapsed ? undefined : handleRowClick}
       data-position={position}
-      draggable={draggable}
-      onDragEnd={onDragEnd}
-      onDragOver={onDragOver}
-      onDragStart={onDragStart}
-      onMouseDown={handleRowMouseDown}
-      onContextMenu={onContextMenu}
+      draggable={!collapsed && draggable}
+      onDragEnd={collapsed ? undefined : onDragEnd}
+      onDragOver={collapsed ? undefined : onDragOver}
+      onDragStart={collapsed ? undefined : onDragStart}
+      onMouseDown={collapsed ? undefined : handleRowMouseDown}
+      onContextMenu={collapsed ? undefined : onContextMenu}
       className={`domain-row${draggable ? ` domain-row-draggable` : ``}${selected ? ` domain-row-selected` : ``}${dragging ? ` domain-row-dragging` : ``}${dropTarget ? ` domain-row-drop-target` : ``}`}
     >
       <td id={`${scope}-position-cell`} className={`domain-position-cell`}>
-        <span id={`${scope}-position`} className={`domain-row-position`} aria-label={`Position ${position}`}>
-          {position}
-        </span>
+        <PortfolioCollapse collapsed={collapsed} id={`${scope}-position-cell-content`}>
+          <span id={`${scope}-position`} className={`domain-row-position`} aria-label={`Position ${position}`}>
+            {position}
+          </span>
+        </PortfolioCollapse>
       </td>
       <td id={`${scope}-selection-cell`} className={`domain-selection-cell`}>
-        <input
-          {...selectionHandlers}
-          type={`checkbox`}
-          draggable={false}
-          checked={!!selected}
-          disabled={busy || !onSelect}
-          id={`${scope}-selection`}
-          className={`domain-selection`}
-          aria-label={`Select ${domain.name}`}
-          aria-describedby={selectionDescriptionId}
-        />
+        <PortfolioCollapse collapsed={collapsed} id={`${scope}-selection-cell-content`}>
+          <input
+            {...selectionHandlers}
+            type={`checkbox`}
+            draggable={false}
+            checked={!!selected}
+            disabled={busy || !onSelect}
+            id={`${scope}-selection`}
+            className={`domain-selection`}
+            aria-label={`Select ${domain.name}`}
+            aria-describedby={selectionDescriptionId}
+          />
+        </PortfolioCollapse>
         {needsAttention && (
           <span
             aria-hidden={`true`}
@@ -338,32 +348,41 @@ const DomainRow = ({
             id={`${scope}-${key}-cell`}
             className={`domain-${key}-cell${column.price ? ` domain-price-cell` : ``}`}
           >
-            {renderColumn(column.field)}
+            <PortfolioCollapse collapsed={collapsed} id={`${scope}-${key}-cell-content`}>
+              {renderColumn(column.field)}
+            </PortfolioCollapse>
           </td>
         );
       })}
       <td aria-hidden={`true`} id={`${scope}-space-cell`} className={`domain-space-cell`} />
       <td id={`${scope}-actions-cell`} className={`actionsCell domain-actions-cell`}>
-        <div id={`${scope}-actions`} className={`domain-row-actions`}>
-          <DomainAnalyticsButton compact suffix={scope} domain={domain.name} />
-          <DomainStarButton
-            id={`${scope}-star`}
-            disabled={busy}
-            domainId={domain.id}
-            domainName={domain.name}
-          />
-          <button
-            type={`button`}
-            disabled={busy}
-            title={`Edit Domain`}
-            id={`${scope}-edit`}
-            onClick={() => onEdit(domain)}
-            className={`domain-row-action`}
-            aria-label={`Edit ${domain.name}`}
-          >
-            <Settings size={14} aria-hidden={`true`} id={`${scope}-edit-icon`} className={`domain-row-action-icon`} />
-          </button>
-        </div>
+        <PortfolioCollapse collapsed={collapsed} id={`${scope}-actions-cell-content`}>
+          <div id={`${scope}-actions`} className={`domain-row-actions`}>
+            <DomainVisibilityButton
+              disabled={busy}
+              domainId={domain.id}
+              domainName={domain.name}
+              id={`${scope}-visibility-toggle`}
+            />
+            <DomainStarButton
+              id={`${scope}-star`}
+              disabled={busy}
+              domainId={domain.id}
+              domainName={domain.name}
+            />
+            <button
+              type={`button`}
+              disabled={busy}
+              title={`Edit Domain`}
+              id={`${scope}-edit`}
+              onClick={() => onEdit(domain)}
+              className={`domain-row-action`}
+              aria-label={`Edit ${domain.name}`}
+            >
+              <Settings size={14} aria-hidden={`true`} id={`${scope}-edit-icon`} className={`domain-row-action-icon`} />
+            </button>
+          </div>
+        </PortfolioCollapse>
       </td>
     </tr>
   );

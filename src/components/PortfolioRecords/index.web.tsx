@@ -1,31 +1,36 @@
 import './styles.scss';
-import { useMemo, useState } from 'react';
 import StarButton from '../StarButton/index.web';
 import PortfolioEmptyState from './EmptyState.web';
-import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import { Fragment, useMemo, useState } from 'react';
 import { useDomainReorder } from './useDomainReorder';
 import type { DomainRecord } from '../../shared/types';
+import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import type { CSSProperties, KeyboardEvent } from 'react';
 import DomainRow, { DomainRowSkeleton } from '../DomainRow';
+import { PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
+import PortfolioAddGroup from '../PortfolioAddGroup/index.web';
+import PortfolioCollapse from '../PortfolioCollapse/index.web';
 import DomainDescription from '../DomainDescription/index.web';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainContextMenu from '../DomainContextMenu/index.web';
-import PortfolioGroupLinks from '../PortfolioGroupLinks/index.web';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import PortfolioTableHead from '../PortfolioTableHead/index.web';
+import PortfolioGroupLinks from '../PortfolioGroupLinks/index.web';
+import PortfolioCollection from '../PortfolioCollection/index.web';
 import DomainGroupSettings from '../DomainGroupSettings/index.web';
 import { useColumns } from '../../shared/columnContext/useColumns';
-import { PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { useStickyPortfolioGroup } from './useStickyPortfolioGroup';
+import type { usePortfolioExpansion } from './usePortfolioExpansion';
 import { getPortfolioColumnWidth } from '../DomainPortfolio/columnLayout.web';
+import { useCollectionReorder } from '../DomainPortfolio/useCollectionReorder';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
-import { Eye, EyeOff, ArrowUp, Settings, AppWindow, ArrowDown, RotateCcw, GripVertical } from 'lucide-react';
 import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
 import { getOrderedPortfolioColumns, type PortfolioColumn } from '../../shared/portfolioColumns';
-import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { Eye, EyeOff, ArrowUp, Settings, AppWindow, ArrowDown, RotateCcw, ChevronDown, GripVertical } from 'lucide-react';
+import type { PortfolioGroup, CustomPortfolioGroup, PortfolioCollectionSection } from '../../shared/portfolioPreferences/types';
 
 export interface PortfolioRecordsProps {
   busy: boolean;
@@ -33,9 +38,9 @@ export interface PortfolioRecordsProps {
   compact: boolean;
   idPrefix?: string;
   searching?: boolean;
-  forceTable?: boolean;
+  showMainRecords?: boolean;
   searchGroups?: PortfolioGroup[];
-  collectionId?: string | null;
+  collectionSections?: PortfolioCollectionSection[];
   hasFilters: boolean;
   domains: DomainRecord[];
   allDomains: DomainRecord[];
@@ -46,6 +51,7 @@ export interface PortfolioRecordsProps {
   someSelected: boolean;
   selectedIds: Set<string>;
   sticky: ReturnType<typeof useStickyPortfolio>;
+  expansion: ReturnType<typeof usePortfolioExpansion>;
   onGrouped: () => void;
   onEmptyAction: () => void;
   onSelectAll: (checked: boolean) => void;
@@ -53,18 +59,23 @@ export interface PortfolioRecordsProps {
   onSort: (field: PortfolioColumn) => void;
   onEdit: (domain: DomainRecord) => void;
   onToggleAutoRenew: (domain: DomainRecord) => void;
-  onToggleGroupSearch?: (key: string) => void;
-  isGroupShowingAll?: (key: string) => boolean;
+  onToggleCollectionSearch?: (id: string) => void;
+  isCollectionShowingAll?: (id: string) => boolean;
+  onToggleGroupSearch?: (key: string, collectionId: string | null) => void;
+  isGroupShowingAll?: (key: string, collectionId: string | null) => boolean;
   onChangeDescription: (domain: DomainRecord, description: string) => Promise<boolean>;
   onChangeProjectStatus: (domain: DomainRecord, projectStatus: DomainRecord[`projectStatus`]) => void;
 }
 
+const EMPTY_COLLECTIONS: PortfolioCollectionSection[] = [];
+
 const PortfolioRecords = ({
-  busy, sticky, compact, loading, domains, allDomains, hasFilters,
+  busy, sticky, compact, loading, domains, expansion, allDomains, hasFilters,
   selectedIds, allSelected, someSelected, onSelect, onGrouped, onSelectAll,
   sortField, sortDirection, visibleColumns, onEdit, onSort, onEmptyAction, onToggleAutoRenew,
   searchGroups, isGroupShowingAll, onToggleGroupSearch, onChangeDescription, onChangeProjectStatus,
-  idPrefix = `portfolio`, searching = false, forceTable = false, collectionId = null,
+  onToggleCollectionSearch, isCollectionShowingAll, collectionSections = EMPTY_COLLECTIONS,
+  idPrefix = `portfolio`, searching = false, showMainRecords = true,
 }: PortfolioRecordsProps) => {
   const [groupingIds, setGroupingIds] = useState<Set<string> | null>(null);
   const [editingGroup, setEditingGroup] = useState<CustomPortfolioGroup | null>(null);
@@ -77,33 +88,48 @@ const PortfolioRecords = ({
     .filter(group => group.isApp)
     .flatMap(group => group.domainIds)), [preferences.customGroups]);
   const { columnWidths, flexibleColumns } = useColumns();
-  const orderingPreferences = useMemo(() => !collectionId && sortField
+  const orderingPreferences = useMemo(() => sortField
     ? { ...preferences, orders: {} }
-    : preferences, [preferences, collectionId, sortField]);
+    : preferences, [preferences, sortField]);
   const columns = getOrderedPortfolioColumns(visibleColumns);
   const fullGroups = useMemo(() => {
-    const sections = buildPortfolioSections(allDomains, { ...orderingPreferences, showHiddenGroups: true });
-    return collectionId
-      ? sections.collections.find(section => section.collection.id === collectionId)?.groups ?? []
-      : sections.mainGroups;
-  }, [allDomains, orderingPreferences, collectionId]);
-  const groups = useMemo(() => {
+    const sections = buildPortfolioSections(allDomains, { ...preferences, showHiddenGroups: true, showHiddenDomains: true });
+    return sections.collections.flatMap(section => section.groups).concat(sections.mainGroups);
+  }, [allDomains, preferences]);
+  const mainGroups = useMemo(() => {
+    if (!showMainRecords) return [];
     const sections = searchGroups ? undefined : buildPortfolioSections(domains, orderingPreferences);
-    const items = searchGroups ?? (collectionId
-      ? sections?.collections.find(section => section.collection.id === collectionId)?.groups ?? []
-      : sections?.mainGroups ?? []);
+    const items = searchGroups ?? sections?.mainGroups ?? [];
     if (!compact) return items;
     const visibleIds = new Set(items.flatMap(group => group.domains).slice(0, PORTFOLIO_PREVIEW_LIMIT).map(domain => domain.id));
     return items.map(group => ({ ...group, domains: group.domains.filter(domain => visibleIds.has(domain.id)) }))
       .filter((group, index) => group.domains.length || (searching && !items[index]?.domains.length));
-  }, [domains, orderingPreferences, collectionId, compact, searching, searchGroups]);
+  }, [domains, orderingPreferences, compact, searching, searchGroups, showMainRecords]);
+  const collections = useMemo(() => collectionSections.map(section => {
+    if (!compact) return section;
+    const visibleIds = new Set(section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT).map(domain => domain.id));
+    const groups = section.groups.map(group => ({ ...group, domains: group.domains.filter(domain => visibleIds.has(domain.id)) }))
+      .filter((group, index) => group.domains.length || (searching && !section.groups[index]?.domains.length));
+    return { ...section, groups };
+  }), [collectionSections, compact, searching]);
+  const groups = useMemo(() => collections.flatMap(section => section.groups).concat(mainGroups), [collections, mainGroups]);
+  const groupCollections = useMemo(() => new Map(preferences.customGroups.map(group => [
+    `custom:${group.id}`, preferences.collections.find(collection => collection.id === group.collectionId),
+  ])), [preferences.customGroups, preferences.collections]);
   const positions = new Map(groups.flatMap(group => group.domains).map((domain, index) => [domain.id, index + 1]));
-  const reorder = useDomainReorder(fullGroups, !sortField && !loading && !busy && !compact, {
+  const reorder = useDomainReorder(fullGroups, !loading && !busy && !compact, {
     onGrouped,
     selectedIds,
     availableIds: allDomains.map(domain => domain.id),
-    groupEnabled: (Boolean(collectionId) || preferences.groupBy === `custom`) && !loading && !busy,
+    groupEnabled: (collections.length > 0 || preferences.groupBy === `custom`) && !loading && !busy,
+    disabledGroupKeys: new Set(fullGroups.filter(group => {
+      const collection = groupCollections.get(group.key);
+      return collection ? collection.sortField : sortField;
+    }).map(group => group.key)),
+    groupScopes: new Map(fullGroups.map(group => [group.key, groupCollections.get(group.key)?.id ?? null])),
   });
+  const collectionReorder = useCollectionReorder(!loading && !busy);
+  const mainHandlers = collectionReorder.handlers(null);
   const baseWidths = columns.map(column => getPortfolioColumnWidth(column.field, columnWidths));
   const flexibleCount = columns.filter(column => flexibleColumns.includes(column.field)).length;
   const unusedWidth = Math.max(0, sticky.header.width - baseWidths.reduce((total, width) => total + width, 190));
@@ -121,16 +147,22 @@ const PortfolioRecords = ({
     ? { width: `100%`, minWidth: 0, tableLayout: `fixed` }
     : { width: tableWidth, minWidth: tableWidth, tableLayout: `fixed` };
   const stickyHeaderReady = sticky.header.headHeight > 0 && sticky.header.columnWidths.length === columns.length + 4;
-  const grouped = Boolean(collectionId) || preferences.groupBy !== `none`;
+  const grouped = preferences.groupBy !== `none`;
+  const hasGroupHeading = (group: PortfolioGroup) => grouped || Boolean(groupCollections.get(group.key));
+  const isGroupParentCollapsed = (group: PortfolioGroup) => expansion.isCollectionCollapsed(groupCollections.get(group.key)?.id);
+  const isGroupCollapsed = (group: PortfolioGroup) => isGroupParentCollapsed(group) || expansion.isGroupCollapsed(group.key);
   const empty = !loading && !groups.some(group => group.domains.length);
-  const hasHiddenDomainGroups = !preferences.showHiddenGroups && fullGroups.some(group => (
-    group.domains.length > 0 && preferences.hiddenGroupKeys.includes(group.key)
+  const hasHiddenMainGroups = !preferences.showHiddenGroups && fullGroups.some(group => (
+    !groupCollections.get(group.key) && group.domains.length > 0 && preferences.hiddenGroupKeys.includes(group.key)
   ));
-  const showGroupHeadings = grouped && groups.length > 0;
+  const hasHiddenDomains = (items: DomainRecord[]) => !preferences.showHiddenDomains
+    && items.some(domain => preferences.hiddenDomainIds.includes(domain.id));
+  const hasHiddenMainDomains = fullGroups.some(group => !groupCollections.get(group.key) && hasHiddenDomains(group.domains));
+  const showGroupHeadings = groups.some(hasGroupHeading);
   const stickyGroup = useStickyPortfolioGroup(
     sticky,
-    groups.map(group => `${group.key}:${group.domains.length}`).join(`|`),
-    stickyHeaderReady && showGroupHeadings && !loading && (forceTable || preferences.view === `table` || empty),
+    `${collections.map(section => section.collection.id).join(`|`)}|${groups.map(group => `${group.key}:${group.domains.length}`).join(`|`)}|${[...expansion.collapsedGroups].join(`|`)}|${[...expansion.collapsedCollections].join(`|`)}`,
+    stickyHeaderReady && showGroupHeadings && !loading && (preferences.view === `table` || empty),
     idPrefix,
   );
   const selectedDomains = allDomains.filter(domain => selectedIds.has(domain.id));
@@ -163,8 +195,15 @@ const PortfolioRecords = ({
     const hidden = preferences.hiddenGroupKeys.includes(key);
     const VisibilityIcon = hidden ? EyeOff : Eye;
     const visibilityLabel = `${hidden ? `Show` : `Hide`} ${label}`;
-    const showingAll = Boolean(isGroupShowingAll?.(key));
+    const collection = groupCollections.get(key);
+    const collectionId = collection?.id ?? null;
+    const groupSortField = collection ? collection.sortField : sortField;
+    const showingAll = Boolean(isGroupShowingAll?.(key, collectionId));
     const searchLabel = showingAll ? `Show only search matches in ${label}` : `Show all domains in ${label}`;
+    const collapsed = expansion.isGroupCollapsed(key);
+    const contentId = grid ? `${idPrefix}-grid-group-${encodeURIComponent(key)}-content`
+      : group.domains.length ? group.domains.map(domain => `domain-row-${domain.id}`).join(` `)
+        : `${idPrefix}-table-group-${encodeURIComponent(key)}-empty-row`;
     return (
       <div
         id={`${scope}-heading`}
@@ -288,12 +327,12 @@ const PortfolioRecords = ({
               aria-pressed={showingAll}
               id={`${scope}-search-toggle`}
               className={`portfolio-group-search-toggle`}
-              onClick={() => onToggleGroupSearch(key)}
+              onClick={() => onToggleGroupSearch(key, collectionId)}
             >
               <Eye size={14} aria-hidden={`true`} id={`${scope}-search-toggle-icon`} className={`portfolio-group-search-toggle-icon`} />
             </button>
           )}
-          {!sortField && preferences.orders[key]?.length > 0 && (
+          {!groupSortField && preferences.orders[key]?.length > 0 && (
             <button
               type={`button`}
               draggable={false}
@@ -354,6 +393,27 @@ const PortfolioRecords = ({
               </button>
             </>
           )}
+          <button
+            type={`button`}
+            draggable={false}
+            aria-controls={contentId}
+            aria-expanded={!collapsed}
+            id={`${scope}-collapse-toggle`}
+            title={`${collapsed ? `Expand` : `Collapse`} ${label}`}
+            aria-label={`${collapsed ? `Expand` : `Collapse`} ${label}`}
+            className={`portfolio-group-collapse-toggle${collapsed ? ` portfolio-group-collapse-toggle-collapsed` : ``}`}
+            onClick={() => {
+              expansion.toggleGroup(key);
+              window.requestAnimationFrame(() => {
+                const originalId = `${idPrefix}-group-${encodeURIComponent(key)}-collapse-toggle`;
+                const mirroredId = `${idPrefix}-sticky-group-${encodeURIComponent(key)}-collapse-toggle`;
+                const buttons = [document.getElementById(`${scope}-collapse-toggle`), document.getElementById(originalId), document.getElementById(mirroredId)];
+                buttons.find(button => button && !button.closest(`[hidden], [inert]`) && window.getComputedStyle(button).visibility !== `hidden`)?.focus({ preventScroll: true });
+              });
+            }}
+          >
+            <ChevronDown size={14} aria-hidden={`true`} id={`${scope}-collapse-icon`} className={`portfolio-group-collapse-icon`} />
+          </button>
         </div>
       </div>
     );
@@ -368,42 +428,202 @@ const PortfolioRecords = ({
       {`Groups are hidden. Turn on Show Hidden Groups in Table Settings to display them.`}
     </p>
   );
+  const hiddenDomainsMessage = `Domains are hidden. Turn on Show Hidden Domains in Table Settings to display them.`;
+  const hiddenDomainsNotice = (
+    <p role={`status`} id={`${idPrefix}-hidden-domains-notice`} className={`portfolio-hidden-groups-notice`}>
+      {hiddenDomainsMessage}
+    </p>
+  );
+  const groupEmptyMessage = (group: PortfolioGroup) => hasHiddenDomains(fullGroups.find(item => item.key === group.key)?.domains ?? [])
+    ? hiddenDomainsMessage : searching ? `No matching domains in this group` : `No domains in this group`;
 
-  if (!forceTable && preferences.view === `grid` && !empty) return (
+  const collectionEmptyMessage = (section: PortfolioCollectionSection) => {
+    const hiddenGroups = !preferences.showHiddenGroups && fullGroups.some(group => (
+      groupCollections.get(group.key)?.id === section.collection.id
+      && group.domains.length > 0 && preferences.hiddenGroupKeys.includes(group.key)
+    ));
+    return hiddenGroups ? `Groups are hidden. Turn on Show Hidden Groups in Table Settings to display them.`
+      : fullGroups.some(group => groupCollections.get(group.key)?.id === section.collection.id && hasHiddenDomains(group.domains)) ? hiddenDomainsMessage
+      : hasFilters ? `No domains match the current filters in this collection` : `Drop a group here or add a group below`;
+  };
+  const collectionHeading = (section: PortfolioCollectionSection, grid = false) => (
+    <PortfolioCollection
+      busy={busy}
+      loading={loading}
+      searching={searching}
+      collection={section.collection}
+      domainCount={section.domains.length}
+      collapsed={expansion.isCollectionCollapsed(section.collection.id)}
+      onToggleCollapsed={() => expansion.toggleCollection(section.collection.id)}
+      contentId={grid ? `portfolio-collection-${section.collection.id}-content` : [
+        ...section.groups.map(group => `${idPrefix}-table-group-${encodeURIComponent(group.key)}`),
+        `portfolio-collection-${section.collection.id}-add-group-body`,
+        ...(!section.groups.length ? [`portfolio-collection-${section.collection.id}-empty-body`] : []),
+      ].join(` `)}
+      {...collectionReorder.moves(section.collection.id)}
+      {...collectionReorder.handlers(section.collection.id)}
+      showAllDomains={isCollectionShowingAll?.(section.collection.id)}
+      onToggleSearch={() => onToggleCollectionSearch?.(section.collection.id)}
+    />
+  );
+  const mainHeading = collections.length > 0 && showMainRecords && (
+    <div
+      onDrop={mainHandlers.onDrop}
+      onDragOver={mainHandlers.onDragOver}
+      onDragLeave={mainHandlers.onDragLeave}
+      id={`${idPrefix}-main-database-heading`}
+      aria-describedby={`${idPrefix}-main-database-help`}
+      className={`portfolio-main-database-heading${mainHandlers.dropTarget ? ` portfolio-main-database-drop-target` : ``}`}
+    >
+      <h3 id={`${idPrefix}-main-database-title`} className={`portfolio-main-database-title`}>{`Database`}</h3>
+      <p id={`${idPrefix}-main-database-help`} className={`portfolio-main-database-help`}>{`Drop a group here to move it back to the main database`}</p>
+    </div>
+  );
+  const addGroupRow = (collectionId: string | null = null) => {
+    const scope = collectionId ? `portfolio-collection-${collectionId}` : idPrefix;
+    const collapsed = expansion.isCollectionCollapsed(collectionId);
+    return (
+      <tbody id={`${scope}-add-group-body`} className={`portfolio-add-group-body`}>
+        <tr
+          inert={collapsed}
+          aria-hidden={collapsed || undefined}
+          data-collapsed={collapsed || undefined}
+          id={`${scope}-add-group-row`}
+          className={`portfolio-add-group-row portfolio-collapse-row`}
+        >
+          <td colSpan={columns.length + 4} id={`${scope}-add-group-cell`} className={`portfolio-add-group-cell`}>
+            <PortfolioCollapse id={`${scope}-add-group-content`} collapsed={collapsed}>
+              <PortfolioAddGroup idPrefix={scope} collectionId={collectionId} disabled={loading || busy} />
+            </PortfolioCollapse>
+          </td>
+        </tr>
+      </tbody>
+    );
+  };
+  const mainEmptyContent = showMainRecords && !loading && !mainGroups.some(group => group.domains.length || hasGroupHeading(group)) && (
+    <div id={`${idPrefix}-records-empty`} className={`portfolio-records-empty`}>
+      {hasHiddenMainGroups ? hiddenGroupsNotice : hasHiddenMainDomains ? hiddenDomainsNotice : <PortfolioEmptyState idPrefix={idPrefix} hasFilters={hasFilters} onAction={onEmptyAction} />}
+    </div>
+  );
+  const tableGroup = (group: PortfolioGroup) => (
+    <tbody
+      key={group.key}
+      data-portfolio-group-key={hasGroupHeading(group) && !isGroupParentCollapsed(group) ? group.key : undefined}
+      id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}`}
+      className={`portfolio-table-body${groupCollections.get(group.key) ? ` portfolio-table-body-collection` : ``}`}
+    >
+      {hasGroupHeading(group) && (
+        <tr
+          {...reorder.groupHandlers(group)}
+          inert={isGroupParentCollapsed(group)}
+          aria-hidden={isGroupParentCollapsed(group) || undefined}
+          data-collapsed={isGroupParentCollapsed(group) || undefined}
+          id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-row`}
+          className={`portfolio-group-heading-row portfolio-collapse-row${groupCollections.get(group.key) ? ` portfolio-group-heading-row-collection` : ``}${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
+        >
+          <th colSpan={columns.length + 4} scope={`rowgroup`} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-cell`} className={`portfolio-group-heading-cell`}>
+            <PortfolioCollapse id={`${idPrefix}-group-${encodeURIComponent(group.key)}-header-content`} collapsed={isGroupParentCollapsed(group)}>
+              {groupHeading(group)}
+            </PortfolioCollapse>
+          </th>
+        </tr>
+      )}
+      {group.domains.map(domain => (
+        <DomainRow
+          busy={busy}
+          key={domain.id}
+          domain={domain}
+          onEdit={onEdit}
+          onSelect={onSelect}
+          collapsed={isGroupCollapsed(group)}
+          showCosts={preferences.showCosts}
+          selected={selectedIds.has(domain.id)}
+          position={positions.get(domain.id) ?? 1}
+          visibleColumns={visibleColumns}
+          hideProjectDetails={appDomainIds.has(domain.id)}
+          selectionDescriptionId={`portfolio-selection-help`}
+          onContextMenu={event => contextMenu.open(event, domain, menuDomains(domain))}
+          onToggleAutoRenew={onToggleAutoRenew}
+          onChangeDescription={onChangeDescription}
+          onChangeProjectStatus={onChangeProjectStatus}
+          {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
+        />
+      ))}
+      {!group.domains.length && (
+        <tr
+          inert={isGroupCollapsed(group)}
+          aria-hidden={isGroupCollapsed(group) || undefined}
+          data-collapsed={isGroupCollapsed(group) || undefined}
+          id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-row`}
+          className={`portfolio-group-empty-row portfolio-collapse-row`}
+        >
+          <td colSpan={columns.length + 4} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-cell`} className={`portfolio-group-empty`}>
+            <PortfolioCollapse id={`${idPrefix}-group-${encodeURIComponent(group.key)}-empty-content`} collapsed={isGroupCollapsed(group)}>
+              {groupEmptyMessage(group)}
+            </PortfolioCollapse>
+          </td>
+        </tr>
+      )}
+    </tbody>
+  );
+  const gridGroup = (group: PortfolioGroup) => (
+    <section key={group.key} id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}`} className={`portfolio-grid-group`}>
+      {hasGroupHeading(group) && groupHeading(group, true)}
+      <PortfolioCollapse id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-content`} collapsed={expansion.isGroupCollapsed(group.key)}>
+        <div id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-domains`} className={`portfolio-domain-grid`}>
+          {group.domains.map(domain => (
+            <DomainGridCard
+              busy={busy}
+              key={domain.id}
+              domain={domain}
+              onEdit={onEdit}
+              onSelect={onSelect}
+              selected={selectedIds.has(domain.id)}
+              position={positions.get(domain.id) ?? 1}
+              visibleColumns={visibleColumns}
+              hideProjectDetails={appDomainIds.has(domain.id)}
+              selectionDescriptionId={`portfolio-selection-help`}
+              onToggleAutoRenew={onToggleAutoRenew}
+              {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
+            />
+          ))}
+        </div>
+        {!group.domains.length && (
+          <p id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-empty`} className={`portfolio-group-empty`}>
+            {groupEmptyMessage(group)}
+          </p>
+        )}
+      </PortfolioCollapse>
+    </section>
+  );
+
+  if (preferences.view === `grid` && !empty) return (
     <div id={`${idPrefix}-grid-view`} className={`portfolio-grid-view`} aria-busy={loading}>
       {groupHelp}
       {loading ? (
         <div id={`${idPrefix}-grid-loading`} className={`portfolio-domain-grid`}>
           {[0, 1, 2, 3].map(index => <DomainGridCardSkeleton key={index} index={index} visibleColumns={visibleColumns} />)}
         </div>
-      ) : empty ? hasHiddenDomainGroups ? hiddenGroupsNotice : <PortfolioEmptyState idPrefix={idPrefix} hasFilters={hasFilters} onAction={onEmptyAction} /> : groups.map(group => (
-        <section key={group.key} id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}`} className={`portfolio-grid-group`}>
-          {grouped && groupHeading(group, true)}
-          <div id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-domains`} className={`portfolio-domain-grid`}>
-            {group.domains.map(domain => (
-              <DomainGridCard
-                busy={busy}
-                key={domain.id}
-                domain={domain}
-                onEdit={onEdit}
-                onSelect={onSelect}
-                selected={selectedIds.has(domain.id)}
-                position={positions.get(domain.id) ?? 1}
-                visibleColumns={visibleColumns}
-                hideProjectDetails={appDomainIds.has(domain.id)}
-                selectionDescriptionId={`portfolio-selection-help`}
-                onToggleAutoRenew={onToggleAutoRenew}
-                {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
-              />
-            ))}
-          </div>
-          {!group.domains.length && (
-            <p id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-empty`} className={`portfolio-group-empty`}>
-              {searching ? `No matching domains in this group` : `No domains in this group`}
-            </p>
-          )}
-        </section>
-      ))}
+      ) : (
+        <>
+          {collections.map(section => (
+            <section key={section.collection.id} id={`portfolio-collection-${section.collection.id}-grid`} className={`portfolio-grid-collection`}>
+              {collectionHeading(section, true)}
+              <PortfolioCollapse id={`portfolio-collection-${section.collection.id}-content`} collapsed={expansion.isCollectionCollapsed(section.collection.id)}>
+                {section.groups.map(gridGroup)}
+                {!section.groups.length && (
+                  <p id={`portfolio-collection-${section.collection.id}-empty-description`} className={`portfolio-group-empty`}>{collectionEmptyMessage(section)}</p>
+                )}
+                <PortfolioAddGroup idPrefix={`portfolio-collection-${section.collection.id}`} collectionId={section.collection.id} disabled={loading || busy} />
+              </PortfolioCollapse>
+            </section>
+          ))}
+          {mainHeading}
+          {mainGroups.map(gridGroup)}
+          {mainEmptyContent}
+          {showMainRecords && <PortfolioAddGroup idPrefix={idPrefix} disabled={loading || busy} />}
+        </>
+      )}
       {groupPicker}
       {groupSettings}
     </div>
@@ -463,7 +683,7 @@ const PortfolioRecords = ({
               className={`portfolio-table portfolio-sticky-group-table`}
             >
               <tbody id={`${idPrefix}-sticky-group-body`} className={`portfolio-sticky-group-body`}>
-                {grouped && groups.map(group => (
+                {groups.filter(group => hasGroupHeading(group) && !isGroupParentCollapsed(group)).map(group => (
                   <tr
                     hidden
                     key={group.key}
@@ -471,7 +691,7 @@ const PortfolioRecords = ({
                     {...reorder.groupHandlers(group)}
                     data-portfolio-sticky-group-key={group.key}
                     id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-row`}
-                    className={`portfolio-group-heading-row${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
+                    className={`portfolio-group-heading-row${groupCollections.get(group.key) ? ` portfolio-group-heading-row-collection` : ``}${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
                   >
                     <td id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-cell`} className={`portfolio-group-heading-cell`}>
                       {groupHeading(group, false, true)}
@@ -517,70 +737,65 @@ const PortfolioRecords = ({
             onSelectAll={onSelectAll}
             columnWidths={loading ? undefined : widths}
           />
-          {loading || (empty && !showGroupHeadings) ? (
+          {loading ? (
             <tbody id={`${idPrefix}-table-body`} className={`portfolio-table-body`}>
-              {loading && [0, 1, 2, 3].map(index => <DomainRowSkeleton key={index} index={index} idPrefix={`${idPrefix}-domain`} visibleColumns={visibleColumns} />)}
+              {[0, 1, 2, 3].map(index => <DomainRowSkeleton key={index} index={index} idPrefix={`${idPrefix}-domain`} visibleColumns={visibleColumns} />)}
             </tbody>
-          ) : groups.map(group => (
-            <tbody key={group.key} data-portfolio-group-key={grouped ? group.key : undefined} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}`} className={`portfolio-table-body`}>
-              {grouped && (
-                <tr
-                  {...reorder.groupHandlers(group)}
-                  id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-row`}
-                  className={`portfolio-group-heading-row${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
-                >
-                  <th colSpan={columns.length + 4} scope={`rowgroup`} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-heading-cell`} className={`portfolio-group-heading-cell`}>
-                    {groupHeading(group)}
-                  </th>
-                </tr>
-              )}
-              {group.domains.map(domain => (
-                <DomainRow
-                  busy={busy}
-                  key={domain.id}
-                  domain={domain}
-                  onEdit={onEdit}
-                  onSelect={onSelect}
-                  showCosts={preferences.showCosts}
-                  selected={selectedIds.has(domain.id)}
-                  position={positions.get(domain.id) ?? 1}
-                  visibleColumns={visibleColumns}
-                  hideProjectDetails={appDomainIds.has(domain.id)}
-                  selectionDescriptionId={`portfolio-selection-help`}
-                  onContextMenu={event => contextMenu.open(event, domain, menuDomains(domain))}
-                  onToggleAutoRenew={onToggleAutoRenew}
-                  onChangeDescription={onChangeDescription}
-                  onChangeProjectStatus={onChangeProjectStatus}
-                  {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
-                />
+          ) : (
+            <>
+              {collections.map(section => (
+                <Fragment key={section.collection.id}>
+                  <tbody id={`portfolio-collection-${section.collection.id}-heading-body`} className={`portfolio-collection-heading-body`}>
+                    <tr id={`portfolio-collection-${section.collection.id}-heading-row`} className={`portfolio-collection-heading-row`}>
+                      <th colSpan={columns.length + 4} scope={`rowgroup`} id={`portfolio-collection-${section.collection.id}-heading-cell`} className={`portfolio-collection-heading-cell`}>
+                        {collectionHeading(section)}
+                      </th>
+                    </tr>
+                  </tbody>
+                  {section.groups.map(tableGroup)}
+                  {!section.groups.length && (
+                    <tbody id={`portfolio-collection-${section.collection.id}-empty-body`} className={`portfolio-collection-empty-body`}>
+                      <tr
+                        inert={expansion.isCollectionCollapsed(section.collection.id)}
+                        aria-hidden={expansion.isCollectionCollapsed(section.collection.id) || undefined}
+                        data-collapsed={expansion.isCollectionCollapsed(section.collection.id) || undefined}
+                        id={`portfolio-collection-${section.collection.id}-empty-row`}
+                        className={`portfolio-collection-empty-row portfolio-collapse-row`}
+                      >
+                        <td colSpan={columns.length + 4} id={`portfolio-collection-${section.collection.id}-empty-cell`} className={`portfolio-group-empty`}>
+                          <PortfolioCollapse id={`portfolio-collection-${section.collection.id}-empty-content`} collapsed={expansion.isCollectionCollapsed(section.collection.id)}>
+                            {collectionEmptyMessage(section)}
+                          </PortfolioCollapse>
+                        </td>
+                      </tr>
+                    </tbody>
+                  )}
+                  {addGroupRow(section.collection.id)}
+                </Fragment>
               ))}
-              {!group.domains.length && (
-                <tr id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-row`} className={`portfolio-group-empty-row`}>
-                  <td colSpan={columns.length + 4} id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}-empty-cell`} className={`portfolio-group-empty`}>
-                    {searching ? `No matching domains in this group` : `No domains in this group`}
-                  </td>
-                </tr>
+              {mainHeading && (
+                <tbody id={`${idPrefix}-main-heading-body`} className={`portfolio-main-heading-body`}>
+                  <tr id={`${idPrefix}-main-heading-row`} className={`portfolio-main-heading-row`}>
+                    <th colSpan={columns.length + 4} scope={`rowgroup`} id={`${idPrefix}-main-heading-cell`} className={`portfolio-main-heading-cell`}>{mainHeading}</th>
+                  </tr>
+                </tbody>
               )}
-            </tbody>
-          ))}
+              {mainGroups.filter(group => group.domains.length || hasGroupHeading(group)).map(tableGroup)}
+              {mainEmptyContent && (
+                <tbody id={`${idPrefix}-empty-body`} className={`portfolio-empty-body`}>
+                  <tr id={`${idPrefix}-empty-row`} className={`portfolio-empty-row`}>
+                    <td colSpan={columns.length + 4} id={`${idPrefix}-empty-cell`} className={`portfolio-empty-cell`}>{mainEmptyContent}</td>
+                  </tr>
+                </tbody>
+              )}
+              {showMainRecords && addGroupRow()}
+            </>
+          )}
         </table>
       </div>
       <DomainContextMenu {...contextMenu} />
       {groupPicker}
       {groupSettings}
-      {empty && (hasHiddenDomainGroups || !showGroupHeadings) && (
-        <div id={`${idPrefix}-records-empty`} className={`portfolio-records-empty`}>
-          {hasHiddenDomainGroups ? hiddenGroupsNotice : collectionId ? (
-            <p id={`${idPrefix}-empty-description`} className={`portfolio-group-empty`}>
-              {hasFilters
-                ? `No domains match the current filters in this collection`
-                : `Drop a group here or choose this collection in group settings`}
-            </p>
-          ) : (
-            <PortfolioEmptyState idPrefix={idPrefix} hasFilters={hasFilters} onAction={onEmptyAction} />
-          )}
-        </div>
-      )}
     </div>
   );
 };

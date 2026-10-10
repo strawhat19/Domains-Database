@@ -10,7 +10,7 @@ const UserMenu = () => {
   const state = useUserMenu();
   const { width } = useWindowDimensions();
   const { user, styles, palette } = state;
-  const GuestIcon = state.hasSavedAccount ? LogIn : UserRoundPlus;
+  const GuestIcon = state.guestAuth.href === routes.signin.href ? LogIn : UserRoundPlus;
   if (state.loading && !user) return (
     <View {...elementProps(`user-menu-loading`)} style={styles.skeleton} accessibilityLabel={`Loading Account`} accessibilityRole={`progressbar`}>
       <UserRound {...elementProps(`user-menu-loading-icon`)} size={20} color={palette.muted} />

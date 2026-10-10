@@ -59,8 +59,10 @@ export interface PortfolioPreferences {
   view: PortfolioView;
   showCosts: boolean;
   groupBy: PortfolioGroupBy;
+  hiddenDomainIds: string[];
   hiddenGroupKeys: string[];
   showHiddenGroups: boolean;
+  showHiddenDomains: boolean;
   collectionNumber: number;
   customGroups: CustomPortfolioGroup[];
   orders: Record<string, string[]>;
@@ -98,7 +100,9 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   renameGroup: (groupId: string, name: string) => boolean;
   toggleGroupStar: (groupId: string) => boolean;
   setShowHiddenGroups: (value: boolean) => void;
+  setShowHiddenDomains: (value: boolean) => void;
   toggleGroupVisibility: (groupKey: string) => boolean;
+  toggleDomainVisibility: (domainId: string) => boolean;
   assignDomain: (domainId: string, groupId: string | null) => void;
   createGroup: (name: string, domainIds?: string[]) => string | undefined;
   assignDomains: (domainIds: string[], groupId: string | null) => boolean;

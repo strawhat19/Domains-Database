@@ -88,6 +88,7 @@ export const useStickyPortfolioGroup = (
         }
         const editing = Boolean(active?.row.querySelector(`.domain-description-editing`));
         next = dragging || editing ? active : groups[index];
+        if (!dragging && !editing && next && position >= next.bottom) next = undefined;
         if (!dragging && next?.heading.querySelector(`.domain-description-editing`)) next = undefined;
       }
       const nextLeft = Math.max(0, Math.min(scroll.scrollLeft, maxScrollLeft));
@@ -114,7 +115,7 @@ export const useStickyPortfolioGroup = (
       if (nextWidth !== width && nextWidth >= 0) mirror.style.width = `${nextWidth}px`;
       const nextHeight = next?.row.getBoundingClientRect().height || next?.height || 0;
       if (next && !dragging && !next.row.querySelector(`.domain-description-editing`)) {
-        const boundary = groups[groups.indexOf(next) + 1]?.top ?? next.bottom;
+        const boundary = Math.min(next.bottom, groups[groups.indexOf(next) + 1]?.top ?? next.bottom);
         nextOffset = Math.min(0, boundary - (top - bounds.top) - nextHeight);
       }
       // All group visibility and geometry changes happen together, without a table render.

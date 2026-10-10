@@ -1,9 +1,9 @@
 import './styles.scss';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
-import DomainAnalyticsButton from '../DomainAnalyticsButton';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainStarButton from '../DomainStarButton/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
+import DomainVisibilityButton from '../DomainVisibilityButton/index.web';
 import { getDomainSource } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { getDomainRow, getDomainColumnKey, getDomainSelectionHandlers } from '../DomainRow/domainRow';
@@ -231,7 +231,12 @@ const DomainGridCard = ({
           </div>
         )}
         <div id={`${scope}-actions`} className={`domain-grid-card-actions`}>
-          <DomainAnalyticsButton suffix={scope} domain={domain.name} />
+          <DomainVisibilityButton
+            disabled={busy}
+            domainId={domain.id}
+            domainName={domain.name}
+            id={`${scope}-visibility-toggle`}
+          />
           <DomainStarButton
             id={`${scope}-star`}
             disabled={busy}

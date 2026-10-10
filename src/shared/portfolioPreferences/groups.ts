@@ -81,13 +81,15 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
 
 export const buildPortfolioSections = (domains: DomainRecord[], preferences: PortfolioPreferences): PortfolioSections => {
   const hiddenKeys = new Set(preferences.hiddenGroupKeys);
+  const hiddenDomainIds = new Set(preferences.hiddenDomainIds);
+  const visibleDomains = preferences.showHiddenDomains ? domains : domains.filter(domain => !hiddenDomainIds.has(domain.id));
   const visibleGroups = (groups: PortfolioGroup[]) => preferences.showHiddenGroups
     ? groups : groups.filter(group => group.key === `all` || !hiddenKeys.has(group.key));
   const collectionIds = new Set(preferences.collections.map(collection => collection.id));
   const assignedDomainIds = new Set(preferences.customGroups
     .filter(group => group.collectionId && collectionIds.has(group.collectionId))
     .flatMap(group => group.domainIds));
-  const mainDomains = domains.filter(domain => !assignedDomainIds.has(domain.id));
+  const mainDomains = visibleDomains.filter(domain => !assignedDomainIds.has(domain.id));
   const mainGroups = visibleGroups(buildPortfolioGroups(mainDomains, {
     ...preferences,
     customGroups: preferences.customGroups.filter(group => !group.collectionId || !collectionIds.has(group.collectionId)),
@@ -95,7 +97,7 @@ export const buildPortfolioSections = (domains: DomainRecord[], preferences: Por
   const collections = preferences.collections.map(collection => {
     const customGroups = preferences.customGroups.filter(group => group.collectionId === collection.id);
     const domainIds = new Set(customGroups.flatMap(group => group.domainIds));
-    const availableDomains = sortPortfolioDomains(domains.filter(domain => domainIds.has(domain.id)), `name`);
+    const availableDomains = sortPortfolioDomains(visibleDomains.filter(domain => domainIds.has(domain.id)), `name`);
     const groups = visibleGroups(buildPortfolioGroups(availableDomains, { ...preferences, customGroups, groupBy: `custom` })
       .filter(group => Boolean(group.customGroupId)))
       .map(group => collection.sortField
