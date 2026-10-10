@@ -71,4 +71,8 @@ export const saveTheme = (theme: ThemeMode, userId: string | null): Promise<void
   const key = getThemeStorageKey(userId);
   await requireScope(userId);
   await writeStorage(key, theme);
+  if (userId !== null) {
+    await requireScope(userId);
+    await writeStorage(THEME_STORAGE_KEY, theme);
+  }
 });

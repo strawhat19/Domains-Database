@@ -34,7 +34,6 @@
 .portfolio-value-skeleton-count { width: 22px; }
 .portfolio-value-skeleton-spend { width: 52px; }
 .portfolio-value-skeleton-footer { width: 112px; }
-.portfolio-value-skeleton-selection { width: 64px; margin-right: auto; }
 @keyframes portfolio-value-pulse { 50% { opacity: .45; } }
 .portfolio-summary-separator { font-size: 12px; color: var(--placeholder); }
 .portfolio-summary-attention { color: var(--warning); }
@@ -120,10 +119,10 @@
   padding: 0 12px;
   border-radius: 4px;
   align-items: center;
-  background: var(--input);
+  background: var(--table-search-bg);
   border: 1px solid var(--line);
   transition: background .2s ease, border-color .2s ease, box-shadow .2s ease;
-  &:focus-within { background: var(--paper); border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+  &:focus-within { background: var(--table-search-focus-bg); border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 }
 .portfolio-search-icon { flex-shrink: 0; color: var(--muted); }
 .portfolio-search { border: 0; width: 100%; min-width: 0; padding: 10px 0; font-size: 13px; color: var(--ink); background: transparent; font-family: var(--font-body); }

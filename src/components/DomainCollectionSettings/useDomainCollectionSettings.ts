@@ -1,17 +1,22 @@
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
-import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
+import type { DomainProjectStatus } from '../../shared/domainProject';
+import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 
 export const useDomainCollectionSettings = (collection: CustomPortfolioCollection, onClose: () => void) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
   const [name, setNameValue] = useState(collection.name);
+  const [orderChanged, setOrderChanged] = useState(false);
   const [nameFocusRequest, setNameFocusRequest] = useState(0);
+  const [manualOrder, setManualOrder] = useState(collection.sortField === null);
   const [visibility, setVisibilityValue] = useState<CollectionVisibility>(collection.visibility ?? `private`);
   const [invalidField, setInvalidField] = useState<`name` | `description` | null>(null);
   const [description, setDescriptionValue] = useState(collection.description ?? ``);
+  const [projectStatus, setProjectStatusValue] = useState(() => normalizeDomainProjectStatus(collection.projectStatus));
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLTextAreaElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -47,6 +52,15 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     clearError();
     setVisibilityValue(value);
   };
+  const setProjectStatus = (value: DomainProjectStatus) => {
+    clearError();
+    setProjectStatusValue(value);
+  };
+  const toggleManualOrder = () => {
+    clearError();
+    setOrderChanged(true);
+    setManualOrder(current => !current);
+  };
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearError();
@@ -70,7 +84,8 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
       descriptionInputRef.current?.focus();
       return;
     }
-    if (!preferences.updateCollection(collection.id, trimmedName, trimmedDescription, visibility)) {
+    if (!preferences.updateCollection(collection.id, trimmedName, trimmedDescription, visibility, projectStatus)
+      || (orderChanged && !preferences.setCollectionSort(collection.id, manualOrder ? null : `name`, `asc`))) {
       setError(`Could Not Save Collection. Try Again Shortly`);
       return;
     }
@@ -81,14 +96,18 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     name,
     setName,
     modalRef,
+    manualOrder,
     visibility,
     description,
     invalidField,
     nameInputRef,
+    projectStatus,
     nameFocusRequest,
     handleSubmit,
     setVisibility,
     setDescription,
+    setProjectStatus,
+    toggleManualOrder,
     descriptionInputRef,
     error: error || availabilityError,
   };

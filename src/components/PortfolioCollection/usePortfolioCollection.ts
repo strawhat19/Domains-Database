@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import type { DomainProjectStatus } from '../../shared/domainProject';
 import type { PortfolioColumn } from '../../shared/portfolioColumns';
 import { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
-import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
+import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
 export const usePortfolioCollection = (
@@ -27,18 +28,26 @@ export const usePortfolioCollection = (
       current && collection.sortDirection === `asc` ? `desc` : `asc`,
     );
   };
-  const toggleManualOrder = () => preferences.setCollectionSort(
-    collection.id,
-    collection.sortField ? null : `name`,
-    `asc`,
-  );
   const voteUp = () => preferences.voteCollection(collection.id, `up`);
   const voteDown = () => preferences.voteCollection(collection.id, `down`);
-  const setVisibility = (visibility: CollectionVisibility) => preferences.setCollectionVisibility(collection.id, visibility);
   const setDescription = async (description: string) => {
     const current = preferences.collections.find(item => item.id === collection.id);
     return current ? preferences.updateCollection(current.id, current.name, description, current.visibility) : false;
   };
+  const setProjectStatus = (projectStatus: DomainProjectStatus) => {
+    const current = preferences.collections.find(item => item.id === collection.id);
+    return current ? preferences.updateCollection(current.id, current.name, current.description ?? ``, current.visibility, projectStatus) : false;
+  };
 
-  return { sticky, voteUp, editing, onSort, voteDown, setEditing, setVisibility, recordsSticky, setDescription, toggleManualOrder };
+  return {
+    onSort,
+    sticky,
+    voteUp,
+    editing,
+    voteDown,
+    setEditing,
+    recordsSticky,
+    setDescription,
+    setProjectStatus,
+  };
 };

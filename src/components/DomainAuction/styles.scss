@@ -42,7 +42,7 @@
 .auction-search-row { gap: 14px; display: flex; align-items: flex-end; }
 .auction-query-field { flex: 1; min-width: 150px; }
 .auction-field-label { display: block; margin-bottom: 7px; font-size: 11px; font-family: var(--font-bold); }
-.auction-query-wrap { gap: 9px; display: flex; min-width: 0; padding: 0 12px; border-radius: 4px; align-items: center; background: var(--input); border: 1px solid var(--line); transition: background .2s ease, border-color .2s ease; &:focus-within { background: var(--paper); border-color: var(--accent); } }
+.auction-query-wrap { gap: 9px; display: flex; min-width: 0; padding: 0 12px; border-radius: 4px; align-items: center; background: var(--table-search-bg); border: 1px solid var(--line); transition: background .2s ease, border-color .2s ease; &:focus-within { background: var(--table-search-focus-bg); border-color: var(--accent); } }
 .auction-query-icon { flex-shrink: 0; color: var(--muted); }
 .auction-query { border: 0; width: 100%; min-width: 0; font-size: 13px; padding: 11px 0; color: var(--ink); background: transparent; font-family: var(--font-body); &:focus { outline: none; } }
 .auction-query::placeholder, .auction-field-input::placeholder { color: var(--placeholder); }

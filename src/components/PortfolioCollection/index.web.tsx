@@ -1,11 +1,12 @@
 import './styles.scss';
 import DomainDescription from '../DomainDescription/index.web';
+import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import { usePortfolioCollection } from './usePortfolioCollection';
 import type { CSSProperties, DragEventHandler } from 'react';
 import DomainCollectionSettings from '../DomainCollectionSettings/index.web';
 import PortfolioRecords, { type PortfolioRecordsProps } from '../PortfolioRecords/index.web';
-import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
-import { Eye, Lock, Globe, Share2, ArrowUp, Settings, ArrowDown, ThumbsUp, ThumbsDown, ChevronDown, ArrowDownAZ, GripVertical } from 'lucide-react';
+import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
+import { Eye, Share2, ArrowUp, Settings, ArrowDown, ThumbsUp, ThumbsDown, GripVertical } from 'lucide-react';
 
 export interface PortfolioCollectionProps extends Omit<PortfolioRecordsProps,
   `sticky` | `compact` | `sortField` | `sortDirection` | `onSort` | `collectionId` | `idPrefix` | `forceTable`
@@ -49,8 +50,6 @@ const PortfolioCollection = ({
   const state = usePortfolioCollection(collection, records.visibleColumns, globalToolbarHeight);
   const visibility = collection.visibility ?? `private`;
   const domainCount = records.domains.length;
-  const VisibilityIcon = visibility === `public` ? Globe : Lock;
-  const OrderIcon = collection.sortField ? GripVertical : ArrowDownAZ;
   const searchToggleLabel = showAllDomains ? `Show only search matches in ${collection.name}` : `Show all domains in ${collection.name}`;
   const style = { [`--portfolio-global-toolbar-height`]: `${globalToolbarHeight}px` } as CSSProperties;
 
@@ -117,28 +116,37 @@ const PortfolioCollection = ({
         <div id={`${scope}-copy`} className={`portfolio-collection-copy`}>
           <div id={`${scope}-heading`} className={`portfolio-collection-heading`}>
             <h3 id={`${scope}-title`} className={`portfolio-collection-title`}>
-              {collection.name}
-            </h3>
-            <label
-              id={`${scope}-visibility-field`}
-              htmlFor={`${scope}-visibility`}
-              className={`portfolio-collection-visibility portfolio-collection-visibility-${visibility}`}
-            >
-              <VisibilityIcon size={12} aria-hidden={`true`} id={`${scope}-visibility-icon`} className={`portfolio-collection-visibility-icon`} />
-              <span id={`${scope}-visibility-label`} className={`portfolio-sr-only`}>{`Visibility for ${collection.name}`}</span>
-              <select
-                draggable={false}
-                value={visibility}
-                id={`${scope}-visibility`}
-                disabled={records.loading || records.busy}
-                className={`portfolio-collection-visibility-select`}
-                onChange={event => state.setVisibility(event.target.value as CollectionVisibility)}
+              <svg
+                width={20}
+                height={20}
+                stroke={`none`}
+                focusable={false}
+                fill={`currentColor`}
+                aria-hidden={`true`}
+                viewBox={`0 0 24 24`}
+                id={`${scope}-folder-icon`}
+                className={`portfolio-collection-folder-icon`}
               >
-                <option value={`private`}>{`Private`}</option>
-                <option value={`public`}>{`Public / Published`}</option>
-              </select>
-              <ChevronDown size={11} aria-hidden={`true`} id={`${scope}-visibility-chevron`} className={`portfolio-collection-visibility-chevron`} />
-            </label>
+                <path
+                  fillRule={`evenodd`}
+                  id={`${scope}-folder-icon-path`}
+                  className={`portfolio-collection-folder-icon-path`}
+                  d={`M4 4h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM5 9h14a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z`}
+                />
+              </svg>
+              <span id={`${scope}-name`} className={`portfolio-collection-name`}>
+                {collection.name}
+              </span>
+            </h3>
+            <DomainProjectBadge
+              field={`projectStatus`}
+              id={`${scope}-project-status`}
+              value={collection.projectStatus}
+              onChange={state.setProjectStatus}
+              disabled={records.loading || records.busy}
+              className={`portfolio-collection-project-status`}
+              editLabel={`Change Project Status For ${collection.name}`}
+            />
             <div id={`${scope}-description-field`} className={`portfolio-collection-description`}>
               <DomainDescription
                 maxLength={280}
@@ -186,22 +194,6 @@ const PortfolioCollection = ({
           </div>
         )}
         <div id={`${scope}-actions`} className={`portfolio-collection-actions`}>
-          <button
-            type={`button`}
-            draggable={false}
-            id={`${scope}-order-toggle`}
-            onClick={state.toggleManualOrder}
-            aria-pressed={collection.sortField === null}
-            disabled={records.loading || records.busy}
-            aria-label={collection.sortField ? `Manual` : `Sort A–Z`}
-            title={collection.sortField ? `Switch to manual sorting` : `Sort domains A–Z`}
-            className={`portfolio-button portfolio-button-secondary portfolio-collection-order-toggle`}
-          >
-            <OrderIcon size={14} aria-hidden={`true`} id={`${scope}-order-toggle-icon`} className={`portfolio-button-icon`} />
-            <span id={`${scope}-order-toggle-text`} className={`portfolio-button-text`}>
-              {collection.sortField ? `Manual` : `Sort A–Z`}
-            </span>
-          </button>
           <span
             id={`${scope}-domain-count`}
             className={`portfolio-collection-count`}

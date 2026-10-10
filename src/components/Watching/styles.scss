@@ -44,10 +44,10 @@
   padding: 0 12px;
   border-radius: 4px;
   align-items: center;
-  background: var(--input);
+  background: var(--table-search-bg);
   border: 1px solid var(--line);
   transition: background .2s ease, border-color .2s ease;
-  &:focus-within { background: var(--paper); border-color: var(--accent); }
+  &:focus-within { background: var(--table-search-focus-bg); border-color: var(--accent); }
 }
 .watching-filter-icon { color: var(--muted); flex-shrink: 0; }
 .watching-filter { border: 0; width: 100%; min-width: 0; font-size: 13px; padding: 10px 0; color: var(--ink); background: transparent; font-family: var(--font-body); }

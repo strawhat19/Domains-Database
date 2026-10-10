@@ -45,6 +45,7 @@ export interface CustomPortfolioCollection {
   sortDirection: `asc` | `desc`;
   visibility: CollectionVisibility;
   sortField: PortfolioColumn | null;
+  projectStatus: DomainProjectStatus;
 }
 
 export interface GroupSettingsInput extends PortfolioGroupDetails {
@@ -106,7 +107,7 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   saveGroupSettings: (groupId: string, input: GroupSettingsInput) => boolean;
   updateGroupProjectStatus: (groupId: string, status: DomainProjectStatus) => boolean;
   moveGroup: (groupId: string, targetId: string, placement?: `before` | `after`) => boolean;
-  updateCollection: (collectionId: string, name: string, description: string, visibility?: CollectionVisibility) => boolean;
+  updateCollection: (collectionId: string, name: string, description: string, visibility?: CollectionVisibility, projectStatus?: DomainProjectStatus) => boolean;
   setCollectionVisibility: (collectionId: string, visibility: CollectionVisibility) => boolean;
   assignGroupCollection: (groupId: string, collectionId: string | null) => boolean;
   setCollectionSort: (collectionId: string, field: PortfolioColumn | null, direction: `asc` | `desc`) => boolean;

@@ -43,11 +43,15 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     seenCollectionNames.add(name.toLowerCase());
     const description = typeof value.description === `string` ? value.description.trim() : ``;
     const sortField = value.sortField === null ? null : PORTFOLIO_FIELDS.some(column => column.field === value.sortField) ? value.sortField : `name`;
+    let projectStatus = DEFAULT_DOMAIN_PROJECT_STATUS;
+    try { projectStatus = normalizeDomainProjectStatus(value.projectStatus); }
+    catch { /* Preserve collections with an invalid saved status. */ }
     return [{
       name,
       number,
       id: value.id,
       sortField,
+      projectStatus,
       upvotes: Number.isSafeInteger(value.upvotes) && value.upvotes >= 0 ? value.upvotes : 0,
       downvotes: Number.isSafeInteger(value.downvotes) && value.downvotes >= 0 ? value.downvotes : 0,
       visibility: value.visibility === `public` ? `public` : `private`,
@@ -314,6 +318,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
         visibility: `private`,
         sortDirection: `asc`,
         description: collectionDescription,
+        projectStatus: DEFAULT_DOMAIN_PROJECT_STATUS,
       };
     } else if (collectionId !== undefined && !current.collections.some(collection => collection.id === collectionId)) return false;
     change(current => ({
@@ -403,7 +408,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     return true;
   }, [ready, change, userId, enabled]);
 
-  const updateCollection = useCallback<PortfolioPreferencesContextValue[`updateCollection`]>((id, value, descriptionValue, visibility) => {
+  const updateCollection = useCallback<PortfolioPreferencesContextValue[`updateCollection`]>((id, value, descriptionValue, visibility, statusValue) => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return false;
     if (visibility !== undefined && visibility !== `private` && visibility !== `public`) return false;
     const name = value.trim();
@@ -411,6 +416,9 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     const collections = preferenceRef.current.collections;
     if (!name || name.length > 80 || description.length > 280 || !collections.some(collection => collection.id === id)) return false;
     if (collections.some(collection => collection.id !== id && collection.name.toLowerCase() === name.toLowerCase())) return false;
+    let projectStatus: CustomPortfolioCollection[`projectStatus`] | undefined;
+    try { if (statusValue !== undefined) projectStatus = normalizeDomainProjectStatus(statusValue); }
+    catch { return false; }
     change(current => ({
       ...current,
       collections: current.collections.map(collection => collection.id === id ? {
@@ -418,6 +426,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
         name,
         description,
         ...(visibility !== undefined ? { visibility } : {}),
+        ...(projectStatus !== undefined ? { projectStatus } : {}),
       } : collection),
     }));
     return true;

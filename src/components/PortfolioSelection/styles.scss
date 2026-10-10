@@ -1,7 +1,2 @@
 .portfolio-selection-controls { display: flex; max-width: 100%; flex-shrink: 0; align-items: center; }
 .portfolio-selection-count { font-size: 10px; color: var(--muted); white-space: nowrap; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.portfolio-selection-total { display: none; }
-.portfolio-selection-total-only { display: inline; }
-@container portfolio-toolbar (min-width: 640px) {
-  .portfolio-selection-total { display: inline; }
-}

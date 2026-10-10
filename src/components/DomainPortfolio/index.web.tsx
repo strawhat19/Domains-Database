@@ -319,11 +319,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       <div id={`portfolio-card`} className={`portfolio-card`}>
         <div ref={sticky.toolbarRef} id={`portfolio-toolbar`} className={`portfolio-toolbar`}>
           <div id={`portfolio-controls-row`} className={`portfolio-controls-row`}>
-            {portfolio.loading ? (
-              <span aria-hidden={`true`} id={`portfolio-selection-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-selection`} />
-            ) : (
+            {!portfolio.loading && (
               <PortfolioSelection
-                totalCount={portfolio.domains.length}
                 count={selection.selectedIds.size}
                 visibleCount={selection.visibleSelectedCount}
               />

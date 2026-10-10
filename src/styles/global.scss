@@ -8,6 +8,8 @@
   --canvas: #f1f3f3;
   --input: #f7f9f9;
   --subtle: #edf8f7;
+  --table-search-bg: color-mix(in srgb, var(--paper) 80%, var(--accent));
+  --table-search-focus-bg: color-mix(in srgb, var(--paper) 74%, var(--accent));
   --placeholder: #9ba4a2;
   --skeleton: #edf1f3;
   --skeleton-highlight: #f8fafa;

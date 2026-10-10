@@ -15,12 +15,12 @@ export const usePortfolioActionsVisibility = () => {
         frame = window.requestAnimationFrame(measure);
         return;
       }
-      const bounds = actions.getBoundingClientRect();
       const headerPosition = header ? window.getComputedStyle(header).position : ``;
       const headerBottom = header && (headerPosition === `sticky` || headerPosition === `fixed`)
         ? Math.max(0, header.getBoundingClientRect().bottom)
         : 0;
       const viewportWidth = document.documentElement.clientWidth;
+      const bounds = actions.getBoundingClientRect();
       const compact = bounds.width > 0 && bounds.height > 0 && (
         bounds.bottom <= headerBottom || bounds.top >= window.innerHeight
         || bounds.right <= 0 || bounds.left >= viewportWidth
