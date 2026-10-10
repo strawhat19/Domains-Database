@@ -1,4 +1,4 @@
-.domain-group-settings { max-width: 900px; }
+.domain-group-settings { max-width: var(--modal-wide-width, 900px); }
 .domain-group-settings-header { margin-bottom: 25px; }
 .domain-group-settings-header-actions { gap: 8px; display: flex; flex-shrink: 0; align-items: center; }
 .domain-group-settings-title-row { gap: 10px; display: flex; flex-wrap: wrap; align-items: center; }
@@ -88,6 +88,6 @@
 @media (prefers-reduced-motion: reduce) {
   .domain-group-settings-type-button, .domain-group-settings-preview-link,
   .domain-group-settings-name-input, .domain-group-settings-description-input,
-  .domain-group-settings-icon-input, .domain-group-settings-collection-select,
+  .domain-group-settings-icon-input,
   .domain-group-settings-collection-name-input { transition: none; }
 }

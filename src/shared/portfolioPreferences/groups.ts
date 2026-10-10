@@ -82,27 +82,47 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
 export const buildPortfolioSections = (domains: DomainRecord[], preferences: PortfolioPreferences): PortfolioSections => {
   const hiddenKeys = new Set(preferences.hiddenGroupKeys);
   const hiddenDomainIds = new Set(preferences.hiddenDomainIds);
+  const hiddenCollectionIds = new Set(preferences.hiddenCollectionIds);
   const visibleDomains = preferences.showHiddenDomains ? domains : domains.filter(domain => !hiddenDomainIds.has(domain.id));
   const visibleGroups = (groups: PortfolioGroup[]) => preferences.showHiddenGroups
     ? groups : groups.filter(group => group.key === `all` || !hiddenKeys.has(group.key));
   const collectionIds = new Set(preferences.collections.map(collection => collection.id));
+  const groupedDomainIds = new Set(preferences.customGroups.flatMap(group => group.domainIds));
+  const directMembership = new Map<string, string>();
+  preferences.collections.forEach(collection => (collection.domainIds ?? []).forEach(id => {
+    if (!groupedDomainIds.has(id) && !directMembership.has(id)) directMembership.set(id, collection.id);
+  }));
   const assignedDomainIds = new Set(preferences.customGroups
     .filter(group => group.collectionId && collectionIds.has(group.collectionId))
-    .flatMap(group => group.domainIds));
+    .flatMap(group => group.domainIds).concat([...directMembership.keys()]));
   const mainDomains = visibleDomains.filter(domain => !assignedDomainIds.has(domain.id));
   const mainGroups = visibleGroups(buildPortfolioGroups(mainDomains, {
     ...preferences,
     customGroups: preferences.customGroups.filter(group => !group.collectionId || !collectionIds.has(group.collectionId)),
   }));
-  const collections = preferences.collections.map(collection => {
+  const visibleCollections = preferences.showHiddenCollections
+    ? preferences.collections : preferences.collections.filter(collection => !hiddenCollectionIds.has(collection.id));
+  const collections = visibleCollections.map(collection => {
     const customGroups = preferences.customGroups.filter(group => group.collectionId === collection.id);
     const domainIds = new Set(customGroups.flatMap(group => group.domainIds));
     const availableDomains = sortPortfolioDomains(visibleDomains.filter(domain => domainIds.has(domain.id)), `name`);
-    const groups = visibleGroups(buildPortfolioGroups(availableDomains, { ...preferences, customGroups, groupBy: `custom` })
+    const customCollectionGroups = visibleGroups(buildPortfolioGroups(availableDomains, { ...preferences, customGroups, groupBy: `custom` })
       .filter(group => Boolean(group.customGroupId)))
       .map(group => collection.sortField
         ? { ...group, domains: sortPortfolioDomains(group.domains, collection.sortField, collection.sortDirection) }
         : group);
+    const directKey = `collection:${collection.id}`;
+    const directDomains = sortPortfolioDomains(visibleDomains.filter(domain => directMembership.get(domain.id) === collection.id), `name`);
+    const orderedDirectDomains = collection.sortField
+      ? sortPortfolioDomains(directDomains, collection.sortField, collection.sortDirection)
+      : applyDomainOrder(directDomains, preferences.orders[directKey]);
+    const directGroups: PortfolioGroup[] = orderedDirectDomains.length ? [{
+      key: directKey,
+      label: collection.name,
+      directCollectionId: collection.id,
+      domains: orderedDirectDomains,
+    }] : [];
+    const groups = [...directGroups, ...customCollectionGroups];
     return { groups, collection, domains: groups.flatMap(group => group.domains) };
   });
   const visibleMainIds = new Set(mainGroups.flatMap(group => group.domains).map(domain => domain.id));

@@ -471,6 +471,15 @@ export const api = {
     const domain = new Domain({ ...original, starred: !original.starred });
     await saveSnapshot({ ...current, domains: current.domains.map(record => record.id === id ? domain : record) });
   }),
+  starDomains: (ids: readonly string[]): Promise<void> => serializePortfolioMutation(async () => {
+    const selectedIds = new Set(ids);
+    if (!selectedIds.size) return;
+    const current = await readSnapshot();
+    if (!current.domains.some(domain => selectedIds.has(domain.id) && !domain.starred)) return;
+    const domains = current.domains.map(domain => selectedIds.has(domain.id) && !domain.starred
+      ? new Domain({ ...domain, starred: true }) : domain);
+    await saveSnapshot({ ...current, domains });
+  }),
   deleteDomain: (id: string) => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
     const domain = current.domains.find(record => record.id === id);

@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Save, Trash2 } from 'lucide-react';
 import type { CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { normalizePortfolioName, isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
 
 interface GroupEditorProps {
   count: number;
   group: CustomPortfolioGroup;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => boolean;
   onRename: (id: string, name: string) => boolean;
 }
 
 const GroupEditor = ({ count, group, onDelete, onRename }: GroupEditorProps) => {
+  const preferences = usePortfolioPreferences();
   const [name, setName] = useState(group.name);
   const [error, setError] = useState(``);
   const scope = `portfolio-custom-group-${group.id}`;
+  const deleteDestination = preferences.collections.find(collection => collection.id === group.collectionId)?.name ?? `Database`;
   useEffect(() => { setName(group.name); }, [group.name]);
 
   return (
@@ -21,7 +25,16 @@ const GroupEditor = ({ count, group, onDelete, onRename }: GroupEditorProps) => 
       className={`group-editor`}
       onSubmit={event => {
         event.preventDefault();
-        setError(onRename(group.id, name) ? `` : `Enter a unique group name.`);
+        if (preferences.loading) { setError(`Portfolio Is Loading — Try Again Shortly`); return; }
+        const trimmedName = name.trim();
+        if (!trimmedName) { setError(`Enter A Group Name`); return; }
+        if (trimmedName.length > 80) { setError(`Group Name Must Be 80 Characters Or Fewer`); return; }
+        if (normalizePortfolioName(trimmedName) === `ungrouped`) { setError(`Ungrouped Is A Reserved Group Name`); return; }
+        if (isPortfolioNameTaken(preferences, trimmedName, { groupId: group.id })) {
+          setError(`A Collection Or Group With This Name Already Exists`);
+          return;
+        }
+        setError(onRename(group.id, trimmedName) ? `` : `Could Not Rename Group`);
       }}
     >
       <label id={`${scope}-label`} htmlFor={`${scope}-name`} className={`group-editor-name-label`}>
@@ -34,7 +47,7 @@ const GroupEditor = ({ count, group, onDelete, onRename }: GroupEditorProps) => 
           id={`${scope}-name`}
           aria-invalid={Boolean(error)}
           className={`group-editor-name-input`}
-          onChange={event => setName(event.target.value)}
+          onChange={event => { setName(event.target.value); setError(``); }}
           aria-describedby={error ? `${scope}-error` : undefined}
         />
       </label>
@@ -52,15 +65,18 @@ const GroupEditor = ({ count, group, onDelete, onRename }: GroupEditorProps) => 
           {`Save`}
         </span>
       </button>
-      <button
-        type={`button`}
-        id={`${scope}-delete`}
-        onClick={() => onDelete(group.id)}
-        aria-label={`Delete ${group.name}; domains become ungrouped`}
-        className={`portfolio-button portfolio-button-quiet group-editor-delete group-editor-button`}
-      >
-        <Trash2 size={14} aria-hidden={`true`} id={`${scope}-delete-icon`} className={`portfolio-button-icon`} />
-      </button>
+      {!group.isApp && (
+        <button
+          type={`button`}
+          id={`${scope}-delete`}
+          disabled={preferences.loading}
+          onClick={() => setError(onDelete(group.id) ? `` : `Could Not Delete Group`)}
+          aria-label={`Delete ${group.name}; Domains Move To ${deleteDestination}`}
+          className={`portfolio-button portfolio-button-quiet group-editor-delete group-editor-button`}
+        >
+          <Trash2 size={14} aria-hidden={`true`} id={`${scope}-delete-icon`} className={`portfolio-button-icon`} />
+        </button>
+      )}
       {error && (
         <p role={`alert`} id={`${scope}-error`} className={`group-controls-error`}>
           {error}

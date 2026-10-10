@@ -1,0 +1,6 @@
+.domain-dialog.portfolio-sync-options { max-width: var(--modal-wide-width, 500px); }
+.portfolio-sync-options-list { gap: 10px; display: grid; }
+.portfolio-sync-options .portfolio-sync-option { gap: 12px; width: 100%; padding: 14px; text-align: left; white-space: normal; justify-content: flex-start; }
+.portfolio-sync-option-icon { color: var(--accent); }
+.portfolio-sync-option-label { min-width: 0; overflow-wrap: anywhere; }
+.portfolio-sync-options .portfolio-sync-options-footer { border-top: 0; justify-content: flex-end; }

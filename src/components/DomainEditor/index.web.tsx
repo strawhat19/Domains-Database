@@ -70,7 +70,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
         <header id={`domain-editor-header`} className={`domain-dialog-header`}>
           <div id={`domain-editor-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-editor-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {isEditing ? `DOMAIN SETTINGS` : `YOUR PORTFOLIO`}
+              {isEditing ? `DOMAIN SETTINGS` : `ACTIONS`}
             </span>
             <div id={`domain-editor-title-row`} className={`domain-editor-title-row`}>
               {isEditing ? (

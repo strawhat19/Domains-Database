@@ -1,21 +1,16 @@
-import { useCallback, useState } from 'react';
-
-const toggleCollapsed = (current: Set<string>, id: string) => {
-  const next = new Set(current);
-  if (next.has(id)) next.delete(id);
-  else next.add(id);
-  return next;
-};
+import { useMemo, useCallback } from 'react';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
 export const usePortfolioExpansion = () => {
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
-  const [collapsedCollections, setCollapsedCollections] = useState<Set<string>>(() => new Set());
+  const { collapsedGroupKeys, collapsedCollectionIds, toggleGroupCollapsed, toggleCollectionCollapsed } = usePortfolioPreferences();
+  const collapsedGroups = useMemo(() => new Set(collapsedGroupKeys), [collapsedGroupKeys]);
+  const collapsedCollections = useMemo(() => new Set(collapsedCollectionIds), [collapsedCollectionIds]);
   const toggleGroup = useCallback((key: string) => {
-    setCollapsedGroups(current => toggleCollapsed(current, key));
-  }, []);
+    toggleGroupCollapsed(key);
+  }, [toggleGroupCollapsed]);
   const toggleCollection = useCallback((id: string) => {
-    setCollapsedCollections(current => toggleCollapsed(current, id));
-  }, []);
+    toggleCollectionCollapsed(id);
+  }, [toggleCollectionCollapsed]);
   const isGroupCollapsed = (key: string) => collapsedGroups.has(key);
   const isCollectionCollapsed = (id: string | null | undefined) => Boolean(id && collapsedCollections.has(id));
 

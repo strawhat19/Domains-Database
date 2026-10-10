@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { normalizePortfolioName, isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
 
 export const useGroupControls = (domains: DomainRecord[]) => {
   const preferences = usePortfolioPreferences();
@@ -25,7 +26,8 @@ export const useGroupControls = (domains: DomainRecord[]) => {
       if (!panel || !toolbar) return;
       const bounds = toolbar.getBoundingClientRect();
       const headerBottom = document.getElementById(`site-header`)?.getBoundingClientRect().bottom ?? 0;
-      const above = bounds.top - Math.max(0, headerBottom) - 24;
+      const headingBottom = toolbar.closest(`.domain-portfolio`)?.querySelector<HTMLElement>(`.portfolio-heading-row`)?.getBoundingClientRect().bottom ?? 0;
+      const above = bounds.top - Math.max(0, headerBottom, headingBottom) - 24;
       const below = window.innerHeight - bounds.bottom - 24;
       const opensAbove = below < 240 && above > below;
       panel.dataset.placement = opensAbove ? `top` : `bottom`;
@@ -72,8 +74,14 @@ export const useGroupControls = (domains: DomainRecord[]) => {
     .sort((first, second) => first.name.localeCompare(second.name, undefined, { sensitivity: `base`, numeric: true })), [domains, query]);
 
   const createGroup = () => {
-    if (!preferences.createGroup(name)) {
-      setError(`Enter a unique group name.`);
+    if (preferences.loading) { setError(`Portfolio Is Loading — Try Again Shortly`); return; }
+    const trimmedName = name.trim();
+    if (!trimmedName) { setError(`Enter A Group Name`); return; }
+    if (trimmedName.length > 80) { setError(`Group Name Must Be 80 Characters Or Fewer`); return; }
+    if (normalizePortfolioName(trimmedName) === `ungrouped`) { setError(`Ungrouped Is A Reserved Group Name`); return; }
+    if (isPortfolioNameTaken(preferences, trimmedName)) { setError(`A Collection Or Group With This Name Already Exists`); return; }
+    if (!preferences.createGroup(trimmedName)) {
+      setError(`Could Not Add Group`);
       return;
     }
     setName(``);

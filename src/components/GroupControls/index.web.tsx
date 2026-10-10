@@ -130,7 +130,7 @@ const GroupControls = ({ domains }: GroupControlsProps) => {
                 ))}
               </div>
               <p id={`portfolio-custom-group-help`} className={`group-controls-help`}>
-                {`Choose a group for each domain. Drag the grip beside a domain to reorder it within its group, or use the move buttons. Deleting a group keeps its domains in Ungrouped.`}
+                {`Choose a group for each domain. Drag the grip beside a domain to reorder it within its group, or use the move buttons. Deleting a group moves its domains to its collection or Database.`}
               </p>
               <label id={`portfolio-group-domain-search-label`} htmlFor={`portfolio-group-domain-search`} className={`group-controls-domain-search`}>
                 <Search size={15} aria-hidden={`true`} id={`portfolio-group-domain-search-icon`} className={`group-controls-search-icon`} />

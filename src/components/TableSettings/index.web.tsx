@@ -147,6 +147,20 @@ const TableSettings = ({
               </SettingsField>
             </div>
             <div id={`table-settings-group-visibility`} className={`table-settings-field table-settings-group-visibility`}>
+              <label htmlFor={`table-settings-show-hidden-collections`} id={`table-settings-show-hidden-collections-label`} className={`table-settings-hidden-label`}>
+                <input
+                  type={`checkbox`}
+                  id={`table-settings-show-hidden-collections`}
+                  checked={settings.showHiddenCollections}
+                  disabled={settings.loading}
+                  className={`column-controls-checkbox table-settings-hidden-checkbox`}
+                  onChange={event => settings.setShowHiddenCollections(event.target.checked)}
+                />
+                <Eye size={14} aria-hidden={`true`} id={`table-settings-show-hidden-collections-icon`} className={`table-settings-field-icon`} />
+                <span id={`table-settings-show-hidden-collections-text`} className={`table-settings-hidden-text`}>
+                  {`Show Hidden Collections`}
+                </span>
+              </label>
               <label htmlFor={`table-settings-show-hidden-groups`} id={`table-settings-show-hidden-label`} className={`table-settings-hidden-label`}>
                 <input
                   type={`checkbox`}

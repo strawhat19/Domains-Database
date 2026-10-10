@@ -12,7 +12,7 @@ interface DomainSiteIconProps {
   disabled?: boolean;
   editLabel?: string;
   onEdit?: () => void;
-  fallback?: `globe` | `link`;
+  fallback?: `app` | `link` | `globe` | `group`;
 }
 
 const SiteIconContent = ({
@@ -33,7 +33,54 @@ const SiteIconContent = ({
   const className = `domain-site-icon${compact ? ` domain-site-icon-compact` : ``}${editable ? ` domain-site-icon-editable` : ``}`;
   const content = (
     <>
-      {(!loaded || failed) && (
+      {(!loaded || failed) && (fallback === `group` ? (
+        <svg
+          stroke={`none`}
+          focusable={false}
+          fill={`currentColor`}
+          width={fallbackSize}
+          height={fallbackSize}
+          viewBox={`0 0 24 24`}
+          aria-hidden={`true`}
+          id={`${id}-fallback`}
+          className={`domain-site-icon-fallback domain-site-icon-group-fallback`}
+        >
+          <path
+            d={`M12 2 2 7l10 5 10-5-10-5Z`}
+            id={`${id}-fallback-top-path`}
+            className={`domain-site-icon-group-fallback-path`}
+          />
+          <path
+            id={`${id}-fallback-middle-path`}
+            className={`domain-site-icon-group-fallback-path`}
+            d={`M2 10.5 12 15.5l10-5v2L12 17.5 2 12.5v-2Z`}
+          />
+          <path
+            id={`${id}-fallback-bottom-path`}
+            className={`domain-site-icon-group-fallback-path`}
+            d={`M2 16 12 21l10-5v2.5L12 23.5 2 18.5V16Z`}
+          />
+        </svg>
+      ) : fallback === `app` ? (
+        <svg
+          stroke={`none`}
+          focusable={false}
+          fill={`currentColor`}
+          width={fallbackSize}
+          height={fallbackSize}
+          viewBox={`0 0 24 24`}
+          aria-hidden={`true`}
+          id={`${id}-fallback`}
+          className={`domain-site-icon-fallback domain-site-icon-app-fallback`}
+        >
+          <path
+            fillRule={`evenodd`}
+            id={`${id}-fallback-window-path`}
+            className={`domain-site-icon-app-fallback-path`}
+            d={`M5 3h14a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Zm0 3a1 1 0 1 0 2 0 1 1 0 0 0-2 0Zm4 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0Zm4 0a1 1 0 1 0 2 0 1 1 0 0 0-2 0ZM5 10h14v8H5v-8Z`}
+          />
+        </svg>
+      ) : (
         <FallbackIcon
           size={fallbackSize}
           strokeWidth={1.4}
@@ -41,7 +88,7 @@ const SiteIconContent = ({
           id={`${id}-fallback`}
           className={`domain-site-icon-fallback`}
         />
-      )}
+      ))}
       {!!iconUrl && !failed && (
         <img
           alt={``}

@@ -10,6 +10,8 @@
 }
 .domain-site-icon-compact { border: 0; color: inherit; background: transparent; border-radius: 2px; }
 .domain-site-icon-fallback, .domain-site-icon-image, .domain-site-icon-edit-icon { grid-area: 1 / 1; }
+.domain-site-icon-group-fallback { display: block; color: var(--accent); }
+.domain-site-icon-app-fallback { color: var(--accent); }
 .domain-site-icon-editable {
   padding: 0;
   cursor: pointer;

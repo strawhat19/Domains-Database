@@ -10,6 +10,7 @@ import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { normalizeGroupDetails } from '../../shared/portfolioPreferences/details';
 import type { CustomPortfolioGroup, PortfolioGroupDetails } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { isPortfolioNameTaken, normalizePortfolioName, getConvertedGroupName } from '../../shared/portfolioPreferences/names';
 
 export const CREATE_COLLECTION_OPTION = `create`;
 export const CONVERT_COLLECTION_OPTION = `convert`;
@@ -29,7 +30,7 @@ const GROUP_LINK_FIELDS: { key: DomainLinkField; label: string; multiple?: boole
 type GroupSettingsField = keyof PortfolioGroupDetails
   | `name` | `description` | `collection` | `collectionName` | `collectionDescription`;
 
-export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () => void) => {
+export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () => void, convertToCollection = false) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
   const [collectionName, setCollectionNameValue] = useState(``);
@@ -37,7 +38,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const [nameFocusRequest, setNameFocusRequest] = useState(0);
   const [collectionDescription, setCollectionDescriptionValue] = useState(``);
   const [description, setDescriptionValue] = useState(group.description ?? ``);
-  const [collectionId, setCollectionIdValue] = useState(group.collectionId ?? MAIN_DATABASE_COLLECTION_OPTION);
+  const [collectionId, setCollectionIdValue] = useState(convertToCollection ? CONVERT_COLLECTION_OPTION : group.collectionId ?? MAIN_DATABASE_COLLECTION_OPTION);
   const [invalidField, setInvalidField] = useState<GroupSettingsField | null>(null);
   const [details, setDetailsValue] = useState<PortfolioGroupDetails>(() => ({
     isApp: group.isApp === true,
@@ -58,7 +59,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLTextAreaElement>(null);
   const siteIconInputRef = useRef<HTMLInputElement>(null);
-  const collectionSelectRef = useRef<HTMLSelectElement>(null);
+  const collectionChoicesRef = useRef<HTMLDivElement>(null);
   const collectionNameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const collectionDescriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -131,15 +132,15 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     }
     const trimmedName = name.trim();
     const trimmedDescription = description.trim();
-    const reservedName = trimmedName.toLowerCase() === `ungrouped`;
-    const duplicateName = preferences.customGroups.some(current => current.id !== group.id
-      && current.name.trim().toLowerCase() === trimmedName.toLowerCase());
+    const reservedName = !convertingToCollection && normalizePortfolioName(trimmedName) === `ungrouped`;
+    const duplicateName = isPortfolioNameTaken(preferences, trimmedName, { groupId: group.id });
     if (!trimmedName || trimmedName.length > 80 || duplicateName || reservedName) {
       setNameFocusRequest(current => current + 1);
       setInvalidField(`name`);
       setError(reservedName
         ? `Ungrouped Is Reserved For Domains Without A Group`
-        : duplicateName ? `A Group With This Name Already Exists` : `Enter A Group Name Between 1 And 80 Characters`);
+        : duplicateName ? `A Collection Or Group With This Name Already Exists`
+          : `Enter A ${convertingToCollection ? `Collection` : `Group`} Name Between 1 And 80 Characters`);
       return;
     }
     if (trimmedDescription.length > 280) {
@@ -151,16 +152,19 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     if (missingCollection) {
       setInvalidField(`collection`);
       setError(availabilityError);
-      collectionSelectRef.current?.focus();
+      collectionChoicesRef.current?.querySelector<HTMLButtonElement>(`button:not([disabled])`)?.focus();
       return;
     }
     const trimmedCollectionName = convertingToCollection ? trimmedName : collectionName.trim();
     const trimmedCollectionDescription = convertingToCollection ? trimmedDescription : collectionDescription.trim();
     if (addingCollection) {
-      const duplicateCollectionName = preferences.collections.some(collection => collection.name.trim().toLowerCase() === trimmedCollectionName.toLowerCase());
+      const groupNameChanged = normalizePortfolioName(currentGroup?.name ?? group.name) !== normalizePortfolioName(trimmedName);
+      const duplicateCollectionName = isPortfolioNameTaken(preferences, trimmedCollectionName, {
+        groupId: convertingToCollection || groupNameChanged ? group.id : undefined,
+      }) || !convertingToCollection && normalizePortfolioName(trimmedCollectionName) === normalizePortfolioName(trimmedName);
       if (!trimmedCollectionName || trimmedCollectionName.length > 80 || duplicateCollectionName) {
         setInvalidField(convertingToCollection ? `name` : `collectionName`);
-        setError(duplicateCollectionName ? `A Collection With This Title Already Exists` : `Enter A Collection Title Between 1 And 80 Characters`);
+        setError(duplicateCollectionName ? `A Collection Or Group With This Name Already Exists` : `Enter A Collection Name Between 1 And 80 Characters`);
         if (convertingToCollection) setNameFocusRequest(current => current + 1);
         else collectionNameInputRef.current?.focus();
         return;
@@ -196,6 +200,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
       name: trimmedName,
       ...normalizedDetails,
       description: trimmedDescription,
+      ...(convertingToCollection ? { convertToCollection: true } : {}),
       collectionId: addingCollection || collectionId === MAIN_DATABASE_COLLECTION_OPTION ? null : collectionId,
       ...(addingCollection ? { newCollection: { name: trimmedCollectionName, description: trimmedCollectionDescription } } : {}),
     })) {
@@ -226,7 +231,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     missingCollection,
     setCollectionName,
     creatingCollection,
-    collectionSelectRef,
+    collectionChoicesRef,
     convertingToCollection,
     collectionDescription,
     collectionNameInputRef,
@@ -236,6 +241,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     collections: preferences.collections,
     error: error || availabilityError,
     starred: currentGroup?.starred === true,
+    convertedGroupName: getConvertedGroupName(preferences, name, group.id),
     invalidLinkField: GROUP_LINK_FIELDS.find(field => field.key === invalidField)?.key ?? null,
   };
 };

@@ -1,16 +1,16 @@
 .domain-row {
-  height: 54px;
+  height: 40px;
   transition: height .24s ease, opacity .24s ease, background .2s ease, visibility 0s;
   &:hover { background: var(--subtle); }
-  td { overflow: hidden; font-size: 12px; padding: 8px 16px; box-sizing: border-box; vertical-align: middle; border-top: 1px solid var(--line); transition: padding-block .24s ease, border-top-width .24s ease; }
+  td { overflow: hidden; font-size: 12px; padding: 2px var(--portfolio-inline-padding, 16px); box-sizing: border-box; vertical-align: middle; border-top: 1px solid var(--line); transition: padding-block .24s ease, border-top-width .24s ease; }
 }
 .domain-identity { gap: 9px; display: flex; align-items: center; container-type: inline-size; container-name: portfolio-domain; }
 .domain-row-selected { background: color-mix(in srgb, var(--accent) 7%, var(--paper)); }
 .domain-row-selected:hover { background: color-mix(in srgb, var(--accent) 11%, var(--paper)); }
 .domain-row-dragging { opacity: .45; }
 .domain-row-drop-target td { box-shadow: inset 0 -2px 0 var(--accent); background: var(--subtle); }
-.domain-row .domain-position-cell { width: 38px; padding: 8px 4px 8px 12px; text-align: center; }
-.domain-row .domain-selection-cell { width: 36px; z-index: 1; overflow: visible; position: relative; padding: 8px 8px 8px 4px; text-align: center; }
+.domain-row .domain-position-cell { width: 38px; padding: 2px 0; text-align: center; }
+.domain-row .domain-selection-cell { width: 36px; z-index: 1; overflow: visible; position: relative; padding: 2px 0; text-align: center; }
 .domain-row[data-collapsed='true'] {
   height: 0;
   opacity: 0;
@@ -19,9 +19,25 @@
   transition: height .24s ease, opacity .24s ease, background .2s ease, visibility 0s .24s;
   td { padding-block: 0; border-top-width: 0; }
 }
-.domain-selection { width: 14px; height: 14px; margin: 0; display: block; cursor: pointer; accent-color: var(--accent); }
+.domain-selection { width: 14px; height: 14px; margin: 0 auto; display: block; cursor: pointer; accent-color: var(--accent); }
 .domain-selection:disabled { cursor: default; opacity: .4; }
-.domain-row-position { min-width: 18px; font-size: 10px; text-align: right; color: var(--muted); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.domain-row-position {
+  height: 18px;
+  padding: 0 4px;
+  min-width: 24px;
+  font-size: 10px;
+  max-width: 100%;
+  text-align: center;
+  border-radius: 4px;
+  color: var(--muted);
+  align-items: center;
+  display: inline-flex;
+  background: var(--input);
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
 .domain-reorder { gap: 2px; display: flex; align-items: center; }
 .domain-drag-handle { display: flex; cursor: grab; color: var(--muted); align-items: center; }
 .domain-row-draggable:active .domain-drag-handle { cursor: grabbing; }
@@ -55,6 +71,7 @@
 .domain-name-copy:has(.domain-description-empty) { flex-wrap: wrap; align-items: center; flex-direction: row; }
 .domain-name-copy:has(.domain-description-empty) > .domain-description { flex: 0 0 auto; }
 .domain-name-copy:has(.domain-description-editing) { gap: 6px; align-items: stretch; flex-direction: column; }
+.domain-row .domain-name-copy:has(.domain-description-editing) { flex-wrap: nowrap; flex-direction: row; align-items: center; }
 .domain-name-heading { gap: 8px; min-width: 0; display: flex; align-items: center; }
 .domain-name-copy .domain-site-link { flex-shrink: 1; }
 .domain-name-copy .domain-project-status { flex-shrink: 0; }
@@ -156,10 +173,11 @@
 .rowStatus-active { color: var(--success); }
 .rowStatus-expired, .rowStatus-renewing-soon { color: var(--warning); }
 .domain-auto-renew {
-  gap: 5px;
+  gap: 3px;
   display: flex;
   font-size: 11px;
-  padding: 5px 8px;
+  padding: 1px 6px;
+  line-height: 12px;
   cursor: pointer;
   border-radius: 4px;
   align-items: center;
@@ -171,16 +189,25 @@
   &:hover { background: var(--subtle); }
   &:disabled { opacity: .4; cursor: wait; }
 }
+.domain-auto-renew-icon { width: 11px; height: 11px; }
 .domain-price-cell, .domain-annual-cost-cell { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .domain-renewal-estimate { font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .domain-renewal-estimate .statusText { color: var(--muted); }
 .domain-renewal-currency { margin-inline-end: 3px; color: var(--success); }
+.domain-row .registrar-mark { width: 20px; height: 20px; font-size: 10px; }
+.domain-row .domain-registrar-copy { gap: 2px; }
+.domain-row :is(.domain-registrar-name, .domain-renewal-date) { font-size: 11px; line-height: 1.2; }
+.domain-row .domain-registrar-copy .domain-source-status { line-height: 1.2; }
+.domain-row .domain-registrar-copy .domain-source-icon { width: 10px; height: 10px; }
+.domain-row .domain-renewal-date + .rowStatus { margin-top: 2px; line-height: 1.2; }
+.domain-row .domain-renewal-date + .rowStatus .statusDotWrap { width: 7px; height: 7px; }
+.domain-row .domain-renewal-date + .rowStatus .statusDot { width: 4px; height: 4px; }
 .domain-row .domain-space-cell { padding: 0; }
-.domain-row .domain-actions-cell { right: 0; z-index: 1; width: 116px; position: sticky; padding-left: 4px; padding-right: 14px; background: var(--paper); }
+.domain-row .domain-actions-cell { right: 0; z-index: 1; width: 176px; position: sticky; padding-left: 4px; padding-right: var(--portfolio-inline-padding, 16px); background: var(--paper); }
 .domain-row:hover .domain-actions-cell { background: var(--subtle); }
 .domain-row-selected .domain-actions-cell { background: color-mix(in srgb, var(--accent) 7%, var(--paper)); }
 .domain-row-selected:hover .domain-actions-cell { background: color-mix(in srgb, var(--accent) 11%, var(--paper)); }
-.domain-row-actions { gap: 4px; display: flex; align-items: center; justify-content: flex-end; }
+.domain-row-actions { align-items: center; justify-content: flex-end; }
 .domain-row-action {
   border: 0;
   width: 28px;
@@ -206,7 +233,7 @@
   background-image: linear-gradient(90deg, var(--skeleton) 25%, var(--skeleton-highlight) 50%, var(--skeleton) 75%);
   &-name { width: 60%; height: 15px; }
   &-icon { width: 28px; height: 28px; flex-shrink: 0; }
-  &-selection { width: 14px; height: 14px; }
+  &-selection { width: 14px; height: 14px; margin-inline: auto; }
   &-auto-renew { width: 35px; }
   &-cost, &-actions, &-estimated-value { width: 35px; margin-left: auto; }
 }
@@ -216,6 +243,9 @@
   70% { opacity: .12; transform: translate(-50%, -50%) scale(3.4); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(4); }
 }
+.domain-details-toggle-icon { transition: transform .24s ease; }
+.domain-details-toggle-collapsed .domain-details-toggle-icon { transform: rotate(-90deg); }
+.domain-details-cell { padding: 0; background: var(--paper); }
 @media (prefers-reduced-motion: no-preference) {
   .domain-attention-dot::before, .domain-attention-dot::after { animation: domain-attention-radar-pulse 2.4s ease-out infinite; }
   .domain-attention-dot::after { animation-delay: -1.2s; }
@@ -228,10 +258,9 @@
   }
 }
 @media (max-width: 820px) {
-  .domain-row td { padding-left: 16px; padding-right: 16px; }
   .domain-identity { gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .domain-row, .domain-row td, .domain-row[data-collapsed='true'], .domain-row-action, .domain-move-action, .domain-auto-renew, .domain-site-link, .domain-github-link, .domain-preview-link { transition: none; }
+  .domain-row, .domain-row td, .domain-row[data-collapsed='true'], .domain-row-action, .domain-details-toggle-icon, .domain-move-action, .domain-auto-renew, .domain-site-link, .domain-github-link, .domain-preview-link { transition: none; }
   .domain-skeleton-line { animation: none; }
 }

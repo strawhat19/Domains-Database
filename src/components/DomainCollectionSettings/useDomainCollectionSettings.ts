@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import type { DomainProjectStatus } from '../../shared/domainProject';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
+import { isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 
@@ -70,12 +71,11 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     }
     const trimmedName = name.trim();
     const trimmedDescription = description.trim();
-    const duplicateName = preferences.collections.some(current => current.id !== collection.id
-      && current.name.trim().toLowerCase() === trimmedName.toLowerCase());
+    const duplicateName = isPortfolioNameTaken(preferences, trimmedName, { collectionId: collection.id });
     if (!trimmedName || trimmedName.length > 80 || duplicateName) {
       setNameFocusRequest(current => current + 1);
       setInvalidField(`name`);
-      setError(duplicateName ? `A Collection With This Title Already Exists` : `Enter A Collection Title Between 1 And 80 Characters`);
+      setError(duplicateName ? `A Collection Or Group With This Name Already Exists` : `Enter A Collection Title Between 1 And 80 Characters`);
       return;
     }
     if (trimmedDescription.length > 280) {

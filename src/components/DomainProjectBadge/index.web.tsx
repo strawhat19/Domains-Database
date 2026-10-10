@@ -76,6 +76,7 @@ const DomainProjectBadge = ({ id, field, value, disabled, onChange, editLabel, c
     <span
       id={id}
       title={editable ? editLabel : label}
+      data-status={field === `projectStatus` ? badgeValue : undefined}
       className={`domain-project-badge rowStatus domain-project-badge-tone-${option?.tone ?? `neutral`}${editable ? ` domain-project-badge-pill${disabled ? ` domain-project-badge-disabled` : ``}` : ``}${className ? ` ${className}` : ``}`}
     >
       {Icon && (

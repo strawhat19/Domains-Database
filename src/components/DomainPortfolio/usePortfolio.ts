@@ -4,11 +4,12 @@ import type { DomainRecord } from '../../shared/types';
 import { getCsvFile } from '../../shared/csvFiles.web';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { useColumns } from '../../shared/columnContext/useColumns';
+import { usePortfolioSummaryFilters } from './usePortfolioSummaryFilters';
 import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { sortPortfolioDomains } from '../../shared/portfolioPreferences/groups';
+import { getPortfolioColumnValue, type PortfolioColumn } from '../../shared/portfolioColumns';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { PORTFOLIO_COLUMNS, getPortfolioColumnValue, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 export type SortField = PortfolioColumn;
 
@@ -34,7 +35,6 @@ export const usePortfolio = () => {
   const [localError, setLocalError] = useState(``);
   const [sortField, setSortField] = useState<SortField | null>(`name`);
   const [sortDirection, setSortDirection] = useState<`asc` | `desc`>(`asc`);
-  const [registrarFilter, setRegistrarFilter] = useState(`All Registrars`);
   const [setupOpen, setSetupOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<DomainRecord | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -51,18 +51,15 @@ export const usePortfolio = () => {
     setEditingDomain(null);
   }, [loading]);
   const sortedDomains = useMemo(() => sortPortfolioDomains(data.domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [data.domains, sortField, sortDirection]);
-  const registrarDomains = useMemo(() => sortedDomains.filter(domain => (
-    registrarFilter === `All Registrars` || domain.registrar === registrarFilter
-  )), [sortedDomains, registrarFilter]);
+  const summaryFilters = usePortfolioSummaryFilters(sortedDomains, loading);
+  const registrarDomains = summaryFilters.domains;
   const filteredDomains = useMemo(() => {
     const search = query.trim().toLowerCase();
     return registrarDomains.filter(domain => [
       domain.name,
       domain.title,
       domain.description,
-      domain.projectStatus,
-      ...PORTFOLIO_COLUMNS.map(column => getPortfolioColumnValue(domain, column.field)),
-    ].join(` `).toLowerCase().includes(search));
+    ].some(value => value?.toLowerCase().includes(search)));
   }, [query, registrarDomains]);
   const summary = useMemo(() => {
     const knownCosts = data.domains.flatMap(domain => {
@@ -72,12 +69,13 @@ export const usePortfolio = () => {
     return {
       count: data.domains.length,
       knownCostCount: knownCosts.length,
+      extensionCounts: summaryFilters.extensionCounts,
       registrarCounts: getRegistrarCounts(data.domains),
       annualCost: knownCosts.reduce((total, cost) => total + cost, 0),
       attention: data.domains.filter(domain => getDomainStatus(domain) !== `Active`).length,
       hasSampleData: data.domains.some(domain => domain.isSample),
     };
-  }, [data.domains]);
+  }, [data.domains, summaryFilters.extensionCounts]);
   const changeSort = (field: SortField) => {
     if (sortField === field && sortDirection === `desc`) {
       setSortField(null);
@@ -99,7 +97,7 @@ export const usePortfolio = () => {
     if (loading) return;
     setQuery(``);
     setLocalError(``);
-    setRegistrarFilter(`All Registrars`);
+    summaryFilters.clearSummaryFilters();
     setSetupOpen(true);
   };
   const closeSetup = () => setSetupOpen(false);
@@ -118,7 +116,7 @@ export const usePortfolio = () => {
       const inputs = parseDomainCsv(await file.text());
       await data.importDomains(inputs);
       setQuery(``);
-      setRegistrarFilter(`All Registrars`);
+      summaryFilters.clearSummaryFilters();
     } catch (caught) {
       setLocalError(caught instanceof Error ? caught.message : `Unable To Import CSV`);
     } finally {
@@ -187,8 +185,18 @@ export const usePortfolio = () => {
   };
   return {
     ...data, query, loading, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
-    clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain, registrarFilter,
+    clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain,
     importInputRef, requestImport, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
-    setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, setRegistrarFilter, toggleAutoRenew, toggleManualOrder, changeProjectStatus,
+    setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, toggleAutoRenew, toggleManualOrder, changeProjectStatus,
+    attentionOnly: summaryFilters.attentionOnly,
+    registrarFilter: summaryFilters.registrarFilter,
+    registrarFilters: summaryFilters.registrarFilters,
+    extensionFilters: summaryFilters.extensionFilters,
+    activeFilterCount: summaryFilters.activeFilterCount,
+    setRegistrarFilter: summaryFilters.setRegistrarFilter,
+    clearSummaryFilters: summaryFilters.clearSummaryFilters,
+    toggleAttentionFilter: summaryFilters.toggleAttentionFilter,
+    toggleRegistrarFilter: summaryFilters.toggleRegistrarFilter,
+    toggleExtensionFilter: summaryFilters.toggleExtensionFilter,
   };
 };

@@ -1,0 +1,74 @@
+.portfolio-add-domains { min-width: 0; }
+.portfolio-add-domains-button {
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  width: auto;
+  font: inherit;
+  min-width: 0;
+  display: flex;
+  cursor: pointer;
+  font-size: 11px;
+  min-height: 18px;
+  text-align: left;
+  color: var(--muted);
+  align-items: center;
+  box-sizing: border-box;
+  background: transparent;
+  transition: color .2s ease, background .2s ease;
+  &:hover:not(:disabled), &:focus-visible { color: var(--accent); background: var(--subtle); }
+  &:focus-visible { outline: 1px solid var(--accent); outline-offset: -2px; }
+  &:disabled { opacity: .4; cursor: default; }
+}
+.portfolio-add-domains-picker-button { width: 20px; min-height: 20px; flex-shrink: 0; justify-content: center; }
+.portfolio-add-domains-text { gap: 5px; min-width: 0; display: inline-flex; align-items: center; }
+.portfolio-add-domains-prefix, .portfolio-add-domains-icon, .portfolio-add-domains-destination-icon { flex-shrink: 0; }
+.portfolio-add-domains-destination-icon { color: var(--accent); }
+.portfolio-add-domains-collection-icon { color: var(--success); }
+.portfolio-add-domains-destination-name { min-width: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.domain-dialog.portfolio-add-domains-dialog {
+  padding: 22px;
+  max-width: min(520px, var(--modal-wide-width, 90vw));
+  .domain-dialog-title { font-size: 28px; }
+  .domain-dialog-description { margin: 12px 0 16px; font-size: 12px; }
+}
+.portfolio-add-domains-destination { gap: 6px; display: flex; min-width: 0; margin-top: 8px; font-size: 12px; align-items: center; }
+.portfolio-add-domains-destination-label { flex-shrink: 0; color: var(--muted); }
+.portfolio-add-domains-body { margin-top: 4px; }
+.portfolio-add-domains-search-field { position: relative; }
+.portfolio-add-domains-search-icon { top: 50%; left: 12px; position: absolute; color: var(--muted); pointer-events: none; transform: translateY(-50%); }
+.portfolio-add-domains-search { min-height: 38px; padding: 8px 12px 8px 36px; }
+.portfolio-add-domains-summary { gap: 12px; display: flex; margin: 16px 0 8px; align-items: center; justify-content: space-between; }
+.portfolio-add-domains-suggestions-label { font-size: 11px; color: var(--muted); }
+.portfolio-add-domains-selection { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; }
+.portfolio-add-domains-suggestions { gap: 6px; margin: 0; padding: 3px; min-width: 0; display: grid; list-style: none; overflow-y: auto; max-height: min(42dvh, 360px); scrollbar-gutter: stable; overscroll-behavior: contain; }
+.portfolio-add-domains-suggestion-item { min-width: 0; }
+.portfolio-add-domains-suggestion {
+  gap: 10px;
+  display: flex;
+  min-width: 0;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 7px;
+  align-items: center;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  transition: background .2s ease, border-color .2s ease;
+  &:hover { background: var(--subtle); }
+  &:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+  &:has(:disabled) { opacity: .5; cursor: default; }
+}
+.portfolio-add-domains-suggestion-selected { background: color-mix(in srgb, var(--accent) 8%, var(--canvas)); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); }
+.portfolio-add-domains-checkbox { margin: 0; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; accent-color: var(--accent); &:disabled { cursor: default; } }
+.portfolio-add-domains-domain-name { min-width: 0; font-size: 12px; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
+.portfolio-add-domains-empty { margin: 0; padding: 24px 12px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.portfolio-add-domains-empty-title { margin: 0 0 5px; color: var(--ink); }
+.portfolio-add-domains-empty-help { margin: 0; font-size: 11px; }
+.portfolio-add-domains-help { margin: 10px 0 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
+.portfolio-add-domains-footer { gap: 8px; margin-top: 18px; padding-top: 14px; justify-content: flex-end; }
+@media (max-width: 560px) {
+  .domain-dialog.portfolio-add-domains-dialog { padding: 20px; }
+  .portfolio-add-domains-search { font-size: 16px; }
+  .portfolio-add-domains-suggestions { max-height: min(36dvh, 320px); }
+}
+@media (prefers-reduced-motion: reduce) { .portfolio-add-domains-button, .portfolio-add-domains-suggestion { transition: none; } }

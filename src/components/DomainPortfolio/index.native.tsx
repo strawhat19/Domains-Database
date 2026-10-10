@@ -8,6 +8,7 @@ import CurrencyField from '../CurrencyField/index.native';
 import DomainSiteIcon from '../DomainSiteIcon/index.native';
 import DomainStarButton from '../DomainStarButton/index.native';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
+import PortfolioSyncOptions from '../PortfolioSyncOptions/index.native';
 import DomainProjectSelect from '../DomainProjectSelect/index.native';
 import { useRef, useEffect, useMemo, useState } from 'react';
 import { elementProps } from '../../shared/elementProps';
@@ -153,20 +154,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 <Text {...elementProps(`native-portfolio-attention-count`)} style={styles.attentionText}>
                   {`${state.dueSoon} need attention`}
                 </Text>
-              )}
-              {state.syncing && (
-                <View
-                  accessible
-                  {...elementProps(`native-portfolio-sync-status`)}
-                  style={styles.syncStatus}
-                  accessibilityRole={`progressbar`}
-                  accessibilityLiveRegion={`polite`}
-                  accessibilityState={{ busy: true }}
-                  accessibilityLabel={`Syncing Domains…`}
-                >
-                  <ActivityIndicator {...elementProps(`native-portfolio-sync-spinner`)} size={`small`} color={palette.accent} />
-                  <Text {...elementProps(`native-portfolio-sync-text`)} style={styles.description}>{`Syncing Domains…`}</Text>
-                </View>
               )}
             </View>
           </View>
@@ -417,6 +404,15 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         )}
       </View>
       {state.setupOpen && !state.loading && <RegistrarSetup onClose={state.closeSetup} onManual={() => state.openEditor()} />}
+      {state.manualSyncChoices.length > 0 && !state.loading && (
+        <PortfolioSyncOptions
+          busy={state.syncing}
+          onClose={state.closeManualSync}
+          choices={state.manualSyncChoices}
+          onSyncAll={() => void state.syncAllManually()}
+          onSync={connectionId => void state.syncManually(connectionId)}
+        />
+      )}
       <Modal visible={state.editorOpen && !state.loading} transparent animationType={`fade`} onRequestClose={state.closeEditor}>
         <View {...elementProps(`native-domain-editor-overlay`)} style={[styles.overlay, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
           <KeyboardAvoidingView {...elementProps(`native-domain-editor-keyboard`)} style={styles.keyboard} behavior={Platform.OS === `ios` ? `padding` : `height`}>

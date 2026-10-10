@@ -4,7 +4,7 @@
   display: none;
   color: var(--ink);
   width: calc(100vw - 48px);
-  max-width: 620px;
+  max-width: var(--modal-wide-width, 620px);
   overflow: hidden;
   border-radius: 14px;
   max-height: calc(100dvh - 48px);

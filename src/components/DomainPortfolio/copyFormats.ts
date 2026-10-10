@@ -1,5 +1,5 @@
 import type { DomainRecord } from '../../shared/types';
-import type { PortfolioGroup, PortfolioSections } from '../../shared/portfolioPreferences/types';
+import type { PortfolioGroup, PortfolioSections, PortfolioPreferences } from '../../shared/portfolioPreferences/types';
 
 export type PortfolioCopyFormat = `list` | `tree` | `detail-tree`;
 
@@ -8,6 +8,34 @@ interface CopyTreeNode {
   description?: string;
   children?: CopyTreeNode[];
 }
+
+export const excludeHiddenPortfolioSections = (sections: PortfolioSections, preferences: PortfolioPreferences): PortfolioSections => {
+  const hiddenGroups = new Set(preferences.hiddenGroupKeys);
+  const hiddenDomains = new Set(preferences.hiddenDomainIds);
+  const hiddenCollections = new Set(preferences.hiddenCollectionIds);
+  const collectionIds = new Set(preferences.collections.map(collection => collection.id));
+  const membership = new Map(preferences.customGroups.flatMap(group => group.domainIds.map(id => [id, group] as const)));
+  membership.forEach((group, id) => {
+    if (hiddenGroups.has(`custom:${group.id}`) || group.collectionId && collectionIds.has(group.collectionId) && hiddenCollections.has(group.collectionId)) hiddenDomains.add(id);
+  });
+  const directOwners = new Set<string>();
+  preferences.collections.forEach(collection => (collection.domainIds ?? []).forEach(id => {
+    if (membership.has(id) || directOwners.has(id)) return;
+    directOwners.add(id);
+    if (hiddenCollections.has(collection.id)) hiddenDomains.add(id);
+  }));
+  const filterGroups = (groups: PortfolioGroup[]) => groups.flatMap(group => {
+    if (group.key !== `all` && hiddenGroups.has(group.key)) return [];
+    const domains = group.domains.filter(domain => !hiddenDomains.has(domain.id));
+    return !group.customGroupId && !domains.length ? [] : [{ ...group, domains }];
+  });
+  const mainGroups = filterGroups(sections.mainGroups);
+  const collections = sections.collections.filter(section => !hiddenCollections.has(section.collection.id)).map(section => {
+    const groups = filterGroups(section.groups);
+    return { ...section, groups, domains: groups.flatMap(group => group.domains) };
+  });
+  return { collections, mainGroups, mainDomains: mainGroups.flatMap(group => group.domains) };
+};
 
 export const buildPortfolioCopyText = (
   sections: PortfolioSections,
@@ -36,6 +64,7 @@ export const buildPortfolioCopyText = (
 
   const groupNodes = (groups: PortfolioGroup[]): CopyTreeNode[] => groups.flatMap(group => {
     const children = domainNodes(group.domains);
+    if (group.directCollectionId || group.key === `custom:ungrouped`) return children;
     return children.length || !group.domains.length ? [{
       children,
       label: group.label,
@@ -53,12 +82,7 @@ export const buildPortfolioCopyText = (
   });
   const mainNodes = grouped ? groupNodes(sections.mainGroups) : domainNodes(mainDomains);
 
-  if (sections.collections.length && mainNodes.length) {
-    roots.push({
-      children: mainNodes,
-      label: `Database`,
-    });
-  } else roots.push(...mainNodes);
+  roots.push(...mainNodes);
 
   const lines: string[] = [];
   let domainNumber = 0;

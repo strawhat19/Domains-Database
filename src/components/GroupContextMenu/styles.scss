@@ -1,0 +1,6 @@
+.domain-context-menu.group-context-menu { width: 360px; }
+.group-context-menu .domain-context-menu-item:disabled { opacity: .4; cursor: default; }
+.group-context-menu .group-context-menu-delete {
+  color: var(--danger);
+  &:hover, &:focus-visible { color: var(--danger); background: var(--danger-bg); }
+}

@@ -50,7 +50,7 @@ export const useDomainReorder = (
     preferences.moveDomain(groupKey, domainId, target, group.domains.map(domain => domain.id), placement);
   };
 
-  const handlers = (groupKey: string, domainId: string, visibleIds: string[]) => {
+  const handlers = (groupKey: string, domainId: string, visibleIds: string[], axis: `vertical` | `horizontal` = `vertical`) => {
     const index = visibleIds.indexOf(domainId);
     const canReorder = enabled && !disabledGroupKeys?.has(groupKey);
     return {
@@ -59,6 +59,7 @@ export const useDomainReorder = (
       dragging: draggingId === domainId,
       dropTarget: targetId === domainId,
       onDragStart: (event: DragEvent<HTMLElement>) => {
+        event.stopPropagation();
         if (!canReorder && !groupEnabled) { event.preventDefault(); return; }
         const domainIds = selectedIds?.has(domainId)
           ? (availableIds ?? groups.flatMap(group => group.domains).map(domain => domain.id)).filter(id => selectedIds?.has(id))
@@ -70,21 +71,40 @@ export const useDomainReorder = (
         setDraggingId(domainId);
         setDraggingGroupId(``);
       },
-      onDragEnd: clear,
+      onDragEnd: (event: DragEvent<HTMLElement>) => { event.stopPropagation(); clear(); },
       onDragOver: (event: DragEvent<HTMLElement>) => {
         const current = source.current;
+        if (axis === `horizontal` && current?.kind === `domain` && current.groupKey === groupKey && (!canReorder || current.domainId === domainId)) {
+          event.preventDefault();
+          event.stopPropagation();
+          event.dataTransfer.dropEffect = `none`;
+          return;
+        }
         if (!canReorder || current?.kind !== `domain` || current.groupKey !== groupKey || current.domainId === domainId) return;
         event.preventDefault();
+        event.stopPropagation();
         event.dataTransfer.dropEffect = `move`;
         setTargetId(domainId);
         setTargetGroupKey(``);
       },
+      onDragLeave: (event: DragEvent<HTMLElement>) => {
+        if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
+        setTargetId(current => current === domainId ? `` : current);
+      },
       onDrop: (event: DragEvent<HTMLElement>) => {
         const current = source.current;
+        if (axis === `horizontal` && current?.kind === `domain` && current.groupKey === groupKey && (!canReorder || current.domainId === domainId)) {
+          event.preventDefault();
+          event.stopPropagation();
+          clear();
+          return;
+        }
         if (!canReorder || current?.kind !== `domain` || current.groupKey !== groupKey) return;
         event.preventDefault();
+        event.stopPropagation();
         const bounds = event.currentTarget.getBoundingClientRect();
-        const placement = event.clientY > bounds.top + bounds.height / 2 ? `after` : `before`;
+        const after = axis === `horizontal` ? event.clientX > bounds.left + bounds.width / 2 : event.clientY > bounds.top + bounds.height / 2;
+        const placement = after ? `after` : `before`;
         move(groupKey, current.domainId, domainId, placement);
         clear();
       },
@@ -105,7 +125,7 @@ export const useDomainReorder = (
     };
   };
 
-  const groupHandlers = (group: PortfolioGroup) => {
+  const groupHandlers = (group: PortfolioGroup, nameEditing = false) => {
     const canDrop = (transfer: DataTransfer) => {
       const current = source.current;
       if (!groupEnabled) return false;
@@ -115,10 +135,10 @@ export const useDomainReorder = (
       return transfer.types.includes(DOMAIN_DRAG_TYPE) && Boolean(group.customGroupId || group.key === `custom:ungrouped`);
     };
     return {
-      draggable: groupEnabled && Boolean(group.customGroupId),
+      draggable: groupEnabled && !nameEditing && Boolean(group.customGroupId),
       onDragEnd: clear,
       onDragStart: (event: DragEvent<HTMLElement>) => {
-        if (!groupEnabled || !group.customGroupId) { event.preventDefault(); return; }
+        if (!groupEnabled || nameEditing || !group.customGroupId) { event.preventDefault(); return; }
         event.stopPropagation();
         source.current = { kind: `group`, groupId: group.customGroupId };
         event.dataTransfer.effectAllowed = `move`;

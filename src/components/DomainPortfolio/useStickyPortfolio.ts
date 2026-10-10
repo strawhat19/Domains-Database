@@ -3,6 +3,7 @@ import { useRef, useState, useEffect, useLayoutEffect } from 'react';
 interface PortfolioHeaderSize {
   width: number;
   headHeight: number;
+  headingHeight: number;
   toolbarHeight: number;
   columnWidths: number[];
 }
@@ -10,6 +11,7 @@ interface PortfolioHeaderSize {
 const INITIAL_HEADER: PortfolioHeaderSize = {
   width: 0,
   headHeight: 0,
+  headingHeight: 0,
   toolbarHeight: 0,
   columnWidths: [],
 };
@@ -18,12 +20,14 @@ const useBrowserLayoutEffect = typeof window === `undefined` ? useEffect : useLa
 const sameHeader = (first: PortfolioHeaderSize, second: PortfolioHeaderSize) => (
   first.width === second.width
   && first.headHeight === second.headHeight
+  && first.headingHeight === second.headingHeight
   && first.toolbarHeight === second.toolbarHeight
   && first.columnWidths.length === second.columnWidths.length
   && first.columnWidths.every((width, index) => width === second.columnWidths[index])
 );
 
 export const useStickyPortfolio = (columnKey: string) => {
+  const headingRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
@@ -32,17 +36,60 @@ export const useStickyPortfolio = (columnKey: string) => {
   const [header, setHeader] = useState(INITIAL_HEADER);
 
   useBrowserLayoutEffect(() => {
+    const heading = headingRef.current;
+    if (!heading) return;
+    const portfolio = heading.closest<HTMLElement>(`.domain-portfolio`);
+    const siteHeader = document.getElementById(`site-header`);
+    let height = -1;
+    let frame: number | null = null;
+    const measure = () => {
+      frame = null;
+      const bounds = heading.getBoundingClientRect();
+      if (bounds.height !== height) {
+        height = bounds.height;
+        portfolio?.style.setProperty(`--portfolio-heading-height`, `${height}px`);
+        setHeader(current => current.headingHeight === height ? current : { ...current, headingHeight: height });
+      }
+      const top = Number.parseFloat(window.getComputedStyle(heading).top) || 0;
+      const scrolled = String(bounds.top <= top + .5);
+      if (heading.dataset.scrolled !== scrolled) heading.dataset.scrolled = scrolled;
+    };
+    const schedule = () => {
+      if (frame === null) frame = window.requestAnimationFrame(measure);
+    };
+    const observer = typeof ResizeObserver === `undefined` ? null : new ResizeObserver(schedule);
+    observer?.observe(heading);
+    if (siteHeader) observer?.observe(siteHeader);
+    window.addEventListener(`scroll`, schedule, { passive: true });
+    window.addEventListener(`resize`, schedule, { passive: true });
+    measure();
+    return () => {
+      observer?.disconnect();
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      window.removeEventListener(`scroll`, schedule);
+      window.removeEventListener(`resize`, schedule);
+      portfolio?.style.removeProperty(`--portfolio-heading-height`);
+      delete heading.dataset.scrolled;
+    };
+  }, []);
+
+  useBrowserLayoutEffect(() => {
     const head = tableHeadRef.current;
     const table = tableRef.current;
     const scroll = scrollRef.current;
     const toolbar = toolbarRef.current;
     if (!toolbar) {
-      setHeader(current => sameHeader(current, INITIAL_HEADER) ? current : INITIAL_HEADER);
+      const next = { ...INITIAL_HEADER, headingHeight: headingRef.current?.getBoundingClientRect().height ?? 0 };
+      setHeader(current => sameHeader(current, next) ? current : next);
       return;
     }
     if (!head || !table || !scroll) {
       const measureToolbar = () => {
-        const next = { ...INITIAL_HEADER, toolbarHeight: toolbar.getBoundingClientRect().height };
+        const next = {
+          ...INITIAL_HEADER,
+          headingHeight: headingRef.current?.getBoundingClientRect().height ?? 0,
+          toolbarHeight: toolbar.getBoundingClientRect().height,
+        };
         setHeader(current => sameHeader(current, next) ? current : next);
       };
       const observer = typeof ResizeObserver === `undefined` ? null : new ResizeObserver(measureToolbar);
@@ -70,6 +117,7 @@ export const useStickyPortfolio = (columnKey: string) => {
       const next = {
         width: scroll.clientWidth,
         headHeight: head.getBoundingClientRect().height,
+        headingHeight: headingRef.current?.getBoundingClientRect().height ?? 0,
         toolbarHeight: toolbar.getBoundingClientRect().height,
         columnWidths: Array.from(head.rows[0]?.cells ?? []).map(cell => cell.getBoundingClientRect().width),
       };
@@ -99,5 +147,5 @@ export const useStickyPortfolio = (columnKey: string) => {
     };
   }, [columnKey]);
 
-  return { toolbarRef, tableRef, tableHeadRef, scrollRef, mirrorTableRef, header };
+  return { headingRef, toolbarRef, tableRef, tableHeadRef, scrollRef, mirrorTableRef, header };
 };

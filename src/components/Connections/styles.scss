@@ -1,4 +1,4 @@
-.connections-dialog { max-width: 520px; }
+.connections-dialog { max-width: var(--modal-wide-width, 520px); }
 .connections-registrar-list { margin: 0; padding: 0; list-style: none; }
 .connections-registrar-row {
   gap: 13px;

@@ -53,27 +53,6 @@
   &:hover, &:focus-visible { color: var(--ink); }
 }
 .domain-description-add-icon { flex-shrink: 0; }
-.domain-description-read-more {
-  gap: 4px;
-  border: 0;
-  padding: 3px 0;
-  font: inherit;
-  display: flex;
-  flex-shrink: 0;
-  font-size: 11px;
-  cursor: pointer;
-  border-radius: 3px;
-  align-items: center;
-  white-space: nowrap;
-  color: var(--accent);
-  background: transparent;
-  text-underline-offset: 3px;
-  transition: opacity .2s ease;
-  &:hover, &:focus-visible { text-decoration: underline; }
-  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  &:disabled { opacity: .5; cursor: wait; }
-}
-.domain-description-read-more-icon { flex-shrink: 0; }
 .domain-description-editing { align-items: stretch; }
 .domain-description-editor { gap: 6px; margin: 0; width: 100%; min-width: 0; display: grid; }
 .domain-description-input {
@@ -119,11 +98,34 @@
 }
 .domain-description-save { color: var(--success); }
 .domain-description-error { font-size: 10px; color: var(--danger); }
+:is(.domain-row, .portfolio-group-heading-row, .portfolio-group-heading-collapsed, .portfolio-collection-heading-row) {
+  .domain-description-editing { height: 28px; min-height: 28px; max-height: 28px; align-items: center; }
+  .domain-description-editor { gap: 4px; height: 28px; display: flex; flex-wrap: nowrap; align-items: center; }
+  .domain-description-input {
+    flex: 1 1 0;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    padding: 2px 6px;
+    resize: none;
+    font-size: 11px;
+    line-height: 22px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: none;
+    overscroll-behavior: contain;
+    &::-webkit-scrollbar { display: none; }
+  }
+  .domain-description-editor-footer { gap: 4px; height: 28px; flex-shrink: 0; flex-wrap: nowrap; }
+  .domain-description-help { width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; position: absolute; white-space: nowrap; clip-path: inset(50%); }
+  .domain-description-actions { gap: 2px; flex-wrap: nowrap; }
+  .domain-description-action { width: 24px; height: 28px; border: 0; padding: 0; flex-shrink: 0; justify-content: center; }
+  .domain-description-action-label { display: none; }
+}
 @media (hover: none) {
   .domain-description-edit-icon { opacity: .65; }
 }
 @media (prefers-reduced-motion: reduce) {
   .domain-description-trigger, .domain-description-edit-icon,
-  .domain-description-read-more, .domain-description-input,
-  .domain-description-action { transition: none; }
+  .domain-description-input, .domain-description-action { transition: none; }
 }

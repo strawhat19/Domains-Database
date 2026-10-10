@@ -1,9 +1,13 @@
-.domain-dialog.portfolio-copy-options { max-width: 500px; }
+.domain-dialog.portfolio-copy-options { max-width: var(--modal-wide-width, 500px); }
 .portfolio-copy-options-list { gap: 10px; display: grid; }
+.portfolio-copy-hidden-option { gap: 8px; display: flex; width: fit-content; align-items: center; margin: 0 0 14px; font-size: 12px; color: var(--ink); cursor: pointer; }
+.portfolio-copy-hidden-checkbox { flex-shrink: 0; cursor: inherit; accent-color: var(--accent); }
+.portfolio-copy-hidden-icon { flex-shrink: 0; color: var(--accent); }
+.portfolio-copy-hidden-option:has(:disabled) { cursor: default; opacity: .55; }
 .portfolio-copy-options .portfolio-copy-option { gap: 14px; width: 100%; padding: 16px; text-align: left; white-space: normal; justify-content: flex-start; }
 .portfolio-copy-option-icon { color: var(--accent); }
 .portfolio-copy-option-content { gap: 5px; display: grid; min-width: 0; }
 .portfolio-copy-option-label { font-size: 13px; }
 .portfolio-copy-option-description { font-size: 12px; line-height: 1.5; color: var(--muted); font-family: var(--font-body); }
 .portfolio-copy-tree-help { margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: var(--muted); }
-.portfolio-copy-options-footer { justify-content: flex-end; }
+.portfolio-copy-options .portfolio-copy-options-footer { border-top: 0; justify-content: flex-end; }

@@ -88,7 +88,7 @@ const DomainProjectBadge = ({ id, field, value }: DomainProjectBadgeProps) => {
         >
           <Icon
             size={14}
-            color={iconColors[option?.tone ?? `neutral`]}
+            color={field === `projectStatus` && badgeValue === `Future` ? palette.success : iconColors[option?.tone ?? `neutral`]}
             {...elementProps(`domain-project-badge-icon`, id)}
           />
         </View>

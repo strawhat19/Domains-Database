@@ -1,0 +1,69 @@
+.portfolio-name-editor { min-width: 0; max-width: 100%; display: inline-flex; vertical-align: middle; align-items: center; }
+.portfolio-name-editor-trigger {
+  gap: 5px;
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px 3px;
+  max-width: 100%;
+  text-align: left;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  transition: color .2s ease, background .2s ease;
+  &:hover:not(:disabled), &:focus-visible {
+    background: var(--input);
+    .portfolio-name-editor-edit-icon { opacity: 1; }
+  }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  &:disabled { opacity: .5; cursor: wait; }
+}
+.portfolio-name-editor-value { min-width: 0; overflow-wrap: anywhere; }
+.portfolio-name-editor-edit-icon { width: 13px; opacity: 0; flex-shrink: 0; color: var(--muted); transition: opacity .2s ease; }
+.portfolio-name-editing { height: 28px; flex-wrap: nowrap; }
+.portfolio-name-editor-controls { gap: 4px; flex: 1; height: 28px; min-width: 0; max-width: 100%; display: inline-flex; align-items: center; }
+.portfolio-name-editor-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  height: 28px;
+  min-height: 0;
+  padding: 2px 6px;
+  line-height: 20px;
+  color: var(--ink);
+  border-radius: 4px;
+  box-sizing: border-box;
+  background: var(--input);
+  width: clamp(120px, 28vw, 360px);
+  border: 1px solid var(--line);
+  transition: background .2s ease, border-color .2s ease;
+  &:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  &[aria-invalid='true'] { border-color: var(--danger); }
+  &:disabled { opacity: .6; cursor: wait; }
+}
+.portfolio-name-editor-action {
+  border: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 4px;
+  color: var(--muted);
+  place-items: center;
+  background: transparent;
+  transition: color .2s ease, background .2s ease;
+  &:hover:not(:disabled), &:focus-visible { color: var(--accent); background: var(--input); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  &:disabled { opacity: .5; cursor: wait; }
+}
+.portfolio-name-editor-save { color: var(--accent); }
+@media (hover: none) { .portfolio-name-editor-edit-icon { opacity: .65; } }
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-name-editor-trigger, .portfolio-name-editor-edit-icon, .portfolio-name-editor-input, .portfolio-name-editor-action { transition: none; }
+}

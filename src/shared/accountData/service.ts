@@ -70,6 +70,9 @@ export const clearAccountData = async (userId: string, includeConnections: boole
       orders: {}, view: `table`, groupBy: `none`, collections: [], customGroups: [],
       collectionNumber, showCosts: false, hiddenGroupKeys: [], showHiddenGroups: false,
       hiddenDomainIds: [], showHiddenDomains: false,
+      expandedDomainIds: [],
+      hiddenCollectionIds: [], showHiddenCollections: false,
+      collapsedGroupKeys: [], collapsedCollectionIds: [],
     };
     const writes: [string, unknown][] = [
       [scopedKey(SYNC_POLICY_STORAGE_KEY), {

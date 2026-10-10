@@ -6,6 +6,7 @@ import { ArrowUp, ArrowDown, ArrowUpDown, MoveHorizontal } from 'lucide-react';
 import type { PortfolioColumn, PortfolioColumnDefinition } from '../../shared/portfolioColumns';
 
 interface PortfolioTableHeadProps {
+  hidden?: boolean;
   inactive?: boolean;
   mirrored?: boolean;
   allSelected?: boolean;
@@ -43,6 +44,7 @@ const PortfolioTableHead = ({
   sortField,
   sortDirection,
   columnWidths,
+  hidden = false,
   inactive = false,
   mirrored = false,
   allSelected = false,
@@ -146,6 +148,7 @@ const PortfolioTableHead = ({
   return (
     <thead
       ref={headRef}
+      hidden={hidden}
       id={`${idPrefix}-table-head`}
       role={mirrored ? `presentation` : undefined}
       className={`portfolio-table-head${inactive ? ` portfolio-table-head-inactive` : ``}`}
@@ -315,7 +318,7 @@ const PortfolioTableHead = ({
           role={mirrored ? `presentation` : undefined}
           aria-label={mirrored ? undefined : `Actions`}
           id={`${idPrefix}-heading-actions`}
-          style={getColumnStyle(columnWidths?.[columns.length + 3] ?? 116)}
+          style={getColumnStyle(columnWidths?.[columns.length + 3] ?? 176)}
           className={`portfolio-table-heading portfolio-table-heading-actions${mirrored ? ` portfolio-table-heading-actions-mirrored` : ``}`}
         >
           <span

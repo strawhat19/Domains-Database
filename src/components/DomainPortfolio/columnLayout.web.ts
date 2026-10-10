@@ -93,7 +93,6 @@ export const fitPortfolioColumns = (
     const nameCopy = find(`.domain-name-copy`, cell);
     const heading = find(`.domain-name-heading`, cell);
     const description = find(`.domain-description`, cell);
-    const readMore = description?.querySelector(`.domain-description-read-more`);
     const descriptionTrigger = description?.querySelector(`.domain-description-trigger`);
     const descriptionCopy = find(`.domain-name-copy:has(.domain-site-description)`, cell) ?? nameCopy;
     const stackedName = readStyle(descriptionCopy)?.flexDirection === `column`;
@@ -107,8 +106,6 @@ export const fitPortfolioColumns = (
     const previewWidth = elementWidth(cell?.querySelector(`.domain-preview-link`), 22);
     const githubWidth = elementWidth(cell?.querySelector(`.domain-github-link`), 22);
     const descriptionDecoration = horizontalBox(description) + horizontalBox(descriptionTrigger, 8) + elementGap(descriptionTrigger, 4);
-    const readMoreDecoration = elementWidth(readMore)
-      + (readMore ? elementGap(description, 6) : 0);
     const projectBadge = find(`.domain-project-badge`, cell);
     const projectFont = readFont(find(`.domain-project-badge-label`, projectBadge), field === `name` ? 11 : 12);
     const projectDecoration = horizontalBox(projectBadge, field === `name` ? 12 : 0)
@@ -133,7 +130,7 @@ export const fitPortfolioColumns = (
         const projectWidth = measure(getPortfolioColumnDisplay(domain, `projectStatus`), projectFont) + projectDecoration;
         const descriptionWidth = hasDescription
           ? Math.min(280, measure(domain.description?.trim() ?? ``, descriptionFont)) + descriptionDecoration
-            + elementWidth(description?.querySelector(`.domain-description-edit-icon`), 12) + readMoreDecoration
+            + elementWidth(description?.querySelector(`.domain-description-edit-icon`), 12)
           : elementWidth(find(`.domain-description-empty`, cell), 22);
         const linkWidth = width + linkDecoration;
         const headingWidth = linkWidth + projectWidth + headingGap + horizontalBox(heading)

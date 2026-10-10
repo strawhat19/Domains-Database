@@ -58,13 +58,14 @@ export const usePortfolioSearch = (sections: PortfolioSections, query: string, m
   const visibleSections = useMemo<PortfolioSections>(() => {
     if (!searching) return sections;
     const matchingIds = new Set(matchingDomains.map(domain => domain.id));
-    const matchesMetadata = (...values: (string | undefined)[]) => values.join(` `).toLowerCase().includes(search);
+    const matchesMetadata = (...values: (string | undefined)[]) => values.some(value => value?.toLowerCase().includes(search));
     const filterGroups = (groups: PortfolioGroup[], collectionId: string | null) => groups.flatMap(group => {
       const collectionShowingAll = collectionId !== null && currentVisibility.collections.has(collectionId);
       const showingAll = currentVisibility.groups.get(getGroupScope(collectionId, group.key))
         ?? collectionShowingAll;
       const domains = showingAll ? group.domains : group.domains.filter(domain => matchingIds.has(domain.id));
-      return showingAll || collectionShowingAll || domains.length || matchesMetadata(group.label, group.description)
+      if (group.directCollectionId) return domains.length ? [{ ...group, domains }] : [];
+      return showingAll || collectionShowingAll || domains.length || (group.key !== `all` && matchesMetadata(group.label, group.description))
         ? [{ ...group, domains }]
         : [];
     });

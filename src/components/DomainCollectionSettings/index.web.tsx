@@ -1,9 +1,9 @@
 import './styles.scss';
 import '../DomainEditor/styles.scss';
-import { X, Check, ArrowDownAZ, GripVertical } from 'lucide-react';
 import ModalTitle from '../ModalTitle/index.web';
 import SettingsField from '../SettingsField/index.web';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
+import { X, Check, Share2, ArrowDownAZ, GripVertical } from 'lucide-react';
 import ProjectSelect from '../DomainEditor/ProjectSelect/index.web';
 import { useDomainCollectionSettings } from './useDomainCollectionSettings';
 import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
@@ -11,10 +11,11 @@ import { DOMAIN_PROJECT_STATUSES, normalizeDomainProjectStatus } from '../../sha
 
 interface DomainCollectionSettingsProps {
   onClose: () => void;
+  editDescription?: boolean;
   collection: CustomPortfolioCollection;
 }
 
-const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSettingsProps) => {
+const DomainCollectionSettings = ({ collection, onClose, editDescription = false }: DomainCollectionSettingsProps) => {
   const settings = useDomainCollectionSettings(collection, onClose);
   const OrderIcon = settings.manualOrder ? ArrowDownAZ : GripVertical;
 
@@ -53,18 +54,31 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
               describedBy={`domain-collection-settings-name-help${settings.error ? ` domain-collection-settings-error` : ``}`}
             />
             <span hidden id={`domain-collection-settings-name-help`}>
-              {`Collection titles must be unique, regardless of capitalization.`}
+              {`Names must be unique across collections and groups, regardless of capitalization.`}
             </span>
           </div>
-          <button
-            type={`button`}
-            onClick={onClose}
-            id={`domain-collection-settings-close`}
-            aria-label={`Close Collection Settings`}
-            className={`domain-dialog-close domain-collection-settings-close`}
-          >
-            <X size={19} aria-hidden={`true`} id={`domain-collection-settings-close-icon`} className={`domain-dialog-close-icon`} />
-          </button>
+          <div id={`domain-collection-settings-header-actions-${collection.id}`} className={`domain-collection-settings-header-actions`}>
+            <button
+              disabled
+              type={`button`}
+              draggable={false}
+              id={`domain-collection-settings-share-${collection.id}`}
+              className={`domain-collection-settings-share`}
+              title={`Share ${collection.name} (Coming Soon)`}
+              aria-label={`Share ${collection.name} (Coming Soon)`}
+            >
+              <Share2 size={17} aria-hidden={`true`} id={`domain-collection-settings-share-icon-${collection.id}`} className={`domain-collection-settings-share-icon`} />
+            </button>
+            <button
+              type={`button`}
+              onClick={onClose}
+              id={`domain-collection-settings-close`}
+              aria-label={`Close Collection Settings`}
+              className={`domain-dialog-close domain-collection-settings-close`}
+            >
+              <X size={19} aria-hidden={`true`} id={`domain-collection-settings-close-icon`} className={`domain-dialog-close-icon`} />
+            </button>
+          </div>
         </header>
         <form noValidate id={`domain-collection-settings-form`} className={`domain-dialog-form domain-collection-settings-form`} onSubmit={settings.handleSubmit}>
           <div id={`domain-collection-settings-body`} className={`domain-dialog-body`}>
@@ -162,6 +176,7 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
                 </label>
                 <SettingsField
                   label={`Description`}
+                  enabled={!editDescription}
                   value={settings.description}
                   emptyText={`Add a description`}
                   id={`domain-collection-settings-description-view`}
@@ -171,6 +186,7 @@ const DomainCollectionSettings = ({ collection, onClose }: DomainCollectionSetti
                     rows={3}
                     maxLength={280}
                     value={settings.description}
+                    data-autofocus={editDescription || undefined}
                     ref={settings.descriptionInputRef}
                     id={`domain-collection-settings-description-input`}
                     placeholder={`A short note about this collection…`}

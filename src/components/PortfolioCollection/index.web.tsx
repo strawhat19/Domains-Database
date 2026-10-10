@@ -1,18 +1,25 @@
 import './styles.scss';
+import '../StarButton/styles.scss';
 import '../DomainSiteIcon/styles.scss';
+import Toast from '../Toast/index.web';
+import { createPortal } from 'react-dom';
 import type { DragEventHandler } from 'react';
-import DomainDescription from '../DomainDescription/index.web';
-import DomainProjectBadge from '../DomainProjectBadge/index.web';
+import PortfolioRowCopy from '../PortfolioRowCopy/index.web';
 import { usePortfolioCollection } from './usePortfolioCollection';
+import PortfolioNameEditor from '../PortfolioNameEditor/index.web';
+import PortfolioCollectionStars from '../PortfolioCollectionStars/index.web';
 import DomainCollectionSettings from '../DomainCollectionSettings/index.web';
-import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
-import { Eye, Share2, ArrowUp, Settings, ArrowDown, ThumbsUp, ThumbsDown, ChevronDown, GripVertical } from 'lucide-react';
+import PortfolioCollectionProgress from '../PortfolioCollectionProgress/index.web';
+import { useCollectionStars } from '../PortfolioCollectionStars/useCollectionStars';
+import type { CustomPortfolioCollection, PortfolioCollectionSection } from '../../shared/portfolioPreferences/types';
+import { Eye, Star, Pencil, EyeOff, ArrowUp, Settings, ArrowDown, ThumbsUp, ThumbsDown, ChevronDown, GripVertical } from 'lucide-react';
 
 export interface PortfolioCollectionProps {
   busy: boolean;
   loading: boolean;
   collapsed: boolean;
   contentId: string;
+  idPrefix?: string;
   searching?: boolean;
   domainCount: number;
   dragging?: boolean;
@@ -24,6 +31,7 @@ export interface PortfolioCollectionProps {
   showAllDomains?: boolean;
   onToggleSearch?: () => void;
   collection: CustomPortfolioCollection;
+  copySection: PortfolioCollectionSection;
   onDrop?: DragEventHandler<HTMLDivElement>;
   onDragEnd?: DragEventHandler<HTMLDivElement>;
   onDragOver?: DragEventHandler<HTMLDivElement>;
@@ -33,6 +41,7 @@ export interface PortfolioCollectionProps {
 
 const PortfolioCollection = ({
   collection,
+  copySection,
   onMoveUp,
   onMoveDown,
   onToggleSearch,
@@ -47,15 +56,25 @@ const PortfolioCollection = ({
   domainCount,
   collapsed,
   contentId,
+  idPrefix = `portfolio`,
   searching = false,
   dragging = false,
   draggable = false,
   dropTarget = false,
   showAllDomains = false,
 }: PortfolioCollectionProps) => {
-  const scope = `portfolio-collection-${collection.id}`;
+  const scope = `${idPrefix}-collection-${collection.id}`;
+  const fallbackPrefix = idPrefix.endsWith(`-sticky`) ? idPrefix.slice(0, -7) : `${idPrefix}-sticky`;
+  const fallbackScope = `${fallbackPrefix}-collection-${collection.id}`;
   const state = usePortfolioCollection(collection);
+  const stars = useCollectionStars(collection, loading || busy);
+  const VisibilityIcon = state.hidden ? EyeOff : Eye;
   const visibility = collection.visibility ?? `private`;
+  const visibilityLabel = `${state.hidden ? `Show` : `Hide`} ${collection.name}`;
+  const descriptionLabel = `${collection.description ? `Edit` : `Add`} Description For ${collection.name}`;
+  const starsLabel = stars.summary.count
+    ? `View ${stars.summary.count} Star(s) In ${collection.name}: ${stars.summary.groupCount} Group(s), ${stars.summary.domainCount} Domain(s)`
+    : `Star All Groups, Apps And Domains In ${collection.name}`;
   const searchToggleLabel = showAllDomains ? `Show only search matches in ${collection.name}` : `Show all domains in ${collection.name}`;
 
   return (
@@ -67,7 +86,7 @@ const PortfolioCollection = ({
       <div
         onDrop={onDrop}
         onDragEnd={onDragEnd}
-        draggable={draggable}
+        draggable={draggable && !state.nameEditing}
         id={`${scope}-titlebar`}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -138,31 +157,43 @@ const PortfolioCollection = ({
                   />
                 </svg>
               </span>
-              <span id={`${scope}-name`} className={`portfolio-collection-name`}>
-                {collection.name}
+              <span id={`${scope}-name-actions`} className={`portfolio-collection-name-actions`}>
+                <PortfolioNameEditor
+                  kind={`Collection`}
+                  id={`${scope}-name`}
+                  value={collection.name}
+                  onSave={state.setName}
+                  onEditingChange={state.setNameEditing}
+                  busy={loading || busy || state.loading}
+                  className={`portfolio-collection-name`}
+                />
+                <button
+                  type={`button`}
+                  draggable={false}
+                  title={descriptionLabel}
+                  aria-haspopup={`dialog`}
+                  aria-label={descriptionLabel}
+                  id={`${scope}-description-edit`}
+                  aria-expanded={state.editing && state.editDescription}
+                  disabled={loading || busy || state.loading}
+                  className={`portfolio-collection-description-edit`}
+                  aria-controls={`domain-collection-settings-dialog`}
+                  data-focus-fallback={`${fallbackScope}-description-edit`}
+                  onMouseDown={event => event.stopPropagation()}
+                  onPointerDown={event => event.stopPropagation()}
+                  onClick={event => { event.stopPropagation(); state.openSettings(true); }}
+                  onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}
+                >
+                  <Pencil size={12} aria-hidden={`true`} id={`${scope}-description-edit-icon`} className={`portfolio-collection-description-edit-icon`} />
+                </button>
               </span>
             </h3>
-            <DomainProjectBadge
-              field={`projectStatus`}
-              id={`${scope}-project-status`}
-              value={collection.projectStatus}
-              onChange={state.setProjectStatus}
-              disabled={loading || busy}
-              className={`portfolio-collection-project-status`}
-              editLabel={`Change Project Status For ${collection.name}`}
-            />
-            <div id={`${scope}-description-field`} className={`portfolio-collection-description`}>
-              <DomainDescription
-                maxLength={280}
-                domainName={collection.name}
-                value={collection.description}
-                id={`${scope}-description`}
-                onSave={state.setDescription}
-                busy={loading || busy}
-                onReadMore={() => state.setEditing(true)}
-                readMoreLabel={`Read More In Collection Settings For ${collection.name}`}
-              />
-            </div>
+            {collection.description && <span id={`${scope}-description`} className={`portfolio-collection-description`}>{collection.description}</span>}
+            {state.hidden && (
+              <span id={`${scope}-visibility-state`} className={`portfolio-collection-hidden-state`}>
+                {`Hidden`}
+              </span>
+            )}
           </div>
         </div>
         {visibility === `public` && (
@@ -198,14 +229,17 @@ const PortfolioCollection = ({
           </div>
         )}
         <div id={`${scope}-actions`} className={`portfolio-collection-actions`}>
-          <span
-            id={`${scope}-domain-count`}
-            className={`portfolio-collection-count`}
-            title={`${domainCount} Domain(s) In ${collection.name}`}
-            aria-label={`${domainCount} Domain(s) In ${collection.name}`}
-          >
-            {domainCount}
-          </span>
+          <PortfolioCollectionProgress collection={collection} id={`${scope}-progress`} />
+          {domainCount > 0 && (
+            <span
+              id={`${scope}-domain-count`}
+              className={`portfolio-collection-count`}
+              title={`${domainCount} Domain(s) In ${collection.name}`}
+              aria-label={`${domainCount} Domain(s) In ${collection.name}`}
+            >
+              {domainCount}
+            </span>
+          )}
           {searching && onToggleSearch && (
             <button
               type={`button`}
@@ -220,49 +254,107 @@ const PortfolioCollection = ({
               <Eye size={17} aria-hidden={`true`} id={`${scope}-search-toggle-icon`} className={`portfolio-collection-search-toggle-icon`} />
             </button>
           )}
-          <button
-            disabled
-            type={`button`}
-            draggable={false}
-            id={`${scope}-share`}
-            className={`portfolio-collection-share`}
-            title={`Share ${collection.name} (Coming Soon)`}
-            aria-label={`Share ${collection.name} (Coming Soon)`}
-          >
-            <Share2 size={17} aria-hidden={`true`} id={`${scope}-share-icon`} className={`portfolio-collection-share-icon`} />
-          </button>
-          <button
-            type={`button`}
-            draggable={false}
-            aria-haspopup={`dialog`}
-            id={`${scope}-settings`}
-            title={`Edit ${collection.name}`}
-            aria-label={`Edit ${collection.name}`}
-            className={`portfolio-collection-settings`}
-            onClick={() => state.setEditing(true)}
-          >
-            <Settings size={17} aria-hidden={`true`} id={`${scope}-settings-icon`} className={`portfolio-collection-settings-icon`} />
-          </button>
-          <button
-            type={`button`}
-            draggable={false}
-            aria-controls={contentId}
-            aria-expanded={!collapsed}
-            onClick={onToggleCollapsed}
-            id={`${scope}-collapse-toggle`}
-            title={`${collapsed ? `Expand` : `Collapse`} ${collection.name}`}
-            aria-label={`${collapsed ? `Expand` : `Collapse`} ${collection.name}`}
-            className={`portfolio-collection-collapse-toggle${collapsed ? ` portfolio-collection-collapse-toggle-collapsed` : ``}`}
-          >
-            <ChevronDown size={17} aria-hidden={`true`} id={`${scope}-collapse-icon`} className={`portfolio-collection-collapse-icon`} />
-          </button>
+          <div id={`${scope}-action-rail`} className={`portfolio-row-action-rail`}>
+            <button
+              type={`button`}
+              draggable={false}
+              title={visibilityLabel}
+              aria-label={visibilityLabel}
+              aria-pressed={!state.hidden}
+              id={`${scope}-visibility-toggle`}
+              disabled={loading || busy || state.loading}
+              className={`portfolio-collection-visibility-toggle`}
+              onMouseDown={event => event.stopPropagation()}
+              onPointerDown={event => event.stopPropagation()}
+              onClick={event => { event.stopPropagation(); state.toggleVisibility(); }}
+              onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}
+            >
+              <VisibilityIcon size={17} aria-hidden={`true`} id={`${scope}-visibility-toggle-icon`} className={`portfolio-collection-visibility-toggle-icon`} />
+            </button>
+            <button
+              type={`button`}
+              draggable={false}
+              title={starsLabel}
+              ref={stars.buttonRef}
+              id={`${scope}-stars`}
+              data-focus-fallback={`${fallbackScope}-stars`}
+              aria-label={starsLabel}
+              aria-busy={stars.starring}
+              aria-haspopup={stars.summary.count ? `dialog` : undefined}
+              aria-expanded={stars.summary.count ? stars.open : undefined}
+              disabled={loading || busy || stars.loading}
+              onMouseDown={event => event.stopPropagation()}
+              onPointerDown={event => event.stopPropagation()}
+              onClick={event => { event.stopPropagation(); void stars.openStars(); }}
+              onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}
+              aria-controls={stars.open ? `${scope}-stars${stars.copyOpen ? `-copy-options` : ``}-dialog` : undefined}
+              className={`star-button portfolio-collection-stars${stars.summary.count > 0 ? ` star-button-starred portfolio-collection-stars-active` : ``}`}
+            >
+              <Star
+                size={16}
+                aria-hidden={`true`}
+                id={`${scope}-stars-icon`}
+                className={`star-button-icon portfolio-collection-stars-icon`}
+                fill={stars.summary.count ? `currentColor` : `none`}
+              />
+              {stars.summary.count > 0 && (
+                <span aria-hidden={`true`} id={`${scope}-stars-count`} className={`portfolio-collection-stars-count`}>{stars.summary.count}</span>
+              )}
+            </button>
+            <PortfolioRowCopy
+              iconSize={17}
+              label={collection.name}
+              id={`${scope}-copy-domains`}
+              disabled={loading || busy || state.loading}
+              focusFallbackId={`${fallbackScope}-copy-domains`}
+              sections={{ collections: [copySection], mainGroups: [], mainDomains: [] }}
+            />
+            <button
+              type={`button`}
+              draggable={false}
+              aria-haspopup={`dialog`}
+              id={`${scope}-settings`}
+              data-focus-fallback={`${fallbackScope}-settings`}
+              title={`Edit ${collection.name}`}
+              aria-label={`Edit ${collection.name}`}
+              className={`portfolio-collection-settings portfolio-row-settings-action`}
+              onClick={() => state.openSettings()}
+            >
+              <Settings size={17} aria-hidden={`true`} id={`${scope}-settings-icon`} className={`portfolio-collection-settings-icon`} />
+            </button>
+            <button
+              type={`button`}
+              draggable={false}
+              aria-controls={contentId}
+              aria-expanded={!collapsed}
+              onClick={onToggleCollapsed}
+              id={`${scope}-collapse-toggle`}
+              title={`${collapsed ? `Expand` : `Collapse`} ${collection.name}`}
+              aria-label={`${collapsed ? `Expand` : `Collapse`} ${collection.name}`}
+              className={`portfolio-collection-collapse-toggle portfolio-row-collapse-action${collapsed ? ` portfolio-collection-collapse-toggle-collapsed` : ``}`}
+            >
+              <ChevronDown size={17} aria-hidden={`true`} id={`${scope}-collapse-icon`} className={`portfolio-collection-collapse-icon`} />
+            </button>
+          </div>
         </div>
       </div>
       <p id={`${scope}-interaction-help`} className={`portfolio-sr-only`}>
-        {`Drag this title bar to reorder collections, or use the up and down buttons. Drop a group heading on the title bar to add it to this collection. Group settings offers a keyboard alternative.`}
+        {`Drag this title bar to reorder collections, or use the up and down buttons. Drop a group or domain on the title bar to add it to this collection. The move menu offers a keyboard alternative.`}
       </p>
-      {state.editing && (
-        <DomainCollectionSettings collection={collection} onClose={() => state.setEditing(false)} />
+      {stars.open && typeof document !== `undefined` && createPortal(
+        <PortfolioCollectionStars idPrefix={idPrefix} collection={collection} state={stars} />,
+        document.body,
+        `${scope}-stars-portal`,
+      )}
+      {stars.starError && typeof document !== `undefined` && createPortal(
+        <Toast id={`${scope}-stars-error`} message={stars.starError} onDismiss={stars.dismissStarError} />,
+        document.body,
+        `${scope}-stars-error-portal`,
+      )}
+      {state.editing && typeof document !== `undefined` && createPortal(
+        <DomainCollectionSettings collection={collection} editDescription={state.editDescription} onClose={() => state.setEditing(false)} />,
+        document.body,
+        `${scope}-settings-portal`,
       )}
     </div>
   );

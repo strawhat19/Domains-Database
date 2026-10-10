@@ -2,11 +2,11 @@ import { api } from '../../api';
 import type { PropsWithChildren } from 'react';
 import type { DomainInput, DomainRecord } from '../types';
 import { useAfterPaint } from '../common/useAfterPaint';
-import type { ConnectionSnapshot } from '../connections/types';
 import { useWebsiteInsights } from '../websiteInsights/useWebsiteInsights';
-import { useRegistrarSync } from '../registrarSync/useRegistrarSync';
-import type { AccountSyncStatuses, ConnectionSyncResult, ConnectionSyncStatuses } from '../registrarSync/types';
+import type { ConnectionProvider, ConnectionSnapshot } from '../connections/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRegistrarSync, type ManualSyncChoice } from '../registrarSync/useRegistrarSync';
+import type { AccountSyncStatuses, ConnectedSyncRegistrar, ConnectionSyncResult, ConnectionSyncStatuses } from '../registrarSync/types';
 
 export interface DomainContextValue {
   error: string;
@@ -18,7 +18,12 @@ export interface DomainContextValue {
   canSyncConnections: boolean;
   manualSyncMessage: string;
   manualSyncWaitSeconds: number;
-  syncManually: () => Promise<void>;
+  manualSyncChoices: ManualSyncChoice[];
+  connectedSyncRegistrars: ConnectedSyncRegistrar[];
+  closeManualSync: () => void;
+  syncAllManually: () => Promise<void>;
+  syncManually: (connectionId?: string) => Promise<void>;
+  syncRegistrarDomains: (provider: ConnectionProvider) => Promise<void>;
   refreshing: boolean;
   insightError: string;
   insightNotice: string;
@@ -34,6 +39,7 @@ export interface DomainContextValue {
   prepareExport: () => Promise<DomainRecord[]>;
   deleteDomain: (id: string) => Promise<void>;
   toggleDomainStar: (id: string) => Promise<void>;
+  starDomains: (ids: readonly string[]) => Promise<void>;
   refreshWebsiteInsights: (domains: DomainRecord[]) => Promise<void>;
   importDomains: (inputs: DomainInput[]) => Promise<number>;
   addDomain: (input: DomainInput) => Promise<DomainRecord>;
@@ -128,6 +134,7 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
   const addDomain = useCallback((input: DomainInput) => mutate(() => api.createDomain(input), `Domain Added`), [mutate]);
   const deleteDomain = useCallback((id: string) => mutate(() => api.deleteDomain(id), `Domain Removed`), [mutate]);
   const toggleDomainStar = useCallback((id: string) => mutate(() => api.toggleDomainStar(id), `Domain Star Updated`), [mutate]);
+  const starDomains = useCallback((ids: readonly string[]) => mutate(() => api.starDomains(ids), `Domains Starred`), [mutate]);
   const updateDomain = useCallback((id: string, input: DomainInput) => mutate(() => api.updateDomain(id, input), `Domain Updated`), [mutate]);
   const importDomains = useCallback((inputs: DomainInput[]) => mutate(() => api.importDomains(inputs), `${inputs.length} Domain(s) Imported`), [mutate]);
   const prepareExport = useCallback(() => mutate(() => api.prepareExport(), `CSV Prepared`), [mutate]);
@@ -140,9 +147,14 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
     domains: domainEnabled ? domains : [],
     syncing: sync.syncing,
     syncManually: sync.syncManually,
+    syncAllManually: sync.syncAllManually,
+    syncRegistrarDomains: sync.syncRegistrarDomains,
+    closeManualSync: sync.closeManualSync,
     canSyncManually: sync.canSyncManually,
     canSyncConnections: syncReady,
     manualSyncMessage: sync.manualSyncMessage,
+    manualSyncChoices: sync.manualSyncChoices,
+    connectedSyncRegistrars: sync.connectedSyncRegistrars,
     manualSyncWaitSeconds: sync.manualSyncWaitSeconds,
     refreshing: domainEnabled && insights.refreshing,
     error: domainEnabled ? error || sync.syncError : ``,
@@ -150,6 +162,7 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
     insightError: domainEnabled ? insights.insightError : ``,
     insightNotice: domainEnabled ? insights.insightNotice : ``,
     addDomain,
+    starDomains,
     clearNotice,
     deleteDomain,
     updateDomain,
@@ -162,7 +175,7 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
     accountStatuses: sync.accountStatuses,
     connectionStatuses: sync.connectionStatuses,
     resetConnectionSync: sync.resetConnectionSync,
-  }), [enabled, syncReady, domainEnabled, error, notice, loading, domains, addDomain, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, toggleDomainStar, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.accountStatuses, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncWaitSeconds]);
+  }), [enabled, syncReady, domainEnabled, error, notice, loading, domains, addDomain, starDomains, clearNotice, deleteDomain, updateDomain, importDomains, prepareExport, resetSampleData, toggleDomainStar, refreshWebsiteInsights, insights, sync.syncing, sync.syncError, sync.syncNotice, sync.syncConnections, sync.accountStatuses, sync.connectionStatuses, sync.resetConnectionSync, sync.syncManually, sync.syncAllManually, sync.syncRegistrarDomains, sync.closeManualSync, sync.canSyncManually, sync.manualSyncMessage, sync.manualSyncChoices, sync.connectedSyncRegistrars, sync.manualSyncWaitSeconds]);
 
   return (
     <DomainContext.Provider value={value}>

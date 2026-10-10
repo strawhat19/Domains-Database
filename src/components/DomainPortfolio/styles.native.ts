@@ -8,7 +8,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   headingCopy: { gap: 7 },
   syncButton: { minHeight: 44, flexShrink: 1 },
   headingActions: { gap: 8, minWidth: 0, maxWidth: `100%`, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
-  syncStatus: { gap: 8, flexShrink: 0, flexDirection: `row`, alignItems: `center` },
   manualSyncMessage: { color: palette.muted, fontSize: 12, lineHeight: 18, fontFamily: `DMSans_400Regular` },
   eyebrow: { color: palette.accent, fontSize: 9, letterSpacing: 1.5, fontFamily: `DMSans_700Bold` },
   title: { color: palette.ink, fontSize: 29, lineHeight: 34, letterSpacing: -.8, fontFamily: `DMSans_700Bold` },

@@ -1,5 +1,7 @@
 import './styles.scss';
-import { X, Check, Pencil, BookOpen } from 'lucide-react';
+import Toast from '../Toast/index.web';
+import { createPortal } from 'react-dom';
+import { X, Check, Pencil } from 'lucide-react';
 import { useDomainDescription } from './useDomainDescription';
 
 interface DomainDescriptionProps {
@@ -8,12 +10,10 @@ interface DomainDescriptionProps {
   value?: string;
   maxLength?: number;
   domainName: string;
-  readMoreLabel?: string;
-  onReadMore: () => void;
   onSave: (value: string) => Promise<boolean>;
 }
 
-const DomainDescription = ({ id, busy, value, onSave, maxLength, domainName, onReadMore, readMoreLabel }: DomainDescriptionProps) => {
+const DomainDescription = ({ id, busy, value, onSave, maxLength, domainName }: DomainDescriptionProps) => {
   const description = useDomainDescription({ busy, value, onSave });
   const label = `${value ? `Edit` : `Add`} Description For ${domainName}`;
 
@@ -33,11 +33,12 @@ const DomainDescription = ({ id, busy, value, onSave, maxLength, domainName, onR
       {description.editing ? (
         <form
           id={`${id}-editor`}
+          aria-busy={description.saving || undefined}
           className={`domain-description-editor`}
           onSubmit={event => { event.preventDefault(); void description.save(); }}
         >
           <textarea
-            rows={2}
+            rows={description.compact ? 1 : 2}
             maxLength={maxLength}
             aria-label={label}
             id={`${id}-input`}
@@ -60,6 +61,7 @@ const DomainDescription = ({ id, busy, value, onSave, maxLength, domainName, onR
                 type={`submit`}
                 id={`${id}-save`}
                 disabled={description.disabled}
+                title={`Save Description For ${domainName}`}
                 aria-label={`Save Description For ${domainName}`}
                 className={`domain-description-action domain-description-save`}
               >
@@ -73,6 +75,7 @@ const DomainDescription = ({ id, busy, value, onSave, maxLength, domainName, onR
                 id={`${id}-cancel`}
                 onClick={description.cancel}
                 disabled={description.disabled}
+                title={`Cancel Description Edit For ${domainName}`}
                 aria-label={`Cancel Description Edit For ${domainName}`}
                 className={`domain-description-action domain-description-cancel`}
               >
@@ -83,54 +86,49 @@ const DomainDescription = ({ id, busy, value, onSave, maxLength, domainName, onR
               </button>
             </div>
           </div>
-          {description.saveError && (
+          {description.saveError && !description.compact && (
             <span role={`alert`} id={`${id}-error`} className={`domain-description-error`}>
               {`Description Wasn't Saved. Try Again`}
             </span>
           )}
         </form>
       ) : (
-        <>
-          <button
-            title={label}
-            type={`button`}
-            draggable={false}
-            aria-label={label}
-            id={`${id}-edit`}
-            onClick={description.edit}
-            ref={description.triggerRef}
-            disabled={description.disabled}
-            className={`domain-description-trigger${value ? `` : ` domain-description-empty`}`}
-          >
-            {value ? (
-              <>
-                <span ref={description.textRef} id={`${id}-text`} className={`domain-site-description`}>
-                  {value}
-                </span>
-                <Pencil size={12} aria-hidden={`true`} id={`${id}-edit-icon`} className={`domain-description-edit-icon`} />
-              </>
-            ) : (
-              <Pencil size={12} aria-hidden={`true`} id={`${id}-add-icon`} className={`domain-description-add-icon`} />
-            )}
-          </button>
-          {description.truncated && (
-            <button
-              type={`button`}
-              draggable={false}
-              onClick={onReadMore}
-              id={`${id}-read-more`}
-              disabled={description.disabled}
-              ref={description.readMoreRef}
-              className={`domain-description-read-more`}
-              aria-label={readMoreLabel ?? `Read More In Domain Settings For ${domainName}`}
-            >
-              <BookOpen size={12} aria-hidden={`true`} id={`${id}-read-more-icon`} className={`domain-description-read-more-icon`} />
-              <span id={`${id}-read-more-label`} className={`domain-description-read-more-label`}>
-                {`Read More`}
+        <button
+          title={label}
+          type={`button`}
+          draggable={false}
+          aria-label={label}
+          id={`${id}-edit`}
+          onClick={description.edit}
+          ref={description.triggerRef}
+          disabled={description.disabled}
+          className={`domain-description-trigger${value ? `` : ` domain-description-empty`}`}
+        >
+          {value ? (
+            <>
+              <span id={`${id}-text`} className={`domain-site-description`}>
+                {value}
               </span>
-            </button>
+              <Pencil size={12} aria-hidden={`true`} id={`${id}-edit-icon`} className={`domain-description-edit-icon`} />
+            </>
+          ) : (
+            <Pencil size={12} aria-hidden={`true`} id={`${id}-add-icon`} className={`domain-description-add-icon`} />
           )}
-        </>
+        </button>
+      )}
+      {description.compact && description.saveError && typeof document !== `undefined` && createPortal(
+        <div
+          id={`${id}-error`}
+          className={`domain-description-error-toast`}
+          onClick={event => event.stopPropagation()}
+          onKeyDown={event => event.stopPropagation()}
+          onMouseDown={event => event.stopPropagation()}
+          onPointerDown={event => event.stopPropagation()}
+        >
+          <Toast id={`${id}-save-error`} message={`Description Wasn't Saved — Try Again`} onDismiss={description.dismissError} />
+        </div>,
+        document.body,
+        `${id}-error-portal`,
       )}
     </div>
   );

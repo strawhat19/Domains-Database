@@ -1,28 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { copyText } from '../../shared/common/clipboard.web';
 import { usePortfolioActionsVisibility } from './usePortfolioActionsVisibility';
-
-const copyText = async (text: string) => {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  const focusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  const buffer = document.createElement(`textarea`);
-  buffer.value = text;
-  buffer.tabIndex = -1;
-  buffer.readOnly = true;
-  buffer.id = `portfolio-copy-buffer`;
-  buffer.className = `portfolio-copy-buffer`;
-  buffer.setAttribute(`aria-hidden`, `true`);
-  document.body.appendChild(buffer);
-  try {
-    buffer.select();
-    if (!document.execCommand(`copy`)) throw new Error(`Copy Unavailable`);
-  } finally {
-    buffer.remove();
-    focusedElement?.focus({ preventScroll: true });
-  }
-};
 
 export const usePortfolioToolbar = () => {
   const actions = usePortfolioActionsVisibility();
@@ -30,6 +8,8 @@ export const usePortfolioToolbar = () => {
   const [columnsOpen, setColumnsOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState(``);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [includeHidden, setIncludeHidden] = useState(true);
+  const pendingCopy = useRef(false);
   const [copyState, setCopyState] = useState<`idle` | `copying` | `copied` | `error`>(`idle`);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -47,26 +27,40 @@ export const usePortfolioToolbar = () => {
     setSettingsOpen(true);
   };
   const openCopyOptions = () => {
-    if (copyState === `copying`) return;
+    if (pendingCopy.current) {
+      setCopyOpen(true);
+      if (typeof document !== `undefined`) document.getElementById(`portfolio-copy-options-dialog`)?.focus({ preventScroll: true });
+      return;
+    }
     setCopyMessage(``);
     setCopyState(`idle`);
+    setIncludeHidden(true);
     setCopyOpen(true);
   };
   const closeCopyOptions = () => {
-    if (copyState !== `copying`) setCopyOpen(false);
+    if (!pendingCopy.current) setCopyOpen(false);
+  };
+  const changeIncludeHidden = (included: boolean) => {
+    if (pendingCopy.current) return;
+    setIncludeHidden(included);
+    setCopyMessage(``);
+    setCopyState(`idle`);
   };
   const copyDomains = async (text: string, count: number) => {
-    if (!text || !count || copyState === `copying`) return;
+    if (!text || pendingCopy.current) return;
+    pendingCopy.current = true;
     setCopyMessage(``);
     setCopyState(`copying`);
     try {
       await copyText(text);
-      setCopyMessage(`Copied ${count} Domain(s)`);
+      setCopyMessage(count ? `Copied ${count} Domain(s)` : `Copied Portfolio Structure`);
       setCopyState(`copied`);
       setCopyOpen(false);
     } catch {
       setCopyMessage(`Could Not Copy Domains — Try Again`);
       setCopyState(`error`);
+    } finally {
+      pendingCopy.current = false;
     }
   };
 
@@ -76,12 +70,14 @@ export const usePortfolioToolbar = () => {
     columnsOpen,
     copyDomains,
     copyMessage,
+    includeHidden,
     settingsOpen,
     openSettings,
     setColumnsOpen,
     openCopyOptions,
     setSettingsOpen,
     closeCopyOptions,
+    changeIncludeHidden,
     settingsButtonRef,
     copied: copyState === `copied`,
     copying: copyState === `copying`,

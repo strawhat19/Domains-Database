@@ -29,6 +29,7 @@ export interface CustomPortfolioGroup extends PortfolioGroupDetails {
   id: string;
   name: string;
   starred?: boolean;
+  createdAt?: string;
   description?: string;
   collectionId?: string;
   domainIds: string[];
@@ -40,6 +41,8 @@ export interface CustomPortfolioCollection {
   number: number;
   upvotes: number;
   downvotes: number;
+  createdAt?: string;
+  domainIds?: string[];
   description?: string;
   currentVote: CollectionVote;
   sortDirection: `asc` | `desc`;
@@ -52,18 +55,25 @@ export interface GroupSettingsInput extends PortfolioGroupDetails {
   name: string;
   description: string;
   collectionId?: string | null;
+  convertToCollection?: boolean;
   newCollection?: { name: string; description: string };
 }
 
 export interface PortfolioPreferences {
   view: PortfolioView;
   showCosts: boolean;
+  showAddRows: boolean;
   groupBy: PortfolioGroupBy;
   hiddenDomainIds: string[];
   hiddenGroupKeys: string[];
+  expandedDomainIds: string[];
+  collapsedGroupKeys: string[];
   showHiddenGroups: boolean;
   showHiddenDomains: boolean;
   collectionNumber: number;
+  hiddenCollectionIds: string[];
+  showHiddenCollections: boolean;
+  collapsedCollectionIds: string[];
   customGroups: CustomPortfolioGroup[];
   orders: Record<string, string[]>;
   collections: CustomPortfolioCollection[];
@@ -74,6 +84,7 @@ export interface PortfolioGroup extends PortfolioGroupDetails {
   label: string;
   description?: string;
   customGroupId?: string;
+  directCollectionId?: string;
   domains: DomainRecord[];
 }
 
@@ -94,18 +105,28 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   clearOrders: () => void;
   setView: (view: PortfolioView) => void;
   resetOrder: (groupKey: string) => void;
-  deleteGroup: (groupId: string) => void;
+  deleteGroup: (groupId: string) => boolean;
   setGroupBy: (groupBy: PortfolioGroupBy) => void;
   setShowCosts: (value: boolean) => void;
+  setShowAddRows: (value: boolean) => void;
   renameGroup: (groupId: string, name: string) => boolean;
+  renameCollection: (collectionId: string, name: string) => boolean;
   toggleGroupStar: (groupId: string) => boolean;
+  starGroups: (groupIds: readonly string[]) => boolean;
   setShowHiddenGroups: (value: boolean) => void;
   setShowHiddenDomains: (value: boolean) => void;
+  setShowHiddenCollections: (value: boolean) => void;
   toggleGroupVisibility: (groupKey: string) => boolean;
+  toggleGroupCollapsed: (groupKey: string) => boolean;
+  toggleDomainExpansion: (domainId: string) => boolean;
   toggleDomainVisibility: (domainId: string) => boolean;
+  toggleCollectionCollapsed: (collectionId: string) => boolean;
+  toggleCollectionVisibility: (collectionId: string) => boolean;
   assignDomain: (domainId: string, groupId: string | null) => void;
-  createGroup: (name: string, domainIds?: string[]) => string | undefined;
+  createCollection: (name: string, description?: string) => string | undefined;
+  createGroup: (name: string, domainIds?: string[], collection?: Pick<GroupSettingsInput, `collectionId` | `newCollection`>) => string | undefined;
   assignDomains: (domainIds: string[], groupId: string | null) => boolean;
+  assignDomainsToCollection: (domainIds: string[], collectionId: string | null) => boolean;
   voteCollection: (collectionId: string, vote: Exclude<CollectionVote, null>) => boolean;
   updateGroup: (groupId: string, name: string, description: string) => boolean;
   saveGroupSettings: (groupId: string, input: GroupSettingsInput) => boolean;

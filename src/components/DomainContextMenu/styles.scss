@@ -41,8 +41,17 @@
   transition: color .2s ease, background .2s ease;
   &:hover, &:focus-visible { color: var(--accent); background: var(--subtle); }
   &:focus-visible { outline-offset: -2px; }
+  &:disabled { opacity: .4; cursor: default; }
 }
 
+.domain-row-context-menu { width: 360px; }
+.domain-row-context-menu .domain-context-menu-target { color: var(--accent); }
+.domain-context-menu-command { padding-block: 10px; }
+.domain-context-menu-content { gap: 3px; display: flex; min-width: 0; flex-direction: column; }
+.domain-context-menu-label { line-height: 1.4; }
+.domain-context-menu-description { font-size: 11px; line-height: 1.4; color: var(--muted); }
+.domain-context-menu-destinations { margin: 2px 0 6px; padding: 6px 4px 8px; border-block: 1px solid var(--line); }
+.domain-context-menu-destinations-label { margin: 0 6px 6px; font-size: 10px; color: var(--muted); }
 .domain-context-menu-icon { flex-shrink: 0; }
 @keyframes domain-context-menu-enter { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {

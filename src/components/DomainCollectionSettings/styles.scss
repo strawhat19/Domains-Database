@@ -1,4 +1,17 @@
 .domain-collection-settings .domain-dialog-header { margin-bottom: 25px; }
+.domain-collection-settings-header-actions { gap: 8px; display: flex; flex-shrink: 0; align-items: center; }
+.domain-collection-settings-share {
+  border: 0;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  flex-shrink: 0;
+  border-radius: 4px;
+  color: var(--muted);
+  place-items: center;
+  background: transparent;
+  &:disabled { opacity: .45; cursor: default; }
+}
 .domain-collection-settings-fields { gap: 18px; display: grid; align-content: start; }
 .domain-collection-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .domain-collection-settings-description-input { resize: vertical; min-height: 92px; }

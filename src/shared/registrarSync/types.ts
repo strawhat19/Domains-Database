@@ -1,6 +1,11 @@
 import type { Registrar, JSONValue } from '../types';
 import type { ConnectionProvider } from '../connections/types';
 
+export interface ConnectedSyncRegistrar {
+  label: string;
+  provider: ConnectionProvider;
+}
+
 export interface RegistrarDomain {
   name: string;
   registrar: Registrar | ``;

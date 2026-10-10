@@ -9,3 +9,6 @@
 @media (prefers-reduced-motion: reduce) {
   :is(.domain-search-watch-button, [data-class='domain-search-watch-button']) { transition: none; }
 }
+@media (min-width: 1100px) {
+  :is(.watch-signin-dialog, [data-class='watch-signin-dialog']) { max-width: var(--modal-wide-width) !important; }
+}

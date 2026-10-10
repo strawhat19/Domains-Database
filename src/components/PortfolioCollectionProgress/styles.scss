@@ -1,0 +1,27 @@
+.portfolio-collection-progress { gap: 8px; height: 26px; width: 120px; display: flex; min-width: 64px; flex: 0 1 120px; align-items: center; margin-inline-end: 12px; }
+.portfolio-collection-progress-track {
+  flex: 1;
+  height: 10px;
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--success) 14%, var(--paper));
+  border: 1px solid color-mix(in srgb, var(--success) 40%, var(--paper));
+}
+.portfolio-collection-progress-percentage { width: 32px; flex-shrink: 0; font-size: 11px; line-height: 14px; font-weight: 600; color: var(--ink); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.portfolio-collection-progress-segment { height: 100%; flex-shrink: 0; transition: width .24s ease, background .2s ease; box-shadow: inset -1px 0 0 color-mix(in srgb, var(--paper) 40%, transparent); }
+.portfolio-collection-progress-segment-neutral { background: color-mix(in srgb, var(--success) 45%, var(--paper)); }
+.portfolio-collection-progress-segment-danger { background: color-mix(in srgb, var(--success) 52%, var(--paper)); }
+.portfolio-collection-progress-segment-warning { background: color-mix(in srgb, var(--success) 60%, var(--paper)); }
+.portfolio-collection-progress-segment-accent { background: color-mix(in srgb, var(--success) 75%, var(--paper)); }
+.portfolio-collection-progress-segment-success { background: color-mix(in srgb, var(--success) 90%, var(--paper)); }
+.portfolio-collection-progress-segment[data-status='Done'] { background: var(--success); }
+@media (max-width: 380px) {
+  .portfolio-collection-progress { gap: 0; min-width: 40px; margin-inline-end: 8px; }
+  .portfolio-collection-progress-percentage { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-collection-progress-segment { transition: none; }
+}

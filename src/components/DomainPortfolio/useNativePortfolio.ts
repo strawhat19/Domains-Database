@@ -7,7 +7,6 @@ import * as DocumentPicker from 'expo-document-picker';
 import { normalizeDomainTags } from '../../shared/domainTags';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../../shared/domainProject';
-import { PORTFOLIO_COLUMNS, getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { getDomainSource, getDomainStatus, getRegistrarCounts, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
@@ -78,11 +77,10 @@ export const useNativePortfolio = (compact = false) => {
     const query = search.trim().toLowerCase();
     return context.domains
       .filter(domain => (registrar === `All` || domain.registrar === registrar) && [
+        domain.name,
         domain.title,
-        normalizeDomainProjectStatus(domain.projectStatus),
         domain.description,
-        ...PORTFOLIO_COLUMNS.map(column => getPortfolioColumnValue(domain, column.field)),
-      ].join(` `).toLowerCase().includes(query))
+      ].some(value => value?.toLowerCase().includes(query)))
       .sort((first, second) => sortByName ? first.name.localeCompare(second.name) : first.expiresAt.localeCompare(second.expiresAt));
   }, [context.domains, search, registrar, sortByName]);
   const visibleDomains = compact ? filteredDomains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : filteredDomains;

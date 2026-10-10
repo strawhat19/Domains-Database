@@ -1,6 +1,6 @@
 .domain-dialog.table-settings {
   display: flex;
-  max-width: 940px;
+  max-width: var(--modal-wide-width, 940px);
   overflow: hidden;
   flex-direction: column;
 }

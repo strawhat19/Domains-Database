@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { DragEvent } from 'react';
-import { GROUP_DRAG_TYPE, COLLECTION_DRAG_TYPE } from '../PortfolioRecords/dragData';
+import { GROUP_DRAG_TYPE, DOMAIN_DRAG_TYPE, COLLECTION_DRAG_TYPE, readDomainDrag } from '../PortfolioRecords/dragData';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
-export const useCollectionReorder = (enabled: boolean) => {
+export const useCollectionReorder = (enabled: boolean, { onAssigned, availableIds }: { onAssigned?: () => void; availableIds?: string[] } = {}) => {
   const preferences = usePortfolioPreferences();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [targetId, setTargetId] = useState<string | null | undefined>();
@@ -14,6 +14,7 @@ export const useCollectionReorder = (enabled: boolean) => {
   const handlers = (collectionId: string | null) => {
     const canDrop = (transfer: DataTransfer) => enabled && (
       transfer.types.includes(GROUP_DRAG_TYPE)
+      || Boolean(availableIds?.length) && transfer.types.includes(DOMAIN_DRAG_TYPE)
       || (Boolean(collectionId) && draggingId !== collectionId && transfer.types.includes(COLLECTION_DRAG_TYPE))
     );
     return {
@@ -46,8 +47,13 @@ export const useCollectionReorder = (enabled: boolean) => {
         event.stopPropagation();
         const groupId = event.dataTransfer.getData(GROUP_DRAG_TYPE);
         const sourceId = event.dataTransfer.getData(COLLECTION_DRAG_TYPE);
+        const domain = readDomainDrag(event.dataTransfer);
         if (groupId) preferences.assignGroupCollection(groupId, collectionId);
-        else if (sourceId && collectionId) {
+        else if (domain) {
+          const available = new Set(availableIds);
+          if (domain.domainIds.every(id => available.has(id))
+            && preferences.assignDomainsToCollection(domain.domainIds, collectionId)) onAssigned?.();
+        } else if (sourceId && collectionId) {
           const bounds = event.currentTarget.getBoundingClientRect();
           const placement = event.clientY > bounds.top + bounds.height / 2 ? `after` : `before`;
           preferences.moveCollection(sourceId, collectionId, placement);

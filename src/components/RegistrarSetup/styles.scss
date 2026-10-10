@@ -1,4 +1,4 @@
-.domain-dialog.registrar-setup-dialog { max-width: 700px; }
+.domain-dialog.registrar-setup-dialog { max-width: var(--modal-wide-width, 700px); }
 .registrar-setup-entry-actions { gap: 12px; display: flex; margin-bottom: 18px; align-items: flex-start; justify-content: flex-end; }
 .registrar-setup-manual-button { flex-shrink: 0; }
 .registrar-setup-tabs { gap: 8px; display: flex; margin: 0 0 20px; border-bottom: 1px solid var(--line); }
@@ -134,7 +134,7 @@
 .registrar-setup-review-note { margin-top: 17px; }
 
 @media (min-width: 900px) {
-  .domain-dialog.registrar-setup-dialog { max-width: 1040px; }
+  .domain-dialog.registrar-setup-dialog { max-width: var(--modal-wide-width, 1040px); }
 }
 
 @media (max-width: 560px) {

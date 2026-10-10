@@ -1,6 +1,6 @@
 import './styles.scss';
 import '../DomainEditor/styles.scss';
-import { X, Eye, Check, Folder, AppWindow, FolderPlus } from 'lucide-react';
+import { X, Eye, Check, Folder, Database, AppWindow, FolderPlus } from 'lucide-react';
 import StarButton from '../StarButton/index.web';
 import TagPicker from '../TagPicker/index.web';
 import ModalTitle from '../ModalTitle/index.web';
@@ -10,6 +10,7 @@ import SettingsField from '../SettingsField/index.web';
 import ProjectSelect from '../DomainEditor/ProjectSelect/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
+import DestinationChoices from '../DestinationChoices/index.web';
 import { getDomainPreviewLink } from '../../shared/domainLinks';
 import { formatCurrency } from '../../shared/domainUtils';
 import { DOMAIN_PRICE_FIELDS } from '../../shared/domainPricing';
@@ -25,21 +26,17 @@ import {
 
 interface DomainGroupSettingsProps {
   onClose: () => void;
+  convertToCollection?: boolean;
   group: CustomPortfolioGroup;
 }
 
-const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
-  const settings = useDomainGroupSettings(group, onClose);
+const DomainGroupSettings = ({ group, onClose, convertToCollection = false }: DomainGroupSettingsProps) => {
+  const settings = useDomainGroupSettings(group, onClose, convertToCollection);
   const previewLink = getDomainPreviewLink(settings.details);
   const hasCustomLogo = Boolean(settings.details.siteIconUrl?.trim());
   const SubmitIcon = settings.convertingToCollection ? FolderPlus : Check;
   const originalSiteIconUrl = getLinkSiteIconUrl(settings.details.productionLink ?? ``)
     || settings.details.previewLinks?.map(getLinkSiteIconUrl)?.find(Boolean) || ``;
-  const collectionLabel = settings.collectionId === MAIN_DATABASE_COLLECTION_OPTION
-    ? `Database`
-    : settings.convertingToCollection ? `Convert To Collection…`
-      : settings.creatingCollection ? `Add New Collection…`
-        : settings.collections.find(collection => collection.id === settings.collectionId)?.name ?? `Unavailable Collection`;
 
   return (
     <div
@@ -74,7 +71,7 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
                 placeholder={`e.g. Client sites`}
                 invalid={settings.invalidField === `name`}
                 focusRequest={settings.nameFocusRequest}
-                label={settings.details.isApp ? `App Name` : `Group Name`}
+                label={settings.convertingToCollection ? `Collection Name` : settings.details.isApp ? `App Name` : `Group Name`}
                 describedBy={`domain-group-settings-name-help${settings.error ? ` domain-group-settings-error` : ``}`}
               />
               {previewLink && (
@@ -92,7 +89,7 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
               )}
             </div>
             <span hidden id={`domain-group-settings-name-help`}>
-              {`Names must be unique, regardless of capitalization.`}
+              {`Names must be unique across collections and groups, regardless of capitalization.`}
             </span>
           </div>
           <div id={`domain-group-settings-header-actions-${group.id}`} className={`domain-group-settings-header-actions`}>
@@ -170,6 +167,7 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
                             compact
                             size={40}
                             domain={``}
+                            fallback={settings.details.isApp ? `app` : `group`}
                             iconUrl={settings.details.siteIconUrl}
                             id={`domain-group-settings-icon-${group.id}`}
                           />
@@ -192,6 +190,7 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
                               compact
                               size={40}
                               domain={``}
+                              fallback={settings.details.isApp ? `app` : `group`}
                               iconUrl={originalSiteIconUrl}
                               id={`domain-group-settings-original-icon-${group.id}`}
                             />
@@ -297,53 +296,29 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
                   </div>
                 ))}
                 <div id={`domain-group-settings-collection-field`} className={`domain-editor-field`}>
-                  <label id={`domain-group-settings-collection-label`} htmlFor={`domain-group-settings-collection`} className={`domain-editor-label`}>
+                  <span id={`domain-group-settings-collection-label`} className={`domain-editor-label`}>
                     {`Save to collection`}
-                  </label>
-                  <SettingsField
-                    value={collectionLabel}
-                    label={`Save to collection`}
-                    id={`domain-group-settings-collection-view`}
-                    invalid={settings.invalidField === `collection`}
-                  >
-                    <select
-                      value={settings.collectionId}
-                      ref={settings.collectionSelectRef}
-                      id={`domain-group-settings-collection`}
-                      aria-invalid={settings.invalidField === `collection` || settings.missingCollection}
-                      className={`domain-editor-input domain-editor-select domain-group-settings-collection-select`}
-                      onChange={event => settings.setCollectionId(event.target.value)}
-                      aria-describedby={`domain-group-settings-collection-help${settings.error ? ` domain-group-settings-error` : ``}`}
-                    >
-                      <option value={MAIN_DATABASE_COLLECTION_OPTION} id={`domain-group-settings-collection-main`} className={`domain-group-settings-collection-option`}>
-                        {`Database`}
-                      </option>
-                      {settings.collections.map(collection => (
-                        <option
-                          key={collection.id}
-                          value={collection.id}
-                          id={`domain-group-settings-collection-${collection.id}`}
-                          className={`domain-group-settings-collection-option`}
-                        >
-                          {collection.name}
-                        </option>
-                      ))}
-                      {settings.missingCollection && (
-                        <option disabled value={settings.collectionId} id={`domain-group-settings-collection-unavailable`} className={`domain-group-settings-collection-option`}>
-                          {`Unavailable Collection`}
-                        </option>
-                      )}
-                      <option value={CONVERT_COLLECTION_OPTION} id={`domain-group-settings-collection-convert`} className={`domain-group-settings-collection-option`}>
-                        {`Convert To Collection…`}
-                      </option>
-                      <option value={CREATE_COLLECTION_OPTION} id={`domain-group-settings-collection-create`} className={`domain-group-settings-collection-option`}>
-                        {`Add New Collection…`}
-                      </option>
-                    </select>
-                  </SettingsField>
+                  </span>
+                  <DestinationChoices
+                    value={settings.collectionId}
+                    disabled={settings.missingGroup}
+                    onChange={settings.setCollectionId}
+                    id={`domain-group-settings-collection`}
+                    choicesRef={settings.collectionChoicesRef}
+                    labelId={`domain-group-settings-collection-label`}
+                    invalid={settings.invalidField === `collection` || settings.missingCollection}
+                    describedBy={`domain-group-settings-collection-help${settings.error ? ` domain-group-settings-error` : ``}`}
+                    options={[
+                      { icon: Database, label: `Database`, id: MAIN_DATABASE_COLLECTION_OPTION },
+                      ...settings.collections.map(collection => ({ icon: Folder, id: collection.id, label: collection.name })),
+                      ...(settings.missingCollection ? [{ icon: Folder, disabled: true, id: settings.collectionId, label: `Unavailable Collection` }] : []),
+                      { icon: FolderPlus, id: CONVERT_COLLECTION_OPTION, label: `Convert To Collection` },
+                      { icon: FolderPlus, id: CREATE_COLLECTION_OPTION, label: `New Collection` },
+                    ]}
+                  />
                   <p id={`domain-group-settings-collection-help`} className={`domain-group-settings-help`}>
                     {settings.convertingToCollection
-                      ? `Creates a collection with an inner group using this group’s name. All domains stay in the inner group.`
+                      ? `Creates a collection and keeps all domains in the uniquely named inner group “${settings.convertedGroupName}”.`
                       : `The group and its domains appear together in the selected collection.`}
                   </p>
                 </div>
@@ -370,7 +345,7 @@ const DomainGroupSettings = ({ group, onClose }: DomainGroupSettingsProps) => {
                         aria-describedby={`domain-group-settings-collection-name-help${settings.error ? ` domain-group-settings-error` : ``}`}
                       />
                       <p id={`domain-group-settings-collection-name-help`} className={`domain-group-settings-help`}>
-                        {`Collection titles must be unique, regardless of capitalization.`}
+                        {`Names must be unique across collections and groups, regardless of capitalization.`}
                       </p>
                     </div>
                     <div id={`domain-group-settings-collection-description-field`} className={`domain-editor-field`}>

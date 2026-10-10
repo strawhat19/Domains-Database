@@ -9,10 +9,15 @@ interface DomainContextMenuTarget {
   domains: DomainRecord[];
 }
 
-export type DomainContextMenuAction = `view` | `details` | `group` | `close`;
+export type DomainContextMenuAction = `close` | `group` | `settings` | `assign-group` | `assign-collection`;
+
+const getMenuItems = (element: HTMLDivElement | null) => Array.from(
+  element?.querySelectorAll<HTMLButtonElement>(`[role='menuitem']:not([disabled])`) ?? [],
+).filter(item => !item.closest(`[hidden], [inert], [aria-hidden='true']`));
 
 export const useDomainContextMenu = (
-  onAction?: (action: DomainContextMenuAction, domains: DomainRecord[]) => void,
+  onAction?: (action: DomainContextMenuAction, domains: DomainRecord[], domain: DomainRecord, targetId?: string) => void,
+  disabled = false,
 ) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -25,16 +30,16 @@ export const useDomainContextMenu = (
     }
   }, []);
 
-  const openForRow = (
-    row: HTMLTableRowElement,
+  const openForTarget = (
+    target: HTMLElement,
     domain: DomainRecord,
     domains: DomainRecord[],
     point?: { x: number; y: number },
   ) => {
     const focused = document.activeElement;
-    previousFocusRef.current = focused instanceof HTMLElement && row.contains(focused)
-      ? focused : row.querySelector<HTMLInputElement>(`input[type='checkbox']`);
-    const bounds = row.getBoundingClientRect();
+    previousFocusRef.current = focused instanceof HTMLElement && target.contains(focused)
+      ? focused : target.querySelector<HTMLInputElement>(`input[type='checkbox']`) ?? (target.matches(`a[href], button, [tabindex]`) ? target : null);
+    const bounds = target.getBoundingClientRect();
     setMenu({
       domain,
       domains,
@@ -43,27 +48,38 @@ export const useDomainContextMenu = (
     });
   };
 
-  const open = (event: MouseEvent<HTMLTableRowElement>, domain: DomainRecord, domains: DomainRecord[]) => {
+  const open = (event: MouseEvent<HTMLElement>, domain: DomainRecord, domains: DomainRecord[]) => {
     event.preventDefault();
     event.stopPropagation();
     const keyboard = event.clientX === 0 && event.clientY === 0;
-    openForRow(event.currentTarget, domain, domains, keyboard ? undefined : { x: event.clientX, y: event.clientY });
+    openForTarget(event.currentTarget, domain, domains, keyboard ? undefined : { x: event.clientX, y: event.clientY });
   };
 
-  const activate = (action: DomainContextMenuAction) => {
-    if (!menu) return;
+  const activate = (action: DomainContextMenuAction, targetId?: string) => {
+    if (!menu || (disabled && action !== `close`) || ([`assign-group`, `assign-collection`].includes(action) && !targetId)) return;
     close(true);
-    onAction?.(action, menu.domains);
+    onAction?.(action, menu.domains, menu.domain, targetId);
   };
 
   useLayoutEffect(() => {
     const element = menuRef.current;
     if (!menu || !element) return;
-    const { width, height } = element.getBoundingClientRect();
-    element.style.left = `${Math.max(8, Math.min(menu.x, window.innerWidth - width - 8))}px`;
-    element.style.top = `${Math.max(8, Math.min(menu.y, window.innerHeight - height - 8))}px`;
-    element.querySelector<HTMLButtonElement>(`[role='menuitem']`)?.focus({ preventScroll: true });
-  }, [menu]);
+    const reposition = () => {
+      const { width, height } = element.getBoundingClientRect();
+      element.style.left = `${Math.max(8, Math.min(menu.x, window.innerWidth - width - 8))}px`;
+      element.style.top = `${Math.max(8, Math.min(menu.y, window.innerHeight - height - 8))}px`;
+    };
+    reposition();
+    getMenuItems(element)[0]?.focus({ preventScroll: true });
+    if (typeof ResizeObserver === `undefined`) return;
+    const observer = new ResizeObserver(reposition);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [menu, disabled]);
+
+  useEffect(() => {
+    if (disabled && menu) close(true);
+  }, [disabled, menu, close]);
 
   useEffect(() => {
     if (!menu) return;
@@ -96,15 +112,17 @@ export const useDomainContextMenu = (
   }, [menu, close]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (![ `End`, `Home`, `ArrowUp`, `ArrowDown` ].includes(event.key)) return;
+    if (![`End`, `Home`, `ArrowUp`, `ArrowDown`].includes(event.key)) return;
     event.preventDefault();
-    const items = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>(`[role='menuitem']`) ?? []);
+    event.stopPropagation();
+    const items = getMenuItems(menuRef.current);
     if (!items.length) return;
     const index = items.findIndex(item => item === document.activeElement);
     const next = event.key === `Home` ? 0 : event.key === `End` ? items.length - 1
       : (index + (event.key === `ArrowDown` ? 1 : -1) + items.length) % items.length;
     items[next]?.focus({ preventScroll: true });
+    items[next]?.scrollIntoView({ block: `nearest` });
   };
 
-  return { menu, open, close, menuRef, activate, onKeyDown, openFromKeyboard: openForRow };
+  return { menu, open, close, menuRef, disabled, activate, onKeyDown, openFromKeyboard: openForTarget };
 };

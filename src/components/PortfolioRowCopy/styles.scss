@@ -1,0 +1,38 @@
+.portfolio-row-copy-action {
+  border: 0;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  flex-shrink: 0;
+  min-width: 28px;
+  min-height: 28px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--muted);
+  place-items: center;
+  box-sizing: border-box;
+  background: transparent;
+  transition: background .2s ease, color .2s ease;
+
+  &:hover { color: var(--ink); background: var(--subtle); }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  &:disabled { opacity: .4; cursor: default; }
+  &[aria-busy='true'] { cursor: wait; }
+  &-copied { color: var(--success); }
+}
+
+.portfolio-row-copy-icon { display: block; pointer-events: none; }
+.portfolio-row-copy-status {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-row-copy-action { transition: none; }
+}
