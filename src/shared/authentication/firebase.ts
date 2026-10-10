@@ -4,15 +4,24 @@ import { User } from '../models/users/User';
 import { genID, isAppCollectionID } from '../common/ids';
 import { clearAccountData } from '../accountData/service';
 import { Roles, Types, Providers } from '../../types/types';
+import { createFirestoreCollection } from '../firebase/collection';
 import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
 import type { ProfileInput, PublicProfile } from '../models/users/User';
 import type { SignInInput, SignUpInput, AuthenticationResult } from './types';
 import { AccountDeactivatedError, AccountDataCleanupError, type AccountAction } from './types';
-import { doc, getDocs, collection, updateDoc, runTransaction } from 'firebase/firestore';
+import { doc, collection, updateDoc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { signOut as firebaseSignOut, onIdTokenChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile as updateFirebaseProfile, type User as FirebaseUser } from 'firebase/auth';
 
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
 let pendingAuthentication: Promise<AuthenticationResult> | null = null;
+let observedUid: string | null = null;
+let observingAuth = false;
+let stopUserSnapshot: (() => void) | null = null;
+let stopIdentitySnapshot: (() => void) | null = null;
+let cachedSession: { uid: string; result: AuthenticationResult } | null = null;
+let sessionFailure: { uid: string; error: Error } | null = null;
+let pendingSession: { uid: string; result: Promise<AuthenticationResult> } | null = null;
+const authListeners = new Set<() => void>();
 const avatarColors = [`#138b8b`, `#725d85`, `#966942`, `#416f9d`, `#957467`, `#59774c`];
 const normalizeEmail = (value: string) => {
   const email = value?.trim()?.toLowerCase();
@@ -40,6 +49,7 @@ const friendlyError = (failure: unknown): Error => {
     [`auth/wrong-password`]: `Email Or Password Is Incorrect`,
     [`auth/user-not-found`]: `Email Or Password Is Incorrect`,
     [`permission-denied`]: `Your Account Does Not Have Permission To Access This Data`,
+    [`resource-exhausted`]: `Firestore Quota Exceeded — Try Again Later`,
     [`unavailable`]: `Firebase Is Unavailable — Try Again Later`,
   };
   return new Error(messages[failure.code] || `Firebase Could Not Complete This Request (${failure.code})`);
@@ -64,6 +74,78 @@ const readUser = (record: Record<string, unknown>, authUser: FirebaseUser) => {
   return new User({ ...record, signedIn: true, ...(photoURL ? { photoURL, avatar: photoURL, imageURL: photoURL, image: photoURL } : {}) });
 };
 const sessionResult = (user: User): AuthenticationResult => ({ user, claimLegacy: false, expiresAt: Date.now() + SESSION_DURATION });
+const assertActor = (uid: string) => {
+  if (getFirebaseAuth().currentUser?.uid !== uid) throw new Error(`Your Account Changed — Try Again`);
+};
+const notifyAuthListeners = () => {
+  for (const listener of authListeners) listener();
+};
+const clearSession = () => {
+  stopUserSnapshot?.();
+  stopIdentitySnapshot?.();
+  stopUserSnapshot = null;
+  stopIdentitySnapshot = null;
+  cachedSession = null;
+  sessionFailure = null;
+  pendingSession = null;
+};
+const observeAuth = () => {
+  if (observingAuth) return;
+  observingAuth = true;
+  observedUid = getFirebaseAuth().currentUser?.uid ?? null;
+  onIdTokenChanged(getFirebaseAuth(), authUser => {
+    const uid = authUser?.uid ?? null;
+    if (uid !== observedUid) {
+      clearSession();
+      observedUid = uid;
+    }
+    else if (sessionFailure?.uid === uid) sessionFailure = null;
+    notifyAuthListeners();
+  });
+};
+const cacheSession = (authUser: FirebaseUser, result: AuthenticationResult) => {
+  assertActor(authUser.uid);
+  const sameAccount = cachedSession?.uid === authUser.uid && cachedSession.result.user.id === result.user.id;
+  cachedSession = { uid: authUser.uid, result };
+  sessionFailure = null;
+  if (sameAccount && stopUserSnapshot && stopIdentitySnapshot) return result;
+  stopUserSnapshot?.();
+  stopIdentitySnapshot?.();
+  const current = () => getFirebaseAuth().currentUser?.uid === authUser.uid && cachedSession?.result.user.id === result.user.id;
+  const fail = (failure: unknown) => {
+    if (!current()) return;
+    const error = friendlyError(failure);
+    clearSession();
+    sessionFailure = { error, uid: authUser.uid };
+    notifyAuthListeners();
+  };
+  stopIdentitySnapshot = onSnapshot(doc(getFirebaseDb(), `identities`, authUser.uid), { includeMetadataChanges: true }, snapshot => {
+    if (!current() || snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
+    const binding = snapshot.data();
+    if (!snapshot.exists() || binding?.id !== result.user.id || binding?.number !== result.user.number || binding?.firebase_uid !== authUser.uid) {
+      fail(new Error(`Saved Firebase Identity Does Not Match Your Account`));
+    }
+  }, fail);
+  stopUserSnapshot = onSnapshot(doc(getFirebaseDb(), `users`, result.user.id), { includeMetadataChanges: true }, snapshot => {
+    if (!current() || snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
+    try {
+      if (!snapshot.exists()) throw new Error(`Saved Firebase Account Could Not Be Found`);
+      const user = readUser(snapshot.data(), getFirebaseAuth().currentUser!);
+      if (user.id !== result.user.id || user.number !== result.user.number) throw new Error(`Saved Firebase Identity Does Not Match Your Account`);
+      if (!user.active) {
+        cachedSession = { uid: authUser.uid, result: { ...result, user } };
+        sessionFailure = { uid: authUser.uid, error: new AccountDeactivatedError() };
+        notifyAuthListeners();
+        return;
+      }
+      sessionFailure = null;
+      if (JSON.stringify(user.toRecord()) === JSON.stringify(cachedSession?.result.user.toRecord())) return;
+      cachedSession = { uid: authUser.uid, result: { ...result, user } };
+      notifyAuthListeners();
+    } catch (failure) { fail(failure); }
+  }, fail);
+  return result;
+};
 
 const ensureUser = async (authUser: FirebaseUser): Promise<{ user: User; newAccount: boolean }> => {
   if (getFirebaseAuth().currentUser?.uid !== authUser.uid) throw new Error(`Sign In To Access Your Saved Data`);
@@ -73,6 +155,7 @@ const ensureUser = async (authUser: FirebaseUser): Promise<{ user: User; newAcco
   const identityRef = doc(database, `identities`, authUser.uid);
   const counterRef = doc(database, `counters`, `users`);
   return runTransaction(database, async transaction => {
+    assertActor(authUser.uid);
     const identity = await transaction.get(identityRef);
     if (identity.exists()) {
       const binding = identity.data();
@@ -112,6 +195,7 @@ const ensureUser = async (authUser: FirebaseUser): Promise<{ user: User; newAcco
       provider: providerId === `google.com` ? Providers.Google : Providers.Firebase,
       color: { color, type: `dark`, name: `User ${number}` },
     });
+    assertActor(authUser.uid);
     transaction.set(counterRef, { number });
     transaction.set(doc(database, `users`, user.id), user.toRecord());
     transaction.set(identityRef, { id: user.id, number, firebase_uid: authUser.uid });
@@ -121,6 +205,7 @@ const ensureUser = async (authUser: FirebaseUser): Promise<{ user: User; newAcco
 
 const beginSession = async (authUser: FirebaseUser): Promise<AuthenticationResult> => {
   const account = await ensureUser(authUser);
+  assertActor(authUser.uid);
   let user = account.user;
   if (!user.active) throw new AccountDeactivatedError();
   const now = new Date().toISOString();
@@ -133,8 +218,10 @@ const beginSession = async (authUser: FirebaseUser): Promise<AuthenticationResul
     lastSignInTime: authUser.metadata.lastSignInTime || now,
   };
   await updateDoc(doc(getFirebaseDb(), `users`, user.id), changes);
+  assertActor(authUser.uid);
   user = new User({ ...user, ...changes, signedIn: true });
-  return { ...sessionResult(user), newAccount: account.newAccount };
+  observeAuth();
+  return cacheSession(authUser, { ...sessionResult(user), newAccount: account.newAccount });
 };
 const authenticateUser = async (authUser: FirebaseUser, name?: string): Promise<AuthenticationResult> => {
   try {
@@ -173,23 +260,48 @@ export const restoreSession = (): Promise<AuthenticationResult | null> => runOpe
   if (pendingAuthentication) await pendingAuthentication.catch(() => undefined);
   const auth = getFirebaseAuth();
   await auth.authStateReady();
-  if (!auth.currentUser) return null;
-  const { user } = await ensureUser(auth.currentUser);
-  if (!user.active) throw new AccountDeactivatedError();
-  return sessionResult(user);
+  observeAuth();
+  const authUser = auth.currentUser;
+  if (!authUser) { clearSession(); return null; }
+  if (sessionFailure?.uid === authUser.uid) throw sessionFailure.error;
+  if (cachedSession?.uid === authUser.uid) {
+    if (!cachedSession.result.user.active) throw new AccountDeactivatedError();
+    if (cachedSession.result.expiresAt <= Date.now()) cachedSession.result = { ...cachedSession.result, expiresAt: Date.now() + SESSION_DURATION };
+    return cachedSession.result;
+  }
+  if (pendingSession?.uid === authUser.uid) return pendingSession.result;
+  const result = (async () => {
+    const { user } = await ensureUser(authUser);
+    assertActor(authUser.uid);
+    if (!user.active) throw new AccountDeactivatedError();
+    return cacheSession(authUser, sessionResult(user));
+  })();
+  pendingSession = { result, uid: authUser.uid };
+  try { return await result; }
+  finally { if (pendingSession?.result === result) pendingSession = null; }
 });
-export const signOut = (): Promise<void> => runOperation(() => firebaseSignOut(getFirebaseAuth()));
-export const subscribeAuthState = (listener: () => void) => onIdTokenChanged(getFirebaseAuth(), () => listener());
+export const signOut = (): Promise<void> => runOperation(async () => {
+  await firebaseSignOut(getFirebaseAuth());
+  clearSession();
+});
+export const subscribeAuthState = (listener: () => void) => {
+  observeAuth();
+  authListeners.add(listener);
+  return () => { authListeners.delete(listener); };
+};
 export const completeLegacyClaim = async (_userId: string): Promise<void> => { throw new Error(`Local Data Must Be Imported Explicitly Into Your Firebase Account`); };
 export const manageAccount = (action: AccountAction, expectedUserId: string): Promise<null> => runOperation(async () => {
   if (![`deactivate`, `delete-data`, `delete-data-connections`, `delete-account`].includes(action)) throw new Error(`Choose A Valid Account Action`);
   if (action === `delete-account` || action === `deactivate`) throw new Error(`Cloud Account Deletion And Deactivation Are Not Connected Yet`);
   const session = await restoreSession();
   if (!session?.user || !expectedUserId || session.user.id !== expectedUserId) throw new Error(`Sign In To Manage Your Account`);
+  const uid = session.user.firebase_uid ?? ``;
   try {
     await clearAccountData(expectedUserId, action === `delete-data-connections`);
+    assertActor(uid);
     const now = new Date().toISOString();
     await updateDoc(doc(getFirebaseDb(), `users`, expectedUserId), { description: ``, publicDomains: false, profilePrivacy: `private`, updated: now, lastUpdated: now });
+    assertActor(uid);
     await firebaseSignOut(getFirebaseAuth());
     return null;
   } catch (failure) {
@@ -197,12 +309,32 @@ export const manageAccount = (action: AccountAction, expectedUserId: string): Pr
   }
 });
 
-export const getUsers = (): Promise<User[]> => runOperation(async () => {
+const requireOwner = async () => {
   const session = await restoreSession();
-  if (session?.user.role !== Roles.Owner) throw new Error(`Owner Access Is Required`);
-  const users = await getDocs(collection(getFirebaseDb(), `users`));
-  return users.docs.map(record => new User({ ...record.data(), signedIn: record.id === session.user.id }));
-});
+  if (!session?.user.active || session.user.role !== Roles.Owner) throw new Error(`Owner Access Is Required`);
+  assertActor(session.user.firebase_uid ?? ``);
+  return session.user.firebase_uid!;
+};
+export const assertOwnerSession = (uid: string) => {
+  assertActor(uid);
+  if (sessionFailure || cachedSession?.uid !== uid || !cachedSession.result.user.active || cachedSession.result.user.role !== Roles.Owner) {
+    throw new Error(`Owner Access Is Required`);
+  }
+};
+const usersCollection = createFirestoreCollection(
+  () => collection(getFirebaseDb(), `users`),
+  snapshot => snapshot.docs.map(record => {
+    const saved = record.data();
+    if (saved.id !== record.id || !isAppCollectionID(saved.id, Types.User)) throw new Error(`Saved User Data Could Not Be Read`);
+    return new User({ ...saved, signedIn: record.id === cachedSession?.result.user.id });
+  }),
+  requireOwner,
+  assertOwnerSession,
+  subscribeAuthState,
+  friendlyError,
+);
+export const getUsers = (): Promise<User[]> => runOperation(usersCollection.get);
+export const subscribeUsers = usersCollection.subscribe;
 export const getPublicProfiles = async (): Promise<PublicProfile[]> => [];
 
 export const updateProfile = (input: ProfileInput, expectedUserId?: string): Promise<User> => runOperation(async () => {
@@ -220,8 +352,13 @@ export const updateProfile = (input: ProfileInput, expectedUserId?: string): Pro
   if (input.publicDomains !== undefined && typeof input.publicDomains !== `boolean`) throw new Error(`Choose Whether To Share Domains`);
   const now = new Date().toISOString();
   const changes = { name, description, profilePrivacy, displayName: name, updated: now, lastUpdated: now, publicDomains: input.publicDomains ?? user.publicDomains };
+  assertActor(user.firebase_uid ?? ``);
   await updateDoc(doc(getFirebaseDb(), `users`, user.id), changes);
-  return new User({ ...user, ...changes, signedIn: true });
+  assertActor(user.firebase_uid ?? ``);
+  const updated = new User({ ...user, ...changes, signedIn: true });
+  if (cachedSession?.result.user.id === user.id) cachedSession = { ...cachedSession, result: { ...cachedSession.result, user: updated } };
+  notifyAuthListeners();
+  return updated;
 });
 
 export const hasSavedAccount = async (): Promise<boolean> => {

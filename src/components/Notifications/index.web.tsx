@@ -64,11 +64,15 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
           ) : notification ? (
             <article id={`${suffix}-body`} className={`notifications-detail`} aria-labelledby={`${suffix}-title`}>
               <p id={`${suffix}-text`} className={`notifications-detail-text`}>
-                {notification.before}
-                <Link href={routes.signup.href} asChild>
-                  <RouterAnchor id={`${suffix}-sign-up`} className={`notifications-inline-link`}>{`sign up`}</RouterAnchor>
-                </Link>
-                {notification.after}
+                {notification.message ?? (
+                  <>
+                    {notification.before}
+                    <Link href={routes.signup.href} asChild>
+                      <RouterAnchor id={`${suffix}-sign-up`} className={`notifications-inline-link`}>{`sign up`}</RouterAnchor>
+                    </Link>
+                    {notification.after}
+                  </>
+                )}
               </p>
             </article>
           ) : state.missing ? (

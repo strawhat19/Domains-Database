@@ -5,7 +5,7 @@ import { Domain } from '../shared/models/domains/Domain';
 import type { WebsiteInsights } from '../shared/websiteInsights/types';
 import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
 import { createSampleDomains } from '../shared/sampleDomains';
-import { readStorage, writeStorage, createOperationQueue } from '../shared/common/storage';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../shared/common/storage';
 import { subscribeAccountDataReset } from '../shared/accountData/state';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { accountStorageKey } from '../shared/authentication/userScope';
@@ -358,6 +358,22 @@ export const api = {
     }
   }),
   getDomains: () => serialize(async () => copyDomains((await readSnapshot()).domains)),
+  subscribeDomains: (listener: (domains: DomainRecord[]) => void, onError?: (error: Error) => void) => {
+    const scope = getScope();
+    const uid = getScopeUid();
+    return subscribeStorage(getStorageKey(), saved => {
+      if (scope !== getScope()) return;
+      try {
+        const snapshot = saved === null
+          ? { version: 1 as const, domains: [], nextNumber: 1 }
+          : restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot, uid);
+        snapshots.set(scope, snapshot);
+        listener(copyDomains(snapshot.domains));
+      } catch (reason) {
+        onError?.(reason instanceof Error ? reason : new Error(`Saved Portfolio Data Could Not Be Read`));
+      }
+    }, onError);
+  },
   getPublicDomainSummaries: (userIds: string[]) => serialize(() => getPublicDomainSummaries(userIds)),
   getSharedDomainSummaries: (userId: string) => serialize(() => getPublicDomainSummaries([userId])),
   saveWebsiteInsights: (id: string, name: string, insights: WebsiteInsights, expectedUserId: string): Promise<void> => serializePortfolioMutation(async () => {

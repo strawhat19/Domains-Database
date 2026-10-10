@@ -69,6 +69,16 @@ service cloud.firestore {
       allow get: if true;
       allow create, update: if newSubmissionCounter();
     }
+    match /counters/notifications {
+      allow get: if true;
+      allow write: if isOwner();
+    }
+    match /notifications/{notificationId} {
+      allow read: if resource.data.active == true;
+      allow create, update: if isOwner() && recordIdentity(notificationId, 'Notification')
+        && request.resource.data.type == 'Notification' && request.resource.data.uid == '';
+      allow delete: if isOwner();
+    }
     match /formSubmissions/{submissionId} {
       allow read: if isOwner();
       allow create: if submissionValues() && recordIdentity(submissionId, 'FormSubmission')

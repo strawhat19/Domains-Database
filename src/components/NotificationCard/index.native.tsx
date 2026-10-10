@@ -78,9 +78,7 @@ const NotificationCard = ({ index = 0, notification, prefix = `header`, onNaviga
             style={styles.text}
             {...elementProps(`native-${prefix}-notification-text`, suffix)}
           >
-            {notification.before}
-            {`sign up`}
-            {notification.after}
+            {notification.message ?? `${notification.before}sign up${notification.after}`}
           </Text>
         </View>
       </Pressable>

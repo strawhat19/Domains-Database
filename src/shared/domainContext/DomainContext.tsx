@@ -67,14 +67,27 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
     setNotice(``);
     if (!domainEnabled) return () => { active.current = false; ++revision.current; };
     const isCurrent = () => mounted && active.current && run === revision.current;
+    let snapshotRevision = 0;
+    const receive = (records: DomainRecord[]) => {
+      if (!isCurrent()) return;
+      setDomains(records);
+      setLoading(false);
+      setError(``);
+    };
+    const fail = (reason: unknown) => {
+      if (!isCurrent()) return;
+      setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio`);
+      setLoading(false);
+    };
+    const unsubscribe = api.subscribeDomains(records => {
+      snapshotRevision += 1;
+      receive(records);
+    }, fail);
+    const requestRevision = snapshotRevision;
     api.getDomains().then(records => {
-      if (isCurrent()) setDomains(records);
-    }).catch(reason => {
-      if (isCurrent()) setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio`);
-    }).finally(() => {
-      if (isCurrent()) setLoading(false);
-    });
-    return () => { mounted = false; active.current = false; ++revision.current; };
+      if (requestRevision === snapshotRevision) receive(records);
+    }).catch(fail);
+    return () => { mounted = false; active.current = false; ++revision.current; unsubscribe(); };
   }, [domainEnabled]);
 
   const refreshDomains = useCallback(async () => {

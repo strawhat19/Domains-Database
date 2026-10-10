@@ -1,10 +1,11 @@
 import { authAPI } from '../../api/auth';
+import { firebaseEnabled } from '../firebase/config';
 import { connectionsAPI } from '../../api/connections';
-import { REGISTRARS, persistenceEnabled } from '../config';
+import { REGISTRARS, useLocalStorage, persistenceEnabled } from '../config';
 import { SYNC_POLICY_STORAGE_KEY } from '../accountData/keys';
 import type { ConnectionProvider } from '../connections/types';
 import { accountStorageKey } from '../authentication/userScope';
-import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import type { RegistrarDomain, AccountSyncStatuses, ConnectionSyncStatus, ConnectionSyncStatuses } from './types';
 
 export const MANUAL_SYNC_LIMIT = 3;
@@ -33,7 +34,10 @@ export interface ManualSyncReservation {
 const providers: ConnectionProvider[] = [`vercel`, `godaddy`, `porkbun`, `namesilo`, `hostinger`, `namecheap`, `squarespace`];
 const listeners = new Set<(userId: string) => void>();
 const serialize = createOperationQueue(SYNC_POLICY_STORAGE_KEY);
-export const subscribeSyncPolicy = (listener: (userId: string) => void) => {
+export const subscribeSyncPolicy = (listener: (userId: string) => void, userId?: string, onError?: (error: Error) => void) => {
+  if (userId && firebaseEnabled && !useLocalStorage) {
+    return subscribeStorage(accountStorageKey(SYNC_POLICY_STORAGE_KEY, userId), () => listener(userId), onError);
+  }
   listeners.add(listener);
   return () => { listeners.delete(listener); };
 };

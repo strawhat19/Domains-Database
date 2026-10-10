@@ -6,7 +6,7 @@ import { createOperationQueue } from '../common/storage';
 import { subscribeAccountDataReset } from '../accountData/state';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { normalizeGroupDetails, restoreGroupDetails } from './details';
-import { readPortfolioPreferences, savePortfolioPreferences } from './storage';
+import { savePortfolioPreferences, subscribePortfolioPreferences } from './storage';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../domainProject';
 import type { PortfolioPreferences, PortfolioGroupDetails, CustomPortfolioCollection, PortfolioPreferencesContextValue } from './types';
@@ -123,6 +123,9 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const active = useRef(enabled);
   if (!enabled) active.current = false;
   const changed = useRef(false);
+  const mutationRevision = useRef(0);
+  const pendingSnapshot = useRef<string | null | undefined>(undefined);
+  const replaySnapshot = useRef<(() => void) | null>(null);
   const preferenceRef = useRef(DEFAULT_PREFERENCES);
   const loadedUserId = useRef<string | null>(null);
   const storageQueue = useRef(createOperationQueue()).current;
@@ -147,42 +150,78 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     setError(``);
     storageReady.current = false;
     changed.current = false;
+    pendingSnapshot.current = undefined;
     loadedUserId.current = null;
     preferenceRef.current = DEFAULT_PREFERENCES;
     setPreferences(DEFAULT_PREFERENCES);
     if (!enabled) return () => { active.current = false; ++revision.current; };
     const isCurrent = () => mounted && active.current && run === revision.current;
-    readPortfolioPreferences(capturedUserId).then(saved => {
-      if (!isCurrent() || changed.current) return;
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const restored = restorePreferences(parsed);
-        if ((Array.isArray(parsed.collections) && restored.collections.length !== parsed.collections.length)
-          || (Array.isArray(parsed.customGroups) && restored.customGroups.length !== parsed.customGroups.length)) throw new Error(`Saved Portfolio Preferences Could Not Be Read`);
+    const fail = (reason: unknown) => {
+      if (!isCurrent()) return;
+      storageReady.current = false;
+      loadedUserId.current = capturedUserId;
+      setReady(true);
+      setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio Preferences`);
+    };
+    const subscribe = () => subscribePortfolioPreferences(capturedUserId, saved => {
+      if (!isCurrent()) return false;
+      if (changed.current) {
+        pendingSnapshot.current = saved;
+        return false;
+      }
+      pendingSnapshot.current = undefined;
+      if (storageReady.current && saved === JSON.stringify(preferenceRef.current)) return;
+      try {
+        let restored = DEFAULT_PREFERENCES;
+        if (saved !== null) {
+          const parsed = JSON.parse(saved);
+          restored = restorePreferences(parsed);
+          if ((Array.isArray(parsed.collections) && restored.collections.length !== parsed.collections.length)
+            || (Array.isArray(parsed.customGroups) && restored.customGroups.length !== parsed.customGroups.length)) throw new Error(`Saved Portfolio Preferences Could Not Be Read`);
+        }
         preferenceRef.current = restored;
         setPreferences(restored);
+        storageReady.current = true;
+        loadedUserId.current = capturedUserId;
+        setError(``);
+        setReady(true);
+      } catch (reason) {
+        fail(reason);
+        return false;
       }
-      storageReady.current = true;
-    }).catch(reason => {
-      if (isCurrent()) {
-        active.current = false;
-        setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio Preferences`);
-      }
-    }).finally(() => {
-      if (mounted && enabled && run === revision.current) { loadedUserId.current = capturedUserId; setReady(true); }
-    });
-    return () => { mounted = false; active.current = false; ++revision.current; };
+    }, fail);
+    let unsubscribe = subscribe();
+    const replay = () => {
+      if (!isCurrent()) return;
+      unsubscribe();
+      unsubscribe = subscribe();
+    };
+    replaySnapshot.current = replay;
+    return () => {
+      mounted = false;
+      active.current = false;
+      ++revision.current;
+      if (replaySnapshot.current === replay) replaySnapshot.current = null;
+      unsubscribe();
+    };
   }, [enabled, userId]);
 
   useEffect(() => {
     if (!enabled || !ready || !storageReady.current || !changed.current || loadedUserId.current !== userId) return;
     const run = revision.current;
+    const mutation = mutationRevision.current;
     const capturedUserId = userId;
     const capturedPreferences = preferences;
     void storageQueue(() => active.current && run === revision.current
       ? savePortfolioPreferences(capturedPreferences, capturedUserId)
       : Promise.resolve()).then(() => {
-      if (active.current && run === revision.current) setError(``);
+      if (active.current && run === revision.current) {
+        if (mutation === mutationRevision.current) {
+          changed.current = false;
+          if (pendingSnapshot.current !== undefined) replaySnapshot.current?.();
+        }
+        setError(``);
+      }
     }).catch(reason => {
       if (active.current && run === revision.current) setError(reason instanceof Error ? reason.message : `Could Not Save Portfolio Preferences`);
     });
@@ -191,6 +230,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const change = useCallback((update: (current: PortfolioPreferences) => PortfolioPreferences) => {
     if (!enabled || !active.current || !storageReady.current) return;
     changed.current = true;
+    ++mutationRevision.current;
     const next = update(preferenceRef.current);
     preferenceRef.current = next;
     setPreferences(next);

@@ -1,6 +1,7 @@
 export interface HeaderNotification {
   id: string;
   title: string;
+  message?: string;
   before: string;
   after: string;
   icon: `Info` | `Sparkles`;

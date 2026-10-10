@@ -1,11 +1,17 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { domainAuctionAPI } from '../../api/domainAuction';
 import { persistenceEnabled } from '../../shared/config';
+import { useAuth } from '../../shared/authContext/useAuth';
 import { defaultAuctionFilters } from '../../shared/domainAuction/values';
 import type { AuctionRecord, AuctionFilters } from '../../shared/domainAuction/types';
 import { filterAuctionRecords, getAuctionFilterCount } from '../../shared/domainAuction/filter';
 
 export const useDomainAuction = () => {
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.id ?? null;
+  const actorKey = authLoading ? `pending` : userId ?? `guest`;
+  const currentActor = useRef(actorKey);
+  currentActor.current = actorKey;
   const request = useRef(0);
   const [error, setError] = useState(``);
   const [notice, setNotice] = useState(``);
@@ -21,20 +27,35 @@ export const useDomainAuction = () => {
   const [revision, setRevision] = useState(0);
 
   useEffect(() => {
+    setBusy(false);
+    setNotice(``);
+  }, [actorKey]);
+
+  useEffect(() => {
     const current = ++request.current;
     setLoading(true);
     setError(``);
     setRecords([]);
-    const operation = preview ? domainAuctionAPI.getPreview() : domainAuctionAPI.getListings();
-    void operation.then(result => {
-      if (request.current === current) setRecords(result);
-    }).catch((reason: unknown) => {
-      if (request.current === current) setError(reason instanceof Error ? reason.message : `Auction Data Could Not Be Loaded`);
-    }).finally(() => {
-      if (request.current === current) setLoading(false);
-    });
-    return () => { ++request.current; };
-  }, [preview, revision]);
+    if (authLoading && !preview) return () => { ++request.current; };
+    const isCurrent = () => request.current === current && currentActor.current === actorKey;
+    const accept = (result: AuctionRecord[]) => {
+      if (!isCurrent()) return false;
+      setRecords(result);
+      setError(``);
+      setLoading(false);
+    };
+    const fail = (reason: unknown) => {
+      if (!isCurrent()) return;
+      setLoading(false);
+      setError(reason instanceof Error ? reason.message : `Auction Data Could Not Be Loaded`);
+    };
+    if (preview) {
+      void domainAuctionAPI.getPreview().then(accept).catch(fail);
+      return () => { ++request.current; };
+    }
+    const unsubscribe = domainAuctionAPI.subscribeListings(userId, accept, fail);
+    return () => { ++request.current; unsubscribe(); };
+  }, [userId, preview, revision, actorKey, authLoading]);
 
   const matchingRecords = useMemo(() => filterAuctionRecords(records, filters), [records, filters]);
   const pageSize = 25;
@@ -50,33 +71,36 @@ export const useDomainAuction = () => {
   const resetFilters = () => setFilters({ ...defaultAuctionFilters });
   const importInventory = async (text = importText) => {
     if (busy || loading) return;
+    const capturedActor = actorKey;
     setBusy(true);
     setError(``);
     setNotice(``);
     try {
       const result = await domainAuctionAPI.importInventory(text);
+      if (currentActor.current !== capturedActor) return;
       setPreview(false);
       setRecords(result.records);
       setImportText(``);
       setImportOpen(false);
       resetFilters();
-      setRevision(current => current + 1);
       setNotice(`${result.importedCount} Auction Domain(s) Imported${result.skippedCount ? ` · ${result.skippedCount} Unsupported Record(s) Skipped` : ``}`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : `Auction Import Failed`);
-    } finally { setBusy(false); }
+      if (currentActor.current === capturedActor) setError(reason instanceof Error ? reason.message : `Auction Import Failed`);
+    } finally { if (currentActor.current === capturedActor) setBusy(false); }
   };
   const clearInventory = async () => {
     if (busy || loading || preview) return;
+    const capturedActor = actorKey;
     setBusy(true);
     setError(``);
     try {
       await domainAuctionAPI.clearInventory();
+      if (currentActor.current !== capturedActor) return;
       setRecords([]);
       setNotice(`Imported Auction Inventory Cleared`);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : `Auction Inventory Could Not Be Cleared`);
-    } finally { setBusy(false); }
+      if (currentActor.current === capturedActor) setError(reason instanceof Error ? reason.message : `Auction Inventory Could Not Be Cleared`);
+    } finally { if (currentActor.current === capturedActor) setBusy(false); }
   };
 
   return {

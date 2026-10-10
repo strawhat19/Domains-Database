@@ -12,23 +12,29 @@ import { useDomains } from '../../shared/domainContext/useDomains';
 import { getDomainStatus, formatCurrency } from '../../shared/domainUtils';
 
 export const useAccountPage = (page: `profile` | `connections` | `dashboard`) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { domains, loaded: domainsLoaded, loading: domainsLoading } = useDomains();
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const [error, setError] = useState(``);
-  const [users, setUsers] = useState<User[]>([]);
+  const [userRecords, setUserRecords] = useState<{ actor: string; users: User[] }>({ actor: ``, users: [] });
   const [loading, setLoading] = useState(page === `dashboard`);
+  const actor = !authLoading && user?.active && user.role === Roles.Owner ? user.id : ``;
+  const users = userRecords.actor === actor ? userRecords.users : [];
   useEffect(() => {
-    if (page !== `dashboard` || user?.role !== Roles.Owner) return;
+    setUserRecords({ actor, users: [] });
+    setError(``);
+    if (page !== `dashboard` || !actor) { setLoading(false); return; }
     let active = true;
     setLoading(true);
-    authAPI.getUsers().then(records => { if (active) setUsers(records); })
-      .catch(reason => { if (active) setError(reason instanceof Error ? reason.message : `Could Not Load User(s)`); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [page, user?.id, user?.role]);
+    const unsubscribe = authAPI.subscribeUsers(records => {
+      if (active) { setUserRecords({ actor, users: records }); setError(``); setLoading(false); }
+    }, reason => {
+      if (active) { setUserRecords({ actor, users: [] }); setError(reason.message); setLoading(false); }
+    });
+    return () => { active = false; unsubscribe(); };
+  }, [page, actor]);
   const stats = [
     { id: `accounts`, label: firebaseEnabled && !useLocalStorage ? `Accounts` : `Local accounts`, value: users.length },
     { id: `domains`, label: `Your domains`, value: domainsLoaded ? domains.length : `—` },

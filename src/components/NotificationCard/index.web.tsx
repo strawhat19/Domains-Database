@@ -39,9 +39,7 @@ const NotificationCard = ({ notification, index = 0, prefix = `header`, onNaviga
               id={`${prefix}-notification-text-${suffix}`}
               className={`header-notification-text`}
             >
-              {notification.before}
-              {`sign up`}
-              {notification.after}
+              {notification.message ?? `${notification.before}sign up${notification.after}`}
             </p>
           </>
         ) : (

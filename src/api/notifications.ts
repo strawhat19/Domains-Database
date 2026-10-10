@@ -3,6 +3,7 @@ import { sampleNotifications } from '../shared/sampleNotifications';
 import { createCollection } from '../shared/common/collection';
 import { NOTIFICATIONS_STORAGE_KEY } from '../shared/accountData/keys';
 import { Notification } from '../shared/models/notifications/Notification';
+import { subscribeAnnouncements, populateInitialAnnouncements } from '../shared/notifications/announcements';
 
 const collection = createCollection(NOTIFICATIONS_STORAGE_KEY, Notification, async () => {
   const session = await authAPI.restoreSession();
@@ -11,7 +12,10 @@ const collection = createCollection(NOTIFICATIONS_STORAGE_KEY, Notification, asy
 });
 
 export const notificationsAPI = {
+  subscribeAnnouncements,
+  populateInitialAnnouncements,
   getNotifications: collection.get,
+  subscribeNotifications: collection.subscribe,
   createNotification: collection.create,
   updateNotification: collection.update,
   deleteNotification: collection.remove,

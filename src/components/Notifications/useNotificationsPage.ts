@@ -14,7 +14,7 @@ export const useNotificationsPage = (detail = false) => {
   const missing = detail && !loading && !error && !notification;
   const title = detail ? notification?.title ?? (missing ? `Notification Not Found` : `Notification`) : `Notifications`;
   const description = notification
-    ? `${notification.before}sign up${notification.after}`
+    ? notification.message ?? `${notification.before}sign up${notification.after}`
     : `Read announcements and updates from Domains Database.`;
 
   return {

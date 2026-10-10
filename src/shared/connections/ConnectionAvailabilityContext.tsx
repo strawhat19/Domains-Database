@@ -1,5 +1,7 @@
 import { AppState } from 'react-native';
+import { useLocalStorage } from '../config';
 import { connectionFields } from './types';
+import { firebaseEnabled } from '../firebase/config';
 import { connectionInputValue } from './inputs';
 import type { ConnectionSnapshot } from './types';
 import { CONNECTIONS_STORAGE_KEY } from './service';
@@ -157,12 +159,19 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
     };
 
     refresh();
+    const fail = (failure: Error) => {
+      if (!active || currentActor.current !== actorKey) return;
+      setState(current => ({
+        ...current, actorKey, error: failure.message, loading: false,
+        hasConnections: false, verifiedConnectionCount: 0, connectionsCountLoading: false,
+      }));
+    };
     const unsubscribe = connectionsAPI.subscribeConnections(changedUserId => {
-      if (changedUserId === userId) refresh(true);
-    });
+      if (changedUserId === userId) refresh();
+    }, userId, fail);
     const unsubscribePolicy = subscribeSyncPolicy(changedUserId => {
       if (changedUserId === userId) refresh();
-    });
+    }, userId, fail);
     const resume = () => refresh();
     const storageKey = accountStorageKey(CONNECTIONS_STORAGE_KEY, userId);
     const policyKey = accountStorageKey(SYNC_POLICY_STORAGE_KEY, userId);
@@ -170,8 +179,9 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
       if (event.key === null || event.key === storageKey) refresh(true);
       else if (event.key === policyKey) refresh();
     };
-    const subscription = AppState.addEventListener(`change`, status => { if (status === `active`) resume(); });
-    if (typeof window !== `undefined`) {
+    const cloud = firebaseEnabled && !useLocalStorage;
+    const subscription = cloud ? null : AppState.addEventListener(`change`, status => { if (status === `active`) resume(); });
+    if (!cloud && typeof window !== `undefined`) {
       window.addEventListener(`focus`, resume);
       window.addEventListener(`storage`, storageChanged);
     }
@@ -179,8 +189,8 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
       active = false;
       unsubscribe();
       unsubscribePolicy();
-      subscription.remove();
-      if (typeof window !== `undefined`) {
+      subscription?.remove();
+      if (!cloud && typeof window !== `undefined`) {
         window.removeEventListener(`focus`, resume);
         window.removeEventListener(`storage`, storageChanged);
       }

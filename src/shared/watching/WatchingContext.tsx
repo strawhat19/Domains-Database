@@ -1,9 +1,6 @@
-import { AppState } from 'react-native';
 import type { PropsWithChildren } from 'react';
-import { WATCHING_STORAGE_KEY } from './service';
 import { watchingAPI } from '../../api/watching';
 import { useAuth } from '../authContext/useAuth';
-import { accountStorageKey } from '../authentication/userScope';
 import type { WatchedDomain } from '../models/watching/WatchedDomain';
 import type { DomainSearchDomainResult } from '../domainSearch/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -63,28 +60,27 @@ export const WatchingProvider = ({ children, enabled = true }: PropsWithChildren
     setError(``);
     setNotice(``);
     setLoading(Boolean(userId));
-    if (userId) void refresh().catch(() => undefined);
-    return () => { mounted.current = false; ++request.current; };
-  }, [userId, refresh]);
-
-  useEffect(() => {
-    if (!userId) return;
-    const resume = () => { void refresh().catch(() => undefined); };
-    const storageKey = accountStorageKey(WATCHING_STORAGE_KEY, userId);
-    const changed = (event: StorageEvent) => { if (event.key === null || event.key === storageKey) resume(); };
-    const subscription = AppState.addEventListener(`change`, state => { if (state === `active`) resume(); });
-    if (typeof window !== `undefined`) {
-      window.addEventListener(`focus`, resume);
-      window.addEventListener(`storage`, changed);
-    }
+    if (!userId) return () => { mounted.current = false; ++request.current; };
+    const isCurrent = () => mounted.current && currentUserId.current === userId;
+    const unsubscribe = watchingAPI.subscribeWatching(userId, saved => {
+      if (!isCurrent()) return false;
+      ++request.current;
+      loadedUserId.current = userId;
+      setRecords(saved);
+      setLoading(false);
+      setError(``);
+    }, failure => {
+      if (!isCurrent()) return;
+      loadedUserId.current = userId;
+      setLoading(false);
+      setError(failure.message);
+    });
     return () => {
-      subscription.remove();
-      if (typeof window !== `undefined`) {
-        window.removeEventListener(`focus`, resume);
-        window.removeEventListener(`storage`, changed);
-      }
+      mounted.current = false;
+      ++request.current;
+      unsubscribe();
     };
-  }, [userId, refresh]);
+  }, [userId]);
 
   const mutate = useCallback(async (operation: () => Promise<unknown>, message: string, sync = false) => {
     if (!userId) throw new Error(`Sign In To Watch Domains`);

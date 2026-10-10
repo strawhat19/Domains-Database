@@ -4,12 +4,14 @@ import { FirebaseError } from 'firebase/app';
 import { Roles, Types } from '../../types/types';
 import { firebaseEnabled } from '../firebase/config';
 import { getAppCollectionIDNumber } from '../common/ids';
-import { restoreSession } from '../authentication/service';
+import { assertOwnerSession } from '../authentication/firebase';
+import { createFirestoreCollection } from '../firebase/collection';
+import { restoreSession, subscribeAuthState } from '../authentication/service';
 import { FormSubmission } from '../models/forms/FormSubmission';
 import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
 import type { ContactSubmissionInput, SubmissionStatus } from './types';
-import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
-import { doc, getDocs, collection, runTransaction, serverTimestamp, Timestamp, type DocumentData } from 'firebase/firestore';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
+import { doc, collection, runTransaction, serverTimestamp, Timestamp, type DocumentData } from 'firebase/firestore';
 
 interface SubmissionSnapshot {
   version: 1;
@@ -60,9 +62,7 @@ const requireOwner = async () => {
 const assertActor = (firebaseUid: string) => {
   if ((getFirebaseAuth().currentUser?.uid ?? ``) !== firebaseUid) throw new Error(`Your Account Changed — Try Again`);
 };
-const readLocal = async (): Promise<SubmissionSnapshot> => {
-  if (!useLocalStorage || (Platform.OS === `web` && typeof window === `undefined`)) throw new Error(`Connect Firebase To Save Submission(s)`);
-  const saved = await readStorage(SUBMISSIONS_STORAGE_KEY);
+const restoreLocal = (saved: string | null): SubmissionSnapshot => {
   if (!saved) return { version: 1, records: [], nextNumber: 1 };
   let parsed: SubmissionSnapshot;
   try { parsed = JSON.parse(saved); } catch { throw new Error(`Saved Submission(s) Could Not Be Read`); }
@@ -72,16 +72,22 @@ const readLocal = async (): Promise<SubmissionSnapshot> => {
     || records.some(record => record.number >= parsed.nextNumber)) throw new Error(`Saved Submission(s) Could Not Be Read`);
   return { ...parsed, records };
 };
+const readLocal = async (): Promise<SubmissionSnapshot> => {
+  if (!useLocalStorage || (Platform.OS === `web` && typeof window === `undefined`)) throw new Error(`Connect Firebase To Save Submission(s)`);
+  return restoreLocal(await readStorage(SUBMISSIONS_STORAGE_KEY));
+};
 const saveLocal = (snapshot: SubmissionSnapshot) => writeStorage(SUBMISSIONS_STORAGE_KEY, JSON.stringify({
   ...snapshot, records: snapshot.records.map(record => record.toRecord()),
 }));
+const submissionError = (failure: unknown) => {
+  if (!(failure instanceof FirebaseError)) return failure instanceof Error ? failure : new Error(`Submission Request Could Not Be Completed`);
+  if (failure.code === `permission-denied`) return new Error(`Submission Request Was Not Allowed`);
+  if (failure.code === `unavailable`) return new Error(`Firebase Is Unavailable — Try Again Later`);
+  if (failure.code === `resource-exhausted`) return new Error(`Firestore Quota Exceeded — Try Again Later`);
+  return new Error(`Submission Request Could Not Be Completed — Try Again`);
+};
 const runOperation = async <T,>(operation: () => Promise<T>): Promise<T> => {
-  try { return await operation(); } catch (failure) {
-    if (!(failure instanceof FirebaseError)) throw failure instanceof Error ? failure : new Error(`Submission Request Could Not Be Completed`);
-    if (failure.code === `permission-denied`) throw new Error(`Submission Request Was Not Allowed`);
-    if (failure.code === `unavailable`) throw new Error(`Firebase Is Unavailable — Try Again Later`);
-    throw new Error(`Submission Request Could Not Be Completed — Try Again`);
-  }
+  try { return await operation(); } catch (failure) { throw submissionError(failure); }
 };
 
 export const submitContact = (input: ContactSubmissionInput): Promise<FormSubmission> => runOperation(async () => {
@@ -117,14 +123,32 @@ export const submitContact = (input: ContactSubmissionInput): Promise<FormSubmis
   });
 });
 
+const submissionsCollection = createFirestoreCollection(
+  () => collection(getFirebaseDb(), `formSubmissions`),
+  snapshot => snapshot.docs.map(record => readRecord(record.data({ serverTimestamps: `estimate` }), record.id))
+    .sort((first, second) => second.number - first.number),
+  requireOwner,
+  assertOwnerSession,
+  subscribeAuthState,
+  submissionError,
+);
 export const getSubmissions = (): Promise<FormSubmission[]> => runOperation(async () => {
-  const actor = await requireOwner();
+  await requireOwner();
   if (!cloudEnabled) return serialize(async () => (await readLocal()).records.sort((first, second) => second.number - first.number));
-  assertActor(actor);
-  const records = await getDocs(collection(getFirebaseDb(), `formSubmissions`));
-  assertActor(actor);
-  return records.docs.map(record => readRecord(record.data(), record.id)).sort((first, second) => second.number - first.number);
+  return submissionsCollection.get();
 });
+export const subscribeSubmissions = (onValue: (submissions: FormSubmission[]) => void, onError?: (error: Error) => void) => {
+  if (cloudEnabled) return submissionsCollection.subscribe(onValue, onError);
+  let active = true;
+  let revision = 0;
+  const unsubscribe = subscribeStorage(SUBMISSIONS_STORAGE_KEY, saved => {
+    const request = ++revision;
+    void requireOwner().then(() => {
+      if (active && revision === request) onValue(restoreLocal(saved).records.sort((first, second) => second.number - first.number));
+    }).catch(failure => { if (active && revision === request) onError?.(submissionError(failure)); });
+  }, onError);
+  return () => { active = false; revision++; unsubscribe(); };
+};
 
 export const updateSubmissionStatus = (id: string, status: SubmissionStatus): Promise<FormSubmission> => runOperation(async () => {
   if (!statuses.includes(status)) throw new Error(`Choose A Valid Submission Status`);

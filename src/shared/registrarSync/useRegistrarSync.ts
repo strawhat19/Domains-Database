@@ -1,6 +1,8 @@
 import { api } from '../../api';
+import { useLocalStorage } from '../config';
 import { formatSyncNotice } from './messages';
 import { getRegistrarDomains } from './client';
+import { firebaseEnabled } from '../firebase/config';
 import { useAuth } from '../authContext/useAuth';
 import { connectionsAPI } from '../../api/connections';
 import { supportsRegistrarSync } from '../connections/inputs';
@@ -10,7 +12,7 @@ import { accountStorageKey } from '../authentication/userScope';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccountSyncStatuses, ConnectionSyncStatus, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
 import { connectionFields, type ConnectionAccount, type ConnectionSnapshot } from '../connections/types';
-import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
+import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, subscribeSyncPolicy, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
 
 const emptyStatuses = (): ConnectionSyncStatuses => ({
   vercel: { count: 0, message: `Not Connected`, checkedAt: ``, state: `idle` },
@@ -107,10 +109,19 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
     });
   }, [enabled, userId, resetSyncState]);
   const clearSyncNotice = useCallback(() => setSyncNotice(``), []);
-  const applyPolicy = useCallback((policy: RegistrarSyncPolicy, snapshot: ConnectionSnapshot) => {
+  const applyPolicy = useCallback((policy: RegistrarSyncPolicy, snapshot: ConnectionSnapshot, restoreStatuses = false) => {
     setClock(Date.now());
     setCooldownUntil(policy.manualCooldownUntil);
     setCanSyncManually(canResumeSync(policy, snapshot));
+    if (restoreStatuses && !syncingRef.current) {
+      const matching = policy.connectionsUpdated === snapshot.updated;
+      const statuses = snapshotAccountStatuses(snapshot, matching ? policy.accountStatuses : {});
+      setAccountStatuses(statuses);
+      setConnectionStatuses(matching
+        ? { ...policy.statuses, squarespace: aggregateStatuses(snapshot.accounts, statuses).squarespace }
+        : aggregateStatuses(snapshot.accounts, statuses));
+      return;
+    }
     if (snapshot.accounts.some(account => !supportsRegistrarSync(account))) {
       setAccountStatuses(previous => snapshotAccountStatuses(snapshot, previous));
       if (!syncingRef.current) setConnectionStatuses(previous => ({
@@ -317,30 +328,40 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       const current = () => mounted && active.current && operation === request && revision.current === run;
       try {
         const [snapshot, policy] = await Promise.all([connectionsAPI.getConnections(userId), getSyncPolicy(userId)]);
-        if (current()) applyPolicy(policy, snapshot);
+        if (current()) applyPolicy(policy, snapshot, true);
       } catch (failure) {
         if (!current()) return;
         setCanSyncManually(false);
         setSyncError(failure instanceof Error ? failure.message : `Could Not Load Sync Settings`);
       }
     };
+    const fail = (failure: Error) => {
+      if (!mounted || !active.current) return;
+      setCanSyncManually(false);
+      setSyncError(failure.message);
+    };
     const unsubscribe = connectionsAPI.subscribeConnections(changedUserId => {
       if (changedUserId === userId) void refreshPolicy();
-    });
+    }, userId, fail);
+    const unsubscribePolicy = subscribeSyncPolicy(changedUserId => {
+      if (changedUserId === userId) void refreshPolicy();
+    }, userId, fail);
     const resume = () => { void refreshPolicy(); };
     const policyKey = accountStorageKey(SYNC_POLICY_STORAGE_KEY, userId);
     const connectionKey = accountStorageKey(CONNECTIONS_STORAGE_KEY, userId);
     const storageChanged = (event: StorageEvent) => {
       if (event.key === null || event.key === policyKey || event.key === connectionKey) void refreshPolicy();
     };
-    if (typeof window !== `undefined`) {
+    const cloud = firebaseEnabled && !useLocalStorage;
+    if (!cloud && typeof window !== `undefined`) {
       window.addEventListener(`focus`, resume);
       window.addEventListener(`storage`, storageChanged);
     }
     return () => {
       mounted = false;
       unsubscribe();
-      if (typeof window !== `undefined`) {
+      unsubscribePolicy();
+      if (!cloud && typeof window !== `undefined`) {
         window.removeEventListener(`focus`, resume);
         window.removeEventListener(`storage`, storageChanged);
       }

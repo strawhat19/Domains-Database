@@ -1,17 +1,21 @@
 import { authAPI } from '../../api/auth';
+import { firebaseEnabled } from '../firebase/config';
 import { genID, isAppCollectionID } from '../common/ids';
 import { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
 import { useLocalStorage, persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
 import { requestEnvironmentConnectionsImport } from './environment';
-import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import { connectionValues, normalizeConnections, normalizeConnectionAccounts } from './values';
 import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues, type ConnectionAccount, type ConnectionSnapshot, type ConnectionProvider, type EnvironmentImportResult } from './types';
 
 export { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
 const listeners = new Set<(userId: string) => void>();
 const serialize = createOperationQueue(CONNECTIONS_STORAGE_KEY);
-export const subscribeConnections = (listener: (userId: string) => void) => {
+export const subscribeConnections = (listener: (userId: string) => void, userId?: string, onError?: (error: Error) => void) => {
+  if (userId && firebaseEnabled && !useLocalStorage) {
+    return subscribeStorage(accountStorageKey(CONNECTIONS_STORAGE_KEY, userId), () => listener(userId), onError);
+  }
   listeners.add(listener);
   return () => { listeners.delete(listener); };
 };

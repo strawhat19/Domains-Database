@@ -114,15 +114,15 @@ export const AuthProvider = ({ children, enabled = true }: { children: ReactNode
       if (event.key === null || AUTH_PRESENCE_KEYS.includes(event.key)) void refreshUser().catch(() => undefined);
     };
     const resumeSession = () => { void refreshUser().catch(() => undefined); };
-    const subscription = AppState.addEventListener(`change`, state => { if (state === `active`) resumeSession(); });
-    if ((useLocalStorage || firebaseEnabled) && typeof window !== `undefined`) {
+    const subscription = useLocalStorage ? AppState.addEventListener(`change`, state => { if (state === `active`) resumeSession(); }) : null;
+    if (useLocalStorage && typeof window !== `undefined`) {
       window.addEventListener(`focus`, resumeSession);
       window.addEventListener(`storage`, syncSession);
     }
     return () => {
       mounted.current = false;
       unsubscribeAuth();
-      subscription.remove();
+      subscription?.remove();
       if (typeof window !== `undefined`) {
         window.removeEventListener(`focus`, resumeSession);
         window.removeEventListener(`storage`, syncSession);

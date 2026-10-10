@@ -7,7 +7,7 @@ import { getAppCollectionIDNumber } from '../common/ids';
 import { accountStorageKey } from '../authentication/userScope';
 import { WatchedDomain } from '../models/watching/WatchedDomain';
 import { domainSearchFields, registrarPurchaseUrl } from '../domainSearch/types';
-import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import type { DomainSearchPrice, DomainSearchResult, DomainSearchDomainResult } from '../domainSearch/types';
 
 export { WATCHING_STORAGE_KEY } from '../accountData/keys';
@@ -70,8 +70,7 @@ const normalizeConnections = (connections: DomainSearchResult[], domain: string)
   });
 };
 
-const readWatching = async (userId: string): Promise<WatchingSnapshot> => {
-  const saved = await readStorage(accountStorageKey(WATCHING_STORAGE_KEY, userId));
+const restoreWatching = (saved: string | null, userId: string): WatchingSnapshot => {
   if (saved === null) return { version: 1, userId, records: [], nextNumber: 1 };
   try {
     const snapshot = JSON.parse(saved) as WatchingSnapshot;
@@ -99,6 +98,32 @@ const readWatching = async (userId: string): Promise<WatchingSnapshot> => {
   } catch {
     throw new Error(`Saved Watching Data Could Not Be Read`);
   }
+};
+
+const readWatching = async (userId: string): Promise<WatchingSnapshot> => restoreWatching(
+  await readStorage(accountStorageKey(WATCHING_STORAGE_KEY, userId)), userId,
+);
+
+export const subscribeWatching = (
+  userId: string,
+  onValue: (records: WatchedDomain[]) => boolean | void,
+  onError: (error: Error) => void,
+) => {
+  let active = true;
+  let unsubscribe: (() => void) | undefined;
+  void requireUser(userId).then(() => {
+    if (!active) return;
+    unsubscribe = subscribeStorage(accountStorageKey(WATCHING_STORAGE_KEY, userId), saved => {
+      try { return onValue(restoreWatching(saved, userId).records); }
+      catch (reason) {
+        onError(reason instanceof Error ? reason : new Error(`Saved Watching Data Could Not Be Read`));
+        return false;
+      }
+    }, onError);
+  }).catch(reason => {
+    if (active) onError(reason instanceof Error ? reason : new Error(`Could Not Load Watching`));
+  });
+  return () => { active = false; unsubscribe?.(); };
 };
 
 const saveWatching = async (snapshot: WatchingSnapshot) => {

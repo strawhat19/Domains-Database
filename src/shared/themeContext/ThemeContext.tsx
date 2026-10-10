@@ -1,9 +1,9 @@
 import type { PropsWithChildren } from 'react';
 import { useAuth } from '../authContext/useAuth';
-import { AppState, Appearance, Platform } from 'react-native';
-import { themePalettes, THEME_STORAGE_KEY, type ThemeMode, type ThemePalette } from './theme';
+import { Appearance, Platform } from 'react-native';
+import { themePalettes, type ThemeMode, type ThemePalette } from './theme';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
-import { getSavedTheme, saveTheme, getThemePreview, saveThemePreview, getThemeStorageKey } from './preferences';
+import { saveTheme, getThemePreview, saveThemePreview, subscribeSavedTheme } from './preferences';
 
 interface ThemeContextValue {
   error: string;
@@ -32,6 +32,9 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
   currentTheme.current = theme;
   const preferenceChanged = useRef(false);
   const mutationRevision = useRef(0);
+  const saving = useRef(false);
+  const pendingSnapshot = useRef<ThemeMode | null | undefined>(undefined);
+  const replaySnapshot = useRef<(() => void) | null>(null);
   const ready = !authLoading && loadedScope === scope;
   const palette = themePalettes[theme];
   const isDark = theme === `dark`;
@@ -46,42 +49,42 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     let mounted = true;
-    let request = 0;
     setError(``);
     setLoadedScope(null);
+    saving.current = false;
+    pendingSnapshot.current = undefined;
     if (authLoading) return () => { mounted = false; };
-    const refresh = () => {
-      const revision = ++request;
-      const changed = mutationRevision.current;
-      const isCurrent = () => mounted && currentScope.current === scope && request === revision;
-      void getSavedTheme(userId).then(saved => {
-        if (isCurrent() && changed === mutationRevision.current) {
-          currentTheme.current = saved ?? `dark`;
-          setTheme(currentTheme.current);
-          setError(``);
-        }
-      }).catch(failure => {
-        if (isCurrent()) setError(failure instanceof Error ? failure.message : `Could Not Load Theme Preference`);
-      }).finally(() => {
-        if (isCurrent()) setLoadedScope(scope);
-      });
+    const isCurrent = () => mounted && currentScope.current === scope;
+    const subscribe = () => subscribeSavedTheme(userId, saved => {
+      if (!isCurrent()) return false;
+      if (saving.current) {
+        pendingSnapshot.current = saved;
+        return false;
+      }
+      pendingSnapshot.current = undefined;
+      const nextTheme = saved ?? `dark`;
+      if (currentTheme.current !== nextTheme) {
+        currentTheme.current = nextTheme;
+        setTheme(nextTheme);
+      }
+      setError(``);
+      setLoadedScope(scope);
+    }, failure => {
+      if (!isCurrent()) return;
+      setError(failure.message);
+      setLoadedScope(scope);
+    });
+    let unsubscribe = subscribe();
+    const replay = () => {
+      if (!isCurrent()) return;
+      unsubscribe();
+      unsubscribe = subscribe();
     };
-    const changed = (event: StorageEvent) => {
-      if (event.key === null || event.key === THEME_STORAGE_KEY || event.key === getThemeStorageKey(userId)) refresh();
-    };
-    const subscription = AppState.addEventListener(`change`, state => { if (state === `active`) refresh(); });
-    refresh();
-    if (typeof window !== `undefined`) {
-      window.addEventListener(`focus`, refresh);
-      window.addEventListener(`storage`, changed);
-    }
+    replaySnapshot.current = replay;
     return () => {
       mounted = false;
-      subscription.remove();
-      if (typeof window !== `undefined`) {
-        window.removeEventListener(`focus`, refresh);
-        window.removeEventListener(`storage`, changed);
-      }
+      if (replaySnapshot.current === replay) replaySnapshot.current = null;
+      unsubscribe();
     };
   }, [scope, userId, authLoading]);
 
@@ -113,13 +116,20 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     if (!ready || nextTheme === currentTheme.current) return;
     preferenceChanged.current = true;
     const revision = ++mutationRevision.current;
+    saving.current = true;
     currentTheme.current = nextTheme;
     setTheme(nextTheme);
     setError(``);
-    void saveTheme(nextTheme, userId).catch(failure => {
+    void saveTheme(nextTheme, userId).then(() => {
+      if (currentScope.current !== scope || mutationRevision.current !== revision) return;
+      saving.current = false;
+      if (pendingSnapshot.current !== undefined) replaySnapshot.current?.();
+    }).catch(failure => {
       if (currentScope.current === scope && mutationRevision.current === revision) {
         setError(failure instanceof Error ? failure.message : `Could Not Save Theme Preference`);
       }
+    }).finally(() => {
+      if (currentScope.current === scope && mutationRevision.current === revision) saving.current = false;
     });
   }, [ready, scope, userId]);
 

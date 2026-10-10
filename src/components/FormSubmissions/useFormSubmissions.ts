@@ -34,31 +34,29 @@ export const useFormSubmissions = () => {
   const actorRef = useRef(actor);
   const revision = useRef(0);
   const pending = useRef(``);
+  const [reloadRevision, setReloadRevision] = useState(0);
   const [state, setState] = useState(() => emptyState(actor));
   actorRef.current = actor;
 
   const refresh = useCallback(async () => {
     if (!actor || actorRef.current !== actor || pending.current) return;
-    const request = ++revision.current;
-    const current = () => actorRef.current === actor && revision.current === request;
-    setState(saved => ({ ...(saved.actor === actor ? saved : emptyState(actor)), error: ``, loading: true }));
-    try {
-      const submissions = await formSubmissionsAPI.getSubmissions();
-      if (current()) setState(saved => ({ ...saved, submissions }));
-    } catch (failure) {
-      if (current()) setState(saved => ({ ...saved, error: errorMessage(failure, `Could Not Load Form Submission(s)`) }));
-    } finally {
-      if (current()) setState(saved => ({ ...saved, loading: false }));
-    }
+    setReloadRevision(current => current + 1);
   }, [actor]);
 
   useEffect(() => {
     revision.current++;
     pending.current = ``;
     setState(emptyState(actor));
-    void refresh();
-    return () => { revision.current++; };
-  }, [actor, refresh]);
+    if (!actor) return;
+    const request = revision.current;
+    const current = () => actorRef.current === actor && revision.current === request;
+    const unsubscribe = formSubmissionsAPI.subscribeSubmissions(submissions => {
+      if (current()) setState(saved => ({ ...saved, submissions, error: ``, loading: false }));
+    }, failure => {
+      if (current()) setState(saved => ({ ...saved, submissions: [], loading: false, error: errorMessage(failure, `Could Not Load Form Submission(s)`) }));
+    });
+    return () => { revision.current++; unsubscribe(); };
+  }, [actor, reloadRevision]);
 
   const updateStatus = async (id: string, status: FormSubmission[`status`]) => {
     const saved = state.submissions.find(submission => submission.id === id);

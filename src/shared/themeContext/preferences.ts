@@ -2,7 +2,7 @@ import { authAPI } from '../../api/auth';
 import { accountStorageKey } from '../authentication/userScope';
 import { useLocalStorage, persistenceEnabled } from '../config';
 import { THEME_STORAGE_KEY, THEME_BOOTSTRAP_KEY, type ThemeMode } from './theme';
-import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 
 const serialize = createOperationQueue(THEME_STORAGE_KEY);
 
@@ -43,6 +43,27 @@ export const getSavedTheme = (userId: string | null): Promise<ThemeMode | null> 
   const saved = await readTheme(getThemeStorageKey(userId), userId);
   return saved === null && userId !== null && useLocalStorage ? readTheme(THEME_STORAGE_KEY, userId) : saved;
 });
+
+export const subscribeSavedTheme = (
+  userId: string | null,
+  onValue: (theme: ThemeMode | null) => boolean | void,
+  onError: (error: Error) => void,
+) => {
+  let saved: string | null | undefined;
+  let legacy: string | null | undefined = userId !== null && useLocalStorage ? undefined : null;
+  const update = () => {
+    if (saved === undefined || legacy === undefined) return false;
+    const theme = saved ?? legacy;
+    if (theme === null || theme === `light` || theme === `dark`) return onValue(theme);
+    onError(new Error(`Saved Theme Preference Could Not Be Read`));
+    return false;
+  };
+  const unsubscribe = subscribeStorage(getThemeStorageKey(userId), value => { saved = value; return update(); }, onError);
+  const unsubscribeLegacy = userId !== null && useLocalStorage
+    ? subscribeStorage(THEME_STORAGE_KEY, value => { legacy = value; return update(); }, onError)
+    : undefined;
+  return () => { unsubscribe(); unsubscribeLegacy?.(); };
+};
 
 export const saveTheme = (theme: ThemeMode, userId: string | null): Promise<void> => serialize(async () => {
   if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Theme Preferences`);

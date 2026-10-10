@@ -4,7 +4,7 @@ import { AUCTION_STORAGE_KEY } from '../accountData/keys';
 import { useLocalStorage, persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
-import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import { parseAuctionInventory, normalizeAuctionDomain, parseAuctionTimestamp, getInventoryListingHref, MAX_AUCTION_IMPORT_RECORDS } from './import';
 
 export { AUCTION_STORAGE_KEY } from '../accountData/keys';
@@ -48,10 +48,8 @@ const validateMetrics = (value: unknown): value is AuctionInventoryMetrics => {
   });
 };
 
-const readSnapshot = async (): Promise<AuctionSnapshot & { storageKey: string; userId: string | null }> => {
-  const scope = await requireStorage();
-  const saved = await readStorage(scope.storageKey);
-  if (saved === null) return { ...scope, version: 1, records: [], nextNumber: 1 };
+const restoreSnapshot = (saved: string | null): AuctionSnapshot => {
+  if (saved === null) return { version: 1, records: [], nextNumber: 1 };
   try {
     const snapshot = JSON.parse(saved) as AuctionSnapshot;
     if (snapshot?.version !== 1 || !Array.isArray(snapshot.records)
@@ -82,12 +80,39 @@ const readSnapshot = async (): Promise<AuctionSnapshot & { storageKey: string; u
     }
     return {
       ...snapshot,
-      ...scope,
       nextNumber: Math.max(snapshot.nextNumber, ...snapshot.records.map(record => record.number + 1)),
     };
   } catch {
     throw new Error(`Saved Auction Inventory Could Not Be Read — Clear Imported Inventory To Start Again`);
   }
+};
+
+const readSnapshot = async (): Promise<AuctionSnapshot & { storageKey: string; userId: string | null }> => {
+  const scope = await requireStorage();
+  return { ...restoreSnapshot(await readStorage(scope.storageKey)), ...scope };
+};
+
+export const subscribeAuctionListings = (
+  userId: string | null,
+  onValue: (records: AuctionRecord[]) => boolean | void,
+  onError: (error: Error) => void,
+) => {
+  let active = true;
+  let unsubscribe: (() => void) | undefined;
+  void requireStorage().then(scope => {
+    if (!active) return;
+    if (scope.userId !== userId) throw new Error(`Your Account Changed — Try Again`);
+    unsubscribe = subscribeStorage(scope.storageKey, saved => {
+      try { return onValue(restoreSnapshot(saved).records); }
+      catch (reason) {
+        onError(reason instanceof Error ? reason : new Error(`Saved Auction Inventory Could Not Be Read`));
+        return false;
+      }
+    }, onError);
+  }).catch(reason => {
+    if (active) onError(reason instanceof Error ? reason : new Error(`Could Not Load Auction Inventory`));
+  });
+  return () => { active = false; unsubscribe?.(); };
 };
 
 export const getAuctionListings = (): Promise<AuctionRecord[]> => serialize(async () => (await readSnapshot()).records);

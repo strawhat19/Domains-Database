@@ -20,10 +20,10 @@ export interface DomainMarqueeItem {
 export const useDomainMarquee = () => {
   const [fontsLoaded, fontError] = useAppFonts();
   const { user, loading: authLoading } = useAuth();
-  const { domains, loading: domainsLoading } = useDomains();
+  const { domains, loaded } = useDomains();
   const { loading, notifications } = useNotifications();
   const userDomains = useMemo(() => domains.filter(domain => !domain.isSample), [domains]);
-  const showDomains = !authLoading && !domainsLoading && Boolean(user?.id) && userDomains.length > 10;
+  const showDomains = !authLoading && loaded && Boolean(user?.id) && userDomains.length > 10;
 
   const items = useMemo<DomainMarqueeItem[]>(() => {
     const values: DomainMarqueeItem[] = showDomains
@@ -43,7 +43,7 @@ export const useDomainMarquee = () => {
         icon: notification.icon,
         href: `${routes.notifications.href}/${encodeURIComponent(notification.id)}`,
         title: notification.title,
-        label: `${notification.before}sign up${notification.after}`,
+        label: notification.message ?? `${notification.before}sign up${notification.after}`,
       }));
     return values.sort((left, right) => left.label.localeCompare(right.label, `en`, { sensitivity: `base` }));
   }, [showDomains, userDomains, notifications]);
@@ -51,6 +51,6 @@ export const useDomainMarquee = () => {
   return {
     items,
     showDomains,
-    loading: authLoading || (Boolean(user?.id) && domainsLoading) || (!fontsLoaded && !fontError) || (!showDomains && loading),
+    loading: (!fontsLoaded && !fontError) || (!items.length && loading),
   };
 };

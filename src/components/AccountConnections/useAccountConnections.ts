@@ -101,6 +101,10 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     else void load();
     const unsubscribe = connectionsAPI.subscribeConnections(changedUserId => {
       if (changedUserId === userId && !dirty.current && !operationBusy.current) void load();
+    }, userId, failure => {
+      if (!isCurrent()) return;
+      setError(failure.message);
+      setLoading(false);
     });
     return () => { mounted.current = false; ++revision.current; operationBusy.current = false; environmentImport.current?.abort(); unsubscribe(); };
   }, [actorKey]);

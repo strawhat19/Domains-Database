@@ -3,7 +3,7 @@ import { useLocalStorage, persistenceEnabled } from '../config';
 import { RECENT_SEARCHES_STORAGE_KEY } from '../accountData/keys';
 import { normalizeDomainSearchQuery } from './query';
 import { accountStorageKey } from '../authentication/userScope';
-import { readStorage, writeStorage, removeStorage, createOperationQueue } from '../common/storage';
+import { readStorage, writeStorage, removeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 
 export interface RecentDomainSearch {
   query: string;
@@ -19,7 +19,6 @@ interface RecentSearchSnapshot {
 export const RECENT_SEARCHES_LIMIT = 12;
 export { RECENT_SEARCHES_STORAGE_KEY } from '../accountData/keys';
 const serialize = createOperationQueue(RECENT_SEARCHES_STORAGE_KEY);
-const listeners = new Set<(storageKey: string) => void>();
 
 export const recentSearchesStorageKey = (userId: string | null) => userId
   ? accountStorageKey(RECENT_SEARCHES_STORAGE_KEY, userId)
@@ -33,8 +32,7 @@ const requireActor = async (expectedUserId?: string | null) => {
   return userId;
 };
 
-const readSnapshot = async (userId: string | null): Promise<RecentDomainSearch[] | null> => {
-  const saved = await readStorage(recentSearchesStorageKey(userId));
+const restoreSnapshot = (saved: string | null, userId: string | null): RecentDomainSearch[] | null => {
   if (saved === null) return null;
   try {
     const snapshot = JSON.parse(saved) as RecentSearchSnapshot;
@@ -53,18 +51,42 @@ const readSnapshot = async (userId: string | null): Promise<RecentDomainSearch[]
   }
 };
 
+const readSnapshot = async (userId: string | null): Promise<RecentDomainSearch[] | null> => restoreSnapshot(
+  await readStorage(recentSearchesStorageKey(userId)), userId,
+);
+
 const readRecentSearches = async (userId: string | null) => {
   const saved = await readSnapshot(userId);
   return saved ?? (userId && useLocalStorage ? await readSnapshot(null) : null) ?? [];
 };
 
-const notifyRecentSearches = (storageKey: string) => {
-  for (const listener of listeners) listener(storageKey);
-};
-
-export const subscribeRecentSearches = (listener: (storageKey: string) => void) => {
-  listeners.add(listener);
-  return () => { listeners.delete(listener); };
+export const subscribeRecentSearches = (
+  userId: string | null,
+  onValue: (records: RecentDomainSearch[]) => boolean | void,
+  onError: (error: Error) => void,
+) => {
+  let active = true;
+  let saved: string | null | undefined;
+  let legacy: string | null | undefined = userId && useLocalStorage ? undefined : null;
+  const unsubscribers: (() => void)[] = [];
+  const update = () => {
+    if (!active || saved === undefined || legacy === undefined) return false;
+    try {
+      const records = restoreSnapshot(saved, userId) ?? (userId && useLocalStorage ? restoreSnapshot(legacy, null) : null) ?? [];
+      return onValue(records);
+    } catch (reason) {
+      onError(reason instanceof Error ? reason : new Error(`Saved Recent Searches Could Not Be Read`));
+      return false;
+    }
+  };
+  void requireActor(userId).then(() => {
+    if (!active) return;
+    unsubscribers.push(subscribeStorage(recentSearchesStorageKey(userId), value => { saved = value; return update(); }, onError));
+    if (userId && useLocalStorage) unsubscribers.push(subscribeStorage(RECENT_SEARCHES_STORAGE_KEY, value => { legacy = value; return update(); }, onError));
+  }).catch(reason => {
+    if (active) onError(reason instanceof Error ? reason : new Error(`Could Not Load Recent Searches`));
+  });
+  return () => { active = false; for (const unsubscribe of unsubscribers) unsubscribe(); };
 };
 
 export const getRecentSearches = (expectedUserId?: string | null): Promise<RecentDomainSearch[]> => serialize(async () => {
@@ -86,7 +108,6 @@ export const rememberSearch = (value: string, expectedUserId?: string | null): P
   };
   await requireActor(userId);
   await writeStorage(storageKey, JSON.stringify(snapshot));
-  notifyRecentSearches(storageKey);
 });
 
 export const clearRecentSearches = (expectedUserId?: string | null): Promise<void> => serialize(async () => {
@@ -98,5 +119,4 @@ export const clearRecentSearches = (expectedUserId?: string | null): Promise<voi
     await writeStorage(storageKey, JSON.stringify({ version: 1, userId, records: [] }));
   }
   else await removeStorage(storageKey);
-  notifyRecentSearches(storageKey);
 });

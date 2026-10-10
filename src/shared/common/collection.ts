@@ -1,7 +1,7 @@
 import { Data } from '../models/Data';
 import { persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
-import { readStorage, writeStorage, createOperationQueue } from './storage';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from './storage';
 
 interface CollectionSnapshot<T> {
   version: 1;
@@ -11,11 +11,7 @@ interface CollectionSnapshot<T> {
 
 export const createCollection = <T extends Data>(key: string, model: new (data: Partial<T>) => T, getUserId: () => Promise<string>) => {
   const serialize = createOperationQueue(key);
-  const read = async () => {
-    if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Record(s)`);
-    const userId = await getUserId();
-    const storageKey = accountStorageKey(key, userId);
-    const saved = await readStorage(storageKey);
+  const restore = (saved: string | null, userId: string) => {
     let snapshot: CollectionSnapshot<T>;
     try {
       snapshot = saved ? JSON.parse(saved) : { version: 1, records: [], nextNumber: 1 };
@@ -34,7 +30,15 @@ export const createCollection = <T extends Data>(key: string, model: new (data: 
       return restored;
     });
     snapshot.nextNumber = Math.max(snapshot.nextNumber, ...snapshot.records.map(record => record.number + 1));
-    return { snapshot, storageKey, userId };
+    return snapshot;
+  };
+  const read = async () => {
+    if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Record(s)`);
+    const userId = await getUserId();
+    const storageKey = accountStorageKey(key, userId);
+    const saved = await readStorage(storageKey);
+    if (await getUserId() !== userId) throw new Error(`Your Account Changed — Try Again`);
+    return { storageKey, userId, snapshot: restore(saved, userId) };
   };
   const save = async (key: string, snapshot: CollectionSnapshot<T>, userId: string) => {
     if (await getUserId() !== userId) throw new Error(`Your Account Changed — Try Again`);
@@ -42,6 +46,27 @@ export const createCollection = <T extends Data>(key: string, model: new (data: 
   };
   return {
     get: () => serialize(async () => (await read()).snapshot.records),
+    subscribe: (onValue: (records: T[]) => void, onError?: (error: Error) => void) => {
+      let active = true;
+      let revision = 0;
+      let unsubscribe: () => void = () => undefined;
+      const fail = (failure: unknown) => {
+        if (active) onError?.(failure instanceof Error ? failure : new Error(`Saved Record(s) Could Not Be Read`));
+      };
+      void getUserId().then(userId => {
+        if (!active) return;
+        if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Record(s)`);
+        unsubscribe = subscribeStorage(accountStorageKey(key, userId), saved => {
+          const request = ++revision;
+          void getUserId().then(currentUserId => {
+            if (!active || request !== revision) return;
+            if (currentUserId !== userId) throw new Error(`Your Account Changed — Try Again`);
+            onValue(restore(saved, userId).records);
+          }).catch(fail);
+        }, fail);
+      }).catch(fail);
+      return () => { active = false; revision++; unsubscribe(); };
+    },
     create: (input: Partial<T>) => serialize(async () => {
       const { snapshot, storageKey, userId } = await read();
       const record = new model({ ...input, id: undefined, uuid: undefined, uid: userId, number: snapshot.nextNumber, created: new Date().toISOString(), updated: undefined });

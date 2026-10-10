@@ -1,19 +1,12 @@
 import { getFirebaseDb, getFirebaseAuth } from './client';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { doc, runTransaction, type Transaction, type DocumentData } from 'firebase/firestore';
+import { splitSnapshots, readCloudSnapshot, clearCloudSnapshots, publishCloudSnapshot, subscribeCloudSnapshot, storageWriteBaselines, storageSubscribedBaselines, type SavedValue, type StorageScope, type SplitSnapshot } from './snapshots';
 
-interface StorageScope { key: string; userId: string }
-interface SavedValue { revision: number; value: string | null; firebaseUid: string }
 interface RecordChange { id: string; record?: DocumentData }
-interface SplitSnapshot { name: string; field: string; collection: string; type: string }
-const savedValues = new Map<string, SavedValue>();
-export const clearFirestoreStorageCache = () => { savedValues.clear(); };
+const savedValues = storageWriteBaselines;
+export const clearFirestoreStorageCache = clearCloudSnapshots;
 const RECORDS_PER_TRANSACTION = 400;
-const splitSnapshots: Record<string, SplitSnapshot> = {
-  [`domains-database:portfolio:v1`]: { name: `portfolio`, field: `domains`, collection: `domains`, type: `Domain` },
-  [`domains-database:connections:v1`]: { name: `connections`, field: `accounts`, collection: `connections`, type: `Connection` },
-  [`domains-database:auction-inventory:v1`]: { name: `auctionInventory`, field: `records`, collection: `auctionInventory`, type: `Auction` },
-};
 const isRecord = (value: unknown): value is DocumentData => Boolean(value) && typeof value === `object` && !Array.isArray(value);
 export const getFirestoreStorageScope = (key: string): StorageScope | null => {
   const index = key.lastIndexOf(`:user:`);
@@ -36,41 +29,23 @@ const snapshotRef = (scope: StorageScope, name: string) => doc(getFirebaseDb(), 
 const keyRef = (scope: StorageScope) => doc(getFirebaseDb(), `users`, scope.userId, `storageKeys`, encodeURIComponent(scope.key));
 const dataRef = (scope: StorageScope, id: string) => doc(getFirebaseDb(), `users`, scope.userId, `data`, id);
 const recordRef = (scope: StorageScope, split: SplitSnapshot, id: string) => doc(getFirebaseDb(), `users`, scope.userId, split.collection, id);
-const readSplit = async (transaction: Transaction, scope: StorageScope, split: SplitSnapshot) => {
-  const metadata = (await transaction.get(snapshotRef(scope, split.name))).data();
-  const revision = revisionOf(metadata);
-  if (!metadata) return { revision, value: null };
-  if (!isRecord(metadata.snapshot) || !Array.isArray(metadata.ids)
-    || metadata.ids.some((id: unknown) => typeof id !== `string` || getAppCollectionIDNumber(id, split.type) < 1)
-    || new Set(metadata.ids).size !== metadata.ids.length) throw new Error(`Saved Cloud Data Could Not Be Read`);
-  const records = await Promise.all(metadata.ids.map(async (id: string) => {
-    const record = (await transaction.get(recordRef(scope, split, id))).data();
-    if (!record || record.id !== id || record.number !== getAppCollectionIDNumber(id, split.type)) throw new Error(`Saved Cloud Data Could Not Be Read`);
-    return record;
-  }));
-  return { revision, value: JSON.stringify({ ...metadata.snapshot, [split.field]: records }) };
-};
-const readValue = async (transaction: Transaction, scope: StorageScope) => {
-  const index = (await transaction.get(keyRef(scope))).data();
-  if (!index) return { revision: 0, value: null };
-  if (typeof index.id !== `string` || getAppCollectionIDNumber(index.id, `Data`) !== index.number) throw new Error(`Saved Cloud Data Could Not Be Read`);
-  const record = (await transaction.get(dataRef(scope, index.id))).data();
-  if (!record || record.id !== index.id || record.key !== scope.key || typeof record.value !== `string`) throw new Error(`Saved Cloud Data Could Not Be Read`);
-  return { revision: revisionOf(record), value: record.value as string };
-};
 export const readFirestoreStorage = async (key: string): Promise<string | null> => {
   const scope = getFirestoreStorageScope(key);
   if (!scope) throw new Error(`Cloud Storage Requires An Account`);
   const firebaseUid = requireActor();
-  const split = splitSnapshots[scope.key];
-  savedValues.delete(key);
-  const result = await runTransaction(getFirebaseDb(), async transaction => {
-    assertActor(firebaseUid);
-    return split ? readSplit(transaction, scope, split) : readValue(transaction, scope);
-  });
+  const result = await readCloudSnapshot(scope);
   assertActor(firebaseUid);
   savedValues.set(key, { ...result, firebaseUid });
   return result.value;
+};
+export const subscribeFirestoreStorage = (key: string, next: (value: string | null) => boolean | void, error?: (error: Error) => void) => {
+  const scope = getFirestoreStorageScope(key);
+  if (!scope) throw new Error(`Cloud Storage Requires An Account`);
+  const firebaseUid = requireActor();
+  return subscribeCloudSnapshot(scope, value => {
+    assertActor(firebaseUid);
+    return next(value);
+  }, error);
 };
 const assertRevision = (expected: SavedValue | undefined, revision: number, firebaseUid: string) => {
   if (expected?.firebaseUid !== firebaseUid || expected?.revision !== revision) throw new Error(`Saved Data Changed On Another Device — Refresh And Try Again`);
@@ -150,7 +125,7 @@ const writeSplitSnapshot = async (key: string, scope: StorageScope, split: Split
       baseline = { revision, firebaseUid, value: storedValue };
       currentRecords = records;
       assertActor(firebaseUid);
-      savedValues.set(key, baseline);
+      publishCloudSnapshot(scope, baseline);
     }
   } catch (error) {
     if (!committedChunks) throw error;
@@ -190,9 +165,11 @@ export const writeFirestoreStorage = async (key: string, value: string, reset = 
   if (!scope) throw new Error(`Cloud Storage Requires An Account`);
   const firebaseUid = requireActor();
   if (reset) await readFirestoreStorage(key);
-  const previous = savedValues.get(key);
+  const previous = savedValues.get(key) ?? storageSubscribedBaselines.get(key);
+  savedValues.delete(key);
   if (!previous) throw new Error(`Load Your Saved Data Before Saving — Refresh And Try Again`);
   if (previous.firebaseUid !== firebaseUid) throw new Error(`Your Account Changed — Try Again`);
+  if (previous.value === value && (await readCloudSnapshot(scope)).value === value) return;
   const split = splitSnapshots[scope.key];
   if (split) return writeSplitSnapshot(key, scope, split, value, previous, firebaseUid);
   const revision = await runTransaction(getFirebaseDb(), async transaction => {
@@ -200,7 +177,7 @@ export const writeFirestoreStorage = async (key: string, value: string, reset = 
     return writeValue(transaction, scope, value, previous, firebaseUid);
   });
   assertActor(firebaseUid);
-  savedValues.set(key, { value, revision, firebaseUid });
+  publishCloudSnapshot(scope, { value, revision, firebaseUid });
 };
 export const removeFirestoreStorage = async (key: string): Promise<void> => {
   const scope = getFirestoreStorageScope(key);
@@ -208,7 +185,8 @@ export const removeFirestoreStorage = async (key: string): Promise<void> => {
   if (splitSnapshots[scope.key]) throw new Error(`Clear Saved Record(s) Through The Account Service`);
   const firebaseUid = requireActor();
   if (!savedValues.has(key)) await readFirestoreStorage(key);
-  const previous = savedValues.get(key);
+  const previous = savedValues.get(key) ?? storageSubscribedBaselines.get(key);
+  savedValues.delete(key);
   await runTransaction(getFirebaseDb(), async transaction => {
     const index = (await transaction.get(keyRef(scope))).data();
     const reference = index ? dataRef(scope, index.id) : null;
@@ -219,5 +197,5 @@ export const removeFirestoreStorage = async (key: string): Promise<void> => {
     transaction.delete(keyRef(scope));
   });
   assertActor(firebaseUid);
-  savedValues.set(key, { value: null, revision: 0, firebaseUid });
+  publishCloudSnapshot(scope, { value: null, revision: 0, firebaseUid });
 };

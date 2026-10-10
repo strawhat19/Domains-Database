@@ -90,11 +90,15 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
           ) : notification ? (
             <View {...elementProps(`native-notifications-body`, suffix)} style={styles.detail}>
               <Text {...elementProps(`native-notifications-text`, suffix)} style={styles.detailText}>
-                {notification.before}
-                <Link href={routes.signup.href} style={styles.inlineLink} {...elementProps(`native-notifications-sign-up`, suffix)} accessibilityLabel={`Sign Up`}>
-                  {`sign up`}
-                </Link>
-                {notification.after}
+                {notification.message ?? (
+                  <>
+                    {notification.before}
+                    <Link href={routes.signup.href} style={styles.inlineLink} {...elementProps(`native-notifications-sign-up`, suffix)} accessibilityLabel={`Sign Up`}>
+                      {`sign up`}
+                    </Link>
+                    {notification.after}
+                  </>
+                )}
               </Text>
             </View>
           ) : state.missing ? (
