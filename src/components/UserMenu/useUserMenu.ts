@@ -1,12 +1,14 @@
 import { Platform } from 'react-native';
 import { routes } from '../../shared/routes';
 import { createStyles } from './styles.native';
+import { capWords } from '../../shared/common/values';
 import { usePathname, useRouter } from 'expo-router';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useWatching } from '../../shared/watching/useWatching';
 import { getAccountBadgeColors } from '../../shared/common/badges';
+import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 
 export const useUserMenu = () => {
@@ -72,6 +74,7 @@ export const useUserMenu = () => {
     guestAuth,
     photoLoaded,
     photoRequestKey,
+    planLabel: hasUnlimitedPlanAccess(auth.user) ? `Unlimited` : capWords(auth.user?.plan?.trim()?.toLowerCase() || `free`),
     connectionsCountLoading,
     verifiedConnectionCount,
     photoURL: photoFailed ? undefined : auth.user?.photoURL,

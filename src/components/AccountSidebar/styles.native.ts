@@ -1,0 +1,33 @@
+import { StyleSheet } from 'react-native';
+import type { ThemePalette } from '../../shared/themeContext/theme';
+
+export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  group: { gap: 8 },
+  links: { gap: 26 },
+  compact: { width: `100%` },
+  collapsed: { width: 56 },
+  children: { gap: 6, marginLeft: 10, paddingLeft: 10, borderLeftWidth: 1, borderLeftColor: palette.line },
+  twoColumns: { flexWrap: `wrap`, flexDirection: `row` },
+  childLink: { flexGrow: 1, flexBasis: `47%` },
+  heading: { gap: 0, flexDirection: `row`, alignItems: `center` },
+  parentLink: { flex: 1, minWidth: 0 },
+  submenuToggle: { width: 34, minHeight: 34, margin: 4, borderRadius: 6, alignItems: `center`, justifyContent: `center` },
+  root: { gap: 18, width: 318, padding: 8, borderWidth: 1, borderRadius: 12, alignSelf: `flex-start`, borderColor: palette.line, backgroundColor: palette.subtle },
+  groupLabel: { color: palette.accent, fontSize: 10, letterSpacing: 1.4, fontFamily: `DMSans_600SemiBold` },
+  link: { gap: 10, minHeight: 38, paddingVertical: 11, paddingHorizontal: 10, borderWidth: 1, borderRadius: 8, flexDirection: `row`, alignItems: `center`, borderColor: palette.line, backgroundColor: palette.paper },
+  iconLink: { padding: 8, justifyContent: `center` },
+  activeLink: { borderColor: palette.accent, backgroundColor: palette.subtle },
+  linkLabel: { flex: 1, color: palette.ink, fontSize: 11, fontFamily: `DMSans_600SemiBold` },
+  activeLabel: { color: palette.accent },
+  badge: { minWidth: 17, height: 17, paddingHorizontal: 4, borderRadius: 999, backgroundColor: palette.subtle },
+  badgeLabel: { color: palette.accent, fontSize: 9, textAlign: `center`, fontFamily: `DMSans_600SemiBold` },
+  skeleton: { width: 22, height: 17, borderRadius: 999, backgroundColor: palette.skeleton },
+  error: { color: palette.danger, fontSize: 10, lineHeight: 15, fontFamily: `DMSans_400Regular` },
+  footer: { gap: 8, minHeight: 43, marginTop: `auto`, paddingVertical: 4, flexDirection: `row`, alignItems: `center`, justifyContent: `flex-end` },
+  profile: { gap: 10, flex: 1, height: 38, minWidth: 0, paddingHorizontal: 8, borderWidth: 1, borderRadius: 8, borderColor: palette.line, backgroundColor: palette.paper, flexDirection: `row`, alignItems: `center` },
+  avatar: { width: 28, height: 28, borderRadius: 28, overflow: `hidden`, alignItems: `center`, justifyContent: `center` },
+  initial: { color: palette.contrast, fontSize: 12, fontFamily: `DMSans_700Bold` },
+  photo: { width: 28, height: 28, top: 0, left: 0, position: `absolute` },
+  fullToggle: { width: `100%` },
+  toggle: { width: 38, height: 38, borderWidth: 1, borderRadius: 8, borderColor: palette.line, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.paper },
+});

@@ -1,15 +1,16 @@
 import { Link } from 'expo-router';
 import PageMeta from '../PageMeta';
+import { routes } from '../../shared/routes';
+import { createStyles } from './styles.native';
 import NotificationCard from '../NotificationCard';
 import { useMemo, useEffect, useContext } from 'react';
-import { Bell, Info, Sparkles, ArrowLeft } from 'lucide-react-native';
-import { Text, View, Pressable, useWindowDimensions } from 'react-native';
-import { createStyles } from './styles.native';
-import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { getNotificationSpacing } from '../NotificationCard/content';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
+import { Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { useNotificationsPage, type NotificationsProps } from './useNotificationsPage';
+import { Bell, Info, Heart, Sparkles, ArrowLeft, CheckCheck, RotateCcw, Construction } from 'lucide-react-native';
 
 const Notifications = ({ detail = false }: NotificationsProps) => {
   const state = useNotificationsPage(detail);
@@ -21,7 +22,7 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
   const wide = width >= 700;
   const padding = wide ? 32 : 20;
   const cardWidth = (Math.min(width, 960) - padding * 2 - (wide ? 16 : 0)) / (wide ? 2 : 1);
-  const Icon = detail ? notification?.icon === `Sparkles` ? Sparkles : Info : Bell;
+  const Icon = detail ? notification?.kind === `development` ? Construction : notification?.kind === `announcement` ? Heart : notification?.icon === `Sparkles` ? Sparkles : Info : Bell;
 
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
 
@@ -68,13 +69,18 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
           )}
           {!detail && !state.loading && !state.error && (
             <Text {...elementProps(`native-notifications-count`, suffix)} style={styles.count}>
-              {`${state.notifications.length} notification(s)`}
+              {`${state.notifications.length} Notification(s) · ${state.readReady ? `${state.unreadCount} Unread` : state.notice ? `Read Status Unavailable` : `Loading Read Status`}`}
             </Text>
           )}
+        </View>
+        <View {...elementProps(`native-notifications-actions`, suffix)} style={styles.actions}>
+          {!detail && <Pressable disabled={state.loading || state.busy || !state.readReady || !state.unreadCount} onPress={() => { void state.markAllRead(); }} accessibilityRole={`button`} accessibilityState={{ disabled: state.loading || state.busy || !state.readReady || !state.unreadCount }} style={[styles.action, (state.loading || state.busy || !state.readReady || !state.unreadCount) && styles.disabled]} {...elementProps(`native-notifications-read-all`, suffix)}><CheckCheck size={14} color={palette.accent} {...elementProps(`native-notifications-read-all-icon`, suffix)} /><Text style={styles.actionLabel} {...elementProps(`native-notifications-read-all-label`, suffix)}>{`Mark All Read`}</Text></Pressable>}
+          <Pressable disabled={state.loading} onPress={state.reload} accessibilityRole={`button`} accessibilityState={{ disabled: state.loading }} style={[styles.action, state.loading && styles.disabled]} {...elementProps(`native-notifications-reload`, suffix)}><RotateCcw size={14} color={palette.accent} {...elementProps(`native-notifications-reload-icon`, suffix)} /><Text style={styles.actionLabel} {...elementProps(`native-notifications-reload-label`, suffix)}>{`Reload`}</Text></Pressable>
         </View>
         {!!state.error && (
           <Text {...elementProps(`native-notifications-error`, suffix)} style={styles.error} accessibilityRole={`alert`}>{state.error}</Text>
         )}
+        {!!state.notice && <Text {...elementProps(`native-notifications-notice`, suffix)} style={styles.notice} accessibilityLiveRegion={`polite`}>{state.notice}</Text>}
         {state.loading && (
           <Text {...elementProps(`native-notifications-loading`, suffix)} style={styles.status} accessibilityLiveRegion={`polite`}>
             {detail ? `Loading notification…` : `Loading notifications…`}
@@ -90,7 +96,12 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
           ) : notification ? (
             <View {...elementProps(`native-notifications-body`, suffix)} style={styles.detail}>
               <Text {...elementProps(`native-notifications-text`, suffix)} style={styles.detailText}>
-                {notification.message ?? (
+                {notification.body !== undefined ? <>
+                  {notification.body}
+                  {getNotificationSpacing(notification.body, notification.link?.label)}
+                  {notification.link && (state.linkHref ? <Link href={state.linkHref} style={styles.inlineLink} {...elementProps(`native-notifications-inline-link`, suffix)} accessibilityLabel={notification.link.label}>{notification.link.label}</Link> : notification.link.label)}
+                  {getNotificationSpacing(notification.link?.label ?? notification.body, notification.suffix)}{notification.suffix}
+                </> : notification.message ?? (
                   <>
                     {notification.before}
                     <Link href={routes.signup.href} style={styles.inlineLink} {...elementProps(`native-notifications-sign-up`, suffix)} accessibilityLabel={`Sign Up`}>
@@ -100,6 +111,11 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
                   </>
                 )}
               </Text>
+              <View {...elementProps(`native-notifications-metadata`, suffix)} style={styles.metadata}>
+                <View {...elementProps(`native-notifications-kind-row`, suffix)} style={styles.metaItem}><Text {...elementProps(`native-notifications-kind-label`, suffix)} style={styles.metaLabel}>{`Type`}</Text><Text {...elementProps(`native-notifications-kind-value`, suffix)} style={styles.metaValue}>{notification.kind === `development` ? `Development` : `Announcement`}</Text></View>
+                <View {...elementProps(`native-notifications-read-row`, suffix)} style={styles.metaItem}><Text {...elementProps(`native-notifications-read-label`, suffix)} style={styles.metaLabel}>{`Read Status`}</Text><Text {...elementProps(`native-notifications-read-value`, suffix)} style={styles.metaValue} accessibilityLiveRegion={`polite`}>{!state.readReady ? state.notice ? `Unavailable` : `Loading` : notification.isRead ? `Read` : `Unread`}</Text></View>
+              </View>
+              {!notification.isRead && <Pressable disabled={state.busy || !state.readReady} onPress={() => { void state.markRead(notification.id); }} accessibilityRole={`button`} accessibilityState={{ disabled: state.busy || !state.readReady }} style={[styles.action, (state.busy || !state.readReady) && styles.disabled]} {...elementProps(`native-notifications-mark-read`, suffix)}><CheckCheck size={14} color={palette.accent} {...elementProps(`native-notifications-mark-read-icon`, suffix)} /><Text style={styles.actionLabel} {...elementProps(`native-notifications-mark-read-label`, suffix)}>{`Mark Read`}</Text></Pressable>}
             </View>
           ) : state.missing ? (
             <Text {...elementProps(`native-notifications-missing`, suffix)} style={[styles.status, styles.empty]} accessibilityLiveRegion={`polite`}>
@@ -115,7 +131,7 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
                 </View>
               )) : state.notifications.map(record => (
                 <View key={record.id} {...elementProps(`native-notifications-slot`, record.id)} style={{ width: cardWidth }}>
-                  <NotificationCard prefix={`notifications`} notification={record} />
+                  <NotificationCard prefix={`notifications`} readReady={state.readReady} onRead={state.readReady && !state.busy ? state.markRead : undefined} notification={record} />
                 </View>
               ))}
             </View>

@@ -1,0 +1,16 @@
+.dd-traffic-trend-reading { display: flex; min-height: 36px; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+.dd-traffic-trend-reading-date { display: inline-flex; align-items: center; gap: 6px; color: var(--dd-panel-muted, var(--muted)); font-size: 11px; }
+.dd-traffic-trend-reading-count { display: inline-flex; align-items: baseline; gap: 7px; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 24px; font-weight: 500; }
+.dd-traffic-trend-chart { display: block; width: 100%; height: auto; overflow: visible; color: var(--dd-highlight, var(--accent)); }
+.dd-traffic-trend-grid line { stroke: color-mix(in srgb, var(--accent) 9%, transparent); stroke-dasharray: 3 4; }
+.dd-traffic-trend-grid text, .dd-traffic-trend-label { fill: var(--dd-panel-muted, var(--muted)); font-family: var(--font-body); font-size: 11px; }
+.dd-traffic-trend-area { animation: dd-traffic-area-reveal .8s ease backwards; }
+.dd-traffic-trend-line { fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; animation: dd-traffic-line-draw 1.25s cubic-bezier(.22, 1, .36, 1) backwards; }
+.dd-traffic-trend-active line { stroke: currentColor; stroke-opacity: .18; stroke-dasharray: 4 4; }
+.dd-traffic-trend-active circle { fill: var(--dd-panel-surface, var(--paper)); stroke: currentColor; stroke-width: 2.5; }
+.dd-traffic-trend-slider-label { display: flex; align-items: center; gap: 12px; padding-left: 6%; }
+.dd-traffic-trend-slider { width: 100%; min-width: 0; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.dd-traffic-trend-slider-label > span { flex: none; }
+@keyframes dd-traffic-line-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes dd-traffic-area-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dd-traffic-trend-line, .dd-traffic-trend-area { animation: none; } }

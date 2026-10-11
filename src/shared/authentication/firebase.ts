@@ -9,7 +9,7 @@ import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
 import type { ProfileInput, PublicProfile } from '../models/users/User';
 import type { SignInInput, SignUpInput, AuthenticationResult } from './types';
 import { AccountDeactivatedError, AccountDataCleanupError, type AccountAction } from './types';
-import { doc, collection, updateDoc, onSnapshot, runTransaction } from 'firebase/firestore';
+import { doc, Timestamp, collection, updateDoc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { signOut as firebaseSignOut, onIdTokenChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile as updateFirebaseProfile, type User as FirebaseUser } from 'firebase/auth';
 
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
@@ -72,8 +72,9 @@ const readUser = (record: Record<string, unknown>, authUser: FirebaseUser) => {
     throw new Error(`Saved Firebase Account Data Is Incomplete`);
   }
   const photoURL = authUser.photoURL || authUser.providerData?.find(provider => provider.providerId === `google.com`)?.photoURL;
-  return new User({ ...record, signedIn: true, ...(photoURL ? { photoURL, avatar: photoURL, imageURL: photoURL, image: photoURL } : {}) });
+  return new User({ ...normalizeUserTimestamps(record), signedIn: true, ...(photoURL ? { photoURL, avatar: photoURL, imageURL: photoURL, image: photoURL } : {}) });
 };
+const normalizeUserTimestamps = (record: Record<string, unknown>) => Object.fromEntries(Object.entries(record).map(([field, value]) => [field, value instanceof Timestamp ? value.toDate().toISOString() : value]));
 const sessionResult = (user: User): AuthenticationResult => ({ user, claimLegacy: false, expiresAt: Date.now() + SESSION_DURATION });
 const assertActor = (uid: string) => {
   if (getFirebaseAuth().currentUser?.uid !== uid) throw new Error(`Your Account Changed — Try Again`);
@@ -327,7 +328,7 @@ const usersCollection = createFirestoreCollection(
   snapshot => snapshot.docs.map(record => {
     const saved = record.data();
     if (saved.id !== record.id || !isAppCollectionID(saved.id, Types.User) || getAppCollectionIDNumber(saved.id, Types.User) !== saved.number) throw new Error(`Saved User Data Could Not Be Read`);
-    return new User({ ...saved, signedIn: record.id === cachedSession?.result.user.id });
+    return new User({ ...normalizeUserTimestamps(saved), signedIn: record.id === cachedSession?.result.user.id });
   }),
   requireOwner,
   assertOwnerSession,

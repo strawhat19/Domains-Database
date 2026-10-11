@@ -1,0 +1,29 @@
+.dd-traffic-breakdown-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.dd-traffic-breakdown-row { min-width: 0; animation: dd-traffic-reveal .45s ease var(--dd-traffic-delay) backwards; }
+.dd-traffic-breakdown-button { display: grid; width: 100%; min-width: 0; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 8px; border: 1px solid transparent; border-radius: 8px; padding: 9px 7px; color: inherit; background: transparent; text-align: left; cursor: pointer; transition: background-color .2s ease, border-color .2s ease; }
+.dd-traffic-breakdown-button:hover, .dd-traffic-breakdown-button.is-selected { border-color: color-mix(in srgb, var(--accent) 12%, transparent); background: color-mix(in srgb, var(--accent) 4%, transparent); }
+.dd-traffic-breakdown-button:disabled { cursor: default; }
+.dd-traffic-breakdown-name { display: flex; min-width: 0; align-items: center; gap: 6px; font-size: 11px; overflow-wrap: anywhere; }
+.dd-traffic-breakdown-identity { display: grid; min-width: 0; gap: 3px; }
+.dd-traffic-breakdown-label { min-width: 0; line-height: 1.45; }
+.dd-traffic-breakdown-raw { min-width: 0; color: var(--dd-panel-muted, var(--muted)); font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+.dd-traffic-breakdown.is-path .dd-traffic-breakdown-identity { display: flex; flex: 1; align-items: baseline; gap: 8px; overflow: hidden; }
+.dd-traffic-breakdown.is-path .dd-traffic-breakdown-label { max-width: 55%; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-traffic-breakdown.is-path .dd-traffic-breakdown-raw { flex: 1 1 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-traffic-breakdown.is-device .dd-traffic-segment-icon { color: var(--dd-traffic-device-color); }
+.dd-traffic-breakdown-value { display: flex; align-items: baseline; gap: 8px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.dd-traffic-breakdown-share { min-width: 39px; color: var(--dd-panel-muted, var(--muted)); font-size: 10px; text-align: right; }
+.dd-traffic-breakdown-track { display: block; height: 4px; grid-column: 1 / -1; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--accent) 5.5%, transparent); }
+.dd-traffic-breakdown-bar { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--accent) 58%, transparent); transform-origin: left center; animation: dd-traffic-bar-grow .8s cubic-bezier(.22, 1, .36, 1) var(--dd-traffic-delay) backwards; transition: width .8s cubic-bezier(.22, 1, .36, 1); }
+.dd-traffic-breakdown-visitors { color: var(--dd-panel-muted, var(--muted)); font-size: 9px; }
+.dd-traffic-breakdown-arrow { justify-self: end; color: color-mix(in srgb, var(--accent) 50%, transparent); }
+.dd-traffic-device-donut { position: relative; display: grid; width: 132px; height: 132px; place-items: center; margin: 0 auto 18px; }
+.dd-traffic-device-rings { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.dd-traffic-device-rings circle { fill: none; stroke-width: 14; }
+.dd-traffic-device-track { stroke: color-mix(in srgb, var(--accent) 6%, transparent); }
+.dd-traffic-device-segment { animation: dd-traffic-donut-draw 1s cubic-bezier(.22, 1, .36, 1) var(--dd-traffic-delay) backwards; }
+.dd-traffic-device-center { display: grid; max-width: 92px; justify-items: center; gap: 3px; }
+.dd-traffic-device-total { color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 25px; font-weight: 500; }
+@keyframes dd-traffic-bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes dd-traffic-donut-draw { from { stroke-dasharray: 0 100; } }
+@media (prefers-reduced-motion: reduce) { .dd-traffic-breakdown-row, .dd-traffic-breakdown-bar, .dd-traffic-device-segment { animation: none; } .dd-traffic-breakdown-bar, .dd-traffic-breakdown-button { transition: none; } }

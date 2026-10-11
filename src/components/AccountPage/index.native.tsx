@@ -1,184 +1,85 @@
-import { Link } from 'expo-router';
+import { Text, View } from 'react-native';
 import { Roles } from '../../types/types';
+import AccountSidebar from '../AccountSidebar';
 import AccountActions from '../AccountActions';
-import FormSubmissions from '../FormSubmissions';
-import { useAccountPage } from './useAccountPage';
 import ProfileSettings from '../ProfileSettings';
-import { useLocalStorage } from '../../shared/config';
+import { useAccountPage } from './useAccountPage';
 import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
 import ProfileThemePreference from '../ProfileThemePreference';
-import { firebaseEnabled } from '../../shared/firebase/config';
+import { canAccessAdmin } from '../../shared/admin/permissions';
 import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
-import { Text, Image, Platform, Pressable, View, StyleSheet } from 'react-native';
-import { PlugZap, UserRound, RefreshCw, ArrowLeft, ArrowRight, BadgeCheck, ShieldCheck, CalendarDays, LayoutDashboard } from 'lucide-react-native';
+import { Crown, Globe2, UserRound, BadgeCheck, LockKeyhole, ShieldCheck, CalendarDays } from 'lucide-react-native';
 
-const googleLogo = require('../../../assets/icons/google-g.png');
-
-const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` | `dashboard` }) => {
-  const state = useAccountPage(page);
+const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` }) => {
+  const state = useAccountPage();
   const { styles, palette, user } = state;
+  if (!user) return null;
+  const profile = page === `profile`;
+  const TitleIcon = profile ? UserRound : ShieldCheck;
+  const RoleIcon = user.role === Roles.Owner ? Crown : canAccessAdmin(user) ? ShieldCheck : UserRound;
+  const PrivacyIcon = user.profilePrivacy === `public` ? Globe2 : LockKeyhole;
   const fields = [
-    { key: `name`, label: `Name`, value: user?.name },
-    { key: `email`, label: `Email`, value: user?.email },
-    { key: `role`, label: `Role`, Icon: ShieldCheck, value: user?.role },
-    { key: `plan`, label: `Plan`, Icon: BadgeCheck, value: user?.plan === `free` ? `Free` : user?.plan },
-    { key: `created`, label: `Joined`, Icon: CalendarDays, value: user?.created ? new Date(user.created).toLocaleDateString() : `` },
-    { key: `id`, label: `Account ID`, value: user?.id },
-  ].filter(field => field.key !== `plan` || !hasUnlimitedPlanAccess(user));
-  const headings = {
-    profile: { eyebrow: `A LITTLE ABOUT YOU`, title: `Your profile.`, copy: `Set your profile visibility and keep your account details together.` },
-    connections: { eyebrow: `PRIVATE CONNECTIONS`, title: `Connections.`, copy: `Prepare your registrar connections in one place.` },
-    dashboard: { eyebrow: `ACCOUNT OVERVIEW`, title: `Dashboard.`, copy: `Account activity and an overview of your own portfolio.` },
-  };
-  return (
-    <View
-      {...elementProps(`account-page`, page)}
-      style={[styles.root, state.compact && styles.compact]}
-      {...(Platform.OS === `web` ? { dataSet: { class: `account-page`, page } } : {})}
-    >
-      <View {...elementProps(`account-sidebar`)} style={[styles.sidebar, state.compact && styles.compactSidebar]}>
-        <Text {...elementProps(`account-sidebar-title`)} style={styles.eyebrow}>{`YOUR ACCOUNT`}</Text>
-        <Link href={`/profile`} asChild>
-          <Pressable {...elementProps(`account-sidebar-profile`)} style={StyleSheet.flatten([styles.link, page === `profile` && styles.activeLink])}>
-            <UserRound {...elementProps(`account-profile-icon`)} size={16} color={page === `profile` ? palette.accent : palette.muted} />
-            <Text {...elementProps(`account-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
-          </Pressable>
-        </Link>
-        <Link href={`/profile/connections`} asChild>
-          <Pressable {...elementProps(`account-sidebar-connections`)} style={StyleSheet.flatten([styles.link, page === `connections` && styles.activeLink])}>
-            <PlugZap {...elementProps(`account-connections-icon`)} size={16} color={page === `connections` ? palette.accent : palette.muted} />
-            <Text {...elementProps(`account-connections-text`)} style={styles.linkText}>{`Connections`}</Text>
-          </Pressable>
-        </Link>
-        {user?.role === Roles.Owner && (
-          <Link href={`/dashboard`} asChild>
-            <Pressable {...elementProps(`account-sidebar-dashboard`)} style={StyleSheet.flatten([styles.link, page === `dashboard` && styles.activeLink])}>
-              <LayoutDashboard {...elementProps(`account-dashboard-icon`)} size={16} color={page === `dashboard` ? palette.accent : palette.muted} />
-              <Text {...elementProps(`account-dashboard-text`)} style={styles.linkText}>{`Dashboard`}</Text>
-            </Pressable>
-          </Link>
-        )}
-      </View>
-      <View {...elementProps(`account-content`)} style={styles.content}>
-        <Text {...elementProps(`account-eyebrow`)} style={styles.eyebrow}>{headings[page].eyebrow}</Text>
-        <Text {...elementProps(`account-title`)} style={styles.title} accessibilityRole={`header`}>{headings[page].title}</Text>
-        <Text {...elementProps(`account-description`)} style={styles.description}>
-          {headings[page].copy}
-        </Text>
-        {page === `profile` ? (
-          <>
+    { id: `role`, label: `Role`, Icon: RoleIcon, value: user.role },
+    ...(!hasUnlimitedPlanAccess(user) ? [{ id: `plan`, label: `Plan`, Icon: BadgeCheck, value: user.plan === `free` ? `Free` : user.plan }] : []),
+    { id: `privacy`, label: `Profile`, Icon: PrivacyIcon, value: user.profilePrivacy === `public` ? `Public` : `Private` },
+    { id: `joined`, label: `Joined`, Icon: CalendarDays, value: new Date(user.created).toLocaleDateString(`en-US`, { day: `numeric`, year: `numeric`, month: `long`, timeZone: `America/New_York` }) },
+  ];
+  return <View {...elementProps(`account-page`, page)} style={[styles.root, state.compact && styles.compact]}>
+    <AccountSidebar section={page} />
+    <View {...elementProps(`account-content`)} style={[styles.content, state.compact && styles.compactContent]}>
+      <View {...elementProps(`profile-content`)} style={[styles.columns, state.narrow && styles.stackedColumns]}>
+        <View {...elementProps(`profile-details`)} style={[styles.main, state.narrow && styles.stackedMain]}>
+          <View {...elementProps(`account-eyebrow-heading`)} style={styles.eyebrowHeading}>
+            <View {...elementProps(`account-eyebrow-line`)} style={styles.eyebrowLine} />
+            <Text {...elementProps(`account-eyebrow`)} style={styles.eyebrow}>{`YOUR ACCOUNT`}</Text>
+          </View>
+          <View {...elementProps(`account-heading`)} style={styles.heading}>
+            <TitleIcon {...elementProps(`account-title-icon`)} size={28} color={palette.accent} />
+            <Text {...elementProps(`account-title`)} style={[styles.title, { fontSize: state.titleSize }]} accessibilityRole={`header`}>
+              {profile ? <>{`Hello, `}<Text {...elementProps(`account-title-name`)} style={styles.name}>{`${user.name}.`}</Text></> : `Connections`}
+            </Text>
+          </View>
+          <Text {...elementProps(`account-description`)} style={styles.description}>{profile ? `Your account uses ${state.providerLabel === `Local Demo` ? `a local demo on this device` : state.providerLabel}.` : `Manage registrar connections securely for your own account.`}</Text>
+          {profile ? <>
             <ProfileSettings />
-            <View {...elementProps(`profile-details-column`)} style={styles.profileDetailsColumn}>
-              <View {...elementProps(`profile-details`)} style={styles.panel}>
-                {fields.map(field => {
-                  const Icon = field.Icon;
-                  return (
-                    <View key={field.key} {...elementProps(`profile-field`, field.key)} style={styles.field}>
-                      <Text {...elementProps(`profile-label`, field.key)} style={styles.label}>{field.label}</Text>
-                      <View {...elementProps(`profile-value-row`, field.key)} style={styles.valueRow}>
-                        {field.key === `email` && (
-                          <Image
-                            source={googleLogo}
-                            style={styles.valueIcon}
-                            resizeMode={`contain`}
-                            {...elementProps(`profile-value-icon`, field.key)}
-                            {...(Platform.OS === `web` ? { 'aria-hidden': true } : {
-                              accessible: false,
-                              accessibilityElementsHidden: true,
-                              accessibilityIgnoresInvertColors: true,
-                              importantForAccessibility: `no` as const,
-                            })}
-                          />
-                        )}
-                        {Icon && (
-                          <Icon
-                            size={16}
-                            color={palette.accent}
-                            style={styles.valueIcon}
-                            {...elementProps(`profile-value-icon`, field.key)}
-                            {...(Platform.OS === `web` ? { 'aria-hidden': true } : { accessible: false })}
-                          />
-                        )}
-                        <Text {...elementProps(`profile-value`, field.key)} style={[styles.value, styles.valueText]} selectable>{field.value || `—`}</Text>
-                      </View>
-                    </View>
-                  );
-                })}
+            <View {...elementProps(`profile-account-record`)} style={styles.accountRecord}>
+              <Text {...elementProps(`profile-account-label`)} style={styles.accountLabel}>{`Account`}</Text>
+              <View {...elementProps(`profile-account-value`)} style={styles.accountValue}><AccountActions stacked /></View>
+            </View>
+          </> : <AccountConnections />}
+        </View>
+        {profile && <View {...elementProps(`profile-sidebar`)} style={[styles.panel, state.narrow && styles.fullDetails]}>
+          <Text {...elementProps(`profile-sidebar-title`)} style={styles.panelTitle} accessibilityRole={`header`}>{`Account Details`}</Text>
+          <View {...elementProps(`profile-sidebar-record`)} style={styles.record}>
+            {fields.map(({ id, label, Icon, value }, index) => <View key={id} {...elementProps(`profile-record-row`, id)} style={[styles.field, index > 0 && styles.separatedField]}>
+              <Text {...elementProps(`profile-label`, id)} style={styles.label}>{label}</Text>
+              <View {...elementProps(`profile-value-row`, id)} style={styles.valueRow}>
+                <Icon {...elementProps(`profile-value-icon`, id)} size={18} color={palette.accent} />
+                <Text {...elementProps(`profile-value`, id)} style={styles.value} selectable>{value}</Text>
               </View>
-              <View {...elementProps(`profile-account-preferences`)} style={[styles.panel, styles.preferences]}>
-                <ProfileThemePreference />
-                <AccountActions stacked />
+            </View>)}
+          </View>
+          <ProfileThemePreference />
+          <View {...elementProps(`profile-portfolio`)} style={styles.portfolio}>
+            <Text {...elementProps(`profile-portfolio-title`)} style={styles.eyebrow}>{`YOUR PORTFOLIO`}</Text>
+            {state.stats.map(({ id, Icon, label, value }, index) => <View key={id} {...elementProps(`profile-portfolio-row`, id)} style={[styles.field, index > 0 && styles.separatedField]}>
+              <Text {...elementProps(`profile-portfolio-label`, id)} style={styles.portfolioLabel}>{label}</Text>
+              <View {...elementProps(`profile-portfolio-value`, id)} style={styles.statValueRow}>
+                <Icon {...elementProps(`profile-portfolio-icon`, id)} size={15} color={palette.accent} />
+                <Text {...elementProps(`profile-portfolio-stat`, id)} style={styles.value}>{value}</Text>
               </View>
-            </View>
-          </>
-        ) : page === `connections` ? (
-          <AccountConnections />
-        ) : (
-          <>
-            <View {...elementProps(`dashboard-stats`)} style={styles.stats}>
-              {state.stats.map(stat => (
-                <View key={stat.id} {...elementProps(`dashboard-stat`, stat.id)} style={styles.stat}>
-                  <Text {...elementProps(`dashboard-stat-label`, stat.id)} style={styles.label}>{stat.label}</Text>
-                  {state.loading ? <View {...elementProps(`dashboard-stat-skeleton`, stat.id)} style={styles.skeleton} /> : (
-                    <Text {...elementProps(`dashboard-stat-value`, stat.id)} style={styles.statValue}>{stat.value}</Text>
-                  )}
-                </View>
-              ))}
-            </View>
-            {!!state.error && <Text {...elementProps(`dashboard-error`)} style={styles.error} accessibilityRole={`alert`}>{state.error}</Text>}
-            <View {...elementProps(`dashboard-roles`)} style={styles.panel}>
-              <Text {...elementProps(`dashboard-roles-title`)} style={styles.panelTitle}>{`Accounts by role · This page`}</Text>
-              {state.loading ? <View {...elementProps(`dashboard-roles-skeleton`)} style={styles.skeleton} /> : state.roles.map(item => (
-                <View key={item.role} {...elementProps(`dashboard-role`, item.role.toLowerCase())} style={styles.roleRow}>
-                  <Text {...elementProps(`dashboard-role-label`, item.role.toLowerCase())} style={styles.label}>{`${item.role} · ${item.count}`}</Text>
-                  <View {...elementProps(`dashboard-role-track`, item.role.toLowerCase())} style={styles.track}>
-                    <View {...elementProps(`dashboard-role-bar`, item.role.toLowerCase())} style={[styles.bar, { width: `${Math.round(item.count / Math.max(state.users.length, 1) * 100)}%` }]} />
-                  </View>
-                </View>
-              ))}
-            </View>
-            <View {...elementProps(`dashboard-users`)} style={styles.panel}>
-              <Text {...elementProps(`dashboard-users-title`)} style={styles.panelTitle}>{firebaseEnabled && !useLocalStorage ? `Users` : `Local users`}</Text>
-              <Text {...elementProps(`dashboard-users-scope`)} style={styles.label}>{`Up to 50 users per page, newest first. Account and role counts describe this page.`}</Text>
-              {state.loading ? <View {...elementProps(`dashboard-users-skeleton`)} style={styles.skeleton} /> : state.users.map(account => (
-                <View key={account.id} {...elementProps(`dashboard-user`, account.id)} style={styles.userRow}>
-                  <View {...elementProps(`dashboard-user-details`, account.id)} style={styles.userDetails}>
-                    <Text {...elementProps(`dashboard-user-name`, account.id)} style={styles.value}>{account.name}</Text>
-                    <Text {...elementProps(`dashboard-user-email`, account.id)} style={styles.label}>{account.email}</Text>
-                  </View>
-                  <View {...elementProps(`actionsCell`, account.id)} style={styles.statusCell}>
-                    <View {...elementProps(`rowStatus`, account.id)} style={styles.statusCell}>
-                      <View {...elementProps(`statusDotWrap`, account.id)}>
-                        <View {...elementProps(`statusDot`, account.id)} style={[styles.dot, { backgroundColor: account.active ? palette.success : palette.muted }]} />
-                      </View>
-                      <Text {...elementProps(`statusText`, account.id)} style={styles.label}>{account.active ? `Active` : `Inactive`}</Text>
-                    </View>
-                  </View>
-                </View>
-              ))}
-              <View {...elementProps(`dashboard-users-pagination`)} style={styles.pagination}>
-                <Text {...elementProps(`dashboard-users-page`)} style={styles.label}>{`Page ${state.userPage.page}`}</Text>
-                <Pressable {...elementProps(`dashboard-users-latest`)} style={[styles.pageButton, state.userPage.loading && styles.disabled]} disabled={state.userPage.loading} accessibilityRole={`button`} accessibilityState={{ disabled: state.userPage.loading }} onPress={state.userPage.refresh}>
-                  <RefreshCw {...elementProps(`dashboard-users-latest-icon`)} size={14} color={palette.ink} />
-                  <Text {...elementProps(`dashboard-users-latest-label`)} style={styles.pageButtonText}>{`Latest`}</Text>
-                </Pressable>
-                <Pressable {...elementProps(`dashboard-users-previous`)} style={[styles.pageButton, (state.userPage.loading || !state.userPage.hasPrevious) && styles.disabled]} disabled={state.userPage.loading || !state.userPage.hasPrevious} accessibilityRole={`button`} accessibilityState={{ disabled: state.userPage.loading || !state.userPage.hasPrevious }} onPress={state.userPage.previousPage}>
-                  <ArrowLeft {...elementProps(`dashboard-users-previous-icon`)} size={14} color={palette.ink} />
-                  <Text {...elementProps(`dashboard-users-previous-label`)} style={styles.pageButtonText}>{`Newer`}</Text>
-                </Pressable>
-                <Pressable {...elementProps(`dashboard-users-next`)} style={[styles.pageButton, (state.userPage.loading || !state.userPage.hasNext) && styles.disabled]} disabled={state.userPage.loading || !state.userPage.hasNext} accessibilityRole={`button`} accessibilityState={{ disabled: state.userPage.loading || !state.userPage.hasNext }} onPress={state.userPage.nextPage}>
-                  <Text {...elementProps(`dashboard-users-next-label`)} style={styles.pageButtonText}>{`Older`}</Text>
-                  <ArrowRight {...elementProps(`dashboard-users-next-icon`)} size={14} color={palette.ink} />
-                </Pressable>
-              </View>
-            </View>
-            <FormSubmissions />
-          </>
-        )}
+            </View>)}
+            {!!state.error && <Text {...elementProps(`profile-portfolio-error`)} style={styles.error} accessibilityRole={`alert`}>{state.error}</Text>}
+          </View>
+          <View {...elementProps(`profile-account-identity`)} style={styles.identity}>
+            <Text {...elementProps(`profile-account-mode`)} style={styles.identityText}>{state.connectionMode}</Text>
+            <Text {...elementProps(`profile-account-id`)} style={styles.identityText} selectable>{user.id}</Text>
+          </View>
+        </View>}
       </View>
     </View>
-  );
+  </View>;
 };
 
 export default AccountPage;

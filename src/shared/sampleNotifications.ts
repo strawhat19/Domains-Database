@@ -1,3 +1,5 @@
+import type { NotificationKind, NotificationLink } from './models/notifications/Notification';
+
 export interface HeaderNotification {
   id: string;
   title: string;
@@ -5,6 +7,13 @@ export interface HeaderNotification {
   before: string;
   after: string;
   icon: `Info` | `Sparkles`;
+  body?: string;
+  slug?: string;
+  suffix?: string;
+  isRead?: boolean;
+  kind?: NotificationKind;
+  link?: NotificationLink;
+  source?: `announcement` | `account`;
 }
 
 export const sampleNotifications: readonly HeaderNotification[] = [

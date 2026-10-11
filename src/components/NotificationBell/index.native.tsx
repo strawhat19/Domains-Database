@@ -1,22 +1,22 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
-import { X, Bell, List } from 'lucide-react-native';
+import { routes } from '../../shared/routes';
 import { createStyles } from './styles.native';
 import NotificationCard from '../NotificationCard';
-import { routes } from '../../shared/routes';
-import { useNotificationBell } from './useNotificationBell';
 import { elementProps } from '../../shared/elementProps';
+import { useNotificationBell } from './useNotificationBell';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { useReducedMotion } from '../../shared/common/useReducedMotion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useReducedMotion } from '../../shared/common/useReducedMotion';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { X, Bell, List, CheckCheck, RotateCcw } from 'lucide-react-native';
 
 const NotificationBell = () => {
   const insets = useSafeAreaInsets();
   const { palette } = useTheme();
   const reducedMotion = useReducedMotion();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const { open, error, loading, notifications, count, close, toggle, badgeColors } = useNotificationBell();
+  const { open, busy, readReady, readLabel, error, notice, loading, notifications, count, close, toggle, badgeColors, markRead, markAllRead, reload } = useNotificationBell();
 
   return (
     <View {...elementProps(`native-header-notifications`)}>
@@ -25,7 +25,7 @@ const NotificationBell = () => {
         accessibilityRole={`button`}
         accessibilityState={{ busy: loading, expanded: open }}
         {...elementProps(`native-header-notifications-toggle`)}
-        accessibilityLabel={loading ? `Notifications, Loading Updates` : `Notifications, ${count} updates`}
+        accessibilityLabel={loading ? `Notifications, Loading Updates` : `Notifications, ${readLabel}`}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
       >
         <Bell
@@ -93,7 +93,7 @@ const NotificationBell = () => {
                 style={styles.count}
                 {...elementProps(`native-header-notifications-count`)}
               >
-                {`${count} updates`}
+                {readLabel}
               </Text>}
               <Pressable
                 onPress={close}
@@ -108,6 +108,10 @@ const NotificationBell = () => {
                   {...elementProps(`native-header-notifications-close-icon`)}
                 />
               </Pressable>
+            </View>
+            <View {...elementProps(`native-header-notifications-actions`)} style={styles.actions}>
+              <Pressable onPress={() => { void markAllRead(); }} disabled={busy || loading || !readReady || !count} accessibilityRole={`button`} accessibilityState={{ disabled: busy || loading || !readReady || !count }} style={[styles.action, (busy || loading || !readReady || !count) && styles.disabled]} {...elementProps(`native-header-notifications-read-all`)}><CheckCheck size={14} color={palette.accent} {...elementProps(`native-header-notifications-read-all-icon`)} /><Text style={styles.actionText} {...elementProps(`native-header-notifications-read-all-label`)}>{`Mark All Read`}</Text></Pressable>
+              <Pressable onPress={reload} disabled={loading} accessibilityRole={`button`} accessibilityState={{ disabled: loading }} style={[styles.action, loading && styles.disabled]} {...elementProps(`native-header-notifications-reload`)}><RotateCcw size={14} color={palette.accent} {...elementProps(`native-header-notifications-reload-icon`)} /><Text style={styles.actionText} {...elementProps(`native-header-notifications-reload-label`)}>{`Reload`}</Text></Pressable>
             </View>
             <ScrollView
               style={styles.scroll}
@@ -132,6 +136,8 @@ const NotificationBell = () => {
               )) : notifications.length ? notifications.map(notification => (
                 <NotificationCard
                   key={notification.id}
+                  readReady={readReady}
+                  onRead={readReady && !busy ? markRead : undefined}
                   onNavigate={close}
                   notification={notification}
                 />
@@ -141,6 +147,7 @@ const NotificationBell = () => {
                 </Text>
               ) : null}
             </ScrollView>
+            {!!notice && <Text style={styles.notice} accessibilityLiveRegion={`polite`} {...elementProps(`native-header-notifications-notice`)}>{notice}</Text>}
             <View style={styles.footer} {...elementProps(`native-header-notifications-footer`)}>
               <Link href={routes.notifications.href} asChild>
                 <Pressable

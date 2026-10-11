@@ -1,0 +1,24 @@
+.admin-notification-editor { margin: 24px 0; border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent); border-radius: 12px; padding: 24px; background: var(--paper); }
+.admin-notification-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.admin-notification-editor-title { margin: 0; color: var(--accent); font-family: var(--font-display); font-size: 26px; font-weight: 500; }
+.admin-notification-editor-close { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 50%; background: transparent; color: var(--accent); }
+.admin-notification-editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; border: 0; padding: 0; }
+.admin-notification-editor-field { display: grid; align-content: start; gap: 8px; min-width: 0; color: var(--ink); font-size: 11px; }
+.admin-notification-editor-field.is-wide { grid-column: 1 / -1; }
+.admin-notification-editor-input { width: 100%; min-width: 0; min-height: 42px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; outline: 0; background: transparent; color: var(--ink); font-size: 12px; transition: border-color .2s ease, box-shadow .2s ease; }
+textarea.admin-notification-editor-input { resize: vertical; }
+.admin-notification-editor-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 8%, transparent); }
+.admin-notification-editor-input:disabled { opacity: .6; }
+.admin-notification-editor-note, .admin-notification-editor-error { margin: 18px 0 0; font-size: 11px; line-height: 1.7; }
+.admin-notification-editor-note { color: var(--muted); }
+.admin-notification-editor-error { color: var(--danger); }
+.admin-notification-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 24px; }
+.admin-notification-editor-actions .admin-notification-editor-save { min-height: 40px; padding: 12px 18px; font-size: 10px; }
+.admin-notification-editor-cancel { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 8px 0; background: transparent; color: var(--accent); font-size: 11px; }
+.admin-notification-editor-actions button:disabled, .admin-notification-editor-close:disabled { cursor: default; opacity: .5; transform: none; }
+.admin-notification-editor-cancel:focus-visible, .admin-notification-editor-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 600px) { .admin-notification-editor-fields { grid-template-columns: minmax(0, 1fr); } .admin-notification-editor { padding: 18px; } .admin-notification-editor-input { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { .admin-notification-editor-input { transition: none; } }
+.admin-notification-editor-save { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: var(--contrast); cursor: pointer; transition: background-color .2s ease; }
+.admin-notification-editor-save:hover:not(:disabled) { background: var(--accent-hover); }
+@media (prefers-reduced-motion: reduce) { .admin-notification-editor-save { transition: none; } }

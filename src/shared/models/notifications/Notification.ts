@@ -8,6 +8,20 @@ export enum AnnouncementStatus {
   Archived = `Archived`,
 }
 
+export type NotificationKind = `development` | `announcement`;
+export type NotificationLink = { href: string; label: string };
+export interface AdminNotificationInput {
+  body: string;
+  slug: string;
+  title: string;
+  icon?: string;
+  suffix?: string;
+  showTitle?: boolean;
+  link?: NotificationLink;
+  kind: NotificationKind;
+  status: AnnouncementStatus;
+}
+
 export type NotificationInput = Omit<Partial<Notification>, `id` | `status`> & {
   id?: string | number;
   status?: AnnouncementStatus | string;
@@ -19,11 +33,16 @@ export type NotificationInput = Omit<Partial<Notification>, `id` | `status`> & {
 };
 
 export class Notification extends Data {
+  body: string;
+  slug: string;
   icon: string;
+  suffix?: string;
   active: boolean;
   details: string;
   showTitle: boolean;
+  link?: NotificationLink;
   providerId?: string;
+  kind: NotificationKind;
   status: AnnouncementStatus;
   metadata: Record<string, JSONValue>;
 
@@ -45,6 +64,17 @@ export class Notification extends Data {
     this.showTitle = data.showTitle ?? false;
     this.providerId = data.providerId || (!appID && data.id !== undefined ? String(data.id) : undefined);
     this.metadata = { ...data.metadata };
+    const before = typeof this.metadata.before === `string` ? this.metadata.before : ``;
+    const after = typeof this.metadata.after === `string` ? this.metadata.after : ``;
+    const original = [`development`, `support`].includes(this.providerId ?? ``) && !!(before || after);
+    const originalBody = original && this.description === `${before}sign up${after}`;
+    this.body = data.body ?? (originalBody ? before : this.description || this.details);
+    this.slug = data.slug ?? (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(this.providerId ?? ``) ? this.providerId! : `notification-${this.number}`);
+    this.kind = data.kind ?? (this.providerId === `development` ? `development` : `announcement`);
+    this.suffix = data.suffix ?? (originalBody ? after : undefined);
+    this.link = data.link ? { ...data.link } : originalBody ? { href: `/signup`, label: `sign up` } : undefined;
     this.refreshProperties();
   }
 }
+
+export type NotificationRecord = Notification;

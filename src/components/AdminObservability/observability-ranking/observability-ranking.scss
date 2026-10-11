@@ -1,0 +1,25 @@
+.dd-observability-ranking { display: flex; min-width: 0; min-height: 0; flex-direction: column; gap: 8px; }
+.dd-observability-ranking-heading { display: flex; flex: none; flex-wrap: wrap; justify-content: space-between; gap: 5px; padding-inline: 4px; color: var(--dd-panel-muted, var(--muted)); font-size: 9px; }
+.dd-observability-ranking-scroll, .dd-observability-ranking-table-wrap { min-width: 0; min-height: 0; flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--accent) 25%, transparent) transparent; }
+.dd-observability-ranking-rows { display: grid; gap: 6px; margin: 0; padding: 3px 4px 7px; list-style: none; }
+.dd-observability-ranking-row { display: grid; min-width: 0; grid-template-columns: 15px 16px minmax(0, 1fr) auto; align-items: center; gap: 6px 9px; border: 1px solid color-mix(in srgb, var(--accent) 6%, transparent); border-radius: 8px; padding: 9px; background: color-mix(in srgb, var(--accent) 1.5%, transparent); animation: dd-runtime-row-reveal .4s ease var(--dd-runtime-row-delay) backwards; }
+.dd-observability-ranking-rank { color: var(--dd-panel-muted, var(--muted)); font-size: 9px; text-align: center; }
+.dd-observability-ranking-icon, .dd-observability-ranking-identity > svg { flex: none; color: var(--dd-highlight, var(--accent)); }
+.dd-observability-ranking-row.is-error .dd-observability-ranking-icon { color: var(--danger); }
+.dd-observability-ranking-copy { display: grid; min-width: 0; gap: 3px; font-size: 11px; font-weight: 400; }
+.dd-observability-ranking-copy > span, .dd-observability-ranking-copy > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-observability-ranking-copy > small, .dd-observability-ranking-values > small { color: var(--dd-panel-muted, var(--muted)); font-size: 9px; font-weight: 400; }
+.dd-observability-ranking-values { display: grid; gap: 4px; justify-items: end; font-variant-numeric: tabular-nums; }
+.dd-observability-ranking-values > strong { color: var(--dd-highlight, var(--accent)); font-size: 11px; font-weight: 600; }
+.dd-observability-ranking-track { height: 4px; grid-column: 2 / -1; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--accent) 5.5%, transparent); }
+.dd-observability-ranking-bar { display: block; height: 100%; border-radius: inherit; background: color-mix(in srgb, var(--accent) 60%, transparent); transform-origin: left center; animation: dd-runtime-row-grow .65s cubic-bezier(.22, 1, .36, 1) var(--dd-runtime-row-delay) backwards; transition: width .65s cubic-bezier(.22, 1, .36, 1); }
+.dd-observability-ranking-table { width: 100%; border-collapse: collapse; text-align: left; }
+.dd-observability-ranking-table th, .dd-observability-ranking-table td { border-bottom: 1px solid color-mix(in srgb, var(--accent) 9%, transparent); padding: 9px 7px; font-size: 10px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.dd-observability-ranking-table thead { position: sticky; z-index: 1; top: 0; color: var(--dd-highlight, var(--accent)); background: var(--dd-panel-surface, var(--paper)); }
+.dd-observability-ranking-table th:not(:first-child), .dd-observability-ranking-table td { text-align: right; white-space: nowrap; }
+.dd-observability-ranking-identity { display: flex; min-width: 0; align-items: center; gap: 7px; }
+.dd-observability-ranking-empty { margin: 0; border-radius: 8px; padding: 24px 12px; color: var(--dd-panel-muted, var(--muted)); font-size: 11px; text-align: center; }
+.dd-observability-panel.is-compact .dd-observability-ranking { height: 100%; }
+@keyframes dd-runtime-row-reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes dd-runtime-row-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .dd-observability-ranking-row, .dd-observability-ranking-bar { animation: none; } .dd-observability-ranking-bar { transition: none; } }

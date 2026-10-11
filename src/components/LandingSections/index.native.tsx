@@ -1,3 +1,4 @@
+import Pricing from '../Pricing';
 import { Link } from 'expo-router';
 import type { Href } from 'expo-router';
 import { routes } from '../../shared/routes';
@@ -7,16 +8,13 @@ import LandingOverview from '../LandingOverview';
 import { useMemo, useState, useEffect } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { getBlogHref } from '../../shared/blog/metadata';
-import { useAuth } from '../../shared/authContext/useAuth';
+import { domainBasics, ctaActivityCells } from './content';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
-import { activityCells, domainBasics, landingPlans, ctaActivityCells } from './content';
+import { Globe2, Server, PanelTop, ArrowUpRight } from 'lucide-react-native';
 import { Text, View, Easing, Animated, Pressable, useWindowDimensions } from 'react-native';
-import { Check, LockKeyhole, Globe2, Server, PanelTop, ArrowUpRight } from 'lucide-react-native';
 
 const LandingSections = () => {
-  const { user } = useAuth();
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
@@ -27,7 +25,6 @@ const LandingSections = () => {
   const contentWidth = Math.max(0, Math.min(width, 1120) - (compact ? 40 : 64));
   const cardWidth = (contentWidth - (columns - 1) * 14) / columns;
   const ctaActivityRows = Array.from({ length: 4 }, (_, row) => ctaActivityCells.filter(cell => cell.index % 7 === row));
-  const activityRows = Array.from({ length: 7 }, (_, row) => activityCells.filter(cell => cell.index % 7 === row));
   const activityColors = [palette.line, `${palette.accent}40`, `${palette.accent}70`, `${palette.accent}b0`, palette.accent];
 
   useEffect(() => {
@@ -167,66 +164,7 @@ const LandingSections = () => {
 
       <LandingOverview />
 
-      {!hasUnlimitedPlanAccess(user) && <View {...elementProps(`landing-pricing`)} style={[styles.section, compact && styles.compactSection]}>
-        <View {...elementProps(`landing-pricing-inner`)} style={styles.inner}>
-          <View {...elementProps(`landing-pricing-heading-row`)} style={[styles.pricingHeadingRow, width >= 900 && styles.widePricingHeadingRow]}>
-            <View {...elementProps(`landing-pricing-heading-copy`)} style={[styles.pricingHeadingCopy, width >= 900 && styles.widePricingHeadingCopy]}>
-              {renderHeading(`landing-pricing`, `ROOM TO GROW`, `Start free. Plan for more.`, `Get your portfolio organized today. Higher tiers are a preview of what we plan to unlock next.`)}
-            </View>
-            <View
-              accessible={false}
-              pointerEvents={`none`}
-              accessibilityElementsHidden
-              importantForAccessibility={`no-hide-descendants`}
-              {...elementProps(`landing-pricing-activity-grid`)}
-              style={[styles.pricingActivityGrid, width >= 900 && styles.widePricingActivityGrid]}
-            >
-              {activityRows.map((row, index) => (
-                <View key={index} {...elementProps(`landing-pricing-activity-row`, `${index}`)} style={styles.pricingActivityRow}>
-                  {row.map(cell => (
-                    <Animated.View
-                      key={cell.index}
-                      accessible={false}
-                      {...elementProps(`landing-pricing-activity-cell`, `${cell.index}`)}
-                      style={[styles.pricingActivityCell, { backgroundColor: activityColors[cell.level], opacity: cell.level ? phases[cell.index % phases.length] : .4 }]}
-                    />
-                  ))}
-                </View>
-              ))}
-            </View>
-          </View>
-          <View {...elementProps(`landing-pricing-grid`)} style={styles.grid}>
-            {landingPlans.map(plan => (
-              <View key={plan.id} {...elementProps(`landing-pricing-plan`, plan.id)} style={[styles.plan, { width: cardWidth }]}>
-                {renderCardShape(`landing-plan-${plan.id}`, plan.id === `pro` ? palette.subtle : palette.input, plan.id === `pro` ? palette.accent : palette.line)}
-                <View {...elementProps(`landing-pricing-plan-heading`, plan.id)} style={styles.cardTop}>
-                  <Text {...elementProps(`landing-pricing-plan-name`, plan.id)} style={styles.cardTitle} accessibilityRole={`header`}>{plan.name}</Text>
-                  <Text {...elementProps(`landing-pricing-plan-status`, plan.id)} style={styles.planStatus}>{plan.id === `free` ? `Available Now` : `Plan Preview`}</Text>
-                </View>
-                <Text {...elementProps(`landing-pricing-plan-label`, plan.id)} style={styles.cardLabel}>{plan.label}</Text>
-                <Text {...elementProps(`landing-pricing-plan-price`, plan.id)} style={[styles.price, plan.id !== `free` && styles.plannedPrice]}>{plan.price}</Text>
-                <Text {...elementProps(`landing-pricing-plan-description`, plan.id)} style={styles.cardDescription}>{plan.description}</Text>
-                <View {...elementProps(`landing-pricing-plan-features`, plan.id)} style={styles.features}>
-                  {plan.features.map((feature, index) => (
-                    <View key={feature} {...elementProps(`landing-pricing-feature`, `${plan.id}-${index}`)} style={styles.feature}>
-                      <Check {...elementProps(`landing-pricing-feature-icon`, `${plan.id}-${index}`)} size={14} color={palette.accent} accessible={false} />
-                      <Text {...elementProps(`landing-pricing-feature-text`, `${plan.id}-${index}`)} style={styles.featureText}>{feature}</Text>
-                    </View>
-                  ))}
-                  {plan.plannedFeatures.map((feature, index) => (
-                    <View key={feature} {...elementProps(`landing-pricing-planned-feature`, `${plan.id}-${index}`)} style={styles.feature}>
-                      <LockKeyhole {...elementProps(`landing-pricing-planned-icon`, `${plan.id}-${index}`)} size={13} color={palette.muted} accessible={false} />
-                      <Text {...elementProps(`landing-pricing-planned-text`, `${plan.id}-${index}`)} style={[styles.featureText, styles.plannedFeatureText]}>{`${feature} · Planned`}</Text>
-                    </View>
-                  ))}
-                </View>
-                {renderLink(`landing-pricing-plan-link-${plan.id}`, plan.id === `free` ? routes.domains.href : routes.contact.href, plan.action, plan.id !== `free`)}
-              </View>
-            ))}
-          </View>
-          <Text {...elementProps(`landing-pricing-note`)} style={styles.note}>{`Pro and Team are coming soon. Planned features and pricing may change. Domain registration and hosting are purchased separately.`}</Text>
-        </View>
-      </View>}
+      <Pricing />
 
       <View {...elementProps(`landing-final-cta`)} style={[styles.section, styles.alternateSection, compact && styles.compactSection]}>
         <View {...elementProps(`landing-final-cta-inner`)} style={[styles.inner, styles.finalCta]}>

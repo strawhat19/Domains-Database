@@ -1,0 +1,5 @@
+.admin-domain-name, .admin-domain-owner { min-width: 160px; overflow-wrap: anywhere; }
+.admin-domain-name { font-weight: 600; }
+.admin-domain-account { display: block; margin-top: 5px; color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
+.admin-domain-registrar, .admin-domain-expiry, .admin-domain-price, .admin-domain-renew { white-space: nowrap; }
+.admin-domain-expiry { color: var(--muted); font-size: 10px; }

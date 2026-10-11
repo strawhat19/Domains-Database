@@ -1,0 +1,31 @@
+.admin-plan-number { font-family: var(--font-mono); font-size: 10px; }
+.admin-plan-main { min-width: 220px; max-width: 340px; }
+.admin-plan-identity { display: flex; align-items: flex-start; gap: 13px; }
+.admin-plan-copy { min-width: 0; flex: 1; }
+.admin-plan-thumbnail { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--ink); }
+.admin-plan-title, .admin-plan-slug { display: block; overflow-wrap: anywhere; }
+.admin-plan-title { margin-bottom: 6px; font-size: 11px; font-weight: 600; }
+.admin-plan-slug { margin: 5px 0; color: var(--muted); font-size: 10px; }
+.admin-plan-body { display: -webkit-box; max-width: 340px; overflow: hidden; color: var(--muted); line-height: 1.6; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.admin-plan-kind, .admin-plan-updated { font-size: 10px; white-space: nowrap; }
+.admin-plan-updated { color: var(--muted); }
+.admin-plan-actions-cell { min-width: 142px; text-align: right; }
+.admin-plan-price { min-width: 130px; white-space: nowrap; }
+.admin-plan-order { font-family: var(--font-mono); font-size: 10px; }
+.admin-plan-highlighted { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--accent); font-size: 9px; }
+.admin-plan-features-cell { min-width: 160px; max-width: 240px; }
+.admin-plan-features { display: grid; gap: 5px; margin: 0; padding-left: 12px; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.admin-plan-feature { overflow-wrap: anywhere; }
+.admin-plan-features-empty, .admin-plan-features-more { color: var(--muted); font-size: 10px; line-height: 1.6; }
+.admin-plan-features-more { display: block; margin-top: 6px; }
+.admin-plans .admin-plan-actions-cell .actionsCell { justify-content: flex-end; gap: 8px; }
+.admin-plan-action { display: inline-flex; width: 30px; height: 26px; flex: none; align-items: center; justify-content: center; border: 1px solid var(--accent); border-radius: 5px; padding: 0; background: var(--accent); color: var(--contrast); cursor: pointer; transition: background-color .2s ease, border-color .2s ease; }
+.admin-plan-action:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
+.admin-plan-action.is-archive:hover:not(:disabled) { border-color: color-mix(in srgb, var(--warning) 38%, transparent); }
+.admin-plan-action:disabled { cursor: default; opacity: .5; }
+.admin-plan-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.admin-plan-archive-confirmation { max-width: 330px; margin: 14px 0 0 auto; border: 1px solid color-mix(in srgb, var(--warning) 19%, transparent); border-radius: 9px; padding: 14px; background: color-mix(in srgb, var(--warning) 2%, transparent); text-align: left; animation: admin-plan-confirmation-in .2s ease both; }
+.admin-plan-archive-title { margin: 0 0 8px; font-size: 11px; font-weight: 600; line-height: 1.7; overflow-wrap: anywhere; }
+.admin-plan-archive-note { margin: 0 0 12px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+@keyframes admin-plan-confirmation-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .admin-plan-action { transition: none; } .admin-plan-archive-confirmation { animation: none; } }

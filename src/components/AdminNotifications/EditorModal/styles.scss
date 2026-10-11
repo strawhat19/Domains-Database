@@ -1,0 +1,28 @@
+.admin-notification-editor-modal { position: fixed; inset: 0; width: 100%; height: 100dvh; max-width: none; max-height: none; overflow: hidden; margin: 0; border: 0; padding: 24px; background: transparent; color: var(--ink); }
+.admin-notification-editor-modal[open] { display: grid; place-items: center; }
+.admin-notification-editor-modal::backdrop { background: transparent; -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); transition: background-color .4s ease, backdrop-filter .4s ease; }
+.admin-notification-editor-modal.is-open::backdrop { background: color-mix(in srgb, var(--overlay) 90%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.admin-notification-editor-modal-panel { position: relative; width: min(760px, 100%); min-width: 0; border-radius: 18px; background: var(--paper); box-shadow: 0 24px 65px var(--shadow); transform: translate3d(0, calc(-100% - 50dvh - 100px), 0); transition: transform .68s cubic-bezier(.76, 0, .24, 1); }
+.admin-notification-editor-modal.is-open .admin-notification-editor-modal-panel { transform: translate3d(0, 0, 0); transition-duration: .78s; }
+.admin-notification-editor-modal-content { max-height: calc(100dvh - 48px); overflow-y: auto; overscroll-behavior: contain; border-radius: inherit; scrollbar-width: thin; }
+.admin-notification-editor-modal-content > .admin-notification-editor { margin: 0; border: 0; background: transparent; }
+.admin-notification-editor-modal-content .admin-notification-editor-close { color: var(--accent); }
+.admin-notification-editor-modal-content .admin-notification-editor-actions { justify-content: flex-end; }
+.admin-notification-editor-modal-error { position: sticky; z-index: 1; top: 0; margin: 0; border-bottom: 1px solid var(--line); padding: 14px 24px; background: var(--paper); color: var(--danger); font-size: 11px; line-height: 1.7; }
+:root[data-theme='dark'] .admin-notification-editor-modal {
+  .admin-notification-editor-modal-panel { box-shadow: 0 32px 90px var(--shadow), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .admin-notification-editor-heading { border-bottom: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); padding-bottom: 18px; }
+  .admin-notification-editor-field-label { color: var(--ink); font-weight: 500; }
+  .admin-notification-editor-input { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--input); color: var(--ink); caret-color: var(--accent); box-shadow: inset 0 1px 3px var(--shadow); transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease; }
+  .admin-notification-editor-input::placeholder { color: var(--muted); opacity: .8; }
+  .admin-notification-editor-input:hover:not(:disabled):not(:focus) { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .admin-notification-editor-input:focus { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--input)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .admin-notification-editor-input:disabled { cursor: not-allowed; opacity: .5; }
+  .admin-notification-editor-input option { background: var(--input); color: var(--ink); }
+  .admin-notification-editor-actions { border-top: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); padding-top: 20px; }
+  .admin-notification-editor-close, .admin-notification-editor-cancel { border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); background: var(--input); color: var(--accent); transition: border-color .2s ease, background-color .2s ease, color .2s ease; }
+  .admin-notification-editor-close:hover:not(:disabled), .admin-notification-editor-cancel:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 12%, var(--input)); }
+  .admin-notification-editor-cancel { border-radius: 999px; padding: 10px 14px; }
+}
+@media (max-width: 600px) { .admin-notification-editor-modal { padding: 12px; } .admin-notification-editor-modal-panel { border-radius: 14px; } .admin-notification-editor-modal-content { max-height: calc(100dvh - 24px); } .admin-notification-editor-modal-error { padding-inline: 18px; } }
+@media (prefers-reduced-motion: reduce) { .admin-notification-editor-modal::backdrop, .admin-notification-editor-modal-panel, .admin-notification-editor-modal .admin-notification-editor-input, .admin-notification-editor-modal .admin-notification-editor-close, .admin-notification-editor-modal .admin-notification-editor-cancel { transition: none; } }

@@ -1,22 +1,23 @@
 import './styles.scss';
+import Toast from '../Toast';
+import './account-shell.scss';
 import '../../styles/global.scss';
 import { Link } from 'expo-router';
-import Toast from '../Toast';
 import UserMenu from '../UserMenu';
 import ThemeToggle from '../ThemeToggle';
 import ScrollToTop from '../ScrollToTop';
-import DomainMarquee from '../DomainMarquee';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
-import NotificationBell from '../NotificationBell';
+import DomainMarquee from '../DomainMarquee';
 import { routes } from '../../shared/routes';
 import { useDomainsMenu } from './useDomainsMenu';
-import type { CSSProperties, PropsWithChildren } from 'react';
+import NotificationBell from '../NotificationBell';
 import { useShellScroll } from './useShellScroll.web';
-import { useMobileNavigation } from './useMobileNavigation';
-import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppShell, footerLinks } from './useAppShell';
-import { X, Eye, Menu, Info, Mail, Gavel, House, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { useMobileNavigation } from './useMobileNavigation';
+import type { CSSProperties, PropsWithChildren } from 'react';
+import { useTheme } from '../../shared/themeContext/useTheme';
+import { X, Eye, Menu, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.auction.href, routes.community.href];
 
@@ -27,12 +28,13 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn && !authLoading;
+  const accountShell = pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`) || pathname === routes.dashboard.href || pathname === `/admin` || pathname.startsWith(`/admin/`);
   const navigationLinks = navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href);
   const MenuIcon = mobileNavigation.open ? X : Menu;
   const domainSubmenuLinks = navigationLinks.filter(item => domainSubmenuPaths.includes(item.href));
   const headerLinks = navigationLinks.filter(item => !domainsMenu.grouped || !domainSubmenuPaths.includes(item.href));
   const renderNavigationLink = (item: (typeof navigation)[number]) => {
-    const Icon = { Eye, Info, Mail, Gavel, House, Search, Globe2, BookOpen, UsersRound }[item.icon];
+    const Icon = { Eye, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, UsersRound }[item.icon];
     const beta = `beta` in item && item.beta;
     const active = pathname === item.href || (item.href === routes.blog.href && pathname.startsWith(`${item.href}/`));
     return (
@@ -84,6 +86,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
     <div
       id={`app-shell`}
       className={`app-shell`}
+      data-account-shell={accountShell || undefined}
       data-landing={pathname === routes.home.href || undefined}
       data-fit-view={fitViewport || undefined}
       data-auth-page={pathname === routes.signin.href || pathname === routes.signup.href || undefined}

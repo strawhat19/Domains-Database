@@ -1,13 +1,13 @@
 import { routes } from '../src/shared/routes';
 import PageMeta from '../src/components/PageMeta';
-import AccountPage from '../src/components/AccountPage';
+import AdminDashboard from '../src/components/AdminDashboard';
 import ProtectedRoute from '../src/components/ProtectedRoute';
 
 const DashboardRoute = () => (
   <>
-    <PageMeta title={`Dashboard`} description={`Your local account and portfolio statistics`} />
-    <ProtectedRoute minRole={routes.dashboard.minRole}>
-      <AccountPage page={`dashboard`} />
+    <PageMeta title={`Admin Dashboard`} description={`Domain portfolio, account, analytics, and runtime insights`} />
+    <ProtectedRoute adminSection={routes.dashboard.adminSection}>
+      <AdminDashboard />
     </ProtectedRoute>
   </>
 );

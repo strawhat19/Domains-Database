@@ -1,0 +1,23 @@
+.admin-notifications-summary { display: grid; width: 100%; min-width: 0; max-width: 480px; flex: 1 1 360px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.admin-notifications-summary-card { display: grid; min-width: 0; align-content: start; gap: 8px; border: 1px solid color-mix(in srgb, var(--accent) 15%, transparent); border-radius: 12px; padding: 14px; background: var(--paper); }
+.admin-notifications-summary-label { color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-notifications-summary-value { margin: 0; color: var(--accent); font-family: var(--font-display); font-size: 30px; line-height: 1.1; }
+.admin-notifications .admin-records { margin-top: 0; }
+.admin-notifications-table thead th:last-child { text-align: right; }
+.admin-notifications-filter-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin-left: auto; }
+.admin-notifications-filter-actions .admin-records-results { width: auto; margin: 0; white-space: nowrap; }
+.admin-notifications-add { min-height: 38px; padding: 10px 14px; font-size: 10px; }
+.admin-notifications-add:disabled { cursor: default; opacity: .5; transform: none; }
+:root[data-theme='dark'] .admin-notifications-summary-card { border-top-color: color-mix(in srgb, var(--accent) 16%, transparent); }
+@media (max-width: 800px) { .admin-notifications-summary-value { font-size: 26px; } }
+@media (max-width: 480px) { .admin-notifications-summary { grid-template-columns: minmax(0, 1fr); } .admin-notifications-summary-card { grid-template-columns: 1fr auto; align-items: center; } .admin-notifications-filter-actions { width: 100%; justify-content: space-between; } }
+.admin-notifications .rowStatus.is-editable { min-height: 26px; border: 0; border-radius: 4px; padding: 0; background: transparent; font: inherit; cursor: pointer; transition: opacity 180ms ease; }
+.admin-notifications .rowStatus.is-editable:disabled { opacity: .5; cursor: not-allowed; }
+.admin-notifications .rowStatus.is-editable:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.admin-notifications .rowStatus.is-editable:hover:not(:disabled) .statusText { text-decoration: underline; text-underline-offset: 3px; }
+.admin-notifications-add { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: var(--contrast); cursor: pointer; transition: background-color .2s ease; }
+.admin-notifications-add:hover:not(:disabled) { background: var(--accent-hover); }
+.admin-notifications .admin-records-notice { display: flex; align-items: center; gap: 7px; }
+.admin-notifications-summary-skeleton { display: block; width: 46px; height: 30px; border-radius: 5px; background: var(--skeleton); animation: admin-notification-summary-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes admin-notification-summary-pulse { to { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .admin-notifications-add, .admin-notifications .rowStatus.is-editable { transition: none; } .admin-notifications-summary-skeleton { animation: none; } }

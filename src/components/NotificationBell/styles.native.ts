@@ -3,6 +3,11 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   list: { gap: 12 },
+  disabled: { opacity: .5 },
+  actions: { gap: 12, flexDirection: `row`, flexWrap: `wrap`, justifyContent: `space-between` },
+  action: { gap: 6, minHeight: 32, flexDirection: `row`, alignItems: `center` },
+  actionText: { fontSize: 10, color: palette.accent, fontFamily: `DMSans_500Medium` },
+  notice: { color: palette.muted, fontSize: 10, lineHeight: 17, fontFamily: `DMSans_400Regular` },
   countSkeleton: { width: 58, height: 20, borderRadius: 6, backgroundColor: palette.skeleton },
   messageError: { color: palette.danger },
   scroll: { minHeight: 0, flexGrow: 0, flexShrink: 1 },

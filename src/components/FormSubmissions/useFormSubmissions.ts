@@ -26,6 +26,9 @@ export const useFormSubmissions = () => {
   const pageState = useCollectionPage(actor, formSubmissionsAPI.subscribeSubmissionsPage);
   const requestRef = useRef(pageState.request);
   const pending = useRef(``);
+  const [search, setSearch] = useState(``);
+  const [statusFilter, setStatusFilter] = useState(`all`);
+  const [notice, setNotice] = useState({ actor, message: `` });
   const [mutation, setMutation] = useState({ request: pageState.request, savingId: ``, error: `` });
   requestRef.current = pageState.request;
   useEffect(() => {
@@ -34,6 +37,9 @@ export const useFormSubmissions = () => {
   }, [pageState.request]);
   const scoped = mutation.request === pageState.request ? mutation : { savingId: ``, error: `` };
   const disabled = pageState.loading || !!scoped.savingId;
+  const query = search.trim().toLocaleLowerCase();
+  const filtered = !!query || statusFilter !== `all`;
+  const visible = pageState.records.filter(record => (statusFilter === `all` || record.status === statusFilter) && [record.number, record.name, record.email, record.subject, record.message, record.status].join(` `).toLocaleLowerCase().includes(query));
 
   const updateStatus = async (id: string, status: FormSubmission[`status`]) => {
     const saved = pageState.records.find(submission => submission.id === id);
@@ -42,9 +48,11 @@ export const useFormSubmissions = () => {
     const operation = `${request}:${id}`;
     const current = () => requestRef.current === request;
     pending.current = operation;
+    setNotice({ actor, message: `` });
     setMutation({ request, savingId: id, error: `` });
     try {
       await formSubmissionsAPI.updateSubmissionStatus(id, status);
+      if (current()) setNotice({ actor, message: `Request Status Updated` });
     } catch (failure) {
       if (current()) setMutation(previous => ({ ...previous, error: errorMessage(failure, `Could Not Update Submission Status`) }));
     } finally {
@@ -55,6 +63,13 @@ export const useFormSubmissions = () => {
   return {
     ...pageState,
     palette,
+    search,
+    visible,
+    filtered,
+    setSearch,
+    statusFilter,
+    setStatusFilter,
+    notice: notice.actor === actor ? notice.message : ``,
     disabled,
     updateStatus,
     allowed: !!actor,

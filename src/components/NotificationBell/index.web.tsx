@@ -1,11 +1,11 @@
 import './styles.scss';
 import { Link } from 'expo-router';
-import { X, Bell, List } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
 import NotificationCard from '../NotificationCard';
 import { useNotificationBell } from './useNotificationBell';
+import { X, Bell, List, CheckCheck, RotateCcw } from 'lucide-react';
 
 const NotificationBell = () => {
   const state = useNotificationBell();
@@ -46,7 +46,7 @@ const NotificationBell = () => {
         id={`header-notifications-toggle`}
         className={`header-notifications-toggle`}
         aria-controls={`header-notifications-panel`}
-        aria-label={state.loading ? `Notifications, Loading Updates` : `Notifications, ${state.count} updates`}
+        aria-label={state.loading ? `Notifications, Loading Updates` : `Notifications, ${state.readLabel}`}
       >
         <Bell
           size={18}
@@ -86,7 +86,7 @@ const NotificationBell = () => {
               id={`header-notifications-count`}
               className={`header-notifications-count`}
             >
-              {state.loading ? <span aria-hidden id={`header-notifications-count-skeleton`} className={`header-notifications-count-skeleton`} /> : `${state.count} updates`}
+              {state.loading ? <span aria-hidden id={`header-notifications-count-skeleton`} className={`header-notifications-count-skeleton`} /> : state.readLabel}
             </span>
             <button
               type={`button`}
@@ -106,6 +106,10 @@ const NotificationBell = () => {
               />
             </button>
           </div>
+          <div id={`header-notifications-actions`} className={`header-notifications-actions`}>
+            <button type={`button`} disabled={state.busy || state.loading || !state.readReady || !state.count} onClick={() => { void state.markAllRead(); }} id={`header-notifications-read-all`} className={`header-notifications-action`}><CheckCheck size={14} aria-hidden id={`header-notifications-read-all-icon`} className={`header-notifications-action-icon`} />{`Mark All Read`}</button>
+            <button type={`button`} disabled={state.loading} onClick={state.reload} id={`header-notifications-reload`} className={`header-notifications-action`}><RotateCcw size={14} aria-hidden id={`header-notifications-reload-icon`} className={`header-notifications-action-icon`} />{`Reload`}</button>
+          </div>
           <ul
             id={`header-notifications-list`}
             className={`header-notifications-list`}
@@ -115,7 +119,7 @@ const NotificationBell = () => {
                 <NotificationCard key={index} index={index} />
               ))
               : state.notifications.map(notification => (
-                <NotificationCard key={notification.id} notification={notification} onNavigate={state.close} />
+                <NotificationCard key={notification.id} readReady={state.readReady} onRead={state.readReady && !state.busy ? state.markRead : undefined} notification={notification} onNavigate={state.close} />
               ))}
             {!state.loading && !!state.error && (
               <li id={`header-notifications-error`} className={`header-notifications-message header-notifications-message-error`} role={`alert`}>
@@ -128,6 +132,7 @@ const NotificationBell = () => {
               </li>
             )}
           </ul>
+          {!!state.notice && <p id={`header-notifications-notice`} className={`header-notifications-notice`} role={`status`}>{state.notice}</p>}
           <div id={`header-notifications-footer`} className={`header-notifications-footer`}>
             <Link href={routes.notifications.href} asChild>
               <RouterAnchor

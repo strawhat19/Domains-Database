@@ -1,0 +1,18 @@
+export const planCurrencies = [`USD`, `EUR`, `GBP`, `CAD`, `AUD`, `BDT`] as const;
+export const planBillingIntervals = [`month`, `year`, `one-time`] as const;
+export type PlanCurrency = typeof planCurrencies[number];
+export type PlanBillingInterval = typeof planBillingIntervals[number];
+
+export interface PlanInput {
+  name: string;
+  slug: string;
+  active: boolean;
+  features: string[];
+  priceCents: number;
+  highlighted: boolean;
+  displayOrder: number;
+  description: string;
+  currency: PlanCurrency;
+  billingInterval: PlanBillingInterval;
+}
+export const planLimits = { name: 100, slug: 100, feature: 200, features: 30, published: 100, description: 2000 } as const;

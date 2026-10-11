@@ -11,6 +11,13 @@
 .notifications-title { margin: 0; font-size: clamp(32px, 4vw, 46px); line-height: 1.15; letter-spacing: -1px; font-family: var(--font-display); }
 .notifications-description { margin: 18px 0 0; font-size: 15px; line-height: 1.8; color: var(--muted); }
 .notifications-count { margin: 20px 0 0; font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+.notifications-actions { gap: 16px; display: flex; flex-wrap: wrap; margin-bottom: 20px; }
+.notifications-action { gap: 6px; padding: 8px 0; min-height: 38px; display: inline-flex; border: 0; font-size: 11px; align-items: center; color: var(--accent); background: transparent; &:hover:not(:disabled) { text-decoration: underline; } &:disabled { opacity: .5; cursor: default; } &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; } }
+.notifications-notice { margin: 0 0 20px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.notifications-detail-meta { gap: 24px; display: flex; flex-wrap: wrap; margin: 26px 0 0; padding-top: 20px; border-top: 1px solid var(--line); }
+.notifications-detail-meta-item { display: grid; gap: 8px; }
+.notifications-detail-meta-label { font-size: 10px; color: var(--muted); }
+.notifications-detail-meta-value { margin: 0; font-size: 12px; color: var(--ink); font-family: var(--font-bold); }
 .notifications-list { gap: 16px; padding: 0; margin: 0; display: grid; list-style: none; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .notifications-list > .header-notification-card { min-width: 0; }
 .notifications-detail { padding: clamp(20px, 3vw, 32px); border-radius: 6px; background: var(--paper); border: 1px solid var(--line); }

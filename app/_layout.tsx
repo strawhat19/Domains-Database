@@ -5,8 +5,8 @@ import { Slot, usePathname } from 'expo-router';
 import AppShell from '../src/components/AppShell';
 import { useAppFonts } from '../src/shared/useAppFonts';
 import { useAuth } from '../src/shared/authContext/useAuth';
-import VercelAnalytics from '../src/components/VercelAnalytics';
 import { useTheme } from '../src/shared/themeContext/useTheme';
+import VercelAnalytics from '../src/components/VercelAnalytics';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAfterPaint } from '../src/shared/common/useAfterPaint';
 import { AuthProvider } from '../src/shared/authContext/AuthContext';
@@ -15,6 +15,7 @@ import { WatchingProvider } from '../src/shared/watching/WatchingContext';
 import { ColumnProvider } from '../src/shared/columnContext/ColumnContext';
 import { DomainProvider } from '../src/shared/domainContext/DomainContext';
 import { ConnectionAvailabilityProvider } from '../src/shared/connections/ConnectionAvailabilityContext';
+import { AccountNavigationProvider } from '../src/shared/accountNavigationContext/AccountNavigationContext';
 import { PortfolioPreferencesProvider } from '../src/shared/portfolioPreferences/PortfolioPreferencesContext';
 
 const RootContent = () => {
@@ -63,12 +64,14 @@ const AccountContent = () => {
       <DomainProvider
         enabled={enabled}
         key={`${accountState.revision}-${dataRevision}`}
-        requested={pathname === routes.domains.href}
+        requested={[routes.profile.href, routes.domains.href, routes.dashboard.href, `/admin/domains`].includes(pathname)}
       >
         <ColumnProvider enabled={enabled} userId={user?.id ?? null}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>
             <WatchingProvider enabled={enabled}>
-              <RootContent />
+              <AccountNavigationProvider key={user?.id ?? `guest`}>
+                <RootContent />
+              </AccountNavigationProvider>
             </WatchingProvider>
           </PortfolioPreferencesProvider>
         </ColumnProvider>

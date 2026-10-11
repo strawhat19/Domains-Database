@@ -10,14 +10,14 @@ type FieldErrors = Partial<Record<ContactField, string>>;
 type SavedSubmission = Awaited<ReturnType<typeof formSubmissionsAPI.submitContact>>;
 
 const copy = {
-  submit: useLocalStorage ? `Save Message` : `Send Message`,
-  pending: useLocalStorage ? `Saving Message…` : `Sending Message…`,
-  another: useLocalStorage ? `Save Another Message` : `Send Another Message`,
+  submit: `Save Message`,
+  pending: `Saving Message…`,
+  another: `Save Another Message`,
   title: useLocalStorage ? `Your note is saved.` : `Thanks for reaching out.`,
-  feedback: useLocalStorage ? `Message Saved On This Device` : `Message Received`,
-  eyebrow: useLocalStorage ? `MESSAGE SAVED ON THIS DEVICE` : `MESSAGE RECEIVED`,
-  error: useLocalStorage ? `Could Not Save Your Message — Please Try Again` : `Could Not Send Your Message — Please Try Again`,
-  description: useLocalStorage ? `Your message is saved on this device.` : `Your message is with us. We appreciate you taking the time to share it.`,
+  error: `Could Not Save Your Message — Please Try Again`,
+  feedback: useLocalStorage ? `Message Saved On This Device` : `Message Saved`,
+  eyebrow: useLocalStorage ? `MESSAGE SAVED ON THIS DEVICE` : `MESSAGE SAVED`,
+  description: useLocalStorage ? `Your message is saved on this device.` : `Your message is saved for the team to review. Thanks for reaching out.`,
 };
 
 export const useContactPage = () => {

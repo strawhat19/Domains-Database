@@ -1,11 +1,11 @@
 import { THEME_STORAGE_KEY } from '../themeContext/theme';
-import { beginAccountDataReset, finishAccountDataReset } from './state';
-import { readStorage, writeAccountResetStorage } from '../common/storage';
 import { accountStorageKey } from '../authentication/userScope';
-import { PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../config';
+import { beginAccountDataReset, finishAccountDataReset } from './state';
 import { PREFERENCES_STORAGE_KEY } from '../portfolioPreferences/storage';
+import { readStorage, writeAccountResetStorage } from '../common/storage';
 import { COLUMN_STORAGE_KEY, getDefaultPortfolioColumns } from '../portfolioColumns';
-import { SOCIAL_STORAGE_KEY, AUCTION_STORAGE_KEY, WATCHING_STORAGE_KEY, CONNECTIONS_STORAGE_KEY, NOTIFICATIONS_STORAGE_KEY, SYNC_POLICY_STORAGE_KEY, RECENT_SEARCHES_STORAGE_KEY } from './keys';
+import { PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../config';
+import { SOCIAL_STORAGE_KEY, AUCTION_STORAGE_KEY, WATCHING_STORAGE_KEY, CONNECTIONS_STORAGE_KEY, NOTIFICATIONS_STORAGE_KEY, SYNC_POLICY_STORAGE_KEY, RECENT_SEARCHES_STORAGE_KEY, NOTIFICATION_READS_STORAGE_KEY } from './keys';
 
 type StoredRecord = Record<string, unknown>;
 const isRecord = (value: unknown): value is StoredRecord => Boolean(value) && typeof value === `object` && !Array.isArray(value);
@@ -82,6 +82,7 @@ export const clearAccountData = async (userId: string, includeConnections: boole
       }],
       [scopedKey(PORTFOLIO_STORAGE_KEY), { version: 1, domains: [], nextNumber: nextNumber(portfolio, `domains`) }],
       [scopedKey(NOTIFICATIONS_STORAGE_KEY), { version: 1, records: [], nextNumber: nextNumber(notifications) }],
+      [scopedKey(NOTIFICATION_READS_STORAGE_KEY), { version: 1, readIds: [] }],
       [scopedKey(WATCHING_STORAGE_KEY), { userId, version: 1, records: [], nextNumber: nextNumber(watching) }],
       [scopedKey(RECENT_SEARCHES_STORAGE_KEY), { userId, version: 1, records: [] }],
       [scopedKey(COLUMN_STORAGE_KEY), { version: 6, widths: {}, flexibleColumns: [`name`], useDefaultColumns: true, columns: getDefaultPortfolioColumns([]) }],

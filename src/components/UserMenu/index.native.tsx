@@ -3,13 +3,18 @@ import { Roles } from '../../types/types';
 import { useUserMenu } from './useUserMenu';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
+import { canAccessAdmin } from '../../shared/admin/permissions';
 import { Image, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
-import { Eye, LogIn, LogOut, PlugZap, UserRound, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
+import { Eye, Crown, LogIn, LogOut, PlugZap, UserRound, BadgeCheck, ShieldCheck, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
+
+const decorativeIconProps = Platform.OS === `web` ? { 'aria-hidden': true } : { accessible: false };
 
 const UserMenu = () => {
   const state = useUserMenu();
   const { width } = useWindowDimensions();
   const { user, styles, palette } = state;
+  const isOwner = user?.role === Roles.Owner;
+  const RoleIcon = isOwner ? Crown : canAccessAdmin(user) ? ShieldCheck : UserRound;
   const GuestIcon = state.guestAuth.href === routes.signin.href ? LogIn : UserRoundPlus;
   if (state.loading && !user) return (
     <View {...elementProps(`user-menu-loading`)} style={styles.skeleton} accessibilityLabel={`Loading Account`} accessibilityRole={`progressbar`}>
@@ -72,12 +77,32 @@ const UserMenu = () => {
       {state.open && (
         <View {...elementProps(`user-menu-options`)} style={styles.options}>
           <View {...elementProps(`user-menu-heading`)} style={styles.heading}>
-            <Text {...elementProps(`user-menu-name`)} style={styles.name} numberOfLines={1}>{user.name}</Text>
-            <Text {...elementProps(`user-menu-email`)} style={styles.email} numberOfLines={1}>{user.email}</Text>
+            <View {...elementProps(`user-menu-identity`)} style={styles.identity}>
+              <Text {...elementProps(`user-menu-name`)} style={styles.name} numberOfLines={1}>{user.name}</Text>
+              <Text {...elementProps(`user-menu-email`)} style={styles.email} numberOfLines={1}>{user.email}</Text>
+            </View>
+            <View {...elementProps(`user-menu-pills`)} style={styles.pills}>
+              <View {...elementProps(`user-menu-role-pill`)} style={styles.pill}>
+                <RoleIcon {...elementProps(`user-menu-role-icon`)} size={10} color={palette.ink} style={styles.pillIcon} {...decorativeIconProps} />
+                <Text {...elementProps(`user-menu-role-text`)} style={styles.pillText} numberOfLines={1} accessibilityLabel={`Role: ${user.role}`}>{user.role}</Text>
+              </View>
+              {!isOwner && (
+                <View {...elementProps(`user-menu-plan-pill`)} style={[styles.pill, styles.planPill]}>
+                  <BadgeCheck {...elementProps(`user-menu-plan-icon`)} size={10} color={palette.contrast} style={styles.pillIcon} {...decorativeIconProps} />
+                  <Text {...elementProps(`user-menu-plan-text`)} style={[styles.pillText, styles.planPillText]} numberOfLines={1} accessibilityLabel={`Plan: ${state.planLabel}`}>{state.planLabel}</Text>
+                </View>
+              )}
+            </View>
           </View>
-          {user.role === Roles.Owner && (
-            <Link href={`/dashboard`} asChild>
-              <Pressable {...elementProps(`user-menu-dashboard`)} style={styles.item} accessibilityRole={`link`}>
+          <Link href={`/profile`} asChild>
+            <Pressable {...elementProps(`user-menu-profile`)} style={styles.item} accessibilityRole={`link`}>
+              <UserRound {...elementProps(`user-menu-profile-icon`)} size={16} color={palette.ink} />
+              <Text {...elementProps(`user-menu-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
+            </Pressable>
+          </Link>
+          {canAccessAdmin(user) && (
+            <Link href={routes.dashboard.href} asChild>
+              <Pressable {...elementProps(`user-menu-dashboard`)} style={styles.item} accessibilityRole={`link`} onPress={state.close}>
                 <LayoutDashboard {...elementProps(`user-menu-dashboard-icon`)} size={16} color={palette.ink} />
                 <Text {...elementProps(`user-menu-dashboard-text`)} style={styles.linkText}>{`Dashboard`}</Text>
               </Pressable>
@@ -102,12 +127,6 @@ const UserMenu = () => {
               </Pressable>
             </Link>
           )}
-          <Link href={`/profile`} asChild>
-            <Pressable {...elementProps(`user-menu-profile`)} style={styles.item} accessibilityRole={`link`}>
-              <UserRound {...elementProps(`user-menu-profile-icon`)} size={16} color={palette.ink} />
-              <Text {...elementProps(`user-menu-profile-text`)} style={styles.linkText}>{`Profile`}</Text>
-            </Pressable>
-          </Link>
           <Link href={`/profile/connections`} asChild>
             <Pressable
               style={styles.item}

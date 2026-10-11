@@ -1,0 +1,32 @@
+import { StyleSheet } from 'react-native';
+import type { ThemePalette } from '../../../shared/themeContext/theme';
+
+export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  root: { padding: 24 },
+  compact: { padding: 18 },
+  disabled: { opacity: .5 },
+  wideField: { flexBasis: `100%` },
+  fields: { gap: 18, flexWrap: `wrap`, flexDirection: `row` },
+  field: { gap: 8, minWidth: 0, flexGrow: 1, flexBasis: `47%` },
+  heading: { gap: 16, marginBottom: 22, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
+  title: { flex: 1, fontSize: 26, color: palette.accent, fontFamily: `DMSans_700Bold` },
+  close: { width: 34, height: 34, borderWidth: 1, borderRadius: 17, borderColor: palette.line, alignItems: `center`, justifyContent: `center` },
+  label: { color: palette.ink, fontSize: 11, fontFamily: `DMSans_400Regular` },
+  fieldNote: { color: palette.muted, fontSize: 10, lineHeight: 17, fontFamily: `DMSans_400Regular` },
+  highlight: { gap: 9, minHeight: 42, padding: 10, borderWidth: 1, borderRadius: 8, borderColor: palette.line, flexDirection: `row`, alignItems: `center` },
+  input: { minWidth: 0, minHeight: 42, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 8, borderColor: palette.line, color: palette.ink, backgroundColor: palette.input, fontSize: 12, fontFamily: `DMSans_400Regular` },
+  multiline: { minHeight: 62, textAlignVertical: `top` },
+  body: { minHeight: 126 },
+  choices: { gap: 6, flexWrap: `wrap`, flexDirection: `row` },
+  choice: { minHeight: 42, padding: 10, borderWidth: 1, borderRadius: 8, borderColor: palette.line, alignItems: `center`, justifyContent: `center` },
+  selected: { borderColor: palette.accent, backgroundColor: palette.subtle },
+  selectedLabel: { color: palette.accent },
+  choiceLabel: { color: palette.ink, fontSize: 11, fontFamily: `DMSans_400Regular` },
+  note: { marginTop: 18, color: palette.muted, fontSize: 11, lineHeight: 19, fontFamily: `DMSans_400Regular` },
+  error: { marginTop: 18, color: palette.danger, fontSize: 11, lineHeight: 19, fontFamily: `DMSans_400Regular` },
+  actions: { gap: 18, marginTop: 24, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center`, justifyContent: `flex-end` },
+  cancel: { gap: 6, paddingVertical: 8, flexDirection: `row`, alignItems: `center` },
+  cancelLabel: { color: palette.accent, fontSize: 11, fontFamily: `DMSans_400Regular` },
+  save: { gap: 7, minHeight: 40, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 8, backgroundColor: palette.accent, flexDirection: `row`, alignItems: `center` },
+  saveLabel: { color: palette.contrast, fontSize: 10, fontFamily: `DMSans_600SemiBold` },
+});

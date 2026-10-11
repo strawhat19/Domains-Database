@@ -7,6 +7,12 @@ service cloud.firestore {
     function counterPath() { return /databases/$(database)/documents/counters/users; }
     function submissionCounterPath() { return /databases/$(database)/documents/counters/formSubmissions; }
     function submissionPath(submissionId) { return /databases/$(database)/documents/formSubmissions/$(submissionId); }
+    function notificationCounterPath() { return /databases/$(database)/documents/counters/notifications; }
+    function notificationPath(notificationId) { return /databases/$(database)/documents/notifications/$(notificationId); }
+    function notificationSlugPath(slug) { return /databases/$(database)/documents/notificationSlugs/$(slug); }
+    function planPath(planId) { return /databases/$(database)/documents/plans/$(planId); }
+    function planCounterPath() { return /databases/$(database)/documents/counters/plans; }
+    function planSlugPath(slug) { return /databases/$(database)/documents/planSlugs/$(slug); }
     function ownsAccount(userId) {
       return signedIn() && exists(identityPath()) && get(identityPath()).data.id == userId
         && get(userPath(userId)).data.firebase_uid == request.auth.uid && get(userPath(userId)).data.active == true;
@@ -14,6 +20,34 @@ service cloud.firestore {
     function isOwner() {
       return signedIn() && exists(identityPath()) && ownsAccount(get(identityPath()).data.id)
         && get(userPath(get(identityPath()).data.id)).data.role == 'Owner';
+    }
+    function actorId() { return get(identityPath()).data.id; }
+    function isAccountAdmin() {
+      return signedIn() && exists(identityPath()) && ownsAccount(actorId())
+        && get(userPath(actorId())).data.role in ['Owner', 'Admin', 'Administrator'];
+    }
+    function auditCounterPath() { return /databases/$(database)/documents/counters/adminAudits; }
+    function auditPath(auditId) { return /databases/$(database)/documents/adminAudits/$(auditId); }
+    function safeAccessUpdate(userId) {
+      let data = request.resource.data;
+      let audit = getAfter(auditPath(data.adminLastAuditId)).data;
+      return isAccountAdmin() && actorId() != userId
+        && data.diff(resource.data).affectedKeys().hasOnly(['role', 'roles', 'active', 'updated', 'lastUpdated', 'adminLastAuditId'])
+        && data.role in ['Guest', 'Subscriber', 'Customer', 'Editor', 'Moderator', 'Admin', 'Administrator', 'Developer', 'Owner']
+        && data.roles == [data.role] && data.active is bool
+        && data.updated == request.time && data.lastUpdated == request.time
+        && data.adminLastAuditId is string && data.adminLastAuditId != resource.data.get('adminLastAuditId', '')
+        && !exists(auditPath(data.adminLastAuditId)) && audit.targetId == userId && audit.actorId == actorId()
+        && audit.actorFirebaseUid == request.auth.uid && audit.beforeRole == resource.data.role && audit.afterRole == data.role
+        && audit.beforeActive == resource.data.active && audit.afterActive == data.active
+        && (isOwner() || (data.role == resource.data.role && !(resource.data.role in ['Owner', 'Admin', 'Administrator', 'Developer'])));
+    }
+    function newAuditCounter() {
+      let data = request.resource.data;
+      return isAccountAdmin() && data.keys().hasAll(['number', 'lastAuditId']) && data.keys().hasOnly(['number', 'lastAuditId'])
+        && data.number is int && data.number > 0 && data.lastAuditId is string && data.lastAuditId.size() < 200
+        && data.number == (exists(auditCounterPath()) ? get(auditCounterPath()).data.number + 1 : 1)
+        && !exists(auditPath(data.lastAuditId)) && getAfter(auditPath(data.lastAuditId)).data.number == data.number;
     }
     function recordIdentity(recordId, recordType) {
       return request.resource.data.id == recordId && request.resource.data.number is int
@@ -52,6 +86,95 @@ service cloud.firestore {
         && getAfter(submissionPath(data.lastSubmissionId)).data.id == data.lastSubmissionId
         && getAfter(submissionPath(data.lastSubmissionId)).data.number == data.number;
     }
+    function notificationMetadata(data) {
+      return data is map && data.keys().hasOnly(['before', 'after'])
+        && (!('before' in data) || (data.before is string && data.before.size() <= 5000))
+        && (!('after' in data) || (data.after is string && data.after.size() <= 5000));
+    }
+    function notificationLink(link) {
+      return link is map && link.keys().hasAll(['href', 'label']) && link.keys().hasOnly(['href', 'label'])
+        && link.label is string && link.label.size() > 0 && link.label.size() <= 120
+        && link.href is string && link.href.size() > 0 && link.href.size() <= 2048
+        && !link.href.matches('.*[\\s\\\\].*')
+        && (link.href.matches('^/([^/].*)?$') || link.href.matches('^https?://[^/@:]+(:[0-9]+)?(/.*|[?].*|#.*)?$'));
+    }
+    function notificationValues() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'uid', 'type', 'number', 'uuid', 'name', 'title', 'description', 'body', 'slug', 'kind', 'status', 'active', 'details', 'icon', 'showTitle', 'metadata', 'created', 'updated'])
+        && data.keys().hasOnly(['id', 'uid', 'type', 'number', 'uuid', 'name', 'title', 'description', 'body', 'slug', 'kind', 'status', 'active', 'details', 'icon', 'showTitle', 'metadata', 'created', 'updated', 'providerId', 'suffix', 'link', 'email', 'color', 'properties'])
+        && data.type == 'Notification' && data.uid == '' && data.uuid is string && data.uuid.size() <= 100
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 160
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 160
+        && data.body is string && data.body.size() > 0 && data.body.size() <= 5000
+        && data.description is string && data.description.size() <= 5000 && data.details is string && data.details.size() <= 5000
+        && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && data.kind in ['development', 'announcement'] && data.status in ['Draft', 'Active', 'Archived']
+        && data.active is bool && data.active == (data.status == 'Active') && data.showTitle is bool
+        && data.icon is string && data.icon.size() > 0 && data.icon.size() <= 80
+        && (!('suffix' in data) || (data.suffix is string && data.suffix.size() <= 300))
+        && (!('link' in data) || notificationLink(data.link))
+        && (!('providerId' in data) || (data.providerId is string && data.providerId.size() <= 240))
+        && (!('email' in data) || (data.email is string && data.email.size() <= 254))
+        && data.metadata is map && data.updated == request.time
+        && getAfter(notificationSlugPath(data.slug)).data.id == data.id;
+    }
+    function newCounterNotification(notificationId, number) {
+      return notificationId is string && notificationId.size() <= 240 && !exists(notificationPath(notificationId))
+        && getAfter(notificationPath(notificationId)).data.id == notificationId
+        && getAfter(notificationPath(notificationId)).data.number == number;
+    }
+    function newNotificationCounter() {
+      let data = request.resource.data;
+      let previous = exists(notificationCounterPath()) ? get(notificationCounterPath()).data.number : 0;
+      return isAccountAdmin() && data.keys().hasAll(['number', 'recordIds']) && data.keys().hasOnly(['number', 'recordIds', 'initialAnnouncementsVersion'])
+        && data.number is int && data.recordIds is list && data.recordIds.size() >= 1 && data.recordIds.size() <= 2
+        && data.number == previous + data.recordIds.size() && newCounterNotification(data.recordIds[0], previous + 1)
+        && (data.recordIds.size() == 1 || (data.recordIds[0] != data.recordIds[1] && newCounterNotification(data.recordIds[1], previous + 2)
+          && data.get('initialAnnouncementsVersion', 0) == 1 && (!exists(notificationCounterPath()) || get(notificationCounterPath()).data.get('initialAnnouncementsVersion', 0) != 1)))
+        && (!('initialAnnouncementsVersion' in data) || data.initialAnnouncementsVersion == 1)
+        && (!exists(notificationCounterPath()) || get(notificationCounterPath()).data.get('initialAnnouncementsVersion', 0) != 1 || data.get('initialAnnouncementsVersion', 0) == 1);
+    }
+    function newNumberedNotification(notificationId) {
+      let counter = getAfter(notificationCounterPath()).data;
+      let previous = exists(notificationCounterPath()) ? get(notificationCounterPath()).data.number : 0;
+      let offset = request.resource.data.number - previous - 1;
+      return recordIdentity(notificationId, 'Notification') && offset >= 0 && offset < counter.recordIds.size()
+        && counter.number == previous + counter.recordIds.size() && counter.recordIds[offset] == notificationId;
+    }
+    function planFeature(features, index) {
+      return features.size() <= index || (features[index] is string && features[index].size() > 0 && features[index].size() <= 200);
+    }
+    function planFeatures(features) {
+      return features is list && features.size() <= 30
+        && planFeature(features, 0) && planFeature(features, 1) && planFeature(features, 2) && planFeature(features, 3) && planFeature(features, 4)
+        && planFeature(features, 5) && planFeature(features, 6) && planFeature(features, 7) && planFeature(features, 8) && planFeature(features, 9)
+        && planFeature(features, 10) && planFeature(features, 11) && planFeature(features, 12) && planFeature(features, 13) && planFeature(features, 14)
+        && planFeature(features, 15) && planFeature(features, 16) && planFeature(features, 17) && planFeature(features, 18) && planFeature(features, 19)
+        && planFeature(features, 20) && planFeature(features, 21) && planFeature(features, 22) && planFeature(features, 23) && planFeature(features, 24)
+        && planFeature(features, 25) && planFeature(features, 26) && planFeature(features, 27) && planFeature(features, 28) && planFeature(features, 29);
+    }
+    function planValues() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'created', 'updated'])
+        && data.keys().hasOnly(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'created', 'updated'])
+        && data.type == 'Plan' && data.id is string && data.id.size() <= 240
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && data.description is string && data.description.size() <= 2000 && planFeatures(data.features)
+        && data.currency in ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'] && data.billingInterval in ['month', 'year', 'one-time']
+        && data.priceCents is int && data.priceCents >= 0 && data.priceCents <= 9007199254740991
+        && data.displayOrder is int && data.displayOrder >= 0 && data.displayOrder <= 9007199254740991
+        && data.active is bool && data.highlighted is bool && data.created is timestamp && data.updated == request.time
+        && getAfter(planSlugPath(data.slug)).data.id == data.id;
+    }
+    function newPlanCounter() {
+      let data = request.resource.data;
+      return isAccountAdmin() && data.keys().hasAll(['number', 'lastPlanId']) && data.keys().hasOnly(['number', 'lastPlanId'])
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991 && data.lastPlanId is string && data.lastPlanId.size() <= 240
+        && data.number == (exists(planCounterPath()) ? get(planCounterPath()).data.number + 1 : 1)
+        && !exists(planPath(data.lastPlanId)) && getAfter(planPath(data.lastPlanId)).data.id == data.lastPlanId
+        && getAfter(planPath(data.lastPlanId)).data.number == data.number;
+    }
     match /identities/{firebaseUid} {
       allow get: if signedIn() && firebaseUid == request.auth.uid;
       allow create: if firebaseUid == request.auth.uid && newIdentity()
@@ -70,14 +193,76 @@ service cloud.firestore {
       allow create, update: if newSubmissionCounter();
     }
     match /counters/notifications {
-      allow get: if true;
-      allow write: if isOwner();
+      allow get: if isAccountAdmin();
+      allow create, update: if newNotificationCounter();
+    }
+    match /counters/plans {
+      allow get: if isAccountAdmin();
+      allow create, update: if newPlanCounter();
+    }
+    match /counters/adminAudits {
+      allow get: if isAccountAdmin();
+      allow create, update: if newAuditCounter();
+    }
+    match /adminAudits/{auditId} {
+      allow read: if isOwner();
+      allow create: if isAccountAdmin() && recordIdentity(auditId, 'AdminAudit')
+        && request.resource.data.keys().hasAll(['id', 'number', 'type', 'action', 'created', 'actorId', 'targetId', 'afterRole', 'beforeRole', 'afterActive', 'beforeActive', 'actorFirebaseUid'])
+        && request.resource.data.keys().hasOnly(['id', 'number', 'type', 'action', 'created', 'actorId', 'targetId', 'afterRole', 'beforeRole', 'afterActive', 'beforeActive', 'actorFirebaseUid'])
+        && request.resource.data.type == 'AdminAudit' && request.resource.data.action == 'user_access'
+        && request.resource.data.created == request.time && request.resource.data.actorId == actorId()
+        && request.resource.data.actorFirebaseUid == request.auth.uid && request.resource.data.targetId != actorId()
+        && request.resource.data.beforeRole == get(userPath(request.resource.data.targetId)).data.role
+        && request.resource.data.beforeActive == get(userPath(request.resource.data.targetId)).data.active
+        && request.resource.data.afterRole == getAfter(userPath(request.resource.data.targetId)).data.role
+        && request.resource.data.afterActive == getAfter(userPath(request.resource.data.targetId)).data.active
+        && getAfter(userPath(request.resource.data.targetId)).data.adminLastAuditId == auditId
+        && getAfter(auditCounterPath()).data.lastAuditId == auditId
+        && getAfter(auditCounterPath()).data.number == request.resource.data.number
+        && (isOwner() || (request.resource.data.beforeRole == request.resource.data.afterRole
+          && !(request.resource.data.beforeRole in ['Owner', 'Admin', 'Administrator', 'Developer'])));
     }
     match /notifications/{notificationId} {
-      allow read: if resource.data.active == true;
-      allow create, update: if isOwner() && recordIdentity(notificationId, 'Notification')
-        && request.resource.data.type == 'Notification' && request.resource.data.uid == '';
-      allow delete: if isOwner();
+      allow get: if resource.data.active == true || isAccountAdmin();
+      allow list: if request.query.limit != null && request.query.limit <= 101 && (resource.data.active == true || isAccountAdmin());
+      allow create: if isAccountAdmin() && notificationValues() && newNumberedNotification(notificationId)
+        && request.resource.data.created == request.time && notificationMetadata(request.resource.data.metadata);
+      allow update: if isAccountAdmin() && notificationValues() && recordIdentity(notificationId, 'Notification')
+        && request.resource.data.id == resource.data.id && request.resource.data.uid == resource.data.uid
+        && request.resource.data.number == resource.data.number && request.resource.data.type == resource.data.type
+        && request.resource.data.uuid == resource.data.uuid && request.resource.data.created == resource.data.get('created', resource.data.get('created_at', ''))
+        && request.resource.data.get('providerId', '') == resource.data.get('providerId', '')
+        && (request.resource.data.metadata == resource.data.get('metadata', {}) || notificationMetadata(request.resource.data.metadata));
+      allow delete: if isAccountAdmin();
+    }
+    match /notificationSlugs/{slug} {
+      allow get: if isAccountAdmin();
+      allow create: if isAccountAdmin() && request.resource.data.keys().hasAll(['id', 'slug']) && request.resource.data.keys().hasOnly(['id', 'slug'])
+        && request.resource.data.id is string && request.resource.data.slug == slug
+        && getAfter(notificationPath(request.resource.data.id)).data.id == request.resource.data.id
+        && getAfter(notificationPath(request.resource.data.id)).data.slug == slug;
+      allow delete: if isAccountAdmin() && (!existsAfter(notificationPath(resource.data.id)) || getAfter(notificationPath(resource.data.id)).data.slug != slug);
+    }
+    match /plans/{planId} {
+      allow get: if resource.data.active == true || isAccountAdmin();
+      allow list: if request.query.limit != null && request.query.limit <= 101 && (resource.data.active == true || isAccountAdmin());
+      allow create: if isAccountAdmin() && planValues() && recordIdentity(planId, 'Plan')
+        && planId.matches('Plan_' + string(request.resource.data.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
+        && request.resource.data.created == request.time && getAfter(planCounterPath()).data.lastPlanId == planId
+        && getAfter(planCounterPath()).data.number == request.resource.data.number
+        && request.resource.data.number == (exists(planCounterPath()) ? get(planCounterPath()).data.number + 1 : 1);
+      allow update: if isAccountAdmin() && planValues() && recordIdentity(planId, 'Plan')
+        && request.resource.data.id == resource.data.id && request.resource.data.type == resource.data.type
+        && request.resource.data.slug == resource.data.slug && request.resource.data.number == resource.data.number
+        && request.resource.data.created == resource.data.created
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'updated']);
+    }
+    match /planSlugs/{slug} {
+      allow get: if isAccountAdmin();
+      allow create: if isAccountAdmin() && request.resource.data.keys().hasAll(['id', 'slug']) && request.resource.data.keys().hasOnly(['id', 'slug'])
+        && request.resource.data.id is string && request.resource.data.slug == slug && !exists(planPath(request.resource.data.id))
+        && getAfter(planPath(request.resource.data.id)).data.id == request.resource.data.id
+        && getAfter(planPath(request.resource.data.id)).data.slug == slug;
     }
     match /formSubmissions/{submissionId} {
       allow read: if isOwner();
@@ -91,7 +276,8 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updated']);
     }
     match /users/{userId} {
-      allow get: if signedIn() && resource.data.firebase_uid == request.auth.uid;
+      allow get: if (signedIn() && resource.data.firebase_uid == request.auth.uid) || isAccountAdmin();
+      allow list: if isAccountAdmin() && request.query.limit != null && request.query.limit <= 101;
       allow create: if newIdentity() && recordIdentity(userId, 'User') && profileValues()
         && request.resource.data.type == 'User' && request.resource.data.uid == request.auth.uid
         && request.resource.data.firebase_uid == request.auth.uid && request.resource.data.number == getAfter(counterPath()).data.number
@@ -104,6 +290,7 @@ service cloud.firestore {
           'name', 'updated', 'verified', 'displayName', 'description', 'lastSignIn', 'lastUpdated',
           'publicDomains', 'emailVerified', 'profilePrivacy', 'lastSignInTime'
         ]);
+      allow update: if safeAccessUpdate(userId);
       match /domains/{recordId} {
         allow read, delete: if ownsAccount(userId);
         allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Domain') && request.resource.data.uid == userId;
@@ -136,8 +323,9 @@ service cloud.firestore {
         allow create, update: if ownsAccount(userId) && snapshotId in ['storage', 'portfolio', 'connections', 'auctionInventory'];
       }
     }
-    match /{document=**} {
-      allow read, write: if isOwner();
+    match /{path=**}/domains/{recordId} {
+      allow get: if isAccountAdmin();
+      allow list: if isAccountAdmin() && request.query.limit != null && request.query.limit <= 501;
     }
   }
 }

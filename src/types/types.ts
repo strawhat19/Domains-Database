@@ -12,6 +12,7 @@ export enum Roles {
   Editor = `Editor`,
   Moderator = `Moderator`,
   Administrator = `Administrator`,
+  Admin = `Admin`,
   Developer = `Developer`,
   Owner = `Owner`,
 }
@@ -20,6 +21,7 @@ export enum Types {
   Data = `Data`,
   User = `User`,
   Post = `Post`,
+  Plan = `Plan`,
   Follow = `Follow`,
   Visit = `Visit`,
   Domain = `Domain`,

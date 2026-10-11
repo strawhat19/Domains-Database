@@ -1,0 +1,170 @@
+[
+  {
+    "file": "instagram.svg",
+    "slug": "instagram",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/instagram.svg",
+    "title": "Instagram",
+    "color": "FF0069",
+    "source": "https://about.meta.com/brand/resources/instagram",
+    "license": null,
+    "guidelines": "https://about.meta.com/brand/resources/instagram"
+  },
+  {
+    "file": "vercel.svg",
+    "slug": "vercel",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/vercel.svg",
+    "title": "Vercel",
+    "color": "000000",
+    "source": "https://vercel.com/geist/brands",
+    "license": null,
+    "guidelines": "https://vercel.com/geist/brands"
+  },
+  {
+    "file": "facebook.svg",
+    "slug": "facebook",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/facebook.svg",
+    "title": "Facebook",
+    "color": "0866FF",
+    "source": "https://about.meta.com/brand/resources/facebook/logo",
+    "license": null,
+    "guidelines": "https://about.meta.com/brand/resources/facebook/logo"
+  },
+  {
+    "file": "google.svg",
+    "slug": "google",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/google.svg",
+    "title": "Google",
+    "color": "4285F4",
+    "source": "https://partnermarketinghub.withgoogle.com",
+    "license": null,
+    "guidelines": "https://about.google/brand-resource-center/brand-elements/"
+  },
+  {
+    "file": "youtube.svg",
+    "slug": "youtube",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/youtube.svg",
+    "title": "YouTube",
+    "color": "FF0000",
+    "source": "https://www.youtube.com/howyoutubeworks/resources/brand-resources/#logos-icons-and-colors",
+    "license": null,
+    "guidelines": "https://www.youtube.com/howyoutubeworks/resources/brand-resources/#logos-icons-and-colors"
+  },
+  {
+    "file": "tiktok.svg",
+    "slug": "tiktok",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/tiktok.svg",
+    "title": "TikTok",
+    "color": "000000",
+    "source": "https://tiktok.com",
+    "license": null,
+    "guidelines": null
+  },
+  {
+    "file": "x.svg",
+    "slug": "x",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/x.svg",
+    "title": "X",
+    "color": "000000",
+    "source": "https://x.com",
+    "license": null,
+    "guidelines": "https://about.x.com/en/who-we-are/brand-toolkit"
+  },
+  {
+    "file": "pinterest.svg",
+    "slug": "pinterest",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/pinterest.svg",
+    "title": "Pinterest",
+    "color": "BD081C",
+    "source": "https://business.pinterest.com/en/brand-guidelines",
+    "license": null,
+    "guidelines": "https://business.pinterest.com/en/brand-guidelines"
+  },
+  {
+    "file": "whatsapp.svg",
+    "slug": "whatsapp",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/whatsapp.svg",
+    "title": "WhatsApp",
+    "color": "25D366",
+    "source": "https://about.meta.com/brand/resources/whatsapp/whatsapp-brand",
+    "license": null,
+    "guidelines": "https://about.meta.com/brand/resources/whatsapp/whatsapp-brand"
+  },
+  {
+    "file": "reddit.svg",
+    "slug": "reddit",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/reddit.svg",
+    "title": "Reddit",
+    "color": "FF4500",
+    "source": "https://www.redditinc.com/brand",
+    "license": null,
+    "guidelines": "https://www.redditinc.com/brand"
+  },
+  {
+    "file": "linkedin.svg",
+    "slug": "linkedin",
+    "version": "11.14.0",
+    "commit": "91a37d360718b8577a467c104112ddc19e8d94b5",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/91a37d360718b8577a467c104112ddc19e8d94b5/icons/linkedin.svg",
+    "title": "LinkedIn",
+    "color": "0A66C2",
+    "source": "https://brand.linkedin.com",
+    "license": null,
+    "guidelines": "https://brand.linkedin.com/policies"
+  },
+  {
+    "file": "bing.svg",
+    "slug": "microsoftbing",
+    "version": "11.14.0",
+    "commit": "91a37d360718b8577a467c104112ddc19e8d94b5",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/91a37d360718b8577a467c104112ddc19e8d94b5/icons/microsoftbing.svg",
+    "title": "Microsoft Bing",
+    "color": "258FFA",
+    "source": "https://www.bing.com/covid/",
+    "license": null,
+    "guidelines": "https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks"
+  },
+  {
+    "file": "twitter.svg",
+    "slug": "twitter",
+    "version": "11.14.0",
+    "commit": "91a37d360718b8577a467c104112ddc19e8d94b5",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/91a37d360718b8577a467c104112ddc19e8d94b5/icons/twitter.svg",
+    "title": "Twitter",
+    "color": "1D9BF0",
+    "source": "https://brand.twitter.com",
+    "license": null,
+    "guidelines": "https://about.twitter.com/en/who-we-are/brand-toolkit"
+  },
+  {
+    "file": "github.svg",
+    "slug": "github",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/github.svg",
+    "title": "GitHub",
+    "color": "181717",
+    "source": "https://github.com/logos",
+    "license": null,
+    "guidelines": "https://github.com/logos"
+  },
+  {
+    "file": "duckduckgo.svg",
+    "slug": "duckduckgo",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/duckduckgo.svg",
+    "title": "DuckDuckGo",
+    "color": "DE5833",
+    "source": "https://github.com/duckduckgo/duckduckgo-privacy-extension/blob/5c6ac8d6a07421adbfb97ee2ff855dd7655f8d71/shared/img/logo-small-grayscale.svg",
+    "license": null,
+    "guidelines": "https://duckduckgo.com/press#press-materials"
+  }
+]

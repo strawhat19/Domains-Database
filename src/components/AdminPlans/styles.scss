@@ -1,0 +1,23 @@
+.admin-plans-summary { display: grid; width: 100%; min-width: 0; max-width: 480px; flex: 1 1 360px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.admin-plans-summary-card { display: grid; min-width: 0; align-content: start; gap: 8px; border: 1px solid color-mix(in srgb, var(--accent) 15%, transparent); border-radius: 12px; padding: 14px; background: var(--paper); }
+.admin-plans-summary-label { color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-plans-summary-value { margin: 0; color: var(--accent); font-family: var(--font-display); font-size: 30px; line-height: 1.1; }
+.admin-plans .admin-records { margin-top: 0; }
+.admin-plans-table thead th:last-child { text-align: right; }
+.admin-plans-filter-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin-left: auto; }
+.admin-plans-filter-actions .admin-records-results { width: auto; margin: 0; white-space: nowrap; }
+.admin-plans-add { min-height: 38px; padding: 10px 14px; font-size: 10px; }
+.admin-plans-add:disabled { cursor: default; opacity: .5; transform: none; }
+:root[data-theme='dark'] .admin-plans-summary-card { border-top-color: color-mix(in srgb, var(--accent) 16%, transparent); }
+@media (max-width: 800px) { .admin-plans-summary-value { font-size: 26px; } }
+@media (max-width: 480px) { .admin-plans-summary { grid-template-columns: minmax(0, 1fr); } .admin-plans-summary-card { grid-template-columns: 1fr auto; align-items: center; } .admin-plans-filter-actions { width: 100%; justify-content: space-between; } }
+.admin-plans .rowStatus.is-editable { min-height: 26px; border: 0; border-radius: 4px; padding: 0; background: transparent; font: inherit; cursor: pointer; transition: opacity 180ms ease; }
+.admin-plans .rowStatus.is-editable:disabled { opacity: .5; cursor: not-allowed; }
+.admin-plans .rowStatus.is-editable:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.admin-plans .rowStatus.is-editable:hover:not(:disabled) .statusText { text-decoration: underline; text-underline-offset: 3px; }
+.admin-plans-add { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: var(--contrast); cursor: pointer; transition: background-color .2s ease; }
+.admin-plans-add:hover:not(:disabled) { background: var(--accent-hover); }
+.admin-plans .admin-records-notice { display: flex; align-items: center; gap: 7px; }
+.admin-plans-summary-skeleton { display: block; width: 46px; height: 30px; border-radius: 5px; background: var(--skeleton); animation: admin-plan-summary-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes admin-plan-summary-pulse { to { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .admin-plans-add, .admin-plans .rowStatus.is-editable { transition: none; } .admin-plans-summary-skeleton { animation: none; } }

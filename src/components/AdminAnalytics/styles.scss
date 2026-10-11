@@ -1,0 +1,84 @@
+.dd-traffic-analytics { display: grid; min-width: 0; container: dd-traffic-analytics / inline-size; gap: 18px; margin-bottom: 30px; }
+.dd-traffic-description { margin: 0; color: var(--dd-panel-muted, var(--muted)); font-size: 11px; line-height: 1.7; }
+.dd-traffic-heading-actions { display: flex; flex: none; flex-wrap: wrap; gap: 6px; }
+.dd-traffic-button, .dd-traffic-toggle-button, .dd-traffic-text-button, .dd-traffic-filter-chip, .dd-traffic-journey-button { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; gap: 6px; border: 1px solid color-mix(in srgb, var(--accent) 16%, transparent); border-radius: 8px; padding: 8px 11px; color: var(--dd-highlight, var(--accent)); background: var(--dd-panel-surface, var(--paper)); font-family: inherit; font-size: 10px; cursor: pointer; transition: background-color .2s ease, border-color .2s ease, color .2s ease; }
+.dd-traffic-button:hover, .dd-traffic-journey-button:hover, .dd-traffic-filter-chip:hover { border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.dd-traffic-heading-actions > button:disabled, .dd-traffic-analytics button:disabled, .dd-traffic-analytics input:disabled, .dd-traffic-analytics select:disabled { opacity: .55; cursor: default; }
+.dd-traffic-heading-actions > button:focus-visible, .dd-traffic-analytics button:focus-visible, .dd-traffic-analytics input:focus-visible, .dd-traffic-analytics select:focus-visible, .dd-traffic-outcome:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.dd-traffic-summary { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 18px; }
+.dd-traffic-summary.is-filters-only { grid-template-columns: minmax(0, 1fr); }
+.dd-traffic-summary-stats { display: flex; min-width: 0; flex-direction: column; gap: 8px; transition: opacity .2s ease; }
+.dd-traffic-summary-stats > .dd-traffic-metrics, .dd-traffic-summary-stats > .dd-traffic-skeleton-cards { flex: 1; }
+.dd-traffic-summary-stats.is-loading { opacity: .6; }
+.dd-traffic-filters { display: grid; min-width: 0; gap: 14px; border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 12px; padding: 16px; background: var(--dd-panel-surface, var(--paper)); }
+.dd-traffic-range-controls { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.dd-traffic-toggle { display: inline-flex; flex: none; gap: 2px; border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 8px; padding: 3px; background: color-mix(in srgb, var(--accent) 3.5%, transparent); }
+.dd-traffic-toggle-button { min-height: 28px; border-color: transparent; border-radius: 5px; padding: 6px 9px; background: transparent; color: var(--dd-panel-muted, var(--muted)); }
+.dd-traffic-toggle-button.is-active { border-color: color-mix(in srgb, var(--accent) 8%, transparent); background: var(--dd-panel-surface, var(--paper)); color: var(--dd-highlight, var(--accent)); box-shadow: 0 1px 4px color-mix(in srgb, var(--accent) 6%, transparent); }
+.dd-traffic-date-form { display: flex; min-width: 0; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.dd-traffic-date-label, .dd-traffic-select-label { display: grid; min-width: 0; gap: 5px; }
+.dd-traffic-input { width: 100%; min-width: 0; min-height: 34px; border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 7px; padding: 7px 9px; background: var(--dd-panel-surface, var(--paper)); color: inherit; font-family: inherit; font-size: 10px; }
+.dd-traffic-date-label > input { width: 128px; }
+.dd-traffic-caption { color: var(--dd-panel-muted, var(--muted)); font-family: var(--font-body); font-size: 9px; font-weight: 400; line-height: 1.6; }
+.dd-traffic-select-label > span { display: flex; align-items: center; gap: 5px; }
+.dd-traffic-segment-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.dd-traffic-select { text-overflow: ellipsis; cursor: pointer; }
+.dd-traffic-date-error { margin: 0; color: var(--danger); font-size: 11px; }
+.dd-traffic-active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.dd-traffic-filter-chip { min-height: 27px; border-radius: 999px; padding: 5px 9px; background: color-mix(in srgb, var(--accent) 3.5%, transparent); overflow-wrap: anywhere; }
+.dd-traffic-filter-chip > svg { flex: none; }
+.dd-traffic-text-button { min-height: 27px; border: 0; padding: 5px 0; background: transparent; font-size: 9px; }
+.dd-traffic-text-button:hover { color: inherit; }
+.dd-traffic-report { display: grid; min-width: 0; gap: 18px; transition: opacity .2s ease; }
+.dd-traffic-analytics.is-loading .dd-traffic-report { opacity: .6; pointer-events: none; }
+.dd-traffic-metrics { display: grid; min-width: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dd-traffic-kpi { display: grid; min-width: 0; align-content: start; gap: 9px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 12px; padding: 18px; background: linear-gradient(140deg, color-mix(in srgb, var(--accent) 3.5%, transparent), transparent 65%), var(--dd-panel-surface, var(--paper)); animation: dd-traffic-reveal .55s ease backwards; }
+.dd-traffic-kpi-label { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--dd-panel-muted, var(--muted)); font-size: 10px; }
+.dd-traffic-kpi-value { min-width: 0; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: clamp(28px, 4vw, 39px); font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dd-traffic-kpi-change { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 10px; }
+.dd-traffic-kpi-change.is-up { color: var(--success); }
+.dd-traffic-kpi-change.is-down { color: var(--danger); }
+.dd-traffic-kpi-change.is-flat { color: var(--dd-panel-muted, var(--muted)); }
+.dd-traffic-kpi-period { color: var(--dd-panel-muted, var(--muted)); font-size: 9px; }
+.dd-traffic-panel { min-width: 0; border: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); border-radius: 12px; padding: 20px; background: var(--dd-panel-surface, var(--paper)); animation: dd-traffic-reveal .55s ease backwards; }
+.dd-traffic-panel-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 18px; }
+.dd-traffic-panel-copy { display: grid; gap: 3px; }
+.dd-traffic-panel-copy > p { margin: 0; }
+.dd-traffic-panel-title { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 21px; font-weight: 500; line-height: 1.25; }
+.dd-traffic-panel-title > svg { flex: none; opacity: .75; }
+.dd-traffic-breakdowns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 18px; }
+.dd-traffic-journey-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.dd-traffic-journey-button.is-selected { background: color-mix(in srgb, var(--accent) 8%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.dd-traffic-outcomes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 16px; }
+.dd-traffic-journeys > .dd-admin-skeleton.is-summary { max-width: none; margin-top: 16px; }
+.dd-traffic-journeys > .dd-admin-skeleton.is-summary > .dd-admin-skeleton-content { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.dd-traffic-journeys > .dd-admin-skeleton.is-summary .dd-admin-skeleton-card { grid-template-columns: minmax(0, 1fr); gap: 10px; border-color: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 9px; padding: 12px; }
+.dd-traffic-journeys > .dd-admin-skeleton.is-summary .dd-admin-skeleton-card > .dd-admin-skeleton-block:last-child { width: 40%; height: 25px; }
+.dd-traffic-outcome { position: relative; display: grid; min-width: 0; gap: 10px; border: 1px solid color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 9px; padding: 12px; transition: background-color .2s ease, border-color .2s ease; }
+.dd-traffic-outcome:hover { border-color: color-mix(in srgb, var(--accent) 30%, transparent); background: color-mix(in srgb, var(--accent) 3.5%, transparent); }
+.dd-traffic-outcome-label { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; color: var(--dd-panel-muted, var(--muted)); font-size: 9px; }
+.dd-traffic-outcome-count { color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 25px; font-weight: 500; line-height: 1; }
+.dd-traffic-outcome-arrow { position: absolute; right: 12px; bottom: 13px; color: var(--dd-highlight, var(--accent)); opacity: .6; }
+.dd-traffic-feedback { display: flex; align-items: flex-start; gap: 12px; border: 1px solid color-mix(in srgb, var(--accent) 13%, transparent); border-radius: 12px; padding: 20px; background: var(--dd-panel-surface, var(--paper)); }
+.dd-traffic-feedback > svg { flex: none; margin-top: 3px; color: var(--dd-highlight, var(--accent)); }
+.dd-traffic-feedback-title { margin: 0 0 5px; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 23px; font-weight: 500; }
+.dd-traffic-feedback.is-error { border-color: var(--danger)30; background: var(--danger)05; }
+.dd-traffic-feedback.is-error > svg { color: var(--danger); }
+.dd-traffic-feedback-copy > .dd-traffic-caption { margin: 9px 0 0; }
+.dd-traffic-empty-caption { margin: 20px 0; color: var(--dd-panel-muted, var(--muted)); font-size: 11px; }
+.dd-traffic-skeleton { display: grid; gap: 16px; }
+.dd-traffic-skeleton-card, .dd-traffic-skeleton-chart { display: block; border-radius: 10px; background: color-mix(in srgb, var(--accent) 6%, transparent); animation: dd-traffic-skeleton-pulse 1.5s ease-in-out infinite alternate; }
+.dd-traffic-skeleton-cards { display: grid; min-width: 0; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.dd-traffic-skeleton-card { min-width: 0; min-height: 150px; }
+.dd-traffic-skeleton-chart { height: 255px; }
+.dd-traffic-button > .is-spinning { animation: dd-traffic-spin 1s linear infinite; }
+@keyframes dd-traffic-reveal { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+@keyframes dd-traffic-skeleton-pulse { to { opacity: .4; } }
+@keyframes dd-traffic-spin { to { transform: rotate(360deg); } }
+@media (max-width: 850px) { .dd-traffic-outcomes, .dd-traffic-journeys > .dd-admin-skeleton.is-summary > .dd-admin-skeleton-content { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .dd-traffic-segment-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dd-traffic-breakdowns { grid-template-columns: minmax(0, 1fr); } .dd-traffic-kpi { padding: 13px; } .dd-traffic-kpi-change { font-size: 9px; } .dd-traffic-kpi-period { display: block; width: 100%; } .dd-traffic-kpi-label { flex-wrap: wrap; font-size: 9px; } .dd-traffic-panel { padding: 16px; } }
+@media (max-width: 420px) { .dd-traffic-metrics, .dd-traffic-skeleton-cards { grid-template-columns: minmax(0, 1fr); } .dd-traffic-kpi { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 7px 12px; } .dd-traffic-kpi-value { grid-column: 2; grid-row: 1 / 4; } .dd-traffic-date-form { width: 100%; } .dd-traffic-date-label { flex: 1 1 100px; } .dd-traffic-date-label > input { width: 100%; } .dd-traffic-date-form > button { flex: 1 1 100%; } }
+@container dd-traffic-analytics (max-width: 840px) { .dd-traffic-summary { grid-template-columns: minmax(0, 1fr); } }
+@container dd-traffic-analytics (max-width: 560px) { .dd-traffic-summary .dd-traffic-segment-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container dd-traffic-analytics (max-width: 420px) { .dd-traffic-summary .dd-traffic-metrics, .dd-traffic-summary .dd-traffic-skeleton-cards { grid-template-columns: minmax(0, 1fr); } .dd-traffic-summary .dd-traffic-kpi { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 7px 12px; } .dd-traffic-summary .dd-traffic-kpi-value { grid-column: 2; grid-row: 1 / 4; } .dd-traffic-summary .dd-traffic-date-form { width: 100%; } .dd-traffic-summary .dd-traffic-date-label { flex: 1 1 100px; } .dd-traffic-summary .dd-traffic-date-label > input { width: 100%; } .dd-traffic-summary .dd-traffic-date-form > button { flex: 1 1 100%; } }
+@media (prefers-reduced-motion: reduce) { .dd-traffic-kpi, .dd-traffic-panel, .dd-traffic-button > .is-spinning, .dd-traffic-skeleton-card, .dd-traffic-skeleton-chart { animation: none; } .dd-traffic-button, .dd-traffic-toggle-button, .dd-traffic-text-button, .dd-traffic-filter-chip, .dd-traffic-journey-button, .dd-traffic-outcome, .dd-traffic-report, .dd-traffic-summary-stats { transition: none; } }

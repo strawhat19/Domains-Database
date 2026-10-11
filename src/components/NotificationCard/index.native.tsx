@@ -1,14 +1,15 @@
-import { Link } from 'expo-router';
 import { useMemo } from 'react';
-import { Info, Sparkles } from 'lucide-react-native';
-import { Text, View, Pressable } from 'react-native';
+import { Link } from 'expo-router';
 import { createStyles } from './styles.native';
+import { getNotificationCopy } from './content';
+import { Text, View, Pressable } from 'react-native';
 import type { NotificationCardProps } from './types';
 import { elementProps } from '../../shared/elementProps';
 import { getNotificationHref } from '../../shared/routes';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { Info, Heart, Sparkles, Construction, ArrowUpRight } from 'lucide-react-native';
 
-const NotificationCard = ({ index = 0, notification, prefix = `header`, onNavigate }: NotificationCardProps) => {
+const NotificationCard = ({ index = 0, notification, prefix = `header`, readReady = true, onRead, onNavigate }: NotificationCardProps) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const suffix = notification?.id ?? `skeleton-${index}`;
@@ -43,16 +44,16 @@ const NotificationCard = ({ index = 0, notification, prefix = `header`, onNaviga
     </View>
   );
 
-  const Icon = notification.icon === `Info` ? Info : Sparkles;
+  const Icon = notification.kind === `development` ? Construction : notification.kind === `announcement` ? Heart : notification.icon === `Info` ? Info : Sparkles;
 
   return (
-    <Link href={getNotificationHref(notification.id)} asChild>
+    <Link href={getNotificationHref(notification.slug || notification.id)} asChild>
       <Pressable
-        onPress={onNavigate}
+        onPress={() => { void onRead?.(notification.id); onNavigate?.(); }}
         accessibilityRole={`link`}
         {...elementProps(`native-${prefix}-notification-card`, suffix)}
         accessibilityLabel={`Open Notification: ${notification.title}`}
-        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+        style={({ pressed }) => [styles.card, notification.isRead && styles.read, pressed && styles.pressed]}
       >
         <View
           style={styles.symbol}
@@ -68,19 +69,18 @@ const NotificationCard = ({ index = 0, notification, prefix = `header`, onNaviga
           style={styles.copy}
           {...elementProps(`native-${prefix}-notification-copy`, suffix)}
         >
-          <Text
-            style={styles.title}
-            {...elementProps(`native-${prefix}-notification-title`, suffix)}
-          >
-            {notification.title}
-          </Text>
+          <View style={styles.titleRow} {...elementProps(`native-${prefix}-notification-title-row`, suffix)}>
+            <Text style={styles.title} {...elementProps(`native-${prefix}-notification-title`, suffix)}>{notification.title}</Text>
+            {readReady && !notification.isRead && <View style={styles.unreadDot} accessibilityLabel={`Unread`} {...elementProps(`native-${prefix}-notification-unread`, suffix)} />}
+          </View>
           <Text
             style={styles.text}
             {...elementProps(`native-${prefix}-notification-text`, suffix)}
           >
-            {notification.message ?? `${notification.before}sign up${notification.after}`}
+            {getNotificationCopy(notification)}
           </Text>
         </View>
+        <ArrowUpRight size={15} color={palette.muted} {...elementProps(`native-${prefix}-notification-arrow`, suffix)} />
       </Pressable>
     </Link>
   );

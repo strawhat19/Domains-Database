@@ -1,5 +1,8 @@
 {
-  "indexes": [],
+  "indexes": [
+    { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "active", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
+    { "collectionGroup": "plans", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "active", "order": "ASCENDING" }, { "fieldPath": "displayOrder", "order": "ASCENDING" }, { "fieldPath": "number", "order": "ASCENDING" }] }
+  ],
   "fieldOverrides": [
     { "collectionGroup": "data", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "users", "fieldPath": "*", "indexes": [] },
@@ -10,10 +13,18 @@
     { "collectionGroup": "connections", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "storageKeys", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "notifications", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "plans", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "planSlugs", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "notificationSlugs", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "formSubmissions", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "auctionInventory", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "users", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "domains", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }] },
     { "collectionGroup": "notifications", "fieldPath": "active", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "notifications", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }, { "order": "ASCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "notifications", "fieldPath": "slug", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "notifications", "fieldPath": "providerId", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "plans", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "formSubmissions", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] }
   ]
 }

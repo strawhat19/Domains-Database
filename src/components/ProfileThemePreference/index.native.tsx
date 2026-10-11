@@ -6,8 +6,8 @@ import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 
 const themeOptions = [
-  { value: `dark`, label: `Dark`, Icon: Moon },
   { value: `light`, label: `Light`, Icon: Sun },
+  { value: `dark`, label: `Dark`, Icon: Moon },
 ] as const;
 
 const ProfileThemePreference = ({ roomy = false }: { roomy?: boolean }) => {
@@ -29,7 +29,7 @@ const ProfileThemePreference = ({ roomy = false }: { roomy?: boolean }) => {
               accessibilityState={{ checked: theme === value, disabled: !ready }}
               style={[styles.option, theme === value && styles.selected, !ready && styles.disabled]}
             >
-              <Icon {...elementProps(`profile-theme-option-icon`, value)} size={16} color={theme === value ? palette.accent : palette.muted} />
+              <Icon {...elementProps(`profile-theme-option-icon`, value)} size={14} color={theme === value ? palette.accent : palette.muted} />
               <Text {...elementProps(`profile-theme-option-text`, value)} style={styles.label}>{label}</Text>
             </Pressable>
           ))}

@@ -1,13 +1,14 @@
 import './styles.scss';
 import { Link } from 'expo-router';
-import { Info, Sparkles } from 'lucide-react';
 import RouterAnchor from '../RouterAnchor';
+import { getNotificationCopy } from './content';
 import type { NotificationCardProps } from './types';
 import { getNotificationHref } from '../../shared/routes';
+import { Info, Heart, Sparkles, Construction, ArrowUpRight } from 'lucide-react';
 
-const NotificationCard = ({ notification, index = 0, prefix = `header`, onNavigate }: NotificationCardProps) => {
+const NotificationCard = ({ notification, index = 0, prefix = `header`, readReady = true, onRead, onNavigate }: NotificationCardProps) => {
   const suffix = notification?.id ?? `skeleton-${index}`;
-  const Icon = notification?.icon === `Sparkles` ? Sparkles : Info;
+  const Icon = notification?.kind === `development` ? Construction : notification?.kind === `announcement` ? Heart : notification?.icon === `Sparkles` ? Sparkles : Info;
   const content = (
     <>
       <span
@@ -34,12 +35,13 @@ const NotificationCard = ({ notification, index = 0, prefix = `header`, onNaviga
               className={`header-notification-title`}
             >
               {notification.title}
+              {readReady && !notification.isRead && <span id={`${prefix}-notification-unread-${suffix}`} className={`header-notification-unread-dot`} aria-label={`Unread`} />}
             </strong>
             <p
               id={`${prefix}-notification-text-${suffix}`}
               className={`header-notification-text`}
             >
-              {notification.message ?? `${notification.before}sign up${notification.after}`}
+              {getNotificationCopy(notification)}
             </p>
           </>
         ) : (
@@ -55,6 +57,7 @@ const NotificationCard = ({ notification, index = 0, prefix = `header`, onNaviga
           </>
         )}
       </div>
+      {notification && <ArrowUpRight size={15} aria-hidden id={`${prefix}-notification-arrow-${suffix}`} className={`header-notification-arrow`} />}
     </>
   );
 
@@ -65,10 +68,10 @@ const NotificationCard = ({ notification, index = 0, prefix = `header`, onNaviga
       aria-hidden={notification ? undefined : true}
     >
       {notification ? (
-        <Link href={getNotificationHref(notification.id)} asChild>
+        <Link href={getNotificationHref(notification.slug || notification.id)} asChild>
           <RouterAnchor
-            onClick={onNavigate}
-            className={`header-notification-card`}
+            onClick={() => { void onRead?.(notification.id); onNavigate?.(); }}
+            className={`header-notification-card${notification.isRead ? ` is-read` : ``}`}
             id={`${prefix}-notification-card-${suffix}`}
             aria-label={`Open Notification: ${notification.title}`}
           >

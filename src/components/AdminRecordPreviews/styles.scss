@@ -1,0 +1,29 @@
+.admin-recent-records { min-width: 0; margin-top: 32px; }
+.admin-recent-records-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.admin-recent-records-title { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--ink); font-family: var(--font-display); font-size: 26px; font-weight: 500; }
+.admin-recent-records-view-all { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-size: 10px; }
+.admin-recent-records-view-all:hover { text-decoration: underline; text-underline-offset: 3px; }
+.admin-recent-empty { margin: 0; border: 1px dashed var(--line); border-radius: 10px; padding: 24px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.admin-recent-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.admin-recent-table { width: 100%; border-collapse: collapse; color: var(--ink); font-size: 11px; text-align: left; }
+.admin-recent-table th, .admin-recent-table td { border-bottom: 1px solid var(--line); padding: 15px 18px; vertical-align: top; }
+.admin-recent-table th { padding-block: 13px; background: var(--strong); color: var(--strong-text); font-size: 9px; font-weight: 600; white-space: nowrap; }
+.admin-recent-table tr:last-child td { border-bottom: 0; }
+.admin-recent-row { transition: background-color .2s ease; }
+.admin-recent-row:hover { background: var(--subtle); }
+.admin-recent-table-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.admin-recent-number { display: inline-flex; min-width: 24px; min-height: 24px; align-items: center; justify-content: center; border-radius: 5px; padding: 3px 6px; background: var(--accent); color: var(--contrast); font-family: var(--font-mono); font-size: 10px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.admin-recent-identity { min-width: 190px; }
+.admin-recent-name, .admin-recent-detail { display: block; overflow-wrap: anywhere; }
+.admin-recent-name { margin-bottom: 5px; font-weight: 600; }
+.admin-recent-detail, .admin-recent-date { color: var(--muted); font-size: 10px; }
+.admin-recent-cell, .admin-recent-date { white-space: nowrap; }
+.admin-record-previews .rowStatus { display: inline-flex; align-items: center; gap: 7px; font-size: 10px; white-space: nowrap; }
+.admin-record-previews .rowStatus.is-green { color: var(--success); }
+.admin-record-previews .rowStatus.is-gray { color: var(--muted); }
+.admin-record-previews .rowStatus.is-red { color: var(--danger); }
+.admin-record-previews .statusDotWrap { display: grid; width: 16px; height: 16px; place-items: center; border-radius: 50%; background: color-mix(in srgb, currentColor 12%, transparent); }
+.admin-record-previews .statusDot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.admin-record-previews .statusText { color: var(--ink); font-size: 11px; }
+@media (max-width: 480px) { .admin-recent-table th, .admin-recent-table td { padding: 13px; } }
+@media (prefers-reduced-motion: reduce) { .admin-recent-row { transition: none; } }

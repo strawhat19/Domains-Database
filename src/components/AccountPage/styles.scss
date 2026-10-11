@@ -1,79 +1,42 @@
-:is(.account-sidebar-profile, [data-class='account-sidebar-profile']):hover, :is(.account-sidebar-dashboard, [data-class='account-sidebar-dashboard']):hover, :is(.account-sidebar-connections, [data-class='account-sidebar-connections']):hover { background: var(--subtle) !important; }
-:is(.dashboard-stat-skeleton, [data-class='dashboard-stat-skeleton']), :is(.dashboard-users-skeleton, [data-class='dashboard-users-skeleton']), :is(.dashboard-roles-skeleton, [data-class='dashboard-roles-skeleton']) { animation: account-pulse 1.4s ease-in-out infinite; }
-:is(.profile-value, [data-class='profile-value']), :is(.dashboard-user-name, [data-class='dashboard-user-name']), :is(.dashboard-user-email, [data-class='dashboard-user-email']) { overflow-wrap: anywhere; }
-:is(.profile-value-row, [data-class='profile-value-row']) { min-width: 0; }
-:is(.profile-value-icon, [data-class='profile-value-icon']) { flex-shrink: 0; }
-@media (min-width: 1100px) {
-  :is(.account-page, [data-class='account-page']):is([data-page='profile'], [data-page='connections']) {
-    gap: 24px !important;
-    max-width: none !important;
-    overflow: visible !important;
-    padding: 20px 0 0 !important;
-    align-items: flex-start !important;
-
-    :is(.account-sidebar, [data-class='account-sidebar']) {
-      width: 160px !important;
-      position: sticky !important;
-      align-self: flex-start !important;
-      top: calc(var(--site-header-offset, 0px) + 16px);
-    }
-
-    :is(.account-content, [data-class='account-content']) {
-      gap: 8px 16px !important;
-      display: grid !important;
-      overflow: visible !important;
-      align-content: start !important;
-      grid-template-columns: auto minmax(0, 1fr);
-    }
-
-    :is(.account-eyebrow, [data-class='account-eyebrow'], .account-connections, [data-class='account-connections'], .connections-signup-prompt, [data-class='connections-signup-prompt']) { grid-column: 1 / -1; }
-    :is(.account-title, [data-class='account-title']) { font-size: 30px !important; }
-    :is(.account-description, [data-class='account-description']) { line-height: 20px !important; margin-bottom: 0 !important; align-self: center !important; }
-  }
-
-  :is(.account-page, [data-class='account-page'])[data-page='profile'] {
-    :is(.account-content, [data-class='account-content']) {
-      gap: 8px 16px !important;
-      align-items: start !important;
-      grid-template-columns: auto minmax(0, 1fr) clamp(260px, 22vw, 340px);
-    }
-
-    :is(.account-eyebrow, [data-class='account-eyebrow']) { grid-column: 1 / -1; }
-    :is(.account-title, [data-class='account-title']) { grid-row: 2; grid-column: 1; }
-    :is(.account-description, [data-class='account-description']) { grid-row: 2; grid-column: 2 / -1; }
-    :is(.profile-settings, [data-class='profile-settings']) { grid-row: 3; min-width: 0; margin-top: 8px; grid-column: 1 / 3; }
-
-    :is(.profile-details-column, [data-class='profile-details-column']) {
-      gap: 16px !important;
-      grid-row: 3;
-      min-width: 0;
-      grid-column: 3;
-      margin-top: 8px;
-    }
-
-    :is(.profile-details, [data-class='profile-details']) {
-      gap: 12px !important;
-      min-width: 0;
-      padding: 16px !important;
-    }
-
-    :is(.profile-field, [data-class='profile-field']) { gap: 4px !important; padding-bottom: 10px !important; }
-    :is(.profile-device-text, [data-class='profile-device-text']) { line-height: 16px !important; }
-    :is(.profile-account-preferences, [data-class='profile-account-preferences']) {
-      min-width: 0;
-      padding: 16px !important;
-    }
-  }
-}
-@media (max-width: 560px) {
-  :is(.account-page, [data-class='account-page']) { padding-right: 16px !important; padding-left: 16px !important; }
-  :is(.account-sidebar-title, [data-class='account-sidebar-title']) { flex-basis: 100%; }
-  :is(.account-title, [data-class='account-title']) { font-size: 32px !important; }
-  :is(.profile-details, [data-class='profile-details']), :is(.profile-account-preferences, [data-class='profile-account-preferences']), :is(.dashboard-users, [data-class='dashboard-users']), :is(.dashboard-roles, [data-class='dashboard-roles']) { padding: 16px !important; }
-}
-@keyframes account-pulse { 50% { opacity: .45; } }
-:is(.dashboard-users-latest, [data-class='dashboard-users-latest'], .dashboard-users-previous, [data-class='dashboard-users-previous'], .dashboard-users-next, [data-class='dashboard-users-next']) { transition: background .2s ease, border-color .2s ease; }
-:is(.dashboard-users-latest, [data-class='dashboard-users-latest'], .dashboard-users-previous, [data-class='dashboard-users-previous'], .dashboard-users-next, [data-class='dashboard-users-next']):focus-visible { outline-offset: 3px; outline: 2px solid var(--accent); }
-@media (prefers-reduced-motion: reduce) {
-  :is(.dashboard-users-latest, [data-class='dashboard-users-latest'], .dashboard-users-previous, [data-class='dashboard-users-previous'], .dashboard-users-next, [data-class='dashboard-users-next']) { transition: none; }
-}
+.account-page { color: var(--ink); overflow: visible; }
+.account-content, .profile-details { min-width: 0; }
+.profile-content { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) 240px; align-items: start; gap: clamp(20px, 3vw, 36px); }
+.account-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+.account-eyebrow::before { width: 28px; height: 1px; flex: none; content: ''; background: var(--accent); }
+.account-title { display: flex; align-items: center; gap: 12px; margin: 15px 0; color: var(--ink); font-family: var(--font-display); font-size: clamp(34px, 5vw, 56px); font-weight: 500; letter-spacing: -.04em; line-height: 1.15; }
+.account-title-icon { flex: none; color: var(--accent); }
+.account-title-copy { min-width: 0; overflow-wrap: anywhere; }
+.account-title em { color: var(--accent); }
+.account-description { color: var(--muted); font-size: 13px; line-height: 1.8; }
+.profile-sidebar { min-width: 0; max-width: 640px; border: 1px solid var(--line); border-radius: 12px; padding: 20px; background: var(--paper); color: var(--ink); }
+.profile-sidebar-title { margin: 0 0 22px; color: var(--accent); font-family: var(--font-display); font-size: 24px; font-weight: 500; letter-spacing: -.02em; }
+.profile-record { margin: 30px 0 0; border-block: 1px solid var(--line); }
+.profile-record-row { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 15px; padding: 20px 0; }
+.profile-record-row + .profile-record-row { border-top: 1px solid var(--line); }
+.profile-sidebar-record { margin: 0 0 22px; border: 0; }
+.profile-sidebar-record .profile-record-row { grid-template-columns: 48px minmax(0, 1fr); gap: 10px; padding: 14px 0; }
+.profile-record-label { color: var(--muted); font-size: 12px; }
+.profile-record-value { min-width: 0; margin: 0; color: var(--ink); font-size: 13px; overflow-wrap: anywhere; }
+.profile-input-row > .profile-record-label { padding-top: 12px; }
+.profile-metadata { display: flex; align-items: center; gap: 9px; }
+.profile-metadata-icon { flex: none; color: var(--accent); }
+.profile-portfolio { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.profile-portfolio-title { margin: 0 0 8px; color: var(--accent); font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
+.profile-portfolio .profile-record { margin-bottom: 0; }
+.profile-portfolio .profile-record-row { grid-template-columns: minmax(0, 1fr) auto; }
+.profile-account-identity { display: grid; gap: 6px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; }
+.profile-account-id { font-family: var(--font-mono); }
+.profile-error { margin: 12px 0 0; color: var(--danger); font-size: 11px; line-height: 1.6; }
+.profile-account-record { margin: 0; border-top: 0; }
+.profile-account-record :is(.account-actions, [data-class='account-actions']) { gap: 10px !important; padding: 0 !important; border: 0 !important; }
+.profile-account-record :is(#account-actions-summary, [data-class='account-actions-summary']) { display: none; }
+.profile-account-record :is(#account-actions-heading, #account-actions-grid) { flex-wrap: wrap !important; flex-direction: row !important; }
+.profile-account-record :is(#account-actions-heading) { justify-content: flex-start !important; }
+.profile-account-record :is(#account-signout, [data-class='account-action']) { width: fit-content !important; min-height: 40px !important; border-radius: 8px !important; padding: 10px 12px !important; background: var(--paper); }
+.profile-account-record :is(#account-signout-text, [data-class='account-action-text']) { font-size: 11px !important; }
+.profile-account-record :is([data-class='account-action']):hover { border-color: var(--danger) !important; background: var(--danger-bg); }
+.profile-account-record :is([data-class='account-action']):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (min-width: 1101px) { .profile-sidebar { position: sticky; top: calc(var(--account-header-height, var(--site-header-offset, 0px)) + 23px); align-self: start; max-height: calc(100dvh - var(--account-header-height, var(--site-header-offset, 0px)) - 47px); overflow-y: auto; } }
+@media (max-width: 1100px) { .profile-content { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .profile-record-row { grid-template-columns: 65px minmax(0, 1fr); gap: 12px; } }
+@media (prefers-reduced-motion: reduce) { .profile-account-record :is(#account-signout, [data-class='account-action']) { transition: none; } }

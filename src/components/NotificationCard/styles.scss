@@ -26,7 +26,10 @@
 }
 
 .header-notification-copy { flex: 1; min-width: 0; }
-.header-notification-title { display: block; font-size: 12px; line-height: 1.5; color: var(--ink); font-family: var(--font-bold); }
+.header-notification-title { gap: 7px; display: flex; align-items: center; font-size: 12px; line-height: 1.5; color: var(--ink); font-family: var(--font-bold); }
+.header-notification-card.is-read { opacity: .72; }
+.header-notification-unread-dot { width: 5px; height: 5px; flex-shrink: 0; border-radius: 50%; background: var(--accent); }
+.header-notification-arrow { flex-shrink: 0; margin-top: 3px; color: var(--muted); }
 .header-notification-text { margin: 4px 0 0; font-size: 12px; line-height: 1.65; color: var(--muted); overflow-wrap: anywhere; }
 
 .header-notification-card-loading .header-notification-symbol { background: var(--skeleton); }

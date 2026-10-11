@@ -7,12 +7,13 @@ import { elementProps } from '../../shared/elementProps';
 import { LockKeyhole, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import AccountLoadingSkeleton from '../AccountLoadingSkeleton';
+import type { AdminSection } from '../../shared/admin/permissions';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 
-type ProtectedRouteProps = PropsWithChildren<{ minRole?: Roles }>;
+type ProtectedRouteProps = PropsWithChildren<{ minRole?: Roles; adminSection?: AdminSection }>;
 
-const ProtectedRoute = ({ children, minRole = Roles.Subscriber }: ProtectedRouteProps) => {
-  const state = useProtectedRoute(minRole);
+const ProtectedRoute = ({ children, minRole = Roles.Subscriber, adminSection }: ProtectedRouteProps) => {
+  const state = useProtectedRoute(minRole, adminSection);
   const { palette } = useTheme();
   const { width, height } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -32,7 +33,7 @@ const ProtectedRoute = ({ children, minRole = Roles.Subscriber }: ProtectedRoute
           {state.auth.user ? `More access is needed` : `Sign in to view this`}
         </Text>
         <Text {...elementProps(`protected-route-description`)} style={[styles.copy, (compact || landscape) && styles.compactCopy, landscape && styles.landscapeCopy]}>
-          {state.auth.user ? `This page requires the ${minRole} role or higher. You can review your current account in your profile.` : `Sign in or create an account to manage your profile and account settings.`}
+          {state.auth.user ? adminSection ? `Your role does not have access to this admin section. Review your account in your profile or contact an owner.` : `This page requires an active account with the ${minRole} role or higher. You can review your current account in your profile.` : `Sign in or create an account to manage your profile and account settings.`}
         </Text>
         <View {...elementProps(`protected-route-actions`)} style={[styles.actions, compact && styles.compactActions, landscape && styles.landscapeActions]}>
           <Pressable {...elementProps(`protected-route-primary-link`)} disabled={state.auth.busy} accessibilityRole={`link`} accessibilityLabel={state.auth.user ? `View Profile` : `Sign In`} style={[styles.button, state.auth.busy && styles.disabled]} onPress={() => state.navigate(state.auth.user ? `/profile` : `/signin`)}>

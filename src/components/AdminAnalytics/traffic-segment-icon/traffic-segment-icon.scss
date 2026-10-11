@@ -1,0 +1,6 @@
+.dd-traffic-segment-icon { display: inline-flex; width: 20px; height: 20px; flex: none; align-items: center; justify-content: center; color: var(--dd-panel-muted, var(--muted)); }
+.dd-traffic-segment-icon.is-flag { width: 24px; height: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); border-radius: 2px; }
+.dd-traffic-segment-flag { display: block; width: 100%; height: 100%; object-fit: cover; }
+.dd-traffic-segment-brand { display: block; width: 18px; height: 18px; background-color: var(--dd-traffic-brand-color, currentColor); -webkit-mask: var(--dd-traffic-brand-image) center / contain no-repeat; mask: var(--dd-traffic-brand-image) center / contain no-repeat; }
+.dd-traffic-segment-brand-source { display: none; }
+@media (forced-colors: active) { .dd-traffic-segment-brand { forced-color-adjust: none; background-color: CanvasText; } }

@@ -16,6 +16,7 @@ const SubmissionRow = ({ submission, saving, disabled, updateStatus }: Submissio
   const Icon = expanded ? ChevronUp : ChevronDown;
   return (
     <tr id={`form-submission-row-${submission.id}`} className={`form-submission-row`}>
+      <td id={`form-submission-number-cell-${submission.id}`} className={`form-submission-number-cell`}><span id={`form-submission-number-${submission.id}`} className={`form-submission-number`}>{submission.number}</span></td>
       <td id={`form-submission-name-${submission.id}`} className={`form-submission-name`}>{submission.name}</td>
       <td id={`form-submission-email-${submission.id}`} className={`form-submission-email`}>{submission.email}</td>
       <td id={`form-submission-subject-${submission.id}`} className={`form-submission-subject`}>{submission.subject}</td>

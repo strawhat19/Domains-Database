@@ -1,6 +1,6 @@
 ---
 name: social
-description: Create or update local social profiles, posts, follows, private messaging, and audience-aware feeds when those features are requested.
+description: Create or update social profiles, posts, follows, private messaging, and audience-aware feeds when those features are requested, using the connected backend or an explicit local demo.
 ---
 
 1. Read [social.md](social.md) for requested social features or profile visibility. Keep public browsing available and enforce account actions and content audiences through the shared service.

@@ -1,0 +1,28 @@
+.admin-plan-editor-modal { position: fixed; inset: 0; width: 100%; height: 100dvh; max-width: none; max-height: none; overflow: hidden; margin: 0; border: 0; padding: 24px; background: transparent; color: var(--ink); }
+.admin-plan-editor-modal[open] { display: grid; place-items: center; }
+.admin-plan-editor-modal::backdrop { background: transparent; -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); transition: background-color .4s ease, backdrop-filter .4s ease; }
+.admin-plan-editor-modal.is-open::backdrop { background: color-mix(in srgb, var(--overlay) 90%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.admin-plan-editor-modal-panel { position: relative; width: min(760px, 100%); min-width: 0; border-radius: 18px; background: var(--paper); box-shadow: 0 24px 65px var(--shadow); transform: translate3d(0, calc(-100% - 50dvh - 100px), 0); transition: transform .68s cubic-bezier(.76, 0, .24, 1); }
+.admin-plan-editor-modal.is-open .admin-plan-editor-modal-panel { transform: translate3d(0, 0, 0); transition-duration: .78s; }
+.admin-plan-editor-modal-content { max-height: calc(100dvh - 48px); overflow-y: auto; overscroll-behavior: contain; border-radius: inherit; scrollbar-width: thin; }
+.admin-plan-editor-modal-content > .admin-plan-editor { margin: 0; border: 0; background: transparent; }
+.admin-plan-editor-modal-content .admin-plan-editor-close { color: var(--accent); }
+.admin-plan-editor-modal-content .admin-plan-editor-actions { justify-content: flex-end; }
+.admin-plan-editor-modal-error { position: sticky; z-index: 1; top: 0; margin: 0; border-bottom: 1px solid var(--line); padding: 14px 24px; background: var(--paper); color: var(--danger); font-size: 11px; line-height: 1.7; }
+:root[data-theme='dark'] .admin-plan-editor-modal {
+  .admin-plan-editor-modal-panel { box-shadow: 0 32px 90px var(--shadow), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent); }
+  .admin-plan-editor-heading { border-bottom: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); padding-bottom: 18px; }
+  .admin-plan-editor-field-label { color: var(--ink); font-weight: 500; }
+  .admin-plan-editor-input { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--input); color: var(--ink); caret-color: var(--accent); box-shadow: inset 0 1px 3px var(--shadow); transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease; }
+  .admin-plan-editor-input::placeholder { color: var(--muted); opacity: .8; }
+  .admin-plan-editor-input:hover:not(:disabled):not(:focus) { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .admin-plan-editor-input:focus { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--input)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .admin-plan-editor-input:disabled { cursor: not-allowed; opacity: .5; }
+  .admin-plan-editor-input option { background: var(--input); color: var(--ink); }
+  .admin-plan-editor-actions { border-top: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); padding-top: 20px; }
+  .admin-plan-editor-close, .admin-plan-editor-cancel { border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent); background: var(--input); color: var(--accent); transition: border-color .2s ease, background-color .2s ease, color .2s ease; }
+  .admin-plan-editor-close:hover:not(:disabled), .admin-plan-editor-cancel:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 12%, var(--input)); }
+  .admin-plan-editor-cancel { border-radius: 999px; padding: 10px 14px; }
+}
+@media (max-width: 600px) { .admin-plan-editor-modal { padding: 12px; } .admin-plan-editor-modal-panel { border-radius: 14px; } .admin-plan-editor-modal-content { max-height: calc(100dvh - 24px); } .admin-plan-editor-modal-error { padding-inline: 18px; } }
+@media (prefers-reduced-motion: reduce) { .admin-plan-editor-modal::backdrop, .admin-plan-editor-modal-panel, .admin-plan-editor-modal .admin-plan-editor-input, .admin-plan-editor-modal .admin-plan-editor-close, .admin-plan-editor-modal .admin-plan-editor-cancel { transition: none; } }

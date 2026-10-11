@@ -3,6 +3,7 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   list: { gap: 12 },
+  filters: { gap: 12 },
   intro: { gap: 6, flex: 1 },
   disabled: { opacity: .55 },
   centered: { textAlign: `center` },
@@ -16,6 +17,9 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   cardHeading: { gap: 12, flexDirection: `row`, justifyContent: `space-between`, flexWrap: `wrap` },
   empty: { gap: 10, paddingVertical: 25, alignItems: `center` },
   selectedOption: { borderColor: palette.accent, backgroundColor: palette.subtle },
+  notice: { fontSize: 11, color: palette.success, fontFamily: `DMSans_400Regular` },
+  searchInput: { flex: 1, minWidth: 0, padding: 0, fontSize: 16, color: palette.ink, fontFamily: `DMSans_400Regular` },
+  search: { gap: 8, height: 40, paddingHorizontal: 14, borderWidth: 1, borderRadius: 8, borderColor: palette.line, backgroundColor: palette.paper, flexDirection: `row`, alignItems: `center` },
   skeleton: { height: 70, borderRadius: 6, backgroundColor: palette.skeleton },
   title: { fontSize: 15, color: palette.ink, fontFamily: `DMSans_700Bold` },
   name: { fontSize: 13, color: palette.ink, fontFamily: `DMSans_600SemiBold`, flexShrink: 1 },

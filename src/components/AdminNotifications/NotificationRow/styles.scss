@@ -1,0 +1,23 @@
+.admin-notification-number { font-family: var(--font-mono); font-size: 10px; }
+.admin-notification-main { min-width: 220px; max-width: 340px; }
+.admin-notification-identity { display: flex; align-items: flex-start; gap: 13px; }
+.admin-notification-copy { min-width: 0; flex: 1; }
+.admin-notification-thumbnail { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--ink); }
+.admin-notification-title, .admin-notification-slug { display: block; overflow-wrap: anywhere; }
+.admin-notification-title { margin-bottom: 6px; font-size: 11px; font-weight: 600; }
+.admin-notification-slug { margin: 5px 0; color: var(--muted); font-size: 10px; }
+.admin-notification-body { display: -webkit-box; max-width: 340px; overflow: hidden; color: var(--muted); line-height: 1.6; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.admin-notification-kind, .admin-notification-updated { font-size: 10px; white-space: nowrap; }
+.admin-notification-updated { color: var(--muted); }
+.admin-notification-actions-cell { min-width: 142px; text-align: right; }
+.admin-notifications .admin-notification-actions-cell .actionsCell { justify-content: flex-end; gap: 8px; }
+.admin-notification-action { display: inline-flex; width: 30px; height: 26px; flex: none; align-items: center; justify-content: center; border: 1px solid var(--accent); border-radius: 5px; padding: 0; background: var(--accent); color: var(--contrast); cursor: pointer; transition: background-color .2s ease, border-color .2s ease; }
+.admin-notification-action:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
+.admin-notification-action.is-danger:hover:not(:disabled) { border-color: color-mix(in srgb, var(--danger) 38%, transparent); }
+.admin-notification-action:disabled { cursor: default; opacity: .5; }
+.admin-notification-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.admin-notification-delete-confirmation { max-width: 330px; margin: 14px 0 0 auto; border: 1px solid color-mix(in srgb, var(--danger) 19%, transparent); border-radius: 9px; padding: 14px; background: color-mix(in srgb, var(--danger) 2%, transparent); text-align: left; animation: admin-notification-confirmation-in .2s ease both; }
+.admin-notification-delete-title { margin: 0 0 8px; font-size: 11px; font-weight: 600; line-height: 1.7; overflow-wrap: anywhere; }
+.admin-notification-delete-note { margin: 0 0 12px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+@keyframes admin-notification-confirmation-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .admin-notification-action { transition: none; } .admin-notification-delete-confirmation { animation: none; } }

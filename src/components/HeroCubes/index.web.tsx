@@ -1,4 +1,5 @@
 import './styles.scss';
+import type { CSSProperties } from 'react';
 import { memo, useId, useRef, useEffect } from 'react';
 import { getTileDepth, roundedTilePath } from './shapes';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
@@ -10,8 +11,10 @@ const halfHeight = 32;
 const scene = { x: 40, y: 10, width: 900, height: 625 };
 const lightTones = [`light`, `spring`, `jade`] as const;
 const darkTones = [`dark`, `teal`, `forest`, `emerald`] as const;
-const keyTimes = `0;.12;.55;.88;1`;
-const keySplines = `0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1;0.42 0 0.58 1`;
+const faceAngles = {
+  left: Math.atan((halfHeight + faceSkew) / halfWidth) * 180 / Math.PI,
+  right: Math.atan((faceSkew - halfHeight) / halfWidth) * 180 / Math.PI,
+};
 const tiles = Array.from({ length: gridSize ** 2 }, (_, index) => {
   const row = Math.floor(index / gridSize);
   const column = index % gridSize;
@@ -45,8 +48,10 @@ const tiles = Array.from({ length: gridSize ** 2 }, (_, index) => {
     lightTone: lightTones[inCore || lightToneIndex < 8 ? 0 : lightToneIndex - 7] ?? `light`,
     tone: centered || toneIndex < 6 ? `dark` : toneIndex < 8 ? `teal` : toneIndex === 8 ? `forest` : `emerald`,
     animated: luminous || (row + column) % 2 === 0,
-    delay: seed % 143 / 20,
-    duration: 5.5 + seed % 7 * .5,
+    motionStyle: {
+      '--cube-motion-delay': `${-(seed % 143 / 20)}s`,
+      '--cube-motion-duration': `${8 + seed % 7 * .5}s`,
+    } as CSSProperties,
   };
 }).filter(cube => {
   const horizontalExtent = cube.luminous ? 91 : halfWidth;
@@ -67,55 +72,37 @@ const facePath = (face: CubeFace, height: number, rounded = false, depth = 8) =>
   return `M0 ${halfHeight - height}L${halfWidth} ${faceSkew - height}L${halfWidth} ${faceSkew}L0 ${halfHeight}Z`;
 };
 
+const faceTransform = (face: CubeFace, height: number, peak: number, rounded: boolean) => {
+  if (rounded || face === `top`) return `translateY(${-height}px)`;
+  const angle = faceAngles[face];
+  // Undo the floor slope before scaling, then restore it to keep the base anchored.
+  return `translateY(${halfHeight}px) skewY(${angle}deg) scaleY(${height / peak}) skewY(${-angle}deg) translateY(${-halfHeight}px)`;
+};
+
 const Face = ({ cube, face, suffix, moving, rounded }: { cube: Cube; face: CubeFace; suffix: string; moving: boolean; rounded: boolean }) => {
   const top = face === `top`;
   const id = `hero-cube-${face}-${suffix}-${cube.index}`;
-  const heights = [5, 5, cube.peak, 5, 5];
-  const values = heights.map(height => facePath(face, height, rounded, cube.depth)).join(`;`);
-  const opacity = top ? `.48;.48;1;.48;.48` : `.18;.18;.95;.18;.18`;
+  const height = top || (moving && rounded) ? 0 : moving ? cube.peak : cube.rest;
+  const motionStyle = {
+    transform: faceTransform(face, cube.rest, cube.peak, rounded),
+    '--cube-rise-from': faceTransform(face, 5, cube.peak, rounded),
+    '--cube-rise-to': faceTransform(face, cube.peak, cube.peak, rounded),
+  } as CSSProperties;
 
   const shape = (
     <path
       id={id}
       strokeWidth={.7}
-      d={facePath(face, top ? 0 : cube.rest, rounded, cube.depth)}
-      fillOpacity={cube.luminous ? .85 : 1}
-      className={`hero-cube-face hero-cube-${face}${cube.luminous ? ` hero-cube-face-luminous` : ``}`}
+      style={moving && !top ? motionStyle : undefined}
+      fillOpacity={cube.luminous && !moving ? .85 : 1}
+      d={facePath(face, height, rounded, cube.depth)}
       fill={`url(#hero-cubes-${cube.luminous ? cube.lightTone : cube.tone}-${face}-${suffix})`}
-    >
-      {moving && !top && (
-        <animate
-          values={values}
-          keyTimes={keyTimes}
-          attributeName={`d`}
-          calcMode={`spline`}
-          keySplines={keySplines}
-          repeatCount={`indefinite`}
-          dur={`${cube.duration}s`}
-          begin={`${-cube.delay}s`}
-          id={`${id}-lift`}
-          className={`hero-cube-lift`}
-        />
-      )}
-      {moving && cube.luminous && (
-        <animate
-          values={opacity}
-          keyTimes={keyTimes}
-          calcMode={`spline`}
-          keySplines={keySplines}
-          repeatCount={`indefinite`}
-          dur={`${cube.duration}s`}
-          begin={`${-cube.delay}s`}
-          attributeName={`fill-opacity`}
-          id={`${id}-illumination`}
-          className={`hero-cube-illumination`}
-        />
-      )}
-    </path>
+      className={`hero-cube-face hero-cube-${face}${cube.luminous ? ` hero-cube-face-luminous` : ``}${moving && !top ? ` hero-cube-lift` : ``}${moving && cube.luminous ? ` hero-cube-illumination` : ``}`}
+    />
   );
   if (!top) return shape;
   return (
-    <g id={`${id}-motion`} className={`hero-cube-top-motion`} transform={`translate(0 ${-cube.rest})`}>
+    <g id={`${id}-motion`} style={motionStyle} className={`hero-cube-top-motion${moving ? ` hero-cube-lift` : ``}`}>
       {cube.luminous && (
         <ellipse
           ry={40}
@@ -127,21 +114,6 @@ const Face = ({ cube, face, suffix, moving, rounded }: { cube: Cube; face: CubeF
         />
       )}
       {shape}
-      {moving && (
-        <animateTransform
-          type={`translate`}
-          keyTimes={keyTimes}
-          calcMode={`spline`}
-          keySplines={keySplines}
-          attributeName={`transform`}
-          repeatCount={`indefinite`}
-          dur={`${cube.duration}s`}
-          begin={`${-cube.delay}s`}
-          id={`${id}-lift`}
-          className={`hero-cube-lift`}
-          values={heights.map(height => `0 ${-height}`).join(`;`)}
-        />
-      )}
     </g>
   );
 };
@@ -154,12 +126,10 @@ const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
-    let visible = true;
+    let visible = typeof IntersectionObserver === `undefined`;
     const updateMotion = () => {
       const paused = reducedMotion || document.hidden || !visible;
       svg.dataset.motion = paused ? `paused` : `running`;
-      if (paused) svg.pauseAnimations?.();
-      else svg.unpauseAnimations?.();
     };
     const observer = typeof IntersectionObserver === `undefined` ? undefined : new IntersectionObserver(entries => {
       visible = entries.some(entry => entry.isIntersecting);
@@ -171,7 +141,7 @@ const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
     return () => {
       observer?.disconnect();
       document.removeEventListener(`visibilitychange`, updateMotion);
-      svg.pauseAnimations?.();
+      svg.dataset.motion = `paused`;
     };
   }, [reducedMotion]);
 
@@ -252,32 +222,19 @@ const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
               cx={cube.x}
               cy={cube.y + 16}
               key={cube.index}
-              fillOpacity={.6}
-              className={`hero-cubes-floor-glow`}
+              style={cube.motionStyle}
+              fillOpacity={reducedMotion ? .6 : 1}
               fill={`url(#hero-cubes-floor-light-${cube.lightTone}-${suffix})`}
               id={`hero-cubes-floor-glow-${suffix}-${cube.index}`}
-            >
-              {!reducedMotion && (
-                <animate
-                  keyTimes={keyTimes}
-                  calcMode={`spline`}
-                  keySplines={keySplines}
-                  repeatCount={`indefinite`}
-                  dur={`${cube.duration}s`}
-                  begin={`${-cube.delay}s`}
-                  attributeName={`fill-opacity`}
-                  values={`.12;.12;.9;.12;.12`}
-                  className={`hero-cubes-floor-glow-pulse`}
-                  id={`hero-cubes-floor-glow-pulse-${suffix}-${cube.index}`}
-                />
-              )}
-            </ellipse>
+              className={`hero-cubes-floor-glow${!reducedMotion ? ` hero-cubes-floor-glow-pulse` : ``}`}
+            />
           ))}
         </g>
         <g id={`hero-cubes-field-${suffix}`} className={`hero-cubes-field`}>
           {tiles.map(cube => (
             <g
               key={cube.index}
+              style={cube.motionStyle}
               id={`hero-cube-${suffix}-${cube.index}`}
               data-light-tone={cube.luminous ? cube.lightTone : undefined}
               transform={`translate(${cube.x} ${cube.y})`}

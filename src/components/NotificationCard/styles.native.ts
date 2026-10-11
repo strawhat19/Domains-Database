@@ -3,6 +3,9 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   pressed: { opacity: .78 },
+  read: { opacity: .72 },
+  titleRow: { gap: 7, flexDirection: `row`, alignItems: `center` },
+  unreadDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: palette.accent },
   copy: { gap: 6, flex: 1, minWidth: 0 },
   card: {
     gap: 12,
@@ -22,6 +25,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
     backgroundColor: palette.subtle,
   },
   title: {
+    flexShrink: 1,
     fontSize: 13,
     lineHeight: 18,
     color: palette.ink,

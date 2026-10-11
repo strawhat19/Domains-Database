@@ -1,0 +1,52 @@
+.account-sidebar { display: flex; min-width: 0; flex-direction: column; gap: 18px; border: 1px solid var(--line); border-radius: 12px; padding: 8px; background: var(--subtle); color: var(--accent); transition: background-color .35s ease, border-color .35s ease, color .35s ease; }
+.account-sidebar-footer { display: flex; min-width: 0; min-height: 43px; flex: none; align-items: center; justify-content: center; gap: 8px; margin-top: auto; padding: 4px 0; }
+.account-sidebar .account-sidebar-profile-link { height: 38px; flex: 1; padding: 4px 8px; }
+.account-sidebar-profile-avatar { position: relative; display: grid; width: 28px; height: 28px; flex: none; overflow: hidden; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); border-radius: 50%; background: var(--accent); color: var(--contrast); font-size: 12px; font-weight: 600; }
+.account-sidebar-profile-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.account-sidebar .account-sidebar-collapse-toggle { width: 38px; height: 38px; flex: none; justify-content: center; padding: 0; cursor: pointer; }
+.account-sidebar-collapse-toggle > svg { transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.account-sidebar.is-collapsed .account-sidebar-collapse-toggle > svg { transform: rotate(180deg); }
+.account-sidebar-links { display: grid; min-width: 0; align-content: start; gap: 26px; }
+.account-sidebar-count-error { margin: 0; color: var(--accent); font-size: 10px; line-height: 1.5; }
+.account-sidebar-preference-error { margin: 0; color: var(--danger); font-size: 10px; line-height: 1.5; }
+.account-sidebar-count-skeleton { min-width: 22px; background: color-mix(in srgb, currentColor 16%, transparent); animation: account-sidebar-count-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes account-sidebar-count-pulse { to { opacity: .4; } }
+.account-sidebar-group { display: grid; min-width: 0; gap: 8px; }
+.account-sidebar-title { grid-column: 1 / -1; margin: 0 0 6px; color: var(--accent); font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; }
+.account-sidebar:not(.is-collapsed) #account-sidebar-admin-title { display: none; }
+.account-sidebar-item { display: grid; min-width: 0; align-self: start; }
+.account-sidebar-heading { display: flex; min-width: 0; }
+.account-sidebar-link { position: relative; display: flex; min-width: 0; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 11px 10px; background: var(--paper); color: var(--accent); font-size: 11px; line-height: 1.5; transition: background-color .2s ease, border-color .2s ease, color .2s ease; }
+.account-sidebar-link-label { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-sidebar-child-link { gap: 6px; padding-inline: 8px; }
+.account-sidebar-heading > .account-sidebar-link { flex: 1; }
+.account-sidebar-link > svg { width: 15px; height: 15px; flex: none; }
+.account-sidebar-link:is(:hover, :focus-visible) { border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: color-mix(in srgb, var(--accent) 9%, var(--paper)); color: var(--accent); }
+.account-sidebar-link[aria-current='page']:not(.account-sidebar-profile-link), .account-sidebar-heading.has-submenu.is-current { border-color: var(--accent); background: var(--accent); color: var(--contrast); }
+.account-sidebar-link[aria-current='page']:not(.account-sidebar-profile-link):is(:hover, :focus-visible), .account-sidebar-heading.has-submenu.is-current:is(:hover, :focus-within) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 88%, var(--ink)); }
+.account-sidebar-heading.has-submenu { border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--accent); transition: background-color .2s ease, border-color .2s ease, color .2s ease; }
+.account-sidebar-heading.has-submenu:is(:hover, :focus-within) { border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: color-mix(in srgb, var(--accent) 9%, var(--paper)); color: var(--accent); }
+.account-sidebar-heading.has-submenu > .account-sidebar-link { border: 0; border-radius: 7px 0 0 7px; padding-right: 6px; background: transparent; color: inherit; }
+.account-sidebar-toggle { display: grid; width: 34px; flex: none; place-items: center; margin: 4px; border: 0; border-radius: 6px; padding: 0; background: transparent; color: inherit; cursor: pointer; transition: background-color .2s ease; }
+.account-sidebar-toggle:hover { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.account-sidebar-heading.is-current .account-sidebar-toggle:hover { background: color-mix(in srgb, var(--contrast) 12%, transparent); }
+.account-sidebar-toggle > svg { transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
+.account-sidebar-toggle[aria-expanded='true'] > svg { transform: rotate(180deg); }
+.account-sidebar-submenu { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .32s cubic-bezier(.22, 1, .36, 1), opacity .24s ease; }
+.account-sidebar-submenu.is-open { grid-template-rows: 1fr; opacity: 1; }
+.account-sidebar-submenu-inner { min-height: 0; overflow: hidden; }
+.account-sidebar-submenu-links { display: grid; gap: 6px; margin: 8px 0 0 10px; border-left: 1px solid var(--line); padding: 4px 4px 4px 10px; }
+.account-sidebar-toggle:focus-visible, .account-sidebar-link:focus-visible, .account-sidebar-collapse-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.account-sidebar-badge { display: inline-grid; height: 17px; min-width: 17px; flex: none; place-items: center; margin-inline-start: auto; border: 1px solid color-mix(in srgb, currentColor 14%, transparent); border-radius: 999px; padding-inline: 4px; background: color-mix(in srgb, currentColor 8%, transparent); color: inherit; font-family: var(--font-mono); font-size: 9px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1; pointer-events: none; }
+.account-sidebar-badge.account-sidebar-count-skeleton { min-width: 22px; background: color-mix(in srgb, currentColor 16%, transparent); }
+:root[data-theme='dark'] .account-sidebar { background: var(--paper); .account-sidebar-link, .account-sidebar-heading.has-submenu { background: var(--input); color: var(--ink); } .account-sidebar-link > svg { color: var(--accent); } .account-sidebar-heading.has-submenu > .account-sidebar-link { background: transparent; color: inherit; } .account-sidebar-link[aria-current='page']:not(.account-sidebar-profile-link), .account-sidebar-heading.has-submenu.is-current { background: var(--accent); color: var(--contrast); } }
+:root[data-theme='dark'] .account-sidebar :is(.account-sidebar-link[aria-current='page']:not(.account-sidebar-profile-link), .account-sidebar-heading.has-submenu.is-current > .account-sidebar-link) > svg { color: var(--contrast); }
+@media (min-width: 651px) {
+  .account-sidebar:not(.is-collapsed) .account-sidebar-submenu-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .account-sidebar-footer { justify-content: flex-end; }
+  .account-sidebar-links { min-height: 0; flex: 1; overflow-y: auto; scrollbar-width: none; padding: 4px; margin: -4px; }
+  .account-sidebar-links::-webkit-scrollbar { display: none; }
+  .account-sidebar.is-collapsed { .account-sidebar-links { gap: 12px; } .account-sidebar-group { gap: 4px; } .account-sidebar-link-label { display: none; } .account-sidebar-title, .account-sidebar-count-error, .account-sidebar-preference-error { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } .account-sidebar-link { min-height: 38px; justify-content: center; padding: 8px 0; } .account-sidebar-heading.has-submenu > .account-sidebar-link { min-height: 36px; border-radius: 7px; padding-right: 0; } .account-sidebar-submenu-links { gap: 4px; margin: 4px 0 0; border-left: 0; padding: 0; } .account-sidebar-footer { justify-content: center; padding-inline: 0; } .account-sidebar-collapse-toggle { width: 100%; } .account-sidebar-badge { position: absolute; top: 1px; right: 1px; height: 14px; min-width: 14px; margin: 0; padding-inline: 3px; font-size: 8px; } }
+}
+@media (max-width: 650px) { .account-sidebar-group { grid-template-columns: repeat(2, minmax(0, 1fr)); } .account-sidebar-collapse-toggle > svg { transform: rotate(90deg); } .account-sidebar.is-collapsed .account-sidebar-collapse-toggle > svg { transform: rotate(-90deg); } .account-sidebar.is-collapsed .account-sidebar-links { display: none; } }
+@media (prefers-reduced-motion: reduce) { .account-sidebar-count-skeleton { animation: none; } .account-sidebar, .account-sidebar-link, .account-sidebar-heading, .account-sidebar-toggle, .account-sidebar-toggle > svg, .account-sidebar-submenu, .account-sidebar-collapse-toggle > svg { transition: none; } }

@@ -12,6 +12,17 @@
   .form-submissions-description { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
   .form-submissions-pagination { gap: 10px; display: flex; flex-wrap: wrap; align-items: center; }
   .form-submissions-page { font-size: 11px; color: var(--muted); }
+  .form-submissions-notice { margin: 0; color: var(--success); font-size: 11px; }
+  .form-submissions-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .form-submissions-search { display: flex; align-items: center; gap: 8px; flex: 1 1 220px; height: 40px; max-width: 320px; min-width: 180px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--muted); }
+  .form-submissions-search:focus-within { border-color: var(--accent); }
+  .form-submissions-search-icon { flex: none; }
+  .form-submissions-search-input { width: 100%; min-width: 0; border: 0; outline: none; background: transparent; color: var(--ink); font: inherit; font-size: 11px; }
+  .form-submissions-filter-label { color: var(--muted); font-size: 10px; }
+  .form-submissions-filter { height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 0 14px; background: var(--paper); color: var(--ink); font: inherit; font-size: 11px; }
+  .form-submissions-filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .form-submission-number-cell { width: 44px; }
+  .form-submission-number { display: inline-grid; width: 24px; height: 24px; place-items: center; border-radius: 7px; background: var(--subtle); color: var(--accent); font-size: 10px; }
   .form-submissions-refresh, .form-submission-expand {
     gap: 6px;
     display: flex;
@@ -41,7 +52,7 @@
   .form-submission-message.expanded { display: block; overflow: visible; }
   .form-submission-status-cell { min-width: 120px; }
   .form-submission-status { gap: 7px; display: flex; align-items: center; }
-  .statusDotWrap { display: flex; }
+  .statusDotWrap { display: flex; width: 16px; height: 16px; flex: none; align-items: center; justify-content: center; border-radius: 50%; background: color-mix(in srgb, currentColor 15%, transparent); }
   .statusDot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
   .status-success { color: var(--success); }
   .status-danger { color: var(--danger); }
