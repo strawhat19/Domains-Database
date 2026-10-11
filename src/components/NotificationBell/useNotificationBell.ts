@@ -20,7 +20,7 @@ export const useNotificationBell = () => {
     close,
     toggle,
     badgeColors: getAccountBadgeColors(user),
-    readLabel: state.readReady ? `${state.unreadCount} unread` : state.notice ? `Read Status Unavailable` : `Loading Read Status`,
+    readLabel: state.error ? `Notifications Unavailable` : state.loading ? `Loading Notifications` : state.readReady ? `${state.unreadCount} unread` : state.notice ? `Read Status Unavailable` : `Loading Read Status`,
     count: state.readReady ? state.unreadCount : 0,
   };
 };

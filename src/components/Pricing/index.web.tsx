@@ -20,7 +20,7 @@ const Pricing = () => {
         </div>
       </div>
       {state.loading ? <div id={`pricing-loading`} className={`pricing-feedback`} role={`status`}>{`Loading Plans…`}</div> : state.error ? <div id={`pricing-error`} className={`pricing-feedback pricing-error`} role={`alert`}>
-        <p id={`pricing-error-description`} className={`pricing-feedback-copy`}>{`Plans Could Not Be Loaded — Please Try Again`}</p>
+        <p id={`pricing-error-description`} className={`pricing-feedback-copy`}>{state.error}</p>
         <button id={`pricing-retry`} className={`landing-button`} type={`button`} onClick={state.refresh}><RefreshCw id={`pricing-retry-icon`} className={`landing-link-icon`} size={15} aria-hidden />{`Try Again`}</button>
       </div> : state.plans.length ? <div id={`landing-pricing-grid`} className={`landing-pricing-grid`}>
         {state.plans.map(plan => <article key={plan.id} id={`landing-plan-${plan.id}`} className={`landing-plan${plan.highlighted ? ` landing-plan-featured` : ``}`}>

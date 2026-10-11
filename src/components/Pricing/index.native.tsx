@@ -30,7 +30,7 @@ const Pricing = () => {
         <Text {...elementProps(`landing-pricing-description`)} style={styles.description}>{pricingDescription}</Text>
       </View>
       {state.loading ? <View {...elementProps(`pricing-loading`)} style={styles.feedback}><Text {...elementProps(`pricing-loading-label`)} style={styles.description} accessibilityRole={`alert`}>{`Loading Plans…`}</Text></View> : state.error ? <View {...elementProps(`pricing-error`)} style={styles.feedback}>
-        <Text {...elementProps(`pricing-error-description`)} style={[styles.description, { color: palette.danger }]} accessibilityRole={`alert`}>{`Plans Could Not Be Loaded — Please Try Again`}</Text>
+        <Text {...elementProps(`pricing-error-description`)} style={[styles.description, { color: palette.danger }]} accessibilityRole={`alert`}>{state.error}</Text>
         <Pressable {...elementProps(`pricing-retry`)} style={styles.button} accessibilityRole={`button`} onPress={state.refresh}><RefreshCw {...elementProps(`pricing-retry-icon`)} color={palette.contrast} size={15} /><Text {...elementProps(`pricing-retry-label`)} style={styles.buttonText}>{`Try Again`}</Text></Pressable>
       </View> : state.plans.length ? <View {...elementProps(`landing-pricing-grid`)} style={styles.grid}>
         {state.plans.map(plan => <View key={plan.id} {...elementProps(`landing-pricing-plan`, plan.id)} style={[styles.plan, { width: cardWidth }]}>
