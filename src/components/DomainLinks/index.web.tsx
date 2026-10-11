@@ -1,4 +1,5 @@
 import './styles.scss';
+import type { ReactNode } from 'react';
 import type { DomainInput } from '../../shared/types';
 import LinkSiteIcon from '../LinkSiteIcon/index.web';
 import SettingsField from '../SettingsField/index.web';
@@ -20,6 +21,8 @@ interface DomainLinksProps {
   id: string;
   errorId?: string;
   disabled?: boolean;
+  children?: ReactNode;
+  topContent?: ReactNode;
   input: DomainLinkValues;
   invalidField?: DomainLinkField | null;
   onChange: <Key extends DomainLinkField>(field: Key, value: DomainLinkValues[Key]) => void;
@@ -44,8 +47,9 @@ const getOpenHref = (value: string) => {
   }
 };
 
-const DomainLinks = ({ id, input, onChange, errorId, invalidField, disabled = false }: DomainLinksProps) => (
+const DomainLinks = ({ id, input, onChange, errorId, children, topContent, invalidField, disabled = false }: DomainLinksProps) => (
   <aside id={id} className={`domain-links`} aria-labelledby={`${id}-title`}>
+    {topContent && <div id={`${id}-top-content`} className={`domain-links-top-content`}>{topContent}</div>}
     <h3 id={`${id}-title`} className={`domain-links-title`}>
       {`Links`}
     </h3>
@@ -142,6 +146,7 @@ const DomainLinks = ({ id, input, onChange, errorId, invalidField, disabled = fa
         );
       })}
     </div>
+    {children}
   </aside>
 );
 

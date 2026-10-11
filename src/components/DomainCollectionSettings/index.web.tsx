@@ -81,98 +81,106 @@ const DomainCollectionSettings = ({ collection, onClose, editDescription = false
         </header>
         <form noValidate id={`domain-collection-settings-form`} className={`domain-dialog-form domain-collection-settings-form`} onSubmit={settings.handleSubmit}>
           <div id={`domain-collection-settings-body`} className={`domain-dialog-body`}>
-            <div id={`domain-collection-settings-fields`} className={`domain-collection-settings-fields`}>
-              <div id={`domain-collection-settings-visibility-field`} className={`domain-editor-field`}>
-                <span id={`domain-collection-settings-visibility-label`} className={`domain-editor-label`}>
-                  {`Visibility`}
-                </span>
-                <SegmentedControl
-                  value={settings.visibility}
-                  id={`domain-collection-settings-visibility`}
-                  labelledBy={`domain-collection-settings-visibility-label`}
-                  describedBy={`domain-collection-settings-visibility-help`}
-                  onChange={value => settings.setVisibility(value === `public` ? `public` : `private`)}
-                  options={[
-                    { value: `private`, label: `Private`, Icon: Lock },
-                    { value: `public`, label: `Public / Published`, Icon: Globe },
-                  ]}
-                />
-                <p id={`domain-collection-settings-visibility-help`} className={`domain-collection-settings-help`}>
-                  {`Private keeps this collection unpublished. Public / Published marks it for public sharing.`}
-                </p>
-              </div>
-              <div id={`domain-collection-settings-status-field-${collection.id}`} className={`domain-editor-field`}>
-                <label
-                  className={`domain-editor-label`}
-                  id={`domain-collection-settings-status-${collection.id}-label`}
-                  htmlFor={`domain-collection-settings-status-${collection.id}`}
-                >
-                  {`Status`}
-                </label>
-                <ProjectSelect
-                  label={`Status`}
-                  placeholder={`Future`}
-                  field={`projectStatus`}
-                  value={settings.projectStatus}
-                  options={DOMAIN_PROJECT_STATUSES}
-                  id={`domain-collection-settings-status-${collection.id}`}
-                  onChange={value => settings.setProjectStatus(normalizeDomainProjectStatus(value))}
-                />
-              </div>
-              <div id={`domain-collection-settings-order-field-${collection.id}`} className={`domain-editor-field`}>
-                <span
-                  className={`domain-editor-label`}
-                  id={`domain-collection-settings-order-label-${collection.id}`}
-                >
-                  {`Sorting`}
-                </span>
-                <SegmentedControl
-                  value={settings.manualOrder ? `manual` : `alphabetical`}
-                  id={`domain-collection-settings-order-toggle-${collection.id}`}
-                  labelledBy={`domain-collection-settings-order-label-${collection.id}`}
-                  describedBy={`domain-collection-settings-order-help-${collection.id}`}
-                  onChange={value => { if ((value === `manual`) !== settings.manualOrder) settings.toggleManualOrder(); }}
-                  options={[
-                    { value: `manual`, label: `Manual`, Icon: GripVertical },
-                    { value: `alphabetical`, label: collection.sortField && collection.sortField !== `name` ? `Sorted` : `Alphabetical`, Icon: ArrowDownAZ },
-                  ]}
-                />
-                <p id={`domain-collection-settings-order-help-${collection.id}`} className={`domain-collection-settings-help`}>
-                  {settings.manualOrder
-                    ? `Manual ordering is selected. Drag rows to arrange domains after saving.`
-                    : `Sorting is selected. Switch to Manual to arrange domains by dragging rows.`}
-                </p>
-              </div>
-              <div id={`domain-collection-settings-description-field`} className={`domain-editor-field`}>
-                <label id={`domain-collection-settings-description-label`} htmlFor={`domain-collection-settings-description-input`} className={`domain-editor-label`}>
-                  {`Description (optional)`}
-                </label>
-                <SettingsField
-                  label={`Description`}
-                  enabled={!editDescription}
-                  value={settings.description}
-                  emptyText={`Add a description`}
-                  id={`domain-collection-settings-description-view`}
-                  invalid={settings.invalidField === `description`}
-                >
-                  <textarea
-                    rows={3}
-                    maxLength={280}
-                    value={settings.description}
-                    data-autofocus={editDescription || undefined}
-                    ref={settings.descriptionInputRef}
-                    id={`domain-collection-settings-description-input`}
-                    placeholder={`A short note about this collection…`}
-                    aria-invalid={settings.invalidField === `description`}
-                    className={`domain-editor-input domain-collection-settings-description-input`}
-                    onChange={event => settings.setDescription(event.target.value)}
-                    aria-describedby={`domain-collection-settings-description-help${settings.error ? ` domain-collection-settings-error` : ``}`}
+            <div id={`domain-collection-settings-content`} className={`domain-collection-settings-content`}>
+              <div id={`domain-collection-settings-fields`} className={`domain-collection-settings-fields`}>
+                <div id={`domain-collection-settings-visibility-field`} className={`domain-editor-field`}>
+                  <span id={`domain-collection-settings-visibility-label`} className={`domain-editor-label`}>
+                    {`Visibility`}
+                  </span>
+                  <SegmentedControl
+                    value={settings.visibility}
+                    id={`domain-collection-settings-visibility`}
+                    labelledBy={`domain-collection-settings-visibility-label`}
+                    describedBy={`domain-collection-settings-visibility-help`}
+                    onChange={value => settings.setVisibility(value === `public` ? `public` : `private`)}
+                    options={[
+                      { value: `private`, label: `Private`, Icon: Lock },
+                      { value: `public`, label: `Public / Published`, Icon: Globe },
+                    ]}
                   />
-                </SettingsField>
-                <p id={`domain-collection-settings-description-help`} className={`domain-collection-settings-help`}>
-                  {`Up to 280 characters, shown next to the collection title.`}
-                </p>
+                  <p id={`domain-collection-settings-visibility-help`} className={`domain-collection-settings-help`}>
+                    {`Private keeps this collection unpublished. Public / Published marks it for public sharing.`}
+                  </p>
+                </div>
+                <div id={`domain-collection-settings-order-field-${collection.id}`} className={`domain-editor-field`}>
+                  <span
+                    className={`domain-editor-label`}
+                    id={`domain-collection-settings-order-label-${collection.id}`}
+                  >
+                    {`Sorting`}
+                  </span>
+                  <SegmentedControl
+                    value={settings.manualOrder ? `manual` : `alphabetical`}
+                    id={`domain-collection-settings-order-toggle-${collection.id}`}
+                    labelledBy={`domain-collection-settings-order-label-${collection.id}`}
+                    describedBy={`domain-collection-settings-order-help-${collection.id}`}
+                    onChange={value => { if ((value === `manual`) !== settings.manualOrder) settings.toggleManualOrder(); }}
+                    options={[
+                      { value: `manual`, label: `Manual`, Icon: GripVertical },
+                      { value: `alphabetical`, label: collection.sortField && collection.sortField !== `name` ? `Sorted` : `Alphabetical`, Icon: ArrowDownAZ },
+                    ]}
+                  />
+                  <p id={`domain-collection-settings-order-help-${collection.id}`} className={`domain-collection-settings-help`}>
+                    {settings.manualOrder
+                      ? `Manual ordering is selected. Drag rows to arrange domains after saving.`
+                      : `Sorting is selected. Switch to Manual to arrange domains by dragging rows.`}
+                  </p>
+                </div>
+                <div id={`domain-collection-settings-description-field`} className={`domain-editor-field`}>
+                  <label id={`domain-collection-settings-description-label`} htmlFor={`domain-collection-settings-description-input`} className={`domain-editor-label`}>
+                    {`Description (optional)`}
+                  </label>
+                  <SettingsField
+                    label={`Description`}
+                    enabled={!editDescription}
+                    value={settings.description}
+                    emptyText={`Add a description`}
+                    id={`domain-collection-settings-description-view`}
+                    invalid={settings.invalidField === `description`}
+                  >
+                    <textarea
+                      rows={3}
+                      maxLength={280}
+                      value={settings.description}
+                      data-autofocus={editDescription || undefined}
+                      ref={settings.descriptionInputRef}
+                      id={`domain-collection-settings-description-input`}
+                      placeholder={`A short note about this collection…`}
+                      aria-invalid={settings.invalidField === `description`}
+                      className={`domain-editor-input domain-collection-settings-description-input`}
+                      onChange={event => settings.setDescription(event.target.value)}
+                      aria-describedby={`domain-collection-settings-description-help${settings.error ? ` domain-collection-settings-error` : ``}`}
+                    />
+                  </SettingsField>
+                  <p id={`domain-collection-settings-description-help`} className={`domain-collection-settings-help`}>
+                    {`Up to 280 characters, shown next to the collection title.`}
+                  </p>
+                </div>
               </div>
+              <aside
+                id={`domain-collection-settings-sidebar-${collection.id}`}
+                className={`domain-collection-settings-sidebar`}
+                aria-labelledby={`domain-collection-settings-status-${collection.id}-label`}
+              >
+                <div id={`domain-collection-settings-status-field-${collection.id}`} className={`domain-editor-field`}>
+                  <label
+                    className={`domain-editor-label`}
+                    id={`domain-collection-settings-status-${collection.id}-label`}
+                    htmlFor={`domain-collection-settings-status-${collection.id}`}
+                  >
+                    {`Status`}
+                  </label>
+                  <ProjectSelect
+                    label={`Status`}
+                    placeholder={`Future`}
+                    field={`projectStatus`}
+                    value={settings.projectStatus}
+                    options={DOMAIN_PROJECT_STATUSES}
+                    id={`domain-collection-settings-status-${collection.id}`}
+                    onChange={value => settings.setProjectStatus(normalizeDomainProjectStatus(value))}
+                  />
+                </div>
+              </aside>
             </div>
             {settings.error && (
               <p role={`alert`} id={`domain-collection-settings-error`} className={`domain-dialog-error`}>

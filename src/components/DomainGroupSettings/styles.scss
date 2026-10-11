@@ -21,6 +21,11 @@
   grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
 }
 .domain-group-settings-fields { gap: 18px; display: grid; }
+#domain-group-settings-collection-field .destination-choice-label { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+.domain-group-settings-tags-field { margin-top: 22px; }
+.domain-group-settings-tags-field .tag-picker-options { position: static; }
+.domain-group-settings .domain-project-select-trigger { min-height: 34px; padding-block: 6px; }
+.domain-group-settings .domain-project-select-chevron { color: var(--accent); }
 .domain-group-settings-help { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .domain-group-settings-icon-preview { border: 0; background: transparent; }
 .domain-group-settings-description-input { resize: vertical; min-height: 92px; }
@@ -51,6 +56,10 @@
 
 @media (max-width: 800px) {
   .domain-group-settings-content { gap: 20px; grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (pointer: coarse) {
+  .domain-group-settings .domain-project-select-trigger { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

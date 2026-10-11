@@ -46,7 +46,7 @@ const DomainProjectSelect = ({ id, field, label, value, onChange, disabled = fal
             </Text>
           )}
         </View>
-        <ChevronDown size={15} color={palette.muted} {...elementProps(`domain-project-select-chevron`, id)} />
+        <ChevronDown size={15} color={palette.accent} {...elementProps(`domain-project-select-chevron`, id)} />
       </Pressable>
       {select.open && (
         <View

@@ -5,10 +5,10 @@ import DomainEditor from '../DomainEditor';
 import TableSettings from '../TableSettings/index.web';
 import StackPillShape from '../StackPillShape/index.web';
 import RegistrarSetup from '../RegistrarSetup/index.web';
+import PortfolioFilters from '../PortfolioFilters/index.web';
 import { fitPortfolioColumns } from './columnLayout.web';
 import { useDomainSelection } from './useDomainSelection';
 import { useStickyPortfolio } from './useStickyPortfolio';
-import { useRegistrarFilter } from './useRegistrarFilter';
 import { formatCurrency } from '../../shared/domainUtils';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { usePortfolioToolbar } from './usePortfolioToolbar';
@@ -20,7 +20,7 @@ import PortfolioCopyOptions from '../PortfolioCopyOptions/index.web';
 import PortfolioSyncOptions from '../PortfolioSyncOptions/index.web';
 import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
-import { REGISTRARS, useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
+import { useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { usePortfolioSearch } from '../../shared/portfolioPreferences/usePortfolioSearch';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { buildPortfolioCopyText, excludeHiddenPortfolioSections, type PortfolioCopyFormat } from './copyFormats';
@@ -30,7 +30,6 @@ import { X, Eye, Copy, Plus, Check, Gauge, Search, Link2, Filter, EyeOff, Settin
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
   const toolbar = usePortfolioToolbar();
-  const registrarFilter = useRegistrarFilter();
   const portfolioRef = useRef<HTMLElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -129,13 +128,13 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     void portfolio.refreshWebsiteInsights(records);
   };
   const hasFilters = summaryFiltering || (portfolio.domains.length > 0 && search.searching);
-  const registrarOptions = [...new Set([...REGISTRARS, ...portfolio.summary.registrarCounts.map(item => item.registrar)])];
   const registrarTotals = useMemo(() => [
     ...portfolio.summary.registrarCounts,
     ...portfolio.connectedSyncRegistrars.filter(({ label }) => !portfolio.summary.registrarCounts.some(({ registrar }) => registrar === label))
       .map(({ label }) => ({ count: 0, registrar: label })),
   ], [portfolio.summary.registrarCounts, portfolio.connectedSyncRegistrars]);
-  const filterDescription = `${portfolio.registrarFilters.join(`, `) || `All Registrars`}${portfolio.extensionFilters.length ? `; Extensions: ${portfolio.extensionFilters.join(`, `)}` : ``}${portfolio.attentionOnly ? `; Needs Attention` : ``}`;
+  const activeFilterCount = portfolio.activeFilterCount + Number(Boolean(portfolio.query.trim()));
+  const filterDescription = `${portfolio.registrarFilters.join(`, `) || `All Registrars`}${portfolio.extensionFilters.length ? `; Extensions: ${portfolio.extensionFilters.join(`, `)}` : ``}${portfolio.attentionOnly ? `; Needs Attention` : ``}${portfolio.query.trim() ? `; Search: ${portfolio.query.trim()}` : ``}`;
   const selectionFor = (ids: string[]) => {
     const count = ids.filter(id => selection.selectedIds.has(id)).length;
     return {
@@ -169,6 +168,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       ref={portfolioRef}
       id={`domain-portfolio`}
       aria-busy={portfolio.loading}
+      data-compact={toolbar.showCompactActions}
       aria-labelledby={`portfolio-title`}
       className={`domain-portfolio${compact ? `` : ` domain-portfolio-full`}`}
     >
@@ -185,44 +185,44 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           <div id={`portfolio-heading`} className={`portfolio-heading`}>
             <button
               type={`button`}
-              id={`portfolio-eyebrow`}
+              id={`portfolio-heading-eyebrow`}
               disabled={portfolio.loading}
-              className={`portfolio-eyebrow`}
-              title={`Clear Domain Summary Filters`}
-              onClick={portfolio.clearSummaryFilters}
-              aria-pressed={portfolio.activeFilterCount === 0}
+              className={`portfolio-heading-count`}
+              title={`Clear All Domain Filters`}
+              onClick={() => { portfolio.clearSummaryFilters(); portfolio.setQuery(``); }}
+              aria-pressed={activeFilterCount === 0}
               aria-label={`Show All ${portfolio.summary.count} Domains`}
             >
-              <span id={`portfolio-domain-count`} className={`portfolio-summary-value`}>
-                {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-domain-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} /> : portfolio.summary.count}
+              <span id={`portfolio-heading-domain-count`} className={`portfolio-summary-value`}>
+                {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-heading-domain-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} /> : portfolio.summary.count}
               </span>
             </button>
             <h2 id={`portfolio-title`} className={`portfolio-title`}>
               {`Domains`}
             </h2>
-            <div id={`portfolio-summary-stack`} className={`portfolio-summary-stack`}>
-              <div id={`portfolio-extension-summary`} className={`portfolio-summary portfolio-extension-summary`}>
+            <div id={`portfolio-heading-summary-stack`} className={`portfolio-summary-stack`}>
+              <div id={`portfolio-heading-extension-summary`} className={`portfolio-summary portfolio-extension-summary portfolio-heading-filters`}>
                 {!portfolio.loading && portfolio.summary.extensionCounts.map(({ extension, count }) => {
                   const extensionId = encodeURIComponent(extension);
                   return (
-                    <span key={extension} id={`portfolio-extension-total-${extensionId}`} className={`portfolio-summary-item portfolio-extension-total`}>
+                    <span key={extension} id={`portfolio-heading-extension-total-${extensionId}`} className={`portfolio-summary-item portfolio-extension-total`}>
                       <button
                         type={`button`}
                         disabled={portfolio.loading}
-                        id={`portfolio-extension-filter-${extensionId}`}
+                        id={`portfolio-heading-extension-filter-${extensionId}`}
                         className={`portfolio-summary-item portfolio-summary-filter`}
                         aria-pressed={portfolio.extensionFilters.includes(extension)}
                         onClick={() => portfolio.toggleExtensionFilter(extension)}
                       >
-                        <StackPillShape id={`portfolio-extension-shape-${extensionId}`} />
-                        <span id={`portfolio-extension-label-${extensionId}`} className={`portfolio-extension-label`}>{`${extension}:`}</span>
-                        <span id={`portfolio-extension-count-${extensionId}`} className={`portfolio-summary-value`}>{count}</span>
+                        <StackPillShape id={`portfolio-heading-extension-shape-${extensionId}`} />
+                        <span id={`portfolio-heading-extension-label-${extensionId}`} className={`portfolio-extension-label`}>{`${extension}:`}</span>
+                        <span id={`portfolio-heading-extension-count-${extensionId}`} className={`portfolio-summary-value`}>{count}</span>
                       </button>
                     </span>
                   );
                 })}
               </div>
-              <div id={`portfolio-summary`} className={`portfolio-summary`}>
+              <div id={`portfolio-heading-summary`} className={`portfolio-summary`}>
                 {!portfolio.loading && registrarTotals.map(({ count, registrar }) => {
                   const registrarId = registrar.toLowerCase().replace(/\s+/g, `-`);
                   const connection = portfolio.connectedSyncRegistrars.find(({ label }) => label === registrar);
@@ -233,23 +233,23 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       role={`group`}
                       key={registrar}
                       aria-label={`${registrar} Domains`}
-                      id={`portfolio-registrar-total-${registrarId}`}
+                      id={`portfolio-heading-registrar-total-${registrarId}`}
                       data-active={portfolio.registrarFilters.includes(registrar)}
-                      className={`portfolio-summary-item portfolio-registrar-total portfolio-registrar-pill${connection ? ` portfolio-registrar-pill-connected` : ``}`}
+                      className={`portfolio-summary-item portfolio-registrar-total portfolio-heading-filter portfolio-registrar-pill${connection ? ` portfolio-registrar-pill-connected` : ``}`}
                     >
-                      <StackPillShape id={`portfolio-registrar-shape-${registrarId}`} />
+                      <StackPillShape id={`portfolio-heading-registrar-shape-${registrarId}`} />
                       <button
                         type={`button`}
                         disabled={portfolio.loading}
-                        id={`portfolio-registrar-filter-${registrarId}`}
+                        id={`portfolio-heading-registrar-filter-${registrarId}`}
                         className={`portfolio-summary-item portfolio-summary-filter portfolio-registrar-filter-toggle`}
                         aria-pressed={portfolio.registrarFilters.includes(registrar)}
                         onClick={() => portfolio.toggleRegistrarFilter(registrar)}
                       >
-                        <span id={`portfolio-registrar-label-${registrarId}`} className={`portfolio-registrar-label`}>
+                        <span id={`portfolio-heading-registrar-label-${registrarId}`} className={`portfolio-registrar-label`}>
                           {`${registrar}:`}
                         </span>
-                        <span id={`portfolio-registrar-count-${registrarId}`} className={`portfolio-summary-value`}>
+                        <span id={`portfolio-heading-registrar-count-${registrarId}`} className={`portfolio-summary-value`}>
                           {count}
                         </span>
                       </button>
@@ -258,7 +258,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                           type={`button`}
                           aria-label={syncLabel}
                           aria-busy={syncingRegistrar || undefined}
-                          id={`portfolio-registrar-sync-${registrarId}`}
+                          id={`portfolio-heading-registrar-sync-${registrarId}`}
                           className={`portfolio-registrar-sync`}
                           disabled={manualSyncBlocked || !portfolio.canSyncManually}
                           title={portfolio.manualSyncWaitSeconds ? portfolio.manualSyncMessage : syncLabel}
@@ -268,7 +268,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                           <RefreshCw
                             size={13}
                             aria-hidden={`true`}
-                            id={`portfolio-registrar-sync-icon-${registrarId}`}
+                            id={`portfolio-heading-registrar-sync-icon-${registrarId}`}
                             className={`portfolio-registrar-sync-icon${syncingRegistrar ? ` portfolio-registrar-sync-icon-syncing` : ``}`}
                           />
                         </button>
@@ -279,32 +279,32 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 <button
                   type={`button`}
                   disabled={portfolio.loading}
-                  id={`portfolio-attention`}
+                  id={`portfolio-heading-attention`}
                   aria-pressed={portfolio.attentionOnly}
                   onClick={portfolio.toggleAttentionFilter}
-                  className={`portfolio-summary-item portfolio-summary-filter${portfolio.summary.attention ? ` portfolio-summary-attention` : ``}`}
+                  className={`portfolio-summary-item portfolio-summary-filter portfolio-heading-filter${portfolio.summary.attention ? ` portfolio-summary-attention` : ``}`}
                 >
-                  <StackPillShape id={`portfolio-attention-shape`} />
-                  <span id={`portfolio-attention-dot`} className={`portfolio-attention-dot`} aria-hidden={`true`} />
-                  <span id={`portfolio-attention-label`} className={`portfolio-attention-label`}>
-                    {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-attention-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} />{` need attention`}</> : `${portfolio.summary.attention} need attention`}
+                  <StackPillShape id={`portfolio-heading-attention-shape`} />
+                  <span id={`portfolio-heading-attention-dot`} className={`portfolio-attention-dot`} aria-hidden={`true`} />
+                  <span id={`portfolio-heading-attention-label`} className={`portfolio-attention-label`}>
+                    {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-heading-attention-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} />{` need attention`}</> : `${portfolio.summary.attention} need attention`}
                   </span>
                 </button>
                 {showAnnualSpend && (
                   <>
-                    <span id={`portfolio-summary-separator-two`} className={`portfolio-summary-separator`} aria-hidden={`true`}>
+                    <span id={`portfolio-heading-summary-separator-two`} className={`portfolio-summary-separator portfolio-heading-filter`} aria-hidden={`true`}>
                       {`·`}
                     </span>
-                    <span id={`portfolio-annual-spend`} className={`portfolio-summary-item`}>
-                      {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-annual-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / year`}</> : `${formatCurrency(portfolio.summary.annualCost)} / year`}
+                    <span id={`portfolio-heading-annual-spend`} className={`portfolio-summary-item`}>
+                      {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-heading-annual-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / year`}</> : `${formatCurrency(portfolio.summary.annualCost)} / year`}
                     </span>
                     {showMonthlySpend && (
                       <>
-                        <span id={`portfolio-summary-separator-monthly`} className={`portfolio-summary-separator`} aria-hidden={`true`}>
+                        <span id={`portfolio-heading-summary-separator-monthly`} className={`portfolio-summary-separator`} aria-hidden={`true`}>
                           {`·`}
                         </span>
-                        <span id={`portfolio-monthly-spend`} className={`portfolio-summary-item`}>
-                          {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-monthly-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / month`}</> : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
+                        <span id={`portfolio-heading-monthly-spend`} className={`portfolio-summary-item`}>
+                          {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-heading-monthly-spend-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-spend`} />{` / month`}</> : `${formatCurrency(portfolio.summary.annualCost / 12)} / month`}
                         </span>
                       </>
                     )}
@@ -452,33 +452,50 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               searchInputRef.current?.focus({ preventScroll: true });
             }}
           >
-            <div id={`portfolio-search-wrap`} className={`portfolio-search-wrap`}>
-              <label id={`portfolio-search-label`} className={`portfolio-sr-only`} htmlFor={`portfolio-search`}>
-                {`Search Domain Names, Titles, Or Descriptions`}
-              </label>
-              <Search size={16} aria-hidden={`true`} id={`portfolio-search-icon`} className={`portfolio-search-icon`} />
-              <input
-                type={`search`}
-                id={`portfolio-search`}
-                ref={searchInputRef}
-                autoComplete={`off`}
-                value={portfolio.query}
-                className={`portfolio-search`}
-                placeholder={`Search`}
-                onChange={event => portfolio.setQuery(event.target.value)}
-              />
-              {Boolean(portfolio.query) && (
-                <button
-                  type={`button`}
-                  title={`Clear Search`}
-                  aria-label={`Clear Search`}
-                  id={`portfolio-search-clear`}
-                  className={`portfolio-button portfolio-button-quiet portfolio-search-clear`}
-                  onClick={() => { portfolio.setQuery(``); searchInputRef.current?.focus({ preventScroll: true }); }}
-                >
-                  <X size={15} aria-hidden={`true`} id={`portfolio-search-clear-icon`} className={`portfolio-button-icon`} />
-                </button>
-              )}
+            <div id={`portfolio-search-tools`} className={`portfolio-search-tools`}>
+              <button
+                type={`button`}
+                id={`portfolio-eyebrow`}
+                disabled={portfolio.loading}
+                className={`portfolio-search-count`}
+                title={`Clear All Domain Filters`}
+                aria-pressed={activeFilterCount === 0}
+                aria-label={`Show All ${portfolio.summary.count} Domains`}
+                onClick={() => { portfolio.clearSummaryFilters(); portfolio.setQuery(``); }}
+              >
+                <span id={`portfolio-domain-count`} className={`portfolio-summary-value`}>
+                  {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-domain-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} /> : portfolio.summary.count}
+                </span>
+                <span id={`portfolio-search-count-label`} className={`portfolio-search-count-label`}>{`Domains`}</span>
+              </button>
+              <div id={`portfolio-search-wrap`} className={`portfolio-search-wrap`}>
+                <label id={`portfolio-search-label`} className={`portfolio-sr-only`} htmlFor={`portfolio-search`}>
+                  {`Search Domain Names, Titles, Or Descriptions`}
+                </label>
+                <Search size={16} aria-hidden={`true`} id={`portfolio-search-icon`} className={`portfolio-search-icon`} />
+                <input
+                  type={`search`}
+                  id={`portfolio-search`}
+                  ref={searchInputRef}
+                  autoComplete={`off`}
+                  value={portfolio.query}
+                  className={`portfolio-search`}
+                  placeholder={`Search`}
+                  onChange={event => portfolio.setQuery(event.target.value)}
+                />
+                {Boolean(portfolio.query) && (
+                  <button
+                    type={`button`}
+                    title={`Clear Search`}
+                    aria-label={`Clear Search`}
+                    id={`portfolio-search-clear`}
+                    className={`portfolio-button portfolio-button-quiet portfolio-search-clear`}
+                    onClick={() => { portfolio.setQuery(``); searchInputRef.current?.focus({ preventScroll: true }); }}
+                  >
+                    <X size={15} aria-hidden={`true`} id={`portfolio-search-clear-icon`} className={`portfolio-button-icon`} />
+                  </button>
+                )}
+              </div>
             </div>
             <div id={`portfolio-toolbar-actions`} className={`portfolio-toolbar-actions`}>
               <div
@@ -490,6 +507,24 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 className={`portfolio-toolbar-domain-actions`}
                 data-has-sync={Boolean(user && portfolio.canSyncManually)}
               >
+                <button
+                  type={`button`}
+                  title={`Add Domain`}
+                  aria-label={`Add Domain`}
+                  onClick={portfolio.openSetup}
+                  id={`portfolio-toolbar-add-domain`}
+                  data-focus-fallback={`portfolio-add-domain`}
+                  tabIndex={toolbar.showCompactActions ? 0 : -1}
+                  disabled={!toolbar.showCompactActions || portfolio.loading}
+                  className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button`}
+                >
+                  <Plus
+                    size={16}
+                    aria-hidden={`true`}
+                    id={`portfolio-toolbar-add-domain-icon`}
+                    className={`portfolio-button-icon`}
+                  />
+                </button>
                 {user && portfolio.canSyncManually && (
                   <button
                     type={`button`}
@@ -520,24 +555,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     )}
                   </button>
                 )}
-                <button
-                  type={`button`}
-                  title={`Add Domain`}
-                  aria-label={`Add Domain`}
-                  onClick={portfolio.openSetup}
-                  id={`portfolio-toolbar-add-domain`}
-                  data-focus-fallback={`portfolio-add-domain`}
-                  tabIndex={toolbar.showCompactActions ? 0 : -1}
-                  disabled={!toolbar.showCompactActions || portfolio.loading}
-                  className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button`}
-                >
-                  <Plus
-                    size={16}
-                    aria-hidden={`true`}
-                    id={`portfolio-toolbar-add-domain-icon`}
-                    className={`portfolio-button-icon`}
-                  />
-                </button>
               </div>
               <button
                 type={`button`}
@@ -573,69 +590,23 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   <Plus size={9} id={`portfolio-add-rows-plus-icon`} className={`portfolio-add-rows-plus-icon`} />
                 </span>
               </button>
-              <div
-                ref={registrarFilter.rootRef}
-                id={`portfolio-registrar-filter-wrap`}
-                className={`portfolio-registrar-filter-wrap`}
+              <button
+                type={`button`}
+                aria-haspopup={`dialog`}
+                disabled={portfolio.loading}
+                id={`portfolio-filters-button`}
+                aria-expanded={toolbar.filtersOpen}
+                aria-controls={`portfolio-filters-dialog`}
+                title={`Advanced Filters: ${filterDescription}`}
+                onClick={toolbar.openFilters}
+                aria-label={`Advanced Filters, ${activeFilterCount} Active Filter(s), ${filterDescription}`}
+                className={`portfolio-button portfolio-button-secondary portfolio-filters-button${toolbar.filtersOpen || activeFilterCount ? ` portfolio-filters-button-active` : ``}`}
               >
-                <button
-                  type={`button`}
-                  ref={registrarFilter.buttonRef}
-                  aria-haspopup={`dialog`}
-                  id={`portfolio-registrar-filter-button`}
-                  aria-expanded={registrarFilter.open}
-                  aria-controls={`portfolio-registrar-filter-panel`}
-                  disabled={portfolio.loading}
-                  title={`Filter By Registrar: ${filterDescription}`}
-                  onClick={() => registrarFilter.setOpen(current => !current)}
-                  aria-label={`Filter By Registrar, ${portfolio.activeFilterCount} Active Filter(s), ${filterDescription}`}
-                  className={`portfolio-button portfolio-button-secondary portfolio-registrar-filter-button${registrarFilter.open || portfolio.activeFilterCount ? ` portfolio-registrar-filter-button-active` : ``}`}
-                >
-                  <Filter size={16} aria-hidden={`true`} id={`portfolio-registrar-filter-icon`} className={`portfolio-button-icon`} />
-                  <span aria-hidden={`true`} id={`portfolio-registrar-filter-badge`} className={`portfolio-registrar-filter-badge`}>
-                    {portfolio.activeFilterCount}
-                  </span>
-                </button>
-                {registrarFilter.open && (
-                  <div
-                    role={`dialog`}
-                    id={`portfolio-registrar-filter-panel`}
-                    className={`portfolio-registrar-filter-panel`}
-                    aria-labelledby={`portfolio-registrar-filter-label`}
-                  >
-                    <label id={`portfolio-registrar-filter-label`} className={`portfolio-registrar-filter-label`} htmlFor={`portfolio-registrar-filter`}>
-                      {`Filter By Registrar`}
-                    </label>
-                    <select
-                      ref={registrarFilter.selectRef}
-                      disabled={portfolio.loading}
-                      id={`portfolio-registrar-filter`}
-                      className={`portfolio-registrar-filter`}
-                      value={portfolio.registrarFilter}
-                      onChange={event => { portfolio.setRegistrarFilter(event.target.value); registrarFilter.close(); }}
-                    >
-                      <option id={`portfolio-registrar-option-all`} className={`portfolio-registrar-option`} value={`All Registrars`}>
-                        {`All Registrars`}
-                      </option>
-                      {portfolio.registrarFilters.length > 1 && (
-                        <option disabled id={`portfolio-registrar-option-multiple`} className={`portfolio-registrar-option`} value={`Multiple Registrars`}>
-                          {`Multiple Registrars`}
-                        </option>
-                      )}
-                      {registrarOptions.map(registrar => (
-                        <option
-                          key={registrar}
-                          value={registrar}
-                          className={`portfolio-registrar-option`}
-                          id={`portfolio-registrar-option-${registrar.toLowerCase().replaceAll(` `, `-`)}`}
-                        >
-                          {registrar}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
+                <Filter size={16} aria-hidden={`true`} id={`portfolio-filters-icon`} className={`portfolio-button-icon`} />
+                <span aria-hidden={`true`} id={`portfolio-filters-badge`} className={`portfolio-filters-badge`}>
+                  {activeFilterCount}
+                </span>
+              </button>
               <button
                 type={`button`}
                 title={`Table Settings`}
@@ -734,6 +705,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           onClose={() => toolbar.setSettingsOpen(false)}
           onToggleManualOrder={toggleManualOrder}
         />
+      )}
+      {toolbar.filtersOpen && (
+        <PortfolioFilters portfolio={portfolio} onClose={toolbar.closeFilters} />
       )}
       {toolbar.copyOpen && (
         <PortfolioCopyOptions

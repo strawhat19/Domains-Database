@@ -220,39 +220,6 @@ const DomainGroupSettings = ({ group, onClose, convertToCollection = false }: Do
                     </div>
                   </div>
                 </div>
-                <div id={`domain-group-settings-tags-field-${group.id}`} className={`domain-editor-field`}>
-                  <label
-                    className={`domain-editor-label`}
-                    id={`domain-group-settings-tags-${group.id}-label`}
-                    htmlFor={`domain-group-settings-tags-${group.id}`}
-                  >
-                    {`Tags`}
-                  </label>
-                  <TagPicker
-                    label={`Tags`}
-                    value={settings.details.tags}
-                    disabled={settings.missingGroup}
-                    id={`domain-group-settings-tags-${group.id}`}
-                    onChange={tags => settings.setDetail(`tags`, tags)}
-                  />
-                  <p id={`domain-group-settings-tags-help-${group.id}`} className={`domain-group-settings-help`}>
-                    {`Choose multiple tags. Select a tag again to remove it.`}
-                  </p>
-                </div>
-                <div id={`domain-group-settings-status-field-${group.id}`} className={`domain-editor-field`}>
-                  <label id={`domain-group-settings-status-${group.id}-label`} htmlFor={`domain-group-settings-status-${group.id}`} className={`domain-editor-label`}>
-                    {`Status`}
-                  </label>
-                  <ProjectSelect
-                    label={`Status`}
-                    placeholder={`Future`}
-                    field={`projectStatus`}
-                    options={DOMAIN_PROJECT_STATUSES}
-                    value={settings.details.projectStatus}
-                    id={`domain-group-settings-status-${group.id}`}
-                    onChange={value => settings.setDetail(`projectStatus`, normalizeDomainProjectStatus(value))}
-                  />
-                </div>
                 {DOMAIN_PRICE_FIELDS.map(({ field, label }) => (
                   <div key={field} id={`domain-group-settings-${field}-field-${group.id}`} className={`domain-editor-field`}>
                     <label
@@ -280,9 +247,11 @@ const DomainGroupSettings = ({ group, onClose, convertToCollection = false }: Do
                 ))}
                 <div id={`domain-group-settings-collection-field`} className={`domain-editor-field`}>
                   <span id={`domain-group-settings-collection-label`} className={`domain-editor-label`}>
-                    {`Save to collection`}
+                    {`Collection`}
                   </span>
                   <DestinationChoices
+                    mosaic
+                    initialRows={2}
                     value={settings.collectionId}
                     disabled={settings.missingGroup}
                     onChange={settings.setCollectionId}
@@ -394,7 +363,40 @@ const DomainGroupSettings = ({ group, onClose, convertToCollection = false }: Do
                 errorId={`domain-group-settings-error`}
                 invalidField={settings.invalidLinkField}
                 id={`domain-group-settings-links-${group.id}`}
-              />
+                topContent={
+                  <div id={`domain-group-settings-status-field-${group.id}`} className={`domain-editor-field`}>
+                    <label id={`domain-group-settings-status-${group.id}-label`} htmlFor={`domain-group-settings-status-${group.id}`} className={`domain-editor-label`}>
+                      {`Status`}
+                    </label>
+                    <ProjectSelect
+                      label={`Status`}
+                      placeholder={`Future`}
+                      field={`projectStatus`}
+                      options={DOMAIN_PROJECT_STATUSES}
+                      value={settings.details.projectStatus}
+                      id={`domain-group-settings-status-${group.id}`}
+                      onChange={value => settings.setDetail(`projectStatus`, normalizeDomainProjectStatus(value))}
+                    />
+                  </div>
+                }
+              >
+                <div id={`domain-group-settings-tags-field-${group.id}`} className={`domain-editor-field domain-group-settings-tags-field`}>
+                  <label
+                    className={`domain-editor-label`}
+                    id={`domain-group-settings-tags-${group.id}-label`}
+                    htmlFor={`domain-group-settings-tags-${group.id}`}
+                  >
+                    {`Tags`}
+                  </label>
+                  <TagPicker
+                    label={`Tags`}
+                    value={settings.details.tags}
+                    disabled={settings.missingGroup}
+                    id={`domain-group-settings-tags-${group.id}`}
+                    onChange={tags => settings.setDetail(`tags`, tags)}
+                  />
+                </div>
+              </DomainLinks>
             </div>
           </div>
           <footer id={`domain-group-settings-footer`} className={`domain-dialog-footer domain-group-settings-footer`}>

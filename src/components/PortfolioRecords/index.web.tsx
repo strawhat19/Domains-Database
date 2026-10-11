@@ -977,7 +977,7 @@ const PortfolioRecords = ({
         hidden={!stickyHeaderReady}
         id={`${idPrefix}-sticky-head`}
         className={`portfolio-sticky-head`}
-        style={{ height: hideColumnNames ? 0 : columnHeaderHeight || undefined, top: `calc(var(--site-header-offset, 0px) + var(--portfolio-header-gap, 16px) + var(--portfolio-heading-height, 0px) + var(--portfolio-sticky-gap, 12px) + ${sticky.header.toolbarHeight}px)` }}
+        style={{ height: hideColumnNames ? 0 : columnHeaderHeight || undefined, top: `calc(var(--site-header-offset, 0px) + var(--portfolio-sticky-gap, 0px) + ${sticky.header.toolbarHeight}px)` }}
       >
         <div hidden={hideColumnNames} id={`${idPrefix}-sticky-head-clip`} className={`portfolio-sticky-head-clip`}>
           <table

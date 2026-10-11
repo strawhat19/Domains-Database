@@ -7,6 +7,7 @@ export const usePortfolioActionsVisibility = () => {
   useEffect(() => {
     const actions = primaryActionsRef.current;
     if (!actions) return;
+    const heading = actions.closest<HTMLElement>(`.portfolio-heading-row`) ?? actions;
     const header = document.getElementById(`site-header`);
     let frame: number | null = null;
     const measure = () => {
@@ -19,12 +20,8 @@ export const usePortfolioActionsVisibility = () => {
       const headerBottom = header && (headerPosition === `sticky` || headerPosition === `fixed`)
         ? Math.max(0, header.getBoundingClientRect().bottom)
         : 0;
-      const viewportWidth = document.documentElement.clientWidth;
-      const bounds = actions.getBoundingClientRect();
-      const compact = bounds.width > 0 && bounds.height > 0 && (
-        bounds.bottom <= headerBottom || bounds.top >= window.innerHeight
-        || bounds.right <= 0 || bounds.left >= viewportWidth
-      );
+      const bounds = heading.getBoundingClientRect();
+      const compact = bounds.width > 0 && bounds.height > 0 && bounds.bottom <= headerBottom;
       if (!compact) {
         const focusedId = document.activeElement?.id;
         const fullButtonId = focusedId === `portfolio-toolbar-sync-domains` ? `portfolio-sync-domains`
@@ -42,8 +39,7 @@ export const usePortfolioActionsVisibility = () => {
     };
     const observer = typeof ResizeObserver === `undefined` ? null : new ResizeObserver(schedule);
     observer?.observe(actions);
-    const heading = actions.closest(`.portfolio-heading-row`);
-    if (heading) observer?.observe(heading);
+    observer?.observe(heading);
     if (header) observer?.observe(header);
     const main = document.getElementById(`main-content`);
     if (main) observer?.observe(main);

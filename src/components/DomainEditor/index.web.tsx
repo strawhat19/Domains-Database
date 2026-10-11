@@ -50,6 +50,23 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
   const hasCustomIcon = Boolean(getCustomSiteIconUrl(input).trim());
   const deleteRestriction = domain ? getDomainDeletionRestriction(domain) : ``;
   const isSynced = Boolean(domain && getDomainSource(domain) === `registrar`);
+  const statusField = (
+    <div id={`domain-status-field`} className={`domain-editor-field`}>
+      <label id={`domain-status-input-label`} className={`domain-editor-label`} htmlFor={`domain-status-input`}>
+        {`Status`}
+      </label>
+      <ProjectSelect
+        label={`Status`}
+        disabled={saving}
+        field={`projectStatus`}
+        id={`domain-status-input`}
+        value={input.projectStatus}
+        placeholder={`Future`}
+        options={DOMAIN_PROJECT_STATUSES}
+        onChange={value => setField(`projectStatus`, normalizeDomainProjectStatus(value))}
+      />
+    </div>
+  );
   return (
     <div
       role={`presentation`}
@@ -444,25 +461,8 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   id={`domain-tags-input-${domain?.id ?? `new`}`}
                   onChange={tags => setField(`tags`, tags)}
                 />
-                <p id={`domain-tags-help-${domain?.id ?? `new`}`} className={`domain-editor-icon-help`}>
-                  {`Choose multiple tags. Select a tag again to remove it.`}
-                </p>
               </div>
-              <div id={`domain-status-field`} className={`domain-editor-field`}>
-                <label id={`domain-status-input-label`} className={`domain-editor-label`} htmlFor={`domain-status-input`}>
-                  {`Status`}
-                </label>
-                <ProjectSelect
-                  label={`Status`}
-                  disabled={saving}
-                  field={`projectStatus`}
-                  id={`domain-status-input`}
-                  value={input.projectStatus}
-                  placeholder={`Future`}
-                  options={DOMAIN_PROJECT_STATUSES}
-                  onChange={value => setField(`projectStatus`, normalizeDomainProjectStatus(value))}
-                />
-              </div>
+              {!isEditing && statusField}
               <div id={`domain-difficulty-field`} className={`domain-editor-field`}>
                 <label id={`domain-difficulty-input-label`} className={`domain-editor-label`} htmlFor={`domain-difficulty-input`}>
                   {`Difficulty Level`}
@@ -598,13 +598,14 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                 input={input}
                 disabled={saving}
                 onChange={setField}
+                topContent={statusField}
                 id={`domain-editor-links-${domain?.id}`}
               />
             )}
           </div>
           </div>
           <footer id={`domain-editor-footer`} className={`domain-dialog-footer`}>
-            {isEditing && (
+            {isEditing && !isSynced && (
               <div id={`${deleteId}-action`} className={`domain-editor-delete-action`}>
                 <button
                   type={`button`}

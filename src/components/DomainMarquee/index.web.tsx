@@ -23,9 +23,7 @@ const MarqueeLoading = ({ compact = false, overlay = false, loading = true }: { 
         key={index}
         id={`domain-marquee-skeleton-${index}`}
         className={`domain-marquee-skeleton${useStackPill ? ` domain-marquee-skeleton-stack` : ``}`}
-      >
-        {useStackPill && <StackPillShape id={`domain-marquee-skeleton-shape-${index}`} />}
-      </span>
+      />
     ))}
   </div>
 );

@@ -54,6 +54,7 @@
   align-items: center;
 }
 .domain-editor-title-row .domain-dialog-title { margin: 0; }
+.domain-editor-title-row .modal-title-trigger:disabled { opacity: 1; }
 .domain-editor-registrar-summary {
   gap: 8px;
   display: flex;
@@ -120,6 +121,11 @@
   .domain-editor-icon-row { align-items: center; }
   .domain-editor-renew-field { justify-content: flex-start; }
   .domain-editor-icon-preview { border: 0; background: transparent; }
+  .currency-field { min-height: 34px; }
+  .currency-field .currency-field-input { padding-block: 6px; }
+  .domain-editor-input:not(textarea) { min-height: 34px; padding-block: 6px; }
+  .domain-editor-price-prefix { top: 50%; transform: translateY(-50%); }
+  :is(.domain-editor-select-chevron, .domain-project-select-chevron) { color: var(--accent); }
 }
 .domain-editor-input {
   width: 100%;
@@ -225,6 +231,9 @@
   .domain-dialog-actions .portfolio-button { flex: 1; }
   .domain-editor-delete-action, .domain-editor-delete-confirmation-actions { width: 100%; }
   .domain-editor-delete-confirmation-actions { flex-direction: column; }
+}
+@media (pointer: coarse) {
+  .domain-editor-settings :is(.domain-editor-input:not(textarea), .currency-field) { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .domain-dialog, .domain-dialog-backdrop { animation: none; }

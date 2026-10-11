@@ -36,29 +36,22 @@ export const useStickyPortfolio = (columnKey: string) => {
   const [header, setHeader] = useState(INITIAL_HEADER);
 
   useBrowserLayoutEffect(() => {
-    const heading = headingRef.current;
-    if (!heading) return;
-    const portfolio = heading.closest<HTMLElement>(`.domain-portfolio`);
+    const toolbar = toolbarRef.current;
+    if (!toolbar) return;
     const siteHeader = document.getElementById(`site-header`);
-    let height = -1;
     let frame: number | null = null;
     const measure = () => {
       frame = null;
-      const bounds = heading.getBoundingClientRect();
-      if (bounds.height !== height) {
-        height = bounds.height;
-        portfolio?.style.setProperty(`--portfolio-heading-height`, `${height}px`);
-        setHeader(current => current.headingHeight === height ? current : { ...current, headingHeight: height });
-      }
-      const top = Number.parseFloat(window.getComputedStyle(heading).top) || 0;
+      const bounds = toolbar.getBoundingClientRect();
+      const top = Number.parseFloat(window.getComputedStyle(toolbar).top) || 0;
       const scrolled = String(bounds.top <= top + .5);
-      if (heading.dataset.scrolled !== scrolled) heading.dataset.scrolled = scrolled;
+      if (toolbar.dataset.scrolled !== scrolled) toolbar.dataset.scrolled = scrolled;
     };
     const schedule = () => {
       if (frame === null) frame = window.requestAnimationFrame(measure);
     };
     const observer = typeof ResizeObserver === `undefined` ? null : new ResizeObserver(schedule);
-    observer?.observe(heading);
+    observer?.observe(toolbar);
     if (siteHeader) observer?.observe(siteHeader);
     window.addEventListener(`scroll`, schedule, { passive: true });
     window.addEventListener(`resize`, schedule, { passive: true });
@@ -68,8 +61,7 @@ export const useStickyPortfolio = (columnKey: string) => {
       if (frame !== null) window.cancelAnimationFrame(frame);
       window.removeEventListener(`scroll`, schedule);
       window.removeEventListener(`resize`, schedule);
-      portfolio?.style.removeProperty(`--portfolio-heading-height`);
-      delete heading.dataset.scrolled;
+      delete toolbar.dataset.scrolled;
     };
   }, []);
 

@@ -112,4 +112,4 @@
 }
 .domain-marquee-loading[data-compact='true'] .domain-marquee-skeleton { width: 130px; &:nth-child(even) { width: 170px; } }
 .domain-marquee-skeleton { flex: 1 0 auto; width: 370px; height: 26px; border-radius: 999px; background: var(--skeleton); }
-.domain-marquee-skeleton-stack { position: relative; border-radius: 4px; background: transparent; --stack-pill-fill: var(--skeleton); --stack-pill-border: var(--skeleton); }
+.domain-marquee-skeleton-stack { border-radius: 4px; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%); }

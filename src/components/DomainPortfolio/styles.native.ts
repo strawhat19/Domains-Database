@@ -78,7 +78,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   fieldReadonly: { opacity: .65 },
   fieldPair: { gap: 14, flexDirection: `row`, alignItems: `flex-start` },
   fieldLabel: { color: palette.ink, fontSize: 11, fontFamily: `DMSans_600SemiBold` },
-  fieldInput: { minHeight: 45, padding: 13, borderWidth: 1, borderRadius: 6, borderColor: palette.line, color: palette.ink, backgroundColor: palette.input, fontSize: 13, fontFamily: `DMSans_400Regular` },
+  fieldInput: { minHeight: 44, paddingVertical: 6, paddingHorizontal: 13, borderWidth: 1, borderRadius: 6, borderColor: palette.line, color: palette.ink, backgroundColor: palette.input, fontSize: 13, fontFamily: `DMSans_400Regular` },
   priceInput: { paddingLeft: 30 },
   priceControl: { position: `relative` },
   priceCurrency: { fontSize: 13, color: palette.muted, fontFamily: `DMSans_400Regular` },

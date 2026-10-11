@@ -885,7 +885,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     {state.saving && !state.deleting ? `Saving…` : `Save domain`}
                   </Text>
                 </Pressable>
-                {state.editingDomain && (
+                {state.editingDomain && !editingSyncedDomain && (
                   <View
                     style={styles.field}
                     {...elementProps(`native-domain-editor-delete-action`, state.editingDomain.id)}
