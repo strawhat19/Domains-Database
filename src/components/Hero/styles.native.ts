@@ -61,7 +61,6 @@ export const createStyles = (palette: ThemePalette, isDark: boolean) => {
     recents: { gap: 8, minWidth: 0, marginTop: 3, alignItems: `center`, flexDirection: `row` },
     recentsLabel: { fontSize: 10, color: heroPalette.muted, fontFamily: `DMSans_500Medium` },
     recentsError: { fontSize: 10, color: heroPalette.danger, fontFamily: `DMSans_400Regular` },
-    recentsMessage: { fontSize: 10, color: heroPalette.muted, fontFamily: `DMSans_400Regular` },
     recentSkeleton: { height: 24, borderRadius: 2, backgroundColor: heroPalette.skeleton },
     recentQuery: { flexShrink: 1, fontSize: 10, color: heroPalette.muted, fontFamily: `DMSans_500Medium` },
     recent: { gap: 4, minWidth: 0, maxWidth: 130, borderWidth: 1, borderRadius: 2, paddingVertical: 4, paddingHorizontal: 6, alignItems: `center`, flexDirection: `row`, borderColor: `${heroPalette.accent}40`, backgroundColor: `${heroBackground}e6` },

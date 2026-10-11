@@ -35,5 +35,6 @@ export const useHeroSearch = () => {
     recentSearchesError: recent.error,
     recentSearchesLoading: themeReady && recent.loading,
     trendingCountLoading: themeReady && !discovery.paused && (discovery.accessLoading || discovery.loading),
+    loading: !themeReady || !recent.ready || domainsLoading || recent.loading || (!discovery.paused && (discovery.accessLoading || discovery.loading)),
   };
 };

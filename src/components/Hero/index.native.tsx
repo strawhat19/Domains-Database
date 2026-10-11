@@ -34,7 +34,8 @@ const Hero = ({ search }: HeroProps) => {
   const compact = width < 600;
   const accentSize = Math.min(52, Math.max(28, (width - 48) * .105));
   const [searchFocused, setSearchFocused] = useState(false);
-  const dataLoading = search.domainCountLoading || search.trendingCountLoading || search.recentSearchesLoading;
+  const dataLoading = search.loading;
+  const recentsEmpty = !search.recentSearchesLoading && !search.recentSearches.length;
   const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
@@ -65,6 +66,13 @@ const Hero = ({ search }: HeroProps) => {
     animations.forEach(animation => animation.start());
     return () => animations.forEach(animation => animation.stop());
   }, [radarPhases, reducedMotion]);
+
+  const recentsHeading = (
+    <>
+      <History {...elementProps(`hero-domain-recents-icon`)} size={12} color={heroPalette.accent} />
+      {!recents.iconOnly && <Text {...elementProps(`hero-domain-recents-label`)} style={styles.recentsLabel}>{`Recents`}</Text>}
+    </>
+  );
 
   return (
     <View {...elementProps(`landing-hero`)} style={[styles.hero, compact && styles.compactHero]} onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}>
@@ -243,7 +251,11 @@ const Hero = ({ search }: HeroProps) => {
             {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
           </Text>
         </View>
-        <HeroDomainStack compact={compact} />
+        <HeroDomainStack
+          compact={compact}
+          loading={dataLoading}
+          skeletonOpacity={skeletonOpacity}
+        />
       </View>
       <View {...elementProps(`hero-domain-search`)} style={styles.search}>
         <View {...elementProps(`hero-domain-search-trending-row`)} style={styles.trendingRow}>
@@ -338,10 +350,23 @@ const Hero = ({ search }: HeroProps) => {
           onLayout={recents.onLayout}
           {...elementProps(`hero-domain-recents`)}
         >
-          <View accessible accessibilityLabel={`Recents`} {...elementProps(`hero-domain-recents-heading`)} style={styles.recentsHeading}>
-            <History {...elementProps(`hero-domain-recents-icon`)} size={12} color={heroPalette.muted} />
-            {!recents.iconOnly && <Text {...elementProps(`hero-domain-recents-label`)} style={styles.recentsLabel}>{`Recents`}</Text>}
-          </View>
+          {recentsEmpty ? (
+            <Link asChild href={routes.search.href}>
+              <Pressable
+                accessible
+                style={styles.recentsHeading}
+                accessibilityRole={`link`}
+                accessibilityLabel={`Recents`}
+                {...elementProps(`hero-domain-recents-heading`)}
+              >
+                {recentsHeading}
+              </Pressable>
+            </Link>
+          ) : (
+            <View accessible accessibilityLabel={`Recents`} {...elementProps(`hero-domain-recents-heading`)} style={styles.recentsHeading}>
+              {recentsHeading}
+            </View>
+          )}
           <View
             style={styles.recentsItems}
             accessibilityLiveRegion={`polite`}
@@ -371,11 +396,7 @@ const Hero = ({ search }: HeroProps) => {
                   {record.query}
                 </Text>
               </Pressable>
-            )) : (
-              <Text {...elementProps(`hero-domain-recents-empty`)} style={styles.recentsMessage}>
-                {search.recentSearchesError ? `Recents unavailable` : `Your searches appear here`}
-              </Text>
-            )}
+            )) : null}
           </View>
         </View>
         {!!search.recentSearchesError && (

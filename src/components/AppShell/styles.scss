@@ -10,7 +10,7 @@
 .site-header {
   z-index: 60;
   position: relative;
-  background: var(--paper);
+  background: transparent;
   -webkit-backdrop-filter: blur(0px);
   backdrop-filter: blur(0px);
   border-bottom: 1px solid var(--line);
@@ -29,8 +29,7 @@
   gap: var(--header-action-gap);
   width: 100%;
   display: flex;
-  min-height: 88px;
-  padding: 10px var(--shell-gutter);
+  padding: 6px var(--shell-gutter);
   align-items: center;
   justify-content: space-between;
 }
@@ -223,7 +222,7 @@
 }
 
 @media (max-width: 1000px) {
-  .header-inner { flex-wrap: wrap; padding: 10px var(--shell-gutter) 14px; gap: 0 var(--header-action-gap); }
+  .header-inner { flex-wrap: wrap; gap: 0 var(--header-action-gap); }
   .header-brand { flex: 1; order: 0; min-width: 0; max-width: 220px; }
   .header-logo { width: 100%; }
   .header-actions { order: 1; margin-left: auto; }
@@ -260,7 +259,6 @@
 
 @media (max-width: 760px) {
   .app-shell { --shell-gutter: 20px; }
-  .header-inner { min-height: 78px; }
   .header-logo { max-width: 185px; }
   .header-link { padding: 9px 11px; }
   .footer-inner { gap: 12px; min-height: 64px; padding: 8px var(--shell-gutter); }

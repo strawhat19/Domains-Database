@@ -13,6 +13,12 @@ import { Search, Globe2, History, TrendingUp, ArrowUpRight } from 'lucide-react'
 
 const Hero = ({ search }: HeroProps) => {
   const [searchFocused, setSearchFocused] = useState(false);
+  const dataLoading = search.loading;
+  const emptyRecents = !search.recentSearchesLoading && !search.recentSearches.length;
+  const recentsHeading = <>
+    <History size={12} aria-hidden id={`hero-domain-recents-icon`} className={`hero-domain-recents-icon`} />
+    <span id={`hero-domain-recents-label`} className={`hero-domain-recents-label`}>{`Recents`}</span>
+  </>;
 
   return (
   <section
@@ -74,7 +80,7 @@ const Hero = ({ search }: HeroProps) => {
             {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}
           </p>
         </div>
-        <HeroDomainStack />
+        <HeroDomainStack loading={dataLoading} />
       </div>
       <form
         role={`search`}
@@ -142,10 +148,17 @@ const Hero = ({ search }: HeroProps) => {
       </form>
       <div id={`hero-domain-discovery`} className={`hero-domain-discovery`}>
         <div id={`hero-domain-recents`} className={`hero-domain-recents`}>
-          <div role={`group`} title={`Recents`} aria-label={`Recents`} id={`hero-domain-recents-heading`} className={`hero-domain-recents-heading`}>
-            <History size={12} aria-hidden id={`hero-domain-recents-icon`} className={`hero-domain-recents-icon`} />
-            <span id={`hero-domain-recents-label`} className={`hero-domain-recents-label`}>{`Recents`}</span>
-          </div>
+          {emptyRecents ? (
+            <Link href={routes.search.href} asChild>
+              <RouterAnchor title={`Recents`} aria-label={`Search Domains`} id={`hero-domain-recents-heading`} className={`hero-domain-recents-heading`}>
+                {recentsHeading}
+              </RouterAnchor>
+            </Link>
+          ) : (
+            <div role={`group`} title={`Recents`} aria-label={`Recents`} id={`hero-domain-recents-heading`} className={`hero-domain-recents-heading`}>
+              {recentsHeading}
+            </div>
+          )}
           <div
             aria-live={`polite`}
             id={`hero-domain-recents-items`}
@@ -174,11 +187,7 @@ const Hero = ({ search }: HeroProps) => {
                 <Search size={10} aria-hidden id={`hero-domain-recent-icon-${index}`} className={`hero-domain-recent-icon`} />
                 <span id={`hero-domain-recent-query-${index}`} className={`hero-domain-recent-query`}>{record.query}</span>
               </button>
-            )) : (
-              <span id={`hero-domain-recents-empty`} className={`hero-domain-recents-message`}>
-                {search.recentSearchesError ? `Recents unavailable` : `Your searches appear here`}
-              </span>
-            )}
+            )) : null}
           </div>
         </div>
         {!!search.recentSearchesError && (
