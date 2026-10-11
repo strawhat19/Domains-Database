@@ -115,12 +115,7 @@ const NotificationBell = () => {
               keyboardShouldPersistTaps={`handled`}
               {...elementProps(`native-header-notifications-list`)}
             >
-              {loading ? [0, 1].map(index => (
-                <NotificationCard
-                  key={index}
-                  index={index}
-                />
-              )) : error ? (
+              {!loading && !!error && (
                 <Text
                   accessibilityRole={`alert`}
                   style={[styles.message, styles.messageError]}
@@ -128,17 +123,23 @@ const NotificationBell = () => {
                 >
                   {error}
                 </Text>
-              ) : notifications.length ? notifications.map(notification => (
+              )}
+              {loading ? [0, 1].map(index => (
+                <NotificationCard
+                  key={index}
+                  index={index}
+                />
+              )) : notifications.length ? notifications.map(notification => (
                 <NotificationCard
                   key={notification.id}
                   onNavigate={close}
                   notification={notification}
                 />
-              )) : (
+              )) : !error ? (
                 <Text style={styles.message} {...elementProps(`native-header-notifications-empty`)}>
                   {`No Notifications Yet`}
                 </Text>
-              )}
+              ) : null}
             </ScrollView>
             <View style={styles.footer} {...elementProps(`native-header-notifications-footer`)}>
               <Link href={routes.notifications.href} asChild>

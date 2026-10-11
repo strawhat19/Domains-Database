@@ -114,17 +114,19 @@ const NotificationBell = () => {
               ? [0, 1].map(index => (
                 <NotificationCard key={index} index={index} />
               ))
-              : state.error ? (
-                <li id={`header-notifications-error`} className={`header-notifications-message header-notifications-message-error`} role={`alert`}>
-                  {state.error}
-                </li>
-              ) : state.notifications.length ? state.notifications.map(notification => (
+              : state.notifications.map(notification => (
                 <NotificationCard key={notification.id} notification={notification} onNavigate={state.close} />
-              )) : (
-                <li id={`header-notifications-empty`} className={`header-notifications-message`} role={`status`}>
-                  {`No Notifications Yet`}
-                </li>
-              )}
+              ))}
+            {!state.loading && !!state.error && (
+              <li id={`header-notifications-error`} className={`header-notifications-message header-notifications-message-error`} role={`alert`}>
+                {state.error}
+              </li>
+            )}
+            {!state.loading && !state.error && !state.notifications.length && (
+              <li id={`header-notifications-empty`} className={`header-notifications-message`} role={`status`}>
+                {`No Notifications Yet`}
+              </li>
+            )}
           </ul>
           <div id={`header-notifications-footer`} className={`header-notifications-footer`}>
             <Link href={routes.notifications.href} asChild>

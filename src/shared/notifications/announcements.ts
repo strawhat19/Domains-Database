@@ -18,6 +18,7 @@ const imports = new Map<string, Promise<void>>();
 const serialize = createOperationQueue(storageKey);
 const originals = () => sampleNotifications.map(notification => ({ ...notification }));
 let notifications = originals();
+let lastError: Error | undefined;
 let stopWatch: (() => void) | undefined;
 
 interface AnnouncementSubscriber {
@@ -44,11 +45,13 @@ const publish = (records: Notification[], imported: boolean) => {
   const saved = records.filter(record => record.active).sort((left, right) => left.number - right.number).map(toHeaderNotification);
   const values = imported ? saved : [...saved, ...originals().filter(original => !saved.some(record => record.id === original.id))];
   if (JSON.stringify(values) !== JSON.stringify(notifications)) notifications = values;
+  lastError = undefined;
   for (const subscriber of subscribers) subscriber.next(notifications);
 };
 
 const report = (failure: unknown) => {
   const error = failure instanceof Error ? failure : new Error(`Notification(s) Could Not Be Loaded`);
+  lastError = error;
   for (const subscriber of subscribers) subscriber.error?.(error);
 };
 
@@ -103,6 +106,7 @@ export const subscribeAnnouncements = (next: AnnouncementSubscriber[`next`], err
   const subscriber = { next, error };
   subscribers.add(subscriber);
   next(notifications);
+  if (lastError) error?.(lastError);
   if (!stopWatch) {
     try {
       stopWatch = firebaseEnabled && !useLocalStorage ? watchCloud() : subscribeStorage(storageKey, value => {
