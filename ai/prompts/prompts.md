@@ -16,6 +16,8 @@
 
 9. For the complete common-core starter, copy ai/ and AGENTS.md into the destination repository and use this prompt:
 
-> Implement the full App System from ai/skills/app-system/SKILL.md in this project, completing every common-core module while preserving its framework, theme, features, and existing data. Follow AGENTS.md and report any external setup still needed.
+> Implement the full App System from ai/skills/app-system/SKILL.md and ai/adoption.md in this project, completing every common-core module through real services, account-scoped realtime persistence, rules/indexes, and protected analytics while preserving its framework, theme, features, and existing data. Use this project's authorized configuration, follow AGENTS.md, and report source completion, actual connectivity, and external setup separately.
 
 Read [the feature map and completion matrix](../skills/app-system/system.md) for what this prompt includes. It requests public frontend, connected auth/users/profile/admin, dashboards/analytics/charts/icons, notifications/contact intake, private realtime chat, plans/pricing, and the sourced blog; existing working modules are reused. Payments, uploads, and external publishing remain separate requested work.
+
+10. For detailed connected adoption, follow [adoption](../adoption.md) and the Admin [Firestore](../skills/admin/references/firestore.md), [workflow](../skills/admin/references/workflows.md), and [analytics](../skills/admin/references/analytics.md) contracts. Map the actual schema, permitted role operations, atomic identities, rules/indexes, environment boundaries and provider access outside ai/. Complete requested real actions and account-scoped subscriptions; report current local/reference gaps and external setup separately.

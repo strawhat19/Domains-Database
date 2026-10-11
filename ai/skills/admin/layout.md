@@ -124,3 +124,14 @@ Put the current bucket's UTC date/time on the left and value/unit on the right a
 Keep original time positions when a measurement is missing. Render null as an em dash in cards and tables, break line/area segments at missing buckets, and show individual measured points without connecting across gaps. The slider still visits missing buckets and announces No Measurement. Empty, unsupported, stale, loading, and error states remain distinct; chart sizing must not convert them to artificial zeroes. Include accessible SVG title/description and a List/table presentation.
 
 Reference motion uses 550 ms panel entrance, 800 ms area fade, 1200-1250 ms line draw, and 850 ms business bar/donut transitions with small staggered delays. Value/ranking bars can animate over 650 ms. Disable entrances, pulses, spinners, drawing animations, and layout/color transitions under reduced motion. Reuse the app's installed animation/chart tools, descriptive IDs, and real typed data sources from [admin.md](admin.md).
+
+
+## Integration And Identity Parity
+
+Use [the Firestore contract](references/firestore.md) for hydrated account/query state and [the workflow contract](references/workflows.md) for real persisted controls. The detailed [analytics contract](references/analytics.md#shared-country-source-device-and-page-identities) owns safe aliases, domain/path-bound matches, asset/catalog installation and browser/OS capability distinctions; keep visual sizing and interaction geometry here.
+
+Use the same identity resolver in compact overview/rankings, full report, Chart/Bars and List, expanded results and native rows. Known source shortcut hosts such as t.co, redd.it, youtu.be, lnkd.in, fb.me, instagr.am, wa.me and pin.it resolve only through explicit brand mappings. Direct, unknown and Others retain distinct meanings; Others does not become a selectable fake country/referrer/page. Country/code labels stay readable if Intl.DisplayNames or an asset is unavailable.
+
+Refresh shows the actual cache/revalidation result and original fetch time. Range inputs stay draft until Apply; switching datasets/views resets incompatible metrics/search rather than silently issuing invalid queries. Report exports preserve the displayed range/filter/unit/source/null/coverage states. Private preference keys are scoped to project/account, and read-state/loading errors do not become zero badges.
+
+Keep private form/editor/read-state fields out of analytics row captions, logs and accessible report names. Accessible labels contain permitted display identity and actual metric/unit/filter action. Counters, selected-page matches and recent-window summaries state their actual coverage; this layout does not convert samples into whole-database totals.

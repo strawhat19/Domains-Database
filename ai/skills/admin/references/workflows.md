@@ -1,0 +1,67 @@
+# Persisted Notifications, Forms, And Account Actions
+
+Read this for the requested workflows with [Admin](../admin.md), [Firestore](firestore.md), and [the account/editor layout](../layout.md). Map existing field names and stricter permissions deliberately; these contracts describe the connected target and do not assert that every reference app already implements each delivery or read-state feature.
+
+## Shared Operation Contracts
+
+Expose typed subscribePage/getPage/create/updateStatus/update/delete methods through the existing service boundary. Mutation results distinguish committed data from delivery, and reads expose source, page coverage, cursor, loading/error, and freshness. Derive the actor from the verified session; caller-supplied user/role fields do not establish authority. Reuse the same capability helper at menu, route, service, rules, and privileged server.
+
+| Workflow | Required Public/Account Surface | Required Authorized Management |
+| --- | --- | --- |
+| Announcements | Active-only bell, cards/page, actual unread count, details/link, individual/All Read, Reload | Bounded list, search/status, Add/Edit, persisted Active/Inactive, confirmed Delete |
+| Account notifications | Own permitted inbox/read state and truthful recipient/audience | Explicit delivery/audience policy; no automatic access to every account's inbox |
+| Public forms | Labels, validation, honeypot/abuse boundary, pending/save feedback, retained failed draft | Private record list/detail, real dates, New/Read/Archived actions, paging |
+| Profile | Provider avatar/initial, allowlisted details/preferences, private account connections | Permitted user/status/role operations, stable identity, protected ownership |
+| Data settings | Honest connected/source state and defined own-data controls | Explicit reset/import scope; private intake and global records excluded from own reset |
+
+## Notification State And Read Hydration
+
+When announcements have slugs, reserve uniqueness atomically with counter allocation and record creation. Rename/delete updates the relevant reservation atomically without changing ID/number; release only the reservation owned by that record. Preserve legitimate legacy providerId aliases and stable imported IDs. An initial-content import is explicit, authorized and idempotent with a persisted marker, never an automatic empty-feed or sign-in fallback.
+
+Define one canonical publication status and derive UI Active/Inactive from it. If compatibility requires both status and active, validate and write their agreement atomically. New records start inactive unless deliberate publication is selected. Record ID/number/created time stay immutable through edit/toggle; safe link text/URL and supported kind/icon are validated, and links retain clear accessible labels. Public queries include active/publication constraints; permission-restricted records never travel in a publicly readable announcement.
+
+Track initial read-preference hydration, reload error, mutation busy, and feed readiness separately. A read failure must not lock Reload behind a permanently busy flag. Track Loading, Ready, Stale and Error explicitly; a failed listener never becomes zero unread and does not erase the last known confirmed read state. Until read state is known, show an unknown/loading unread badge and disable read mutations rather than treating every notification as unread or already read. Count only eligible active notifications within the reported coverage; a global exact count needs a maintained authorized aggregate.
+
+Use persisted stable notification IDs or an explicit versioned read cursor. Define whether editing or republishing an announcement makes it unread; avoid changing read semantics accidentally through updatedAt. Mark All Read records only the eligible feed/cursor actually observed and cannot consume notifications that arrive after the action started. Merge concurrent read changes rather than replacing another device's read IDs with an old snapshot. A dismissal/read event never changes global publication status.
+
+Read preferences are private and account-scoped. If an established app uses local/device read preferences, disclose that scope and preserve compatible existing behavior; a requested fully connected starter implements cloud persistence for cross-device read state. Namespace device caches by app and account, clear old state immediately on account switch, and include read preferences in a deliberately chosen own-data reset. Do not clear public announcements or private form submissions as a side effect.
+
+Notification creation, in-app visibility, read receipt, email, and push delivery are separate states. Realtime database publication does not establish email/push delivery or presence. Add provider delivery only when requested/already supported, using server-owned configuration, stable idempotency keys, and truthful queued/sent/failed outcomes. Do not duplicate public announcement records merely to simulate individual read state.
+
+## Forms And Submission Review
+
+Use one typed submission service per logical form family rather than a form-specific localStorage cache. Contact, enquiry, signup requests, or other supported forms map their schemas and initial review state to the same private intake boundary. Required/allowed fields, supported lengths, normalization, allowed select values, initial status, nullable actor, and idempotency format belong in shared validation and rules/server enforcement.
+
+Trim text, validate email, reject unsupported keys/oversized payloads, and never trust a caller-selected reviewer/role/status. Enforce an empty honeypot at the persistence boundary, keep it off the tab order/assistive navigation, and apply configured rate/abuse protection without exposing submission contents. UI validation is feedback; it is not the public write gate.
+
+Keep a stable submission attempt while retrying an uncertain save. On a trusted endpoint, reserve/deduplicate the attempt in the same transaction as allocation and creation, bind it to project/form/schema version, normalized payload and server-derived actor/session scope, reject mismatched reuse, and return the previously committed record on retry. A deliberate new submission gets a new attempt key. A duplicate-suppression button only protects that component and does not deduplicate network retries, multiple tabs, or server workers. Do not store personal form fields in public counter/attempt metadata.
+
+Await commit before clearing fields, closing the form, or claiming Submission Saved. If save succeeds and delivery fails, retain the saved record and report Saved with Delivery Failed/Not Configured as appropriate. Delivery retries address that record and do not resubmit the form. A mailto link alone is not a database save or confirmed sent email. Failed/unknown saves retain the draft with a retry action and cannot silently become a successful local record.
+
+Review capabilities are explicit, independent of general report access, and retain stricter existing Owner-only rules. Provide Name/Email/Subject and supported form details, safe message expansion, submitted/updated dates, New/Read/Archived status and actual loaded-page summaries. Reviews change only permitted status/reviewer/update fields; original form fields and identity remain stable. Search over the current page says Loaded Page, resets appropriately, and leaves paging visible on No Matching Records. Public users cannot query/read/update/delete private intake.
+
+## Profile, Users, And Own-Data Controls
+
+Use one hydrated account shell and original account record as the baseline for edits. Persist only editable name/avatar/bio/privacy/preferences supported by the destination. Preserve provider email, firebase_uid, ID/number, role, active status, creation time, and trusted plan/entitlement fields. An Edit Roles or account deactivation action requires its own capability and trusted invariant checks. Do not implement it by reusing unrestricted profile save.
+
+Owner bootstrap is a deliberate trusted setup step. Role management records actor/target/previous/new state and timestamp, protects the last active Owner, and forbids Admin grants or destructive Owner operations beyond policy. Current role/status changes revoke listeners and private views promptly. Firebase Auth identity/account deletion and Firestore profile deletion are distinct operations; define their permitted order, cleanup/recovery, and reauthentication where required. Do not claim Delete Account when only a local preference was removed.
+
+Private connection UI displays safe configured/not-configured metadata, masked/editable input only where supported, and explicit clear controls. Keep production secrets in server storage and out of hydrated public/private User responses unless a separately authorized secret operation genuinely needs them. Never put integration credentials under public profile visibility.
+
+For Delete My Data/reset, list actual owned collections and storage keys, include notification read state when selected, and distinguish sign-out, preference reset, own-feature deletion, app-account deletion, and full application reset. Keep shared catalog/announcements, global users/roles/counters, private submissions, and other accounts' records outside an own-data action. Connected deletes need authorized bounded server work where cross-record cleanup is required; do not clear local cache then claim cloud data was deleted.
+
+## Pending Actions And Accessible Feedback
+
+Scope editor, confirm, draft, busy, and result state to account/record/operation. Prevent a late success from closing a new account's editor or overwriting a later edit. Disable conflicting controls during save; failed creates/edits keep the draft, failed status/delete keeps the last confirmed row, and successful operations close only their own editor/confirmation.
+
+Use the existing shared users-table status pattern and editor dimensions in [layout](../layout.md). Native row cards retain the same fields and persisted actions. Dialogs have a title, labels, focus trap/return, keyboard/touch close behavior while idle, and inline errors. Announcement bodies/form messages are plain text or shared safely rendered content; no arbitrary HTML. Use concise Title Case toasts and live-region feedback, stable descriptive IDs, and reduced motion. An empty collection with functioning CRUD is complete source behavior; an unconfigured or decorative manager is not a connected workflow.
+
+## Portable Form Schema And Delivery Map
+
+Declare each form's collection/type, accepted fields, required/optional fields, lengths/formats, actor policy, initial/review status transitions, public-create/private-review rules, dashboard columns and notification/delivery mapping. Keep actual definitions in the destination code/project docs, not project-specific edits to this guide.
+
+A generic contact default can use name up to 100, email up to 254, subject up to 200 and message up to 5000, with an empty website honeypot and New/Read/Archived. Preserve established alternatives such as a single Email Or Phone input or appointment date/time/service fields. Validate semantic dates/times and availability through the appropriate product service; a YYYY-MM-DD regex alone does not validate a real date or booking. Do not introduce bookings/commerce to an app merely because the reference supports them.
+
+Specify which saved events create a notification, its recipient/audience and required capability, and whether it is an in-app operational alert or configured external delivery. Resolve recipient routing on the trusted server rather than accepting a guest-selected account/address. Persist an outbox/job reference atomically with the submission when delivery is supported, deduplicate each delivery attempt, and retain provider result/error/retry metadata privately. Missing optional delivery never discards the saved submission. Do not claim delivery workers exist because a notification collection or contact form exists.
+
+Bound versioned read-ID lists and individual IDs, reject malformed/duplicate/unreadable state, and keep a clear recovery path without overwriting it with empty data. An example compatible bound is 2000 read IDs of at most 200 characters; choose a maintained cursor/receipt model if that grows too large. A process-local serialization queue does not prevent cross-device lost updates; connected read-state merges need an atomic backend operation.

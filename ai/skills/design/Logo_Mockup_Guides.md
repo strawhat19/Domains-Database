@@ -1,10 +1,10 @@
 # Logo and Mockup Guides for AI
 
-Use this guide whenever asked to explore or extend visual concepts in a project under this Library. Treat every version as a reviewable design round, not a replacement for an approved identity.
+Use this guide whenever asked to explore or extend visual concepts in the requested project. Treat every version as a reviewable design round, not a replacement for an approved identity.
 
 ## Read the project first
 
-1. Locate the exact project repository and read its `AGENTS.md`, if present, plus the Library `AGENTS.md`.
+1. Locate the exact project repository and read its `AGENTS.md`, if present, plus any applicable ancestor `AGENTS.md`.
 2. Read the project README, product copy, and existing brand or visual files. Learn the project's purpose, audience, exact display name, current colors, and any motifs worth retaining.
 3. Inspect `assets/concepts/logos/` and `assets/concepts/mockups/` before writing. Do not infer the latest version from a filename alone; look at the numbered folders.
 4. Preserve every existing concept. Never overwrite or rename an earlier version unless the user explicitly requests it.
@@ -51,6 +51,6 @@ Use this request template for another AI run:
 
 When the user asks for several new rounds at once, repeat the logo steps in separate `v1`, `v2`, `v3`, etc. folders. Carry forward useful discoveries from one round without making later rounds near duplicates.
 
-## Project instruction in this Library
+## Applicable project instructions
 
-The Library's `AGENTS.md` asks AI agents making code changes to keep them minimal and to leave verification, testing, and builds to the user before committing. Follow the more specific instructions in a project if they apply. Creating concepts does not require changing application code.
+Follow the project's and applicable ancestor instructions for scope, verification, testing, builds, commits and external actions. Preserve the user's requested boundaries. Creating concepts does not require changing application code.

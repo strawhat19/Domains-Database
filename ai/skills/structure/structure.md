@@ -128,6 +128,8 @@ src/
       styles.scss
       styles.native.ts
 ai/
+  README.md
+  adoption.md
   goals/
     goals.md
   prompts/
@@ -155,6 +157,12 @@ ai/
       SKILL.md
       admin.md
       layout.md
+      references/
+        firestore.md
+        workflows.md
+        analytics.md
+      assets/
+        analytics/
     app-system/
       SKILL.md
       system.md
@@ -205,3 +213,5 @@ Use the existing framework's supported SCSS module loading. When its Sass compil
 | Blog | shared/models/blog and shared/blog; published-content/authoring facades | BlogIndex/BlogArticle/categories/search and authorized AdminBlog |
 
 Give each view its own logic/rendering/styles where the platforms differ. Thin route files compose the component and capability boundary; shared subscriptions/persistence never live inside route JSX.
+
+18. For connected adoption read [adoption](../../adoption.md), then the Admin [Firestore](../admin/references/firestore.md), [workflow](../admin/references/workflows.md), and [analytics](../admin/references/analytics.md) contracts as needed. Keep one account-aware listener/adapter boundary, a shared identity/icon resolver, private role/provider server operations and real persisted form/notification facades. ai/skills/ is the portable skill tree; avoid an independent duplicate skills/ folder.

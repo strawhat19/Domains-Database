@@ -1,18 +1,16 @@
 ---
 name: admin
-description: Build or update account profiles, role-controlled admin sidebars, persisted contact intake and notification/request workflows, realtime Firestore dashboards, animated charts, and server-protected Vercel analytics and observability in the current app.
+description: Build or update connected account/profile/admin workflows, roles, realtime Firestore dashboards, notifications, saved forms, and protected analytics reports in an existing app.
 ---
 
-1. Read the applicable shared guides in the order required by AGENTS.md, then read [admin.md](admin.md). Use this skill for the connected account and admin system, including its data access and reporting boundaries.
+1. Read the applicable shared guides in AGENTS.md order, then [admin.md](admin.md) for the system map. Preserve the existing framework, theme, schema, routes and narrower permissions; a focused task does not add every module.
 
-2. Follow the app's framework, feature model, theme, and installed components. For Profile, Dashboard, navigation, analytics, charts, or record editors, read [the shared layout reference](layout.md) and match its geometry, sizing, controls, and menu behavior across the account shell. Retain the destination app's colors, fonts, icons, and relevant feature labels; a theme change must not become a different layout. Inspect the reference's actual persisted actions and implement the relevant workflows, including notification CRUD/Active-Inactive controls and contact/request intake and review. Save contact submissions independently of email delivery, allow validated guest intake where public, and preserve private review capabilities. Keep public browsing available; do not copy unrelated business modules or unconfigured placeholders as working features.
+2. Read [references/firestore.md](references/firestore.md) for Firebase/provider setup, identity/roles, atomic records, scoped realtime listeners, rules/indexes and scaling. Read [references/workflows.md](references/workflows.md) for profile/users, persisted notification CRUD/read state, guest intake/private review, resets and optional delivery. Read [references/analytics.md](references/analytics.md) for provider queries, ranges/filters, source/cache/capability states and identity icons.
 
-3. Use Firebase Authentication and realtime Firestore for a requested connected system. Keep an explicitly chosen local demo separate, and show a connection-needed state when production configuration is missing. Client navigation checks do not grant backend permissions.
+3. Read [layout.md](layout.md) for account shell/sidebar persistence, profile/table/editor controls, chart geometry/inspection, responsive behavior and platform icons. Layout parity includes relevant working persisted actions; retain the destination's colors/fonts and business labels.
 
-4. Keep this skill portable: no project names, credentials, fixed Firebase projects, role bootstrap emails, or deployment IDs. Put those values and the actual route/schema mapping in project configuration or project documentation outside ai/. Copy ai/ with AGENTS.md to adopt the guidance in another repository; copying instructions does not create cloud resources.
+4. Use [adoption](../../adoption.md) when connecting the system in another project. Keep actual project IDs, schemas, credentials, bootstrap identities and history outside ai/. Complete source and configuration examples within scope; describe external prerequisites accurately. Do not turn missing configuration into local authentication/data success.
 
-5. Recheck official provider documentation when integrating reporting because endpoint schemas and plan access change. Complete reviewable source and configuration examples within scope; follow AGENTS.md for validation, commits, deployment, and live changes.
+5. Use [the analytics assets](assets/analytics/) as a complete licensed source bundle, or reuse an equivalent catalog. Adapt served URLs, importable resolver metadata and supported native static asset mappings; the bundle does not install component code or cloud services. Recheck official provider contracts/entitlements when implementing reporting.
 
-6. For an explicitly requested complete app core with public frontend, private chat, plans/pricing, and a sourced blog, use [App System](../app-system/SKILL.md) to orchestrate those focused contracts while retaining this guide's account/admin/reporting boundaries.
-
-7. The portable [analytics asset bundle](assets/analytics/) contains local country flags and source brand marks with their licenses/manifests. Reuse a compatible destination catalog or copy the needed bundle into its supported public/bundled asset path, preserving notices/provenance. Adapt web URLs and native static asset requires/renderers to the destination; assets in ai/ are a source bundle, not automatically served app routes.
+6. For a requested complete starter, use [App System](../app-system/SKILL.md) and its focused chat/plans/blog contracts. Follow AGENTS.md for source review, checks, commits, deployment and external actions.

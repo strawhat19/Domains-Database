@@ -6,7 +6,7 @@ Use this blueprint when the user asks to implement the full common core. Extend 
 
 After copying ai/ and AGENTS.md into the destination repository, use:
 
-> Implement the full App System from ai/skills/app-system/SKILL.md in this project, completing every common-core module while preserving its framework, theme, features, and existing data. Follow AGENTS.md and report any external setup still needed.
+> Implement the full App System from ai/skills/app-system/SKILL.md and ai/adoption.md in this project, completing every common-core module through real services, account-scoped realtime persistence, rules/indexes, and protected analytics while preserving its framework, theme, features, and existing data. Use this project's authorized configuration, follow AGENTS.md, and report source completion, actual connectivity, and external setup separately.
 
 This requests the whole core below. For an existing focused task, apply only the relevant module. Existing working integrations count toward completion; do not replace them merely to match a suggested folder or schema.
 
@@ -20,8 +20,8 @@ This requests the whole core below. For an existing focused task, apply only the
 | Profile And Account Shell | Editable allowlisted profile, private settings, provider avatar, persistent account-scoped sidebar/submenus and bottom Profile controls across routes | [Admin layout](../admin/layout.md), [social privacy](../social/social.md) |
 | Admin And Dashboard | Relevant operational records, summaries, recent activity, permitted users/roles, real feature charts, direct routes; working create/edit/status actions rather than decorative sections | [Admin](../admin/admin.md), [layout](../admin/layout.md) |
 | Analytics, Runtime, Charts, Icons | Web collection SDK, protected provider reports, compact/full Chart/List controls, inspection, real units/missing values, complete local flags and source/device/page icons | [Admin reporting](../admin/admin.md#vercel-analytics-and-observability), [layout](../admin/layout.md) |
-| Notifications | Private permitted CRUD/public active feed, persisted Active/Inactive status, bell/cards, account read state, unread count, individual/All Read, Reload | [Admin actions](../admin/admin.md#persisted-administrative-actions) |
-| Contact Submissions | Validated guest intake, saved database records independent of email, private realtime request review, New/Read/Archived, search/filter/pagination | [Contact intake](../admin/admin.md#contact-intake-and-private-request-review) |
+| Notifications | Private permitted CRUD/public active feed, persisted Active/Inactive status, bell/cards, private account-scoped realtime read state, unread count, individual/All Read, Reload | [Admin actions](../admin/admin.md#persisted-administrative-actions) |
+| Contact Submissions | Validated guest intake, confirmed database records independent of delivery, stable retry idempotency, private realtime request review, New/Read/Archived, search/filter/pagination | [Contact intake](../admin/admin.md#contact-intake-and-private-request-review) |
 | Private Chat | Authenticated participant-only thread/message creation, realtime bounded lists, pagination, unread/read receipts, composer and saved/error states | [chats](references/chats.md) |
 | Plans And Pricing | Authorized catalog creation/editing/publication, stable identities, active public live pricing and existing plan labels; no automatic purchase or entitlement writes | [plans](references/plans.md) |
 | Blog And References | Public listing/article/category/search, verified relevant YouTube and Reddit links, source credit, permitted authoring/publication | [blog](references/blog.md) |
@@ -42,7 +42,7 @@ Compose one shared account shell for Profile, Admin, Dashboard, chat management,
 
 ## Completion Matrix
 
-Report each module as Implemented In Source, Connected, Setup Needed, or Blocked, with its actual paths and remaining prerequisites. Source implementation and a live connected service are separate claims. Do not mark a module complete merely because a route or empty panel exists.
+For each module report Source: Complete/Incomplete, Connection: Connected/Setup Needed/Unavailable, and Validation: User Review Pending/Checks Performed, with actual paths/evidence and remaining prerequisites. These are independent facts; complete source may still need external setup. Do not mark a module complete merely because a route or empty panel exists.
 
 | Area | Required Source Evidence | External Setup To Report |
 | --- | --- | --- |
@@ -57,3 +57,9 @@ Report each module as Implemented In Source, Connected, Setup Needed, or Blocked
 | Handoff | Secret-free environment example, project-specific route/schema/setup map, source review notes and actual limitations | Explicitly identify checks/deployment not performed |
 
 Continue until all requested source paths and permitted actions are concrete and reviewable. If credentials/resources are missing, finish their typed boundary and honest setup/error UI, then name the external prerequisite. Do not substitute fake records, random charts, successful local fallback, fabricated links, or purchased entitlements. Follow AGENTS.md rather than running unrequested validation, deployment, or commits.
+
+## Detailed Integration Contracts
+
+Follow [adoption](../../adoption.md) and the focused [Firestore/accounts/rules map](../admin/references/firestore.md), [notifications/forms/actions map](../admin/references/workflows.md), and [analytics/runtime/icon map](../admin/references/analytics.md). Preserve working code and documented stricter policies. Source gaps in an existing app remain explicit: device/visit read preferences are not account-synced read state, transactionally allocated form IDs do not deduplicate retries, and a web-only provider adapter does not implement native reporting.
+
+Build real frontend-to-service-to-persistence/rules actions for every requested module. The connected source target includes stable identity/counters, current authorization, listener lifecycle, failed-save draft recovery, recipient/delivery separation, real report ranges/units/nulls/cache/coverage and full local identity assets. Copying these instructions alone does not perform cloud configuration or deployment.
