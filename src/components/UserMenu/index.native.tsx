@@ -4,14 +4,13 @@ import { useUserMenu } from './useUserMenu';
 import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
 import { canAccessAdmin } from '../../shared/admin/permissions';
-import { Image, Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
-import { Eye, Crown, LogIn, LogOut, PlugZap, UserRound, BadgeCheck, ShieldCheck, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
+import { Image, Platform, Pressable, Text, View } from 'react-native';
+import { Crown, LogIn, LogOut, PlugZap, UserRound, BadgeCheck, ShieldCheck, UserRoundPlus, LayoutDashboard } from 'lucide-react-native';
 
 const decorativeIconProps = Platform.OS === `web` ? { 'aria-hidden': true } : { accessible: false };
 
 const UserMenu = () => {
   const state = useUserMenu();
-  const { width } = useWindowDimensions();
   const { user, styles, palette } = state;
   const isOwner = user?.role === Roles.Owner;
   const RoleIcon = isOwner ? Crown : canAccessAdmin(user) ? ShieldCheck : UserRound;
@@ -105,25 +104,6 @@ const UserMenu = () => {
               <Pressable {...elementProps(`user-menu-dashboard`)} style={styles.item} accessibilityRole={`link`} onPress={state.close}>
                 <LayoutDashboard {...elementProps(`user-menu-dashboard-icon`)} size={16} color={palette.ink} />
                 <Text {...elementProps(`user-menu-dashboard-text`)} style={styles.linkText}>{`Dashboard`}</Text>
-              </Pressable>
-            </Link>
-          )}
-          {width <= 1360 && (
-            <Link href={routes.watching.href} asChild>
-              <Pressable
-                style={styles.item}
-                onPress={state.close}
-                accessibilityRole={`link`}
-                {...elementProps(`user-menu-watching`)}
-                accessibilityLabel={state.watchingCount ? `Watching, ${state.watchingCount} Domain${state.watchingCount === 1 ? `` : `s`}` : `Watching`}
-              >
-                <Eye {...elementProps(`user-menu-watching-icon`)} size={16} color={palette.ink} />
-                <Text {...elementProps(`user-menu-watching-text`)} style={styles.linkText}>{routes.watching.label}</Text>
-                {state.watchingCount > 0 && (
-                  <View {...elementProps(`user-menu-watching-badge`)} style={[styles.badge, { backgroundColor: state.badgeColors.backgroundColor }]} accessibilityElementsHidden importantForAccessibility={`no-hide-descendants`}>
-                    <Text {...elementProps(`user-menu-watching-count`)} style={[styles.badgeText, { color: state.badgeColors.color }]}>{state.watchingCount}</Text>
-                  </View>
-                )}
               </Pressable>
             </Link>
           )}

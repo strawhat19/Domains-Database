@@ -5,7 +5,7 @@ import AdminDashboard from '../../src/components/AdminDashboard';
 
 const AdminObservabilityRoute = () => (
   <>
-    <PageMeta title={`Admin · Runtime Health`} description={`Connected service status and runtime observability`} />
+    <PageMeta title={`Admin · Health`} description={`Connected service status and runtime observability`} />
     <ProtectedRoute adminSection={routes.adminObservability.adminSection}>
       <AdminDashboard section={routes.adminObservability.adminSection} />
     </ProtectedRoute>

@@ -1,10 +1,12 @@
 {
   "indexes": [
+    { "collectionGroup": "events", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "endsAt", "order": "ASCENDING" }, { "fieldPath": "startsAt", "order": "ASCENDING" }] },
     { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "active", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
     { "collectionGroup": "plans", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "active", "order": "ASCENDING" }, { "fieldPath": "displayOrder", "order": "ASCENDING" }, { "fieldPath": "number", "order": "ASCENDING" }] }
   ],
   "fieldOverrides": [
     { "collectionGroup": "data", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "events", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "users", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "domains", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "counters", "fieldPath": "*", "indexes": [] },

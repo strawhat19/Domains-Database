@@ -40,7 +40,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
               {profile ? <>{`Hello, `}<Text {...elementProps(`account-title-name`)} style={styles.name}>{`${user.name}.`}</Text></> : `Connections`}
             </Text>
           </View>
-          <Text {...elementProps(`account-description`)} style={styles.description}>{profile ? `Your account uses ${state.providerLabel === `Local Demo` ? `a local demo on this device` : state.providerLabel}.` : `Manage registrar connections securely for your own account.`}</Text>
+          {!profile && <Text {...elementProps(`account-description`)} style={styles.description}>{`Manage registrar connections securely for your own account.`}</Text>}
           {profile ? <>
             <ProfileSettings />
             <View {...elementProps(`profile-account-record`)} style={styles.accountRecord}>

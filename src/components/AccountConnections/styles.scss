@@ -132,11 +132,11 @@
     :is(.connection-add, [data-class='connection-add'], .connections-import-env, [data-class='connections-import-env'], .connection-save, [data-class='connection-save'], .connection-reset, [data-class='connection-reset'], .connection-token-link, [data-class='connection-token-link'], .connection-access-link, [data-class='connection-access-link'], .connections-save, [data-class='connections-save'], .connections-reset, [data-class='connections-reset']) { min-height: 38px; padding: 9px 12px !important; }
 
     :is(.connections-actions, [data-class='connections-actions']) {
-      bottom: 12px;
+      bottom: 0;
       z-index: 3;
       position: sticky !important;
       padding: 8px !important;
-      border-radius: 8px;
+      border-radius: 8px 8px 0 0;
       border: 1px solid var(--line);
       background: var(--paper) !important;
     }

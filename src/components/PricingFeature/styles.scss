@@ -1,0 +1,12 @@
+.pricing-feature { gap: 9px; display: flex; font-size: 12px; line-height: 1.6; align-items: flex-start; }
+.pricing-feature-icon { margin-top: 2px; flex-shrink: 0; color: var(--muted); }
+.pricing-feature-current .pricing-feature-icon { color: var(--success); }
+.pricing-feature-proposed .pricing-feature-icon { color: var(--warning); }
+.pricing-feature-content { gap: 5px 8px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; }
+.pricing-feature-label { overflow-wrap: anywhere; }
+.pricing-feature-badges { gap: 5px; display: inline-flex; flex-wrap: wrap; }
+.pricing-feature-badge { font-size: 9px; line-height: 1.5; padding: 2px 6px; border-radius: 4px; color: var(--muted); background: var(--input); font-family: var(--font-bold); }
+.pricing-feature-badge-current { color: var(--success); background: var(--success-bg); }
+.pricing-feature-badge-proposed { color: var(--warning); background: var(--warning-bg); }
+.pricing-feature-badge-competitor { color: var(--ink); background: var(--subtle); }
+.pricing-feature-badge-highlight { color: var(--accent); background: var(--subtle); }

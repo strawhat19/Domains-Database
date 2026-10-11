@@ -7,6 +7,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   roomyButton: { flexGrow: 1, flexBasis: 180 },
   headingText: { flex: 1 },
   buttonText: { flex: 1 },
+  whiteText: { color: `#ffffff` },
   root: { gap: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: palette.line },
   roomyRoot: { flex: 1, minWidth: 0, paddingTop: 0, paddingLeft: 16, borderTopWidth: 0, borderLeftWidth: 1, borderLeftColor: palette.line },
   disabled: { opacity: .55 },

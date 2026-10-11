@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'expo-router';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { useWatching } from '../../shared/watching/useWatching';
 import { getAccountBadgeColors } from '../../shared/common/badges';
 import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
@@ -15,7 +14,6 @@ export const useUserMenu = () => {
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
-  const { records, loading: watchingLoading } = useWatching();
   const { verifiedConnectionCount, connectionsCountLoading } = useConnectionAvailability();
   const { palette } = useTheme();
   const [open, setOpen] = useState(false);
@@ -85,7 +83,6 @@ export const useUserMenu = () => {
       if (currentPhotoRequest.current === photoRequestKey) setPhotoState({ key: photoKey, attempt: photoAttempt, failed: true, loaded: false });
     },
     badgeColors: getAccountBadgeColors(auth.user),
-    watchingCount: watchingLoading ? 0 : records.filter(record => record.listName === `Watching`).length,
     close: () => setOpen(false),
     toggle: () => setOpen(current => !current),
   };

@@ -6,7 +6,7 @@ import { firebaseEnabled } from '../../shared/firebase/config';
 
 const ProfileSettings = () => {
   const state = useProfileSettings();
-  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `Your preferences are saved in Firebase. Cloud Community sharing is not connected yet.` : `Connect a backend to save your profile preferences.`;
+  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `` : `Connect a backend to save your profile preferences.`;
   return (
     <form id={`profile-settings`} className={`profile-settings`} onSubmit={event => { event.preventDefault(); void state.save(); }}>
       <dl id={`profile-settings-record`} className={`profile-record profile-settings-record`}>
@@ -26,7 +26,7 @@ const ProfileSettings = () => {
         <div id={`profile-email-field`} className={`profile-record-row profile-input-row`}>
           <dt id={`profile-email-label`} className={`profile-record-label`}><label htmlFor={`profile-email-input`} id={`profile-email-input-label`} className={`profile-input-label`}>{`Email`}</label></dt>
           <dd id={`profile-email-value`} className={`profile-record-value profile-email-field`}>
-            {state.isGoogle && <img width={18} height={18} src={`/analytics/brands/google.svg`} alt={`Google Account`} id={`profile-email-provider-icon`} className={`profile-email-provider-icon`} />}
+            {state.isGoogle && <img width={18} height={18} src={`/images/google-g.png`} alt={`Google Account`} id={`profile-email-provider-icon`} className={`profile-email-provider-icon`} />}
             <input disabled readOnly type={`email`} name={`email`} value={state.email} id={`profile-email-input`} className={`profile-input profile-email-input`} />
           </dd>
         </div>
@@ -40,7 +40,6 @@ const ProfileSettings = () => {
             <div role={`radiogroup`} aria-labelledby={`profile-privacy-label`} id={`profile-privacy-options`} className={`profile-privacy-options`}>
               {[{ value: `private`, label: `Private`, Icon: Lock }, { value: `public`, label: `Public`, Icon: Globe2 }].map(({ value, label, Icon }) => <button key={value} type={`button`} role={`radio`} aria-checked={state.privacy === value} disabled={state.busy} id={`profile-privacy-option-${value}`} className={`profile-privacy-option${state.privacy === value ? ` is-selected` : ``}`} onClick={() => state.changePrivacy(value as `private` | `public`)}><Icon size={16} aria-hidden id={`profile-privacy-icon-${value}`} className={`profile-privacy-icon`} />{label}</button>)}
             </div>
-            <p id={`profile-privacy-copy`} className={`profile-settings-copy`}>{`Profiles start private. Email and account connection credentials are never shared with Community.`}</p>
           </dd>
         </div>
         <div id={`profile-sharing-field`} className={`profile-record-row`}>
@@ -50,7 +49,7 @@ const ProfileSettings = () => {
               <input type={`checkbox`} role={`switch`} id={`profile-domains-sharing-switch`} className={`profile-sharing-switch`} disabled={state.busy || state.privacy !== `public`} checked={state.privacy === `public` && state.publicDomains} aria-checked={state.privacy === `public` && state.publicDomains} onChange={event => state.setPublicDomains(event.target.checked)} />
               <span id={`profile-domains-sharing-text`} className={`profile-domains-sharing-text`}>{`Share Domain Names`}</span>
             </label>
-            <p id={`profile-sharing-note`} className={`profile-settings-copy`}>{sharingNote}</p>
+            {sharingNote && <p id={`profile-sharing-note`} className={`profile-settings-copy`}>{sharingNote}</p>}
           </dd>
         </div>
       </dl>

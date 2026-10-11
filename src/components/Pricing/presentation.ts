@@ -11,4 +11,3 @@ export const getPricingAmount = (plan: Plan) => {
 };
 export const getPricingPeriod = (plan: Plan) => plan.priceCents === 0 ? `` : plan.billingInterval === `month` ? ` / Month` : plan.billingInterval === `year` ? ` / Year` : ` / One Time`;
 export const pricingDescription = `Explore the plans and features for your next idea. Contact us to discuss the option that fits your portfolio.`;
-export const pricingNote = `Paid plans are available for enquiries only. Online purchases are not available yet. Domain registration and hosting are billed separately by your providers.`;

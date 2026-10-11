@@ -149,16 +149,17 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
   );
 };
 
-const DomainMarquee = ({ scope = `header`, translucent = false }: { scope?: string; translucent?: boolean }) => {
+const DomainMarquee = ({ scope = `header`, translucent = false, backgroundColor }: { scope?: string; translucent?: boolean; backgroundColor?: string }) => {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const { items, loading, showDomains } = useDomainMarquee();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const surface = backgroundColor ?? palette.canvas;
   const fadeWidth = Math.max(32, Math.min(72, width * .06));
 
   return (
     <View
-      style={[styles.bar, { width }, translucent && { backgroundColor: `${palette.canvas}e6` }]}
+      style={[styles.bar, { width, backgroundColor: translucent ? `${surface}e6` : surface }]}
       {...elementProps(`native-domain-marquee`, scope)}
       accessibilityLabel={showDomains ? `Your domains` : `Notifications`}
     >
@@ -198,13 +199,13 @@ const DomainMarquee = ({ scope = `header`, translucent = false }: { scope?: stri
                 >
                   <Stop
                     offset={`0%`}
-                    stopColor={palette.canvas}
+                    stopColor={surface}
                     stopOpacity={side === `left` ? 1 : 0}
                     {...elementProps(`native-domain-marquee-fade-start`, suffix)}
                   />
                   <Stop
                     offset={`100%`}
-                    stopColor={palette.canvas}
+                    stopColor={surface}
                     stopOpacity={side === `left` ? 0 : 1}
                     {...elementProps(`native-domain-marquee-fade-end`, suffix)}
                   />

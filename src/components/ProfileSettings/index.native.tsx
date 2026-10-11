@@ -16,7 +16,7 @@ const ProfileSettings = () => {
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `Your preferences are saved in Firebase. Cloud Community sharing is not connected yet.` : `Connect a backend to save your profile preferences.`;
+  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `` : `Connect a backend to save your profile preferences.`;
   const row = (id: string, label: string, value: ReactNode, input = false) => <View {...elementProps(`profile-record-row`, id)} style={[styles.row, id !== `name` && styles.separatedRow]}>
     <Text {...elementProps(`profile-label`, id)} style={[styles.label, width <= 480 && styles.compactLabel, input && styles.inputLabel]}>{label}</Text>
     <View {...elementProps(`profile-value`, id)} style={styles.value}>{value}</View>
@@ -48,14 +48,13 @@ const ProfileSettings = () => {
           <Text {...elementProps(`profile-privacy-label`, value)} style={[styles.optionLabel, state.privacy === value && styles.selectedLabel]}>{label}</Text>
         </Pressable>)}
       </View>
-      <Text {...elementProps(`profile-privacy-copy`)} style={styles.copy}>{`Profiles start private. Email and account connection credentials are never shared with Community.`}</Text>
     </>)}
     {row(`sharing`, `Portfolio`, <>
       <View {...elementProps(`profile-domains-sharing`)} style={styles.sharing}>
         <Switch {...elementProps(`profile-domains-sharing-switch`)} accessibilityLabel={`Share Domain Names`} onValueChange={state.setPublicDomains} disabled={state.busy || state.privacy !== `public`} value={state.privacy === `public` && state.publicDomains} trackColor={{ false: palette.line, true: palette.accent }} />
         <Text {...elementProps(`profile-domains-sharing-text`)} style={styles.sharingText}>{`Share Domain Names`}</Text>
       </View>
-      <Text {...elementProps(`profile-sharing-note`)} style={styles.copy}>{sharingNote}</Text>
+      {!!sharingNote && <Text {...elementProps(`profile-sharing-note`)} style={styles.copy}>{sharingNote}</Text>}
     </>)}
   </View>;
 };

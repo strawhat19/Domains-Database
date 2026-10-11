@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "currency": "USD",
+  "researchedOn": "2026-10-11",
+  "position": "Introductory monthly enquiry prices. Paid features marked Planned are not available yet; catalog publication does not change account entitlements.",
+  "sources": [
+    {
+      "name": "TryDomainio",
+      "url": "https://www.trydomain.io/",
+      "notes": "Publishes Pro at $5/month and Business at $11/month; Enterprise is custom-priced. Closest domain-monitoring and portfolio comparator."
+    },
+    {
+      "name": "Efty Investor",
+      "url": "https://efty.com/pricing/",
+      "notes": "Monthly Basic starts at $22 and Starter is $34. Includes a broader sales toolkit, so it supports an upper benchmark rather than direct feature parity."
+    },
+    {
+      "name": "Aftermarket",
+      "url": "https://aftermarket.com/register",
+      "notes": "Advertises free portfolio tools. Supports keeping basic organization and tracking in the Free tier."
+    }
+  ],
+  "plans": [
+    {
+      "name": "Free",
+      "slug": "free",
+      "active": true,
+      "currency": "USD",
+      "priceCents": 0,
+      "displayOrder": 0,
+      "highlighted": false,
+      "billingInterval": "month",
+      "description": "A home for your names and next ideas.",
+      "features": [
+        "Domain portfolio",
+        "CSV import & export",
+        "Projects, groups & tags",
+        "Registrar & renewal tracking"
+      ]
+    },
+    {
+      "name": "Pro",
+      "slug": "pro",
+      "active": true,
+      "currency": "USD",
+      "priceCents": 500,
+      "displayOrder": 1,
+      "highlighted": true,
+      "billingInterval": "month",
+      "description": "More insight for your next decision. Planned tier with introductory pricing; enquiries only.",
+      "features": [
+        "Everything in Free",
+        "Planned: Scheduled registrar sync",
+        "Planned: Advanced portfolio insights",
+        "Planned: Automated renewal reminders"
+      ]
+    },
+    {
+      "name": "Team",
+      "slug": "team",
+      "active": true,
+      "currency": "USD",
+      "priceCents": 1500,
+      "displayOrder": 2,
+      "highlighted": false,
+      "billingInterval": "month",
+      "description": "Shared clarity from idea to launch. Planned collaboration tier with introductory pricing; enquiries only.",
+      "features": [
+        "Everything in Free",
+        "Planned: Pro features",
+        "Planned: Priority support",
+        "Planned: Shared team workspaces",
+        "Planned: Portfolio activity history",
+        "Planned: Member roles & permissions"
+      ]
+    },
+    {
+      "name": "Enterprise",
+      "slug": "enterprise",
+      "active": true,
+      "currency": "USD",
+      "priceCents": 3900,
+      "displayOrder": 3,
+      "highlighted": false,
+      "billingInterval": "month",
+      "description": "A tailored plan for larger portfolios and organizations. Planned tier with introductory pricing; enquiries only.",
+      "features": [
+        "Everything in Free",
+        "Planned: Team features",
+        "Planned: Configurable renewal workflows",
+        "Planned: Organization-wide activity history",
+        "Planned: Consolidated multi-portfolio reports"
+      ]
+    }
+  ]
+}

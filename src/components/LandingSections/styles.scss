@@ -79,10 +79,15 @@
 .landing-plan-preview { margin: auto 0 4px; font-size: 9px; line-height: 1.7; color: var(--muted); }
 .landing-plan .landing-button { margin-top: auto; }
 .landing-final-cta { overflow: hidden; position: relative; background: var(--subtle); }
+.landing-workflow { gap: 6px 10px; display: flex; flex-wrap: wrap; letter-spacing: .08em; justify-content: center; }
+.landing-workflow-icon { flex-shrink: 0; color: var(--accent); }
+.landing-workflow-label { color: var(--strong-text); }
+.landing-workflow-step { gap: 4px; display: inline-flex; align-items: center; white-space: nowrap; }
 .landing-final-inner { display: flex; text-align: center; align-items: center; flex-direction: column; }
 .landing-final-inner .landing-section-title { max-width: 100%; white-space: nowrap; font-size: clamp(32px, 4vw, 56px); }
 .landing-final-inner .landing-section-description { max-width: 520px; }
 .landing-final-actions { gap: 24px; display: flex; margin-top: 28px; align-items: center; justify-content: center; }
+#landing-final-guides .landing-link-label { color: var(--strong-text); }
 
 @keyframes landing-activity-blink { 0%, 100% { opacity: .4; } 38%, 58% { opacity: 1; } }
 @keyframes landing-cta-activity-wave { 0%, 65%, 100% { opacity: .3; transform: scale(.75); } 30% { opacity: 1; transform: scale(1); } }

@@ -73,7 +73,7 @@ const allAccountActions: AccountActionOption[] = [
   },
   {
     id: `delete-data`,
-    label: `Delete Account Data`,
+    label: `Delete Data`,
     copy: `Clear this account's saved app data while keeping its login and registrar connections`,
     outcome: `This action has no Undo. Registrar sync can fetch provider data again, but app-only notes, custom metadata, groups and collections are not restored by sync`,
     sections: [
@@ -88,7 +88,7 @@ const allAccountActions: AccountActionOption[] = [
   },
   {
     id: `delete-data-connections`,
-    label: `Delete Account Data + Connections`,
+    label: `Delete Data + Connections`,
     copy: `Clear this account's saved app data and registrar connections while keeping its login`,
     outcome: `This action has no Undo. Removed app-only notes, custom metadata, groups, collections and ${cloudAccountActions ? `saved` : `locally saved`} credentials are not restored automatically`,
     sections: [

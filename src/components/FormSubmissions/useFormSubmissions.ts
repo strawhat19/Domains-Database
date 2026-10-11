@@ -52,7 +52,7 @@ export const useFormSubmissions = () => {
     setMutation({ request, savingId: id, error: `` });
     try {
       await formSubmissionsAPI.updateSubmissionStatus(id, status);
-      if (current()) setNotice({ actor, message: `Request Status Updated` });
+      if (current()) setNotice({ actor, message: `Submission Status Updated` });
     } catch (failure) {
       if (current()) setMutation(previous => ({ ...previous, error: errorMessage(failure, `Could Not Update Submission Status`) }));
     } finally {

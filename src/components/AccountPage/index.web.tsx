@@ -29,7 +29,6 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
         <div id={`profile-details`} className={`profile-details`}>
           <span id={`account-eyebrow`} className={`account-eyebrow`}>{`Your Account`}</span>
           <h1 id={`account-title`} className={`account-title`}><UserRound size={28} aria-hidden id={`account-title-icon`} className={`account-title-icon`} /><span id={`account-title-copy`} className={`account-title-copy`}>{`Hello, `}<em id={`account-title-name`} className={`account-title-name`}>{`${user.name}.`}</em></span></h1>
-          <p id={`account-description`} className={`account-description`}>{`Your account uses ${state.providerLabel === `Local Demo` ? `a local demo on this device` : state.providerLabel}.`}</p>
           <ProfileSettings />
           <dl id={`profile-account-record`} className={`profile-record profile-account-record`}>
             <div id={`profile-account-row`} className={`profile-record-row profile-input-row`}>

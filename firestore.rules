@@ -13,6 +13,8 @@ service cloud.firestore {
     function planPath(planId) { return /databases/$(database)/documents/plans/$(planId); }
     function planCounterPath() { return /databases/$(database)/documents/counters/plans; }
     function planSlugPath(slug) { return /databases/$(database)/documents/planSlugs/$(slug); }
+    function eventPath(eventId) { return /databases/$(database)/documents/events/$(eventId); }
+    function eventCounterPath() { return /databases/$(database)/documents/counters/events; }
     function ownsAccount(userId) {
       return signedIn() && exists(identityPath()) && get(identityPath()).data.id == userId
         && get(userPath(userId)).data.firebase_uid == request.auth.uid && get(userPath(userId)).data.active == true;
@@ -175,6 +177,29 @@ service cloud.firestore {
         && !exists(planPath(data.lastPlanId)) && getAfter(planPath(data.lastPlanId)).data.id == data.lastPlanId
         && getAfter(planPath(data.lastPlanId)).data.number == data.number;
     }
+    function eventValues() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'name', 'type', 'allDay', 'endsAt', 'number', 'created', 'updated', 'startsAt', 'location', 'creatorId', 'description'])
+        && data.keys().hasOnly(['id', 'name', 'type', 'allDay', 'endsAt', 'number', 'created', 'updated', 'startsAt', 'location', 'creatorId', 'description'])
+        && data.type == 'Event' && data.id is string && data.id.size() <= 240
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100 && data.name.matches('.*[^\\s].*')
+        && data.location is string && data.location.size() <= 200 && data.description is string && data.description.size() <= 2000
+        && data.creatorId is string && data.creatorId.size() <= 240
+        && data.creatorId.matches('User_[1-9][0-9]*_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
+        && data.allDay is bool && data.startsAt is timestamp && data.endsAt is timestamp
+        && data.endsAt > data.startsAt && data.endsAt - data.startsAt <= duration.value(366, 'd')
+        && (!data.allDay || (data.startsAt == data.startsAt.date() && data.endsAt == data.endsAt.date()))
+        && data.created is timestamp && data.updated == request.time;
+    }
+    function newEventCounter() {
+      let data = request.resource.data;
+      return isAccountAdmin() && data.keys().hasAll(['number', 'lastEventId']) && data.keys().hasOnly(['number', 'lastEventId'])
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991 && data.lastEventId is string && data.lastEventId.size() <= 240
+        && data.number == (exists(eventCounterPath()) ? get(eventCounterPath()).data.number + 1 : 1)
+        && !exists(eventPath(data.lastEventId)) && getAfter(eventPath(data.lastEventId)).data.id == data.lastEventId
+        && getAfter(eventPath(data.lastEventId)).data.number == data.number;
+    }
     match /identities/{firebaseUid} {
       allow get: if signedIn() && firebaseUid == request.auth.uid;
       allow create: if firebaseUid == request.auth.uid && newIdentity()
@@ -199,6 +224,10 @@ service cloud.firestore {
     match /counters/plans {
       allow get: if isAccountAdmin();
       allow create, update: if newPlanCounter();
+    }
+    match /counters/events {
+      allow get: if isAccountAdmin();
+      allow create, update: if newEventCounter();
     }
     match /counters/adminAudits {
       allow get: if isAccountAdmin();
@@ -263,6 +292,21 @@ service cloud.firestore {
         && request.resource.data.id is string && request.resource.data.slug == slug && !exists(planPath(request.resource.data.id))
         && getAfter(planPath(request.resource.data.id)).data.id == request.resource.data.id
         && getAfter(planPath(request.resource.data.id)).data.slug == slug;
+    }
+    match /events/{eventId} {
+      allow get: if isAccountAdmin();
+      allow list: if isAccountAdmin() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 501;
+      allow create: if isAccountAdmin() && eventValues() && recordIdentity(eventId, 'Event')
+        && eventId.matches('Event_' + string(request.resource.data.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
+        && request.resource.data.creatorId == actorId() && request.resource.data.created == request.time
+        && getAfter(eventCounterPath()).data.lastEventId == eventId && getAfter(eventCounterPath()).data.number == request.resource.data.number
+        && request.resource.data.number == (exists(eventCounterPath()) ? get(eventCounterPath()).data.number + 1 : 1);
+      allow update: if isAccountAdmin() && eventValues() && recordIdentity(eventId, 'Event')
+        && request.resource.data.id == resource.data.id && request.resource.data.type == resource.data.type
+        && request.resource.data.number == resource.data.number && request.resource.data.creatorId == resource.data.creatorId
+        && request.resource.data.created == resource.data.created
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'allDay', 'endsAt', 'updated', 'startsAt', 'location', 'description']);
+      allow delete: if isAccountAdmin();
     }
     match /formSubmissions/{submissionId} {
       allow read: if isOwner();

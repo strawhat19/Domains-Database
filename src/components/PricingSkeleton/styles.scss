@@ -1,0 +1,20 @@
+.pricing-skeleton-sr-only { width: 1px; height: 1px; border: 0; margin: -1px; padding: 0; overflow: hidden; position: absolute; clip-path: inset(50%); white-space: nowrap; }
+.pricing-skeleton-content { gap: 12px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pricing-skeleton-placeholder { height: 12px; display: block; border-radius: 4px; background: var(--skeleton); animation: pricing-skeleton-pulse 1.8s ease-in-out infinite; }
+.pricing-skeleton-title { width: 48%; height: 24px; }
+.pricing-skeleton-description { gap: 8px; display: flex; flex-direction: column; }
+.pricing-skeleton-short { width: 76%; }
+.pricing-skeleton-price { width: 55%; height: 40px; margin-block: 12px; }
+.pricing-skeleton-feature { gap: 10px; display: flex; align-items: flex-start; }
+.pricing-skeleton-icon { width: 14px; height: 14px; flex-shrink: 0; }
+.pricing-skeleton-feature-content { gap: 5px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pricing-skeleton-badges { gap: 5px; display: flex; flex-wrap: wrap; }
+.pricing-skeleton-badge { width: 50px; height: 17px; }
+.pricing-skeleton-badge-wide { width: 72px; }
+.pricing-skeleton-action { width: 100%; height: 44px; margin-top: auto; }
+
+@keyframes pricing-skeleton-pulse { 50% { opacity: .45; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-skeleton-placeholder { animation: none; }
+}

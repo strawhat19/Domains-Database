@@ -22,6 +22,7 @@ export enum Types {
   User = `User`,
   Post = `Post`,
   Plan = `Plan`,
+  Event = `Event`,
   Follow = `Follow`,
   Visit = `Visit`,
   Domain = `Domain`,

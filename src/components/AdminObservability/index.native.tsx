@@ -79,10 +79,10 @@ const AdminObservability = ({ compact = false }: { compact?: boolean; headingAct
   const options = compact ? compactTrends : state.activeView.metrics;
   const setupError = error?.code.includes(`configured`) || error?.code.includes(`configuration`);
   const plusError = error?.code === `observability_plus_required`;
-  const errorTitle = plusError ? `Observability Plus Required` : setupError ? `Connect Vercel Observability` : `Runtime Health Unavailable`;
+  const errorTitle = plusError ? `Observability Plus Required` : setupError ? `Connect Vercel Observability` : `Health Unavailable`;
   return <View {...elementProps(`admin-runtime`, id)} style={styles.root}>
     <View {...elementProps(`admin-runtime-toolbar`, id)} style={styles.toolbar}>
-      <View {...elementProps(`admin-runtime-heading`, id)} style={styles.source}><Cpu {...elementProps(`admin-runtime-heading-icon`, id)} size={17} color={palette.accent} /><Text {...elementProps(`admin-runtime-title`, id)} style={styles.title} accessibilityRole={`header`}>{`Runtime Health`}</Text>{report ? <StatusCell id={`${id}-source`} label={`Vercel Observability`} /> : null}</View>
+      <View {...elementProps(`admin-runtime-heading`, id)} style={styles.source}><Cpu {...elementProps(`admin-runtime-heading-icon`, id)} size={17} color={palette.accent} /><Text {...elementProps(`admin-runtime-title`, id)} style={styles.title} accessibilityRole={`header`}>{`Health`}</Text>{report ? <StatusCell id={`${id}-source`} label={`Vercel Observability`} /> : null}</View>
       <View {...elementProps(`admin-runtime-actions`, id)} style={styles.controls}>
         <AdminButton id={`${id}-refresh`} Icon={RefreshCw} label={`Refresh`} disabled={loading} onPress={state.refresh} />
         {!compact ? <AdminButton id={`${id}-export`} Icon={Download} label={`Export JSON`} disabled={loading || !report} onPress={() => { void state.exportReport(); }} /> : null}
@@ -98,11 +98,11 @@ const AdminObservability = ({ compact = false }: { compact?: boolean; headingAct
       <View {...elementProps(`admin-runtime-error-actions`, id)} style={styles.controls}><AdminButton id={`${id}-retry`} Icon={RefreshCw} label={`Retry`} disabled={loading} onPress={state.refresh} /></View>
     </View> : null}
     {state.exportError ? <Text {...elementProps(`admin-runtime-export-error`, id)} style={styles.errorText} accessibilityRole={`alert`}>{state.exportError}</Text> : null}
-    {loading ? <><AdminStats id={`${id}-loading`} loading stats={metrics.map(key => ({ id: key, label: runtimeMetrics[key].label, Icon: runtimeMetrics[key].Icon, value: `—` }))} /><AdminLoading id={id} label={`Loading Vercel Runtime Health`} /></> : null}
+    {loading ? <><AdminStats id={`${id}-loading`} loading stats={metrics.map(key => ({ id: key, label: runtimeMetrics[key].label, Icon: runtimeMetrics[key].Icon, value: `—` }))} /><AdminLoading id={id} label={`Loading Vercel Health`} /></> : null}
     {report ? <>
       <AdminStats id={id} stats={metrics.map(key => ({ id: key, label: runtimeMetrics[key].label, Icon: runtimeMetrics[key].Icon, hint: runtimeMetrics[key].hint, value: formatRuntimeValue(key, report.totals?.[key]) }))} />
       <AdminPanel id={`${id}-measurements`} title={compact ? `Runtime Over Time` : `Runtime Measurements`} note={`${formatRuntimeTime(report.start, period)} – ${formatRuntimeTime(report.end, period)} · — Means The Provider Has No Available Measurement`}>
-        {!compact ? <View {...elementProps(`admin-runtime-views`, id)} style={styles.controls} accessibilityLabel={`Runtime Health Views`}>
+        {!compact ? <View {...elementProps(`admin-runtime-views`, id)} style={styles.controls} accessibilityLabel={`Health Views`}>
           {runtimeViews.map(item => <RuntimeChoice key={item.key} id={`${id}-view-${item.key}`} state={state} Icon={item.Icon} label={item.label} selected={view === item.key} onPress={() => state.selectView(item.key)} />)}
         </View> : null}
         <View {...elementProps(`admin-runtime-metric-toolbar`, id)} style={styles.toolbar}>
@@ -144,7 +144,7 @@ const AdminObservability = ({ compact = false }: { compact?: boolean; headingAct
     </> : null}
     {!loading && !error && !report ? <Text {...elementProps(`admin-runtime-unavailable`, id)} style={styles.muted}>{`Runtime Reporting Is Unavailable For This Account`}</Text> : null}
     {compact ? <Link {...elementProps(`admin-runtime-link-target`, id)} href={`/admin/observability`} asChild><Pressable {...elementProps(`admin-runtime-link`, id)} style={styles.link}>
-      <Cpu {...elementProps(`admin-runtime-link-icon`, id)} size={14} color={palette.accent} /><Text {...elementProps(`admin-runtime-link-label`, id)} style={styles.linkText}>{`Open Runtime Health`}</Text><ArrowRight {...elementProps(`admin-runtime-link-arrow`, id)} size={14} color={palette.accent} />
+      <Cpu {...elementProps(`admin-runtime-link-icon`, id)} size={14} color={palette.accent} /><Text {...elementProps(`admin-runtime-link-label`, id)} style={styles.linkText}>{`Open Health`}</Text><ArrowRight {...elementProps(`admin-runtime-link-arrow`, id)} size={14} color={palette.accent} />
     </Pressable></Link> : null}
   </View>;
 };

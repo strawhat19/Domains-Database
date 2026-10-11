@@ -9,9 +9,16 @@ import LandingOverview from '../LandingOverview';
 import { getBlogHref } from '../../shared/blog/metadata';
 import { domainBasics, ctaActivityCells } from './content';
 import { useLandingActivity } from './useLandingActivity.web';
-import { Globe2, Server, LayoutTemplate, BookOpen, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { Play, Rocket, Globe2, Server, BookOpen, Lightbulb, Settings2, ArrowRight, ArrowUpRight, ClipboardList, LayoutTemplate } from 'lucide-react';
 
 const basicIcons = { domain: Globe2, hosting: Server, website: LayoutTemplate };
+const workflowSteps = [
+  { id: `idea`, label: `Idea.`, Icon: Lightbulb },
+  { id: `plan`, label: `Plan.`, Icon: ClipboardList },
+  { id: `manage`, label: `Manage.`, Icon: Settings2 },
+  { id: `execute`, label: `Execute.`, Icon: Play },
+  { id: `launch`, label: `Launch.`, Icon: Rocket },
+];
 
 const LandingSections = () => {
   const ctaActivity = useLandingActivity();
@@ -107,7 +114,16 @@ const LandingSections = () => {
 
       <section id={`landing-final-cta`} className={`landing-section landing-final-cta`} aria-labelledby={`landing-final-title`}>
         <div id={`landing-final-inner`} className={`landing-section-inner landing-final-inner`}>
-          <p id={`landing-final-eyebrow`} className={`landing-eyebrow`}>{`Idea. Plan. Manage. Execute. Launch.`}</p>
+          <p id={`landing-final-eyebrow`} className={`landing-eyebrow landing-workflow`}>
+            {workflowSteps.map(({ id, label, Icon }) => <span
+              key={id}
+              className={`landing-workflow-step`}
+              id={`landing-final-workflow-${id}`}
+            >
+              <Icon size={13} aria-hidden className={`landing-workflow-icon`} id={`landing-final-workflow-icon-${id}`} />
+              <span className={`landing-workflow-label`} id={`landing-final-workflow-label-${id}`}>{label}</span>
+            </span>)}
+          </p>
           <h2 id={`landing-final-title`} className={`landing-section-title`}>{`Give your next idea a name.`}</h2>
           <p id={`landing-final-description`} className={`landing-section-description`}>{`Find the address. Keep the details together. Build what comes next.`}</p>
           <div id={`landing-final-actions`} className={`landing-final-actions`}>

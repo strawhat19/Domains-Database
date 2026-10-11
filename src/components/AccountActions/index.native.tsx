@@ -63,7 +63,7 @@ const AccountActions = ({ stacked = false }: { stacked?: boolean }) => {
           style={[styles.button, state.disabled && styles.disabled]}
         >
           <LogOut {...elementProps(`account-signout-icon`)} size={16} color={palette.danger} />
-          <Text {...elementProps(`account-signout-text`)} style={styles.text}>{`Sign Out`}</Text>
+          <Text {...elementProps(`account-signout-text`)} style={[styles.text, styles.whiteText]}>{`Sign Out`}</Text>
         </Pressable>
       </View>
       {Boolean(state.signOutError) && <Text {...elementProps(`account-signout-error`)} style={styles.error} accessibilityRole={`alert`}>{state.signOutError}</Text>}
@@ -83,7 +83,12 @@ const AccountActions = ({ stacked = false }: { stacked?: boolean }) => {
                   style={[styles.button, state.roomy && !stacked && styles.roomyButton, state.disabled && styles.disabled]}
                 >
                   <Icon {...elementProps(`account-action-icon`, action.id)} size={16} color={palette.danger} />
-                  <Text {...elementProps(`account-action-text`, action.id)} style={[styles.text, styles.buttonText, styles.dangerText]}>{action.label}</Text>
+                  <Text
+                    {...elementProps(`account-action-text`, action.id)}
+                    style={[styles.text, styles.buttonText, action.id === `delete-data` || action.id === `delete-data-connections` ? styles.whiteText : styles.dangerText]}
+                  >
+                    {action.label}
+                  </Text>
                 </Pressable>
               );
             })}

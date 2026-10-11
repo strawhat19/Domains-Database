@@ -31,6 +31,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
   const blurTargetRef = useRef<View>(null);
   const styles = useMemo(() => createStyles(palette), [palette]);
   const scroll = useShellScroll(pathname, sticky);
+  const accountShell = pathname === `/admin` || pathname.startsWith(`/admin/`)
+    || pathname === routes.dashboard.href || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
   const blurOpacity = useMemo(() => scroll.headerOpacity.interpolate({
     inputRange: [.86, 1],
     outputRange: [1, 0],
@@ -68,8 +70,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             />
           </Animated.View>
         )}
-        <Animated.View {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, { pointerEvents: `none`, opacity: scroll.headerOpacity, backgroundColor: palette.paper }]} />
-        <DomainMarquee translucent={scroll.scrolled} />
+        <Animated.View {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, { pointerEvents: `none`, opacity: scroll.headerOpacity, backgroundColor: accountShell ? palette.subtle : palette.paper }]} />
+        <DomainMarquee translucent={scroll.scrolled} backgroundColor={accountShell ? palette.subtle : undefined} />
         <View {...elementProps(`native-header-row`)} style={styles.headerRow}>
           <Link href={`/`} asChild>
             <Pressable {...elementProps(`native-brand-link`)} accessibilityLabel={`Domains Database Home`}>

@@ -1,5 +1,6 @@
 import './styles.scss';
 import { Link } from 'expo-router';
+import type { ReactElement } from 'react';
 import RouterAnchor from '../RouterAnchor';
 import SidebarTooltip from './SidebarTooltip.web';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
@@ -12,6 +13,48 @@ const AccountSidebar = (props: AccountSidebarProps) => {
   const badge = (link: SidebarLink, id: string) => link.countLoading
     ? <span aria-hidden id={id} className={`account-sidebar-badge account-sidebar-count-skeleton`} />
     : link.count && link.count > 0 ? <span aria-hidden id={id} className={`account-sidebar-badge`}>{link.count.toLocaleString(`en-US`)}</span> : null;
+  const iconOnly = state.collapsed && !state.compact;
+  const renderItem = (link: SidebarLink, parentId: string, depth = 0): ReactElement => {
+    const Icon = link.Icon;
+    const id = `${parentId}-${link.id}`;
+    const linkId = depth ? id : `${id}-link`;
+    const expanded = iconOnly || state.expandedRoutes.includes(link.id);
+    const hasChildren = Boolean(link.children?.length);
+    return <div key={link.id} id={depth ? `${id}-item` : id} className={`account-sidebar-item${depth ? ` account-sidebar-child-item` : ``}${hasChildren ? ` has-submenu` : ``}`}>
+      <div id={`${id}-heading`} className={`account-sidebar-heading${hasChildren ? ` has-submenu` : ``}${state.isGroupActive(link) ? ` is-current` : ``}`}>
+        <Link href={link.href} asChild>
+          <RouterAnchor
+            id={linkId}
+            aria-label={state.getCountLabel(link)}
+            aria-current={state.isActive(link) ? `page` : undefined}
+            className={`account-sidebar-link${depth ? ` account-sidebar-child-link` : ``}`}
+            {...getTooltipProps(linkId, iconOnly ? state.getCountLabel(link) : undefined)}
+          >
+            <Icon size={depth ? 15 : 17} aria-hidden id={`${id}-icon`} className={`account-sidebar-link-icon`} />
+            <span id={`${id}-label`} className={`account-sidebar-link-label`}>{link.label}</span>
+            {badge(link, `${id}-count`)}
+          </RouterAnchor>
+        </Link>
+        {hasChildren && !iconOnly && <button
+          type={`button`}
+          id={`${id}-toggle`}
+          aria-expanded={expanded}
+          aria-controls={`${id}-submenu`}
+          className={`account-sidebar-toggle`}
+          onClick={() => state.toggleSubmenu(link.id)}
+          aria-label={`${expanded ? `Collapse` : `Expand`} ${link.label} Submenu`}
+          {...getTooltipProps(`${id}-toggle`, `${expanded ? `Collapse` : `Expand`} ${link.label}`)}
+        ><ChevronDown size={16} aria-hidden id={`${id}-toggle-icon`} className={`account-sidebar-toggle-icon`} /></button>}
+      </div>
+      {hasChildren && <div role={`group`} inert={!expanded} aria-hidden={!expanded} aria-labelledby={linkId} id={`${id}-submenu`} className={`account-sidebar-submenu${expanded ? ` is-open` : ``}`}>
+        <div id={`${id}-submenu-inner`} className={`account-sidebar-submenu-inner`}>
+          <div id={`${id}-submenu-links`} className={`account-sidebar-submenu-links`}>
+            {link.children?.map(child => renderItem(child, id, depth + 1))}
+          </div>
+        </div>
+      </div>}
+    </div>;
+  };
   return (
     <nav
       {...tooltipEvents}
@@ -25,64 +68,7 @@ const AccountSidebar = (props: AccountSidebarProps) => {
         {state.groups.map(group => (
           <div key={group.id} id={`account-sidebar-${group.id}`} className={`account-sidebar-group`}>
             <h2 id={`account-sidebar-${group.id}-title`} className={`account-sidebar-title`}>{group.label}</h2>
-            {group.links.map(link => {
-              const Icon = link.Icon;
-              const expanded = state.collapsed || state.expandedRoutes.includes(link.id);
-              const id = `account-sidebar-${group.id}-${link.id}`;
-              const hasChildren = Boolean(link.children?.length);
-              return (
-                <div key={link.id} id={id} className={`account-sidebar-item`}>
-                  <div id={`${id}-heading`} className={`account-sidebar-heading${hasChildren ? ` has-submenu` : ``}${state.isGroupActive(link) ? ` is-current` : ``}`}>
-                    <Link href={link.href} asChild>
-                      <RouterAnchor
-                        id={`${id}-link`}
-                        aria-label={state.getCountLabel(link)}
-                        className={`account-sidebar-link`}
-                        aria-current={state.isActive(link) ? `page` : undefined}
-                        {...getTooltipProps(`${id}-link`, state.collapsed ? state.getCountLabel(link) : undefined)}
-                      >
-                        <Icon size={17} aria-hidden id={`${id}-icon`} className={`account-sidebar-link-icon`} />
-                        <span id={`${id}-label`} className={`account-sidebar-link-label`}>{link.label}</span>
-                        {badge(link, `${id}-count`)}
-                      </RouterAnchor>
-                    </Link>
-                    {hasChildren && !state.collapsed && (
-                      <button
-                        type={`button`}
-                        id={`${id}-toggle`}
-                        aria-expanded={expanded}
-                        aria-controls={`${id}-submenu`}
-                        className={`account-sidebar-toggle`}
-                        onClick={() => state.toggleSubmenu(link.id)}
-                        aria-label={`${expanded ? `Collapse` : `Expand`} ${link.label} Submenu`}
-                        {...getTooltipProps(`${id}-toggle`, `${expanded ? `Collapse` : `Expand`} ${link.label}`)}
-                      >
-                        <ChevronDown size={16} aria-hidden id={`${id}-toggle-icon`} className={`account-sidebar-toggle-icon`} />
-                      </button>
-                    )}
-                  </div>
-                  {hasChildren && (
-                    <div role={`group`} inert={!expanded} aria-hidden={!expanded} aria-labelledby={`${id}-link`} id={`${id}-submenu`} className={`account-sidebar-submenu${expanded ? ` is-open` : ``}`}>
-                      <div id={`${id}-submenu-inner`} className={`account-sidebar-submenu-inner`}>
-                        <div id={`${id}-submenu-links`} className={`account-sidebar-submenu-links`}>
-                          {link.children?.map(child => {
-                            const ChildIcon = child.Icon;
-                            const childId = `${id}-${child.id}`;
-                            return <Link key={child.id} href={child.href} asChild><RouterAnchor
-                              id={childId}
-                              aria-label={state.getCountLabel(child)}
-                              className={`account-sidebar-link account-sidebar-child-link`}
-                              aria-current={state.isActive(child) ? `page` : undefined}
-                              {...getTooltipProps(childId, state.collapsed ? state.getCountLabel(child) : undefined)}
-                            ><ChildIcon size={15} aria-hidden id={`${childId}-icon`} className={`account-sidebar-link-icon`} /><span id={`${childId}-label`} className={`account-sidebar-link-label`}>{child.label}</span>{badge(child, `${childId}-count`)}</RouterAnchor></Link>;
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {group.links.map(link => renderItem(link, `account-sidebar-${group.id}`))}
           </div>
         ))}
       </div>
