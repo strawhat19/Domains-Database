@@ -1,8 +1,9 @@
 import './styles.scss';
 import { useRef } from 'react';
 import '../DomainEditor/styles.scss';
+import { X, FileText, FolderTree, ListOrdered } from 'lucide-react';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
-import { X, Eye, EyeOff, FileText, FolderTree, ListOrdered } from 'lucide-react';
+import BooleanSetting from '../SegmentedControl/BooleanSetting.web';
 import type { PortfolioCopyFormat } from '../DomainPortfolio/copyFormats';
 
 interface PortfolioCopyOptionsProps {
@@ -44,7 +45,6 @@ const PortfolioCopyOptions = ({ busy, count, error, label, onCopy, onClose, tree
   const modalRef = useRef<HTMLDivElement>(null);
   const close = () => { if (!busy) onClose(); };
   const scopeLabel = label?.trim();
-  const HiddenIcon = hiddenOptions?.included ? Eye : EyeOff;
   useModalFocus(modalRef, true, close, !!scopeLabel);
 
   return (
@@ -90,18 +90,19 @@ const PortfolioCopyOptions = ({ busy, count, error, label, onCopy, onClose, tree
               : `Choose a numbered format for the ${count} ${count === 1 ? `domain` : `domains`} ${scopeLabel ? `in ${scopeLabel}` : `currently displayed`}.`}
         </p>
         {hiddenOptions && (
-          <label htmlFor={`${idPrefix}-include-hidden`} id={`${idPrefix}-include-hidden-label`} className={`portfolio-copy-hidden-option`}>
-            <input
-              type={`checkbox`}
+          <div id={`${idPrefix}-include-hidden-field`} className={`portfolio-copy-hidden-option`}>
+            <span id={`${idPrefix}-include-hidden-label`} className={`domain-editor-label portfolio-copy-hidden-label`}>
+              <span id={`${idPrefix}-include-hidden-text`} className={`portfolio-copy-hidden-text`}>{`Include Hidden`}</span>
+            </span>
+            <BooleanSetting
               disabled={busy}
-              checked={hiddenOptions.included}
               id={`${idPrefix}-include-hidden`}
-              className={`portfolio-copy-hidden-checkbox`}
-              onChange={event => hiddenOptions.onChange(event.target.checked)}
+              value={hiddenOptions.included}
+              onChange={hiddenOptions.onChange}
+              className={`portfolio-copy-hidden-control`}
+              labelledBy={`${idPrefix}-include-hidden-label`}
             />
-            <HiddenIcon size={15} aria-hidden={`true`} id={`${idPrefix}-include-hidden-icon`} className={`portfolio-copy-hidden-icon`} />
-            <span id={`${idPrefix}-include-hidden-text`} className={`portfolio-copy-hidden-text`}>{`Include Hidden`}</span>
-          </label>
+          </div>
         )}
         <div id={`${idPrefix}-options-list`} className={`portfolio-copy-options-list`}>
           {COPY_OPTIONS.map(({ Icon, label, format, description }) => {

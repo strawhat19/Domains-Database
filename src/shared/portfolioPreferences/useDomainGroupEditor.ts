@@ -1,3 +1,4 @@
+import { UNGROUPED_GROUP_LABEL } from './names';
 import { usePortfolioPreferences } from './usePortfolioPreferences';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -15,7 +16,7 @@ export const useDomainGroupEditor = (domainId?: string) => {
   const options = useMemo(() => {
     const collections = new Map(preferences.collections.map(collection => [collection.id, collection.name]));
     return [
-      { id: ``, label: `Ungrouped` },
+      { id: ``, label: UNGROUPED_GROUP_LABEL },
       ...preferences.customGroups.map(group => {
         const collection = group.collectionId ? collections.get(group.collectionId) : undefined;
         return { id: group.id, label: collection ? `${collection} / ${group.name}` : group.name };

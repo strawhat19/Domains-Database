@@ -84,7 +84,7 @@ export const usePortfolioAddDomains = ({ group, collection, idPrefix, onGrouped,
         trigger,
         document.getElementById(triggerId),
         focusFallbackId ? document.getElementById(focusFallbackId) : null,
-        document.getElementById(`portfolio-groups-button`),
+        document.getElementById(`portfolio-table-settings`),
       ];
       controls.find(control => control?.isConnected && !control.matches(`:disabled`)
         && !control.closest(`[aria-hidden='true'], [hidden], [inert]`))?.focus({ preventScroll: true });
@@ -140,7 +140,7 @@ export const usePortfolioAddDomains = ({ group, collection, idPrefix, onGrouped,
       const controls = [
         collection ? inlineInputRef.current : null,
         focusFallbackId ? document.getElementById(focusFallbackId) : null,
-        document.getElementById(`portfolio-groups-button`),
+        document.getElementById(`portfolio-table-settings`),
       ];
       controls.find(control => control?.isConnected && !control.matches(`:disabled`)
         && !control.closest(`[aria-hidden='true'], [hidden], [inert]`))?.focus({ preventScroll: true });

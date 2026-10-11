@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Save, Trash2 } from 'lucide-react';
 import type { CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { normalizePortfolioName, isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
+import { isPortfolioNameTaken, normalizePortfolioName, isReservedPortfolioGroupName } from '../../shared/portfolioPreferences/names';
 
 interface GroupEditorProps {
   count: number;
@@ -29,7 +29,10 @@ const GroupEditor = ({ count, group, onDelete, onRename }: GroupEditorProps) => 
         const trimmedName = name.trim();
         if (!trimmedName) { setError(`Enter A Group Name`); return; }
         if (trimmedName.length > 80) { setError(`Group Name Must Be 80 Characters Or Fewer`); return; }
-        if (normalizePortfolioName(trimmedName) === `ungrouped`) { setError(`Ungrouped Is A Reserved Group Name`); return; }
+        if (isReservedPortfolioGroupName(trimmedName) && normalizePortfolioName(trimmedName) !== normalizePortfolioName(group.name)) {
+          setError(`This Name Is Reserved For Domains Without A Group Or App`);
+          return;
+        }
         if (isPortfolioNameTaken(preferences, trimmedName, { groupId: group.id })) {
           setError(`A Collection Or Group With This Name Already Exists`);
           return;

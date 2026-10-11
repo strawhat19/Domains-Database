@@ -10,7 +10,7 @@ import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { normalizeGroupDetails } from '../../shared/portfolioPreferences/details';
 import type { CustomPortfolioGroup, PortfolioGroupDetails } from '../../shared/portfolioPreferences/types';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { isPortfolioNameTaken, normalizePortfolioName, getConvertedGroupName } from '../../shared/portfolioPreferences/names';
+import { isPortfolioNameTaken, normalizePortfolioName, getConvertedGroupName, isReservedPortfolioGroupName } from '../../shared/portfolioPreferences/names';
 
 export const CREATE_COLLECTION_OPTION = `create`;
 export const CONVERT_COLLECTION_OPTION = `convert`;
@@ -83,7 +83,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
       // Renaming a group can remount its heading while keeping the settings button ID.
       if (!invokingElement?.isConnected) {
         const invokingControl = invokingId ? document.getElementById(invokingId) : null;
-        (invokingControl ?? document.getElementById(`portfolio-groups-button`))?.focus();
+        (invokingControl ?? document.getElementById(`portfolio-table-settings`))?.focus();
       }
     };
   }, []);
@@ -132,13 +132,14 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     }
     const trimmedName = name.trim();
     const trimmedDescription = description.trim();
-    const reservedName = !convertingToCollection && normalizePortfolioName(trimmedName) === `ungrouped`;
+    const reservedName = !convertingToCollection && isReservedPortfolioGroupName(trimmedName)
+      && normalizePortfolioName(trimmedName) !== normalizePortfolioName(currentGroup?.name ?? group.name);
     const duplicateName = isPortfolioNameTaken(preferences, trimmedName, { groupId: group.id });
     if (!trimmedName || trimmedName.length > 80 || duplicateName || reservedName) {
       setNameFocusRequest(current => current + 1);
       setInvalidField(`name`);
       setError(reservedName
-        ? `Ungrouped Is Reserved For Domains Without A Group`
+        ? `This Name Is Reserved For Domains Without A Group Or App`
         : duplicateName ? `A Collection Or Group With This Name Already Exists`
           : `Enter A ${convertingToCollection ? `Collection` : `Group`} Name Between 1 And 80 Characters`);
       return;

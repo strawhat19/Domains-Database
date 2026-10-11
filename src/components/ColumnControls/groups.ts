@@ -1,7 +1,8 @@
 import type { PortfolioColumn } from '../../shared/portfolioColumns';
+import type { PortfolioColumnCategory } from '../../shared/portfolioPreferences/columns';
 
 export const COLUMN_GROUPS: {
-  id: string;
+  id: PortfolioColumnCategory;
   label: string;
   fields: PortfolioColumn[];
 }[] = [

@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { buildPortfolioGroups } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { normalizePortfolioName, isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
+import { isPortfolioNameTaken, isReservedPortfolioGroupName } from '../../shared/portfolioPreferences/names';
 
-export const useGroupControls = (domains: DomainRecord[]) => {
+export const useGroupControls = (domains: DomainRecord[], embedded = false) => {
   const preferences = usePortfolioPreferences();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(``);
@@ -19,7 +19,7 @@ export const useGroupControls = (domains: DomainRecord[]) => {
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (embedded || !open) return;
     const positionPanel = () => {
       const panel = panelRef.current;
       const toolbar = rootRef.current?.closest<HTMLElement>(`.portfolio-toolbar`);
@@ -59,7 +59,7 @@ export const useGroupControls = (domains: DomainRecord[]) => {
       document.removeEventListener(`keydown`, handleEscape);
       document.removeEventListener(`pointerdown`, handleOutsideClick);
     };
-  }, [open]);
+  }, [open, embedded]);
 
   const groupCount = useMemo(() => preferences.groupBy === `none` ? 0
     : preferences.groupBy === `custom` ? preferences.customGroups.length
@@ -78,7 +78,7 @@ export const useGroupControls = (domains: DomainRecord[]) => {
     const trimmedName = name.trim();
     if (!trimmedName) { setError(`Enter A Group Name`); return; }
     if (trimmedName.length > 80) { setError(`Group Name Must Be 80 Characters Or Fewer`); return; }
-    if (normalizePortfolioName(trimmedName) === `ungrouped`) { setError(`Ungrouped Is A Reserved Group Name`); return; }
+    if (isReservedPortfolioGroupName(trimmedName)) { setError(`This Name Is Reserved For Domains Without A Group Or App`); return; }
     if (isPortfolioNameTaken(preferences, trimmedName)) { setError(`A Collection Or Group With This Name Already Exists`); return; }
     if (!preferences.createGroup(trimmedName)) {
       setError(`Could Not Add Group`);

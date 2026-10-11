@@ -3,6 +3,7 @@ import type { MouseEventHandler } from 'react';
 import LinkSiteIcon from '../LinkSiteIcon/index.web';
 import DomainMetadata from '../DomainMetadata/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainNewBadge from '../DomainNewBadge/index.web';
 import { getDomainSource } from '../../shared/domainUtils';
 import DomainStarButton from '../DomainStarButton/index.web';
 import PortfolioRowCopy from '../PortfolioRowCopy/index.web';
@@ -153,6 +154,7 @@ const DomainRow = ({
                     </span>
                   </span>
                 </a>
+                <DomainNewBadge domain={domain} id={`${scope}-new-badge`} />
                 {!hideProjectDetails && previewLink && (
                   <a
                     target={`_blank`}

@@ -5,7 +5,6 @@ import { usePortfolioActionsVisibility } from './usePortfolioActionsVisibility';
 export const usePortfolioToolbar = () => {
   const actions = usePortfolioActionsVisibility();
   const [copyOpen, setCopyOpen] = useState(false);
-  const [columnsOpen, setColumnsOpen] = useState(false);
   const [copyMessage, setCopyMessage] = useState(``);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [includeHidden, setIncludeHidden] = useState(true);
@@ -22,10 +21,7 @@ export const usePortfolioToolbar = () => {
     return () => window.clearTimeout(timeout);
   }, [copyState]);
 
-  const openSettings = () => {
-    setColumnsOpen(false);
-    setSettingsOpen(true);
-  };
+  const openSettings = () => setSettingsOpen(true);
   const openCopyOptions = () => {
     if (pendingCopy.current) {
       setCopyOpen(true);
@@ -67,13 +63,11 @@ export const usePortfolioToolbar = () => {
   return {
     ...actions,
     copyOpen,
-    columnsOpen,
     copyDomains,
     copyMessage,
     includeHidden,
     settingsOpen,
     openSettings,
-    setColumnsOpen,
     openCopyOptions,
     setSettingsOpen,
     closeCopyOptions,

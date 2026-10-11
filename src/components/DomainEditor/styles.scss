@@ -159,16 +159,6 @@
 .domain-editor-icon-help { margin: 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
 .domain-editor-icon-preview { width: 56px; height: 56px; display: grid; flex-shrink: 0; border-radius: 8px; place-items: center; background: var(--canvas); border: 1px solid var(--line); }
 .domain-editor-renew-field { justify-content: flex-end; }
-.domain-editor-renew-label {
-  gap: 10px;
-  display: flex;
-  cursor: pointer;
-  min-height: 43px;
-  align-items: center;
-}
-.domain-editor-renew-checkbox { width: 17px; height: 17px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
-.domain-editor-renew-copy { gap: 4px; display: flex; min-width: 0; flex-direction: column; }
-.domain-editor-renew-title { font-size: 12px; }
 .domain-editor-renew-help { font-size: 10px; line-height: 1.5; color: var(--muted); }
 .domain-dialog-error { font-size: 12px; color: var(--danger); line-height: 1.5; margin: 16px 0 0; }
 .domain-dialog-footer {
@@ -179,7 +169,6 @@
   padding-top: 20px;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--line);
 }
 .domain-dialog-actions { gap: 8px; display: flex; margin-left: auto; align-items: center; }
 .domain-editor-delete-action { gap: 7px; min-width: 0; display: grid; justify-items: start; }

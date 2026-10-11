@@ -1,5 +1,6 @@
 import type { DomainRecord } from '../types';
 import type { DomainTag } from '../domainTags';
+import type { PortfolioColumnCategory } from './columns';
 import type { PortfolioColumn } from '../portfolioColumns';
 import type { DomainProjectStatus } from '../domainProject';
 
@@ -64,6 +65,7 @@ export interface PortfolioPreferences {
   showCosts: boolean;
   showAddRows: boolean;
   groupBy: PortfolioGroupBy;
+  databasePosition: `above` | `below`;
   hiddenDomainIds: string[];
   hiddenGroupKeys: string[];
   expandedDomainIds: string[];
@@ -77,6 +79,7 @@ export interface PortfolioPreferences {
   customGroups: CustomPortfolioGroup[];
   orders: Record<string, string[]>;
   collections: CustomPortfolioCollection[];
+  collapsedColumnCategories: PortfolioColumnCategory[];
 }
 
 export interface PortfolioGroup extends PortfolioGroupDetails {
@@ -109,6 +112,7 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   setGroupBy: (groupBy: PortfolioGroupBy) => void;
   setShowCosts: (value: boolean) => void;
   setShowAddRows: (value: boolean) => void;
+  setDatabasePosition: (position: PortfolioPreferences[`databasePosition`]) => void;
   renameGroup: (groupId: string, name: string) => boolean;
   renameCollection: (collectionId: string, name: string) => boolean;
   toggleGroupStar: (groupId: string) => boolean;
@@ -122,6 +126,7 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   toggleDomainVisibility: (domainId: string) => boolean;
   toggleCollectionCollapsed: (collectionId: string) => boolean;
   toggleCollectionVisibility: (collectionId: string) => boolean;
+  toggleColumnCategoryCollapsed: (category: PortfolioColumnCategory) => boolean;
   assignDomain: (domainId: string, groupId: string | null) => void;
   createCollection: (name: string, description?: string) => string | undefined;
   createGroup: (name: string, domainIds?: string[], collection?: Pick<GroupSettingsInput, `collectionId` | `newCollection`>) => string | undefined;

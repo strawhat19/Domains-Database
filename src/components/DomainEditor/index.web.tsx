@@ -9,8 +9,8 @@ import ProjectSelect from './ProjectSelect/index.web';
 import { X, Plus, Check, Trash2, ChevronDown } from 'lucide-react';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainStarButton from '../DomainStarButton/index.web';
-import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
+import BooleanSetting from '../SegmentedControl/BooleanSetting.web';
 import DomainAnalyticsButton from '../DomainAnalyticsButton/index.web';
 import { REGISTRARS } from '../../shared/config';
 import { useDomainEditor } from './useDomainEditor';
@@ -360,43 +360,18 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                     </SettingsField>
                   </div>
                   <div id={`domain-auto-renew-field`} className={`domain-editor-field domain-editor-field-full domain-editor-renew-field`}>
-                    {isEditing && (
-                      <label id={`domain-auto-renew-setting-label`} className={`domain-editor-label`} htmlFor={`domain-auto-renew-input`}>
-                        {`Auto-renew`}
-                      </label>
-                    )}
-                    <SettingsField
+                    <span id={`domain-auto-renew-setting-label`} className={`domain-editor-label`}>{`Auto-Renew`}</span>
+                    <BooleanSetting
                       disabled={saving}
-                      label={`Auto-Renew`}
-                      enabled={isEditing}
-                      id={`domain-auto-renew-setting`}
-                      value={input.autoRenew ? `On` : `Off`}
-                    >
-                      <label id={`domain-auto-renew-label`} className={`domain-editor-renew-label`} htmlFor={`domain-auto-renew-input`}>
-                        <input
-                          type={`checkbox`}
-                          checked={input.autoRenew}
-                          id={`domain-auto-renew-input`}
-                          className={`domain-editor-renew-checkbox`}
-                          onChange={event => setField(`autoRenew`, event.target.checked)}
-                        />
-                        <span id={`domain-auto-renew-copy`} className={`domain-editor-renew-copy`}>
-                          <span id={`domain-auto-renew-title`} className={`domain-editor-renew-title`}>
-                            {`Auto-renew is enabled`}
-                          </span>
-                          {!isEditing && (
-                            <span id={`domain-auto-renew-help`} className={`domain-editor-renew-help`}>
-                              {`Match the setting at your registrar`}
-                            </span>
-                          )}
-                        </span>
-                      </label>
-                    </SettingsField>
-                    {isEditing && (
-                      <span id={`domain-auto-renew-help`} className={`domain-editor-renew-help`}>
-                        {`Match the setting at your registrar`}
-                      </span>
-                    )}
+                      value={input.autoRenew}
+                      id={`domain-auto-renew-input`}
+                      describedBy={`domain-auto-renew-help`}
+                      labelledBy={`domain-auto-renew-setting-label`}
+                      onChange={value => setField(`autoRenew`, value)}
+                    />
+                    <span id={`domain-auto-renew-help`} className={`domain-editor-renew-help`}>
+                      {`Match the setting at your registrar`}
+                    </span>
                   </div>
                 </>
               )}
@@ -405,35 +380,27 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                   <label id={`domain-group-label`} className={`domain-editor-label`} htmlFor={`domain-group-input`}>
                     {`Group`}
                   </label>
-                  <SettingsField
-                    label={`Group`}
-                    disabled={saving}
-                    enabled={isEditing}
-                    id={`domain-group-setting`}
-                    value={groupEditor.options.find(option => option.id === groupEditor.groupId)?.label}
-                  >
-                    <div id={`domain-group-select-wrap`} className={`domain-editor-select-wrap`}>
-                      <select
-                        disabled={saving}
-                        value={groupEditor.groupId}
-                        id={`domain-group-input`}
-                        className={`domain-editor-input domain-editor-select`}
-                        onChange={event => groupEditor.setGroupId(event.target.value)}
-                      >
-                        {groupEditor.options.map(option => (
-                          <option
-                            key={option.id}
-                            value={option.id}
-                            className={`domain-editor-option`}
-                            id={`domain-group-option-${option.id || `ungrouped`}`}
-                          >
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown size={15} aria-hidden={`true`} id={`domain-group-select-chevron`} className={`domain-editor-select-chevron`} />
-                    </div>
-                  </SettingsField>
+                  <div id={`domain-group-select-wrap`} className={`domain-editor-select-wrap`}>
+                    <select
+                      disabled={saving}
+                      value={groupEditor.groupId}
+                      id={`domain-group-input`}
+                      className={`domain-editor-input domain-editor-select`}
+                      onChange={event => groupEditor.setGroupId(event.target.value)}
+                    >
+                      {groupEditor.options.map(option => (
+                        <option
+                          key={option.id}
+                          value={option.id}
+                          className={`domain-editor-option`}
+                          id={`domain-group-option-${option.id || `ungrouped`}`}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={15} aria-hidden={`true`} id={`domain-group-select-chevron`} className={`domain-editor-select-chevron`} />
+                  </div>
                 </div>
               )}
               {DOMAIN_PRICE_FIELDS.map(({ field, label }) => (
@@ -485,47 +452,31 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                 <label id={`domain-status-input-label`} className={`domain-editor-label`} htmlFor={`domain-status-input`}>
                   {`Status`}
                 </label>
-                <SettingsField
+                <ProjectSelect
                   label={`Status`}
                   disabled={saving}
-                  enabled={isEditing}
-                  id={`domain-status-setting`}
-                  value={<DomainProjectBadge field={`projectStatus`} value={input.projectStatus} id={`domain-status-setting-badge`} />}
-                >
-                  <ProjectSelect
-                    label={`Status`}
-                    disabled={saving}
-                    field={`projectStatus`}
-                    id={`domain-status-input`}
-                    value={input.projectStatus}
-                    placeholder={`Future`}
-                    options={DOMAIN_PROJECT_STATUSES}
-                    onChange={value => setField(`projectStatus`, normalizeDomainProjectStatus(value))}
-                  />
-                </SettingsField>
+                  field={`projectStatus`}
+                  id={`domain-status-input`}
+                  value={input.projectStatus}
+                  placeholder={`Future`}
+                  options={DOMAIN_PROJECT_STATUSES}
+                  onChange={value => setField(`projectStatus`, normalizeDomainProjectStatus(value))}
+                />
               </div>
               <div id={`domain-difficulty-field`} className={`domain-editor-field`}>
                 <label id={`domain-difficulty-input-label`} className={`domain-editor-label`} htmlFor={`domain-difficulty-input`}>
                   {`Difficulty Level`}
                 </label>
-                <SettingsField
+                <ProjectSelect
                   disabled={saving}
-                  enabled={isEditing}
+                  field={`difficulty`}
+                  value={input.difficulty}
                   label={`Difficulty Level`}
-                  id={`domain-difficulty-setting`}
-                  value={input.difficulty ? <DomainProjectBadge field={`difficulty`} value={input.difficulty} id={`domain-difficulty-setting-badge`} /> : undefined}
-                >
-                  <ProjectSelect
-                    disabled={saving}
-                    field={`difficulty`}
-                    value={input.difficulty}
-                    label={`Difficulty Level`}
-                    id={`domain-difficulty-input`}
-                    options={DOMAIN_DIFFICULTIES}
-                    placeholder={`Select Difficulty Level`}
-                    onChange={value => setField(`difficulty`, normalizeDomainDifficulty(value))}
-                  />
-                </SettingsField>
+                  id={`domain-difficulty-input`}
+                  options={DOMAIN_DIFFICULTIES}
+                  placeholder={`Select Difficulty Level`}
+                  onChange={value => setField(`difficulty`, normalizeDomainDifficulty(value))}
+                />
               </div>
               <div id={`domain-mvp-field`} className={`domain-editor-field`}>
                 <label id={`domain-mvp-label`} className={`domain-editor-label`} htmlFor={`domain-mvp-input`}>

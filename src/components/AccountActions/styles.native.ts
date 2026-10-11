@@ -33,6 +33,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   dialogCopy: { fontSize: 12, lineHeight: 19, color: palette.muted, fontFamily: `DMSans_400Regular` },
   detailsTitle: { fontSize: 13, lineHeight: 18, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
   error: { fontSize: 12, lineHeight: 18, color: palette.danger, fontFamily: `DMSans_400Regular` },
-  actions: { gap: 10, padding: 12, flexShrink: 0, borderTopWidth: 1, borderTopColor: palette.line, flexWrap: `wrap`, flexDirection: `row`, justifyContent: `flex-end` },
+  actions: { gap: 10, padding: 12, flexShrink: 0, flexWrap: `wrap`, flexDirection: `row`, justifyContent: `flex-end` },
   confirm: { backgroundColor: palette.dangerBackground, borderColor: palette.danger },
 });

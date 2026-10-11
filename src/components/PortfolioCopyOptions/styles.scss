@@ -1,9 +1,7 @@
 .domain-dialog.portfolio-copy-options { max-width: var(--modal-wide-width, 500px); }
 .portfolio-copy-options-list { gap: 10px; display: grid; }
-.portfolio-copy-hidden-option { gap: 8px; display: flex; width: fit-content; align-items: center; margin: 0 0 14px; font-size: 12px; color: var(--ink); cursor: pointer; }
-.portfolio-copy-hidden-checkbox { flex-shrink: 0; cursor: inherit; accent-color: var(--accent); }
-.portfolio-copy-hidden-icon { flex-shrink: 0; color: var(--accent); }
-.portfolio-copy-hidden-option:has(:disabled) { cursor: default; opacity: .55; }
+.portfolio-copy-hidden-option { gap: 6px; display: grid; width: fit-content; max-width: 100%; margin: 0 0 14px; }
+.portfolio-copy-hidden-label { font-size: 12px; color: var(--ink); }
 .portfolio-copy-options .portfolio-copy-option { gap: 14px; width: 100%; padding: 16px; text-align: left; white-space: normal; justify-content: flex-start; }
 .portfolio-copy-option-icon { color: var(--accent); }
 .portfolio-copy-option-content { gap: 5px; display: grid; min-width: 0; }

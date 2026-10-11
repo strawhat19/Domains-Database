@@ -1,5 +1,6 @@
 import { createStyles } from './styles.native';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
+import DomainNewBadge from '../DomainNewBadge/index.native';
 import DomainStarButton from '../DomainStarButton/index.native';
 import DomainSourceBadge from '../DomainSourceBadge/index.native';
 import DomainProjectBadge from '../DomainProjectBadge/index.native';
@@ -164,6 +165,7 @@ const DomainCard = ({
                 {domain.name}
               </Text>
             </Pressable>
+            <DomainNewBadge domain={domain} id={`native-domain-new-badge-${domain.id}`} />
             {!hideProjectDetails && (
               <>
                 <Text

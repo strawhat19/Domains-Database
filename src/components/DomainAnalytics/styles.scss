@@ -64,7 +64,7 @@
 .domain-analytics-research-link:hover,
 .domain-analytics-refresh:hover:not(:disabled) { background: var(--subtle); border-color: var(--accent); }
 .domain-analytics-provider-note { margin: 16px 0 0; padding: 12px; font-size: 11px; line-height: 1.7; color: var(--muted); border-radius: 8px; background: var(--input); }
-.domain-analytics-footer { gap: 16px; display: flex; flex-shrink: 0; padding: 16px 22px; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); }
+.domain-analytics-footer { gap: 16px; display: flex; flex-shrink: 0; padding: 16px 22px; align-items: center; justify-content: space-between; }
 .domain-analytics-refresh:disabled { opacity: .5; cursor: default; }
 .domain-analytics-loading { gap: 10px; display: flex; color: var(--muted); flex-wrap: wrap; align-items: center; }
 .domain-analytics-loading-text { font-size: 12px; }

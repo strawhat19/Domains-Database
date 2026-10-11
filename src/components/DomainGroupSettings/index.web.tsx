@@ -9,7 +9,7 @@ import CurrencyField from '../CurrencyField/index.web';
 import SettingsField from '../SettingsField/index.web';
 import ProjectSelect from '../DomainEditor/ProjectSelect/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
-import DomainProjectBadge from '../DomainProjectBadge/index.web';
+import SegmentedControl from '../SegmentedControl/index.web';
 import DestinationChoices from '../DestinationChoices/index.web';
 import { getDomainPreviewLink } from '../../shared/domainLinks';
 import { formatCurrency } from '../../shared/domainUtils';
@@ -120,30 +120,19 @@ const DomainGroupSettings = ({ group, onClose, convertToCollection = false }: Do
                   <span id={`domain-group-settings-type-label-${group.id}`} className={`domain-editor-label`}>
                     {`Type`}
                   </span>
-                  <div
-                    role={`group`}
+                  <SegmentedControl
+                    disabled={settings.missingGroup}
+                    value={settings.details.isApp ? `app` : `group`}
                     id={`domain-group-settings-type-${group.id}`}
                     className={`domain-group-settings-type-controls`}
-                    aria-labelledby={`domain-group-settings-type-label-${group.id}`}
-                    aria-describedby={`domain-group-settings-type-help-${group.id}`}
-                  >
-                    {[{ isApp: false, label: `Group`, Icon: Folder }, { isApp: true, label: `App`, Icon: AppWindow }].map(option => (
-                      <button
-                        type={`button`}
-                        key={option.label}
-                        disabled={settings.missingGroup}
-                        aria-pressed={settings.details.isApp === option.isApp}
-                        id={`domain-group-settings-type-${option.label.toLowerCase()}-${group.id}`}
-                        onClick={() => settings.setDetail(`isApp`, option.isApp)}
-                        className={`domain-group-settings-type-button${settings.details.isApp === option.isApp ? ` domain-group-settings-type-button-active` : ``}`}
-                      >
-                        <option.Icon size={15} aria-hidden={`true`} id={`domain-group-settings-type-${option.label.toLowerCase()}-icon-${group.id}`} className={`domain-group-settings-type-icon`} />
-                        <span id={`domain-group-settings-type-${option.label.toLowerCase()}-text-${group.id}`} className={`domain-group-settings-type-text`}>
-                          {option.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                    onChange={value => settings.setDetail(`isApp`, value === `app`)}
+                    labelledBy={`domain-group-settings-type-label-${group.id}`}
+                    describedBy={`domain-group-settings-type-help-${group.id}`}
+                    options={[
+                      { value: `group`, label: `Group`, Icon: Folder },
+                      { value: `app`, label: `App`, Icon: AppWindow },
+                    ]}
+                  />
                   <p id={`domain-group-settings-type-help-${group.id}`} className={`domain-group-settings-help`}>
                     {settings.details.isApp
                       ? `Apps have a distinct row color. Their domains hide statuses, previews, and descriptions.`
@@ -254,21 +243,15 @@ const DomainGroupSettings = ({ group, onClose, convertToCollection = false }: Do
                   <label id={`domain-group-settings-status-${group.id}-label`} htmlFor={`domain-group-settings-status-${group.id}`} className={`domain-editor-label`}>
                     {`Status`}
                   </label>
-                  <SettingsField
+                  <ProjectSelect
                     label={`Status`}
-                    id={`domain-group-settings-status-setting-${group.id}`}
-                    value={<DomainProjectBadge field={`projectStatus`} value={settings.details.projectStatus} id={`domain-group-settings-status-badge-${group.id}`} />}
-                  >
-                    <ProjectSelect
-                      label={`Status`}
-                      placeholder={`Future`}
-                      field={`projectStatus`}
-                      options={DOMAIN_PROJECT_STATUSES}
-                      value={settings.details.projectStatus}
-                      id={`domain-group-settings-status-${group.id}`}
-                      onChange={value => settings.setDetail(`projectStatus`, normalizeDomainProjectStatus(value))}
-                    />
-                  </SettingsField>
+                    placeholder={`Future`}
+                    field={`projectStatus`}
+                    options={DOMAIN_PROJECT_STATUSES}
+                    value={settings.details.projectStatus}
+                    id={`domain-group-settings-status-${group.id}`}
+                    onChange={value => settings.setDetail(`projectStatus`, normalizeDomainProjectStatus(value))}
+                  />
                 </div>
                 {DOMAIN_PRICE_FIELDS.map(({ field, label }) => (
                   <div key={field} id={`domain-group-settings-${field}-field-${group.id}`} className={`domain-editor-field`}>

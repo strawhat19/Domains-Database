@@ -9,7 +9,8 @@ import { normalizeGroupDetails, restoreGroupDetails } from './details';
 import { savePortfolioPreferences, subscribePortfolioPreferences } from './storage';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../domainProject';
-import { isPortfolioNameTaken, getConvertedGroupName, normalizePortfolioName } from './names';
+import { COLUMN_CATEGORY_IDS, DEFAULT_COLLAPSED_COLUMN_CATEGORIES, type PortfolioColumnCategory } from './columns';
+import { isPortfolioNameTaken, getConvertedGroupName, normalizePortfolioName, isReservedPortfolioGroupName } from './names';
 import type { PortfolioPreferences, PortfolioGroupDetails, CustomPortfolioCollection, PortfolioPreferencesContextValue } from './types';
 
 const DEFAULT_PREFERENCES: PortfolioPreferences = {
@@ -21,6 +22,7 @@ const DEFAULT_PREFERENCES: PortfolioPreferences = {
   showAddRows: true,
   customGroups: [],
   collectionNumber: 0,
+  databasePosition: `below`,
   hiddenDomainIds: [],
   hiddenGroupKeys: [],
   expandedDomainIds: [],
@@ -30,6 +32,7 @@ const DEFAULT_PREFERENCES: PortfolioPreferences = {
   hiddenCollectionIds: [],
   showHiddenCollections: false,
   collapsedCollectionIds: [],
+  collapsedColumnCategories: [...DEFAULT_COLLAPSED_COLUMN_CATEGORIES],
 };
 const uniqueIds = (value: unknown): string[] => Array.isArray(value)
   ? [...new Set(value.filter((id): id is string => typeof id === `string` && Boolean(id)))]
@@ -112,6 +115,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     groupBy,
     customGroups,
     collectionNumber,
+    databasePosition: saved.databasePosition === `above` ? `above` : `below`,
     collections: restoredCollections,
     showCosts: saved.showCosts === true,
     showAddRows: saved.showAddRows !== false,
@@ -124,6 +128,9 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     collapsedGroupKeys: uniqueIds(saved.collapsedGroupKeys),
     hiddenCollectionIds: uniqueIds(saved.hiddenCollectionIds).filter(id => seenCollections.has(id)),
     collapsedCollectionIds: uniqueIds(saved.collapsedCollectionIds).filter(id => seenCollections.has(id)),
+    collapsedColumnCategories: Array.isArray(saved.collapsedColumnCategories)
+      ? uniqueIds(saved.collapsedColumnCategories).filter((category): category is PortfolioColumnCategory => COLUMN_CATEGORY_IDS.some(id => id === category))
+      : [...DEFAULT_COLLAPSED_COLUMN_CATEGORIES],
     view: saved.view === `grid` ? `grid` : `table`,
   };
 };
@@ -333,6 +340,12 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     change(current => ({ ...current, showAddRows }));
   }, [ready, change, userId, enabled]);
 
+  const setDatabasePosition = useCallback<PortfolioPreferencesContextValue[`setDatabasePosition`]>(databasePosition => {
+    if (!enabled || !active.current || !ready || !storageReady.current || loadedUserId.current !== userId) return;
+    if (databasePosition !== `above` && databasePosition !== `below`) return;
+    change(current => ({ ...current, databasePosition }));
+  }, [ready, change, userId, enabled]);
+
   const setShowHiddenGroups = useCallback<PortfolioPreferencesContextValue[`setShowHiddenGroups`]>(showHiddenGroups => {
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
     change(current => ({ ...current, showHiddenGroups }));
@@ -377,6 +390,17 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
       ...current,
       collapsedCollectionIds: current.collapsedCollectionIds.includes(collectionId)
         ? current.collapsedCollectionIds.filter(id => id !== collectionId) : [...current.collapsedCollectionIds, collectionId],
+    }));
+    return true;
+  }, [ready, change, userId, enabled]);
+
+  const toggleColumnCategoryCollapsed = useCallback<PortfolioPreferencesContextValue[`toggleColumnCategoryCollapsed`]>(category => {
+    if (!enabled || !active.current || !ready || !storageReady.current || loadedUserId.current !== userId) return false;
+    if (!COLUMN_CATEGORY_IDS.includes(category)) return false;
+    change(current => ({
+      ...current,
+      collapsedColumnCategories: current.collapsedColumnCategories.includes(category)
+        ? current.collapsedColumnCategories.filter(id => id !== category) : [...current.collapsedColumnCategories, category],
     }));
     return true;
   }, [ready, change, userId, enabled]);
@@ -434,7 +458,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     const selectedIds = uniqueIds(domainIds);
     if (domainIds !== undefined && !selectedIds.length) return undefined;
     const name = value.trim();
-    if (!name || name.length > 80 || normalizePortfolioName(name) === `ungrouped` || isPortfolioNameTaken(current, name)) return undefined;
+    if (!name || name.length > 80 || isReservedPortfolioGroupName(name) || isPortfolioNameTaken(current, name)) return undefined;
     let collectionId = collection?.collectionId ?? undefined;
     let createdCollection: CustomPortfolioCollection | undefined;
     if (collection?.newCollection) {
@@ -465,7 +489,8 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     const description = input.description.trim();
     const groups = current.customGroups;
     const existing = groups.find(group => group.id === id);
-    if (!existing || !name || name.toLowerCase() === `ungrouped` || name.length > 80 || description.length > 280) return false;
+    if (!existing || !name || name.length > 80 || description.length > 280) return false;
+    if (isReservedPortfolioGroupName(name) && normalizePortfolioName(name) !== normalizePortfolioName(existing.name)) return false;
     if (isPortfolioNameTaken(current, name, { groupId: id })) return false;
     let details: PortfolioGroupDetails;
     try { details = normalizeGroupDetails(input); }
@@ -720,6 +745,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     updateGroup,
     setShowCosts,
     setShowAddRows,
+    setDatabasePosition,
     voteCollection,
     createCollection,
     assignDomain,
@@ -743,7 +769,8 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     toggleCollectionVisibility,
     toggleCollectionCollapsed,
     updateGroupProjectStatus,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, starGroups, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, setShowAddRows, voteCollection, createCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, renameCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, setShowHiddenDomains, setShowHiddenCollections, toggleGroupCollapsed, toggleDomainExpansion, toggleGroupVisibility, assignGroupCollection, assignDomainsToCollection, toggleDomainVisibility, setCollectionVisibility, toggleCollectionVisibility, toggleCollectionCollapsed, updateGroupProjectStatus]);
+    toggleColumnCategoryCollapsed,
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, starGroups, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, setShowAddRows, setDatabasePosition, voteCollection, createCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, renameCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, setShowHiddenDomains, setShowHiddenCollections, toggleGroupCollapsed, toggleDomainExpansion, toggleGroupVisibility, assignGroupCollection, assignDomainsToCollection, toggleDomainVisibility, setCollectionVisibility, toggleCollectionVisibility, toggleCollectionCollapsed, updateGroupProjectStatus, toggleColumnCategoryCollapsed]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

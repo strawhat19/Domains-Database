@@ -2,15 +2,47 @@ import './styles.scss';
 import '../DomainEditor/styles.scss';
 import type { TableSettingsProps } from './types';
 import { useTableSettings } from './useTableSettings';
-import SettingsField from '../SettingsField/index.web';
+import GroupControls from '../GroupControls/index.web';
+import SegmentedControl from '../SegmentedControl/index.web';
 import ColumnOptions from '../ColumnControls/ColumnOptions.web';
-import { PORTFOLIO_COLUMNS } from '../../shared/portfolioColumns';
+import BooleanSetting from '../SegmentedControl/BooleanSetting.web';
 import { GROUPABLE_COLUMNS } from '../../shared/portfolioPreferences/groups';
 import type { PortfolioGroupBy } from '../../shared/portfolioPreferences/types';
-import { X, Eye, List, Coins, Check, Layers3, RotateCcw, LayoutGrid, ArrowDownAZ, GripVertical, MoveHorizontal } from 'lucide-react';
+import { X, Eye, List, Lock, Plus, Minus, Globe, Coins, Check, ArrowUp, Columns3, Layers3, Database, Settings, ArrowDown, RotateCcw, LayoutGrid, ChevronDown, ArrowDownAZ, GripVertical, MoveHorizontal } from 'lucide-react';
+
+const SETTINGS_TABS = [
+  { id: `general`, label: `General`, Icon: Settings },
+  { id: `columns`, label: `Columns`, Icon: Columns3 },
+] as const;
+
+const VIEW_OPTIONS = [
+  { value: `table`, label: `Table`, Icon: List },
+  { value: `grid`, label: `Cards`, Icon: LayoutGrid },
+] as const;
+
+const VISIBILITY_OPTIONS = [
+  { value: `public`, label: `Public`, Icon: Globe },
+  { value: `private`, label: `Private`, Icon: Lock },
+] as const;
+
+const HIDDEN_OPTIONS = [
+  { value: `off`, label: `Off`, Icon: Minus },
+  { value: `on`, label: `On`, Icon: Check },
+] as const;
+
+const SORT_OPTIONS = [
+  { value: `manual`, label: `Manual`, Icon: GripVertical },
+  { value: `alphabetical`, label: `Alphabetical`, Icon: ArrowDownAZ },
+] as const;
+
+const DATABASE_POSITION_OPTIONS = [
+  { value: `above`, label: `Above`, Icon: ArrowUp },
+  { value: `below`, label: `Below`, Icon: ArrowDown },
+] as const;
 
 const TableSettings = ({
   onFit,
+  domains,
   onClose,
   onReset,
   onToggle,
@@ -21,9 +53,8 @@ const TableSettings = ({
   fitDisabled = false,
 }: TableSettingsProps) => {
   const settings = useTableSettings(onClose);
-  const groupLabel = settings.groupBy === `none` ? `No Groups` : settings.groupBy === `custom` ? `Custom Groups`
-    : GROUPABLE_COLUMNS.find(column => column.field === settings.groupBy)?.label ?? `No Groups`;
-  const sortLabel = PORTFOLIO_COLUMNS.find(column => column.field === sortField)?.label ?? `Domain Name`;
+  const sortOptions = SORT_OPTIONS.map(option => option.value === `alphabetical` && sortField && sortField !== `name`
+    ? { ...option, label: `Sorted`, Icon: List } : option);
 
   return (
     <div
@@ -38,16 +69,16 @@ const TableSettings = ({
         aria-modal={`true`}
         ref={settings.modalRef}
         id={`table-settings-dialog`}
-        aria-labelledby={`table-settings-title`}
+        aria-labelledby={`table-settings-title table-settings-eyebrow`}
         className={`domain-dialog table-settings`}
       >
         <header id={`table-settings-header`} className={`domain-dialog-header table-settings-header`}>
           <div id={`table-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`table-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
-              {`TABLE SETTINGS`}
+              {`SETTINGS`}
             </span>
             <h2 id={`table-settings-title`} className={`domain-dialog-title`}>
-              {`Table Settings`}
+              {`Table`}
             </h2>
           </div>
           <button
@@ -60,192 +91,266 @@ const TableSettings = ({
             <X size={19} aria-hidden={`true`} id={`table-settings-close-icon`} className={`domain-dialog-close-icon`} />
           </button>
         </header>
+        <div role={`tablist`} id={`table-settings-tabs`} aria-label={`Table Settings Sections`} className={`table-settings-tabs`}>
+          {SETTINGS_TABS.map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              role={`tab`}
+              type={`button`}
+              id={`table-settings-tab-${id}`}
+              tabIndex={settings.tab === id ? 0 : -1}
+              aria-selected={settings.tab === id}
+              aria-controls={`table-settings-panel-${id}`}
+              onClick={() => settings.setTab(id)}
+              onKeyDown={settings.onTabKeyDown}
+              data-autofocus={settings.tab === id || undefined}
+              className={`table-settings-tab${settings.tab === id ? ` table-settings-tab-active` : ``}`}
+            >
+              <Icon size={15} aria-hidden={`true`} id={`table-settings-tab-${id}-icon`} className={`table-settings-tab-icon`} />
+              <span id={`table-settings-tab-${id}-text`} className={`table-settings-tab-text`}>{label}</span>
+            </button>
+          ))}
+        </div>
         <div id={`table-settings-content`} className={`table-settings-content`}>
-          <div id={`table-settings-fields`} className={`table-settings-fields`}>
-            <fieldset id={`table-settings-view`} className={`table-settings-field table-settings-view`}>
-              <legend id={`table-settings-view-label`} className={`table-settings-label`}>
-                {`View`}
-              </legend>
-              <div id={`table-settings-view-choices`} className={`table-settings-choices`}>
-                <button
-                  type={`button`}
-                  id={`table-settings-view-table`}
-                  aria-pressed={settings.view === `table`}
-                  onClick={() => settings.setView(`table`)}
-                  className={`portfolio-button portfolio-button-secondary table-settings-choice`}
-                >
-                  <List size={15} aria-hidden={`true`} id={`table-settings-view-table-icon`} className={`portfolio-button-icon`} />
-                  <span id={`table-settings-view-table-text`} className={`portfolio-button-text`}>
-                    {`Table`}
-                  </span>
-                </button>
-                <button
-                  type={`button`}
-                  id={`table-settings-view-cards`}
-                  aria-pressed={settings.view === `grid`}
-                  onClick={() => settings.setView(`grid`)}
-                  className={`portfolio-button portfolio-button-secondary table-settings-choice`}
-                >
-                  <LayoutGrid size={15} aria-hidden={`true`} id={`table-settings-view-cards-icon`} className={`portfolio-button-icon`} />
-                  <span id={`table-settings-view-cards-text`} className={`portfolio-button-text`}>
-                    {`Cards`}
-                  </span>
-                </button>
-              </div>
-            </fieldset>
-            <div id={`table-settings-sort`} className={`table-settings-field`}>
-              <span id={`table-settings-sort-label`} className={`table-settings-label`}>
-                {`Sorting`}
-              </span>
-              <div id={`table-settings-sort-options`} className={`table-settings-sort-options`}>
-                <span id={`table-settings-current-sort`} className={`table-settings-current-sort`}>
-                  {sortField ? `Sorted By ${sortLabel}` : `Manual Order`}
+          <section
+            role={`tabpanel`}
+            hidden={settings.tab !== `general`}
+            id={`table-settings-panel-general`}
+            aria-labelledby={`table-settings-tab-general`}
+            className={`table-settings-panel table-settings-general-panel`}
+          >
+            <div id={`table-settings-fields`} className={`table-settings-fields`}>
+              <div id={`table-settings-view`} className={`table-settings-field table-settings-view`}>
+                <span id={`table-settings-view-label`} className={`table-settings-label`}>
+                  <LayoutGrid size={14} aria-hidden={`true`} id={`table-settings-view-icon`} className={`table-settings-field-icon`} />
+                  <span id={`table-settings-view-label-text`} className={`table-settings-label-text`}>{`View`}</span>
                 </span>
-                <button
-                  type={`button`}
-                  id={`table-settings-sort-toggle`}
-                  onClick={onToggleManualOrder}
-                  title={sortField ? `Switch To Manual Order` : `Sort Domains Alphabetically`}
-                  aria-label={sortField ? `Switch To Manual Domain Order` : `Sort Domains Alphabetically`}
-                  className={`portfolio-button portfolio-button-secondary table-settings-sort-toggle`}
-                >
-                  {sortField
-                    ? <GripVertical size={15} aria-hidden={`true`} id={`table-settings-sort-icon`} className={`portfolio-button-icon`} />
-                    : <ArrowDownAZ size={15} aria-hidden={`true`} id={`table-settings-sort-icon`} className={`portfolio-button-icon`} />}
-                  <span id={`table-settings-sort-text`} className={`portfolio-button-text`}>
-                    {sortField ? `Use Manual Order` : `Use Alphabetical Order`}
-                  </span>
-                </button>
-              </div>
-            </div>
-            <div id={`table-settings-grouping`} className={`table-settings-field`}>
-              <label id={`table-settings-group-by-label`} htmlFor={`table-settings-group-by`} className={`table-settings-label`}>
-                <Layers3 size={13} aria-hidden={`true`} id={`table-settings-group-by-icon`} className={`table-settings-field-icon`} />
-                <span id={`table-settings-group-by-text`} className={`table-settings-label-text`}>
-                  {`Group By`}
-                </span>
-              </label>
-              <SettingsField id={`table-settings-group-by-view`} label={`Group By`} value={groupLabel}>
-                <select
-                  value={settings.groupBy}
-                  id={`table-settings-group-by`}
-                  className={`domain-editor-input table-settings-select`}
-                  onChange={event => settings.setGroupBy(event.target.value as PortfolioGroupBy)}
-                >
-                  <option id={`table-settings-group-none`} className={`table-settings-group-option`} value={`none`}>
-                    {`No Groups`}
-                  </option>
-                  <option id={`table-settings-group-custom`} className={`table-settings-group-option`} value={`custom`}>
-                    {`Custom Groups`}
-                  </option>
-                  {GROUPABLE_COLUMNS.map(column => (
-                    <option key={column.field} id={`table-settings-group-${column.field}`} className={`table-settings-group-option`} value={column.field}>
-                      {column.label}
-                    </option>
-                  ))}
-                </select>
-              </SettingsField>
-            </div>
-            <div id={`table-settings-group-visibility`} className={`table-settings-field table-settings-group-visibility`}>
-              <label htmlFor={`table-settings-show-hidden-collections`} id={`table-settings-show-hidden-collections-label`} className={`table-settings-hidden-label`}>
-                <input
-                  type={`checkbox`}
-                  id={`table-settings-show-hidden-collections`}
-                  checked={settings.showHiddenCollections}
+                <SegmentedControl
+                  value={settings.view}
+                  options={VIEW_OPTIONS}
+                  onChange={settings.setView}
                   disabled={settings.loading}
-                  className={`column-controls-checkbox table-settings-hidden-checkbox`}
-                  onChange={event => settings.setShowHiddenCollections(event.target.checked)}
+                  id={`table-settings-view-choices`}
+                  labelledBy={`table-settings-view-label`}
                 />
-                <Eye size={14} aria-hidden={`true`} id={`table-settings-show-hidden-collections-icon`} className={`table-settings-field-icon`} />
-                <span id={`table-settings-show-hidden-collections-text`} className={`table-settings-hidden-text`}>
-                  {`Show Hidden Collections`}
+              </div>
+              <div id={`table-settings-visibility`} className={`table-settings-field table-settings-visibility`}>
+                <span id={`table-settings-visibility-label`} className={`table-settings-label`}>
+                  <Eye size={14} aria-hidden={`true`} id={`table-settings-visibility-icon`} className={`table-settings-field-icon`} />
+                  <span id={`table-settings-visibility-label-text`} className={`table-settings-label-text`}>{`Visibility`}</span>
                 </span>
-              </label>
-              <label htmlFor={`table-settings-show-hidden-groups`} id={`table-settings-show-hidden-label`} className={`table-settings-hidden-label`}>
-                <input
-                  type={`checkbox`}
-                  id={`table-settings-show-hidden-groups`}
-                  checked={settings.showHiddenGroups}
-                  className={`column-controls-checkbox table-settings-hidden-checkbox`}
-                  onChange={event => settings.setShowHiddenGroups(event.target.checked)}
+                <SegmentedControl
+                  disabled
+                  value={`private`}
+                  options={VISIBILITY_OPTIONS}
+                  onChange={() => undefined}
+                  id={`table-settings-visibility-choices`}
+                  labelledBy={`table-settings-visibility-label`}
                 />
-                <Eye size={14} aria-hidden={`true`} id={`table-settings-show-hidden-icon`} className={`table-settings-field-icon`} />
-                <span id={`table-settings-show-hidden-text`} className={`table-settings-hidden-text`}>
-                  {`Show Hidden Groups`}
+              </div>
+              <div id={`table-settings-sort`} className={`table-settings-field`}>
+                <span id={`table-settings-sort-label`} className={`table-settings-label`}>
+                  <ArrowDownAZ size={14} aria-hidden={`true`} id={`table-settings-sort-icon`} className={`table-settings-field-icon`} />
+                  <span id={`table-settings-sort-label-text`} className={`table-settings-label-text`}>{`Sorting`}</span>
                 </span>
-              </label>
-              <label htmlFor={`table-settings-show-hidden-domains`} id={`table-settings-show-hidden-domains-label`} className={`table-settings-hidden-label`}>
-                <input
-                  type={`checkbox`}
-                  id={`table-settings-show-hidden-domains`}
-                  checked={settings.showHiddenDomains}
+                <SegmentedControl
+                  options={sortOptions}
                   disabled={settings.loading}
-                  className={`column-controls-checkbox table-settings-hidden-checkbox`}
-                  onChange={event => settings.setShowHiddenDomains(event.target.checked)}
+                  id={`table-settings-sort-options`}
+                  labelledBy={`table-settings-sort-label`}
+                  value={sortField ? `alphabetical` : `manual`}
+                  onChange={value => { if ((value === `manual`) !== (sortField === null)) onToggleManualOrder(); }}
                 />
-                <Eye size={14} aria-hidden={`true`} id={`table-settings-show-hidden-domains-icon`} className={`table-settings-field-icon`} />
-                <span id={`table-settings-show-hidden-domains-text`} className={`table-settings-hidden-text`}>
-                  {`Show Hidden Domains`}
+              </div>
+              <div id={`table-settings-database-position-field`} className={`table-settings-field`}>
+                <span id={`table-settings-database-position-label`} className={`table-settings-label`}>
+                  <Database size={13} aria-hidden={`true`} id={`table-settings-database-position-icon`} className={`table-settings-field-icon`} />
+                  <span id={`table-settings-database-position-text`} className={`table-settings-label-text`}>{`Ungrouped`}</span>
                 </span>
-              </label>
-            </div>
-            <div id={`table-settings-costs`} className={`table-settings-field table-settings-costs`}>
-              <label htmlFor={`table-settings-show-costs`} id={`table-settings-show-costs-label`} className={`table-settings-costs-label`}>
-                <input
-                  type={`checkbox`}
+                <SegmentedControl
+                  disabled={settings.loading}
+                  value={settings.databasePosition}
+                  onChange={settings.setDatabasePosition}
+                  options={DATABASE_POSITION_OPTIONS}
+                  id={`table-settings-database-position`}
+                  labelledBy={`table-settings-database-position-label`}
+                />
+              </div>
+              <div id={`table-settings-show-hidden-field`} className={`table-settings-field`}>
+                <span id={`table-settings-show-hidden-label`} className={`table-settings-label`}>
+                  <Eye size={14} aria-hidden={`true`} id={`table-settings-show-hidden-icon`} className={`table-settings-field-icon`} />
+                  <span id={`table-settings-show-hidden-text`} className={`table-settings-label-text`}>{`Show Hidden`}</span>
+                </span>
+                <SegmentedControl
+                  options={HIDDEN_OPTIONS}
+                  disabled={settings.loading}
+                  value={settings.showHiddenState}
+                  id={`table-settings-show-hidden`}
+                  labelledBy={`table-settings-show-hidden-label`}
+                  onChange={value => settings.setShowHidden(value === `on`)}
+                  describedBy={settings.showHiddenState === `mixed` ? `table-settings-show-hidden-help` : undefined}
+                />
+                {settings.showHiddenState === `mixed` && (
+                  <span id={`table-settings-show-hidden-help`} className={`table-settings-hidden-help`}>
+                    {`Some Hidden Types Shown`}
+                  </span>
+                )}
+              </div>
+              <div id={`table-settings-costs`} className={`table-settings-field table-settings-costs`}>
+                <span id={`table-settings-show-costs-label`} className={`table-settings-label`}>
+                  <Coins size={14} aria-hidden={`true`} id={`table-settings-show-costs-icon`} className={`table-settings-field-icon`} />
+                  <span id={`table-settings-show-costs-text`} className={`table-settings-label-text`}>{`Show Costs`}</span>
+                </span>
+                <BooleanSetting
                   id={`table-settings-show-costs`}
-                  checked={settings.showCosts}
+                  value={settings.showCosts}
                   disabled={settings.loading}
-                  aria-describedby={`table-settings-costs-help`}
-                  className={`column-controls-checkbox table-settings-costs-checkbox`}
-                  onChange={event => settings.setShowCosts(event.target.checked)}
+                  onChange={settings.setShowCosts}
+                  labelledBy={`table-settings-show-costs-label`}
                 />
-                <Coins size={14} aria-hidden={`true`} id={`table-settings-show-costs-icon`} className={`table-settings-field-icon`} />
-                <span id={`table-settings-show-costs-text`} className={`table-settings-costs-text`}>
-                  {`Show Costs`}
-                </span>
-              </label>
-              <p id={`table-settings-costs-help`} className={`table-settings-help`}>
-                {`Show registrar renewal estimates below active domain renewal dates. Renewal warnings stay visible.`}
-              </p>
+              </div>
             </div>
-          </div>
-          <ColumnOptions
-            expanded
-            onToggle={onToggle}
-            columnCounts={columnCounts}
-            visibleColumns={visibleColumns}
-            idPrefix={`table-settings-column`}
-          />
+            <form
+              noValidate
+              id={`table-settings-collection-create`}
+              className={`table-settings-collection-create`}
+              onSubmit={settings.collectionForm.handleSubmit}
+              onKeyDown={settings.collectionForm.handleKeyDown}
+            >
+              <div id={`table-settings-collection-field`} className={`table-settings-collection-field`}>
+                <label id={`table-settings-collection-label`} htmlFor={`table-settings-collection-name`} className={`table-settings-label`}>
+                  <svg
+                    width={15}
+                    height={15}
+                    stroke={`none`}
+                    focusable={false}
+                    aria-hidden={`true`}
+                    fill={`currentColor`}
+                    viewBox={`0 0 24 24`}
+                    id={`table-settings-collection-icon`}
+                    className={`table-settings-field-icon table-settings-collection-icon`}
+                  >
+                    <path
+                      fillRule={`evenodd`}
+                      id={`table-settings-collection-icon-path`}
+                      d={`M4 4h5l2 3h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM5 9h14a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z`}
+                    />
+                  </svg>
+                  <span id={`table-settings-collection-label-text`} className={`table-settings-label-text`}>{`New Collection`}</span>
+                </label>
+                <input
+                  maxLength={80}
+                  autoComplete={`off`}
+                  placeholder={`Collection Name`}
+                  id={`table-settings-collection-name`}
+                  value={settings.collectionForm.name}
+                  ref={settings.collectionForm.inputRef}
+                  disabled={settings.collectionForm.unavailable}
+                  aria-invalid={Boolean(settings.collectionForm.error)}
+                  className={`table-settings-collection-name-input`}
+                  onChange={event => settings.collectionForm.setName(event.target.value)}
+                  aria-describedby={settings.collectionForm.error ? `table-settings-collection-error` : undefined}
+                />
+              </div>
+              <button
+                type={`submit`}
+                id={`table-settings-collection-add`}
+                disabled={settings.collectionForm.unavailable}
+                className={`portfolio-button portfolio-button-secondary table-settings-collection-add`}
+              >
+                <Plus size={15} aria-hidden={`true`} id={`table-settings-collection-add-icon`} className={`portfolio-button-icon table-settings-action-icon`} />
+                <span id={`table-settings-collection-add-text`} className={`portfolio-button-text`}>{`Add`}</span>
+              </button>
+              {settings.collectionForm.error && (
+                <p role={`alert`} id={`table-settings-collection-error`} className={`table-settings-collection-error`}>
+                  {settings.collectionForm.error}
+                </p>
+              )}
+            </form>
+            <GroupControls
+              embedded
+              domains={domains}
+              groupByControl={(
+                <div id={`table-settings-grouping`} className={`table-settings-field table-settings-grouping`}>
+                  <label id={`table-settings-group-by-label`} htmlFor={`table-settings-group-by`} className={`table-settings-label`}>
+                    <Layers3 size={13} aria-hidden={`true`} id={`table-settings-group-by-icon`} className={`table-settings-field-icon`} />
+                    <span id={`table-settings-group-by-text`} className={`table-settings-label-text`}>
+                      {`Group By`}
+                    </span>
+                  </label>
+                  <div id={`table-settings-group-by-select-wrap`} className={`table-settings-select-wrap`}>
+                    <select
+                      disabled={settings.loading}
+                      value={settings.groupBy}
+                      id={`table-settings-group-by`}
+                      className={`domain-editor-input table-settings-select`}
+                      onChange={event => settings.setGroupBy(event.target.value as PortfolioGroupBy)}
+                    >
+                      <option id={`table-settings-group-none`} className={`table-settings-group-option`} value={`none`}>
+                        {`No Groups`}
+                      </option>
+                      <option id={`table-settings-group-custom`} className={`table-settings-group-option`} value={`custom`}>
+                        {`Custom Groups`}
+                      </option>
+                      {GROUPABLE_COLUMNS.map(column => (
+                        <option key={column.field} id={`table-settings-group-${column.field}`} className={`table-settings-group-option`} value={column.field}>
+                          {column.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={15} aria-hidden={`true`} id={`table-settings-group-by-select-chevron`} className={`table-settings-select-chevron`} />
+                  </div>
+                </div>
+              )}
+            />
+          </section>
+          <section
+            role={`tabpanel`}
+            hidden={settings.tab !== `columns`}
+            id={`table-settings-panel-columns`}
+            aria-labelledby={`table-settings-tab-columns`}
+            className={`table-settings-panel table-settings-columns-panel`}
+          >
+            <ColumnOptions
+              expanded
+              onToggle={onToggle}
+              columnCounts={columnCounts}
+              visibleColumns={visibleColumns}
+              categoriesDisabled={settings.loading}
+              idPrefix={`table-settings-column`}
+              onToggleCategory={settings.toggleColumnCategoryCollapsed}
+              collapsedCategories={settings.collapsedColumnCategories}
+            />
+            <div id={`table-settings-column-actions`} className={`table-settings-column-actions`}>
+              <button
+                type={`button`}
+                onClick={onFit}
+                disabled={fitDisabled}
+                id={`table-settings-fit-columns`}
+                aria-label={`Fit Columns To Contents`}
+                title={`Fit Each Column To Its Longest Value`}
+                className={`portfolio-button portfolio-button-secondary`}
+              >
+                <MoveHorizontal size={15} aria-hidden={`true`} id={`table-settings-fit-icon`} className={`portfolio-button-icon`} />
+                <span id={`table-settings-fit-text`} className={`portfolio-button-text`}>
+                  {`Fit Columns`}
+                </span>
+              </button>
+              <button
+                type={`button`}
+                onClick={onReset}
+                id={`table-settings-reset-columns`}
+                className={`portfolio-button portfolio-button-secondary`}
+              >
+                <RotateCcw size={14} aria-hidden={`true`} id={`table-settings-reset-icon`} className={`portfolio-button-icon`} />
+                <span id={`table-settings-reset-text`} className={`portfolio-button-text`}>
+                  {`Reset Columns`}
+                </span>
+              </button>
+            </div>
+          </section>
         </div>
         <footer id={`table-settings-footer`} className={`domain-dialog-footer table-settings-footer`}>
-          <div id={`table-settings-column-actions`} className={`table-settings-column-actions`}>
-            <button
-              type={`button`}
-              onClick={onFit}
-              disabled={fitDisabled}
-              id={`table-settings-fit-columns`}
-              aria-label={`Fit Columns To Contents`}
-              title={`Fit Each Column To Its Longest Value`}
-              className={`portfolio-button portfolio-button-secondary`}
-            >
-              <MoveHorizontal size={15} aria-hidden={`true`} id={`table-settings-fit-icon`} className={`portfolio-button-icon`} />
-              <span id={`table-settings-fit-text`} className={`portfolio-button-text`}>
-                {`Fit Columns`}
-              </span>
-            </button>
-            <button
-              type={`button`}
-              onClick={onReset}
-              id={`table-settings-reset-columns`}
-              className={`portfolio-button portfolio-button-secondary`}
-            >
-              <RotateCcw size={14} aria-hidden={`true`} id={`table-settings-reset-icon`} className={`portfolio-button-icon`} />
-              <span id={`table-settings-reset-text`} className={`portfolio-button-text`}>
-                {`Reset Columns`}
-              </span>
-            </button>
-          </div>
           <button
             type={`button`}
             onClick={onClose}

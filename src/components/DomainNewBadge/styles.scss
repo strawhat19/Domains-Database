@@ -1,0 +1,19 @@
+.domain-new-badge {
+  gap: 3px;
+  height: 16px;
+  padding: 0 5px;
+  flex-shrink: 0;
+  font-size: 9px;
+  line-height: 12px;
+  border-radius: 999px;
+  color: var(--accent);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  font-family: var(--font-bold);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.domain-new-badge-icon { flex-shrink: 0; }
+.domain-new-badge-compact { gap: 2px; height: 14px; font-size: 8px; padding: 0 4px; }

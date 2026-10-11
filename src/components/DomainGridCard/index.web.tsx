@@ -1,6 +1,7 @@
 import './styles.scss';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainNewBadge from '../DomainNewBadge/index.web';
 import DomainStarButton from '../DomainStarButton/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import DomainVisibilityButton from '../DomainVisibilityButton/index.web';
@@ -105,6 +106,7 @@ const DomainGridCard = ({
               </span>
             </span>
           </a>
+          <DomainNewBadge domain={domain} id={`${scope}-new-badge`} />
           {!hideProjectDetails && (
             <>
               <span aria-hidden={`true`} id={`${scope}-status-separator`} className={`domain-grid-card-name-separator`}>

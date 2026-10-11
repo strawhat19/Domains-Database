@@ -41,7 +41,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   researchLink: { gap: 6, minHeight: 38, borderWidth: 1, borderRadius: 7, paddingVertical: 8, paddingHorizontal: 10, flexDirection: `row`, alignItems: `center`, borderColor: palette.line },
   refresh: { gap: 6, minHeight: 36, borderWidth: 1, borderRadius: 7, paddingVertical: 7, paddingHorizontal: 10, flexDirection: `row`, alignItems: `center`, borderColor: palette.line },
   header: { gap: 12, padding: 22, flexShrink: 0, borderBottomWidth: 1, flexDirection: `row`, alignItems: `flex-start`, borderBottomColor: palette.line },
-  footer: { gap: 12, padding: 16, flexShrink: 0, borderTopWidth: 1, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between`, borderTopColor: palette.line },
+  footer: { gap: 12, padding: 16, flexShrink: 0, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
   dialog: { width: `100%`, maxWidth: 620, minHeight: 0, maxHeight: `90%`, flexShrink: 1, borderWidth: 1, borderRadius: 14, overflow: `hidden`, borderColor: palette.line, backgroundColor: palette.paper },
   overlay: { flex: 1, padding: 20, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.overlay },
 });

@@ -34,7 +34,6 @@ import { useCollectionReorder } from '../DomainPortfolio/useCollectionReorder';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
-import { isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
 import { getRecentPortfolioItems } from '../../shared/portfolioPreferences/recent';
 import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
@@ -42,6 +41,7 @@ import { getOrderedPortfolioColumns, type PortfolioColumn } from '../../shared/p
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { Eye, EyeOff, ArrowUp, Database, Settings, ArrowDown, RotateCcw, ChevronDown, GripVertical } from 'lucide-react';
 import type { PortfolioGroup, CustomPortfolioGroup, PortfolioCollectionSection } from '../../shared/portfolioPreferences/types';
+import { isPortfolioNameTaken, normalizePortfolioName, isReservedPortfolioGroupName } from '../../shared/portfolioPreferences/names';
 
 export interface PortfolioRecordsProps {
   busy: boolean;
@@ -143,7 +143,7 @@ const PortfolioRecords = ({
     window.requestAnimationFrame(() => {
       const controls = [
         document.getElementById(`domain-row-${clickedDomain.id}-selection`),
-        document.getElementById(`portfolio-groups-button`),
+        document.getElementById(`portfolio-table-settings`),
       ];
       controls.find(control => control && !control.matches(`:disabled`) && !control.closest(`[hidden], [inert], [aria-hidden='true']`))?.focus({ preventScroll: true });
     });
@@ -212,7 +212,7 @@ const PortfolioRecords = ({
         document.getElementById(`${idPrefix}-sticky-group-${key}-settings`),
         action === `delete` && currentGroup.collectionId ? document.getElementById(`${idPrefix}-collection-${currentGroup.collectionId}-settings`) : null,
         action === `delete` && currentGroup.collectionId ? document.getElementById(`${idPrefix}-sticky-collection-${currentGroup.collectionId}-settings`) : null,
-        document.getElementById(`portfolio-groups-button`),
+        document.getElementById(`portfolio-table-settings`),
       ];
       controls.find(control => control && !control.matches(`:disabled`) && !control.closest(`[hidden], [inert], [aria-hidden='true']`))?.focus({ preventScroll: true });
     });
@@ -247,7 +247,10 @@ const PortfolioRecords = ({
       .filter((group, index) => group.domains.length || (searching && !section.groups[index]?.domains.length));
     return { ...section, groups };
   }), [collectionSections, compact, searching]);
-  const groups = useMemo(() => collections.flatMap(section => section.groups).concat(mainGroups), [collections, mainGroups]);
+  const databaseAboveCollections = preferences.databasePosition === `above`;
+  const groups = useMemo(() => databaseAboveCollections
+    ? mainGroups.concat(collections.flatMap(section => section.groups))
+    : collections.flatMap(section => section.groups).concat(mainGroups), [collections, mainGroups, databaseAboveCollections]);
   const groupCollections = useMemo(() => new Map(preferences.customGroups.map(group => [
     `custom:${group.id}`, preferences.collections.find(collection => collection.id === group.collectionId),
   ] as const).concat(preferences.collections.map(collection => [`collection:${collection.id}`, collection] as const))),
@@ -306,7 +309,7 @@ const PortfolioRecords = ({
   const showGroupHeadings = groups.some(hasGroupHeading);
   const stickyGroup = useStickyPortfolioGroup(
     sticky,
-    `${hideColumnNames}|${collections.map(section => section.collection.id).join(`|`)}|${groups.map(group => `${group.key}:${group.domains.length}:${groupCollections.get(group.key)?.id ?? `main`}:${hasGroupHeading(group) ? 1 : 0}`).join(`|`)}|${[...expansion.collapsedGroups].join(`|`)}|${[...expansion.collapsedCollections].join(`|`)}`,
+    `${preferences.databasePosition}|${hideColumnNames}|${collections.map(section => section.collection.id).join(`|`)}|${groups.map(group => `${group.key}:${group.domains.length}:${groupCollections.get(group.key)?.id ?? `main`}:${hasGroupHeading(group) ? 1 : 0}`).join(`|`)}|${[...expansion.collapsedGroups].join(`|`)}|${[...expansion.collapsedCollections].join(`|`)}`,
     stickyHeaderReady && (showGroupHeadings || collections.length > 0) && !loading && (preferences.view === `table` || empty),
     idPrefix,
   );
@@ -460,7 +463,7 @@ const PortfolioRecords = ({
                 if (!current) return `This Group Is No Longer Available`;
                 const name = value.trim();
                 if (!name || name.length > 80) return `Enter A Group Name Between 1 And 80 Characters`;
-                if (name.toLowerCase() === `ungrouped`) return `Ungrouped Is Reserved For Domains Without A Group`;
+                if (isReservedPortfolioGroupName(name) && normalizePortfolioName(name) !== normalizePortfolioName(current.name)) return `This Name Is Reserved For Domains Without A Group Or App`;
                 if (isPortfolioNameTaken(preferences, name, { groupId: current.id })) {
                   return `A Collection Or Group With This Name Already Exists`;
                 }
@@ -896,6 +899,34 @@ const PortfolioRecords = ({
     </section>
   );
 
+  const mainRecordsContent = (grid = false) => grid ? (
+    <Fragment key={`${idPrefix}-main-records`}>
+      {mainHeading}
+      {mainGroups.map(gridGroup)}
+      {mainEmptyContent}
+      {showMainContent && addGroupContent(null, true)}
+    </Fragment>
+  ) : (
+    <Fragment key={`${idPrefix}-main-records`}>
+      {mainHeading && (
+        <tbody id={`${idPrefix}-main-heading-body`} className={`portfolio-main-heading-body`}>
+          <tr id={`${idPrefix}-main-heading-row`} className={`portfolio-main-heading-row`}>
+            <th colSpan={columns.length + 4} scope={`rowgroup`} id={`${idPrefix}-main-heading-cell`} className={`portfolio-main-heading-cell`}>{mainHeading}</th>
+          </tr>
+        </tbody>
+      )}
+      {renderedMainGroups.map(tableGroup)}
+      {mainEmptyContent && (
+        <tbody id={`${idPrefix}-empty-body`} className={`portfolio-empty-body`}>
+          <tr id={`${idPrefix}-empty-row`} className={`portfolio-empty-row`}>
+            <td colSpan={columns.length + 4} id={`${idPrefix}-empty-cell`} className={`portfolio-empty-cell`}>{mainEmptyContent}</td>
+          </tr>
+        </tbody>
+      )}
+      {showMainContent && addGroupRow()}
+    </Fragment>
+  );
+
   if (preferences.view === `grid` && !empty) return (
     <div id={`${idPrefix}-grid-view`} className={`portfolio-grid-view`} aria-busy={loading} onKeyDown={openContextMenuFromKeyboard}>
       {groupHelp}
@@ -905,6 +936,7 @@ const PortfolioRecords = ({
         </div>
       ) : (
         <>
+          {databaseAboveCollections && mainRecordsContent(true)}
           {collections.map(section => (
             <section key={section.collection.id} id={`portfolio-collection-${section.collection.id}-grid`} className={`portfolio-grid-collection`}>
               {collectionHeading(section, true)}
@@ -919,10 +951,7 @@ const PortfolioRecords = ({
             </section>
           ))}
           {addCollectionContent(true)}
-          {mainHeading}
-          {mainGroups.map(gridGroup)}
-          {mainEmptyContent}
-          {showMainContent && addGroupContent(null, true)}
+          {!databaseAboveCollections && mainRecordsContent(true)}
         </>
       )}
       {groupPicker}
@@ -1007,38 +1036,40 @@ const PortfolioRecords = ({
               </tbody>
             </table>
           </div>
-          <div
-            hidden
-            ref={stickyGroup.clipRef}
-            id={`${idPrefix}-sticky-group-clip`}
-            className={`portfolio-sticky-group-clip`}
-          >
-            <table
-              role={`presentation`}
-              ref={stickyGroup.mirrorRef}
-              id={`${idPrefix}-sticky-group-table`}
-              className={`portfolio-table portfolio-sticky-group-table`}
+          <div id={`${idPrefix}-sticky-group-slot`} className={`portfolio-sticky-group-slot`}>
+            <div
+              hidden
+              ref={stickyGroup.clipRef}
+              id={`${idPrefix}-sticky-group-clip`}
+              className={`portfolio-sticky-group-clip`}
             >
-              <tbody id={`${idPrefix}-sticky-group-body`} className={`portfolio-sticky-group-body`}>
-                {groups.filter(group => hasGroupHeading(group) && !isGroupParentCollapsed(group)).map(group => (
-                  <tr
-                    hidden
-                    key={group.key}
-                    aria-hidden={`true`}
-                    {...reorder.groupHandlers(group, editingGroupNameKey === group.key)}
-                    data-group-context-key={group.key}
-                    onContextMenu={event => openGroupContextMenu(event, group)}
-                    data-portfolio-sticky-group-key={group.key}
-                    id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-row`}
-                    className={`portfolio-group-heading-row${groupCollections.get(group.key) ? ` portfolio-group-heading-row-collection` : ``}${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
-                  >
-                    <td id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-cell`} className={`portfolio-group-heading-cell`}>
-                      {groupHeading(group, false, true)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              <table
+                role={`presentation`}
+                ref={stickyGroup.mirrorRef}
+                id={`${idPrefix}-sticky-group-table`}
+                className={`portfolio-table portfolio-sticky-group-table`}
+              >
+                <tbody id={`${idPrefix}-sticky-group-body`} className={`portfolio-sticky-group-body`}>
+                  {groups.filter(group => hasGroupHeading(group) && !isGroupParentCollapsed(group)).map(group => (
+                    <tr
+                      hidden
+                      key={group.key}
+                      aria-hidden={`true`}
+                      {...reorder.groupHandlers(group, editingGroupNameKey === group.key)}
+                      data-group-context-key={group.key}
+                      onContextMenu={event => openGroupContextMenu(event, group)}
+                      data-portfolio-sticky-group-key={group.key}
+                      id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-row`}
+                      className={`portfolio-group-heading-row${groupCollections.get(group.key) ? ` portfolio-group-heading-row-collection` : ``}${customGroupsById.get(group.customGroupId ?? ``)?.isApp ? ` portfolio-group-heading-row-app` : ``}${reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-row-dragging` : ``}${reorder.targetGroupKey === group.key ? ` portfolio-group-heading-row-drop-target` : ``}`}
+                    >
+                      <td id={`${idPrefix}-sticky-group-${encodeURIComponent(group.key)}-cell`} className={`portfolio-group-heading-cell`}>
+                        {groupHeading(group, false, true)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -1083,6 +1114,7 @@ const PortfolioRecords = ({
             </tbody>
           ) : (
             <>
+              {databaseAboveCollections && mainRecordsContent()}
               {collections.map(section => (
                 <Fragment key={section.collection.id}>
                   <tbody id={`portfolio-collection-${section.collection.id}-heading-body`} className={`portfolio-collection-heading-body`} data-portfolio-collection-key={section.collection.id}>
@@ -1127,22 +1159,7 @@ const PortfolioRecords = ({
                   </td>
                 </tr>
               </tbody>
-              {mainHeading && (
-                <tbody id={`${idPrefix}-main-heading-body`} className={`portfolio-main-heading-body`}>
-                  <tr id={`${idPrefix}-main-heading-row`} className={`portfolio-main-heading-row`}>
-                    <th colSpan={columns.length + 4} scope={`rowgroup`} id={`${idPrefix}-main-heading-cell`} className={`portfolio-main-heading-cell`}>{mainHeading}</th>
-                  </tr>
-                </tbody>
-              )}
-              {renderedMainGroups.map(tableGroup)}
-              {mainEmptyContent && (
-                <tbody id={`${idPrefix}-empty-body`} className={`portfolio-empty-body`}>
-                  <tr id={`${idPrefix}-empty-row`} className={`portfolio-empty-row`}>
-                    <td colSpan={columns.length + 4} id={`${idPrefix}-empty-cell`} className={`portfolio-empty-cell`}>{mainEmptyContent}</td>
-                  </tr>
-                </tbody>
-              )}
-              {showMainContent && addGroupRow()}
+              {!databaseAboveCollections && mainRecordsContent()}
             </>
           )}
         </table>

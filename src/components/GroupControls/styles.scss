@@ -1,4 +1,8 @@
 .group-controls { display: flex; flex-shrink: 0; align-items: center; }
+.group-controls-embedded { width: 100%; display: block; min-width: 0; }
+.group-controls-embedded-panel { min-width: 0; }
+.group-controls-group-by { margin-bottom: 16px; }
+.group-controls-embedded .group-controls-custom-manager { margin-top: 0; }
 .group-controls-button { padding: 10px 12px; }
 .group-controls-button-active { color: var(--accent); background: var(--subtle); border-color: var(--accent); }
 .group-controls-badge {

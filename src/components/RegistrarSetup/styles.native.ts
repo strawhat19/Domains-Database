@@ -31,7 +31,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   primaryButton: { gap: 7, flex: 1, paddingVertical: 12, paddingHorizontal: 15, borderRadius: 6, flexDirection: `row`, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.accent },
   primaryText: { flexShrink: 1, color: palette.contrast, fontSize: 12, fontFamily: `DMSans_700Bold` },
   disabled: { opacity: .45 },
-  footer: { gap: 12, padding: 22, flexShrink: 0, flexWrap: `wrap`, borderTopWidth: 1, borderTopColor: palette.line, flexDirection: `row`, alignItems: `center`, justifyContent: `flex-end` },
+  footer: { gap: 12, padding: 22, flexShrink: 0, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center`, justifyContent: `flex-end` },
   error: { padding: 12, borderRadius: 6, color: palette.danger, backgroundColor: palette.dangerBackground, fontSize: 12, lineHeight: 19 },
   success: { padding: 12, borderRadius: 6, color: palette.success, backgroundColor: palette.successBackground, fontSize: 12, lineHeight: 19 },
 });

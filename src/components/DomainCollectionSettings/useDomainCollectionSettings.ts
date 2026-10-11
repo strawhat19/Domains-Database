@@ -32,7 +32,7 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     return () => {
       if (!invokingElement?.isConnected) {
         const invokingControl = invokingId ? document.getElementById(invokingId) : null;
-        (invokingControl ?? document.getElementById(`portfolio-groups-button`))?.focus();
+        (invokingControl ?? document.getElementById(`portfolio-table-settings`))?.focus();
       }
     };
   }, []);

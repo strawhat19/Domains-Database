@@ -1,4 +1,5 @@
 import type { DomainRecord } from '../types';
+import { UNGROUPED_GROUP_LABEL } from './names';
 import type { PortfolioColumn } from '../portfolioColumns';
 import type { PortfolioPreferences, PortfolioGroup, PortfolioSections } from './types';
 import { getPortfolioColumnDisplay, getPortfolioColumnValue, hasPortfolioColumnValue, PORTFOLIO_FIELDS } from '../portfolioColumns';
@@ -58,7 +59,7 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
     }));
     groups.push({
       key: `custom:ungrouped`,
-      label: `Ungrouped`,
+      label: UNGROUPED_GROUP_LABEL,
       domains: applyDomainOrder(domains.filter(domain => !membership.has(domain.id)), orders[`custom:ungrouped`]),
     });
     return groups;

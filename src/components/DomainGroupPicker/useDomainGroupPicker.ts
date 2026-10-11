@@ -6,7 +6,7 @@ import { useDomains } from '../../shared/domainContext/useDomains';
 import { scrollToPortfolioGroup, scrollToPortfolioCollection } from './scrollToGroup.web';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { isPortfolioNameTaken, normalizePortfolioName } from '../../shared/portfolioPreferences/names';
+import { isPortfolioNameTaken, normalizePortfolioName, isReservedPortfolioGroupName } from '../../shared/portfolioPreferences/names';
 
 export const CREATE_GROUP_OPTION = `create`;
 export const CREATE_COLLECTION_OPTION = `create`;
@@ -85,7 +85,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
       const controls = [
         invokingElement,
         invokingId ? document.getElementById(invokingId) : null,
-        document.getElementById(`portfolio-groups-button`),
+        document.getElementById(`portfolio-table-settings`),
       ];
       controls.find(control => control?.isConnected && !control.matches(`:disabled`)
         && !control.closest(`[hidden], [inert], [aria-hidden='true']`))?.focus({ preventScroll: true });
@@ -184,11 +184,11 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
       }
     } else if (creatingGroup) {
       const trimmedName = name.trim();
-      const reservedName = normalizePortfolioName(trimmedName) === `ungrouped`;
+      const reservedName = isReservedPortfolioGroupName(trimmedName);
       const duplicateName = isPortfolioNameTaken(preferences, trimmedName);
       if (!trimmedName || trimmedName.length > 80 || duplicateName || reservedName) {
         setInvalidField(`name`);
-        setError(reservedName ? `Ungrouped Is Reserved For Domains Without A Group`
+        setError(reservedName ? `This Name Is Reserved For Domains Without A Group Or App`
           : duplicateName ? `A Collection Or Group With This Name Already Exists` : `Enter A Group Name Between 1 And 80 Characters`);
         nameInputRef.current?.focus();
         return;

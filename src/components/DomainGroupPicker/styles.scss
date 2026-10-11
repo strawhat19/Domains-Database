@@ -44,25 +44,8 @@
 .domain-group-picker-collection-fields { gap: 12px; min-width: 0; display: grid; }
 .domain-group-picker-collection-destinations { grid-column: 1 / -1; }
 .domain-group-picker-help { margin: 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
-.domain-group-picker-scroll-label {
-  gap: 10px;
-  display: flex;
-  cursor: pointer;
-  min-height: 36px;
-  border-radius: 6px;
-  align-items: center;
-  transition: background .2s ease;
-  &:hover { background: var(--subtle); }
-}
-.domain-group-picker-scroll-checkbox {
-  width: 17px;
-  height: 17px;
-  flex-shrink: 0;
-  cursor: pointer;
-  accent-color: var(--accent);
-  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-}
-.domain-group-picker-scroll-text { font-size: 12px; color: var(--ink); }
+.domain-group-picker-scroll-field { gap: 6px; max-width: 100%; }
+.domain-group-picker-scroll-label { font-size: 12px; color: var(--ink); }
 .domain-group-picker .domain-group-picker-footer { justify-content: flex-end; }
 
 @media (min-width: 1100px) {
@@ -89,7 +72,6 @@
     .domain-group-picker-controls { gap: 10px; }
     .domain-group-picker-create-fields { gap: 10px; }
     .domain-group-picker-help { font-size: 11px; line-height: 1.45; }
-    .domain-group-picker-scroll-label { min-height: 30px; }
     .portfolio-destination-tree { gap: 6px; padding: 2px; overflow-y: auto; max-height: min(44dvh, 400px); scrollbar-gutter: stable; overscroll-behavior: contain; grid-template-columns: minmax(0, 1fr); }
     .portfolio-destination-tree-header { gap: 7px; min-height: 32px; padding: 6px 8px; }
     .portfolio-destination-tree-icon-wrap { width: 22px; height: 22px; }
@@ -107,5 +89,5 @@
   .domain-group-picker-create-fields { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .domain-group-picker-name-input, .domain-group-picker-collection-name-input, .domain-group-picker-scroll-label { transition: none; }
+  .domain-group-picker-name-input, .domain-group-picker-collection-name-input { transition: none; }
 }

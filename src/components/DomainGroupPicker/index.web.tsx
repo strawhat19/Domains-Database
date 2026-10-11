@@ -2,7 +2,9 @@ import './styles.scss';
 import '../DomainEditor/styles.scss';
 import type { DomainRecord } from '../../shared/types';
 import DestinationChoices from '../DestinationChoices/index.web';
+import BooleanSetting from '../SegmentedControl/BooleanSetting.web';
 import PortfolioDestinationTree from '../PortfolioDestinationTree/index.web';
+import { UNGROUPED_GROUP_LABEL } from '../../shared/portfolioPreferences/names';
 import { X, List, Plus, Folder, Layers3, Database, FolderPlus, ChevronRight } from 'lucide-react';
 import { CREATE_GROUP_OPTION, CREATE_COLLECTION_OPTION, UNGROUPED_GROUP_OPTION, useDomainGroupPicker, MAIN_DATABASE_COLLECTION_OPTION } from './useDomainGroupPicker';
 
@@ -146,13 +148,13 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped }: DomainGroupPickerPro
                     >
                       <List size={19} aria-hidden={`true`} id={`domain-group-picker-ungrouped-command-icon`} className={`domain-group-picker-command-icon`} />
                       <span id={`domain-group-picker-ungrouped-command-content`} className={`domain-group-picker-command-content`}>
-                        <span id={`domain-group-picker-ungrouped-command-label`} className={`domain-group-picker-command-label`}>{`Ungrouped`}</span>
-                        <span id={`domain-group-picker-ungrouped-command-description`} className={`domain-group-picker-command-description`}>{`Remove selected domains from their current groups`}</span>
+                        <span id={`domain-group-picker-ungrouped-command-label`} className={`domain-group-picker-command-label`}>{UNGROUPED_GROUP_LABEL}</span>
+                        <span id={`domain-group-picker-ungrouped-command-description`} className={`domain-group-picker-command-description`}>{`Remove selected domains from their current groups or apps`}</span>
                       </span>
                       <span
                         id={`domain-group-picker-ungrouped-command-count`}
                         className={`destination-choice-count domain-group-picker-command-count`}
-                        title={`${picker.ungroupedCount} Ungrouped Domain(s)`}
+                        title={`${picker.ungroupedCount} Domain(s) Without A Group Or App`}
                       >
                         {picker.ungroupedCount}
                       </span>
@@ -189,7 +191,7 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped }: DomainGroupPickerPro
                   {picker.selectingCollection
                     ? `Domains move directly into the collection or Database, without a group.`
                     : picker.groupId === UNGROUPED_GROUP_OPTION
-                    ? `Ungrouped removes these domains from their current custom groups.`
+                    ? `${UNGROUPED_GROUP_LABEL} removes these domains from their current groups or apps.`
                     : `Applying a group moves these domains out of their current custom groups.`}
                 </p>
                 {(picker.creatingGroup || picker.creatingNewCollection) && (
@@ -271,22 +273,21 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped }: DomainGroupPickerPro
                     )}
                   </div>
                 )}
-                <label
-                  id={`domain-group-picker-scroll-label`}
-                  htmlFor={`domain-group-picker-scroll-input`}
-                  className={`domain-group-picker-scroll-label`}
-                >
-                  <input
-                    type={`checkbox`}
-                    checked={picker.scrollToGroup}
-                    id={`domain-group-picker-scroll-input`}
-                    className={`domain-group-picker-scroll-checkbox`}
-                    onChange={event => picker.setScrollToGroup(event.currentTarget.checked)}
-                  />
-                  <span id={`domain-group-picker-scroll-text`} className={`domain-group-picker-scroll-text`}>
-                    {`Scroll to Destination when Done`}
+                <div id={`domain-group-picker-scroll-field`} className={`domain-editor-field domain-group-picker-scroll-field`}>
+                  <span id={`domain-group-picker-scroll-label`} className={`domain-editor-label domain-group-picker-scroll-label`}>
+                    <span id={`domain-group-picker-scroll-text`} className={`domain-group-picker-scroll-text`}>
+                      {`Scroll to Destination when Done`}
+                    </span>
                   </span>
-                </label>
+                  <BooleanSetting
+                    value={picker.scrollToGroup}
+                    disabled={picker.disabled}
+                    onChange={picker.setScrollToGroup}
+                    id={`domain-group-picker-scroll-input`}
+                    className={`domain-group-picker-scroll-control`}
+                    labelledBy={`domain-group-picker-scroll-label`}
+                  />
+                </div>
               </div>
             </div>
             {picker.error && (

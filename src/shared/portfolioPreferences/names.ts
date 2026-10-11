@@ -6,7 +6,13 @@ interface PortfolioNameExclusions {
   collectionId?: string;
 }
 
+export const UNGROUPED_GROUP_LABEL = `No Group or App Yet`;
 export const normalizePortfolioName = (name: string) => name.trim().toLowerCase();
+
+export const isReservedPortfolioGroupName = (name: string) => {
+  const normalizedName = normalizePortfolioName(name);
+  return normalizedName === `ungrouped` || normalizedName === normalizePortfolioName(UNGROUPED_GROUP_LABEL);
+};
 
 export const isPortfolioNameTaken = (preferences: PortfolioNames, name: string, exclude: PortfolioNameExclusions = {}) => {
   const normalizedName = normalizePortfolioName(name);

@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { normalizePortfolioName, isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
 import { getPortfolioSuggestions, getRecentPortfolioItems } from '../../shared/portfolioPreferences/recent';
+import { normalizePortfolioName, isPortfolioNameTaken, isReservedPortfolioGroupName } from '../../shared/portfolioPreferences/names';
 
 export interface PortfolioAddGroupProps {
   idPrefix: string;
@@ -80,7 +80,7 @@ export const usePortfolioAddGroup = ({ disabled = false, collectionId = null }: 
     const trimmedName = name.trim();
     if (!trimmedName) { showError(`Enter A Group Name`); return; }
     if (trimmedName.length > 80) { showError(`Group Name Must Be 80 Characters Or Fewer`); return; }
-    if (normalizePortfolioName(trimmedName) === `ungrouped`) { showError(`Ungrouped Is A Reserved Group Name`); return; }
+    if (isReservedPortfolioGroupName(trimmedName)) { showError(`This Name Is Reserved For Domains Without A Group Or App`); return; }
     const existing = candidates.find(group => normalizePortfolioName(group.name) === normalizePortfolioName(trimmedName));
     if (existing) { addSuggestedGroup(existing.id); return; }
     if (isPortfolioNameTaken(preferences, trimmedName)) { showError(`A Collection Or Group With This Name Already Exists`); return; }

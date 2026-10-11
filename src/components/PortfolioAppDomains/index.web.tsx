@@ -2,6 +2,7 @@ import './styles.scss';
 import { Star } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import type { DomainRecord } from '../../shared/types';
+import DomainNewBadge from '../DomainNewBadge/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import { readDomainDrag } from '../PortfolioRecords/dragData';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
@@ -93,6 +94,7 @@ const PortfolioAppDomains = ({ id, group, getDragHandlers, onContextMenu, busy =
                 />
               </span>
               <span id={`${scope}-name`} className={`portfolio-app-domain-name`}>{domain.name}</span>
+              <DomainNewBadge compact domain={domain} id={`${scope}-new-badge`} />
               {domain.starred && <Star size={10} fill={`currentColor`} aria-hidden={`true`} id={`${scope}-star-icon`} className={`portfolio-app-domain-star-icon`} />}
             </a>
           </li>

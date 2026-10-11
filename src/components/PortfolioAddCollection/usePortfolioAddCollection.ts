@@ -6,9 +6,10 @@ import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePo
 export interface PortfolioAddCollectionProps {
   idPrefix: string;
   disabled?: boolean;
+  onCreated?: () => void;
 }
 
-export const usePortfolioAddCollection = ({ disabled = false }: PortfolioAddCollectionProps) => {
+export const usePortfolioAddCollection = ({ onCreated, disabled = false }: PortfolioAddCollectionProps) => {
   const preferences = usePortfolioPreferences();
   const [name, setNameValue] = useState(``);
   const [error, setError] = useState(``);
@@ -44,6 +45,7 @@ export const usePortfolioAddCollection = ({ disabled = false }: PortfolioAddColl
       return;
     }
     if (!preferences.createCollection(trimmedName)) { showError(`Could Not Add Collection`); return; }
+    onCreated?.();
     clearDraft();
     inputRef.current?.focus({ preventScroll: true });
   };

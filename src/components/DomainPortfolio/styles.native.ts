@@ -93,6 +93,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   registrarChoices: { gap: 7, flexWrap: `wrap`, flexDirection: `row` },
   toggle: { gap: 12, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
   toggleCopy: { gap: 4, flex: 1 },
-  modalFooter: { gap: 12, padding: 22, flexShrink: 0, paddingTop: 18, borderTopWidth: 1, borderTopColor: palette.line },
+  modalFooter: { gap: 12, padding: 22, flexShrink: 0, paddingTop: 18 },
   modalFootnote: { color: palette.muted, fontSize: 10, lineHeight: 17, textAlign: `center`, fontFamily: `DMSans_400Regular` },
 });

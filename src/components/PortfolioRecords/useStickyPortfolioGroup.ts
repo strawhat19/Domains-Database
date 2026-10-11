@@ -112,7 +112,7 @@ export const useStickyPortfolioGroup = (
 
     const focusControl = (id: string) => {
       const originalId = id.replace(`${idPrefix}-sticky-`, `${idPrefix}-`);
-      const controls = [id, originalId, originalId.replace(/-input$/, `-edit`), `portfolio-groups-button`];
+      const controls = [id, originalId, originalId.replace(/-input$/, `-edit`), `portfolio-table-settings`];
       controls.map(controlId => document.getElementById(controlId)).find(control => control?.isConnected
         && !control.matches(`:disabled`) && !control.closest(`[hidden], [inert], [aria-hidden='true']`))?.focus({ preventScroll: true });
     };

@@ -2,8 +2,8 @@ import './styles.scss';
 import '../DomainEditor/styles.scss';
 import ModalTitle from '../ModalTitle/index.web';
 import SettingsField from '../SettingsField/index.web';
-import DomainProjectBadge from '../DomainProjectBadge/index.web';
-import { X, Check, Share2, ArrowDownAZ, GripVertical } from 'lucide-react';
+import SegmentedControl from '../SegmentedControl/index.web';
+import { X, Lock, Check, Globe, Share2, ArrowDownAZ, GripVertical } from 'lucide-react';
 import ProjectSelect from '../DomainEditor/ProjectSelect/index.web';
 import { useDomainCollectionSettings } from './useDomainCollectionSettings';
 import type { CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
@@ -17,7 +17,6 @@ interface DomainCollectionSettingsProps {
 
 const DomainCollectionSettings = ({ collection, onClose, editDescription = false }: DomainCollectionSettingsProps) => {
   const settings = useDomainCollectionSettings(collection, onClose);
-  const OrderIcon = settings.manualOrder ? ArrowDownAZ : GripVertical;
 
   return (
     <div
@@ -84,25 +83,20 @@ const DomainCollectionSettings = ({ collection, onClose, editDescription = false
           <div id={`domain-collection-settings-body`} className={`domain-dialog-body`}>
             <div id={`domain-collection-settings-fields`} className={`domain-collection-settings-fields`}>
               <div id={`domain-collection-settings-visibility-field`} className={`domain-editor-field`}>
-                <label id={`domain-collection-settings-visibility-label`} htmlFor={`domain-collection-settings-visibility`} className={`domain-editor-label`}>
+                <span id={`domain-collection-settings-visibility-label`} className={`domain-editor-label`}>
                   {`Visibility`}
-                </label>
-                <SettingsField
-                  label={`Visibility`}
-                  id={`domain-collection-settings-visibility-view`}
-                  value={settings.visibility === `public` ? `Public / Published` : `Private`}
-                >
-                  <select
-                    value={settings.visibility}
-                    id={`domain-collection-settings-visibility`}
-                    className={`domain-editor-input domain-collection-settings-visibility-input`}
-                    aria-describedby={`domain-collection-settings-visibility-help`}
-                    onChange={event => settings.setVisibility(event.target.value === `public` ? `public` : `private`)}
-                  >
-                    <option id={`domain-collection-settings-visibility-private`} value={`private`}>{`Private`}</option>
-                    <option id={`domain-collection-settings-visibility-public`} value={`public`}>{`Public / Published`}</option>
-                  </select>
-                </SettingsField>
+                </span>
+                <SegmentedControl
+                  value={settings.visibility}
+                  id={`domain-collection-settings-visibility`}
+                  labelledBy={`domain-collection-settings-visibility-label`}
+                  describedBy={`domain-collection-settings-visibility-help`}
+                  onChange={value => settings.setVisibility(value === `public` ? `public` : `private`)}
+                  options={[
+                    { value: `private`, label: `Private`, Icon: Lock },
+                    { value: `public`, label: `Public / Published`, Icon: Globe },
+                  ]}
+                />
                 <p id={`domain-collection-settings-visibility-help`} className={`domain-collection-settings-help`}>
                   {`Private keeps this collection unpublished. Public / Published marks it for public sharing.`}
                 </p>
@@ -115,55 +109,34 @@ const DomainCollectionSettings = ({ collection, onClose, editDescription = false
                 >
                   {`Status`}
                 </label>
-                <SettingsField
+                <ProjectSelect
                   label={`Status`}
-                  id={`domain-collection-settings-status-setting-${collection.id}`}
-                  value={(
-                    <DomainProjectBadge
-                      field={`projectStatus`}
-                      value={settings.projectStatus}
-                      id={`domain-collection-settings-status-badge-${collection.id}`}
-                    />
-                  )}
-                >
-                  <ProjectSelect
-                    label={`Status`}
-                    placeholder={`Future`}
-                    field={`projectStatus`}
-                    value={settings.projectStatus}
-                    options={DOMAIN_PROJECT_STATUSES}
-                    id={`domain-collection-settings-status-${collection.id}`}
-                    onChange={value => settings.setProjectStatus(normalizeDomainProjectStatus(value))}
-                  />
-                </SettingsField>
+                  placeholder={`Future`}
+                  field={`projectStatus`}
+                  value={settings.projectStatus}
+                  options={DOMAIN_PROJECT_STATUSES}
+                  id={`domain-collection-settings-status-${collection.id}`}
+                  onChange={value => settings.setProjectStatus(normalizeDomainProjectStatus(value))}
+                />
               </div>
               <div id={`domain-collection-settings-order-field-${collection.id}`} className={`domain-editor-field`}>
-                <label
+                <span
                   className={`domain-editor-label`}
-                  htmlFor={`domain-collection-settings-order-toggle-${collection.id}`}
                   id={`domain-collection-settings-order-label-${collection.id}`}
                 >
                   {`Sorting`}
-                </label>
-                <button
-                  type={`button`}
-                  aria-pressed={settings.manualOrder}
-                  onClick={settings.toggleManualOrder}
+                </span>
+                <SegmentedControl
+                  value={settings.manualOrder ? `manual` : `alphabetical`}
                   id={`domain-collection-settings-order-toggle-${collection.id}`}
-                  aria-label={settings.manualOrder ? `Sort A–Z` : `Manual`}
-                  className={`portfolio-button portfolio-button-secondary domain-collection-settings-order-toggle`}
-                  title={settings.manualOrder ? `Sort domains A–Z` : `Switch to manual sorting`}
-                >
-                  <OrderIcon
-                    size={14}
-                    aria-hidden={`true`}
-                    className={`portfolio-button-icon`}
-                    id={`domain-collection-settings-order-toggle-icon-${collection.id}`}
-                  />
-                  <span id={`domain-collection-settings-order-toggle-text-${collection.id}`} className={`portfolio-button-text`}>
-                    {settings.manualOrder ? `Sort A–Z` : `Manual`}
-                  </span>
-                </button>
+                  labelledBy={`domain-collection-settings-order-label-${collection.id}`}
+                  describedBy={`domain-collection-settings-order-help-${collection.id}`}
+                  onChange={value => { if ((value === `manual`) !== settings.manualOrder) settings.toggleManualOrder(); }}
+                  options={[
+                    { value: `manual`, label: `Manual`, Icon: GripVertical },
+                    { value: `alphabetical`, label: collection.sortField && collection.sortField !== `name` ? `Sorted` : `Alphabetical`, Icon: ArrowDownAZ },
+                  ]}
+                />
                 <p id={`domain-collection-settings-order-help-${collection.id}`} className={`domain-collection-settings-help`}>
                   {settings.manualOrder
                     ? `Manual ordering is selected. Drag rows to arrange domains after saving.`
