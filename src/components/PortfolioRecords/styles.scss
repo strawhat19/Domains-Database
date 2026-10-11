@@ -94,12 +94,12 @@
 .portfolio-grid-group .portfolio-group-heading { margin-bottom: 9px; }
 .portfolio-grid-group > .portfolio-group-heading { transition: margin-bottom .24s ease, background .2s ease, box-shadow .2s ease; }
 .portfolio-grid-group[data-add-row-hidden='true'] > .portfolio-group-heading { margin-bottom: 0; }
-.portfolio-group-heading-cell { font-weight: 400; padding: 2px var(--portfolio-inline-padding, 16px); text-align: left; background: var(--subtle); border-top: 1px solid var(--line); }
+.portfolio-group-heading-cell { font-weight: 400; padding: 2px var(--portfolio-inline-padding, 16px); text-align: left; background: var(--portfolio-group-bg, var(--subtle)); border-top: 1px solid var(--line); }
 .portfolio-main-heading-cell, .portfolio-empty-cell, .portfolio-add-group-cell, .portfolio-add-domains-cell, .portfolio-add-collection-cell { padding: 0; font-weight: 400; text-align: left; }
 .portfolio-grid-collection { margin-bottom: 18px; }
 .portfolio-grid-collection > .portfolio-collapse > .portfolio-collapse-content > .portfolio-grid-group { margin: 14px 16px; }
 .portfolio-group-heading-row-app > .portfolio-group-heading-cell,
-.portfolio-grid-group .portfolio-group-heading-app { background: color-mix(in srgb, var(--success-bg) 92%, transparent); }
+.portfolio-grid-group .portfolio-group-heading-app { background: var(--portfolio-app-bg, color-mix(in srgb, var(--success-bg) 92%, transparent)); }
 .portfolio-grid-group .portfolio-group-heading-app { padding: 2px 10px; border-radius: 6px; }
 .portfolio-group-heading-row-app.portfolio-group-heading-row-drop-target > .portfolio-group-heading-cell,
 .portfolio-grid-group .portfolio-group-heading-app.portfolio-group-heading-drop-target { background: var(--input); }

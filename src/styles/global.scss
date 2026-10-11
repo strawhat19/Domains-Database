@@ -53,6 +53,9 @@
   --canvas: #0c1821;
   --input: #10202b;
   --subtle: #1b343d;
+  --portfolio-app-bg: color-mix(in srgb, var(--accent) 18%, var(--paper));
+  --portfolio-group-bg: color-mix(in srgb, var(--accent) 12%, var(--paper));
+  --portfolio-collection-bg: color-mix(in srgb, var(--accent) 24%, var(--paper));
   --placeholder: #849aa7;
   --skeleton: #2b414e;
   --skeleton-highlight: #354f5d;

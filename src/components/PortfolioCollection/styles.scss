@@ -9,7 +9,7 @@
   align-items: center;
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
-  background: color-mix(in srgb, var(--success-bg) 90%, var(--success));
+  background: var(--portfolio-collection-bg, color-mix(in srgb, var(--success-bg) 90%, var(--success)));
   transition: background .2s ease, box-shadow .2s ease;
 }
 .portfolio-collection-titlebar[draggable='true'] { cursor: grab; }
