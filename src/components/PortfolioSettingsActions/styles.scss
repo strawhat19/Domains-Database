@@ -1,0 +1,46 @@
+.portfolio-settings-actions { min-width: 0; margin: 0 0 18px; }
+.portfolio-settings-action-buttons { gap: 8px; display: flex; flex-wrap: wrap; }
+.portfolio-settings-actions .portfolio-settings-action { padding: 9px 12px; min-height: 44px; }
+.portfolio-settings-actions .portfolio-settings-action-copied { color: var(--success); }
+.portfolio-settings-actions-status {
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+.portfolio-settings-copy-options { padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid var(--line); }
+.portfolio-settings-copy-heading { gap: 10px; display: flex; align-items: center; justify-content: space-between; }
+.portfolio-settings-copy-title { margin: 0; min-width: 0; font-size: 13px; font-family: var(--font-bold); overflow-wrap: anywhere; }
+.portfolio-settings-copy-close {
+  border: 0;
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 5px;
+  color: var(--muted);
+  place-items: center;
+  background: transparent;
+  transition: background .2s ease, color .2s ease;
+  &:hover:not(:disabled) { color: var(--ink); background: var(--subtle); }
+  &:disabled { opacity: .45; cursor: default; }
+}
+.portfolio-settings-copy-description { margin: 0 0 12px; font-size: 12px; line-height: 1.5; color: var(--muted); }
+.portfolio-settings-copy-hidden-field { gap: 6px; display: grid; width: fit-content; max-width: 100%; margin-bottom: 12px; }
+.portfolio-settings-copy-hidden-label { font-size: 12px; color: var(--ink); }
+.portfolio-settings-copy-formats { gap: 8px; display: grid; }
+.portfolio-settings-actions .portfolio-settings-copy-format { gap: 10px; width: 100%; min-height: 44px; padding: 10px 12px; text-align: left; white-space: normal; justify-content: flex-start; }
+.portfolio-settings-copy-format-content { gap: 3px; display: grid; min-width: 0; }
+.portfolio-settings-copy-format-description { font-size: 11px; line-height: 1.5; color: var(--muted); font-family: var(--font-body); }
+.portfolio-settings-copy-error { margin: 12px 0 0; font-size: 12px; line-height: 1.5; color: var(--danger); }
+.portfolio-settings-actions .portfolio-settings-copy-cancel { min-height: 44px; margin-top: 12px; padding: 9px 12px; }
+.portfolio-settings-actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.portfolio-settings-actions button[aria-busy='true'] { cursor: wait; }
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-settings-actions button { transition: none; }
+}

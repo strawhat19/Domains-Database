@@ -1,15 +1,15 @@
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { normalizeDomainTags } from '../../shared/domainTags';
-import { normalizeSiteIconUrl } from '../../shared/domainSiteIcon';
-import { DOMAIN_PRICE_FIELDS, normalizeDomainPrice } from '../../shared/domainPricing';
+import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import type { DomainLinkField } from '../DomainLinks/index.web';
-import { normalizeDomainLink, normalizeDomainLinks } from '../../shared/domainLinks';
+import { normalizeSiteIconUrl } from '../../shared/domainSiteIcon';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { normalizeGroupDetails } from '../../shared/portfolioPreferences/details';
-import type { CustomPortfolioGroup, PortfolioGroupDetails } from '../../shared/portfolioPreferences/types';
+import { normalizeDomainLink, normalizeDomainLinks } from '../../shared/domainLinks';
+import { DOMAIN_PRICE_FIELDS, normalizeDomainPrice } from '../../shared/domainPricing';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import type { CustomPortfolioGroup, PortfolioGroupDetails } from '../../shared/portfolioPreferences/types';
 import { isPortfolioNameTaken, normalizePortfolioName, getConvertedGroupName, isReservedPortfolioGroupName } from '../../shared/portfolioPreferences/names';
 
 export const CREATE_COLLECTION_OPTION = `create`;
@@ -33,6 +33,9 @@ type GroupSettingsField = keyof PortfolioGroupDetails
 export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () => void, convertToCollection = false) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
+  const [activeTab, setActiveTab] = useState<`general` | `project` | `organization`>(convertToCollection ? `organization` : `general`);
+  const [validationFocusRequest, setValidationFocusRequest] = useState(0);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [collectionName, setCollectionNameValue] = useState(``);
   const [name, setNameValue] = useState(group.name);
   const [nameFocusRequest, setNameFocusRequest] = useState(0);
@@ -57,6 +60,8 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     projectStatus: normalizeDomainProjectStatus(group.projectStatus),
   }));
   const modalRef = useRef<HTMLDivElement>(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const nameInputRef = useRef<HTMLTextAreaElement>(null);
   const siteIconInputRef = useRef<HTMLInputElement>(null);
   const collectionChoicesRef = useRef<HTMLDivElement>(null);
@@ -68,6 +73,8 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const addingCollection = creatingCollection || convertingToCollection;
   const currentGroup = preferences.customGroups.find(current => current.id === group.id);
   const missingGroup = !currentGroup;
+  const canDelete = Boolean(currentGroup) && !currentGroup?.isApp;
+  const hidden = preferences.hiddenGroupKeys.includes(`custom:${group.id}`);
   const missingCollection = collectionId !== MAIN_DATABASE_COLLECTION_OPTION && !addingCollection
     && !preferences.collections.some(collection => collection.id === collectionId);
   const availabilityError = missingGroup
@@ -91,6 +98,33 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   useEffect(() => {
     if (creatingCollection) collectionNameInputRef.current?.focus();
   }, [creatingCollection]);
+
+  useEffect(() => {
+    if (!confirmingDelete) return;
+    if (!canDelete) setConfirmingDelete(false);
+    else deleteCancelRef.current?.focus();
+  }, [canDelete, confirmingDelete]);
+
+  useEffect(() => {
+    if (!invalidField || invalidField === `name`) return;
+    setActiveTab(GROUP_LINK_FIELDS.some(field => field.key === invalidField) ? `project`
+      : [`collection`, `collectionName`, `collectionDescription`].includes(invalidField) ? `organization` : `general`);
+  }, [invalidField, validationFocusRequest]);
+
+  useEffect(() => {
+    if (!invalidField || invalidField === `name`) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (invalidField === `collection`) collectionChoicesRef.current?.querySelector<HTMLButtonElement>(`button:not([disabled])`)?.focus();
+      else if (invalidField === `collectionName`) collectionNameInputRef.current?.focus();
+      else if (invalidField === `collectionDescription`) collectionDescriptionInputRef.current?.focus();
+      else if (invalidField === `description`) descriptionInputRef.current?.focus();
+      else if (invalidField === `siteIconUrl`) siteIconInputRef.current?.focus();
+      else document.getElementById(GROUP_LINK_FIELDS.some(field => field.key === invalidField)
+        ? `domain-group-settings-links-${group.id}-${invalidField}-input`
+        : `domain-group-settings-${invalidField}-input-${group.id}`)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, invalidField, validationFocusRequest, group.id]);
 
   const clearError = () => {
     setError(``);
@@ -123,8 +157,43 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const toggleStar = () => {
     if (!preferences.toggleGroupStar(group.id)) setError(`Could Not Update Group Star. Try Again Shortly`);
   };
+  const toggleVisibility = () => {
+    if (missingGroup || preferences.loading) return;
+    onClose();
+    const changed = preferences.toggleGroupVisibility(`custom:${group.id}`);
+    if (changed && !hidden && !preferences.showHiddenGroups) {
+      window.requestAnimationFrame(() => document.getElementById(`portfolio-table-settings`)?.focus({ preventScroll: true }));
+    }
+  };
+  const requestDelete = () => {
+    if (preferences.loading || !canDelete) return;
+    clearError();
+    setConfirmingDelete(true);
+  };
+  const cancelDelete = () => {
+    clearError();
+    setConfirmingDelete(false);
+    deleteButtonRef.current?.focus();
+  };
+  const handleDelete = () => {
+    if (!confirmingDelete || preferences.loading) return;
+    clearError();
+    if (!canDelete) {
+      setError(missingGroup ? `This Group Is No Longer Available` : `Only Groups Can Be Deleted`);
+      setConfirmingDelete(false);
+      return;
+    }
+    if (!preferences.deleteGroup(group.id)) {
+      setError(`Could Not Delete Group. Try Again Shortly`);
+      return;
+    }
+    onClose();
+    window.requestAnimationFrame(() => document.getElementById(`portfolio-table-settings`)?.focus({ preventScroll: true }));
+  };
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (confirmingDelete) return;
+    setValidationFocusRequest(current => current + 1);
     clearError();
     if (missingGroup) {
       setError(availabilityError);
@@ -213,25 +282,36 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
 
   return {
     name,
+    hidden,
     details,
+    activeTab,
+    setActiveTab,
     setName,
     setDetail,
     modalRef,
+    canDelete,
     toggleStar,
+    toggleVisibility,
     collectionId,
     missingGroup,
     description,
     invalidField,
+    handleDelete,
+    cancelDelete,
+    requestDelete,
     nameInputRef,
     nameFocusRequest,
     siteIconInputRef,
     handleSubmit,
+    deleteButtonRef,
+    deleteCancelRef,
     collectionName,
     setDescription,
     setCollectionId,
     missingCollection,
     setCollectionName,
     creatingCollection,
+    confirmingDelete,
     collectionChoicesRef,
     convertingToCollection,
     collectionDescription,
@@ -240,6 +320,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
     setCollectionDescription,
     collectionDescriptionInputRef,
     collections: preferences.collections,
+    actionsDisabled: preferences.loading || missingGroup,
     error: error || availabilityError,
     starred: currentGroup?.starred === true,
     convertedGroupName: getConvertedGroupName(preferences, name, group.id),

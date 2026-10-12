@@ -11,18 +11,22 @@ interface PortfolioDestinationTreeProps {
   value?: string;
   compact?: boolean;
   invalid?: boolean;
+  filterMode?: boolean;
   disabled?: boolean;
   labelId?: string;
   describedBy?: string;
+  defaultCollapsed?: boolean;
   collectionValue?: string;
+  selectedGroupIds?: string[];
   selectCollections?: boolean;
+  selectedCollectionIds?: string[];
   branches: DestinationBranch[];
   onSelect: (id: string) => void;
   onSelectCollection?: (id: string) => void;
   choicesRef?: RefObject<HTMLDivElement | null>;
 }
 
-const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, compact, menu, labelId, describedBy, invalid, choicesRef, collectionValue, onSelectCollection, selectCollections = false }: PortfolioDestinationTreeProps) => {
+const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, compact, menu, labelId, describedBy, invalid, choicesRef, collectionValue, defaultCollapsed, onSelectCollection, filterMode = false, selectCollections = false, selectedGroupIds = [], selectedCollectionIds = [] }: PortfolioDestinationTreeProps) => {
   const [collapsedBranches, setCollapsedBranches] = useState<Map<string, boolean>>(new Map());
   const setBranchCollapsed = (branchId: string, collapsed: boolean, branchElement?: HTMLElement | null) => {
     if (disabled) return;
@@ -44,13 +48,13 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
       aria-labelledby={labelId}
       aria-invalid={invalid || undefined}
       aria-describedby={describedBy}
-      className={`portfolio-destination-tree${compact ? ` portfolio-destination-tree-compact` : ``}${menu ? ` portfolio-destination-tree-menu` : ``}`}
+      className={`portfolio-destination-tree${compact ? ` portfolio-destination-tree-compact` : ``}${menu ? ` portfolio-destination-tree-menu` : ``}${filterMode ? ` portfolio-destination-tree-filter` : ``}`}
     >
       {branches.map(branch => {
         const BranchIcon = branch.main ? Database : Folder;
-        const collapsed = collapsedBranches.get(branch.id) ?? selectCollections;
-        const collectionDestination = selectCollections ? !branch.main : Boolean(onSelectCollection);
-        const currentCollection = collectionDestination && (selectCollections ? value : collectionValue) === branch.id;
+        const collapsed = collapsedBranches.get(branch.id) ?? (defaultCollapsed && branch.groups.some(group => selectedGroupIds.includes(group.id)) ? false : defaultCollapsed ?? selectCollections);
+        const collectionDestination = filterMode || (selectCollections ? !branch.main : Boolean(onSelectCollection));
+        const currentCollection = filterMode ? selectedCollectionIds.includes(branch.id) : collectionDestination && (selectCollections ? value : collectionValue) === branch.id;
         const branchId = `${id}-branch-${encodeURIComponent(branch.id)}`;
         const branchDetails = `${branch.name}${branch.description ? ` — ${branch.description}` : ``}, ${branch.count} Domain(s)`;
         const branchContent = (
@@ -83,6 +87,7 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
             role={`group`}
             key={branch.id}
             id={branchId}
+            data-expanded={!collapsed}
             aria-labelledby={`${branchId}-name`}
             className={`portfolio-destination-tree-branch`}
             onKeyDown={event => {
@@ -98,15 +103,15 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
                   type={`button`}
                   title={branchDetails}
                   id={`${branchId}-select`}
-                  disabled={disabled || selectCollections && currentCollection}
+                  disabled={disabled || !filterMode && selectCollections && currentCollection}
                   role={menu ? `menuitem` : undefined}
                   tabIndex={menu ? -1 : undefined}
-                  onClick={() => selectCollections ? onSelect(branch.id) : onSelectCollection?.(branch.id)}
-                  aria-pressed={!menu && !selectCollections ? currentCollection : undefined}
-                  aria-current={currentCollection ? `true` : undefined}
-                  data-autofocus={!menu && currentCollection && !disabled || undefined}
+                  onClick={() => !filterMode && selectCollections ? onSelect(branch.id) : onSelectCollection?.(branch.id)}
+                  aria-pressed={filterMode || !menu && !selectCollections ? currentCollection : undefined}
+                  aria-current={!filterMode && currentCollection ? `true` : undefined}
+                  data-autofocus={!filterMode && !menu && currentCollection && !disabled || undefined}
                   className={`portfolio-destination-tree-header portfolio-destination-tree-collection-select`}
-                  aria-label={`${selectCollections ? currentCollection ? `Current Collection` : `Move Group To Collection` : `Move Domains To ${branch.main ? `Database` : `Collection`}`}: ${branchDetails}`}
+                  aria-label={`${filterMode ? `Filter Domains In ${branch.main ? `Database` : `Collection`}` : selectCollections ? currentCollection ? `Current Collection` : `Move Group To Collection` : `Move Domains To ${branch.main ? `Database` : `Collection`}`}: ${branchDetails}`}
                 >
                   {branchContent}
                 </button>
@@ -149,7 +154,7 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
             <PortfolioCollapse id={`${branchId}-groups`} collapsed={collapsed}>
               <div id={`${branchId}-group-list`} className={`portfolio-destination-tree-groups`}>
                 {branch.groups.map(group => {
-                  const selected = !selectCollections && value === group.id;
+                  const selected = filterMode ? selectedGroupIds.includes(group.id) : !selectCollections && value === group.id;
                   const GroupIcon = group.isApp ? AppWindow : Layers3;
                   const groupId = `${branchId}-group-${encodeURIComponent(group.id)}`;
                   const groupDetails = `${group.name}${group.description ? ` — ${group.description}` : ``}, ${group.count} Domain(s)`;
@@ -179,7 +184,7 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
                   );
                   return (
                     <div key={group.id} id={`${groupId}-item`} className={`portfolio-destination-tree-group-item`}>
-                      {selectCollections ? (
+                      {selectCollections && !filterMode ? (
                         <span id={groupId} title={groupDetails} className={`portfolio-destination-tree-group portfolio-destination-tree-group-readonly`}>
                           {groupContent}
                         </span>
@@ -189,12 +194,12 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
                           id={groupId}
                           title={groupDetails}
                           disabled={disabled}
-                          aria-label={groupDetails}
+                          aria-label={filterMode ? `Filter Domains In Group: ${groupDetails}` : groupDetails}
                           role={menu ? `menuitem` : undefined}
                           tabIndex={menu ? -1 : undefined}
                           onClick={() => onSelect(group.id)}
-                          aria-pressed={menu ? undefined : selected}
-                          data-autofocus={!menu && !collapsed && selected && !disabled || undefined}
+                          aria-pressed={filterMode || !menu ? selected : undefined}
+                          data-autofocus={!filterMode && !menu && !collapsed && selected && !disabled || undefined}
                           className={`portfolio-destination-tree-group${selected ? ` portfolio-destination-tree-group-selected` : ``}`}
                         >
                           {groupContent}

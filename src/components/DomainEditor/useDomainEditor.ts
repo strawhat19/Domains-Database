@@ -1,13 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
-import type { FormEvent, RefObject } from 'react';
 import { REGISTRARS } from '../../shared/config';
-import { normalizeDomainTags } from '../../shared/domainTags';
-import { normalizeDomainProjectStatus } from '../../shared/domainProject';
+import type { FormEvent, RefObject } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
+import type { DomainLinkField } from '../DomainLinks/index.web';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
+import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
-import { getDomainSource, normalizeDomainName, getDomainDeletionRestriction } from '../../shared/domainUtils';
+import { normalizeDomainTags, validateDomainTags } from '../../shared/domainTags';
+import { normalizeDomainLink, normalizeDomainLinks } from '../../shared/domainLinks';
+import { DOMAIN_PRICE_FIELDS, normalizeDomainPrice } from '../../shared/domainPricing';
+import { getCustomSiteIconUrl, normalizeSiteIconUrl } from '../../shared/domainSiteIcon';
 import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { getDomainSource, normalizeDomainName, getDomainDeletionRestriction } from '../../shared/domainUtils';
 
 export const useModalFocus = (
   container: RefObject<HTMLDivElement | null>,
@@ -99,11 +104,29 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
   };
 };
 
+type DomainEditorTab = `general` | `project` | `links` | `actions`;
+type DomainEditorField = keyof DomainInput | `siteIconUrl`;
+const DOMAIN_EDITOR_LINK_FIELDS: { key: DomainLinkField; label: string; multiple?: boolean }[] = [
+  { key: `parentLink`, label: `Parent Link` },
+  { key: `productionLink`, label: `Production Link` },
+  { key: `githubRepoLink`, label: `GitHub Repository Link` },
+  { key: `childLinks`, label: `Child Links`, multiple: true },
+  { key: `previewLinks`, label: `Preview Links`, multiple: true },
+  { key: `relatedLinks`, label: `Related Links`, multiple: true },
+  { key: `developmentLinks`, label: `Development Links`, multiple: true },
+  { key: `socialMediaLinks`, label: `Social Media Links`, multiple: true },
+];
+
 export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose: () => void) => {
+  const preferences = usePortfolioPreferences();
   const { addDomain, deleteDomain, updateDomain } = useDomains();
   const groupEditor = useDomainGroupEditor(domain?.id);
   const isSynced = domain && getDomainSource(domain) === `registrar`;
   const [error, setError] = useState(``);
+  const [activeTab, setActiveTabValue] = useState<DomainEditorTab>(`general`);
+  const [invalidField, setInvalidField] = useState<DomainEditorField | null>(null);
+  const [validationFocusRequest, setValidationFocusRequest] = useState(0);
+  const [moving, setMoving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [nameInvalid, setNameInvalid] = useState(false);
@@ -112,17 +135,73 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const modalRef = useRef<HTMLDivElement>(null);
   const pendingActionRef = useRef(false);
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const moveButtonRef = useRef<HTMLButtonElement>(null);
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const [input, setInput] = useState<DomainInput>(() => getInitialInput(domain));
   const close = () => { if (!pendingActionRef.current) onClose(); };
+  const hidden = Boolean(domain?.id && preferences.hiddenDomainIds.includes(domain.id));
+  const currentGroup = preferences.customGroups.find(group => domain?.id && group.domainIds.includes(domain.id));
+  const currentCollection = preferences.collections.find(collection => currentGroup
+    ? collection.id === currentGroup.collectionId : collection.domainIds?.includes(domain?.id ?? ``));
+  const destinationLabel = [currentCollection?.name ?? `Database`, currentGroup?.name].filter(Boolean).join(` / `);
+  const copySections = useMemo(() => ({
+    collections: [],
+    mainDomains: domain ? [domain] : [],
+    mainGroups: domain ? [{ key: `domain:${domain.id}`, label: domain.name, domains: [domain] }] : [],
+  }), [domain]);
+  const toggleVisibility = () => {
+    if (!domain?.id || pendingActionRef.current || preferences.loading) return;
+    close();
+    const changed = preferences.toggleDomainVisibility(domain.id);
+    if (changed && !hidden && !preferences.showHiddenDomains) {
+      document.getElementById(`portfolio-table-settings`)?.focus({ preventScroll: true });
+    }
+  };
+  const openMove = () => {
+    if (!domain?.id || confirmingDelete || pendingActionRef.current || preferences.loading) return;
+    setMoving(true);
+  };
+  const closeMove = () => {
+    if (pendingActionRef.current) return;
+    setMoving(false);
+    moveButtonRef.current?.focus({ preventScroll: true });
+  };
+  const setActiveTab = (value: DomainEditorTab) => {
+    if (pendingActionRef.current || confirmingDelete || value === activeTab) return;
+    setMoving(false);
+    setActiveTabValue(value);
+  };
   useModalFocus(modalRef, true, close);
 
   useEffect(() => {
     if (confirmingDelete) deleteCancelRef.current?.focus();
   }, [confirmingDelete]);
 
+  useEffect(() => {
+    if (!invalidField || invalidField === `name` && domain?.id) return;
+    setActiveTabValue(DOMAIN_EDITOR_LINK_FIELDS.some(field => field.key === invalidField) ? `links`
+      : [`tags`, `difficulty`, `startingBid`, `estimatedRevenue`, `mvp`, `future`, `description`].includes(invalidField) ? `project` : `general`);
+  }, [invalidField, validationFocusRequest, domain?.id]);
+
+  useEffect(() => {
+    if (!invalidField || invalidField === `name` && domain?.id) return;
+    const frame = window.requestAnimationFrame(() => {
+      const fieldId = DOMAIN_EDITOR_LINK_FIELDS.some(field => field.key === invalidField)
+        ? `domain-editor-links-${domain?.id}-${invalidField}-input`
+        : invalidField === `siteIconUrl` ? `domain-site-icon-input`
+          : invalidField === `owner` ? `domain-owner-input`
+            : invalidField === `renewalPrice` ? `domain-price-input`
+              : invalidField === `name` ? `domain-name-input`
+                : invalidField === `tags` ? `domain-tags-input-${domain?.id ?? `new`}`
+                  : DOMAIN_PRICE_FIELDS.some(field => field.field === invalidField) ? `domain-${invalidField}-input-${domain?.id ?? `new`}`
+                    : `domain-${invalidField}-input`;
+      document.getElementById(fieldId)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, invalidField, validationFocusRequest, domain?.id]);
+
   const requestDelete = () => {
-    if (!domain?.id || pendingActionRef.current || getDomainDeletionRestriction(domain)) return;
+    if (!domain?.id || moving || pendingActionRef.current || getDomainDeletionRestriction(domain)) return;
     setError(``);
     setConfirmingDelete(true);
   };
@@ -157,20 +236,45 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     if (pendingActionRef.current) return;
     if (isSynced && ![`mvp`, `meta`, `tags`, `future`, `childLinks`, `parentLink`, `difficulty`, `startingBid`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `estimatedRevenue`, `developmentLinks`, `socialMediaLinks`].includes(field)) return;
     setError(``);
+    setInvalidField(null);
     if (field === `name`) setNameInvalid(false);
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
   };
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (confirmingDelete || pendingActionRef.current) return;
-    if (domain?.id && !isSynced) {
-      try { normalizeDomainName(input.name); }
-      catch (caught) {
+    if (moving || confirmingDelete || pendingActionRef.current) return;
+    let field: DomainEditorField = `name`;
+    try {
+      if (!isSynced) {
+        normalizeDomainName(input.name);
+        field = `owner`;
+        if (!input.owner?.trim()) throw new Error(`Enter The Domain Owner`);
+        field = `renewalPrice`;
+        if (!Number.isFinite(input.renewalPrice) || input.renewalPrice < 0) throw new Error(`Enter A Renewal Price Of Zero Or More`);
+        normalizeDomainPrice(input.renewalPrice, `Renewal Price`);
+      }
+      field = `siteIconUrl`;
+      normalizeSiteIconUrl(getCustomSiteIconUrl(input));
+      for (const link of DOMAIN_EDITOR_LINK_FIELDS) {
+        field = link.key;
+        if (link.multiple) normalizeDomainLinks(input[link.key], link.label);
+        else normalizeDomainLink(input[link.key], link.label);
+      }
+      for (const price of DOMAIN_PRICE_FIELDS) {
+        field = price.field;
+        normalizeDomainPrice(input[price.field], price.label);
+      }
+      field = `tags`;
+      validateDomainTags(input.tags);
+    } catch (caught) {
+      setInvalidField(field);
+      setValidationFocusRequest(current => current + 1);
+      if (field === `name` && domain?.id) {
         setNameInvalid(true);
         setNameFocusRequest(current => current + 1);
-        setError(caught instanceof Error ? caught.message : `Enter A Valid Domain Name`);
-        return;
       }
+      setError(caught instanceof Error ? caught.message : `Enter Valid Domain Details`);
+      return;
     }
     pendingActionRef.current = true;
     setError(``);
@@ -201,11 +305,20 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     error,
     input,
     close,
+    activeTab,
+    setActiveTab,
+    invalidField,
+    hidden,
+    moving,
+    openMove,
+    closeMove,
     deleting,
     setField,
     modalRef,
     nameInvalid,
     groupEditor,
+    copySections,
+    moveButtonRef,
     handleDelete,
     cancelDelete,
     requestDelete,
@@ -214,6 +327,10 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     deleteButtonRef,
     deleteCancelRef,
     confirmingDelete,
+    toggleVisibility,
+    actionsDisabled: preferences.loading,
+    destinationLabel,
+    invalidLinkField: DOMAIN_EDITOR_LINK_FIELDS.find(field => field.key === invalidField)?.key ?? null,
     saving: saving || deleting,
   };
 };

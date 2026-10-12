@@ -269,19 +269,25 @@ const PortfolioRecords = ({
   });
   const collectionReorder = useCollectionReorder(!loading && !busy, { onAssigned: onGrouped, availableIds: allDomains.map(domain => domain.id) });
   const mainHandlers = collectionReorder.handlers(null);
+  const actionsWidth = useMemo(() => {
+    const scroll = sticky.scrollRef.current;
+    return typeof window === `undefined` || !scroll ? 176
+      : Number.parseFloat(window.getComputedStyle(scroll).getPropertyValue(`--portfolio-row-actions-cell-width`)) || 176;
+  }, [sticky.header, sticky.scrollRef]);
+  const fixedWidth = 38 + 36 + actionsWidth;
   const baseWidths = columns.map(column => getPortfolioColumnWidth(column.field, columnWidths));
   const flexibleCount = columns.filter(column => flexibleColumns.includes(column.field)).length;
-  const unusedWidth = Math.max(0, sticky.header.width - baseWidths.reduce((total, width) => total + width, 250));
+  const unusedWidth = Math.max(0, sticky.header.width - baseWidths.reduce((total, width) => total + width, fixedWidth));
   const dataWidths = columns.map((column, index) => (baseWidths[index] ?? 72)
     + (flexibleColumns.includes(column.field) && flexibleCount ? unusedWidth / flexibleCount : 0));
-  const widths = [38, 36, ...dataWidths, flexibleCount ? 0 : unusedWidth, 176];
+  const widths = [38, 36, ...dataWidths, flexibleCount ? 0 : unusedWidth, actionsWidth];
   const tableWidth = widths.reduce((total, width) => total + width, 0);
   const loadingWeight = columns.reduce((total, column) => total + (column.field === `name` ? 2 : 1), 0) || 1;
   const loadingDataWidths = columns.map(column => {
     const share = (column.field === `name` ? 2 : 1) / loadingWeight;
-    return `calc(${share * 100}% - ${share * 250}px)`;
+    return `calc(${share * 100}% - ${share * fixedWidth}px)`;
   });
-  const renderedWidths = loading ? [38, 36, ...loadingDataWidths, 0, 176] : widths;
+  const renderedWidths = loading ? [38, 36, ...loadingDataWidths, 0, actionsWidth] : widths;
   const tableStyle: CSSProperties = loading
     ? { width: `100%`, minWidth: 0, tableLayout: `fixed` }
     : { width: `100%`, minWidth: tableWidth, tableLayout: `fixed` };
@@ -324,7 +330,11 @@ const PortfolioRecords = ({
     />
   );
   const groupSettings = editingGroup && (
-    <DomainGroupSettings {...editingGroup} onClose={() => setEditingGroup(null)} />
+    <DomainGroupSettings
+      {...editingGroup}
+      onClose={() => setEditingGroup(null)}
+      copyGroup={fullGroups.find(group => group.customGroupId === editingGroup.group.id)}
+    />
   );
   const menuFeedback = <Toast id={`${idPrefix}-context-menu-error`} message={menuError} onDismiss={() => setMenuError(``)} />;
   const openGroupContextMenu = (event: MouseEvent<HTMLElement>, group: PortfolioGroup) => {
@@ -550,7 +560,7 @@ const PortfolioRecords = ({
               <RotateCcw size={13} aria-hidden={`true`} id={`${scope}-reset-icon`} className={`portfolio-group-reset-icon`} />
             </button>
           )}
-          <div id={`${scope}-action-rail`} className={`portfolio-row-action-rail`}>
+          <div id={`${scope}-action-rail`} className={`portfolio-row-action-rail${customGroup ? ` portfolio-row-action-rail-mobile-settings` : ``}`}>
             {key !== `all` && (
               <button
                 type={`button`}

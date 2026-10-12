@@ -100,6 +100,9 @@
 .domain-grid-card-skeleton-value { width: 70%; }
 .domain-grid-card-skeleton-actions { width: 52px; height: 24px; margin-left: auto; }
 @keyframes domain-grid-card-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (max-width: 720px) {
+  .domain-grid-card-actions > .domain-visibility-toggle { display: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .domain-grid-card, .domain-grid-card-action, .domain-grid-card-auto-renew, .domain-grid-card-site-link { transition: none; }
   .domain-grid-card-skeleton-line { animation: none; }

@@ -10,6 +10,8 @@ import type { CollectionVisibility, CustomPortfolioCollection } from '../../shar
 export const useDomainCollectionSettings = (collection: CustomPortfolioCollection, onClose: () => void) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
+  const [activeTab, setActiveTab] = useState<`general` | `sharing`>(`general`);
+  const [validationFocusRequest, setValidationFocusRequest] = useState(0);
   const [name, setNameValue] = useState(collection.name);
   const [orderChanged, setOrderChanged] = useState(false);
   const [nameFocusRequest, setNameFocusRequest] = useState(0);
@@ -22,9 +24,20 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
   const nameInputRef = useRef<HTMLTextAreaElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const missingCollection = !preferences.collections.some(current => current.id === collection.id);
+  const hidden = preferences.hiddenCollectionIds.includes(collection.id);
   const availabilityError = missingCollection ? `This Collection Is No Longer Available` : ``;
 
   useModalFocus(modalRef, true, onClose);
+
+  useEffect(() => {
+    if (invalidField === `description`) setActiveTab(`general`);
+  }, [invalidField, validationFocusRequest]);
+
+  useEffect(() => {
+    if (invalidField !== `description`) return;
+    const frame = window.requestAnimationFrame(() => descriptionInputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, invalidField, validationFocusRequest]);
 
   useEffect(() => {
     const invokingElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -62,8 +75,17 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     setOrderChanged(true);
     setManualOrder(current => !current);
   };
+  const toggleRowVisibility = () => {
+    if (missingCollection || preferences.loading) return;
+    onClose();
+    const changed = preferences.toggleCollectionVisibility(collection.id);
+    if (changed && !hidden && !preferences.showHiddenCollections) {
+      window.requestAnimationFrame(() => document.getElementById(`portfolio-table-settings`)?.focus({ preventScroll: true }));
+    }
+  };
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setValidationFocusRequest(current => current + 1);
     clearError();
     if (missingCollection) {
       setError(availabilityError);
@@ -94,6 +116,9 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
 
   return {
     name,
+    activeTab,
+    setActiveTab,
+    hidden,
     setName,
     modalRef,
     manualOrder,
@@ -108,7 +133,9 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
     setDescription,
     setProjectStatus,
     toggleManualOrder,
+    toggleRowVisibility,
     descriptionInputRef,
+    actionsDisabled: preferences.loading || missingCollection,
     error: error || availabilityError,
   };
 };

@@ -29,7 +29,7 @@ const downloadCsv = (text: string, filename: string) => {
 export const usePortfolio = () => {
   const data = useDomains();
   const { loading: columnsLoading } = useColumns();
-  const { loading: preferencesLoading } = usePortfolioPreferences();
+  const { customGroups, collections, loading: preferencesLoading } = usePortfolioPreferences();
   const loading = data.loading || columnsLoading || preferencesLoading;
   const [query, setQuery] = useState(``);
   const [localError, setLocalError] = useState(``);
@@ -51,7 +51,7 @@ export const usePortfolio = () => {
     setEditingDomain(null);
   }, [loading]);
   const sortedDomains = useMemo(() => sortPortfolioDomains(data.domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [data.domains, sortField, sortDirection]);
-  const summaryFilters = usePortfolioSummaryFilters(sortedDomains, loading);
+  const summaryFilters = usePortfolioSummaryFilters(sortedDomains, loading, { customGroups, collections });
   const registrarDomains = summaryFilters.domains;
   const filteredDomains = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -184,19 +184,10 @@ export const usePortfolio = () => {
     }
   };
   return {
+    ...summaryFilters,
     ...data, query, loading, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
     clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain,
     importInputRef, requestImport, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
     setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, toggleAutoRenew, toggleManualOrder, changeProjectStatus,
-    attentionOnly: summaryFilters.attentionOnly,
-    registrarFilter: summaryFilters.registrarFilter,
-    registrarFilters: summaryFilters.registrarFilters,
-    extensionFilters: summaryFilters.extensionFilters,
-    activeFilterCount: summaryFilters.activeFilterCount,
-    setRegistrarFilter: summaryFilters.setRegistrarFilter,
-    clearSummaryFilters: summaryFilters.clearSummaryFilters,
-    toggleAttentionFilter: summaryFilters.toggleAttentionFilter,
-    toggleRegistrarFilter: summaryFilters.toggleRegistrarFilter,
-    toggleExtensionFilter: summaryFilters.toggleExtensionFilter,
   };
 };

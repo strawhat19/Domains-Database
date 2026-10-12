@@ -452,6 +452,7 @@
   }
 }
 @media (max-width: 720px) {
+  .domain-portfolio { --portfolio-row-actions-cell-width: 112px; }
   .portfolio-heading { min-width: 0; max-width: 100%; }
   .portfolio-title { font-size: 28px; }
   .portfolio-summary-item { max-width: 100%; }

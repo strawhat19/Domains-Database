@@ -214,6 +214,13 @@
   .portfolio-grid-view { padding: 14px; }
   .portfolio-domain-grid { grid-template-columns: 1fr; }
 }
+@media (max-width: 720px) {
+  .portfolio-row-action-rail-mobile-settings { width: 92px; grid-template-columns: repeat(3, 28px); }
+  .portfolio-row-action-rail-mobile-settings > :is(.domain-visibility-toggle, .portfolio-group-visibility-toggle, .portfolio-collection-visibility-toggle, .portfolio-row-copy-action) { display: none; }
+  .portfolio-row-action-rail-mobile-settings > :is(.star-button, .domain-star-control) { grid-column: 1; }
+  .portfolio-row-action-rail-mobile-settings > .portfolio-row-settings-action { grid-column: 2; }
+  .portfolio-row-action-rail-mobile-settings > .portfolio-row-collapse-action { grid-column: 3; }
+}
 @media (max-width: 380px) {
   .portfolio-group-actions > .portfolio-group-project-status.rowStatus { margin-inline-end: 8px; }
 }

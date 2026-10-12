@@ -203,7 +203,7 @@
 .domain-row .domain-renewal-date + .rowStatus .statusDotWrap { width: 7px; height: 7px; }
 .domain-row .domain-renewal-date + .rowStatus .statusDot { width: 4px; height: 4px; }
 .domain-row .domain-space-cell { padding: 0; }
-.domain-row .domain-actions-cell { right: 0; z-index: 1; width: 176px; position: sticky; padding-left: 4px; padding-right: var(--portfolio-inline-padding, 16px); background: var(--paper); }
+.domain-row .domain-actions-cell { right: 0; z-index: 1; width: var(--portfolio-row-actions-cell-width, 176px); position: sticky; padding-left: 4px; padding-right: var(--portfolio-inline-padding, 16px); background: var(--paper); }
 .domain-row:hover .domain-actions-cell { background: var(--subtle); }
 .domain-row-selected .domain-actions-cell { background: color-mix(in srgb, var(--accent) 7%, var(--paper)); }
 .domain-row-selected:hover .domain-actions-cell { background: color-mix(in srgb, var(--accent) 11%, var(--paper)); }

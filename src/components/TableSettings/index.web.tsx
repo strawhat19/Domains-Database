@@ -1,5 +1,6 @@
 import './styles.scss';
 import '../DomainEditor/styles.scss';
+import ModalTabs from '../ModalTabs/index.web';
 import type { TableSettingsProps } from './types';
 import { useTableSettings } from './useTableSettings';
 import GroupControls from '../GroupControls/index.web';
@@ -12,6 +13,7 @@ import { X, Eye, List, Lock, Plus, Minus, Globe, Coins, Check, ArrowUp, Columns3
 
 const SETTINGS_TABS = [
   { id: `general`, label: `General`, Icon: Settings },
+  { id: `organization`, label: `Organization`, Icon: Layers3 },
   { id: `columns`, label: `Columns`, Icon: Columns3 },
 ] as const;
 
@@ -91,29 +93,17 @@ const TableSettings = ({
             <X size={19} aria-hidden={`true`} id={`table-settings-close-icon`} className={`domain-dialog-close-icon`} />
           </button>
         </header>
-        <div role={`tablist`} id={`table-settings-tabs`} aria-label={`Table Settings Sections`} className={`table-settings-tabs`}>
-          {SETTINGS_TABS.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              role={`tab`}
-              type={`button`}
-              id={`table-settings-tab-${id}`}
-              tabIndex={settings.tab === id ? 0 : -1}
-              aria-selected={settings.tab === id}
-              aria-controls={`table-settings-panel-${id}`}
-              onClick={() => settings.setTab(id)}
-              onKeyDown={settings.onTabKeyDown}
-              data-autofocus={settings.tab === id || undefined}
-              className={`table-settings-tab${settings.tab === id ? ` table-settings-tab-active` : ``}`}
-            >
-              <Icon size={15} aria-hidden={`true`} id={`table-settings-tab-${id}-icon`} className={`table-settings-tab-icon`} />
-              <span id={`table-settings-tab-${id}-text`} className={`table-settings-tab-text`}>{label}</span>
-            </button>
-          ))}
-        </div>
+        <ModalTabs
+          id={`table-settings`}
+          value={settings.tab}
+          options={SETTINGS_TABS}
+          onChange={settings.setTab}
+          label={`Table Settings Sections`}
+        />
         <div id={`table-settings-content`} className={`table-settings-content`}>
           <section
             role={`tabpanel`}
+            tabIndex={0}
             hidden={settings.tab !== `general`}
             id={`table-settings-panel-general`}
             aria-labelledby={`table-settings-tab-general`}
@@ -210,6 +200,45 @@ const TableSettings = ({
                 />
               </div>
             </div>
+          </section>
+          <section
+            role={`tabpanel`}
+            tabIndex={0}
+            hidden={settings.tab !== `organization`}
+            id={`table-settings-panel-organization`}
+            aria-labelledby={`table-settings-tab-organization`}
+            className={`table-settings-panel table-settings-organization-panel`}
+          >
+            <div id={`table-settings-grouping`} className={`table-settings-field table-settings-grouping`}>
+              <label id={`table-settings-group-by-label`} htmlFor={`table-settings-group-by`} className={`table-settings-label`}>
+                <Layers3 size={13} aria-hidden={`true`} id={`table-settings-group-by-icon`} className={`table-settings-field-icon`} />
+                <span id={`table-settings-group-by-text`} className={`table-settings-label-text`}>
+                  {`Group By`}
+                </span>
+              </label>
+              <div id={`table-settings-group-by-select-wrap`} className={`table-settings-select-wrap`}>
+                <select
+                  disabled={settings.loading}
+                  value={settings.groupBy}
+                  id={`table-settings-group-by`}
+                  className={`domain-editor-input table-settings-select`}
+                  onChange={event => settings.setGroupBy(event.target.value as PortfolioGroupBy)}
+                >
+                  <option id={`table-settings-group-none`} className={`table-settings-group-option`} value={`none`}>
+                    {`No Groups`}
+                  </option>
+                  <option id={`table-settings-group-custom`} className={`table-settings-group-option`} value={`custom`}>
+                    {`Custom Groups`}
+                  </option>
+                  {GROUPABLE_COLUMNS.map(column => (
+                    <option key={column.field} id={`table-settings-group-${column.field}`} className={`table-settings-group-option`} value={column.field}>
+                      {column.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={15} aria-hidden={`true`} id={`table-settings-group-by-select-chevron`} className={`table-settings-select-chevron`} />
+              </div>
+            </div>
             <form
               noValidate
               id={`table-settings-collection-create`}
@@ -270,42 +299,11 @@ const TableSettings = ({
             <GroupControls
               embedded
               domains={domains}
-              groupByControl={(
-                <div id={`table-settings-grouping`} className={`table-settings-field table-settings-grouping`}>
-                  <label id={`table-settings-group-by-label`} htmlFor={`table-settings-group-by`} className={`table-settings-label`}>
-                    <Layers3 size={13} aria-hidden={`true`} id={`table-settings-group-by-icon`} className={`table-settings-field-icon`} />
-                    <span id={`table-settings-group-by-text`} className={`table-settings-label-text`}>
-                      {`Group By`}
-                    </span>
-                  </label>
-                  <div id={`table-settings-group-by-select-wrap`} className={`table-settings-select-wrap`}>
-                    <select
-                      disabled={settings.loading}
-                      value={settings.groupBy}
-                      id={`table-settings-group-by`}
-                      className={`domain-editor-input table-settings-select`}
-                      onChange={event => settings.setGroupBy(event.target.value as PortfolioGroupBy)}
-                    >
-                      <option id={`table-settings-group-none`} className={`table-settings-group-option`} value={`none`}>
-                        {`No Groups`}
-                      </option>
-                      <option id={`table-settings-group-custom`} className={`table-settings-group-option`} value={`custom`}>
-                        {`Custom Groups`}
-                      </option>
-                      {GROUPABLE_COLUMNS.map(column => (
-                        <option key={column.field} id={`table-settings-group-${column.field}`} className={`table-settings-group-option`} value={column.field}>
-                          {column.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={15} aria-hidden={`true`} id={`table-settings-group-by-select-chevron`} className={`table-settings-select-chevron`} />
-                  </div>
-                </div>
-              )}
             />
           </section>
           <section
             role={`tabpanel`}
+            tabIndex={0}
             hidden={settings.tab !== `columns`}
             id={`table-settings-panel-columns`}
             aria-labelledby={`table-settings-tab-columns`}
@@ -321,6 +319,10 @@ const TableSettings = ({
               onToggleCategory={settings.toggleColumnCategoryCollapsed}
               collapsedCategories={settings.collapsedColumnCategories}
             />
+          </section>
+        </div>
+        <footer id={`table-settings-footer`} className={`domain-dialog-footer table-settings-footer`}>
+          {settings.tab === `columns` && (
             <div id={`table-settings-column-actions`} className={`table-settings-column-actions`}>
               <button
                 type={`button`}
@@ -348,9 +350,7 @@ const TableSettings = ({
                 </span>
               </button>
             </div>
-          </section>
-        </div>
-        <footer id={`table-settings-footer`} className={`domain-dialog-footer table-settings-footer`}>
+          )}
           <button
             type={`button`}
             onClick={onClose}

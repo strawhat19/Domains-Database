@@ -35,6 +35,7 @@
   border-radius: 7px 0 0 7px;
   &[aria-current='true'] { opacity: 1; cursor: default; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--paper)); }
 }
+.portfolio-destination-tree-filter .portfolio-destination-tree-collection-select[aria-pressed='true'] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--paper)); }
 .portfolio-destination-tree-disclosure {
   border: 0;
   width: 32px;

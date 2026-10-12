@@ -14,8 +14,18 @@ export const UNGROUPED_GROUP_OPTION = `ungrouped`;
 export const MAIN_DATABASE_COLLECTION_OPTION = `main`;
 
 type GroupPickerField = `name` | `collection` | `collectionName`;
+interface GroupPickerDestination {
+  groupId: string;
+  collectionId: string;
+  type: `group` | `collection`;
+}
 
-export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => void, onGrouped?: () => void) => {
+interface DomainGroupPickerOptions {
+  embedded?: boolean;
+  disabled?: boolean;
+}
+
+export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => void, onGrouped?: () => void, { embedded = false, disabled: externallyDisabled = false }: DomainGroupPickerOptions = {}) => {
   const preferences = usePortfolioPreferences();
   const { loading: domainsLoading, domains: availableDomains } = useDomains();
   const loading = domainsLoading || preferences.loading;
@@ -32,7 +42,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
   const [name, setNameValue] = useState(``);
   const [error, setError] = useState(``);
   const [collectionName, setCollectionNameValue] = useState(``);
-  const [scrollToGroup, setScrollToGroup] = useState(false);
+  const [scrollToGroup, setScrollToGroupValue] = useState(false);
   const [groupId, setGroupIdValue] = useState(CREATE_GROUP_OPTION);
   const [destinationType, setDestinationType] = useState<`group` | `collection`>(`group`);
   const [invalidField, setInvalidField] = useState<GroupPickerField | null>(null);
@@ -69,8 +79,10 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
         : ``;
   const groupError = missingGroup ? `This Group Is No Longer Available. Choose Another Group` : ``;
   const collectionError = missingCollection ? `This Collection Is No Longer Available. Choose Another Collection` : ``;
+  const disabled = externallyDisabled || Boolean(availabilityError);
+  const handleClose = () => { if (!externallyDisabled) onClose(); };
 
-  useModalFocus(modalRef, true, onClose, true);
+  useModalFocus(modalRef, !embedded, handleClose, true);
 
   useEffect(() => {
     if (availabilityError || collectionDefaultApplied.current) return;
@@ -79,6 +91,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
   }, [availabilityError, defaultCollectionId]);
 
   useEffect(() => {
+    if (embedded) return;
     const invokingElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const invokingId = invokingElement?.id;
     return () => {
@@ -90,61 +103,81 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
       controls.find(control => control?.isConnected && !control.matches(`:disabled`)
         && !control.closest(`[hidden], [inert], [aria-hidden='true']`))?.focus({ preventScroll: true });
     };
-  }, []);
+  }, [embedded]);
 
   useEffect(() => {
-    if (availabilityError) return;
+    if (disabled) return;
     if (creatingGroup) nameInputRef.current?.focus({ preventScroll: true });
     else if (creatingNewCollection) collectionNameInputRef.current?.focus({ preventScroll: true });
-  }, [creatingGroup, creatingNewCollection, availabilityError]);
+  }, [disabled, creatingGroup, creatingNewCollection]);
 
   const clearError = () => {
     setError(``);
     setInvalidField(null);
   };
   const setName = (value: string) => {
+    if (disabled) return;
     clearError();
     setNameValue(value);
   };
   const setGroupId = (value: string) => {
-    if (availabilityError) return;
+    if (disabled) return;
     collectionDefaultApplied.current = true;
     clearError();
     setDestinationType(`group`);
     setGroupIdValue(value);
+    if (value !== CREATE_GROUP_OPTION || name.trim() && (collectionId !== CREATE_COLLECTION_OPTION || collectionName.trim())) {
+      applyDestination({ groupId: value, collectionId, type: `group` });
+    }
   };
   const setDestinationCollectionId = (value: string) => {
-    if (availabilityError) return;
+    if (disabled) return;
     collectionDefaultApplied.current = true;
     clearError();
     setDestinationType(`collection`);
     setCollectionIdValue(value);
     if (value !== CREATE_COLLECTION_OPTION) setCollectionNameValue(``);
+    if (value !== CREATE_COLLECTION_OPTION || collectionName.trim()) {
+      applyDestination({ groupId, collectionId: value, type: `collection` });
+    }
   };
   const setCollectionId = (value: string) => {
-    if (availabilityError) return;
+    if (disabled) return;
     collectionDefaultApplied.current = true;
     clearError();
     setCollectionIdValue(value);
     if (value === CREATE_COLLECTION_OPTION) collectionNameInputRef.current?.focus();
     else setCollectionNameValue(``);
+    if (creatingGroup && name.trim() && (value !== CREATE_COLLECTION_OPTION || collectionName.trim())) {
+      applyDestination({ groupId, collectionId: value, type: `group` });
+    }
   };
   const setCollectionName = (value: string) => {
-    if (availabilityError) return;
+    if (disabled) return;
     collectionDefaultApplied.current = true;
     clearError();
     setCollectionNameValue(value);
     setCollectionIdValue(value.trim() || selectingCollection ? CREATE_COLLECTION_OPTION : MAIN_DATABASE_COLLECTION_OPTION);
   };
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const setScrollToGroup = (value: boolean) => {
+    if (!disabled) setScrollToGroupValue(value);
+  };
+  const applyDestination = ({ groupId, collectionId, type }: GroupPickerDestination) => {
+    if (externallyDisabled) return;
+    const selectingCollection = type === `collection`;
+    const creatingGroup = !selectingCollection && groupId === CREATE_GROUP_OPTION;
+    const creatingCollection = (creatingGroup || selectingCollection) && collectionId === CREATE_COLLECTION_OPTION;
+    const missingCollection = (creatingGroup || selectingCollection) && collectionId !== MAIN_DATABASE_COLLECTION_OPTION && !creatingCollection
+      && !preferences.collections.some(collection => collection.id === collectionId);
+    const missingGroup = Boolean(!selectingCollection && groupId && !creatingGroup && groupId !== UNGROUPED_GROUP_OPTION
+      && !preferences.customGroups.some(group => group.id === groupId));
     clearError();
     if (availabilityError) {
       setError(availabilityError);
       return;
     }
     if (!selectingCollection && (!groupId || missingGroup)) {
-      setError(groupError || `Choose A Group`);
+      setError(missingGroup ? `This Group Is No Longer Available. Choose Another Group` : `Choose A Group`);
       const choice = Array.from(groupChoicesRef.current?.querySelectorAll<HTMLButtonElement>(`button:not([disabled])`) ?? [])
         .find(button => !button.closest(`[inert], [hidden], [aria-hidden='true']`));
       choice?.focus();
@@ -152,7 +185,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
     }
     if (missingCollection) {
       setInvalidField(`collection`);
-      setError(collectionError);
+      setError(`This Collection Is No Longer Available. Choose Another Collection`);
       const choices = creatingGroup ? collectionChoicesRef.current : groupChoicesRef.current;
       choices?.querySelector<HTMLButtonElement>(`button:not([disabled])`)?.focus({ preventScroll: true });
       return;
@@ -219,7 +252,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
     }
     onGrouped?.();
     onClose();
-    if (scrollToGroup) {
+    if (scrollToGroup && !embedded) {
       if (selectingCollection) scrollToPortfolioCollection(destinationCollectionId);
       else {
         const groupCollectionId = creatingGroup
@@ -229,17 +262,25 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
       }
     }
   };
+  const submit = () => applyDestination({ groupId, collectionId, type: destinationType });
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    submit();
+  };
 
   return {
     name,
+    submit,
     groupId,
     setName,
+    disabled,
     modalRef,
     setGroupId,
     collections,
     invalidField,
     nameInputRef,
     collectionId,
+    handleClose,
     creatingGroup,
     selectingCollection,
     handleSubmit,
@@ -259,7 +300,6 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
     ungroupedCount: destinationTree.ungroupedCount,
     mainCollectionCount: destinationTree.mainCount,
     destinationBranches: destinationTree.branches,
-    disabled: Boolean(availabilityError),
     error: error || availabilityError || groupError || collectionError,
   };
 };

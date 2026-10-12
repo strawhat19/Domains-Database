@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import type { KeyboardEvent } from 'react';
 import type { TableSettingsTab } from './types';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { usePortfolioAddCollection } from '../PortfolioAddCollection/usePortfolioAddCollection';
@@ -21,13 +20,5 @@ export const useTableSettings = (onClose: () => void) => {
     preferences.setShowHiddenCollections(value);
   };
 
-  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (![`ArrowLeft`, `ArrowRight`, `Home`, `End`].includes(event.key)) return;
-    event.preventDefault();
-    const nextTab = event.key === `Home` ? `general` : event.key === `End` ? `columns` : tab === `general` ? `columns` : `general`;
-    setTab(nextTab);
-    modalRef.current?.querySelector<HTMLButtonElement>(`#table-settings-tab-${nextTab}`)?.focus();
-  };
-
-  return { ...preferences, tab, setTab, modalRef, collectionForm, onTabKeyDown, setShowHidden, showHiddenState };
+  return { ...preferences, tab, setTab, modalRef, collectionForm, setShowHidden, showHiddenState };
 };

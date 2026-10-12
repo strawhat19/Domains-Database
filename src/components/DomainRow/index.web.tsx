@@ -367,7 +367,7 @@ const DomainRow = ({
         <td aria-hidden={`true`} id={`${scope}-space-cell`} className={`domain-space-cell`} />
         <td id={`${scope}-actions-cell`} className={`actionsCell domain-actions-cell`}>
           <PortfolioCollapse collapsed={collapsed} id={`${scope}-actions-cell-content`}>
-            <div id={`${scope}-actions`} className={`domain-row-actions portfolio-row-action-rail`}>
+            <div id={`${scope}-actions`} className={`domain-row-actions portfolio-row-action-rail portfolio-row-action-rail-mobile-settings`}>
               {!hideProjectDetails && (
                 <>
                   <DomainVisibilityButton

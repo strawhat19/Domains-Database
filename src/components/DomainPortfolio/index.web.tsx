@@ -141,7 +141,15 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       .map(({ label }) => ({ count: 0, registrar: label })),
   ], [portfolio.summary.registrarCounts, portfolio.connectedSyncRegistrars]);
   const activeFilterCount = portfolio.activeFilterCount + Number(Boolean(portfolio.query.trim()));
-  const filterDescription = `${portfolio.registrarFilters.join(`, `) || `All Registrars`}${portfolio.extensionFilters.length ? `; Extensions: ${portfolio.extensionFilters.join(`, `)}` : ``}${portfolio.attentionOnly ? `; Needs Attention` : ``}${portfolio.query.trim() ? `; Search: ${portfolio.query.trim()}` : ``}`;
+  const filterDescription = [
+    ...portfolio.registrarFilters,
+    ...portfolio.extensionFilters,
+    ...portfolio.destinationBranches.filter(branch => portfolio.collectionFilters.includes(branch.id)).map(branch => branch.name),
+    ...portfolio.destinationBranches.flatMap(branch => branch.groups.filter(group => portfolio.groupFilters.includes(group.id)).map(group => `${branch.name} / ${group.name}`)),
+    ...portfolio.filterSections.flatMap(section => (portfolio.facetFilters[section.id] ?? []).map(value => `${section.label}: ${section.options.find(option => option.value === value)?.label ?? value}`)),
+    ...(portfolio.attentionOnly ? [`Needs Attention`] : []),
+    ...(portfolio.query.trim() ? [`Search: ${portfolio.query.trim()}`] : []),
+  ].join(`; `) || `All Domains`;
   const selectionFor = (ids: string[]) => {
     const count = ids.filter(id => selection.selectedIds.has(id)).length;
     return {

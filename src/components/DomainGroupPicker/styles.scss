@@ -47,6 +47,17 @@
 .domain-group-picker-scroll-field { gap: 6px; max-width: 100%; }
 .domain-group-picker-scroll-label { font-size: 12px; color: var(--ink); }
 .domain-group-picker .domain-group-picker-footer { justify-content: flex-end; }
+.domain-group-picker-embedded {
+  min-width: 0;
+  .domain-group-picker-form { overflow: visible; }
+  .domain-dialog-body { padding: 0; overflow: visible; scrollbar-gutter: auto; }
+  .domain-dialog-description { margin: 0 0 12px; font-size: 12px; }
+  .domain-group-picker-selection { display: none; }
+  .domain-group-picker-fields, .domain-group-picker-commands, .portfolio-destination-tree, .domain-group-picker-create-fields { grid-template-columns: minmax(0, 1fr); }
+  .domain-group-picker-command { gap: 8px; padding: 10px; }
+  .domain-group-picker-command-description { font-size: 10px; }
+  .domain-group-picker-footer { margin-top: 12px; padding-top: 12px; }
+}
 
 @media (min-width: 1100px) {
   .domain-dialog.domain-group-picker {

@@ -1,5 +1,5 @@
 .domain-dialog.table-settings {
-  --table-settings-label-width: 120px;
+  --table-settings-label-width: 114px;
   --table-settings-control-height: 34px;
   --table-settings-segment-width: 228px;
   display: flex;
@@ -7,54 +7,25 @@
   overflow: hidden;
   flex-direction: column;
 }
-.table-settings-header { flex-shrink: 0; margin-bottom: 20px; }
-.table-settings-tabs { gap: 0; display: flex; flex-shrink: 0; padding: 0; overflow: hidden; height: var(--table-settings-control-height); margin-bottom: 20px; border-radius: 6px; border: 1px solid var(--line); background: var(--input); }
-.table-settings-tab {
-  flex: 1;
-  gap: 6px;
-  border: 0;
-  min-width: 0;
-  font: inherit;
-  display: flex;
-  font-size: 12px;
-  min-height: 0;
-  line-height: 1.25;
-  cursor: pointer;
-  padding: 4px 10px;
-  border-radius: 0;
-  color: var(--muted);
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  font-family: var(--font-bold);
-  transition: color .2s ease, background .2s ease, box-shadow .2s ease;
-  &:hover { color: var(--ink); background: var(--subtle); }
-  &:first-child { border-radius: 5px 0 0 5px; }
-  &:last-child { border-radius: 0 5px 5px 0; }
-}
-.table-settings-tabs .table-settings-tab:focus-visible { outline-offset: -2px; }
-.table-settings-tab-active, .table-settings-tab-active:hover {
-  color: var(--contrast);
-  background: var(--accent);
-  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
-  box-shadow: none;
-}
-.table-settings-tab-icon { flex-shrink: 0; }
+.table-settings-header { flex-shrink: 0; margin-bottom: 16px; }
+.table-settings > .modal-tabs { margin-bottom: 14px; }
 .table-settings-content {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 4px 4px 4px 0;
-  scrollbar-gutter: stable;
+  padding: 4px;
+  scrollbar-gutter: auto;
   overscroll-behavior: contain;
   container-type: inline-size;
   container-name: table-settings-content;
 }
-.table-settings-panel { gap: 24px; min-width: 0; display: grid; }
-.table-settings-general-panel, .table-settings-columns-panel { gap: 14px; }
-.table-settings-columns-panel { --table-settings-segment-width: 128px; }
+.table-settings-panel { gap: 12px; min-width: 0; display: grid; align-items: start; }
+.table-settings-columns-panel { --table-settings-segment-width: 112px; }
+.table-settings-organization-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.table-settings-organization-panel .group-controls-embedded, .table-settings-organization-panel .group-controls-embedded-panel { display: contents; }
+.table-settings-organization-panel .group-controls-custom-manager { min-width: 0; }
 .table-settings-panel[hidden] { display: none; }
-.table-settings-fields { gap: 14px 16px; display: grid; align-items: stretch; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.table-settings-fields { gap: 12px; display: grid; align-items: stretch; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .table-settings-field { gap: 8px; border: 0; margin: 0; padding: 0; min-width: 0; display: grid; align-content: start; }
 .table-settings-fields > .table-settings-field, .table-settings-grouping, .table-settings .group-controls-create, .table-settings .table-settings-collection-create, .table-settings-columns-panel .column-controls-option {
   gap: 8px 12px;
@@ -95,7 +66,7 @@
   .segmented-control-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 }
 .table-settings-grouping { grid-template-columns: var(--table-settings-label-width) minmax(0, 1fr); }
-.table-settings .group-controls-embedded-panel { gap: 14px; display: grid; align-items: start; grid-template-columns: minmax(0, 1fr); }
+.table-settings .group-controls-embedded-panel { gap: 12px; align-items: start; }
 .table-settings .group-controls-group-by { margin-bottom: 0; }
 .table-settings .group-controls-create, .table-settings-collection-create { display: grid; grid-template-columns: minmax(0, 1fr) max-content; }
 .table-settings .group-controls-create .group-controls-field, .table-settings-collection-field {
@@ -129,11 +100,11 @@
 .table-settings-field-icon.table-settings-collection-icon { color: var(--success); }
 .table-settings-action-icon { flex-shrink: 0; color: var(--accent); }
 .table-settings-label-text { min-width: 0; overflow-wrap: anywhere; }
-.table-settings .table-settings-footer { gap: 12px; padding-top: 0; flex-shrink: 0; align-items: center; justify-content: flex-end; }
-.table-settings-column-actions { gap: 8px; display: flex; flex-wrap: wrap; justify-content: flex-end; }
+.table-settings .table-settings-footer { gap: 12px; margin-top: 16px; padding-top: 0; flex-shrink: 0; align-items: center; justify-content: flex-end; }
+.table-settings-column-actions { gap: 8px; display: flex; flex-wrap: wrap; margin-right: auto; }
 .table-settings-column-actions .portfolio-button-icon { color: var(--accent); }
 .table-settings-columns-panel .column-controls-title { width: 1px; height: 1px; padding: 0; border: 0; margin: -1px; overflow: hidden; position: absolute; white-space: nowrap; clip-path: inset(50%); }
-.table-settings-columns-panel .column-controls-groups { gap: 14px 16px; align-items: start; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); }
+.table-settings-columns-panel .column-controls-groups { gap: 12px; align-items: start; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
 .table-settings-columns-panel .column-controls-group-title { gap: 6px; display: flex; font-size: 12px; line-height: 1.25; color: var(--ink); align-items: center; margin-bottom: 10px; }
 .table-settings-columns-panel .column-controls-group-collapsible .column-controls-group-title { display: block; margin-bottom: 0; }
 .table-settings-columns-panel .column-controls-group-toggle {
@@ -171,7 +142,7 @@
 }
 .table-settings-columns-panel .column-controls-group-collapsible .column-controls-group-options { min-height: 0; overflow: hidden; }
 .table-settings-columns-panel :is(.column-controls-group-icon, .column-controls-option-icon) { width: 15px; height: 15px; flex-shrink: 0; color: var(--accent); }
-.table-settings-columns-panel .column-controls-group-options { gap: 8px; grid-template-columns: minmax(0, 1fr); }
+.table-settings-columns-panel .column-controls-group-options { gap: 6px; grid-template-columns: minmax(0, 1fr); }
 .table-settings-columns-panel .column-controls-option { grid-template-columns: minmax(0, 1fr) var(--table-settings-segment-width); }
 .table-settings-columns-panel .column-controls-option-heading { gap: 6px; flex-wrap: nowrap; }
 .table-settings-columns-panel .column-controls-option-label { gap: 6px; flex: 1; display: flex; font-size: 12px; line-height: 1.25; align-items: center; font-family: var(--font-bold); }
@@ -181,10 +152,10 @@
 .table-settings :is(.table-settings-footer, .table-settings-column-actions) > .portfolio-button { padding: 4px 12px; line-height: 1.25; height: var(--table-settings-control-height); min-height: var(--table-settings-control-height); }
 .table-settings :is(button, input, select):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @media (max-width: 620px) {
-  .table-settings-fields { grid-template-columns: minmax(0, 1fr); }
+  .table-settings-fields, .table-settings-organization-panel { grid-template-columns: minmax(0, 1fr); }
 }
 @container table-settings-content (max-width: 720px) {
-  .table-settings-fields { grid-template-columns: minmax(0, 1fr); }
+  .table-settings-fields, .table-settings-organization-panel { grid-template-columns: minmax(0, 1fr); }
 }
 @container table-settings-content (min-width: 1120px) {
   .table-settings-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -209,9 +180,14 @@
 }
 @media (max-width: 560px) {
   .table-settings .table-settings-footer { align-items: stretch; flex-direction: column; }
+  .table-settings-column-actions { width: 100%; }
   .table-settings-column-actions .portfolio-button { flex: 1; }
+  .table-settings :is(.table-settings-select, .group-controls-name-input, .table-settings-collection-name-input) { font-size: 16px; }
+}
+@media (pointer: coarse) {
+  .domain-dialog.table-settings { --table-settings-control-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .table-settings .portfolio-button, .table-settings .column-controls-option, .table-settings-tab { transition: none; }
+  .table-settings .portfolio-button, .table-settings .column-controls-option { transition: none; }
   .table-settings-columns-panel :is(.column-controls-group-toggle, .column-controls-group-chevron), .table-settings-columns-panel .column-controls-group-collapsible .column-controls-group-content, .table-settings-columns-panel .column-controls-group-collapsible .column-controls-group-content[data-collapsed='true'] { transition: none; }
 }

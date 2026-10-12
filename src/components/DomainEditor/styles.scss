@@ -87,8 +87,8 @@
   border-radius: 50%;
   place-items: center;
   background: var(--canvas);
-  transition: background .2s ease, color .2s ease, transform .2s ease;
-  &:hover { color: var(--ink); background: var(--subtle); transform: rotate(6deg); }
+  transition: background .2s ease, color .2s ease;
+  &:hover { color: var(--ink); background: var(--subtle); }
 }
 .domain-dialog-description {
   font-size: 13px;
@@ -143,6 +143,10 @@
   &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
 }
 .domain-editor-select { cursor: pointer; appearance: none; padding-right: 38px; }
+.domain-editor-move-trigger { gap: 8px; display: flex; cursor: pointer; text-align: left; align-items: center; }
+.domain-editor-move-destination { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.domain-editor-move-icon { flex-shrink: 0; color: var(--accent); }
+.domain-editor-move-options { min-width: 0; }
 .domain-editor-select-wrap { position: relative; }
 .domain-editor-select-chevron {
   top: 50%;
@@ -238,4 +242,33 @@
 @media (prefers-reduced-motion: reduce) {
   .domain-dialog, .domain-dialog-backdrop { animation: none; }
   .domain-dialog-close, .domain-editor-input { transition: none; }
+}
+.domain-editor .domain-dialog-header { margin-bottom: 16px; }
+.domain-editor .domain-dialog-form { flex: 1; }
+.domain-editor .domain-dialog-body { flex: 1; padding: 4px; display: block; overflow-y: auto; scrollbar-gutter: stable; }
+.domain-editor .domain-editor-fields { gap: 16px; padding: 0; overflow: visible; align-content: start; scrollbar-gutter: auto; }
+.domain-editor-pane { min-width: 0; }
+:is(.domain-editor-pane, .domain-group-settings-pane, .domain-collection-settings-pane)[hidden] { display: none; }
+.domain-editor .domain-dialog-description { margin: 0 0 16px; }
+.domain-editor .domain-dialog-footer { margin-top: 16px; padding-top: 12px; }
+:is(.domain-editor, .domain-group-settings, .domain-collection-settings) .domain-dialog-error { flex-shrink: 0; margin-top: 12px; }
+:is(.domain-editor, .domain-group-settings) .domain-editor-delete-confirmation { flex-shrink: 0; margin-top: 12px; padding: 12px; }
+.domain-settings-links-pane {
+  .domain-links { padding: 0; overflow: visible; border: 0; scrollbar-gutter: auto; }
+  .domain-links-title { margin-bottom: 12px; }
+  .domain-links-fields { gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .domain-links-top-content { max-width: 360px; margin-bottom: 16px; }
+  .domain-links-textarea { min-height: 76px; }
+}
+@media (min-width: 900px) {
+  .domain-dialog.domain-editor { max-width: var(--modal-wide-width, 1100px); }
+  .domain-editor .domain-editor-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1200px) {
+  .domain-settings-links-pane .domain-links-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .domain-settings-links-pane .domain-links-fields { grid-template-columns: minmax(0, 1fr); }
+  .domain-editor .domain-dialog-header { margin-bottom: 12px; }
+  .domain-editor .domain-dialog-footer { gap: 10px; margin-top: 12px; }
 }

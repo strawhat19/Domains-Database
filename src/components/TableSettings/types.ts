@@ -1,7 +1,7 @@
 import type { DomainRecord } from '../../shared/types';
 import type { PortfolioColumn } from '../../shared/portfolioColumns';
 
-export type TableSettingsTab = `general` | `columns`;
+export type TableSettingsTab = `general` | `organization` | `columns`;
 
 export interface TableSettingsProps {
   onFit: () => void;

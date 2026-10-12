@@ -254,7 +254,7 @@ const PortfolioCollection = ({
               <Eye size={17} aria-hidden={`true`} id={`${scope}-search-toggle-icon`} className={`portfolio-collection-search-toggle-icon`} />
             </button>
           )}
-          <div id={`${scope}-action-rail`} className={`portfolio-row-action-rail`}>
+          <div id={`${scope}-action-rail`} className={`portfolio-row-action-rail portfolio-row-action-rail-mobile-settings`}>
             <button
               type={`button`}
               draggable={false}
@@ -352,7 +352,7 @@ const PortfolioCollection = ({
         `${scope}-stars-error-portal`,
       )}
       {state.editing && typeof document !== `undefined` && createPortal(
-        <DomainCollectionSettings collection={collection} editDescription={state.editDescription} onClose={() => state.setEditing(false)} />,
+        <DomainCollectionSettings collection={collection} copySection={copySection} editDescription={state.editDescription} onClose={() => state.setEditing(false)} />,
         document.body,
         `${scope}-settings-portal`,
       )}
