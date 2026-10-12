@@ -34,7 +34,7 @@ const FeatureDetails = ({ roles, feature, onClose }: FeatureDetailsProps) => {
         {roles.saving ? <p id={`${id}-roles-saving`} className={`admin-feature-details-role-status`} role={`status`}>Saving</p> : null}
         {roles.error ? <p id={`${id}-roles-error`} className={`admin-feature-details-role-error`} role={`alert`}>{roles.error}</p> : null}
       </section>
-      <p id={`${id}-audience`} className={`admin-feature-details-audience`}>When enabled, this feature is shown to selected roles. No plan selection allows Free and above; selecting a plan allows that tier and above. Select the highlighted plan again to return to Free and above. Guests use the Guest role and Free plan</p>
+      <p id={`${id}-audience`} className={`admin-feature-details-audience`}>When enabled, this feature is shown to selected roles. No plan selection allows Free and above; selecting a plan allows that tier and above. Select the same plan again to return to Free and above. Guests use the Guest role and Free plan</p>
     </article>}
   </EditorModal>;
 };

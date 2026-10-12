@@ -1,7 +1,15 @@
 .pricing-feedback { gap: 14px; display: flex; padding: 24px; border-radius: 12px; align-items: flex-start; flex-direction: column; color: var(--muted); background: var(--input); border: 1px solid var(--line); }
 .pricing-feedback-copy { margin: 0; font-size: 13px; line-height: 1.8; }
 .pricing-error { color: var(--danger); }
+.landing-pricing .landing-pricing-heading { grid-template-columns: minmax(0, 1fr); }
+.landing-pricing .landing-heading-copy { width: 100%; max-width: none; }
 .landing-pricing .landing-pricing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.landing-pricing .landing-plan:not(.pricing-skeleton-card):is(:hover, :focus-within) { --stack-pill-border: var(--accent); --stack-pill-fill: color-mix(in srgb, var(--subtle) 32%, var(--paper)); }
+.landing-pricing .landing-plan:is(:hover, :focus-within) .landing-plan-action { color: var(--contrast); background: var(--accent); border-color: var(--accent); }
+.landing-pricing .landing-plan .landing-plan-action:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.landing-pricing .landing-plan-title { gap: 12px; display: flex; min-width: 0; font-size: 22px; align-items: center; }
+.landing-plan-name-icon { flex-shrink: 0; }
+.landing-plan-name-label { min-width: 0; overflow-wrap: anywhere; }
 .pricing-plan-interest { gap: 12px; display: flex; margin-top: auto; flex-direction: column; }
 .pricing-plan-interest-note, .pricing-plan-interest-notice, .pricing-plan-interest-error { margin: 0; font-size: 11px; line-height: 1.7; color: var(--muted); }
 .pricing-plan-interest-notice { color: var(--success); }
@@ -15,4 +23,7 @@
 }
 @media (max-width: 700px) {
   .landing-pricing .landing-pricing-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-pricing .landing-plan-action { transition: none; }
 }

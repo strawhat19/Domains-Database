@@ -6,9 +6,6 @@
 .admin-plan-editor-field { display: grid; align-content: start; gap: 8px; min-width: 0; color: var(--ink); font-size: 11px; }
 .admin-plan-editor-field.is-wide { grid-column: 1 / -1; }
 .admin-plan-editor-field-note { color: var(--muted); font-size: 10px; line-height: 1.6; }
-.admin-plan-editor-check { display: inline-flex; align-items: center; gap: 9px; min-height: 42px; font-size: 11px; color: var(--ink); }
-.admin-plan-editor-check.is-wide { grid-column: 1 / -1; }
-.admin-plan-editor-checkbox { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
 .admin-plan-editor-input { width: 100%; min-width: 0; min-height: 42px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; outline: 0; background: transparent; color: var(--ink); font-size: 12px; transition: border-color .2s ease, box-shadow .2s ease; }
 textarea.admin-plan-editor-input { resize: vertical; }
 .admin-plan-editor-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 8%, transparent); }

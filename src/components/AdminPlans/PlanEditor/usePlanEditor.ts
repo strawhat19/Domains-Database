@@ -11,7 +11,6 @@ export const usePlanEditor = ({ busy, record, onSave }: Pick<PlanEditorProps, `b
     active: record?.active ?? false,
     currency: record?.currency ?? `USD`,
     description: record?.description ?? ``,
-    highlighted: record?.highlighted ?? false,
     displayOrder: String(record?.displayOrder ?? 0),
     features: record?.features.join(`\n`) ?? ``,
     billingInterval: record?.billingInterval ?? `month`,
@@ -46,7 +45,6 @@ export const usePlanEditor = ({ busy, record, onSave }: Pick<PlanEditorProps, `b
         billingInterval,
         slug: values.slug,
         active: values.active,
-        highlighted: values.highlighted,
         displayOrder: Number(values.displayOrder),
       }, record?.id);
     } catch (failure) {

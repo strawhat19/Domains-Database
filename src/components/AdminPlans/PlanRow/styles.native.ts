@@ -10,8 +10,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   copy: { flex: 1, minWidth: 0 },
   featureList: { gap: 5 },
   score: { gap: 6, flexDirection: `row`, alignItems: `center` },
-  highlighted: { gap: 5, marginTop: 8, flexDirection: `row`, alignItems: `center` },
-  highlightedLabel: { fontSize: 9, color: palette.accent, fontFamily: `DMSans_400Regular` },
   title: { marginBottom: 6, fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
   slug: { marginBottom: 6, fontSize: 10, color: palette.muted, fontFamily: `DMSans_400Regular` },
   body: { fontSize: 10, lineHeight: 16, color: palette.muted, fontFamily: `DMSans_400Regular` },

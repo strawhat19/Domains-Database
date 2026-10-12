@@ -7,14 +7,18 @@ import { routes } from '../../shared/routes';
 import PricingFeature from '../PricingFeature';
 import StackPillShape from '../StackPillShape';
 import PricingSkeleton from '../PricingSkeleton';
+import PricingPlanPrice from '../PricingPlanPrice';
 import PricingPlanVotes from '../PricingPlanVotes';
+import { pricingDescription } from './presentation';
+import { getPricingPlanVisual } from './planIcons';
 import { usePricingInterest } from './usePricingInterest';
 import PricingInterestPrompt from '../PricingInterestPrompt';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
-import { Check, ArrowUpRight, RefreshCw, ThumbsUp } from 'lucide-react';
 import { getPricingFeatures } from '../../shared/plans/pricingFeatures';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
-import { getPricingAmount, getPricingPeriod, pricingDescription } from './presentation';
+import { Gem, Zap, Check, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react';
+
+const planIcons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
 const Pricing = () => {
   const state = usePricing();
@@ -39,14 +43,15 @@ const Pricing = () => {
         <button id={`pricing-retry`} className={`landing-button`} type={`button`} onClick={state.refresh}><RefreshCw id={`pricing-retry-icon`} className={`landing-link-icon`} size={15} aria-hidden />{`Try Again`}</button>
       </div> : state.plans.length ? <div id={`landing-pricing-grid`} className={`landing-pricing-grid`}>
         {state.plans.map(plan => {
+          const visual = getPricingPlanVisual(plan);
+          const PlanIcon = planIcons[visual.icon];
           const planInterest = interest.getState(plan.id);
-          return <article key={plan.id} id={`landing-plan-${plan.id}`} className={`landing-plan${plan.highlighted ? ` landing-plan-featured` : ``}`}>
+          return <article key={plan.id} id={`landing-plan-${plan.id}`} className={`landing-plan`}>
           <div aria-hidden id={`landing-plan-${plan.id}-backing`} className={`landing-card-backing`}><StackPillShape id={`landing-plan-${plan.id}-backing`} /></div>
           <StackPillShape id={`landing-plan-${plan.id}-foreground`} />
-          {plan.highlighted ? <span id={`landing-plan-label-${plan.id}`} className={`landing-plan-label`}>{`Featured Plan`}</span> : null}
-          <h3 id={`landing-plan-name-${plan.id}`} className={`landing-card-title`}>{brand.formatText(plan.name)}</h3>
+          <h3 id={`landing-plan-name-${plan.id}`} className={`landing-card-title landing-plan-title`}><PlanIcon size={28} strokeWidth={1.8} aria-hidden id={`landing-plan-name-icon-${plan.id}`} className={`landing-plan-name-icon`} style={{ color: `var(--${visual.tone})` }} /><span id={`landing-plan-name-label-${plan.id}`} className={`landing-plan-name-label`}>{brand.formatText(plan.name)}</span></h3>
           <p id={`landing-plan-description-${plan.id}`} className={`landing-card-description`}>{brand.formatText(plan.description)}</p>
-          <p id={`landing-plan-price-${plan.id}`} className={`landing-plan-price`}>{getPricingAmount(plan)}<span id={`landing-plan-period-${plan.id}`} className={`landing-plan-period`}>{getPricingPeriod(plan)}</span></p>
+          <PricingPlanPrice plan={plan} id={`landing-plan-price-${plan.id}`} color={`var(--${visual.tone})`} />
           <ul id={`landing-plan-features-${plan.id}`} className={`landing-plan-features`}>
             {state.showFeaturePreview ? getPricingFeatures(plan).map(feature => <PricingFeature
               key={feature.id}
@@ -61,14 +66,14 @@ const Pricing = () => {
               <span className={`landing-feature-label`} id={`landing-plan-feature-label-${plan.id}-${index}`}>{brand.formatText(feature)}</span>
             </li>)}
           </ul>
-          {pricingEnabled && (contactEnabled || (plan.priceCents === 0 && plan.slug === `free`)) && <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><RouterAnchor id={`landing-plan-action-${plan.id}`} className={`landing-button${plan.highlighted ? ` landing-button-primary` : ``}`}><span id={`landing-plan-action-label-${plan.id}`} className={`landing-link-label`}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${brand.formatText(plan.name)}`}</span><ArrowUpRight size={15} aria-hidden id={`landing-plan-action-arrow-${plan.id}`} className={`landing-link-icon`} /></RouterAnchor></Link>}
+          {pricingEnabled && (contactEnabled || (plan.priceCents === 0 && plan.slug === `free`)) && <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><RouterAnchor id={`landing-plan-action-${plan.id}`} className={`landing-button landing-plan-action`}><span id={`landing-plan-action-label-${plan.id}`} className={`landing-link-label`}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${brand.formatText(plan.name)}`}</span><ArrowUpRight size={15} aria-hidden id={`landing-plan-action-arrow-${plan.id}`} className={`landing-link-icon`} /></RouterAnchor></Link>}
           {interestEnabled ? <div id={`landing-plan-interest-${plan.id}`} className={`pricing-plan-interest`}>
             <button
               type={`button`}
               id={`landing-plan-interest-action-${plan.id}`}
               aria-haspopup={interest.signedIn ? undefined : `dialog`}
               onClick={() => { void interest.register(plan.id); }}
-              className={`landing-button${plan.highlighted ? ` landing-button-primary` : ``}`}
+              className={`landing-button landing-plan-action`}
               disabled={planInterest.pending || planInterest.interested || (interest.signedIn && !planInterest.ready)}
             >{planInterest.interested ? <Check id={`landing-plan-interest-icon-${plan.id}`} size={15} aria-hidden /> : <ThumbsUp id={`landing-plan-interest-icon-${plan.id}`} size={15} aria-hidden />}<span id={`landing-plan-interest-label-${plan.id}`} className={`landing-link-label`}>{planInterest.pending ? `Saving…` : planInterest.interested ? `Interest Saved` : `I'm Interested`}</span></button>
             <p id={`landing-plan-votes-label-${plan.id}`} className={`pricing-plan-interest-note`}>{interest.signedIn ? `Upvote This Plan` : `Upvote Without Signup`}</p>

@@ -28,7 +28,6 @@
       "currency": "USD",
       "priceCents": 0,
       "displayOrder": 0,
-      "highlighted": false,
       "billingInterval": "month",
       "description": "A home for your names and next ideas.",
       "features": [
@@ -45,7 +44,6 @@
       "currency": "USD",
       "priceCents": 500,
       "displayOrder": 1,
-      "highlighted": true,
       "billingInterval": "month",
       "description": "More insight for your next decision. Planned tier with introductory pricing; enquiries only.",
       "features": [
@@ -62,7 +60,6 @@
       "currency": "USD",
       "priceCents": 1500,
       "displayOrder": 2,
-      "highlighted": false,
       "billingInterval": "month",
       "description": "Shared clarity from idea to launch. Planned collaboration tier with introductory pricing; enquiries only.",
       "features": [
@@ -81,7 +78,6 @@
       "currency": "USD",
       "priceCents": 3900,
       "displayOrder": 3,
-      "highlighted": false,
       "billingInterval": "month",
       "description": "A tailored plan for larger portfolios and organizations. Planned tier with introductory pricing; enquiries only.",
       "features": [

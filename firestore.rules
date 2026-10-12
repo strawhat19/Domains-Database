@@ -232,8 +232,8 @@ service cloud.firestore {
     }
     function planValues() {
       let data = request.resource.data;
-      return data.keys().hasAll(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'created', 'updated'])
-        && data.keys().hasOnly(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'created', 'updated'])
+      return data.keys().hasAll(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'displayOrder', 'created', 'updated'])
+        && data.keys().hasOnly(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'displayOrder', 'created', 'updated'])
         && data.type == 'Plan' && data.id is string && data.id.size() <= 240
         && data.name is string && data.name.size() > 0 && data.name.size() <= 100
         && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
@@ -241,7 +241,7 @@ service cloud.firestore {
         && data.currency in ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'] && data.billingInterval in ['month', 'year', 'one-time']
         && data.priceCents is int && data.priceCents >= 0 && data.priceCents <= 9007199254740991
         && data.displayOrder is int && data.displayOrder >= 0 && data.displayOrder <= 9007199254740991
-        && data.active is bool && data.highlighted is bool && data.created is timestamp && data.updated == request.time
+        && data.active is bool && data.created is timestamp && data.updated == request.time
         && planTierValues(getAfter(planSlugPath(data.slug)).data, data.slug)
         && getAfter(planSlugPath(data.slug)).data.id == data.id
         && getAfter(planSlugPath(data.slug)).data.number == data.number

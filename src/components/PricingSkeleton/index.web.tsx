@@ -10,7 +10,7 @@ const PricingSkeleton = ({ expanded = false }: PricingSkeletonProps) => {
   return <div id={`pricing-loading`} className={`pricing-skeleton`} role={`status`}>
     <span id={`pricing-loading-label`} className={`pricing-skeleton-sr-only`}>{`Loading Plans…`}</span>
     <div aria-hidden id={`pricing-loading-grid`} className={`landing-pricing-grid`}>
-      {pricingSkeletonCards.map(index => <article key={index} id={`pricing-skeleton-card-${index}`} className={`landing-plan pricing-skeleton-card${index === 1 ? ` landing-plan-featured` : ``}`}>
+      {pricingSkeletonCards.map(index => <article key={index} id={`pricing-skeleton-card-${index}`} className={`landing-plan pricing-skeleton-card`}>
         <div id={`pricing-skeleton-backing-${index}`} className={`landing-card-backing`}>
           <StackPillShape id={`pricing-skeleton-backing-${index}`} />
         </div>

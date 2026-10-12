@@ -11,7 +11,6 @@ export interface PlanInput {
   active: boolean;
   features: string[];
   priceCents: number;
-  highlighted: boolean;
   displayOrder: number;
   description: string;
   currency: PlanCurrency;

@@ -47,7 +47,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   pricingActivityRow: { gap: 4, flexDirection: `row` },
   pricingActivityCell: { flex: 1, aspectRatio: 1, borderRadius: 3 },
   plan: { gap: 15, padding: 24, borderWidth: 1, position: `relative`, borderColor: `transparent`, backgroundColor: `transparent` },
-  planStatus: { fontSize: 9, paddingVertical: 5, paddingHorizontal: 7, borderRadius: 3, color: palette.accent, backgroundColor: `${palette.accent}14`, fontFamily: `DMSans_600SemiBold` },
   price: { zIndex: 1, fontSize: 38, lineHeight: 45, marginTop: 7, letterSpacing: -1, color: palette.ink, fontFamily: `DMSans_700Bold` },
   plannedPrice: { fontSize: 24, lineHeight: 45, letterSpacing: -.4 },
   features: { gap: 13, flex: 1, zIndex: 1, marginVertical: 7, paddingTop: 19, borderTopWidth: 1, borderTopColor: palette.line },

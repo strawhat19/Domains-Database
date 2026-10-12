@@ -39,7 +39,7 @@ const PricingSkeleton = ({ cardWidth, expanded = false }: PricingSkeletonProps) 
           <StackPillShape id={`pricing-loading-card-${index}-backing`} fill={palette.subtle} stroke={`${palette.accent}30`} />
         </View>
         <View {...elementProps(`pricing-loading-card-foreground`, `${index}`)} style={styles.cardForeground} pointerEvents={`none`}>
-          <StackPillShape id={`pricing-loading-card-${index}-foreground`} fill={index === 1 ? palette.subtle : palette.input} stroke={index === 1 ? palette.accent : palette.line} />
+          <StackPillShape id={`pricing-loading-card-${index}-foreground`} fill={palette.input} stroke={palette.line} />
         </View>
         <Animated.View {...elementProps(`pricing-loading-card-content`, `${index}`)} style={[styles.content, motion]}>
           <Placeholder id={`${index}-title`} style={[styles.placeholder, styles.title]} />

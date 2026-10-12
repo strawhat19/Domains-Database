@@ -1,7 +1,7 @@
 import './styles.scss';
 import type { PlanRowProps } from './types';
 import { formatPlanDate, formatPlanPrice } from '../values';
-import { X, Star, Layers3, Archive, Settings, ThumbsUp } from 'lucide-react';
+import { X, Layers3, Archive, Settings, ThumbsUp } from 'lucide-react';
 
 const PlanRow = ({ busy, score, saving, record, confirming, scoreLoading, onEdit, onArchive, onStatus, onRequestArchive, onCancelArchive }: PlanRowProps) => {
   const rowId = `admin-plan-${record.id}`;
@@ -13,11 +13,9 @@ const PlanRow = ({ busy, score, saving, record, confirming, scoreLoading, onEdit
         <strong id={`${rowId}-name`} className={`admin-plan-title`}>{record.name}</strong>
         <span id={`${rowId}-slug`} className={`admin-plan-slug`}>{record.slug}</span>
         <span id={`${rowId}-description`} className={`admin-plan-body`}>{record.description || `—`}</span>
-        {record.highlighted && <span id={`${rowId}-highlighted`} className={`admin-plan-highlighted`}><Star size={11} aria-hidden id={`${rowId}-highlighted-icon`} className={`admin-plan-highlighted-icon`} />{`Highlighted`}</span>}
       </div>
     </div></td>
     <td id={`${rowId}-price`} className={`admin-plan-price`}>{formatPlanPrice(record)}</td>
-    <td id={`${rowId}-score`} className={`admin-plan-score`} aria-busy={scoreLoading} title={scoreLoading ? `Loading Upvote Score` : score === null ? `Upvote Score Unavailable` : `${score} Upvote(s)`}><span id={`${rowId}-score-value`} className={`admin-plan-score-value`}><ThumbsUp size={13} aria-hidden id={`${rowId}-score-icon`} className={`admin-plan-score-icon`} />{score ?? `—`}</span></td>
     <td id={`${rowId}-features-cell`} className={`admin-plan-features-cell`}>
       {record.features.length ? <ul id={`${rowId}-features`} className={`admin-plan-features`}>{record.features.slice(0, 3).map((feature, index) => <li key={index} id={`${rowId}-feature-${index}`} className={`admin-plan-feature`}>{feature}</li>)}</ul> : <span id={`${rowId}-features-empty`} className={`admin-plan-features-empty`}>{`No Features`}</span>}
       {record.features.length > 3 && <span id={`${rowId}-features-more`} className={`admin-plan-features-more`}>{`+${record.features.length - 3} Feature(s)`}</span>}
@@ -25,7 +23,6 @@ const PlanRow = ({ busy, score, saving, record, confirming, scoreLoading, onEdit
     <td id={`${rowId}-status-cell`} className={`admin-plan-status`}><div id={`${rowId}-status-actions`} className={`actionsCell`}>
       <button type={`button`} disabled={busy} aria-pressed={record.active} id={`${rowId}-status`} className={`rowStatus is-editable is-${record.active ? `green` : `gray`}`} aria-label={`${record.active ? `Deactivate` : `Activate`} ${record.name}`} onClick={() => { void onStatus(record); }}><span id={`${rowId}-status-dot-wrap`} className={`statusDotWrap`} aria-hidden><span id={`${rowId}-status-dot`} className={`statusDot`} /></span><span id={`${rowId}-status-text`} className={`statusText`} role={`status`}>{saving ? `Saving` : record.active ? `Active` : `Inactive`}</span></button>
     </div></td>
-    <td id={`${rowId}-order`} className={`admin-plan-order`}>{record.displayOrder}</td>
     <td id={`${rowId}-updated`} className={`admin-plan-updated`}><time dateTime={record.updated} id={`${rowId}-updated-time`} className={`admin-plan-updated-time`}>{formatPlanDate(record.updated)}</time></td>
     <td id={`${rowId}-actions-cell`} className={`admin-plan-actions-cell`}>
       <div id={`${rowId}-actions`} className={`actionsCell`}>
@@ -41,6 +38,7 @@ const PlanRow = ({ busy, score, saving, record, confirming, scoreLoading, onEdit
         </div>
       </div>}
     </td>
+    <td id={`${rowId}-score`} className={`admin-plan-score`} aria-busy={scoreLoading} title={scoreLoading ? `Loading Upvote Score` : score === null ? `Upvote Score Unavailable` : `${score} Upvote(s)`}><span id={`${rowId}-score-value`} className={`admin-plan-score-value`}><ThumbsUp size={13} aria-hidden id={`${rowId}-score-icon`} className={`admin-plan-score-icon`} />{score ?? `—`}</span></td>
   </tr>;
 };
 

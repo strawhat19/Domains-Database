@@ -28,7 +28,7 @@ export const useAdminPlans = () => {
   const setControl = <K extends keyof ReturnType<typeof emptyControls>>(key: K, value: ReturnType<typeof emptyControls>[K]) => setControls(state => ({ ...(state.actor === actor ? state : emptyControls(actor)), [key]: value }));
   const query = current.search.trim().toLocaleLowerCase();
   const records = page.records;
-  const matchingRecords = records.filter(plan => (current.filter === `all` || (plan.active ? `active` : `inactive`) === current.filter) && [plan.number, plan.name, plan.slug, plan.description, plan.currency, plan.features.join(` `), plan.active ? `Active` : `Inactive`, plan.highlighted ? `Highlighted` : ``, plan.displayOrder, billingLabels[plan.billingInterval], formatPlanPrice(plan)].join(` `).toLocaleLowerCase().includes(query));
+  const matchingRecords = records.filter(plan => (current.filter === `all` || (plan.active ? `active` : `inactive`) === current.filter) && [plan.number, plan.name, plan.slug, plan.description, plan.currency, plan.features.join(` `), plan.active ? `Active` : `Inactive`, plan.displayOrder, billingLabels[plan.billingInterval], formatPlanPrice(plan)].join(` `).toLocaleLowerCase().includes(query));
   const active = records.filter(plan => plan.active).length;
   const runMutation = async (id: string, operation: () => Promise<unknown>, notice: string) => {
     if (!actor || pending.current?.actor === actor) return false;

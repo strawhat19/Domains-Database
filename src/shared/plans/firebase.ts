@@ -6,7 +6,7 @@ import { planId, readPlan, normalizePlan } from './values';
 import { getFirebaseDb, getFirebaseAuth } from '../firebase/client';
 import { restoreSession, subscribeAuthState } from '../authentication/service';
 import { numberCollectionPage, type CollectionPage } from '../firebase/collection';
-import { doc, query, limit, where, orderBy, startAfter, collection, onSnapshot, runTransaction, serverTimestamp, getDocFromServer, getDocsFromServer, type Transaction } from 'firebase/firestore';
+import { doc, query, limit, where, orderBy, startAfter, collection, onSnapshot, deleteField, runTransaction, serverTimestamp, getDocFromServer, getDocsFromServer, type Transaction } from 'firebase/firestore';
 
 export const planError = (failure: unknown): Error => {
   if (!(failure instanceof FirebaseError)) return failure instanceof Error ? failure : new Error(`Plan Request Could Not Be Completed`);
@@ -219,7 +219,7 @@ export const setCloudPlanActive = async (id: string, active: boolean): Promise<P
     const reservation = await transaction.get(slugRef);
     if (reservation.data()?.id !== id || reservation.data()?.slug !== original.slug) throw new Error(`Saved Plan Slug Needs Attention`);
     assertAccount(actor.firebaseUid);
-    transaction.update(reference, { active, updated: serverTimestamp() });
+    transaction.update(reference, { active, updated: serverTimestamp(), highlighted: deleteField() });
     transaction.set(slugRef, planTier(original));
   });
   return savedPlan(id, actor);

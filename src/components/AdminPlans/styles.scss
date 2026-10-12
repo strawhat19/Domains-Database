@@ -3,7 +3,7 @@
 .admin-plans-summary-label { color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
 .admin-plans-summary-value { margin: 0; color: var(--accent); font-family: var(--font-display); font-size: 30px; line-height: 1.1; }
 .admin-plans .admin-records { margin-top: 0; }
-.admin-plans-table thead th:last-child { text-align: right; }
+.admin-plans-table thead th:nth-last-child(2) { text-align: right; }
 .admin-plans-filter-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; margin-left: auto; }
 .admin-plans-filter-actions .admin-records-results { width: auto; margin: 0; white-space: nowrap; }
 .admin-plans-add { min-height: 38px; padding: 10px 14px; font-size: 10px; }

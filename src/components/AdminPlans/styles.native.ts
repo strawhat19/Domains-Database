@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
-export const planColumns = [60, 260, 150, 80, 180, 120, 75, 100, 160];
+export const planColumns = [60, 260, 150, 180, 120, 100, 160, 80];
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   root: { gap: 18, minWidth: 0 },
   disabled: { opacity: .5 },

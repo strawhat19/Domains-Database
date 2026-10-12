@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 import { getAppCollectionIDNumber } from '../common/ids';
 import { planLimits, planCurrencies, planBillingIntervals, type PlanInput } from './types';
 
-const planFields = [`id`, `name`, `slug`, `type`, `number`, `active`, `created`, `updated`, `currency`, `features`, `priceCents`, `highlighted`, `displayOrder`, `description`, `billingInterval`];
+const planFields = [`id`, `name`, `slug`, `type`, `number`, `active`, `created`, `updated`, `currency`, `features`, `priceCents`, `displayOrder`, `description`, `billingInterval`];
 const planText = (value: unknown, label: string, maximum: number, optional = false) => {
   if (typeof value !== `string` || value.length > maximum || (!optional && !value.trim())) throw new Error(`Enter A Valid ${label}`);
   return value.trim();
@@ -17,10 +17,10 @@ export const normalizePlan = (input: PlanInput): PlanInput => {
   if (!Array.isArray(input?.features) || input.features.length > planLimits.features) throw new Error(`Use Up To ${planLimits.features} Features`);
   if (!planCurrencies.includes(input?.currency)) throw new Error(`Choose A Supported Currency`);
   if (!planBillingIntervals.includes(input?.billingInterval)) throw new Error(`Choose A Valid Billing Interval`);
-  if (typeof input?.active !== `boolean` || typeof input?.highlighted !== `boolean`) throw new Error(`Choose Valid Plan Statuses`);
+  if (typeof input?.active !== `boolean`) throw new Error(`Choose A Valid Plan Status`);
   if (!Number.isSafeInteger(input?.priceCents) || input.priceCents < 0) throw new Error(`Enter A Valid Price In Cents`);
   if (!Number.isSafeInteger(input?.displayOrder) || input.displayOrder < 0) throw new Error(`Enter A Valid Display Order`);
-  return { name, slug, description, currency: input.currency, priceCents: input.priceCents, billingInterval: input.billingInterval, active: input.active, highlighted: input.highlighted, displayOrder: input.displayOrder, features: input.features.map(feature => planText(feature, `Feature`, planLimits.feature)) };
+  return { name, slug, description, currency: input.currency, priceCents: input.priceCents, billingInterval: input.billingInterval, active: input.active, displayOrder: input.displayOrder, features: input.features.map(feature => planText(feature, `Feature`, planLimits.feature)) };
 };
 export const planId = (id: unknown) => {
   if (typeof id !== `string` || id.length > 240 || id.includes(`/`) || !getAppCollectionIDNumber(id, Types.Plan)) throw new Error(`Choose A Valid Plan`);
@@ -34,7 +34,8 @@ const timestamp = (value: unknown) => {
 export const readPlan = (data: Record<string, unknown> | undefined, id: string): Plan => {
   planId(id);
   if (!data || data.id !== id || data.type !== Types.Plan || planFields.some(field => !(field in data))
-    || Object.keys(data).some(field => !planFields.includes(field)) || !Number.isSafeInteger(data.number)
+    || Object.keys(data).some(field => !planFields.includes(field) && field !== `highlighted`)
+    || (`highlighted` in data && typeof data.highlighted !== `boolean`) || !Number.isSafeInteger(data.number)
     || data.number !== getAppCollectionIDNumber(id, Types.Plan)) throw new Error(`Saved Plan Data Needs Attention`);
   const values = normalizePlan(data as unknown as PlanInput);
   return new Plan({ ...values, id, number: Number(data.number), created: timestamp(data.created), updated: timestamp(data.updated) });

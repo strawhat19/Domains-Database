@@ -10,7 +10,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { Layers3, Plus, Search, CircleCheck, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react-native';
 import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator, useWindowDimensions } from 'react-native';
 
-const columns = [`No.`, `Plan`, `Price`, `Score`, `Features`, `Status`, `Order`, `Updated`, `Actions`];
+const columns = [`No.`, `Plan`, `Price`, `Features`, `Status`, `Updated`, `Actions`, `Score`];
 const AdminPlans = (_props: AdminPlansProps = {}) => {
   const state = useAdminPlans();
   const { width } = useWindowDimensions();

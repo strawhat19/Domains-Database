@@ -15,7 +15,6 @@ export interface PlanEditorValues {
   features: string;
   currency: string;
   description: string;
-  highlighted: boolean;
   displayOrder: string;
   billingInterval: string;
 }

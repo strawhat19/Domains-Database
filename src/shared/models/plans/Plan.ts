@@ -7,7 +7,6 @@ export class Plan extends Data {
   active: boolean;
   features: string[];
   priceCents: number;
-  highlighted: boolean;
   displayOrder: number;
   currency: PlanCurrency;
   billingInterval: PlanBillingInterval;
@@ -19,7 +18,6 @@ export class Plan extends Data {
     this.priceCents = data.priceCents ?? 0;
     this.currency = data.currency ?? `USD`;
     this.features = [...(data.features ?? [])];
-    this.highlighted = data.highlighted ?? false;
     this.displayOrder = data.displayOrder ?? 0;
     this.billingInterval = data.billingInterval ?? `month`;
     this.refreshProperties();
@@ -38,7 +36,6 @@ export class Plan extends Data {
       currency: this.currency,
       features: [...this.features],
       priceCents: this.priceCents,
-      highlighted: this.highlighted,
       displayOrder: this.displayOrder,
       description: this.description,
       billingInterval: this.billingInterval,

@@ -9,7 +9,7 @@ import { AdminLoading } from '../AdminWidgets';
 import { useAdminPlans } from './useAdminPlans';
 import { Layers3, Plus, Search, CircleCheck, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
 
-const columns = [`No.`, `Plan`, `Price`, `Score`, `Features`, `Status`, `Order`, `Updated`, `Actions`];
+const columns = [`No.`, `Plan`, `Price`, `Features`, `Status`, `Updated`, `Actions`, `Score`];
 const AdminPlans = ({ headingActionsTarget }: AdminPlansProps = {}) => {
   const state = useAdminPlans();
   if (!state.allowed) return <p id={`admin-plans-access`} className={`admin-records-error`} role={`alert`}>{`Active Admin Or Owner Access Is Required`}</p>;

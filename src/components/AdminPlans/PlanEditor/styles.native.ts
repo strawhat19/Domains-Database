@@ -13,7 +13,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   close: { width: 34, height: 34, borderWidth: 1, borderRadius: 17, borderColor: palette.line, alignItems: `center`, justifyContent: `center` },
   label: { color: palette.ink, fontSize: 11, fontFamily: `DMSans_400Regular` },
   fieldNote: { color: palette.muted, fontSize: 10, lineHeight: 17, fontFamily: `DMSans_400Regular` },
-  highlight: { gap: 9, minHeight: 42, padding: 10, borderWidth: 1, borderRadius: 8, borderColor: palette.line, flexDirection: `row`, alignItems: `center` },
   input: { minWidth: 0, minHeight: 42, paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderRadius: 8, borderColor: palette.line, color: palette.ink, backgroundColor: palette.input, fontSize: 12, fontFamily: `DMSans_400Regular` },
   multiline: { minHeight: 62, textAlignVertical: `top` },
   body: { minHeight: 126 },

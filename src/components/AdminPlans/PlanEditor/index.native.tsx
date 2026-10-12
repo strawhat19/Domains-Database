@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 import { billingLabels } from '../values';
 import { createStyles } from './styles.native';
+import { X, Save } from 'lucide-react-native';
 import type { PlanEditorProps } from './types';
 import { usePlanEditor } from './usePlanEditor';
 import { elementProps } from '../../../shared/elementProps';
 import { useTheme } from '../../../shared/themeContext/useTheme';
-import { X, Save, Square, SquareCheck } from 'lucide-react-native';
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { planLimits, planCurrencies, planBillingIntervals } from '../../../shared/plans/types';
 
@@ -17,7 +17,6 @@ const PlanEditor = (props: PlanEditorProps) => {
   const styles = useMemo(() => createStyles(palette), [palette]);
   const editorId = `admin-plan-editor-${record?.id ?? `new`}`;
   const compact = width <= 600;
-  const HighlightIcon = values.highlighted ? SquareCheck : Square;
   const inputs = [
     { field: `name`, label: `Name *`, limit: planLimits.name, wide: true },
     { field: `slug`, label: `Plan Slug *`, limit: planLimits.slug, note: record ? `The Slug Is Fixed After Creation` : `Lowercase Letters, Numbers, And Hyphens` },
@@ -65,7 +64,6 @@ const PlanEditor = (props: PlanEditorProps) => {
         </View>
       </View>
       {inputs.slice(5).map(inputField)}
-      <Pressable disabled={busy} onPress={() => setField(`highlighted`, !values.highlighted)} accessibilityRole={`checkbox`} accessibilityState={{ checked: values.highlighted, disabled: busy }} style={[styles.highlight, styles.wideField, values.highlighted && styles.selected, busy && styles.disabled]} {...elementProps(`${editorId}-highlighted`)}><HighlightIcon size={18} color={palette.accent} {...elementProps(`${editorId}-highlighted-icon`)} /><Text style={styles.choiceLabel} {...elementProps(`${editorId}-highlighted-label`)}>{`Highlight This Plan In Pricing`}</Text></Pressable>
     </View>
     <Text {...elementProps(`${editorId}-visibility-note`)} style={styles.note}>{`Active plans appear in Pricing. Inactive plans stay in Admin. Prices do not change account access.`}</Text>
     {!!error && <Text {...elementProps(`${editorId}-error`)} style={styles.error} accessibilityRole={`alert`}>{error}</Text>}

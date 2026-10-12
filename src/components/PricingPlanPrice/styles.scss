@@ -1,0 +1,7 @@
+.pricing-plan-price { gap: 7px; margin: 12px 0; display: flex; min-width: 0; position: relative; flex-wrap: wrap; align-items: baseline; color: var(--ink); font-family: var(--font-bold); }
+.pricing-plan-price-label { width: 1px; height: 1px; padding: 0; border: 0; margin: -1px; overflow: hidden; position: absolute; white-space: nowrap; clip-path: inset(50%); }
+.pricing-plan-price-amount { flex: none; line-height: 1; white-space: pre; letter-spacing: -.03em; }
+.pricing-plan-price-number { font-size: 44px; font-family: var(--font-bold); }
+.pricing-plan-price-currency { font-size: 27px; letter-spacing: -.025em; color: var(--accent); font-family: var(--font-bold); }
+.pricing-plan-price-literal { font-size: 27px; letter-spacing: 0; }
+.pricing-plan-price-period { font-size: 12px; line-height: 1.6; white-space: pre; color: var(--muted); letter-spacing: 0; font-family: var(--font-body); }
