@@ -1,0 +1,30 @@
+.account-backdrop {
+  top: var(--account-header-height, 89px);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  position: fixed;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--accent);
+  contain: layout paint;
+  --account-backdrop-opacity: .13;
+  --account-backdrop-glow: 5%;
+}
+.account-backdrop-glow { inset: 0; position: absolute; background: radial-gradient(ellipse at 96% 8%, color-mix(in srgb, var(--accent) var(--account-backdrop-glow), transparent), transparent 42%), radial-gradient(ellipse at 6% 94%, color-mix(in srgb, var(--accent) 3%, transparent), transparent 35%); }
+.account-backdrop-dots { top: clamp(20px, 5vh, 56px); right: clamp(18px, 3vw, 48px); width: clamp(180px, 22vw, 300px); position: absolute; opacity: var(--account-backdrop-opacity); animation: account-backdrop-breathe 14s ease-in-out infinite; -webkit-mask-image: radial-gradient(ellipse at 70% 25%, #000 20%, transparent 76%); mask-image: radial-gradient(ellipse at 70% 25%, #000 20%, transparent 76%); }
+.account-backdrop-dot-grid, .account-backdrop-slab-field { width: 100%; height: auto; display: block; }
+.account-backdrop-dot { fill: currentColor; }
+.account-backdrop-slabs { left: clamp(0px, 4vw, 60px); bottom: -16px; width: clamp(260px, 32vw, 460px); position: absolute; opacity: var(--account-backdrop-opacity); animation: account-backdrop-drift 22s ease-in-out infinite; -webkit-mask-image: radial-gradient(ellipse, #000 24%, transparent 75%); mask-image: radial-gradient(ellipse, #000 24%, transparent 75%); }
+.account-backdrop-slab { stroke: currentColor; stroke-width: .8; stroke-linejoin: round; }
+.account-backdrop-slab-top { fill: currentColor; fill-opacity: .18; }
+.account-backdrop-slab-left { fill: currentColor; fill-opacity: .1; stroke-opacity: .6; }
+.account-backdrop-slab-right { fill: currentColor; fill-opacity: .04; stroke-opacity: .45; }
+.account-backdrop[data-motion='paused'] :is(.account-backdrop-dots, .account-backdrop-slabs) { animation-play-state: paused; }
+:root[data-theme='dark'] .account-backdrop { --account-backdrop-opacity: .2; --account-backdrop-glow: 4%; }
+@keyframes account-backdrop-breathe { 0%, 100% { opacity: calc(var(--account-backdrop-opacity) * .65); } 50% { opacity: var(--account-backdrop-opacity); } }
+@keyframes account-backdrop-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@media (min-width: 651px) { .app-shell[data-account-shell='true']:has(.account-sidebar) .account-backdrop { left: var(--account-sidebar-width); transition: left .3s cubic-bezier(.22, 1, .36, 1); } }
+@media (max-width: 650px) { .account-backdrop { --account-backdrop-opacity: .1; } :root[data-theme='dark'] .account-backdrop { --account-backdrop-opacity: .14; } .account-backdrop-dots { right: -40px; width: 220px; } .account-backdrop-slabs { left: -70px; width: 300px; bottom: -32px; } }
+@media (prefers-reduced-motion: reduce) { .account-backdrop, .app-shell[data-account-shell='true']:has(.account-sidebar) .account-backdrop { transition: none; } .account-backdrop-dots, .account-backdrop-slabs { animation: none; } }

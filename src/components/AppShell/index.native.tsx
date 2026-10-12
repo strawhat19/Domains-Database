@@ -9,6 +9,7 @@ import ScrollToTop from '../ScrollToTop';
 import DomainMarquee from '../DomainMarquee';
 import AuthFeedback from '../AuthFeedback';
 import NotificationBell from '../NotificationBell';
+import AccountBackdrop from '../AccountBackdrop';
 import { routes, isAdminPath } from '../../shared/routes';
 import { createStyles } from './styles.native';
 import { BlurView, BlurTargetView } from 'expo-blur';
@@ -162,6 +163,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
   return (
     <ScrollContext.Provider value={heroContext}>
       <View {...elementProps(`native-app-shell`)} style={styles.shell}>
+        {accountShell && <AccountBackdrop top={sticky ? scroll.headerHeight : 0} />}
         <BlurTargetView ref={blurTargetRef} style={styles.blurTarget} {...elementProps(`native-app-blur-target`)}>
           <ScrollView
             ref={scroll.scrollRef}

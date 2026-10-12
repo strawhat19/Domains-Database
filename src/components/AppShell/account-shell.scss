@@ -1,4 +1,5 @@
 .app-shell[data-account-shell='true'] {
+  isolation: isolate;
   --account-sidebar-width: var(--header-logo-width);
   --account-header-background: var(--subtle);
   --account-icon-center: 31.5px;

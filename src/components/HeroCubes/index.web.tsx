@@ -2,7 +2,6 @@ import './styles.scss';
 import type { CSSProperties } from 'react';
 import { memo, useId, useRef, useEffect } from 'react';
 import { getTileDepth, roundedTilePath } from './shapes';
-import { useReducedMotion } from '../../shared/common/useReducedMotion';
 
 const halfWidth = 45;
 const faceSkew = 6;
@@ -50,7 +49,7 @@ const tiles = Array.from({ length: gridSize ** 2 }, (_, index) => {
     animated: luminous || (row + column) % 2 === 0,
     motionStyle: {
       '--cube-motion-delay': `${-(seed % 143 / 20)}s`,
-      '--cube-motion-duration': `${8 + seed % 7 * .5}s`,
+      '--cube-motion-duration': `${5.5 + seed % 7 * .5}s`,
     } as CSSProperties,
   };
 }).filter(cube => {
@@ -120,15 +119,14 @@ const Face = ({ cube, face, suffix, moving, rounded }: { cube: Cube; face: CubeF
 
 const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
   const suffix = useId().replace(/[^a-zA-Z0-9_-]/g, ``);
-  const reducedMotion = useReducedMotion();
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
-    let visible = typeof IntersectionObserver === `undefined`;
+    let visible = true;
     const updateMotion = () => {
-      const paused = reducedMotion || document.hidden || !visible;
+      const paused = document.hidden || !visible;
       svg.dataset.motion = paused ? `paused` : `running`;
     };
     const observer = typeof IntersectionObserver === `undefined` ? undefined : new IntersectionObserver(entries => {
@@ -143,7 +141,7 @@ const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
       document.removeEventListener(`visibilitychange`, updateMotion);
       svg.dataset.motion = `paused`;
     };
-  }, [reducedMotion]);
+  }, []);
 
   return (
     <div aria-hidden id={`hero-cubes-${suffix}`} className={`hero-cubes`} data-shape={cubes ? `cubes` : `slabs`}>
@@ -156,7 +154,7 @@ const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
         id={`hero-cubes-svg-${suffix}`}
         className={`hero-cubes-svg`}
         preserveAspectRatio={`xMidYMid slice`}
-        data-motion={reducedMotion ? `paused` : `running`}
+        data-motion={`running`}
       >
         <defs id={`hero-cubes-defs-${suffix}`} className={`hero-cubes-defs`}>
           <radialGradient id={`hero-cubes-atmosphere-${suffix}`} className={`hero-cubes-atmosphere-gradient`}>
@@ -223,10 +221,10 @@ const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
               cy={cube.y + 16}
               key={cube.index}
               style={cube.motionStyle}
-              fillOpacity={reducedMotion ? .6 : 1}
+              fillOpacity={1}
               fill={`url(#hero-cubes-floor-light-${cube.lightTone}-${suffix})`}
               id={`hero-cubes-floor-glow-${suffix}-${cube.index}`}
-              className={`hero-cubes-floor-glow${!reducedMotion ? ` hero-cubes-floor-glow-pulse` : ``}`}
+              className={`hero-cubes-floor-glow hero-cubes-floor-glow-pulse`}
             />
           ))}
         </g>
@@ -240,9 +238,9 @@ const HeroCubes = ({ cubes = true }: { cubes?: boolean }) => {
               transform={`translate(${cube.x} ${cube.y})`}
               className={`hero-cube${cube.luminous ? ` hero-cube-luminous` : ``}`}
             >
-              <Face face={`left`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} rounded={!cubes} />
-              <Face face={`right`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} rounded={!cubes} />
-              <Face face={`top`} cube={cube} suffix={suffix} moving={!reducedMotion && cube.animated} rounded={!cubes} />
+              <Face face={`left`} cube={cube} suffix={suffix} moving={cube.animated} rounded={!cubes} />
+              <Face face={`right`} cube={cube} suffix={suffix} moving={cube.animated} rounded={!cubes} />
+              <Face face={`top`} cube={cube} suffix={suffix} moving={cube.animated} rounded={!cubes} />
             </g>
           ))}
         </g>

@@ -53,7 +53,7 @@ export const useDomainMarquee = () => {
   return {
     items,
     showDomains,
-    visible: featuresReady && (showDomains || flags.notifications),
+    visible: featuresReady && (showDomains || (flags.notifications && notifications.length >= 3)),
     loading: authLoading || (!fontsLoaded && !fontError) || (Boolean(user?.id) && domainLoading) || (!items.length && notificationLoading),
   };
 };

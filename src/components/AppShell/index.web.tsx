@@ -9,6 +9,7 @@ import ScrollToTop from '../ScrollToTop';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
 import DomainMarquee from '../DomainMarquee';
+import AccountBackdrop from '../AccountBackdrop';
 import { routes, isAdminPath } from '../../shared/routes';
 import { useDomainsMenu } from './useDomainsMenu';
 import NotificationBell from '../NotificationBell';
@@ -103,6 +104,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
         [`--shell-header-height`]: scroll.pageHeaderHeight ? `${scroll.pageHeaderHeight}px` : undefined,
       } as CSSProperties}
     >
+      {accountShell ? <AccountBackdrop /> : null}
       <header ref={mobileNavigation.headerRef} id={`site-header`} className={`site-header`} data-sticky={sticky} data-scrolled={scroll.scrolled || undefined}>
         {featuresReady && flags.domainMarquee && <DomainMarquee />}
         <div id={`header-inner`} className={`header-inner`}>
