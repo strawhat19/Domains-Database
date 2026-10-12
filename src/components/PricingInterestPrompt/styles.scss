@@ -1,0 +1,16 @@
+.pricing-interest-prompt { gap: 18px; display: flex; padding: 26px; flex-direction: column; }
+.pricing-interest-heading { gap: 18px; display: flex; align-items: flex-start; justify-content: space-between; }
+.pricing-interest-title { gap: 10px; margin: 0; display: flex; align-items: center; color: var(--ink); font-size: 23px; font-family: var(--font-bold); }
+.pricing-interest-title svg { flex: none; color: var(--accent); }
+.pricing-interest-close { padding: 0; width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 5px; color: var(--muted); background: var(--input); }
+.pricing-interest-description { margin: 0; font-size: 13px; line-height: 1.8; color: var(--muted); }
+.pricing-interest-actions { gap: 10px; display: flex; flex-wrap: wrap; }
+.pricing-interest-guest { gap: 12px; display: flex; padding-top: 18px; flex-direction: column; border-top: 1px solid var(--line); }
+.pricing-interest-note, .pricing-interest-success, .pricing-interest-error { margin: 0; font-size: 11px; line-height: 1.7; color: var(--muted); }
+.pricing-interest-success { color: var(--success); }
+.pricing-interest-error { color: var(--danger); }
+.pricing-interest-feedback { gap: 10px; display: flex; align-items: flex-start; flex-direction: column; }
+.pricing-interest-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.pricing-interest-close:disabled { opacity: .5; cursor: default; }
+.pricing-interest-prompt .landing-button:disabled { opacity: .5; cursor: default; transform: none; }
+@media (max-width: 600px) { .pricing-interest-prompt { padding: 20px; } .pricing-interest-title { font-size: 19px; } }

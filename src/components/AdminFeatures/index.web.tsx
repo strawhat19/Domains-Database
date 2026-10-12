@@ -2,6 +2,7 @@ import '../AdminUsers/records.scss';
 import './styles.scss';
 import { useState } from 'react';
 import { AdminLoading } from '../AdminWidgets';
+import AdminPlanInterest from '../AdminPlanInterest';
 import { featureDefinitions } from './features';
 import TableStatus from '../AdminUsers/TableStatus';
 import { useAdminFeatures } from './useAdminFeatures';
@@ -9,10 +10,10 @@ import FeatureDetails from './FeatureDetails/index.web';
 import SegmentedControl from '../SegmentedControl/index.web';
 import { tableElementProps } from '../AdminUsers/tableElements';
 import type { FeatureFlagKey } from '../../shared/featureFlags/types';
-import { Bell, Mail, Check, Minus, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react';
+import { Coins, Megaphone, CaseSensitive, Bell, Mail, Check, Minus, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react';
 
 const columns = [`No.`, `Feature`, `Description`, `Value`, `Plans`, `Actions`];
-const featureIcons = { contact: Mail, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
+const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
 const featureOptions = [
   { value: `off`, label: `Disable`, Icon: Minus },
   { value: `on`, label: `Enable`, Icon: Check },
@@ -81,6 +82,7 @@ const AdminFeatures = () => {
         </tbody>
       </table>
     </div>
+    <AdminPlanInterest />
     {details ? <FeatureDetails
       feature={details}
       onClose={() => setDetailsKey(null)}

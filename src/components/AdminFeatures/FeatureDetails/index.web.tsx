@@ -2,9 +2,9 @@ import '../../SegmentedControl/styles.scss';
 import './styles.scss';
 import type { FeatureDetailsProps } from './types';
 import EditorModal from '../../AdminPlans/EditorModal/index.web';
-import { Bell, Mail, X, SunMoon, MoveHorizontal } from 'lucide-react';
+import { Coins, Megaphone, CaseSensitive, Bell, Mail, X, SunMoon, MoveHorizontal } from 'lucide-react';
 
-const featureIcons = { contact: Mail, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
+const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
 
 const FeatureDetails = ({ roles, feature, onClose }: FeatureDetailsProps) => {
   const id = `admin-feature-details-${feature.key}`;

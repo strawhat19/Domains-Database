@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import { routes } from '../../shared/routes';
 import { useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../../shared/authContext/useAuth';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { useNotifications } from '../../shared/notifications/useNotifications';
 import { getNotificationCopy, getNotificationLink } from '../NotificationCard/content';
 
@@ -13,6 +14,7 @@ export const useNotificationsPage = (detail = false) => {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const state = useNotifications();
   const { user } = useAuth();
+  const { name: appName } = useAppBrand();
   const { busy, error, loading, notifications } = state;
   const attemptedRead = useRef(``);
   const notificationId = detail ? (Array.isArray(params.id) ? params.id[0] : params.id) ?? `` : ``;
@@ -21,7 +23,7 @@ export const useNotificationsPage = (detail = false) => {
   const title = detail ? notification?.title ?? (missing ? `Notification Not Found` : `Notification`) : `Notifications`;
   const description = notification
     ? getNotificationCopy(notification)
-    : `Read announcements and updates from Domains Database.`;
+    : `Read announcements and updates from ${appName}.`;
   const readKey = `${user?.active ? user.id : `guest`}:${notification?.id ?? ``}`;
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export const useNotificationsPage = (detail = false) => {
   return {
     ...state,
     title,
+    appName,
     missing,
     description,
     notification,

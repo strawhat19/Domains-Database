@@ -9,7 +9,7 @@ let auth: firebaseAuth.Auth | undefined;
 let database: Firestore | undefined;
 const getFirebaseApp = (): FirebaseApp => {
   if (!firebaseEnabled) throw new Error(`Connect Firebase To Save Your Account`);
-  return getApps().length ? getApp() : initializeApp(firebaseConfig);
+  return getApps().some(app => app.name === `[DEFAULT]`) ? getApp() : initializeApp(firebaseConfig);
 };
 
 export const getFirebaseAuth = (): firebaseAuth.Auth => {

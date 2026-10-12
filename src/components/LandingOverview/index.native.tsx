@@ -3,7 +3,8 @@ import { Image } from 'expo-image';
 import StackPillShape from '../StackPillShape';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
-import { blogImages } from '../../shared/blog/images.native';
+import { getBlogImage } from '../../shared/blog/images.native';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { Text, View, useWindowDimensions } from 'react-native';
 import { Globe2, Search, Layers3, CalendarDays } from 'lucide-react-native';
@@ -14,6 +15,7 @@ const illustrationLabel = `Illustration of a portfolio dashboard with sample dom
 
 const LandingOverview = () => {
   const { palette } = useTheme();
+  const { switched, formatText } = useAppBrand();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const compact = width < 600;
@@ -54,7 +56,7 @@ const LandingOverview = () => {
         <View {...elementProps(`landing-overview-intro`)} style={[styles.intro, wide && styles.wideIntro]}>
           <View {...elementProps(`landing-overview-copy`)} style={[styles.copy, wide && styles.wideCopy]}>
             <Text {...elementProps(`landing-overview-eyebrow`)} style={styles.eyebrow}>{`PLAN IT. MANAGE IT.`}</Text>
-            <Text {...elementProps(`landing-overview-title`)} adjustsFontSizeToFit numberOfLines={1} style={styles.title} accessibilityRole={`header`}>{overviewTitle}</Text>
+            <Text {...elementProps(`landing-overview-title`)} adjustsFontSizeToFit numberOfLines={1} style={styles.title} accessibilityRole={`header`}>{formatText(overviewTitle)}</Text>
             <Text {...elementProps(`landing-overview-description`)} style={styles.description}>{overviewDescription}</Text>
           </View>
           <View {...elementProps(`landing-overview-illustration-frame`)} style={[styles.illustrationFrame, { width: illustrationWidth }]}>
@@ -65,7 +67,7 @@ const LandingOverview = () => {
               contentFit={`contain`}
               style={styles.illustration}
               accessibilityLabel={illustrationLabel}
-              source={blogImages[`domain-portfolio-management`]}
+              source={getBlogImage(`domain-portfolio-management`, switched)}
               {...elementProps(`landing-overview-portfolio-illustration`)}
             />
             <Text {...elementProps(`landing-overview-illustration-caption`)} style={styles.caption}>

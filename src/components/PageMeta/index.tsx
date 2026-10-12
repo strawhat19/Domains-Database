@@ -1,5 +1,6 @@
 import Head from 'expo-router/head';
 import { absoluteSiteUrl } from '../../shared/seo';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 
 export type PageMetaProps = {
   title: string;
@@ -14,8 +15,10 @@ export type PageMetaProps = {
 };
 
 const PageMeta = ({ title, image, noIndex, exactTitle, description, publishedAt, canonicalPath, type = `website`, structuredData }: PageMetaProps) => {
-  const pageTitle = exactTitle ? title : `${title} | Domains Database`;
-  const imageUrl = image ? absoluteSiteUrl(image) : undefined;
+  const { name, blogImage, formatText, formatContent } = useAppBrand();
+  const pageTitle = exactTitle ? formatText(title) : `${formatText(title)} | ${name}`;
+  const pageDescription = formatText(description);
+  const imageUrl = image ? absoluteSiteUrl(blogImage(image)) : undefined;
   const canonicalUrl = canonicalPath ? absoluteSiteUrl(canonicalPath) : undefined;
 
   return (
@@ -23,13 +26,13 @@ const PageMeta = ({ title, image, noIndex, exactTitle, description, publishedAt,
       <title id={`page-title`} className={`page-title`}>
         {pageTitle}
       </title>
-      <meta id={`page-description`} className={`page-description`} name={`description`} content={description} />
+      <meta id={`page-description`} className={`page-description`} name={`description`} content={pageDescription} />
       <meta id={`page-og-title`} className={`page-meta`} property={`og:title`} content={pageTitle} />
       <meta id={`page-og-type`} className={`page-meta`} property={`og:type`} content={type} />
-      <meta id={`page-og-site-name`} className={`page-meta`} property={`og:site_name`} content={`Domains Database`} />
-      <meta id={`page-og-description`} className={`page-meta`} property={`og:description`} content={description} />
+      <meta id={`page-og-site-name`} className={`page-meta`} property={`og:site_name`} content={name} />
+      <meta id={`page-og-description`} className={`page-meta`} property={`og:description`} content={pageDescription} />
       <meta id={`page-twitter-title`} className={`page-meta`} name={`twitter:title`} content={pageTitle} />
-      <meta id={`page-twitter-description`} className={`page-meta`} name={`twitter:description`} content={description} />
+      <meta id={`page-twitter-description`} className={`page-meta`} name={`twitter:description`} content={pageDescription} />
       <meta id={`page-twitter-card`} className={`page-meta`} name={`twitter:card`} content={imageUrl ? `summary_large_image` : `summary`} />
       {noIndex && <meta id={`page-robots`} className={`page-meta`} name={`robots`} content={`noindex, follow`} />}
       {canonicalUrl && <link id={`page-canonical`} className={`page-canonical`} rel={`canonical`} href={canonicalUrl} />}
@@ -42,7 +45,7 @@ const PageMeta = ({ title, image, noIndex, exactTitle, description, publishedAt,
           id={`page-structured-data`}
           type={`application/ld+json`}
           className={`page-structured-data`}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, `\\u003c`) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(formatContent(structuredData)).replace(/</g, `\\u003c`) }}
         />
       )}
     </Head>

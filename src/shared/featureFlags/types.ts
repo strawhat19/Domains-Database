@@ -1,5 +1,8 @@
 export interface FeatureFlags {
+  ads: boolean;
   contact: boolean;
+  nameSwitch: boolean;
+  pricingTable: boolean;
   themeToggle: boolean;
   domainMarquee: boolean;
   notifications: boolean;
@@ -21,7 +24,10 @@ export interface FeatureSettings {
   type: `FeatureSettings`;
 }
 export const defaultFeatureFlags: FeatureFlags = {
+  ads: false,
   contact: true,
+  nameSwitch: false,
+  pricingTable: true,
   themeToggle: true,
   domainMarquee: true,
   notifications: true,

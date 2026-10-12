@@ -1,5 +1,6 @@
 export * from './Data';
 export * from './plans/Plan';
+export * from './plans/PlanInterest';
 export * from './events/Event';
 export * from './users/User';
 export * from './domains/Domain';

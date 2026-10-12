@@ -57,7 +57,7 @@ const NotificationsContent = ({ detail = false }: NotificationsProps) => {
           <View {...elementProps(`native-notifications-eyebrow`, suffix)} style={styles.eyebrow}>
             <Icon size={15} accessible={false} color={palette.accent} {...elementProps(`native-notifications-eyebrow-icon`, suffix)} />
             <Text {...elementProps(`native-notifications-eyebrow-text`, suffix)} style={styles.eyebrowText}>
-              {detail ? `APP ANNOUNCEMENT` : `DOMAINS DATABASE UPDATES`}
+              {detail ? `APP ANNOUNCEMENT` : `${state.appName.toUpperCase()} UPDATES`}
             </Text>
           </View>
           <Text {...elementProps(`native-notifications-title`, suffix)} style={[styles.title, wide && styles.wideTitle]} accessibilityRole={`header`}>
@@ -65,7 +65,7 @@ const NotificationsContent = ({ detail = false }: NotificationsProps) => {
           </Text>
           {!detail && (
             <Text {...elementProps(`native-notifications-description`, suffix)} style={styles.description}>
-              {`Announcements and updates from Domains Database.`}
+              {`Announcements and updates from ${state.appName}.`}
             </Text>
           )}
           {!detail && !state.loading && !state.error && (

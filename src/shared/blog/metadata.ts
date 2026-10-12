@@ -1,5 +1,6 @@
-import type { BlogArticle } from './articles';
 import { absoluteSiteUrl } from '../seo';
+import type { BlogArticle } from './articles';
+import { getAppName, getBrandedBlogImage } from '../branding/values';
 
 export const blogTitle = `Domain Guides & Portfolio Tips Blog`;
 export const blogDescription = `Practical guides to choosing domain names, managing a domain portfolio, evaluating names, researching expired domains, and protecting your registrations.`;
@@ -16,12 +17,12 @@ export const formatBlogDate = (date: string) => new Intl.DateTimeFormat(`en-US`,
   timeZone: `UTC`,
 }).format(new Date(date));
 
-export const getArticleSchema = (article: BlogArticle) => [
+export const getArticleSchema = (article: BlogArticle, appName = getAppName()) => [
   {
     '@type': `BlogPosting`,
     '@context': `https://schema.org`,
     url: absoluteSiteUrl(`/blog/${article.slug}`),
-    image: absoluteSiteUrl(article.image),
+    image: absoluteSiteUrl(getBrandedBlogImage(article.image, appName === getAppName(true))),
     headline: article.title,
     inLanguage: `en-US`,
     description: article.description,
@@ -29,12 +30,12 @@ export const getArticleSchema = (article: BlogArticle) => [
     articleSection: article.category,
     author: {
       '@type': `Organization`,
-      name: `Domains Database`,
+      name: appName,
       url: absoluteSiteUrl(`/about`),
     },
     publisher: {
       '@type': `Organization`,
-      name: `Domains Database`,
+      name: appName,
       url: absoluteSiteUrl(`/`),
     },
     mainEntityOfPage: {

@@ -26,6 +26,7 @@ export enum Types {
   Follow = `Follow`,
   Visit = `Visit`,
   Domain = `Domain`,
+  PlanInterest = `PlanInterest`,
   Notification = `Notification`,
   FormSubmission = `FormSubmission`,
   WatchedDomain = `WatchedDomain`,

@@ -4,11 +4,11 @@ import type { FeatureDetailsProps } from './types';
 import { elementProps } from '../../../shared/elementProps';
 import { useTheme } from '../../../shared/themeContext/useTheme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Bell, Mail, SunMoon, MoveHorizontal, X } from 'lucide-react-native';
+import { Coins, Megaphone, CaseSensitive, Bell, Mail, SunMoon, MoveHorizontal, X } from 'lucide-react-native';
 import { useReducedMotion } from '../../../shared/common/useReducedMotion';
 import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 
-const featureIcons = { contact: Mail, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
+const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
 
 const FeatureDetails = ({ roles, feature, onClose }: FeatureDetailsProps) => {
   const insets = useSafeAreaInsets();

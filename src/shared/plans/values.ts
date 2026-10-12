@@ -23,7 +23,7 @@ export const normalizePlan = (input: PlanInput): PlanInput => {
   return { name, slug, description, currency: input.currency, priceCents: input.priceCents, billingInterval: input.billingInterval, active: input.active, highlighted: input.highlighted, displayOrder: input.displayOrder, features: input.features.map(feature => planText(feature, `Feature`, planLimits.feature)) };
 };
 export const planId = (id: unknown) => {
-  if (typeof id !== `string` || id.length > 240 || !getAppCollectionIDNumber(id, Types.Plan)) throw new Error(`Choose A Valid Plan`);
+  if (typeof id !== `string` || id.length > 240 || id.includes(`/`) || !getAppCollectionIDNumber(id, Types.Plan)) throw new Error(`Choose A Valid Plan`);
   return id;
 };
 const timestamp = (value: unknown) => {

@@ -5,7 +5,7 @@ import PageMeta from '../PageMeta';
 import { useMemo, useEffect, useContext } from 'react';
 import { createStyles } from './styles.native';
 import { useBlogArticle } from './useBlogArticle';
-import { blogImages } from '../../shared/blog/images.native';
+import { getBlogImage } from '../../shared/blog/images.native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { Clock3, ArrowLeft, ArrowUpRight } from 'lucide-react-native';
@@ -16,7 +16,7 @@ import { Alert, Linking, Pressable, Text, View, useWindowDimensions } from 'reac
 const BlogArticle = () => {
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
-  const { article, relatedArticles } = useBlogArticle();
+  const { article, appName, switched, relatedArticles } = useBlogArticle();
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const wide = width >= 700;
@@ -61,7 +61,7 @@ const BlogArticle = () => {
         description={article.description}
         publishedAt={article.publishedAt}
         canonicalPath={`/blog/${article.slug}`}
-        structuredData={getArticleSchema(article)}
+        structuredData={getArticleSchema(article, appName)}
       />
       <View {...elementProps(`native-blog-article`, suffix)} style={[styles.page, { paddingHorizontal: padding }]}>
         <View
@@ -82,8 +82,8 @@ const BlogArticle = () => {
           <Text {...elementProps(`native-blog-article-description`, suffix)} style={styles.description}>{article.excerpt}</Text>
           <View {...elementProps(`native-blog-article-meta`, suffix)} style={styles.meta}>
             <Link href={`/about`} asChild>
-              <Pressable {...elementProps(`native-blog-article-author`, suffix)} style={styles.authorLink} accessibilityRole={`link`} accessibilityLabel={`About Domains Database`}>
-                <Text {...elementProps(`native-blog-article-author-text`, suffix)} style={styles.author}>{`By Domains Database`}</Text>
+              <Pressable {...elementProps(`native-blog-article-author`, suffix)} style={styles.authorLink} accessibilityRole={`link`} accessibilityLabel={`About ${appName}`}>
+                <Text {...elementProps(`native-blog-article-author-text`, suffix)} style={styles.author}>{`By ${appName}`}</Text>
               </Pressable>
             </Link>
             <Text {...elementProps(`native-blog-article-date`, suffix)} style={styles.metaText}>{formatBlogDate(article.publishedAt)}</Text>
@@ -97,7 +97,7 @@ const BlogArticle = () => {
           <Image
             contentFit={`cover`}
             style={styles.image}
-            source={blogImages[article.slug]}
+            source={getBlogImage(article.slug, switched)}
             accessibilityLabel={article.imageAlt}
             {...elementProps(`native-blog-article-image`, suffix)}
           />

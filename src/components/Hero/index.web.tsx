@@ -8,10 +8,12 @@ import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
 import HeroDomainStack from '../HeroDomainStack';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { cubes, useStackPill } from '../../shared/config';
 import { Search, Globe2, History, TrendingUp, ArrowUpRight } from 'lucide-react';
 
 const Hero = ({ search }: HeroProps) => {
+  const { firstWord, lastWord } = useAppBrand();
   const [searchFocused, setSearchFocused] = useState(false);
   const dataLoading = search.loading;
   const emptyRecents = !search.recentSearchesLoading && !search.recentSearches.length;
@@ -72,8 +74,8 @@ const Hero = ({ search }: HeroProps) => {
               {`Planner `}<span id={`hero-title-separator`} className={`hero-title-separator`}>{`//`}</span>{` Manager`}
             </span>
             <span id={`hero-title-accent`} className={`hero-title-accent`}>
-              {`Domains `}
-              <span id={`hero-title-database`} className={`hero-title-database`}>{`Database`}</span>
+              {`${firstWord} `}
+              <span id={`hero-title-database`} className={`hero-title-database`}>{lastWord}</span>
             </span>
           </h1>
           <p id={`hero-description`} className={`hero-description`}>

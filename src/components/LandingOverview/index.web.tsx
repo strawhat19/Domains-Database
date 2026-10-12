@@ -2,6 +2,7 @@ import './styles.scss';
 import { Link } from 'expo-router';
 import RouterAnchor from '../RouterAnchor';
 import StackPillShape from '../StackPillShape';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { getBlogHref } from '../../shared/blog/metadata';
 import { Globe2, Search, Layers3, BookOpen, CalendarDays, ArrowUpRight } from 'lucide-react';
 import { overviewNote, overviewTitle, overviewFeatures, overviewDescription } from './content';
@@ -9,6 +10,7 @@ import { overviewNote, overviewTitle, overviewFeatures, overviewDescription } fr
 const featureIcons = { inventory: Globe2, renewals: CalendarDays, projects: Layers3, discovery: Search };
 
 const LandingOverview = () => {
+  const { blogImage, formatText } = useAppBrand();
   const renderCardShape = (id: string) => (
     <>
       <div aria-hidden id={`${id}-backing`} className={`landing-overview-card-backing`}>
@@ -24,7 +26,7 @@ const LandingOverview = () => {
         <div id={`landing-overview-intro`} className={`landing-overview-intro`}>
           <div id={`landing-overview-copy`} className={`landing-overview-copy`}>
             <p id={`landing-overview-eyebrow`} className={`landing-eyebrow`}>{`From Scattered Names To Clear Plans`}</p>
-            <h2 id={`landing-overview-title`} className={`landing-section-title`}>{overviewTitle}</h2>
+            <h2 id={`landing-overview-title`} className={`landing-section-title`}>{formatText(overviewTitle)}</h2>
             <p id={`landing-overview-description`} className={`landing-section-description`}>{overviewDescription}</p>
             <p id={`landing-overview-summary`} className={`landing-overview-summary`}>{`Know what you own, what it costs, and what you want to build next.`}</p>
           </div>
@@ -37,7 +39,7 @@ const LandingOverview = () => {
               height={750}
               id={`landing-overview-image`}
               className={`landing-overview-image`}
-              src={`/images/blog/domain-portfolio-management.svg`}
+              src={blogImage(`/images/blog/domain-portfolio-management.svg`)}
               alt={`Illustration of domain folders and a portfolio list with Renew, Review, and Keep labels`}
             />
             <figcaption id={`landing-overview-caption`} className={`landing-overview-caption`}>

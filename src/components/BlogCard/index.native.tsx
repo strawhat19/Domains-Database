@@ -5,7 +5,8 @@ import { Text, View, Pressable } from 'react-native';
 import { Star, Clock3, FileText, ArrowUpRight } from 'lucide-react-native';
 import { createStyles } from './styles.native';
 import { getBlogHref } from '../../shared/blog/metadata';
-import { blogImages } from '../../shared/blog/images.native';
+import { getBlogImage } from '../../shared/blog/images.native';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import type { BlogArticle } from '../../shared/blog/articles';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -23,6 +24,7 @@ type BlogCardProps = {
 
 const BlogCard = ({ article, wide = false, story = false, journal = false, compact = false, featured = false, prefix = `blog` }: BlogCardProps) => {
   const { palette, isDark } = useTheme();
+  const { switched } = useAppBrand();
   const suffix = `${prefix}-${article.slug}`;
   const dated = journal || story || wide;
   const accent = getBlogCardAccent(article.category, isDark);
@@ -42,7 +44,7 @@ const BlogCard = ({ article, wide = false, story = false, journal = false, compa
           {!journal && <Image
             contentFit={compact || featured || wide ? `contain` : `cover`}
             style={[styles.image, compact && styles.compactImage, featured && styles.featuredImage, wide && styles.wideImage]}
-            source={blogImages[article.slug]}
+            source={getBlogImage(article.slug, switched)}
             accessibilityLabel={article.imageAlt}
             {...elementProps(`native-blog-card-image`, suffix)}
           />}

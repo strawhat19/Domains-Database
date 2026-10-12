@@ -2,6 +2,13 @@
 .pricing-feedback-copy { margin: 0; font-size: 13px; line-height: 1.8; }
 .pricing-error { color: var(--danger); }
 .landing-pricing .landing-pricing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pricing-plan-interest { gap: 12px; display: flex; margin-top: auto; flex-direction: column; }
+.pricing-plan-interest-note, .pricing-plan-interest-notice, .pricing-plan-interest-error { margin: 0; font-size: 11px; line-height: 1.7; color: var(--muted); }
+.pricing-plan-interest-notice { color: var(--success); }
+.pricing-plan-interest-error { color: var(--danger); }
+.pricing-plan-interest-feedback { gap: 10px; display: flex; align-items: flex-start; flex-direction: column; }
+.pricing-plan-interest .landing-button:disabled { opacity: .5; cursor: default; transform: none; }
+.pricing-plan-interest .pricing-plan-vote { flex: 1; }
 
 @media (max-width: 1199px) {
   .landing-pricing .landing-pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

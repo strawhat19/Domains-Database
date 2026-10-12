@@ -1,5 +1,6 @@
 import { usePathname } from 'expo-router';
 import { useWindowDimensions } from 'react-native';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { routes, navigation } from '../../shared/routes';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
@@ -13,6 +14,7 @@ export const useAppShell = () => {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const { user, loading } = useAuth();
+  const { name: appName } = useAppBrand();
   const { flags, ready: featuresReady } = useFeatureFlags();
   const { eligible, loading: connectionsLoading } = useConnectionAvailability();
   const { domains, loaded: domainsLoaded, loading: domainsLoading } = useDomains();
@@ -37,5 +39,5 @@ export const useAppShell = () => {
         : `${item.label}, ${count} Domain${count === 1 ? `` : `s`}${item.href === routes.watching.href ? ` in Watch List` : ` in Table`}`;
       return { ...item, count, countLoading, accessibilityLabel };
     });
-  return { pathname, signedIn, fitViewport, searchViewport, authLoading: loading, badgeColors: getAccountBadgeColors(user), year: new Date().getFullYear(), navigation: visibleNavigation };
+  return { appName, pathname, signedIn, fitViewport, searchViewport, authLoading: loading, badgeColors: getAccountBadgeColors(user), year: new Date().getFullYear(), navigation: visibleNavigation };
 };

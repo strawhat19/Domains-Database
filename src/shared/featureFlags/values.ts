@@ -8,6 +8,7 @@ import { defaultFeatureFlags, featureFlagKeys, featurePlanLimit, type FeatureFla
 const identity = genID(`FeatureSettings`, 1, `Global`, new Date(`2026-10-12T04:00:00.000Z`), `cb23b14255924fdd95957eac7ca7e35e`);
 export const featureSettingsId = identity.id;
 const fields = [`id`, `name`, `type`, `flags`, `number`, `version`, `created`, `updated`];
+const legacyFeatureKeys = [`contact`, `themeToggle`, `domainMarquee`, `notifications`] as const;
 export const createFeatureAudiences = (): FeatureAudiences => Object.fromEntries(featureFlagKeys.map(key => [key, { roles: null, plans: null, planMode: `minimum` }])) as FeatureAudiences;
 const roleValues: string[] = Object.values(Roles);
 export const isFeaturePlan = (value: unknown): value is string => typeof value === `string` && value.length <= 100 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
@@ -22,8 +23,9 @@ const readAudiences = (value: unknown): FeatureAudiences => {
   if (value === undefined) return createFeatureAudiences();
   if (!value || typeof value !== `object` || Array.isArray(value)) throw unreadable();
   const data = value as Record<string, unknown>;
-  if (Object.keys(data).length !== featureFlagKeys.length || featureFlagKeys.some(key => !(key in data))) throw unreadable();
+  if (Object.keys(data).some(key => !featureFlagKeys.includes(key as keyof FeatureFlags)) || legacyFeatureKeys.some(key => !(key in data))) throw unreadable();
   return Object.fromEntries(featureFlagKeys.map(key => {
+    if (!(key in data)) return [key, { roles: null, plans: null, planMode: `minimum` }];
     const audience = data[key] as Record<string, unknown> | undefined;
     if (!audience || typeof audience !== `object` || Array.isArray(audience) || Object.keys(audience).some(field => ![`roles`, `plans`, `planMode`].includes(field))
       || !(`roles` in audience) || !(`plans` in audience) || (`planMode` in audience && audience.planMode !== `minimum`)) throw unreadable();
@@ -38,7 +40,8 @@ export const resolveFeatureFlags = (settings: FeatureSettings, user: Pick<User, 
   const role = user?.role ?? Roles.Guest;
   const plan = typeof user?.plan === `string` ? user.plan.toLowerCase() : user ? `` : `free`;
   const valid = !user || (user.active && roleValues.includes(role) && isFeaturePlan(plan));
-  return Object.fromEntries(featureFlagKeys.map(key => {
+  const flags = { ...defaultFeatureFlags };
+  for (const key of featureFlagKeys) {
     const audience = settings.audiences[key];
     const minimum = audience.plans?.[0];
     const selectedTier = tiers.find(tier => tier.slug === minimum);
@@ -46,8 +49,9 @@ export const resolveFeatureFlags = (settings: FeatureSettings, user: Pick<User, 
     const plansAllow = audience.planMode === `minimum` ? !minimum || minimum === `free` || (plan !== `free` && !!selectedTier && !!viewerTier
       && (viewerTier.displayOrder > selectedTier.displayOrder || (viewerTier.displayOrder === selectedTier.displayOrder && viewerTier.number >= selectedTier.number)))
       : audience.plans === null || audience.plans.includes(plan);
-    return [key, valid && settings.flags[key] && (audience.roles === null || audience.roles.includes(role)) && plansAllow];
-  })) as FeatureFlags;
+    flags[key] = valid && settings.flags[key] && (audience.roles === null || audience.roles.includes(role)) && plansAllow;
+  }
+  return flags;
 };
 export const migrateFeaturePlanTiers = (settings: FeatureSettings, tiers: readonly PlanTier[]): FeatureSettings => ({
   ...settings,
@@ -82,9 +86,20 @@ export const readFeatureSettings = (value: unknown): FeatureSettings => {
   const flags = data.flags as Record<string, unknown> | undefined;
   if (fields.some(field => !(field in data)) || Object.keys(data).some(field => !fields.includes(field) && field !== `audiences`)
     || data.id !== featureSettingsId || data.number !== 1 || data.version !== 1 || data.name !== `Global` || data.type !== `FeatureSettings`
-    || !flags || typeof flags !== `object` || Array.isArray(flags) || Object.keys(flags).length !== featureFlagKeys.length
-    || featureFlagKeys.some(key => typeof flags[key] !== `boolean`)) throw unreadable();
-  return { ...data, flags: { ...flags }, audiences: readAudiences(data.audiences), created: readDate(data.created), updated: readDate(data.updated) } as FeatureSettings;
+    || !flags || typeof flags !== `object` || Array.isArray(flags)
+    || legacyFeatureKeys.some(key => typeof flags[key] !== `boolean`)
+    || Object.keys(flags).some(key => !featureFlagKeys.includes(key as keyof FeatureFlags) || typeof flags[key] !== `boolean`)) throw unreadable();
+  return {
+    number: 1,
+    version: 1,
+    name: `Global`,
+    id: featureSettingsId,
+    type: `FeatureSettings`,
+    created: readDate(data.created),
+    updated: readDate(data.updated),
+    audiences: readAudiences(data.audiences),
+    flags: { ...defaultFeatureFlags, ...flags },
+  };
 };
 export const createFeatureSettings = (flags: FeatureFlags = defaultFeatureFlags): FeatureSettings => ({
   number: 1,

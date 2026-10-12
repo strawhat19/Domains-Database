@@ -34,12 +34,12 @@ const NotificationsContent = ({ detail = false }: NotificationsProps) => {
           )}
           <p id={`${suffix}-eyebrow`} className={`notifications-eyebrow`}>
             <Icon size={15} aria-hidden id={`${suffix}-eyebrow-icon`} className={`notifications-eyebrow-icon`} />
-            {detail ? `APP ANNOUNCEMENT` : `DOMAINS DATABASE UPDATES`}
+            {detail ? `APP ANNOUNCEMENT` : `${state.appName.toUpperCase()} UPDATES`}
           </p>
           <h1 id={`${suffix}-title`} className={`notifications-title`}>{state.title}</h1>
           {!detail && (
             <p id={`${suffix}-description`} className={`notifications-description`}>
-              {`Announcements and updates from Domains Database.`}
+              {`Announcements and updates from ${state.appName}.`}
             </p>
           )}
           {!detail && !state.loading && !state.error && (

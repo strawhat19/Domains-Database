@@ -4,6 +4,7 @@ import { useAuth } from '../../shared/authContext/useAuth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { firebaseEnabled } from '../../shared/firebase/config';
 import { routes, resolveAuthReturnTo } from '../../shared/routes';
+import { resolvePlanInterestId } from '../../shared/plans/interestReturn';
 import { AccountDeactivatedError } from '../../shared/authentication/types';
 
 export type AuthMode = `signin` | `signup`;
@@ -12,8 +13,9 @@ type Field = `email` | `password`;
 export const useAuthForm = (mode: AuthMode) => {
   const auth = useAuth();
   const router = useRouter();
-  const params = useLocalSearchParams<{ q?: string | string[]; returnTo?: string | string[] }>();
+  const params = useLocalSearchParams<{ q?: string | string[]; returnTo?: string | string[]; planInterest?: string | string[] }>();
   const returnTo = resolveAuthReturnTo(params.returnTo);
+  const planInterest = returnTo === routes.pricing.href ? resolvePlanInterestId(params.planInterest) : ``;
   const query = returnTo === routes.search.href && typeof params.q === `string` ? params.q.trim().slice(0, 253) : ``;
   const [feedback, setFeedback] = useState(``);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,7 +35,7 @@ export const useAuthForm = (mode: AuthMode) => {
   const finishAuthentication = () => {
     setCanReactivate(false);
     setFields({ email: ``, password: `` });
-    router.replace(query ? { pathname: routes.search.href, params: { q: query } } : returnTo);
+    router.replace(planInterest ? { pathname: routes.pricing.href, params: { planInterest } } : query ? { pathname: routes.search.href, params: { q: query } } : returnTo);
   };
 
   const signInWithGoogle = async () => {
@@ -75,7 +77,7 @@ export const useAuthForm = (mode: AuthMode) => {
   const navigate = (href: `/signin` | `/signup` | `/profile`) => {
     if (disabled) return;
     if (href === `/profile`) router.push(href);
-    else router.push({ pathname: href, params: { returnTo, ...(query ? { q: query } : {}) } });
+    else router.push({ pathname: href, params: { returnTo, ...(query ? { q: query } : {}), ...(planInterest ? { planInterest } : {}) } });
   };
 
   const clearFeedback = () => { setFeedback(``); auth.clearError(); };

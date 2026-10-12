@@ -1,5 +1,6 @@
 import './styles.scss';
 import Toast from '../Toast';
+import BrandLogo from '../BrandLogo';
 import './account-shell.scss';
 import '../../styles/global.scss';
 import { Link } from 'expo-router';
@@ -24,8 +25,8 @@ import { X, Eye, Menu, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpe
 const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.auction.href, routes.community.href];
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
-  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
-  const { isDark, error: themeError, clearError: clearThemeError } = useTheme();
+  const { pathname, year, appName, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
+  const { error: themeError, clearError: clearThemeError } = useTheme();
   const { flags, ready: featuresReady } = useFeatureFlags();
   const domainsMenu = useDomainsMenu(pathname);
   const mobileNavigation = useMobileNavigation(pathname);
@@ -113,16 +114,9 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
               id={`header-brand`}
               onClick={mobileNavigation.close}
               className={`header-brand`}
-              aria-label={`Domains Database Home`}
+              aria-label={`${appName} Home`}
             >
-              <img
-                height={280}
-                width={1080}
-                id={`header-logo`}
-                src={isDark ? `/brand-logo-dark.svg` : `/brand-logo.svg`}
-                alt={`Domains Database`}
-                className={`header-logo`}
-              />
+              <BrandLogo id={`header-logo`} className={`header-logo`} />
             </RouterAnchor>
           </Link>
           <nav
@@ -224,7 +218,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
           <p id={`footer-copyright`} className={`footer-copyright`}>
             {`© ${year}`}
             <span id={`footer-copyright-name`} className={`footer-copyright-name`}>
-              {` Domains Database.`}
+              {` ${appName}.`}
             </span>
           </p>
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>

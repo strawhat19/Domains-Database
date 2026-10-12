@@ -31,9 +31,12 @@ service cloud.firestore {
     }
     function featureAudiencesValues(audiences) {
       return audiences is map && audiences.keys().hasAll(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
-        && audiences.keys().hasOnly(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
+        && audiences.keys().hasOnly(['ads', 'contact', 'nameSwitch', 'pricingTable', 'themeToggle', 'domainMarquee', 'notifications'])
         && featureAudienceValues(audiences.contact) && featureAudienceValues(audiences.themeToggle)
-        && featureAudienceValues(audiences.domainMarquee) && featureAudienceValues(audiences.notifications);
+        && featureAudienceValues(audiences.domainMarquee) && featureAudienceValues(audiences.notifications)
+        && (!audiences.keys().hasAny(['ads']) || featureAudienceValues(audiences.ads))
+        && (!audiences.keys().hasAny(['nameSwitch']) || featureAudienceValues(audiences.nameSwitch))
+        && (!audiences.keys().hasAny(['pricingTable']) || featureAudienceValues(audiences.pricingTable));
     }
     function planTierValues(data, slug) {
       return data is map && data.keys().hasAll(['id', 'slug', 'number', 'displayOrder']) && data.keys().hasOnly(['id', 'slug', 'number', 'displayOrder'])
@@ -80,8 +83,11 @@ service cloud.firestore {
         && data.id == featureSettingsId() && data.number is int && data.number == 1 && data.type == 'FeatureSettings'
         && data.name == 'Global' && data.version is int && data.version == 1 && data.created is timestamp && data.updated == request.time
         && data.flags is map && data.flags.keys().hasAll(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
-        && data.flags.keys().hasOnly(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
+        && data.flags.keys().hasOnly(['ads', 'contact', 'nameSwitch', 'pricingTable', 'themeToggle', 'domainMarquee', 'notifications'])
         && data.flags.contact is bool && data.flags.themeToggle is bool && data.flags.domainMarquee is bool && data.flags.notifications is bool
+        && (!data.flags.keys().hasAny(['ads']) || data.flags.ads is bool)
+        && (!data.flags.keys().hasAny(['nameSwitch']) || data.flags.nameSwitch is bool)
+        && (!data.flags.keys().hasAny(['pricingTable']) || data.flags.pricingTable is bool)
         && (!data.keys().hasAny(['audiences']) || featureAudiencesValues(data.audiences));
     }
     function ownsAccount(userId) {
@@ -249,6 +255,107 @@ service cloud.firestore {
         && !exists(planPath(data.lastPlanId)) && getAfter(planPath(data.lastPlanId)).data.id == data.lastPlanId
         && getAfter(planPath(data.lastPlanId)).data.number == data.number;
     }
+    function planInterestPath(interestId) { return /databases/$(database)/documents/planInterestRecords/$(interestId); }
+    function planInterestCounterPath() { return /databases/$(database)/documents/counters/planInterest; }
+    function planInterestSummaryPath(planId) { return /databases/$(database)/documents/planInterestSummary/$(planId); }
+    function planInterestLookupPath(firebaseUid, planId) { return /databases/$(database)/documents/planInterestLookup/$(firebaseUid)/plans/$(planId); }
+    function anonymousPlanVoter() {
+      return signedIn() && request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'anonymous';
+    }
+    function planInterestActor() {
+      return signedIn() && (anonymousPlanVoter() || (exists(identityPath()) && ownsAccount(actorId())));
+    }
+    function planInterestUserId() { return anonymousPlanVoter() ? '' : actorId(); }
+    function planInterestPricingEnabled() {
+      return !exists(featureSettingsPath()) || (get(featureSettingsPath()).data.flags.get('pricingTable', true) == true
+        && featureAudienceAllows(get(featureSettingsPath()).data, 'pricingTable', anonymousPlanVoter() ? 'Guest' : get(userPath(actorId())).data.role,
+          anonymousPlanVoter() ? 'free' : get(userPath(actorId())).data.get('plan', 'free').lower()));
+    }
+    function planInterestIdentity(data, interestId) {
+      return data.id == interestId && data.type == 'PlanInterest'
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991
+        && interestId is string && interestId.size() <= 240
+        && interestId.matches('PlanInterest_' + string(data.number) + '_Plan_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+');
+    }
+    function planInterestValues(data, interestId) {
+      return data.keys().hasAll(['id', 'type', 'number', 'planId', 'vote', 'userId', 'actorKey', 'migratedTo', 'interested', 'created', 'updated'])
+        && data.keys().hasOnly(['id', 'type', 'number', 'planId', 'vote', 'userId', 'actorKey', 'migratedTo', 'interested', 'created', 'updated'])
+        && planInterestIdentity(data, interestId) && data.planId is string && data.planId.size() > 0 && data.planId.size() <= 240
+        && data.vote in ['up', 'down', 'none'] && data.actorKey == request.auth.uid
+        && data.userId == planInterestUserId() && data.migratedTo == '' && data.interested is bool
+        && (!anonymousPlanVoter() || data.interested == false) && data.created is timestamp && data.updated == request.time;
+    }
+    function planInterestSummaryCoupled(data) {
+      let summary = getAfter(planInterestSummaryPath(data.planId)).data;
+      return summary.lastInterestId == data.id && summary.updated == request.time;
+    }
+    function newPlanInterest(interestId) {
+      let data = request.resource.data;
+      let lookup = getAfter(planInterestLookupPath(request.auth.uid, data.planId)).data;
+      let counter = getAfter(planInterestCounterPath()).data;
+      return planInterestActor() && planInterestValues(data, interestId) && data.created == request.time
+        && (data.vote != 'none' || data.interested == true)
+        && lookup.id == interestId && lookup.number == data.number
+        && counter.lastInterestId == interestId && counter.number == data.number
+        && data.number == (exists(planInterestCounterPath()) ? get(planInterestCounterPath()).data.number + 1 : 1)
+        && planInterestSummaryCoupled(data);
+    }
+    function updatedPlanInterest(interestId) {
+      let data = request.resource.data;
+      return planInterestActor() && planInterestValues(data, interestId)
+        && data.id == resource.data.id && data.number == resource.data.number && data.type == resource.data.type
+        && data.actorKey == resource.data.actorKey && data.userId == resource.data.userId && data.planId == resource.data.planId
+        && data.created == resource.data.created && (!resource.data.interested || data.interested)
+        && data.updated - resource.data.updated >= duration.value(500, 'ms')
+        && data.diff(resource.data).affectedKeys().hasOnly(['vote', 'interested', 'updated'])
+        && (data.vote != resource.data.vote || data.interested != resource.data.interested)
+        && planInterestSummaryCoupled(data);
+    }
+    function planInterestCount(value) { return value is int && value >= 0 && value <= 9007199254740991; }
+    function planInterestVoteCount(vote, direction) { return vote == direction ? 1 : 0; }
+    function planInterestSummaryValues(planId) {
+      let data = request.resource.data;
+      let plan = get(planPath(planId)).data;
+      return data.keys().hasAll(['planId', 'planName', 'up', 'down', 'interested', 'updated', 'lastInterestId'])
+        && data.keys().hasOnly(['planId', 'planName', 'up', 'down', 'interested', 'updated', 'lastInterestId'])
+        && data.planId == planId && data.planName == plan.name && plan.active == true && plan.id == planId && plan.type == 'Plan'
+        && plan.number is int && plan.number > 0 && planId.size() <= 240
+        && planId.matches('Plan_' + string(plan.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
+        && planInterestCount(data.up) && planInterestCount(data.down) && planInterestCount(data.interested)
+        && data.lastInterestId is string && data.lastInterestId.size() <= 240 && data.updated == request.time;
+    }
+    function planInterestSummaryChange(planId, previous) {
+      let data = request.resource.data;
+      let after = getAfter(planInterestPath(data.lastInterestId)).data;
+      let before = exists(planInterestPath(data.lastInterestId)) ? get(planInterestPath(data.lastInterestId)).data : {'vote': 'none', 'interested': false};
+      return planInterestActor() && planInterestValues(after, data.lastInterestId) && after.planId == planId
+        && (!exists(planInterestPath(data.lastInterestId)) || before.updated != request.time)
+        && (!planInterestPricingEnabled() || (exists(planInterestPath(data.lastInterestId))
+          && before.vote != 'none' && after.vote == 'none' && after.interested == before.interested))
+        && data.up == previous.get('up', 0) + planInterestVoteCount(after.vote, 'up') - planInterestVoteCount(before.vote, 'up')
+        && data.down == previous.get('down', 0) + planInterestVoteCount(after.vote, 'down') - planInterestVoteCount(before.vote, 'down')
+        && data.interested == previous.get('interested', 0) + (after.interested ? 1 : 0) - (before.interested ? 1 : 0);
+    }
+    function newPlanInterestCounter() {
+      let data = request.resource.data;
+      let interest = getAfter(planInterestPath(data.lastInterestId)).data;
+      let lookup = getAfter(planInterestLookupPath(request.auth.uid, interest.planId)).data;
+      return planInterestActor() && data.keys().hasAll(['number', 'lastInterestId']) && data.keys().hasOnly(['number', 'lastInterestId'])
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991
+        && planInterestIdentity(interest, data.lastInterestId) && interest.number == data.number && interest.actorKey == request.auth.uid
+        && interest.created == request.time && !exists(planInterestPath(data.lastInterestId))
+        && lookup.id == data.lastInterestId && lookup.number == data.number;
+    }
+    function newPlanInterestLookup(firebaseUid, planId) {
+      let data = request.resource.data;
+      let interest = getAfter(planInterestPath(data.id)).data;
+      let counter = getAfter(planInterestCounterPath()).data;
+      return planInterestActor() && firebaseUid == request.auth.uid
+        && data.keys().hasAll(['id', 'number']) && data.keys().hasOnly(['id', 'number'])
+        && planInterestIdentity(interest, data.id) && interest.number == data.number && interest.planId == planId
+        && interest.actorKey == firebaseUid && interest.created == request.time && !exists(planInterestPath(data.id))
+        && counter.lastInterestId == data.id && counter.number == data.number;
+    }
     function eventValues() {
       let data = request.resource.data;
       return data.keys().hasAll(['id', 'name', 'type', 'allDay', 'endsAt', 'number', 'created', 'updated', 'startsAt', 'location', 'creatorId', 'description'])
@@ -313,6 +420,11 @@ service cloud.firestore {
     match /counters/plans {
       allow get: if isAccountAdmin();
       allow create, update: if newPlanCounter();
+    }
+    match /counters/planInterest {
+      allow get: if planInterestActor();
+      allow create: if newPlanInterestCounter() && request.resource.data.number == 1;
+      allow update: if newPlanInterestCounter() && request.resource.data.number == resource.data.number + 1;
     }
     match /counters/events {
       allow get: if isAccountAdmin();
@@ -392,6 +504,25 @@ service cloud.firestore {
         && getAfter(planPath(request.resource.data.id)).data.number == request.resource.data.number
         && getAfter(planPath(request.resource.data.id)).data.displayOrder == request.resource.data.displayOrder;
     }
+    match /planInterestSummary/{planId} {
+      allow get: if isOwner();
+      allow list: if isOwner() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 201;
+      allow create: if planInterestSummaryValues(planId) && !exists(planInterestPath(request.resource.data.lastInterestId))
+        && planInterestSummaryChange(planId, {});
+      allow update: if planInterestSummaryValues(planId) && planInterestSummaryChange(planId, resource.data);
+    }
+    match /planInterestRecords/{interestId} {
+      allow get: if isOwner() || (planInterestActor() && resource.data.actorKey == request.auth.uid);
+      allow list: if isOwner() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 101;
+      allow create: if newPlanInterest(interestId);
+      allow update: if updatedPlanInterest(interestId);
+    }
+    match /planInterestLookup/{firebaseUid}/plans/{planId} {
+      allow get: if planInterestActor() && firebaseUid == request.auth.uid;
+      allow create: if newPlanInterestLookup(firebaseUid, planId);
+    }
+    match /planInterestLookup/{lookupId} { allow read, write: if false; }
+    match /planInterestLimits/{actorId} { allow read, write: if false; }
     match /events/{eventId} {
       allow get: if isAccountAdmin();
       allow list: if isAccountAdmin() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 501;

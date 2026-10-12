@@ -1,4 +1,4 @@
-import { Image } from 'expo-image';
+import BrandLogo from '../BrandLogo';
 import { Text, View, Animated } from 'react-native';
 import { useLoadingScreen } from './useLoadingScreen';
 import { elementProps } from '../../shared/elementProps';
@@ -6,7 +6,7 @@ import { elementProps } from '../../shared/elementProps';
 type LoadingScreenProps = { label?: string; suffix?: string; compact?: boolean };
 
 const LoadingScreen = ({ compact = false, suffix = `page`, label = `Loading your page…` }: LoadingScreenProps) => {
-  const { isDark, styles, logoMotion, skeletonMotion } = useLoadingScreen();
+  const { styles, logoMotion, skeletonMotion } = useLoadingScreen();
 
   return (
     <View
@@ -20,14 +20,12 @@ const LoadingScreen = ({ compact = false, suffix = `page`, label = `Loading your
       <View {...elementProps(`app-loading-card`, suffix)} style={[styles.card, compact && styles.compactCard]}>
         <View {...elementProps(`app-loading-heading`, suffix)} style={styles.heading}>
           <Animated.View {...elementProps(`app-loading-brand`, suffix)} style={[styles.brand, logoMotion]}>
-            <Image
-              {...elementProps(`app-loading-logo`, suffix)}
+            <BrandLogo
+              width={214}
+              height={56}
               style={styles.logo}
-              contentFit={`contain`}
-              accessibilityLabel={`Domains Database`}
-              source={isDark
-                ? require('../../../assets/icons/brand-logo-dark.svg')
-                : require('../../../assets/concepts/logos/v8/02-domain-record-stack-fill.svg')}
+              className={`app-loading-logo`}
+              id={`app-loading-logo-${suffix}`}
             />
           </Animated.View>
           <View {...elementProps(`app-loading-record-dots`, suffix)} style={styles.dots} accessibilityElementsHidden>

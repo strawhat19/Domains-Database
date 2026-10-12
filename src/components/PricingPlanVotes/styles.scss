@@ -1,0 +1,7 @@
+.pricing-plan-votes { gap: 8px; display: flex; flex-wrap: wrap; }
+.pricing-plan-vote { gap: 7px; min-height: 44px; display: inline-flex; padding: 9px 11px; align-items: center; justify-content: center; color: var(--muted); background: var(--input); border: 1px solid var(--line); border-radius: 5px; font-size: 11px; font-family: var(--font-bold); transition: color .2s ease, border-color .2s ease, background-color .2s ease; }
+.pricing-plan-vote svg { flex: none; }
+.pricing-plan-vote:hover:not(:disabled), .pricing-plan-vote[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); background: var(--subtle); }
+.pricing-plan-vote:disabled { opacity: .5; cursor: default; }
+.pricing-plan-vote:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .pricing-plan-vote { transition: none; } }

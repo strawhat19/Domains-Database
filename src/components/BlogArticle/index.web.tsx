@@ -8,7 +8,7 @@ import { Clock3, ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { formatBlogDate, getArticleSchema } from '../../shared/blog/metadata';
 
 const BlogArticle = () => {
-  const { article, relatedArticles } = useBlogArticle();
+  const { article, appName, blogImage, relatedArticles } = useBlogArticle();
 
   if (!article) return (
     <div id={`blog-article-missing`} className={`blog-article-missing`}>
@@ -34,7 +34,7 @@ const BlogArticle = () => {
         description={article.description}
         publishedAt={article.publishedAt}
         canonicalPath={`/blog/${article.slug}`}
-        structuredData={getArticleSchema(article)}
+        structuredData={getArticleSchema(article, appName)}
       />
       <article id={id} className={`blog-article`}>
         <header data-scroll-hero id={`${id}-header`} className={`blog-article-header`}>
@@ -49,7 +49,7 @@ const BlogArticle = () => {
           <p id={`${id}-description`} className={`blog-article-description`}>{article.excerpt}</p>
           <div id={`${id}-meta`} className={`blog-article-meta`}>
             <Link href={`/about`} asChild>
-              <RouterAnchor id={`${id}-author`} className={`blog-article-author`}>{`By Domains Database`}</RouterAnchor>
+              <RouterAnchor id={`${id}-author`} className={`blog-article-author`}>{`By ${appName}`}</RouterAnchor>
             </Link>
             <time id={`${id}-date`} className={`blog-article-date`} dateTime={article.publishedAt}>{formatBlogDate(article.publishedAt)}</time>
             <span id={`${id}-time`} className={`blog-article-reading-time`}>
@@ -64,7 +64,7 @@ const BlogArticle = () => {
             height={750}
             fetchPriority={`high`}
             id={`${id}-image`}
-            src={article.image}
+            src={blogImage(article.image)}
             alt={article.imageAlt}
             className={`blog-article-image`}
           />

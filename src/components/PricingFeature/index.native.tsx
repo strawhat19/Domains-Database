@@ -2,12 +2,14 @@ import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
-import { Check, List, Clock3, Layers } from 'lucide-react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
+import { Check, List, Clock3, Layers } from 'lucide-react-native';
 import { getPricingFeatureBadges } from '../../shared/plans/pricingFeatures';
 import type { PricingFeature as Feature } from '../../shared/plans/pricingFeatures';
 
 const PricingFeature = ({ id, feature }: { id: string; feature: Feature }) => {
+  const brand = useAppBrand();
   const { palette } = useTheme();
   const badges = getPricingFeatureBadges(feature);
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -26,17 +28,17 @@ const PricingFeature = ({ id, feature }: { id: string; feature: Feature }) => {
     accessible
     style={styles.feature}
     {...elementProps(`pricing-feature`, id)}
-    accessibilityLabel={`${feature.label}. ${badges.map(badge => `${badge.label}: ${badge.description}`).join(`. `)}`}
+    accessibilityLabel={brand.formatText(`${feature.label}. ${badges.map(badge => `${badge.label}: ${badge.description}`).join(`. `)}`)}
   >
     <Icon size={14} color={color} style={styles.icon} {...elementProps(`pricing-feature-icon`, id)} />
     <View {...elementProps(`pricing-feature-content`, id)} style={styles.content}>
-      <Text {...elementProps(`pricing-feature-label`, id)} style={styles.label}>{feature.label}</Text>
+      <Text {...elementProps(`pricing-feature-label`, id)} style={styles.label}>{brand.formatText(feature.label)}</Text>
       <View {...elementProps(`pricing-feature-badges`, id)} style={styles.badges}>
         {badges.map(badge => <Text
           key={badge.id}
           {...elementProps(`pricing-feature-badge`, `${id}-${badge.id}`)}
           style={[styles.badge, badgeColors[badge.id]]}
-        >{badge.label}</Text>)}
+        >{brand.formatText(badge.label)}</Text>)}
       </View>
     </View>
   </View>;

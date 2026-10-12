@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
-import { Image } from 'expo-image';
 import Toast from '../Toast';
+import BrandLogo from '../BrandLogo';
 import UserMenu from '../UserMenu';
 import { useRef, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
@@ -24,7 +24,7 @@ import { Eye, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, FileTe
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
-  const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
+  const { pathname, year, appName, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [viewportHeight, setViewportHeight] = useState(height);
@@ -76,16 +76,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
         {featuresReady && flags.domainMarquee && <DomainMarquee translucent={scroll.scrolled} backgroundColor={accountShell ? palette.subtle : undefined} />}
         <View {...elementProps(`native-header-row`)} style={styles.headerRow}>
           <Link href={`/`} asChild>
-            <Pressable {...elementProps(`native-brand-link`)} accessibilityLabel={`Domains Database Home`}>
-              <Image
-                {...elementProps(`native-brand-logo`)}
-                contentFit={`contain`}
-                style={[styles.logo, { width: Math.max(70, Math.min(194, width - 288)) }]}
-                accessibilityLabel={`Domains Database`}
-                source={isDark
-                  ? require('../../../assets/icons/brand-logo-dark.svg')
-                  : require('../../../assets/concepts/logos/v8/02-domain-record-stack-fill.svg')}
-              />
+            <Pressable {...elementProps(`native-brand-link`)} accessibilityLabel={`${appName} Home`}>
+              <BrandLogo id={`native-brand-logo`} height={58} width={Math.max(70, Math.min(194, width - 288))} style={[styles.logo, { width: Math.max(70, Math.min(194, width - 288)) }]} />
             </Pressable>
           </Link>
           <View {...elementProps(`native-header-actions`)} style={styles.headerActions}>
@@ -187,7 +179,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             >
               <View {...elementProps(`native-footer-copyright-column`)} style={styles.footerColumn}>
                 <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
-                  {width >= 760 ? `© ${year} Domains Database.` : `© ${year}`}
+                  {width >= 760 ? `© ${year} ${appName}.` : `© ${year}`}
                 </Text>
               </View>
               <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>

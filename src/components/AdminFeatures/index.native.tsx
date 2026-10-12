@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import { createStyles } from './styles.native';
 import { featureDefinitions } from './features';
+import AdminPlanInterest from '../AdminPlanInterest';
 import { Text, View, Pressable } from 'react-native';
 import { useAdminFeatures } from './useAdminFeatures';
 import FeatureDetails from './FeatureDetails/index.native';
 import { elementProps } from '../../shared/elementProps';
 import type { FeatureFlagKey } from '../../shared/featureFlags/types';
 import { StatusCell, AdminButton, AdminLoading, useAdminWidgetStyles } from '../AdminWidgets';
-import { Bell, Mail, Check, Minus, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react-native';
+import { Coins, Megaphone, CaseSensitive, Bell, Mail, Check, Minus, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react-native';
 
-const featureIcons = { contact: Mail, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
+const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
 const featureToggleOptions = [{ value: `off`, enabled: false, label: `Disable`, Icon: Minus }, { value: `on`, enabled: true, label: `Enable`, Icon: Check }];
 
 const AdminFeatures = () => {
@@ -78,6 +79,7 @@ const AdminFeatures = () => {
           </View>;
         })}
       </View>}
+      <AdminPlanInterest />
     </View>
     {details ? <FeatureDetails
       feature={details}

@@ -1,6 +1,6 @@
 # Features
 
-`/features` appears last in the Dashboard submenu and requires an active Owner at navigation, direct-route, service, and Firestore-rule boundaries. `/admin/features` redirects to it. The four flags default to true only when no settings record exists.
+`/features` appears last in the Dashboard submenu and requires an active Owner at navigation, direct-route, service, and Firestore-rule boundaries. `/admin/features` redirects to it. The original four flags and Pricing Table default to true after a confirmed missing record; Ads and Name Switch default to false.
 
 | Flag | False Behavior |
 | --- | --- |
@@ -8,8 +8,13 @@
 | `domainMarquee` | Remove the top marquee and remeasure the header |
 | `notifications` | Hide the bell, public notification pages, and marquee announcements; stop public notification subscriptions |
 | `contact` | Hide Contact navigation and contact actions, disable the public form, and reject new submissions |
+| `pricingTable` | Keep published plan previews; replace plan actions with signed-in interest and account-free up/down voting |
+| `ads` | Disable future ad eligibility for everyone; no ad placements are connected yet |
+| `nameSwitch` | Display Domains Database; enabling it displays Domain Databases in UI, page copy, and browser titles |
 
-Firebase mode subscribes to one public-safe `featureSettings/FeatureSettings_1_Global_12_00_AM_10_12_26_cb23b14255924fdd95957eac7ca7e35e` document. Its stable singleton identity is generated through `genID`, with number 1 allocated atomically alongside `counters/features` on the first Owner save. The counter cannot be changed afterward. Settings contain `id`, `number`, `type`, `name`, `version`, `created`, `updated`, the four boolean `flags`, and optional `audiences`; only flags, audiences, and the updated timestamp may change. No extra index is needed.
+Firebase mode subscribes to one public-safe `featureSettings/FeatureSettings_1_Global_12_00_AM_10_12_26_cb23b14255924fdd95957eac7ca7e35e` document. Its stable singleton identity is generated through `genID`, with number 1 allocated atomically alongside `counters/features` on the first Owner save. The counter cannot be changed afterward. Settings contain `id`, `number`, `type`, `name`, `version`, `created`, `updated`, the seven boolean `flags`, and optional `audiences`; only flags, audiences, and the updated timestamp may change. No extra index is needed.
+
+Existing four-flag documents remain readable. Missing new flags receive their release defaults, and missing new audiences use unrestricted minimum-plan targeting. Existing values and audiences remain intact; the next confirmed Owner save writes the compatible full configuration. Unknown keys and malformed saved values remain errors rather than being replaced with defaults.
 
 Each feature audience has a `roles` allowlist and a minimum `plans` selection with `planMode: minimum`. For roles, `null` allows every role and an empty list allows none. For plans, no selection means Free and above; a single selected slug allows that tier and every higher tier. Free has no selector button, and clicking the highlighted plan clears the selection. Paid tiers follow the saved catalog's `displayOrder`, then `number`; Free remains below paid tiers. Unknown paid tiers do not qualify until their catalog metadata is available. A feature is effective only when globally enabled and both the role and minimum plan match. Signed-out visitors match Guest/Free; inactive accounts fail the audience check. Both Admin and legacy Administrator remain separately selectable. Plan selection does not grant or alter account entitlements.
 
@@ -20,3 +25,5 @@ Plan creation and updates maintain public-safe `{id, slug, number, displayOrder}
 The shared provider publishes confirmed snapshots and retains the last confirmed flags on read failure. Until its first successful read, public controls stay hidden and the document starts dark; the user's saved theme becomes effective only when the theme flag permits it. Features disables saving and offers Refresh for failed reads. Existing local mode stores the same validated record under `domains-database:features:v1`; those changes apply only to that device.
 
 Deploy the updated `firestore.rules` with the matching client before using the new controls in Firebase mode. Source changes do not deploy rules or confirm a live connection. Public notification reads and Contact creation respect their flags; authorized notification management and Owner submission review remain available.
+
+The Plan Interest section below Features displays saved per-plan upvotes, downvotes, and signed-in interest directly from Firestore. No pricing action grants a plan entitlement or processes a payment. Guest voting uses isolated Anonymous Authentication in the same Firebase project as described in `docs/plan-interest.md`; local mode labels its results as saved on this device.

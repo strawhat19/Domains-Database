@@ -6,6 +6,7 @@ import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
 import { createStyles } from './styles.native';
 import HeroDomainStack from '../HeroDomainStack';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { elementProps } from '../../shared/elementProps';
 import { cubes, useStackPill } from '../../shared/config';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -19,6 +20,7 @@ import { Search, Layers3, History, TrendingUp, ArrowUpRight } from 'lucide-react
 import { Text, View, Easing, Animated, Pressable, TextInput, useWindowDimensions } from 'react-native';
 
 const Hero = ({ search }: HeroProps) => {
+  const { firstWord, lastWord } = useAppBrand();
   const recents = useRecentsLayout();
   const reducedMotion = useReducedMotion();
   const skeletonOpacity = useRef(new Animated.Value(1)).current;
@@ -245,7 +247,7 @@ const Hero = ({ search }: HeroProps) => {
             {`Planner `}<Text {...elementProps(`hero-title-separator`)} style={styles.separator}>{`//`}</Text>{` Manager`}
           </Text>
           <Text {...elementProps(`hero-title-accent`)} style={[styles.accent, compact && { fontSize: accentSize, lineHeight: accentSize * 1.08 }]}>
-            {`Domains `}<Text {...elementProps(`hero-title-database`)} style={styles.database}>{`Database`}</Text>
+            {`${firstWord} `}<Text {...elementProps(`hero-title-database`)} style={styles.database}>{lastWord}</Text>
           </Text>
           <Text {...elementProps(`hero-description`)} style={styles.description}>
             {`Keep track of every name, registrar, and renewal. A domain portfolio you can actually keep up with.`}

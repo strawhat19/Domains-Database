@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { pageContent, type PageName } from '../../shared/pages';
 
 const splitParagraph = (paragraph: string, limit: number) => {
@@ -29,7 +30,8 @@ const splitParagraph = (paragraph: string, limit: number) => {
 };
 
 export const useStaticPage = (page: PageName, detailLength = 310) => {
-  const content = pageContent[page];
+  const { formatContent } = useAppBrand();
+  const content = useMemo(() => formatContent(pageContent[page]), [page, formatContent]);
   const sections = useMemo(() => content.sections.map(section => ({
     ...section,
     details: section.body.flatMap(paragraph => splitParagraph(paragraph, detailLength)),

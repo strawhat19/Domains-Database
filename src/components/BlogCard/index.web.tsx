@@ -2,6 +2,7 @@ import './styles.scss';
 import { Link } from 'expo-router';
 import type { CSSProperties } from 'react';
 import RouterAnchor from '../RouterAnchor';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { Star, Clock3, FileText, ArrowUpRight } from 'lucide-react';
 import { getBlogHref } from '../../shared/blog/metadata';
 import { formatBlogDate, getBlogCardAccent } from './presentation';
@@ -18,6 +19,7 @@ type BlogCardProps = {
 };
 
 const BlogCard = ({ article, wide = false, story = false, journal = false, compact = false, featured = false, prefix = `blog` }: BlogCardProps) => {
+  const { blogImage } = useAppBrand();
   const id = `${prefix}-card-${article.slug}`;
   const dated = journal || story || wide;
   const Heading = journal || wide ? `h3` : `h2`;
@@ -34,7 +36,7 @@ const BlogCard = ({ article, wide = false, story = false, journal = false, compa
               height={750}
               decoding={`async`}
               id={`${id}-image`}
-              src={article.image}
+              src={blogImage(article.image)}
               alt={article.imageAlt}
               className={`blog-card-image`}
               loading={featured ? `eager` : `lazy`}
