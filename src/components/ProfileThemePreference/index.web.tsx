@@ -1,9 +1,12 @@
 import './styles.scss';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 
 const ProfileThemePreference = () => {
   const { theme, ready, error, setThemePreference } = useTheme();
+  const { flags, ready: featuresReady } = useFeatureFlags();
+  if (!featuresReady || !flags.themeToggle) return null;
   return <section id={`profile-theme-preference`} className={`profile-theme-preference`} aria-labelledby={`profile-theme-title`}>
     <h3 id={`profile-theme-title`} className={`profile-theme-title`}>{`Theme`}</h3>
     <div id={`profile-theme-value`} className={`profile-theme-value`}>

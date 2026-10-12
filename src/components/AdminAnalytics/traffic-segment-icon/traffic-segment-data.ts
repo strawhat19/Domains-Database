@@ -3,7 +3,7 @@ import { routes } from '../../../shared/routes';
 import { formatTrafficSegment, isOtherTrafficSegment, type TrafficSegment } from '../data';
 
 export type TrafficSegmentIconName = (typeof routes)[keyof typeof routes][`icon`] | `Globe` | `Link2` | `MapPin` | `Laptop` | `Tablet` | `Monitor` | `Smartphone` | `MonitorSmartphone`;
-export type TrafficSegmentDetails = { label: string; icon: TrafficSegmentIconName; caption?: string; countryCode?: string; brand?: { key: string; color: string } };
+export type TrafficSegmentDetails = { label: string; icon: TrafficSegmentIconName; caption?: string; hostname?: string; pathname?: string; countryCode?: string; brand?: { key: string; color: string } };
 
 const countryCodes = new Set(flagCodes);
 const deviceIcons: Record<string, TrafficSegmentIconName> = { laptop: `Laptop`, tablet: `Tablet`, desktop: `Monitor`, mobile: `Smartphone` };
@@ -43,10 +43,11 @@ export const getTrafficSegmentDetails = (segment: TrafficSegment, value: string)
     ? { icon, countryCode: normalized, label: formatTrafficSegment(segment, normalized.toUpperCase()) }
     : { icon, label: formatTrafficSegment(segment, value) };
   if (segment === `path`) {
-    const path = getTrafficURL(value)?.pathname ?? value.split(/[?#]/)?.[0] ?? `/`;
+    const url = getTrafficURL(value);
+    const path = url?.pathname ?? value.split(/[?#]/)?.[0] ?? `/`;
     const pathname = path.replace(/\/+$/, ``) || `/`;
     const route = pageRoutes.find(({ path }) => pathname === path || path !== `/` && pathname.startsWith(`${path}/`))?.route;
-    return { caption: value || `/`, label: route?.label ?? getPageName(pathname), icon: route?.icon ?? `FileText` };
+    return { caption: value || `/`, ...(url?.hostname ? { hostname: url.hostname, pathname: url.pathname } : {}), label: route?.label ?? getPageName(pathname), icon: route?.icon ?? `FileText` };
   }
   if (segment === `referrer`) {
     if (!normalized || [`__direct__`, `__unknown__`, `direct`, `(direct)`].includes(normalized)) return { icon: `Link2`, label: `Direct / Unknown` };

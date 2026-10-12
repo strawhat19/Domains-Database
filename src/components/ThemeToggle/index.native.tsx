@@ -4,11 +4,14 @@ import { createStyles } from './styles.native';
 import { Sun, Moon } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 
 const ThemeToggle = () => {
   const { ready, isDark, palette, toggleTheme } = useTheme();
+  const { flags, ready: featuresReady } = useFeatureFlags();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const Icon = isDark ? Sun : Moon;
+  if (!featuresReady || !flags.themeToggle) return null;
 
   return (
     <Pressable

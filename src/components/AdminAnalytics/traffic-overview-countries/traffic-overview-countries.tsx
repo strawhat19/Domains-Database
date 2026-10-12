@@ -9,6 +9,7 @@ import TrafficOverviewBreakdown from '../traffic-overview-breakdown/traffic-over
 type TrafficOverviewCountriesProps = {
   id: string;
   total: number;
+  inline?: boolean;
   loading: boolean;
   selected: string;
   showShare: boolean;
@@ -19,10 +20,10 @@ type TrafficOverviewCountriesProps = {
   onSelect: (value: string) => void;
 };
 
-const TrafficOverviewCountries = ({ id, rows, view, total, metric, loading, selected, showShare, onSelect, onExplore }: TrafficOverviewCountriesProps) => (
-  <section id={id} className={`dd-traffic-overview-countries`} aria-labelledby={`${id}-title`}>
+const TrafficOverviewCountries = ({ id, rows, view, total, metric, loading, selected, showShare, onSelect, onExplore, inline = false }: TrafficOverviewCountriesProps) => {
+  return <section id={id} className={`dd-traffic-overview-countries${inline ? ` is-inline` : ``}`} aria-labelledby={`${id}-title`}>
     <div id={`${id}-heading`} className={`dd-traffic-overview-countries-heading`}>
-      <h4 id={`${id}-title`} className={`dd-traffic-overview-countries-title`}><MapPin className={`dd-report-icon`} size={14} aria-hidden={`true`} />Countries</h4>
+      <h3 id={`${id}-title`} className={`dd-traffic-overview-countries-title`}><MapPin className={`dd-report-icon`} size={14} aria-hidden={`true`} />Countries</h3>
       <button
         type={`button`}
         onClick={onExplore}
@@ -45,7 +46,7 @@ const TrafficOverviewCountries = ({ id, rows, view, total, metric, loading, sele
         id={`${id}-breakdown`}
       />
     </div>
-  </section>
-);
+  </section>;
+};
 
 export default TrafficOverviewCountries;

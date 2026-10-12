@@ -9,7 +9,7 @@ import ScrollToTop from '../ScrollToTop';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
 import DomainMarquee from '../DomainMarquee';
-import { routes } from '../../shared/routes';
+import { routes, isAdminPath } from '../../shared/routes';
 import { useDomainsMenu } from './useDomainsMenu';
 import NotificationBell from '../NotificationBell';
 import { useShellScroll } from './useShellScroll.web';
@@ -17,6 +17,7 @@ import { useAppShell, footerLinks } from './useAppShell';
 import { useMobileNavigation } from './useMobileNavigation';
 import type { CSSProperties, PropsWithChildren } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { X, Eye, Menu, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck } from 'lucide-react';
 
 const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.auction.href, routes.community.href];
@@ -24,11 +25,12 @@ const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
   const { pathname, year, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
   const { isDark, error: themeError, clearError: clearThemeError } = useTheme();
+  const { flags, ready: featuresReady } = useFeatureFlags();
   const domainsMenu = useDomainsMenu(pathname);
   const mobileNavigation = useMobileNavigation(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn && !authLoading;
-  const accountShell = pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`) || pathname === routes.dashboard.href || pathname === `/admin` || pathname.startsWith(`/admin/`);
+  const accountShell = isAdminPath(pathname) || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
   const navigationLinks = navigation.filter(item => !mobileNavigation.compact || item.href !== routes.watching.href);
   const MenuIcon = mobileNavigation.open ? X : Menu;
   const domainSubmenuLinks = navigationLinks.filter(item => domainSubmenuPaths.includes(item.href));
@@ -102,7 +104,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       } as CSSProperties}
     >
       <header ref={mobileNavigation.headerRef} id={`site-header`} className={`site-header`} data-sticky={sticky} data-scrolled={scroll.scrolled || undefined}>
-        <DomainMarquee />
+        {featuresReady && flags.domainMarquee && <DomainMarquee />}
         <div id={`header-inner`} className={`header-inner`}>
           <Link href={`/`} asChild>
             <RouterAnchor
@@ -187,7 +189,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
           </nav>
           <div id={`header-actions`} className={`header-actions`}>
             <ThemeToggle />
-            <NotificationBell />
+            {featuresReady && flags.notifications && <NotificationBell />}
             {!mobileSignIn && <UserMenu />}
             <button
               type={`button`}

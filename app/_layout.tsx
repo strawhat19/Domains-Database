@@ -14,6 +14,7 @@ import { ThemeProvider } from '../src/shared/themeContext/ThemeContext';
 import { WatchingProvider } from '../src/shared/watching/WatchingContext';
 import { ColumnProvider } from '../src/shared/columnContext/ColumnContext';
 import { DomainProvider } from '../src/shared/domainContext/DomainContext';
+import { FeatureFlagsProvider } from '../src/shared/featureFlags/FeatureFlagsContext';
 import { ConnectionAvailabilityProvider } from '../src/shared/connections/ConnectionAvailabilityContext';
 import { AccountNavigationProvider } from '../src/shared/accountNavigationContext/AccountNavigationContext';
 import { PortfolioPreferencesProvider } from '../src/shared/portfolioPreferences/PortfolioPreferencesContext';
@@ -36,9 +37,11 @@ const RootLayout = () => {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <ThemeProvider>
-          <AccountContent />
-        </ThemeProvider>
+        <FeatureFlagsProvider>
+          <ThemeProvider>
+            <AccountContent />
+          </ThemeProvider>
+        </FeatureFlagsProvider>
       </AuthProvider>
       <VercelAnalytics />
     </SafeAreaProvider>
@@ -64,7 +67,7 @@ const AccountContent = () => {
       <DomainProvider
         enabled={enabled}
         key={`${accountState.revision}-${dataRevision}`}
-        requested={[routes.profile.href, routes.domains.href, routes.dashboard.href, `/admin/domains`].includes(pathname)}
+        requested={[routes.profile.href, routes.domains.href, routes.dashboard.href, routes.adminDomains.href].includes(pathname)}
       >
         <ColumnProvider enabled={enabled} userId={user?.id ?? null}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>

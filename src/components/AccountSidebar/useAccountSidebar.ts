@@ -8,7 +8,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { canAccessAdmin, type AdminSection } from '../../shared/admin/permissions';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 import { useAccountNavigationState } from '../../shared/accountNavigationContext/useAccountNavigationState';
-import { Bot, Star, Bell, Wallet, PlugZap, Activity, FileText, UserRound, UsersRound, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, ChartNoAxesCombined } from 'lucide-react-native';
+import { Bot, Star, Bell, Wallet, PlugZap, Activity, FileText, UserRound, UsersRound, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, SlidersHorizontal, ChartNoAxesCombined } from 'lucide-react-native';
 
 type RouteHref = (typeof routes)[keyof typeof routes][`href`];
 export type AccountSidebarSection = `profile` | `connections` | AdminSection;
@@ -43,6 +43,7 @@ export const useAccountSidebar = ({ section, counts, countsLoading = false }: Ac
     { id: `reports`, Icon: FileText, ...routes.adminReports, section: `reports` },
     { id: `analytics`, Icon: ChartNoAxesCombined, ...routes.adminAnalytics, section: `analytics` },
     { id: `observability`, Icon: Activity, ...routes.adminObservability, section: `observability` },
+    { id: `features`, Icon: SlidersHorizontal, ...routes.adminFeatures, section: `features` },
   ];
   const adminChildren = adminCandidates.filter(link => canAccessAdmin(user, link.section));
   const adminLinks: SidebarLink[] = [

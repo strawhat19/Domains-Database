@@ -24,7 +24,7 @@ Key short caches and in-flight deduplication by authorized project/environment, 
 | Daily trend | day | Per-bucket visitors/views with actual UTC dates |
 | Countries | country | Supported two-letter code plus resolved local country identity |
 | Sources | referrerHostname | Actual source/host; direct/unknown/Others remain distinct |
-| Pages | requestPath or route | Exact path versus framework route pattern are separate meanings |
+| Pages | requestPath or route | Exact path versus framework route pattern are separate meanings; optional destination hostname remains supplied metadata |
 | Devices | deviceType | Normalized desktop/laptop/mobile/tablet/unknown identity |
 | Other dimensions | Verified browserName/osName/UTM/flags capability | Expose only supplied supported metrics/filters |
 
@@ -35,6 +35,8 @@ Each report has explicit UTC start/end day boundaries and an effective valid dat
 Do not label an undated lifetime count as a selected-period KPI. When a whole-period exact total cannot be obtained, show unavailable or a specifically labelled approximation and explain its coverage. Breakdown visitor totals are not necessarily additive across paths/days; rankings cannot be used as unique period totals. Percentages use the selected metric and an actual compatible denominator. A zero previous value produces a defined New/Unavailable comparison label rather than Infinity or a fabricated percentage.
 
 Maintain normalized bucket keys/time positions. Fill a missing bucket with null unless a successful source contract proves an omitted bucket means zero activity. Comparison buckets align by relative position and retain their own dates. Status changes from stale/unavailable to error must not silently change the selected range. Exports include actual filters, ranges, units, source/freshness/warnings, nulls, coverage and comparison data; no tokens, private record details, or unrelated provider payload.
+
+Preserve a Pages row's optional destination hostname only when the provider supplies a valid request hostname or the row contains an actual URL. Validate and normalize optional metadata independently; an absent or invalid hostname does not invalidate the path's otherwise valid counts. A referrer/source is not the domain the page was visited on, and the app's configured domain is not evidence for a path-only row. Keep requestPath grouping/filter semantics unchanged unless a separate hostname dimension is explicitly supported; do not invent a new provider grouping merely to populate a caption. Others retains coverage semantics and has no fabricated hostname.
 
 ## Shared Country, Source, Device, And Page Identities
 
@@ -49,7 +51,7 @@ Use one safe resolver for every segment in compact/full reports, Overview/rankin
 | Desktop/laptop | Corresponding installed desktop/laptop icon; preserve whichever distinction the provider actually supplies |
 | Device aliases | Normalize supported phone/smartphone/computer/PC values deliberately, retaining raw data and unknown combined-device fallback |
 | Referrer source | Parse supported URL/hostname, remove www where appropriate, match exact known hosts or true subdomains |
-| Page | Normalize supported pathname safely, match canonical/alias route at segment boundaries, prefer longest match; retain raw path/pattern |
+| Page | Normalize pathname safely, match canonical/alias route at segment boundaries, prefer longest match; retain raw path/pattern and an actual URL's separate hostname when available |
 | Asset failure | Same category's neutral icon and real label; reset image-error state when the identity changes |
 
 Known brand registry covers Google, Bing, DuckDuckGo, GitHub, Vercel, Facebook, Instagram, LinkedIn, Pinterest, Reddit, TikTok, WhatsApp, X/Twitter, and YouTube. Support known aliases/hosts deliberately, including provider referral redirect hosts only when mapped. A hostname merely containing google or reddit is not that brand; explicit domain-bound checks prevent misleading matches. Direct traffic uses the link icon, unknown sources a globe, unknown page a document, unknown country a location, and unknown device a combined-device glyph.
@@ -58,17 +60,23 @@ Use the complete local vendored country catalog, not a shortlist or emoji fallba
 
 Keep flags at 24 x 18 with 4:3 ratio, 2 px corners and themed border; glyph slot 20 x 20 with 15 px icon; brand mark 18 x 18 inside the slot. Keep slots flex-none. Icons beside labels are decorative, with empty image alt/aria-hidden; accessible row names include label, metric/unit, useful raw caption, and real filter action. Native uses supported local SVG/image/icon rendering and literal static asset mappings rather than dynamic require strings. Follow [the layout contract](../layout.md#analytics-identity-icons).
 
+In compact Pages rows, put the friendly label, raw pathname, and available destination hostname on one baseline row when they fit, wrapping safely at narrower widths. Include the real hostname in the title/accessibility caption when shown. Keep source and device captions unchanged; hostname display is optional data coverage, not a guarantee supplied by the shared icon resolver.
+
 The source bundle lives in ../assets/analytics/ relative to this reference. Copy artwork and notices into a supported public/bundled output path and resolver metadata into an importable source path; ai/ is not an automatically served URL. Do not change bundler configuration or add a second icon library simply to copy reference JSX. Country/source/device icons persist when toggling Chart/List, changing compact/full tabs, expanding Top/All results, or switching theme/platform.
 
 ## Controls, Ranking, And Inspection
 
 Full and compact panels share typed report controls within their relevant ranges. Traffic supports Overview/Daily/Countries/Sources/Pages/Devices, Visitors/Page Views, period selection, Chart/List, compatible comparison/percentage/area/inspection toggles, removable filter chips, Clear Filters, Refresh, and real JSON export. Source/category row selection applies the correct typed filter; Other/unknown coverage rows are only clickable when the provider supports that exact filter.
 
+The compact title is Traffic. At sufficient panel width, Countries is a right-aligned chip row in the top heading above tabs/controls, leaving the trend free to stretch. Period/metric/presentation/filter controls and relevant display switches share the wrapping toolbar; Filters matches the segmented group height. Do not add a redundant Traffic Overview heading row. Chart modes fit their reading, plot, and timeline without an inner vertical scrollbar; list/filter/ranking results retain bounded scrolling. Preserve source/coverage/errors even when redundant overview source copy is omitted. Full reports retain their active report heading actions and Traffic/Health switch. Reuse the precise sizing and container breakpoints in [layout](../layout.md#compact-reporting-panels).
+
 Use actual raw keys for filter values, friendly names for display, and page-only versus server-filtered search coverage labels. Top-N/expanded rows never change whole-period KPIs or erase Others; preserve result truncation and source limits. Reset incompatible filters/search/metric when changing dataset or view rather than sending invalid provider queries. Keep empty filtered results distinct from No Data and upstream failure.
 
 Runtime supports Compute/Memory/Requests/Latency/Routes/Statuses/Cache only where discovered capability supplies them; use 24 Hours/7 Days/30 Days as supported by the effective window. Metric selections carry real units and available aggregation; route rankings, status distribution, error rates and cache summaries each retain compatible denominators. Application activity is not runtime traffic.
 
-Chart selection defaults to the latest bucket, works by pointer/tap and accessible slider, retains explicit selection on leave, and exposes timestamp/value/unit or No Measurement. Preserve null gaps in line/area plots and the same time positions in the list. Tabs implement keyboard roving focus; chart/list/inspection controls have descriptive IDs and names. Use exact responsive dimensions, layout heights, sticky table headers, motion/reduced-motion and container breakpoints from [layout](../layout.md).
+Web chart selection defaults to the latest bucket, supports pointer inspection and an accessible slider, retains explicit selection on leave, and exposes timestamp/value/unit or No Measurement. Runtime also persists tap/pointer-down selection. Preserve null gaps in runtime line/area plots and the same time positions in the list. Keep SVG aspect ratios intact: traffic uses responsive width and natural height; runtime measures the actual plot container, updates its viewBox/tick density, and converts pointer coordinates through the SVG transform. Day Timeline/Time Timeline controls use a thin track, outlined thumb, movement icon, and Drag To Inspect hint rather than a heavy decorative bar. Tabs implement keyboard roving focus; chart/list/inspection controls have descriptive IDs and names. Use [layout's sizing and inspection contract](../layout.md#chart-inspection-missing-data-and-motion).
+
+Native uses its supported chart and accessibility APIs with the same actual data and identities. Check native controls and missing-data handling separately; a tap/previous-next renderer or reduced compact report is not equivalent to the complete web tab/filter/timeline flow. Label excluded unavailable buckets where a renderer compresses them, and do not claim preserved time gaps or route-specific loading until implemented. Copying these instructions or assets does not add that behavior.
 
 ## Runtime Provider Compatibility
 
@@ -80,7 +88,7 @@ Keep raw logs/traces and credentials out of normal reports. Drains verify signat
 
 ## Validation, Import, And Browser/OS Dimensions
 
-Reject unknown or repeated query parameters, incompatible preset/custom range modes, malformed dimension values and unsupported filter combinations. Preserve empty/default selection semantics explicitly. A practical traffic range cap is 90 inclusive days with its preceding comparison inside the supported historical window; derive actual retention from current provider access instead of assuming a year is guaranteed. Cap token/header lengths, request timeouts and report concurrency in the destination's server policy.
+Reject unknown or repeated query parameters, incompatible preset/custom range modes, malformed dimension values and unsupported filter combinations. Preserve empty/default selection semantics explicitly. Keep each selected interval and its preceding comparison inside the supported historical window; derive retention and range limits from the destination's current provider access rather than assuming a fixed period. Token/header lengths, request timeouts, concurrency, cache budgets, and actual provider/project limits belong in the destination's server policy and setup documentation outside ai/.
 
 Browser and OS identities are separate from device type. Normalize known provider values through an explicit installed-icon/local-asset registry, keep readable original labels, and use neutral browser/system fallbacks when unsupported. Do not infer a visitor's browser/OS/device from a source logo, user account, or country. Only add those dimension tabs when the source actually returns them.
 

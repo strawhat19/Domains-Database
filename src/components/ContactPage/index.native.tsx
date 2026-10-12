@@ -6,6 +6,7 @@ import { useContactPage } from './useContactPage';
 import { useMemo, useEffect, useContext } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { contactFields, contactTopics, contactDescription } from './content';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
@@ -13,7 +14,7 @@ import { Mail, Send, Plug, Globe2, Lightbulb, ArrowRight, ArrowUpRight, MessageC
 
 const topicIcons = { ideas: Lightbulb, support: Plug };
 
-const ContactPage = () => {
+const ContactContent = () => {
   const state = useContactPage();
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
@@ -155,6 +156,27 @@ const ContactPage = () => {
       <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />
     </>
   );
+};
+
+const ContactUnavailable = ({ message }: { message: string }) => {
+  const { palette } = useTheme();
+  const { width } = useWindowDimensions();
+  const styles = useMemo(() => createStyles(palette, true, width), [palette, width]);
+  return <>
+    <PageMeta noIndex title={`Contact`} canonicalPath={`/contact`} description={message} />
+    <View {...elementProps(`contact-page`)} style={styles.page}>
+      <View {...elementProps(`contact-unavailable`)} style={styles.intro}>
+        <Text {...elementProps(`contact-title`)} style={styles.title} accessibilityRole={`header`}>{`Contact`}</Text>
+        <Text {...elementProps(`contact-unavailable-message`)} style={styles.description} accessibilityLiveRegion={`polite`}>{message}</Text>
+      </View>
+    </View>
+  </>;
+};
+
+const ContactPage = () => {
+  const { error, flags, ready } = useFeatureFlags();
+  const message = !ready && !error ? `Loading Contact…` : `Contact Is Currently Unavailable`;
+  return ready && flags.contact ? <ContactContent /> : <ContactUnavailable message={message} />;
 };
 
 export default ContactPage;

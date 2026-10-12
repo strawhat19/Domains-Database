@@ -152,10 +152,11 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
 const DomainMarquee = ({ scope = `header`, translucent = false, backgroundColor }: { scope?: string; translucent?: boolean; backgroundColor?: string }) => {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
-  const { items, loading, showDomains } = useDomainMarquee();
+  const { items, loading, visible, showDomains } = useDomainMarquee();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const surface = backgroundColor ?? palette.canvas;
   const fadeWidth = Math.max(32, Math.min(72, width * .06));
+  if (!visible || (!loading && !items.length)) return null;
 
   return (
     <View

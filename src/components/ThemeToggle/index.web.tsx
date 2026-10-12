@@ -1,11 +1,14 @@
 import './styles.scss';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 
 const ThemeToggle = () => {
   const { ready, isDark, toggleTheme } = useTheme();
+  const { flags, ready: featuresReady } = useFeatureFlags();
   const Icon = isDark ? Sun : Moon;
   const label = isDark ? `Switch to light mode` : `Switch to dark mode`;
+  if (!featuresReady || !flags.themeToggle) return null;
 
   return (
     <button

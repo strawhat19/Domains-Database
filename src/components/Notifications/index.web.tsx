@@ -4,11 +4,12 @@ import PageMeta from '../PageMeta';
 import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
 import NotificationCard from '../NotificationCard';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { getNotificationSpacing } from '../NotificationCard/content';
 import { useNotificationsPage, type NotificationsProps } from './useNotificationsPage';
 import { Bell, Info, Heart, Sparkles, ArrowLeft, CheckCheck, RotateCcw, Construction } from 'lucide-react';
 
-const Notifications = ({ detail = false }: NotificationsProps) => {
+const NotificationsContent = ({ detail = false }: NotificationsProps) => {
   const state = useNotificationsPage(detail);
   const { suffix, notification } = state;
   const Icon = detail ? notification?.kind === `development` ? Construction : notification?.kind === `announcement` ? Heart : notification?.icon === `Sparkles` ? Sparkles : Info : Bell;
@@ -113,6 +114,19 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
       </div>
     </>
   );
+};
+
+const Notifications = ({ detail = false }: NotificationsProps) => {
+  const { error, flags, ready } = useFeatureFlags();
+  if (ready && flags.notifications) return <NotificationsContent detail={detail} />;
+  const message = !ready && !error ? `Loading Notifications…` : `Notifications Are Currently Unavailable`;
+  return <>
+    <PageMeta noIndex title={`Notifications`} canonicalPath={routes.notifications.href} description={message} />
+    <div id={`notifications-page`} className={`notifications-page`} aria-busy={!ready && !error}>
+      <h1 id={`notifications-title`} className={`notifications-title`}>{`Notifications`}</h1>
+      <p role={`status`} id={`notifications-unavailable-message`} className={`notifications-status`}>{message}</p>
+    </div>
+  </>;
 };
 
 export default Notifications;

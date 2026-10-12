@@ -12,12 +12,22 @@
 
 7. For publishing work: Prepare concrete, reviewable output within the authorized scope. Ensure public policy pages, internal navigation, common redirects, dynamic copyright year, and the Piratechs link are present. Perform external publishing only when authorized.
 
-8. For an account/admin system: Use ai/skills/admin/SKILL.md to build themed Profile/Admin sidebars, secure Owner/Admin/Developer/Subscriber capabilities, realtime Firestore feature data, animated dashboards, and protected Vercel Analytics/Observability reports. Adapt sections to the app's purpose/framework. Deliver rules/indexes, secret-free environment examples, and project setup notes; display missing setup or unsupported metrics honestly. Copy ai/ with AGENTS.md to reuse the workflow, keeping app-specific details outside it.
+8. After copying ai/ and AGENTS.md, request the current connected account/admin setup with:
 
-9. For the complete common-core starter, copy ai/ and AGENTS.md into the destination repository and use this prompt:
+> Set up the connected account system from ai/adoption.md in this project
 
-> Implement the full App System from ai/skills/app-system/SKILL.md and ai/adoption.md in this project, completing every common-core module through real services, account-scoped realtime persistence, rules/indexes, and protected analytics while preserving its framework, theme, features, and existing data. Use this project's authorized configuration, follow AGENTS.md, and report source completion, actual connectivity, and external setup separately.
+[Its scope and detailed prompt](../adoption.md#connected-account-system-prompt) include Profile/private Connections, Firebase/Firestore sync, the shared sidebar/submenus, Owner Features with role/minimum-plan controls, root admin routes, and Traffic/Health reports/charts. Preserve the destination's theme, framework, product data and narrower permissions. Real cloud/provider setup still uses that project's authorized resources.
+
+9. For the complete common-core starter, use [the full-system prompt](../skills/app-system/system.md#one-adoption-prompt) after copying the files. It extends the account scope with the complete public/chat/pricing/blog modules.
 
 Read [the feature map and completion matrix](../skills/app-system/system.md) for what this prompt includes. It requests public frontend, connected auth/users/profile/admin, dashboards/analytics/charts/icons, notifications/contact intake, private realtime chat, plans/pricing, and the sourced blog; existing working modules are reused. Payments, uploads, and external publishing remain separate requested work.
+
+For focused follow-ups, use concise requests such as:
+
+- "Apply the shared account sidebar, submenus and loading layout from ai/skills/admin/layout.md"
+- "Set up the Owner Features table and real feature consumers from ai/skills/admin/references/features.md"
+- "Connect private account settings and provider synchronization from ai/skills/admin/references/connections.md"
+- "Set up Traffic and Health charts from the Admin analytics and layout references"
+- "Use available root admin page URLs and preserve existing links through redirects"
 
 10. For detailed connected adoption, follow [adoption](../adoption.md) and the Admin [Firestore](../skills/admin/references/firestore.md), [workflow](../skills/admin/references/workflows.md), and [analytics](../skills/admin/references/analytics.md) contracts. Map the actual schema, permitted role operations, atomic identities, rules/indexes, environment boundaries and provider access outside ai/. Complete requested real actions and account-scoped subscriptions; report current local/reference gaps and external setup separately.

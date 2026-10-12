@@ -1,5 +1,6 @@
 import { Link } from 'expo-router';
 import TrendChart from '../AdminCharts';
+import { routes } from '../../shared/routes';
 import { elementProps } from '../../shared/elementProps';
 import { useAdminObservability } from './useAdminObservability';
 import { Text, View, Pressable, TextInput, ScrollView } from 'react-native';
@@ -143,7 +144,7 @@ const AdminObservability = ({ compact = false }: { compact?: boolean; headingAct
       </View>
     </> : null}
     {!loading && !error && !report ? <Text {...elementProps(`admin-runtime-unavailable`, id)} style={styles.muted}>{`Runtime Reporting Is Unavailable For This Account`}</Text> : null}
-    {compact ? <Link {...elementProps(`admin-runtime-link-target`, id)} href={`/admin/observability`} asChild><Pressable {...elementProps(`admin-runtime-link`, id)} style={styles.link}>
+    {compact ? <Link {...elementProps(`admin-runtime-link-target`, id)} href={routes.adminObservability.href} asChild><Pressable {...elementProps(`admin-runtime-link`, id)} style={styles.link}>
       <Cpu {...elementProps(`admin-runtime-link-icon`, id)} size={14} color={palette.accent} /><Text {...elementProps(`admin-runtime-link-label`, id)} style={styles.linkText}>{`Open Health`}</Text><ArrowRight {...elementProps(`admin-runtime-link-arrow`, id)} size={14} color={palette.accent} />
     </Pressable></Link> : null}
   </View>;

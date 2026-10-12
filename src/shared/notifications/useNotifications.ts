@@ -2,6 +2,7 @@ import { useAuth } from '../authContext/useAuth';
 import { useAfterPaint } from '../common/useAfterPaint';
 import { notificationsAPI } from '../../api/notifications';
 import { useMemo, useRef, useEffect, useState } from 'react';
+import { useFeatureFlags } from '../featureFlags/useFeatureFlags';
 import type { HeaderNotification } from '../sampleNotifications';
 import { markNotificationsRead, subscribeNotificationReads } from './readPreferences';
 
@@ -15,6 +16,8 @@ interface ReadState { actor: string; notice: string; ready: boolean; readIds: st
 
 export const useNotifications = () => {
   const ready = useAfterPaint();
+  const { flags, ready: featuresReady } = useFeatureFlags();
+  const enabled = featuresReady && flags.notifications;
   const { user, loading: authLoading } = useAuth();
   const actor = !authLoading && user?.active ? user.id : ``;
   const reader = actor ? user : null;
@@ -29,6 +32,7 @@ export const useNotifications = () => {
   const [state, setState] = useState<NotificationState>({ actor: ``, error: ``, loading: true, notifications: [] });
 
   useEffect(() => {
+    if (!enabled) return;
     let mounted = true;
     setAnnouncementsLoading(true);
     setAnnouncements([]);
@@ -45,10 +49,10 @@ export const useNotifications = () => {
       setAnnouncementsLoading(false);
     });
     return () => { mounted = false; unsubscribe(); };
-  }, [revision]);
+  }, [revision, enabled, actor, user?.role, user?.plan]);
 
   useEffect(() => {
-    if (!ready || authLoading) return;
+    if (!enabled || !ready || authLoading) return;
     let mounted = true;
     setReads({ actor, notice: ``, ready: false, readIds: [] });
     setBusy(false);
@@ -58,10 +62,10 @@ export const useNotifications = () => {
       if (mounted) setReads(current => ({ actor, ready: false, readIds: current.actor === actor ? current.readIds : [], notice: failure.message }));
     });
     return () => { mounted = false; unsubscribe(); };
-  }, [actor, reader, ready, revision, authLoading]);
+  }, [actor, reader, ready, revision, authLoading, enabled]);
 
   useEffect(() => {
-    if (!ready || authLoading) return;
+    if (!enabled || !ready || authLoading) return;
     let mounted = true;
     setState({ actor, error: ``, loading: !!actor, notifications: [] });
     if (!actor) return () => { mounted = false; };
@@ -89,19 +93,20 @@ export const useNotifications = () => {
       if (mounted) setState({ actor, notifications: [], loading: false, error: failure.message });
     });
     return () => { mounted = false; unsubscribe(); };
-  }, [actor, ready, revision, authLoading]);
+  }, [actor, ready, revision, authLoading, enabled]);
 
   const current = state.actor === actor ? state : { error: ``, loading: !!actor, notifications: [] };
   const currentReads = reads.actor === actor ? reads : { notice: ``, ready: false, readIds: [] };
   const notifications = useMemo(() => {
+    if (!enabled) return [];
     const sharedIDs = new Set(announcements.map(notification => notification.id));
     const accountNotifications = state.actor === actor ? state.notifications : [];
     const readIDs = new Set(reads.actor === actor ? reads.readIds : []);
     return [...announcements, ...accountNotifications.filter(notification => !sharedIDs.has(notification.id))]
       .map(notification => ({ ...notification, isRead: readIDs.has(notification.id) }));
-  }, [actor, state, reads, announcements]);
+  }, [actor, state, reads, announcements, enabled]);
   const markReadIds = async (ids: string[]): Promise<boolean> => {
-    if (busy || authLoading || !ready || !currentReads.ready) return false;
+    if (!enabled || busy || authLoading || !ready || !currentReads.ready) return false;
     const requestActor = actor;
     setBusy(true);
     try {
@@ -119,15 +124,15 @@ export const useNotifications = () => {
   const reload = () => setRevision(value => value + 1);
 
   return {
-    busy,
+    busy: enabled && busy,
     reload,
     markRead,
     markAllRead,
     notifications,
-    readReady: currentReads.ready,
-    notice: currentReads.notice,
-    error: announcementError || current.error,
+    readReady: enabled && currentReads.ready,
+    notice: enabled ? currentReads.notice : ``,
+    error: enabled ? announcementError || current.error : ``,
     unreadCount: notifications.filter(notification => !notification.isRead).length,
-    loading: !notifications.length && (announcementsLoading || !ready || authLoading || current.loading),
+    loading: enabled && !notifications.length && (announcementsLoading || !ready || authLoading || current.loading),
   };
 };

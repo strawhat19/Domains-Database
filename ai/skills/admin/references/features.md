@@ -1,0 +1,54 @@
+# Owner Feature Configuration And Plan Tiers
+
+Read this for requested feature configuration or the connected App System. Preserve the destination's existing feature names, roles, catalog, entitlement boundary and stricter access policy. A focused flag change does not authorize adding unrelated features, paid offers or a payment system. Keep actual routes, collections, singleton identity, limits and migration/setup evidence in destination code/configuration/docs outside ai/.
+
+## Configuration, Authority, And Shared State
+
+Use one shared feature service/provider with typed global settings and effective viewer flags. Store versioned global settings in a public-safe singleton with app-owned ID, matching number, type/name, created/updated timestamps, booleans and per-feature audiences. Generate the singleton identity once through the destination's ID/allocation mechanism and keep its stable reference consistent in client, server, rules and counter configuration. Do not copy another project's exact ID/date/UUID, regenerate it on mount, or substitute a Firebase UID. Couple initial creation to its singleton counter atomically; updates preserve identity and created time.
+
+The settings document contains public configuration only. Do not add credentials, account lists, private experiment notes, unpublished plan descriptions or provider data to a publicly readable document. Permit exact singleton reads; listing arbitrary settings is unnecessary. Only a currently active trusted Owner can manage global booleans, roles and minimum plans. Use that same capability for navigation, the direct route, service, Firestore rules and any server/Admin SDK path. Derive the actor from the verified session and current authoritative account, including UID mapping; client-supplied roles and browser preferences do not establish authority.
+
+Expose raw global settings separately from effective flags. The Owner table edits global values even when that Owner's own role/plan is excluded. Compute availability as global boolean AND eligible current role AND eligible current plan tier. Guests use an explicit Guest role and Free baseline. Unknown/malformed account authority or an unranked paid threshold cannot gain access. Account deactivation, role/plan changes and confirmed configuration/rank updates recompute consumers; release obsolete subscriptions and prevent late callbacks from restoring an old account's view.
+
+Default the four initial booleans to enabled after a confirmed missing record, unless the destination deliberately chooses another release policy. Loading, denied access, unreadable data and failed reads remain distinct from confirmed absence. A connected app never falls back to device-only flags after failure. An explicitly selected local demo may use the common storage adapter, with its device scope labelled. Expose loading/read/error/retry states, keep the last confirmed row after a failed write, and confirm persistence from the server rather than optimistic or cached/pending snapshots.
+
+## Owner Features View
+
+Place Features last among Dashboard submenus and protect its direct route with active Owner access. Use the root administrative route convention, normally `/features` unless that conflicts with a public feature page; preserve compatible legacy aliases through redirects. Keep this entry in the shared route/capability map rather than creating separate menu and direct-route policies.
+
+Web uses the shared record table with columns No., Feature, Description, Value, Plans, Actions. The account page supplies its Features heading; avoid a second Feature Flags banner, redundant Owner-access note or success-copy row above the table. Feature identity is an icon and readable name; omit raw keys beneath it. Value reports the saved global boolean or Unavailable using the shared status-cell pattern. Actions contain slimmer Disable/Enable segments and an adjacent labelled settings gear. Scope the slimmer sizing to this table/modal, preserving the app's other segmented controls and accessible keyboard/touch targets. Native adapts the same fields/actions to row cards.
+
+The gear opens the shared accessible settings modal with feature icon/name, Description and independent role segments. Keep roles in the modal rather than adding a wide Roles table column. Explain the minimum-plan behavior there. Support focus trap/return, Escape/outside dismissal while idle, reduced motion, inline errors and Saving feedback; prevent conflicting actions and dismissal during a pending save. Scope row/modal state to account and feature so late results cannot close another account's editor.
+
+## Minimum Plan Selection And Catalog Connection
+
+The Plans cell offers actual saved paid catalog tiers, including inactive tiers that remain referenced by legitimate entitlements. Do not hardcode paid names or derive access from prices. There is no Free segment: no selected plan means Free And Above. Select one paid plan to require that tier or higher; highlight only that chosen threshold. Selecting it again clears the threshold to Free And Above. A compatible representation is `plans: [slug] | null` with `planMode: minimum`; role audiences remain independent allowlists, with null meaning all and an empty role list allowing none.
+
+Order tiers by the catalog's nonnegative `displayOrder`, then stable positive app-owned `number`. The Free baseline is always below paid tiers. A future plan that sorts above the stored threshold qualifies automatically; store a minimum pointer and compare current ranks instead of saving today's list of permitted higher plans. This uses the user's already trusted plan/entitlement. Publishing/editing a catalog or choosing a threshold does not purchase, assign or change that user's entitlement.
+
+Maintain a separate public-safe tier index/projection containing only stable plan ID, immutable slug, number and displayOrder. A slug reservation can serve this role when its entire document remains safe for public reads. It may retain rank metadata for inactive plans without publishing their draft names, descriptions, prices or private notes. Keep catalog create/edit/status operations and the corresponding rank/reservation synchronized atomically. Rules validate equality with the matching catalog record through `getAfter`; authoritative enforcement verifies that rank metadata still matches the live catalog. The public pricing query stays active-only and separate from tier lookup.
+
+Load the complete permitted catalog through bounded cursor pages before enabling threshold changes; disclose and fail on an unsupported size instead of treating a partial page as all plans. Backfill legacy rank metadata through a deliberate Owner-authorized operation, then await a confirmed public tier snapshot before migrating feature policy or enabling plan controls. For legacy exact-plan allowlists, preserve role/global values and atomically convert each policy to its lowest known selected tier; null, an empty plan selection or a selection including Free becomes the Free baseline. Preserve an unknown saved threshold as unavailable rather than guessing its rank. Show it only for recovery: the selected unavailable threshold can be cleared, while an unavailable unselected choice cannot be newly assigned. Never invent a paid tier from an arbitrary viewer plan string.
+
+Version and validate compatible reads before migration. Do not overwrite malformed settings with defaults or silently reinterpret an existing exact allowlist before its explicit migration. Migration reads the latest stored settings and changes only plan policy, preserving concurrent role/global edits. New plan writes keep rank metadata current afterward; the initial backfill is not a substitute for ongoing synchronization.
+
+## Initial Flags And Consumer Enforcement
+
+Map these logical flags to destination-owned keys and existing surfaces. New connected starters include all four; focused work changes only the requested flags.
+
+| Flag | Enabled Behavior | Disabled Or Ineligible Behavior |
+| --- | --- | --- |
+| Theme Toggle | Existing light/dark button and supported theme settings | Remove all theme controls and use dark mode; retain the saved preference so reenabling restores it |
+| Top Bar Infinite Marquee | Existing top marquee with its supported content | Remove the marquee and its unused subscriptions; remeasure actual sticky header/account offsets |
+| Notifications | Eligible bell, public announcement views and supported unread/read actions | Remove public notification entry points/content and stop public subscriptions; retain authorized notification management |
+| Contact | Existing public contact links, direct form route and validated intake | Remove public links/form, handle direct navigation, and deny intake at the authoritative persistence boundary; retain authorized private review |
+
+Resolve feature/session readiness before exposing optional controls. Start with dark rendering and hidden gated surfaces so a disabled flag never flashes on while settings/auth hydrate. Force dark through the shared theme provider without overwriting the saved light/dark preference. Match web/native consumers, alternate menus, footer links, profile settings, notification surfaces and direct routes; a hidden header button alone is incomplete enforcement.
+
+Rules and any trusted intake endpoint independently evaluate the current contact/notification policy using authoritative role/plan values and verified tier metadata. Client checks provide feedback, not authorization. Keep privileged management/read paths separately capability-controlled so disabling a public feature cannot hide its Owner configuration or private review. Avoid leaking cached public content after eligibility changes.
+
+## Adoption And Completion Evidence
+
+Map and connect the global singleton/counter, Owner capability/menu/direct route, feature service/provider, every consumer, catalog/rank projection, bounded queries, indexes, migrations and contact/notification enforcement together. Keep bounded public-safe tier queries and individual slug lookups separate from pricing publication and private management queries. Match deployed rule/query limits and document setup requirements outside ai/. Copying this reference creates no database, singleton, rank index, Owner, provider or deployment.
+
+Report source/configuration completion separately from actual backend connection and authorized validation. Existing device notification read preferences, missing intake retry idempotency, unconfigured delivery or undeployed rules remain accurately described; flags do not complete those independent workflows. A requested connected starter still implements the [workflow contract](workflows.md) and [plans contract](../../app-system/references/plans.md). Follow AGENTS.md for checks, deployment and synchronization; documentation updates alone authorize none of them.

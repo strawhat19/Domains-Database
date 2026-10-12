@@ -1,8 +1,9 @@
 'use client';
 
 import './observability-trend.scss';
-import { Clock3 } from 'lucide-react';
+import useTrendSize from './useTrendSize';
 import { useState, type PointerEvent } from 'react';
+import { Clock3, MoveHorizontal } from 'lucide-react';
 import { observabilityMetrics, formatObservabilityValue, formatObservabilityTimestamp } from '../data.web';
 import type { ObservabilityPoint, ObservabilityMetric, ObservabilityPeriod } from '../../../shared/analytics/types';
 
@@ -24,9 +25,11 @@ type TrendCoordinate = {
 type MeasuredCoordinate = TrendCoordinate & { y: number; value: number };
 
 const ObservabilityTrend = ({ id, points, metric, period }: ObservabilityTrendProps) => {
+  const { size, plotRef } = useTrendSize();
   const [hovered, setHovered] = useState<number | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
-  const plot = { top: 18, left: 76, right: 782, bottom: 182 };
+  const plot = { top: 18, left: 76, right: Math.max(77, size.width - 18), bottom: Math.max(19, size.height - 30) };
+  const tickCount = Math.max(1, Math.min(4, Math.floor((plot.bottom - plot.top) / 32)));
   const label = observabilityMetrics[metric].label;
   const values = points.map((point) => {
     const value = point.values?.[metric];
@@ -64,7 +67,7 @@ const ObservabilityTrend = ({ id, points, metric, period }: ObservabilityTrendPr
   });
   const activeIndex = Math.min(Math.max(0, hovered ?? selected ?? points.length - 1), Math.max(0, points.length - 1));
   const active = coordinates?.[activeIndex];
-  const labels = [...new Set([0, Math.floor((points.length - 1) / 2), points.length - 1])].filter((index) => points?.[index]);
+  const labels = [...new Set(size.width < 400 ? [0, points.length - 1] : [0, Math.floor((points.length - 1) / 2), points.length - 1])].filter((index) => points?.[index]);
   const activeTimestamp = active ? formatObservabilityTimestamp(active.timestamp, period) : `No Measurements`;
   const activeValue = formatObservabilityValue(metric, active?.value);
   const description = points.length
@@ -88,12 +91,11 @@ const ObservabilityTrend = ({ id, points, metric, period }: ObservabilityTrendPr
         <span id={`${id}-reading-timestamp`} className={`dd-observability-trend-timestamp`}><Clock3 className={`dd-report-icon`} size={13} aria-hidden={`true`} />{activeTimestamp}</span>
         <strong id={`${id}-reading-value`} className={`dd-observability-trend-value`}>{activeValue}<span id={`${id}-reading-metric`} className={`dd-observability-trend-caption`}>{label}</span></strong>
       </div>
-      <div id={`${id}-plot`} className={`dd-observability-trend-plot`}>
+      <div ref={plotRef} id={`${id}-plot`} className={`dd-observability-trend-plot`}>
         <svg
           role={`img`}
-          viewBox={`0 0 800 218`}
           id={`${id}-chart`}
-          preserveAspectRatio={`none`}
+          viewBox={`0 0 ${size.width} ${size.height}`}
           className={`dd-observability-trend-chart`}
           onPointerMove={(event) => inspectPointer(event)}
           onPointerLeave={() => setHovered(null)}
@@ -103,9 +105,9 @@ const ObservabilityTrend = ({ id, points, metric, period }: ObservabilityTrendPr
           <title id={`${id}-svg-title`}>{label} Over Time</title>
           <desc id={`${id}-svg-description`}>{description}</desc>
           <defs><linearGradient id={`${id}-fill`} x1={0} y1={0} x2={0} y2={1}><stop offset={`0%`} stopColor={`currentColor`} stopOpacity={.2} /><stop offset={`100%`} stopColor={`currentColor`} stopOpacity={0} /></linearGradient></defs>
-          {measured.length > 0 && [0, 1, 2, 3, 4].map((tick) => {
-            const y = plot.bottom - tick / 4 * (plot.bottom - plot.top);
-            const value = (minimum / scale * (1 - tick / 4) + ceiling / scale * tick / 4) * scale;
+          {measured.length > 0 && Array.from({ length: tickCount + 1 }, (_, tick) => {
+            const y = plot.bottom - tick / tickCount * (plot.bottom - plot.top);
+            const value = (minimum / scale * (1 - tick / tickCount) + ceiling / scale * tick / tickCount) * scale;
             return <g key={tick} aria-hidden={`true`} id={`${id}-grid-${tick}`} className={`dd-observability-trend-grid`}><line y1={y} y2={y} x1={plot.left} x2={plot.right} /><text y={y + 4} x={plot.left - 10} textAnchor={`end`}>{formatObservabilityValue(metric, value)}</text></g>;
           })}
           {segments.map((group, index) => {
@@ -117,12 +119,15 @@ const ObservabilityTrend = ({ id, points, metric, period }: ObservabilityTrendPr
             </g>;
           })}
           {active && measured.length > 0 && <g aria-hidden={`true`} id={`${id}-active`} className={`dd-observability-trend-active`}><line y1={plot.top} x1={active.x} x2={active.x} y2={plot.bottom} />{active.y !== null && <circle r={5} cx={active.x} cy={active.y} />}</g>}
-          {labels.map((index) => <text key={index} y={208} x={coordinates[index].x} aria-hidden={`true`} id={`${id}-label-${index}`} className={`dd-observability-trend-label`} textAnchor={index === 0 ? `start` : index === points.length - 1 ? `end` : `middle`}>{formatObservabilityTimestamp(points[index].timestamp, period, true)}</text>)}
+          {labels.map((index) => <text key={index} y={size.height - 10} x={coordinates[index].x} aria-hidden={`true`} id={`${id}-label-${index}`} className={`dd-observability-trend-label`} textAnchor={index === 0 ? `start` : index === points.length - 1 ? `end` : `middle`}>{formatObservabilityTimestamp(points[index].timestamp, period, true)}</text>)}
         </svg>
         {!measured.length && <p id={`${id}-empty`} className={`dd-observability-trend-empty`}>{points.length ? `No ${label.toLowerCase()} measurements available in this period` : `No measurement buckets available in this period`}</p>}
       </div>
       {points.length > 1 && <label htmlFor={`${id}-slider`} id={`${id}-slider-label`} className={`dd-observability-trend-slider-label`}>
-        <span id={`${id}-slider-caption`} className={`dd-observability-trend-caption`}>Explore Timeline</span>
+        <span id={`${id}-slider-copy`} className={`dd-observability-trend-slider-copy`}>
+          <span id={`${id}-slider-caption`} className={`dd-observability-trend-caption dd-observability-trend-slider-caption`}><MoveHorizontal size={12} aria-hidden={`true`} className={`dd-report-icon`} />Time Timeline</span>
+          <span id={`${id}-slider-hint`} className={`dd-observability-trend-caption dd-observability-trend-slider-hint`}>Drag To Inspect</span>
+        </span>
         <input
           min={0}
           step={1}
@@ -131,6 +136,9 @@ const ObservabilityTrend = ({ id, points, metric, period }: ObservabilityTrendPr
           id={`${id}-slider`}
           max={points.length - 1}
           className={`dd-observability-trend-slider`}
+          aria-labelledby={`${id}-slider-caption`}
+          aria-describedby={`${id}-slider-hint`}
+          title={`Drag Or Use Arrow Keys To Inspect Each Time Bucket`}
           aria-valuetext={`${activeTimestamp}, ${active?.value === null ? `No Measurement` : activeValue} ${label}`}
           onChange={(event) => { setHovered(null); setSelected(Number(event.target.value)); }}
         />

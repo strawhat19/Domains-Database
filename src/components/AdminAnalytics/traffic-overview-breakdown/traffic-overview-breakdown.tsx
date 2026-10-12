@@ -32,7 +32,7 @@ const TrafficOverviewBreakdown = ({ id, rows, view, total, metric, segment, load
   const shareLabel = metric === `visitors` ? `Of Reported Visitors` : `Page View Share`;
 
   return (
-    <div id={id} className={`dd-traffic-overview-breakdown is-${view}${loading ? ` is-loading` : ``}`} aria-busy={loading}>
+    <div id={id} className={`dd-traffic-overview-breakdown is-${view} is-${segment}${loading ? ` is-loading` : ``}`} aria-busy={loading}>
       <div id={`${id}-heading`} className={`dd-traffic-overview-breakdown-heading`}>
         <span id={`${id}-result-count`} className={`dd-traffic-overview-breakdown-caption`}>{formatTrafficCount(rankedRows.length)} Result(s) · Ranked By {metricLabel}</span>
         <span id={`${id}-metric-label`} className={`dd-traffic-overview-breakdown-caption`}>{showShare ? shareLabel : metricLabel}</span>
@@ -50,7 +50,9 @@ const TrafficOverviewBreakdown = ({ id, rows, view, total, metric, segment, load
             const { value } = row;
             const identity = getTrafficSegmentIdentity(segment, value);
             const isOther = isOtherTrafficSegment(value);
-            const accessibleLabel = identity.caption ? `${identity.label} (${identity.caption})` : identity.label;
+            const caption = segment === `path` ? identity.pathname ?? identity.caption : identity.caption;
+            const hostname = segment === `path` && !isOther ? row.hostname ?? identity.hostname : undefined;
+            const accessibleLabel = `${caption ? `${identity.label} (${caption})` : identity.label}${hostname ? ` · ${hostname}` : ``}`;
             const share = total > 0 ? row[metric] / total * 100 : 0;
             const relativeCount = largest > 0 ? row[metric] / largest * 100 : 0;
             const width = Math.min(100, Math.max(0, showShare ? share : relativeCount));
@@ -63,7 +65,7 @@ const TrafficOverviewBreakdown = ({ id, rows, view, total, metric, segment, load
                 onClick={() => onSelect(value)}
                 disabled={loading || isOther}
                 aria-pressed={selected === value}
-                title={identity.caption ?? identity.label}
+                title={`${caption ?? identity.label}${hostname ? ` · ${hostname}` : ``}`}
                 className={`dd-traffic-overview-breakdown-button${selected === value ? ` is-selected` : ``}${isOther ? ` is-other` : ``}`}
                 aria-label={`${accessibleLabel}: ${formatTrafficCount(row[metric])} ${metricLabel}, ${formatTrafficCount(row[alternateMetric])} ${alternateLabel}${showShare ? `, ${share.toFixed(1)}% ${shareLabel}` : ``}${isOther ? `` : `. Filter By ${accessibleLabel}`}`}
               >
@@ -71,7 +73,8 @@ const TrafficOverviewBreakdown = ({ id, rows, view, total, metric, segment, load
                 <TrafficSegmentIcon identity={identity} id={`${rowId}-icon`} />
                 <span id={`${rowId}-identity`} className={`dd-traffic-overview-breakdown-identity`}>
                   <span id={`${rowId}-label`} className={`dd-traffic-overview-breakdown-label`}>{identity.label}</span>
-                  {identity.caption && <span id={`${rowId}-raw`} className={`dd-traffic-overview-breakdown-raw`}>{identity.caption}</span>}
+                  {caption && <span id={`${rowId}-raw`} className={`dd-traffic-overview-breakdown-raw`}>{caption}</span>}
+                  {hostname && <span id={`${rowId}-hostname`} className={`dd-traffic-overview-breakdown-hostname`}>{hostname}</span>}
                 </span>
                 <span id={`${rowId}-values`} className={`dd-traffic-overview-breakdown-values`}>
                   <span id={`${rowId}-primary`} className={`dd-traffic-overview-breakdown-primary`}><strong id={`${rowId}-count`} className={`dd-traffic-overview-breakdown-count`}>{formatTrafficCount(row[metric])}</strong>{showShare && <span id={`${rowId}-share`} className={`dd-traffic-overview-breakdown-share`}>{share.toFixed(1)}%</span>}</span>

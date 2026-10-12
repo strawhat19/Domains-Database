@@ -12,6 +12,12 @@ app/
   profile/
     connections.tsx
   dashboard.tsx
+  users.tsx
+  plans.tsx
+  features.tsx
+  feedback.tsx
+  analytics.tsx
+  observability.tsx
   community.tsx
   about.tsx
   terms.tsx
@@ -73,6 +79,13 @@ src/
       types.ts
       values.ts
       service.ts
+    featureFlags/
+      types.ts
+      values.ts
+      service.ts
+      firebase.ts
+      useFeatureFlags.ts
+      FeatureFlagsContext.tsx
   components/
     AppShell/
       index.tsx
@@ -99,6 +112,10 @@ src/
       index.native.tsx
       styles.scss
       styles.native.ts
+    AccountSidebar/
+    AccountLoadingSkeleton/
+    AdminDashboard/
+    AdminFeatures/
     Toast/
       index.tsx
       index.web.tsx
@@ -161,6 +178,8 @@ ai/
         firestore.md
         workflows.md
         analytics.md
+        features.md
+        connections.md
       assets/
         analytics/
     app-system/
@@ -188,17 +207,17 @@ ai/
 
 Use the existing framework's supported SCSS module loading. When its Sass compileString pipeline lacks a source URL, importer, or load path for relative resolution, load shared global SCSS through web component side-effect imports rather than a relative Sass @use used only to emit CSS. Load shared base styles before component overrides, preserving that semantic order when arranging imports. Sass @use remains appropriate for Sass modules or shared CSS emission when the installed pipeline supports the required resolution; do not change bundler configuration merely to copy another framework's style-loading pattern.
 
-10. The shared route registry keeps canonical paths, aliases, labels, icons, and allowed roles/capabilities. Profile and Admin navigation consume that registry and the same capability helpers as direct routes. Preserve framework conventions and current URLs; avoid unrelated pages or empty scaffolds.
+10. The shared route registry keeps canonical paths, aliases, labels, icons, and allowed roles/capabilities. Profile and Admin navigation consume that registry and the same capability helpers as direct routes. Prefer available top-level admin URLs; keep namespaced fallbacks for collisions and legacy redirects when a canonical path changes. Derive shell/loading detection and safe auth return destinations from metadata instead of an /admin prefix. The example root pages above are common-core boundaries, not a reason to add unrelated business modules.
 
 11. ai/ contains portable instructions and shared integration patterns. Keep app-specific schemas, branding, cloud IDs, credentials, owner bootstrap details, and historical plans in project configuration/documentation outside ai/. Each SKILL.md links to its focused reference. ai/README.md indexes adoption, ai/skills/admin/ describes the connected account/admin/reporting system, and [App System](../app-system/SKILL.md) orchestrates a requested complete starter with focused chat/plans/blog references.
 
 12. Follow the complete data flow: shared enums and helpers support Data, reusable models extend Data, services import those models, contexts consume the service facades, component hooks consume context, and thin routes import component entrypoints. The model index.ts re-exports models; keep service operations in their focused API or service modules. Serialize with toRecord() at the persistence boundary and return public records without credential fields.
 
-13. Compose the Expo shell as SafeAreaProvider, ThemeProvider, AuthProvider, optional per-account feature providers, AppShell, and Slot. Wait for authentication hydration before mounting account-dependent providers; key or reset their state when the account changes. Keep optional feature providers within their own feature folders and omit feature names from portable guidance.
+13. Compose providers in dependency order. For the default account/feature system, use SafeAreaProvider, AuthProvider, FeatureFlagsProvider, ThemeProvider, hydrated account-data/navigation providers, AppShell and Slot; adapt to another framework's equivalents. Feature evaluation consumes the current account, and the effective theme consumes the theme flag. Public global settings can load independently, while private providers wait for both session and app-account hydration. Key/reset account state on identity changes, share confirmed settings rather than duplicating listeners, and measure header height after feature-controlled bars change. Keep business-specific providers in their own folders.
 
 14. Add social modules when requested: Post and Follow extend Data, shared/social owns typed operations and content normalization, api/social.ts exposes its facade, and SocialContext with useSocial shares eligible records. Community owns the feed view, and RichTextEditor with RichTextContent shares formatted input and safe output across platforms. User owns ProfilePrivacy with public and private choices, private by default, and optional public sharing stays disabled until chosen. authAPI.getPublicProfiles returns allowlisted display fields and updateProfile accepts only editable profile fields. Public profile projections, private account settings, and participant-only messages remain separate service boundaries.
 
-15. ProfileSettings and useProfileSettings own authenticated profile editing; AccountConnections and useAccountConnections own private connection settings. shared/connections/types.ts defines the private snapshot, values.ts normalizes supported input, and service.ts owns account-scoped persistence. api/connections.ts exposes getConnections, saveConnections, and clearConnections. Keep provider-specific fields in the app's configuration, and keep all credentials separate from public User records regardless of profile visibility.
+15. ProfileSettings and useProfileSettings own authenticated profile editing; AccountConnections and useAccountConnections own private connection settings. shared/connections/types.ts defines the private snapshot, values.ts normalizes supported input, and service.ts owns account-scoped persistence. api/connections.ts exposes the supported load/save/validate/clear/sync operations. Use [the connection contract](../admin/references/connections.md) for verified availability, server-owned production credentials and scoped provider record synchronization. Keep provider-specific fields in project configuration, and credentials separate from public User records regardless of profile visibility.
 
 16. Read [database guidance](../database/database.md) before persistence changes, [API guidance](../api/api.md) before service changes, [authentication guidance](../authentication/authentication.md) for sessions, [social guidance](../social/social.md) for profiles/privacy, [route guidance](../routes/routes.md) for access, then [Admin guidance](../admin/admin.md) for connected profiles, roles, sidebars, dashboards, and reports. Follow AGENTS.md and leave verification to the user unless requested.
 
@@ -207,6 +226,7 @@ Use the existing framework's supported SCSS module loading. When its Sass compil
 | Module | Shared Models/Service Boundary | Components/Routes |
 | --- | --- | --- |
 | Admin/Reports | shared/admin, shared/analytics, shared/observability; focused API facades | AdminDashboard, AdminRecords, AnalyticsCharts, ObservabilityPanel |
+| Feature Flags | shared/featureFlags and current account/catalog tier services; feature settings facade | Owner AdminFeatures table/settings modal and shared public consumer gates |
 | Notifications/Contacts | shared/notifications and shared/formSubmissions; notification/contact facades | Public bell/cards/Contact, private notification manager/request viewer |
 | Private Chat | shared/models/chats and shared/chats; chat facade | ChatInbox/ChatThread/composer and participant-private account/admin routes |
 | Plans/Pricing | shared/models/plans and shared/plans; plans facade | Public Pricing/Home cards and authorized AdminPlans |
@@ -214,4 +234,4 @@ Use the existing framework's supported SCSS module loading. When its Sass compil
 
 Give each view its own logic/rendering/styles where the platforms differ. Thin route files compose the component and capability boundary; shared subscriptions/persistence never live inside route JSX.
 
-18. For connected adoption read [adoption](../../adoption.md), then the Admin [Firestore](../admin/references/firestore.md), [workflow](../admin/references/workflows.md), and [analytics](../admin/references/analytics.md) contracts as needed. Keep one account-aware listener/adapter boundary, a shared identity/icon resolver, private role/provider server operations and real persisted form/notification facades. ai/skills/ is the portable skill tree; avoid an independent duplicate skills/ folder.
+18. For connected adoption read [adoption](../../adoption.md), then the Admin [Firestore](../admin/references/firestore.md), [workflow](../admin/references/workflows.md), [analytics](../admin/references/analytics.md), and [feature flags](../admin/references/features.md) contracts as needed. Keep one account-aware listener/adapter boundary, a shared identity/icon resolver, private role/provider server operations and real persisted form/notification facades. ai/skills/ is the portable skill tree; avoid an independent duplicate skills/ folder.

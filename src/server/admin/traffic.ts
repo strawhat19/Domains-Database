@@ -152,6 +152,11 @@ const parsePeriodTotals = (value: unknown): AnalyticsTotals => {
   if (!row || row.environment !== `production`) return invalidResponse();
   return parseTotals(row);
 };
+const parseRequestHostname = (value: unknown) => {
+  const hostname = typeof value === `string` ? value.trim().toLowerCase() : ``;
+  if (!hostname || hostname === `__direct__`) return;
+  try { return normalizeReferrerHostname(hostname); } catch { return; }
+};
 const parseBreakdown = (value: unknown, dimension: AnalyticsDimension): AnalyticsBreakdown[] => {
   const rows = parseRows(value, maximumBreakdownRows + 1);
   const values = new Set<string>();
@@ -171,7 +176,8 @@ const parseBreakdown = (value: unknown, dimension: AnalyticsDimension): Analytic
     }
     if (values.has(normalizedValue)) return invalidResponse();
     values.add(normalizedValue);
-    return { value: normalizedValue, ...parseTotals(row) };
+    const hostname = dimension === `requestPath` && normalizedValue !== `Others` ? parseRequestHostname(row.requestHostname) : undefined;
+    return { value: normalizedValue, ...parseTotals(row), ...(hostname ? { hostname } : {}) };
   }).sort((first, second) => second.pageviews - first.pageviews || second.visitors - first.visitors || first.value.localeCompare(second.value));
 };
 const parseTrend = (value: unknown, filters: AnalyticsFilters): AnalyticsTrendPoint[] => {

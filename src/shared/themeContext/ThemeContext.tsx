@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { useAuth } from '../authContext/useAuth';
 import { Appearance, Platform } from 'react-native';
+import { useFeatureFlags } from '../featureFlags/useFeatureFlags';
 import { themePalettes, type ThemeMode, type ThemePalette } from './theme';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from 'react';
 import { saveTheme, getThemePreview, saveThemePreview, subscribeSavedTheme } from './preferences';
@@ -21,21 +22,24 @@ const useThemeLayoutEffect = Platform.OS === `web` && typeof window !== `undefin
 
 export const ThemeProvider = ({ children }: PropsWithChildren) => {
   const { user, loading: authLoading } = useAuth();
+  const { flags, ready: featuresReady } = useFeatureFlags();
+  const themeEnabled = featuresReady && flags.themeToggle;
   const userId = user?.id ?? null;
   const scope = authLoading ? `pending` : userId ?? `guest`;
   const currentScope = useRef(scope);
   currentScope.current = scope;
   const [error, setError] = useState(``);
   const [loadedScope, setLoadedScope] = useState<string | null>(null);
-  const [theme, setTheme] = useState<ThemeMode>(`dark`);
-  const currentTheme = useRef(theme);
-  currentTheme.current = theme;
+  const [preference, setPreference] = useState<ThemeMode>(`dark`);
+  const currentTheme = useRef(preference);
+  currentTheme.current = preference;
   const preferenceChanged = useRef(false);
   const mutationRevision = useRef(0);
   const saving = useRef(false);
   const pendingSnapshot = useRef<ThemeMode | null | undefined>(undefined);
   const replaySnapshot = useRef<(() => void) | null>(null);
   const ready = !authLoading && loadedScope === scope;
+  const theme = themeEnabled ? preference : `dark`;
   const palette = themePalettes[theme];
   const isDark = theme === `dark`;
 
@@ -43,7 +47,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     if (Platform.OS !== `web` || typeof document === `undefined`) return;
     const saved = getThemePreview() ?? document.documentElement.dataset.theme;
     if (!preferenceChanged.current && (saved === `light` || saved === `dark`)) {
-      setTheme(saved);
+      setPreference(saved);
     }
   }, []);
 
@@ -65,7 +69,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
       const nextTheme = saved ?? `dark`;
       if (currentTheme.current !== nextTheme) {
         currentTheme.current = nextTheme;
-        setTheme(nextTheme);
+        setPreference(nextTheme);
       }
       setError(``);
       setLoadedScope(scope);
@@ -93,8 +97,8 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
       Appearance.setColorScheme(theme);
       return;
     }
-    if (!ready || typeof document === `undefined`) return;
-    saveThemePreview(theme);
+    if ((!ready && themeEnabled) || typeof document === `undefined`) return;
+    if (ready) saveThemePreview(preference);
     const root = document.documentElement;
     root.dataset.themeChanging = `true`;
     root.dataset.theme = theme;
@@ -110,15 +114,15 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
       window.cancelAnimationFrame(frame);
       delete root.dataset.themeChanging;
     };
-  }, [theme, palette, ready]);
+  }, [theme, palette, ready, preference, themeEnabled]);
 
   const setThemePreference = useCallback((nextTheme: ThemeMode) => {
-    if (!ready || nextTheme === currentTheme.current) return;
+    if (!ready || !themeEnabled || nextTheme === currentTheme.current) return;
     preferenceChanged.current = true;
     const revision = ++mutationRevision.current;
     saving.current = true;
     currentTheme.current = nextTheme;
-    setTheme(nextTheme);
+    setPreference(nextTheme);
     setError(``);
     void saveTheme(nextTheme, userId).then(() => {
       if (currentScope.current !== scope || mutationRevision.current !== revision) return;
@@ -131,7 +135,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     }).finally(() => {
       if (currentScope.current === scope && mutationRevision.current === revision) saving.current = false;
     });
-  }, [ready, scope, userId]);
+  }, [ready, scope, userId, themeEnabled]);
 
   const toggleTheme = useCallback(() => setThemePreference(currentTheme.current === `light` ? `dark` : `light`), [setThemePreference]);
   const clearError = useCallback(() => setError(``), []);

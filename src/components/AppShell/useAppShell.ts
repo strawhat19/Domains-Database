@@ -2,6 +2,7 @@ import { usePathname } from 'expo-router';
 import { useWindowDimensions } from 'react-native';
 import { routes, navigation } from '../../shared/routes';
 import { useAuth } from '../../shared/authContext/useAuth';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { getAccountBadgeColors } from '../../shared/common/badges';
 import { useWatching } from '../../shared/watching/useWatching';
 import { useDomains } from '../../shared/domainContext/useDomains';
@@ -12,6 +13,7 @@ export const useAppShell = () => {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const { user, loading } = useAuth();
+  const { flags, ready: featuresReady } = useFeatureFlags();
   const { eligible, loading: connectionsLoading } = useConnectionAvailability();
   const { domains, loaded: domainsLoaded, loading: domainsLoading } = useDomains();
   const { records, loading: watchingLoading } = useWatching();
@@ -24,7 +26,8 @@ export const useAppShell = () => {
   const fitViewport = publicPages.includes(pathname)
     || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href);
   const visibleNavigation = navigation.filter(item =>
-    (item.href !== routes.search.href || eligible || connectionsLoading)
+    (item.href !== routes.contact.href || (featuresReady && flags.contact))
+    && (item.href !== routes.search.href || eligible || connectionsLoading)
     && (item.href !== routes.auction.href || signedIn)
     && (item.href !== routes.community.href || signedIn)).map(item => {
       const count = item.href === routes.domains.href ? domainCount : item.href === routes.watching.href ? watchingCount : undefined;

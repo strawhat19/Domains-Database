@@ -13,6 +13,7 @@ Expose typed subscribePage/getPage/create/updateStatus/update/delete methods thr
 | Public forms | Labels, validation, honeypot/abuse boundary, pending/save feedback, retained failed draft | Private record list/detail, real dates, New/Read/Archived actions, paging |
 | Profile | Provider avatar/initial, allowlisted details/preferences, private account connections | Permitted user/status/role operations, stable identity, protected ownership |
 | Data settings | Honest connected/source state and defined own-data controls | Explicit reset/import scope; private intake and global records excluded from own reset |
+| Feature configuration | Effective eligible surfaces, stopped disabled public reads and authoritative intake enforcement | Active Owner global flags/minimum plans, role settings modal, confirmed row saves/errors |
 
 ## Notification State And Read Hydration
 
@@ -28,6 +29,8 @@ Read preferences are private and account-scoped. If an established app uses loca
 
 Notification creation, in-app visibility, read receipt, email, and push delivery are separate states. Realtime database publication does not establish email/push delivery or presence. Add provider delivery only when requested/already supported, using server-owned configuration, stable idempotency keys, and truthful queued/sent/failed outcomes. Do not duplicate public announcement records merely to simulate individual read state.
 
+When [Features](features.md) gates notifications, stop public feed/read subscriptions and remove all ineligible entry points/content without deleting announcements or read preferences. Retain separately authorized notification management. The flag does not supply account read persistence, private recipients or delivery; implement those independently for a requested connected starter and disclose any existing reference gaps.
+
 ## Forms And Submission Review
 
 Use one typed submission service per logical form family rather than a form-specific localStorage cache. Contact, enquiry, signup requests, or other supported forms map their schemas and initial review state to the same private intake boundary. Required/allowed fields, supported lengths, normalization, allowed select values, initial status, nullable actor, and idempotency format belong in shared validation and rules/server enforcement.
@@ -39,6 +42,8 @@ Keep a stable submission attempt while retrying an uncertain save. On a trusted 
 Await commit before clearing fields, closing the form, or claiming Submission Saved. If save succeeds and delivery fails, retain the saved record and report Saved with Delivery Failed/Not Configured as appropriate. Delivery retries address that record and do not resubmit the form. A mailto link alone is not a database save or confirmed sent email. Failed/unknown saves retain the draft with a retry action and cannot silently become a successful local record.
 
 Review capabilities are explicit, independent of general report access, and retain stricter existing Owner-only rules. Provide Name/Email/Subject and supported form details, safe message expansion, submitted/updated dates, New/Read/Archived status and actual loaded-page summaries. Reviews change only permitted status/reviewer/update fields; original form fields and identity remain stable. Search over the current page says Loaded Page, resets appropriately, and leaves paging visible on No Matching Records. Public users cannot query/read/update/delete private intake.
+
+Apply the current [Contact feature policy](features.md#initial-flags-and-consumer-enforcement) to public links, direct navigation and the authoritative save/rules boundary, including role/minimum-tier eligibility. Hiding a form does not deny direct submissions. Keep permitted private review available when public Contact is off. This gate is independent of intake validation, atomic allocation, retry idempotency and optional delivery; do not claim those are connected from a UI flag or this reference alone.
 
 ## Profile, Users, And Own-Data Controls
 

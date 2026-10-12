@@ -1,7 +1,7 @@
 import { Plan } from '../models/plans/Plan';
 import { FirebaseError } from 'firebase/app';
-import { planLimits, type PlanInput } from './types';
-import { canManagePlans } from '../admin/permissions';
+import { canManagePlans, canManageFeatures } from '../admin/permissions';
+import { planLimits, planTierLimit, type PlanTier, type PlanInput } from './types';
 import { planId, readPlan, normalizePlan } from './values';
 import { getFirebaseDb, getFirebaseAuth } from '../firebase/client';
 import { restoreSession, subscribeAuthState } from '../authentication/service';
@@ -18,22 +18,25 @@ export const planError = (failure: unknown): Error => {
 const assertAccount = (uid: string) => {
   if (getFirebaseAuth().currentUser?.uid !== uid) throw new Error(`Your Account Changed — Try Again`);
 };
-const requireManager = async () => {
+const requireManager = async (ownerOnly = false) => {
+  const canManage = ownerOnly ? canManageFeatures : canManagePlans;
+  const accessError = ownerOnly ? `Owner Access Is Required` : `Admin Access Is Required`;
   const user = (await restoreSession())?.user;
-  if (!canManagePlans(user) || !user?.firebase_uid) throw new Error(`Admin Access Is Required`);
+  if (!canManage(user) || !user?.firebase_uid) throw new Error(accessError);
   const actor = { id: user.id, firebaseUid: user.firebase_uid };
   assertAccount(actor.firebaseUid);
   const saved = await getDocFromServer(doc(getFirebaseDb(), `users`, actor.id));
   assertAccount(actor.firebaseUid);
   const data = saved.data();
-  if (data?.id !== actor.id || data?.firebase_uid !== actor.firebaseUid || data?.active !== true || !canManagePlans({ id: data.id, role: data.role, active: data.active })) throw new Error(`Admin Access Is Required`);
+  if (data?.id !== actor.id || data?.firebase_uid !== actor.firebaseUid || data?.active !== true || !canManage({ id: data.id, role: data.role, active: data.active })) throw new Error(accessError);
   return actor;
 };
-const requireTransactionManager = async (transaction: Transaction, actor: Awaited<ReturnType<typeof requireManager>>) => {
+const requireTransactionManager = async (transaction: Transaction, actor: Awaited<ReturnType<typeof requireManager>>, ownerOnly = false) => {
+  const canManage = ownerOnly ? canManageFeatures : canManagePlans;
   assertAccount(actor.firebaseUid);
   const saved = await transaction.get(doc(getFirebaseDb(), `users`, actor.id));
   const data = saved.data();
-  if (data?.id !== actor.id || data?.firebase_uid !== actor.firebaseUid || data?.active !== true || !canManagePlans({ id: data.id, role: data.role, active: data.active })) throw new Error(`Admin Access Is Required`);
+  if (data?.id !== actor.id || data?.firebase_uid !== actor.firebaseUid || data?.active !== true || !canManage({ id: data.id, role: data.role, active: data.active })) throw new Error(ownerOnly ? `Owner Access Is Required` : `Admin Access Is Required`);
   assertAccount(actor.firebaseUid);
 };
 const pageQuery = (cursor: number | null) => {
@@ -90,6 +93,58 @@ export const subscribeCloudPublishedPlans = (onValue: (plans: Plan[]) => void, o
   } catch (failure) { clearTimeout(timeout); fail(failure); }
   return () => { active = false; clearTimeout(timeout); unsubscribe(); };
 };
+const planTier = (record: Plan): PlanTier => ({ id: record.id, slug: record.slug, number: record.number, displayOrder: record.displayOrder });
+export const readPlanTier = (data: Record<string, unknown> | undefined, slug: string): PlanTier | null => {
+  if (!data || data.slug !== slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 100
+    || Object.keys(data).some(key => ![`id`, `slug`, `number`, `displayOrder`].includes(key))) throw new Error(`Saved Plan Tier Needs Attention`);
+  const id = planId(data.id);
+  if (!(`number` in data) && !(`displayOrder` in data)) return null;
+  if (!Number.isSafeInteger(data.number) || Number(data.number) < 1 || Number(data.number) !== Number(id.split(`_`)?.[1])
+    || !Number.isSafeInteger(data.displayOrder) || Number(data.displayOrder) < 0) throw new Error(`Saved Plan Tier Needs Attention`);
+  return { id, slug, number: Number(data.number), displayOrder: Number(data.displayOrder) };
+};
+export const subscribeCloudPlanTiers = (onValue: (tiers: PlanTier[]) => void, onError?: (failure: Error) => void) => {
+  let active = true;
+  let unsubscribe: () => void = () => undefined;
+  const fail = (failure: unknown) => { if (active) onError?.(planError(failure)); };
+  const timeout = setTimeout(() => fail(new Error(`Could Not Confirm Plan Tiers — Check Your Connection And Refresh`)), 20_000);
+  try {
+    unsubscribe = onSnapshot(query(collection(getFirebaseDb(), `planSlugs`), limit(planTierLimit + 1)), { includeMetadataChanges: true }, snapshot => {
+      if (!active || snapshot.metadata.fromCache || snapshot.metadata.hasPendingWrites) return;
+      try {
+        if (snapshot.size > planTierLimit) throw new Error(`Feature Targeting Supports Up To ${planTierLimit} Plans`);
+        const tiers = snapshot.docs.flatMap(record => {
+          const tier = readPlanTier(record.data(), record.id);
+          return tier ? [tier] : [];
+        });
+        if (new Set(tiers.map(tier => tier.id)).size !== tiers.length || new Set(tiers.map(tier => tier.number)).size !== tiers.length) throw new Error(`Saved Plan Tier Identity Needs Attention`);
+        clearTimeout(timeout);
+        onValue(tiers.sort((first, second) => first.displayOrder - second.displayOrder || first.number - second.number));
+      } catch (failure) { clearTimeout(timeout); fail(failure); }
+    }, failure => { clearTimeout(timeout); fail(failure); });
+  } catch (failure) { clearTimeout(timeout); fail(failure); }
+  return () => { active = false; clearTimeout(timeout); unsubscribe(); };
+};
+export const prepareCloudPlanTiers = async (records: readonly Plan[]): Promise<void> => {
+  if (records.length > planTierLimit) throw new Error(`Feature Targeting Supports Up To ${planTierLimit} Plans — Nothing Was Changed`);
+  const actor = await requireManager(true);
+  const database = getFirebaseDb();
+  for (const record of records) {
+    const id = planId(record.id);
+    await runTransaction(database, async transaction => {
+      await requireTransactionManager(transaction, actor, true);
+      const saved = await transaction.get(doc(database, `plans`, id));
+      const original = readPlan(saved.data(), id);
+      const reference = doc(database, `planSlugs`, original.slug);
+      const reservation = await transaction.get(reference);
+      const data = reservation.data();
+      if (!reservation.exists() || data?.id !== id || data?.slug !== original.slug) throw new Error(`Saved Plan Slug Needs Attention`);
+      if (data.number === original.number && data.displayOrder === original.displayOrder) return;
+      assertAccount(actor.firebaseUid);
+      transaction.set(reference, planTier(original));
+    });
+  }
+};
 const savedPlan = async (id: string, actor: Awaited<ReturnType<typeof requireManager>>) => {
   assertAccount(actor.firebaseUid);
   const saved = await getDocFromServer(doc(getFirebaseDb(), `plans`, id));
@@ -123,7 +178,7 @@ export const createCloudPlan = async (input: PlanInput): Promise<Plan> => {
     assertAccount(actor.firebaseUid);
     transaction.set(reference, { ...record.toRecord(), created: serverTimestamp(), updated: serverTimestamp() });
     transaction.set(counterRef, { number, lastPlanId: record.id });
-    transaction.set(slugRef, { id: record.id, slug: record.slug });
+    transaction.set(slugRef, planTier(record));
     return record.id;
   });
   return savedPlan(id, actor);
@@ -139,11 +194,13 @@ export const updateCloudPlan = async (id: string, input: PlanInput): Promise<Pla
     const saved = await transaction.get(reference);
     const original = readPlan(saved.data(), id);
     if (values.slug !== original.slug) throw new Error(`Plan Slugs Cannot Change After Creation`);
-    const reservation = await transaction.get(doc(database, `planSlugs`, original.slug));
-    if (reservation.data()?.id !== id) throw new Error(`Saved Plan Slug Needs Attention`);
+    const slugRef = doc(database, `planSlugs`, original.slug);
+    const reservation = await transaction.get(slugRef);
+    if (reservation.data()?.id !== id || reservation.data()?.slug !== original.slug) throw new Error(`Saved Plan Slug Needs Attention`);
     const record = new Plan({ ...original, ...values, updated: new Date().toISOString() });
     assertAccount(actor.firebaseUid);
     transaction.set(reference, { ...record.toRecord(), created: saved.data()?.created, updated: serverTimestamp() });
+    transaction.set(slugRef, planTier(record));
   });
   return savedPlan(id, actor);
 };
@@ -158,8 +215,12 @@ export const setCloudPlanActive = async (id: string, active: boolean): Promise<P
     const saved = await transaction.get(reference);
     const original = readPlan(saved.data(), id);
     if (original.active === active) return;
+    const slugRef = doc(database, `planSlugs`, original.slug);
+    const reservation = await transaction.get(slugRef);
+    if (reservation.data()?.id !== id || reservation.data()?.slug !== original.slug) throw new Error(`Saved Plan Slug Needs Attention`);
     assertAccount(actor.firebaseUid);
     transaction.update(reference, { active, updated: serverTimestamp() });
+    transaction.set(slugRef, planTier(original));
   });
   return savedPlan(id, actor);
 };

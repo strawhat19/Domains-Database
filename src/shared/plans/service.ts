@@ -1,13 +1,13 @@
 import { Plan } from '../models/plans/Plan';
 import { useLocalStorage } from '../config';
 import { firebaseEnabled } from '../firebase/config';
-import { planLimits, type PlanInput } from './types';
-import { canManagePlans } from '../admin/permissions';
+import { canManagePlans, canManageFeatures } from '../admin/permissions';
+import { planLimits, planTierLimit, type PlanTier, type PlanInput } from './types';
 import { restoreSession } from '../authentication/service';
 import { planId, readPlan, normalizePlan, orderPublishedPlans } from './values';
 import { numberCollectionPage, type CollectionPage } from '../firebase/collection';
 import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
-import { planError, getCloudPlansPage, subscribeCloudPlansPage, subscribeCloudPublishedPlans, createCloudPlan, updateCloudPlan, setCloudPlanActive } from './firebase';
+import { planError, getCloudPlansPage, subscribeCloudPlansPage, subscribeCloudPublishedPlans, createCloudPlan, updateCloudPlan, setCloudPlanActive, subscribeCloudPlanTiers, prepareCloudPlanTiers } from './firebase';
 
 interface PlanSnapshot { version: 1; nextNumber: number; records: Plan[] }
 const storageKey = `domains-database:plans:v1`;
@@ -76,6 +76,24 @@ export const subscribePublishedPlans = (onValue: (plans: Plan[]) => void, onErro
     catch (failure) { onError?.(planError(failure)); }
   }, onError);
 };
+export const subscribePlanTiers = (onValue: (tiers: PlanTier[]) => void, onError?: (failure: Error) => void) => {
+  if (cloudEnabled) return subscribeCloudPlanTiers(onValue, onError);
+  if (!useLocalStorage) { onError?.(new Error(`Connect Firebase To Load Plan Tiers`)); return () => undefined; }
+  return subscribeStorage(storageKey, saved => {
+    try {
+      const records = readLocalSnapshot(saved).records;
+      if (records.length > planTierLimit) throw new Error(`Feature Targeting Supports Up To ${planTierLimit} Plans`);
+      onValue(records.map(({ id, slug, number, displayOrder }) => ({ id, slug, number, displayOrder })).sort((first, second) => first.displayOrder - second.displayOrder || first.number - second.number));
+    } catch (failure) { onError?.(planError(failure)); }
+  }, onError);
+};
+export const preparePlanTiers = (records: readonly Plan[]): Promise<void> => runOperation(async () => {
+  if (cloudEnabled) return prepareCloudPlanTiers(records);
+  if (!useLocalStorage) throw new Error(`Connect Firebase To Manage Plan Tiers`);
+  const user = (await restoreSession())?.user;
+  if (!canManageFeatures(user)) throw new Error(`Owner Access Is Required`);
+  if (records.length > planTierLimit) throw new Error(`Feature Targeting Supports Up To ${planTierLimit} Plans — Nothing Was Changed`);
+});
 export const createPlan = (input: PlanInput): Promise<Plan> => runOperation(async () => {
   const values = normalizePlan(input);
   if (cloudEnabled) return createCloudPlan(values);
@@ -125,4 +143,4 @@ export const setPlanActive = (id: string, active: boolean): Promise<Plan> => run
 });
 export const archivePlan = (id: string) => setPlanActive(id, false);
 
-export type { PlanInput, PlanCurrency, PlanBillingInterval } from './types';
+export type { PlanTier, PlanInput, PlanCurrency, PlanBillingInterval } from './types';

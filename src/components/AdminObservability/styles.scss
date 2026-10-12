@@ -63,13 +63,18 @@
 .dd-observability-panel.is-compact .dd-observability-kpi-label { font-size: 9px; }
 .dd-observability-panel.is-compact .dd-observability-kpi-value { font-size: 25px; }
 .dd-observability-panel.is-compact .dd-observability-data { overflow: auto; scrollbar-width: thin; }
+.dd-observability-panel.is-compact.is-trend { height: auto; min-height: 470px; }
+.dd-observability-panel.is-compact.is-trend .dd-observability-viewport { display: flex; flex-direction: column; gap: 10px; overflow: visible; }
+.dd-observability-panel.is-compact.is-trend .dd-observability-report { height: auto; flex: 1 1 auto; }
+.dd-observability-panel.is-compact.is-trend .dd-observability-data { overflow: visible; }
+.dd-observability-panel.is-compact.is-trend .dd-observability-error { flex: none; }
 .dd-observability-panel.is-compact .dd-observability-table-wrap { flex: 1 1 auto; }
 .dd-observability-panel.is-compact .dd-admin-skeleton-chart { height: 130px; }
 @keyframes dd-runtime-reveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 @keyframes dd-runtime-spin { to { transform: rotate(360deg); } }
 .dd-observability-button > .is-spinning { animation: dd-runtime-spin 1s linear infinite; }
 @media (max-width: 1000px) { .dd-observability-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .dd-observability-panel.is-compact { height: 560px; } .dd-observability-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dd-observability-panel.is-compact .dd-observability-metrics, .dd-observability-panel.is-compact .dd-admin-skeleton.is-summary > .dd-admin-skeleton-content { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .dd-observability-panel.is-compact { height: 560px; } .dd-observability-panel.is-compact.is-trend { min-height: 560px; } .dd-observability-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .dd-observability-panel.is-compact .dd-observability-metrics, .dd-observability-panel.is-compact .dd-admin-skeleton.is-summary > .dd-admin-skeleton-content { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 460px) { .dd-observability-panel { padding: 15px; } .dd-observability-kpi { padding: 10px; } .dd-observability-kpi-value { font-size: 24px; } .dd-observability-view-title { font-size: 17px; } }
 @container dd-observability (max-width: 760px) { .dd-observability-panel:not(.is-compact) .dd-observability-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container dd-observability (max-width: 520px) { .dd-observability-panel:not(.is-compact) .dd-observability-metrics, .dd-observability-panel.is-compact .dd-observability-metrics, .dd-observability-panel.is-compact .dd-admin-skeleton.is-summary > .dd-admin-skeleton-content { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

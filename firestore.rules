@@ -15,6 +15,75 @@ service cloud.firestore {
     function planSlugPath(slug) { return /databases/$(database)/documents/planSlugs/$(slug); }
     function eventPath(eventId) { return /databases/$(database)/documents/events/$(eventId); }
     function eventCounterPath() { return /databases/$(database)/documents/counters/events; }
+    function featureSettingsId() { return 'FeatureSettings_1_Global_12_00_AM_10_12_26_cb23b14255924fdd95957eac7ca7e35e'; }
+    function featureSettingsPath() { return /databases/$(database)/documents/featureSettings/$(featureSettingsId()); }
+    function featureCounterPath() { return /databases/$(database)/documents/counters/features; }
+    function featureAudienceValues(audience) {
+      return audience is map && audience.keys().hasAll(['roles', 'plans']) && audience.keys().hasOnly(['roles', 'plans', 'planMode'])
+        && (!audience.keys().hasAny(['planMode']) || audience.planMode == 'minimum')
+        && (audience.roles == null || (audience.roles is list && audience.roles.size() <= 9 && audience.roles.toSet().size() == audience.roles.size()
+          && audience.roles.hasOnly(['Guest', 'Subscriber', 'Customer', 'Editor', 'Moderator', 'Administrator', 'Admin', 'Developer', 'Owner'])))
+        && (audience.plans == null || (audience.plans is list && audience.plans.size() <= 200 && audience.plans.toSet().size() == audience.plans.size()
+          && (audience.get('planMode', '') != 'minimum' || audience.plans.size() <= 1)
+          && (audience.plans.size() == 0 || (audience.plans.join(',').split(',') == audience.plans
+            && audience.plans.join(',').matches('[a-z0-9-]{1,100}(,[a-z0-9-]{1,100})*')
+            && audience.plans.join(',').matches('[a-z0-9]+(-[a-z0-9]+)*(,[a-z0-9]+(-[a-z0-9]+)*)*')))));
+    }
+    function featureAudiencesValues(audiences) {
+      return audiences is map && audiences.keys().hasAll(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
+        && audiences.keys().hasOnly(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
+        && featureAudienceValues(audiences.contact) && featureAudienceValues(audiences.themeToggle)
+        && featureAudienceValues(audiences.domainMarquee) && featureAudienceValues(audiences.notifications);
+    }
+    function planTierValues(data, slug) {
+      return data is map && data.keys().hasAll(['id', 'slug', 'number', 'displayOrder']) && data.keys().hasOnly(['id', 'slug', 'number', 'displayOrder'])
+        && data.slug == slug && slug is string && slug.size() > 0 && slug.size() <= 100 && slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991
+        && data.displayOrder is int && data.displayOrder >= 0 && data.displayOrder <= 9007199254740991
+        && data.id is string && data.id.size() <= 240
+        && data.id.matches('Plan_' + string(data.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+');
+    }
+    function livePlanTier(slug) {
+      return slug is string && slug.size() <= 100 && slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$') && exists(planSlugPath(slug))
+        && planTierValues(get(planSlugPath(slug)).data, slug) && exists(planPath(get(planSlugPath(slug)).data.id))
+        && get(planPath(get(planSlugPath(slug)).data.id)).data.id == get(planSlugPath(slug)).data.id
+        && get(planPath(get(planSlugPath(slug)).data.id)).data.type == 'Plan'
+        && get(planPath(get(planSlugPath(slug)).data.id)).data.slug == slug
+        && get(planPath(get(planSlugPath(slug)).data.id)).data.number == get(planSlugPath(slug)).data.number
+        && get(planPath(get(planSlugPath(slug)).data.id)).data.displayOrder == get(planSlugPath(slug)).data.displayOrder;
+    }
+    function planTierAtLeast(plan, minimum) {
+      let viewer = get(planPath(get(planSlugPath(plan)).data.id)).data;
+      let selected = get(planPath(get(planSlugPath(minimum)).data.id)).data;
+      return viewer.displayOrder > selected.displayOrder || (viewer.displayOrder == selected.displayOrder && viewer.number >= selected.number);
+    }
+    function featureMinimumPlanAllows(plans, plan) {
+      return plan is string && plan.size() <= 100 && plan.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && (plans == null || plans.size() == 0 || plans[0] == 'free'
+          || (plan != 'free' && livePlanTier(plan) && livePlanTier(plans[0]) && planTierAtLeast(plan, plans[0])));
+    }
+    function featureAudienceAllows(data, key, role, plan) {
+      let audience = data.get('audiences', {}).get(key, {'roles': null, 'plans': null});
+      return (audience.roles == null || role in audience.roles)
+        && (audience.get('planMode', '') == 'minimum' ? featureMinimumPlanAllows(audience.plans, plan) : audience.plans == null || plan in audience.plans);
+    }
+    function featureEnabled(key) {
+      return (!signedIn() || (exists(identityPath()) && ownsAccount(actorId())))
+        && (!exists(featureSettingsPath()) || (get(featureSettingsPath()).data.flags[key] == true
+          && featureAudienceAllows(get(featureSettingsPath()).data, key, signedIn() ? get(userPath(actorId())).data.role : 'Guest',
+            signedIn() ? get(userPath(actorId())).data.get('plan', 'free').lower() : 'free')));
+    }
+    function featureSettingsValues() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'name', 'type', 'flags', 'number', 'version', 'created', 'updated'])
+        && data.keys().hasOnly(['id', 'name', 'type', 'flags', 'number', 'version', 'created', 'updated', 'audiences'])
+        && data.id == featureSettingsId() && data.number is int && data.number == 1 && data.type == 'FeatureSettings'
+        && data.name == 'Global' && data.version is int && data.version == 1 && data.created is timestamp && data.updated == request.time
+        && data.flags is map && data.flags.keys().hasAll(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
+        && data.flags.keys().hasOnly(['contact', 'themeToggle', 'domainMarquee', 'notifications'])
+        && data.flags.contact is bool && data.flags.themeToggle is bool && data.flags.domainMarquee is bool && data.flags.notifications is bool
+        && (!data.keys().hasAny(['audiences']) || featureAudiencesValues(data.audiences));
+    }
     function ownsAccount(userId) {
       return signedIn() && exists(identityPath()) && get(identityPath()).data.id == userId
         && get(userPath(userId)).data.firebase_uid == request.auth.uid && get(userPath(userId)).data.active == true;
@@ -167,7 +236,10 @@ service cloud.firestore {
         && data.priceCents is int && data.priceCents >= 0 && data.priceCents <= 9007199254740991
         && data.displayOrder is int && data.displayOrder >= 0 && data.displayOrder <= 9007199254740991
         && data.active is bool && data.highlighted is bool && data.created is timestamp && data.updated == request.time
-        && getAfter(planSlugPath(data.slug)).data.id == data.id;
+        && planTierValues(getAfter(planSlugPath(data.slug)).data, data.slug)
+        && getAfter(planSlugPath(data.slug)).data.id == data.id
+        && getAfter(planSlugPath(data.slug)).data.number == data.number
+        && getAfter(planSlugPath(data.slug)).data.displayOrder == data.displayOrder;
     }
     function newPlanCounter() {
       let data = request.resource.data;
@@ -215,7 +287,24 @@ service cloud.firestore {
     }
     match /counters/formSubmissions {
       allow get: if true;
-      allow create, update: if newSubmissionCounter();
+      allow create, update: if featureEnabled('contact') && newSubmissionCounter();
+    }
+    match /counters/features {
+      allow get: if isOwner();
+      allow create: if isOwner() && request.resource.data.keys().hasAll(['number', 'lastFeatureId'])
+        && request.resource.data.keys().hasOnly(['number', 'lastFeatureId']) && request.resource.data.number is int && request.resource.data.number == 1
+        && request.resource.data.lastFeatureId == featureSettingsId() && !exists(featureSettingsPath())
+        && getAfter(featureSettingsPath()).data.id == featureSettingsId() && getAfter(featureSettingsPath()).data.number == 1;
+    }
+    match /featureSettings/{settingsId} {
+      allow get: if settingsId == featureSettingsId();
+      allow create: if isOwner() && settingsId == featureSettingsId() && featureSettingsValues()
+        && recordIdentity(settingsId, 'FeatureSettings') && request.resource.data.created == request.time
+        && !exists(featureCounterPath()) && getAfter(featureCounterPath()).data.number == 1
+        && getAfter(featureCounterPath()).data.lastFeatureId == settingsId;
+      allow update: if isOwner() && settingsId == featureSettingsId() && featureSettingsValues()
+        && request.resource.data.created == resource.data.created
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flags', 'audiences', 'updated']);
     }
     match /counters/notifications {
       allow get: if isAccountAdmin();
@@ -252,8 +341,8 @@ service cloud.firestore {
           && !(request.resource.data.beforeRole in ['Owner', 'Admin', 'Administrator', 'Developer'])));
     }
     match /notifications/{notificationId} {
-      allow get: if resource.data.active == true || isAccountAdmin();
-      allow list: if request.query.limit != null && request.query.limit <= 101 && (resource.data.active == true || isAccountAdmin());
+      allow get: if isAccountAdmin() || (featureEnabled('notifications') && resource.data.active == true);
+      allow list: if request.query.limit != null && request.query.limit <= 101 && (isAccountAdmin() || (featureEnabled('notifications') && resource.data.active == true));
       allow create: if isAccountAdmin() && notificationValues() && newNumberedNotification(notificationId)
         && request.resource.data.created == request.time && notificationMetadata(request.resource.data.metadata);
       allow update: if isAccountAdmin() && notificationValues() && recordIdentity(notificationId, 'Notification')
@@ -287,11 +376,21 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'updated']);
     }
     match /planSlugs/{slug} {
-      allow get: if isAccountAdmin();
-      allow create: if isAccountAdmin() && request.resource.data.keys().hasAll(['id', 'slug']) && request.resource.data.keys().hasOnly(['id', 'slug'])
-        && request.resource.data.id is string && request.resource.data.slug == slug && !exists(planPath(request.resource.data.id))
+      allow get: if true;
+      allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 201;
+      allow create: if isAccountAdmin() && planTierValues(request.resource.data, slug) && !exists(planPath(request.resource.data.id))
         && getAfter(planPath(request.resource.data.id)).data.id == request.resource.data.id
-        && getAfter(planPath(request.resource.data.id)).data.slug == slug;
+        && getAfter(planPath(request.resource.data.id)).data.type == 'Plan'
+        && getAfter(planPath(request.resource.data.id)).data.slug == slug
+        && getAfter(planPath(request.resource.data.id)).data.number == request.resource.data.number
+        && getAfter(planPath(request.resource.data.id)).data.displayOrder == request.resource.data.displayOrder;
+      allow update: if isAccountAdmin() && planTierValues(request.resource.data, slug)
+        && request.resource.data.id == resource.data.id && request.resource.data.slug == resource.data.slug
+        && getAfter(planPath(request.resource.data.id)).data.id == request.resource.data.id
+        && getAfter(planPath(request.resource.data.id)).data.type == 'Plan'
+        && getAfter(planPath(request.resource.data.id)).data.slug == slug
+        && getAfter(planPath(request.resource.data.id)).data.number == request.resource.data.number
+        && getAfter(planPath(request.resource.data.id)).data.displayOrder == request.resource.data.displayOrder;
     }
     match /events/{eventId} {
       allow get: if isAccountAdmin();
@@ -310,7 +409,7 @@ service cloud.firestore {
     }
     match /formSubmissions/{submissionId} {
       allow read: if isOwner();
-      allow create: if submissionValues() && recordIdentity(submissionId, 'FormSubmission')
+      allow create: if featureEnabled('contact') && submissionValues() && recordIdentity(submissionId, 'FormSubmission')
         && submissionId.matches('FormSubmission_' + string(request.resource.data.number) + '_Contact_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
         && getAfter(submissionCounterPath()).data.lastSubmissionId == submissionId
         && getAfter(submissionCounterPath()).data.number == request.resource.data.number

@@ -4,12 +4,13 @@ import PageMeta from '../PageMeta';
 import { Link } from 'expo-router';
 import RouterAnchor from '../RouterAnchor';
 import { useContactPage } from './useContactPage';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { contactFields, contactTopics, contactDescription } from './content';
 import { Mail, Send, Plug, Globe2, Lightbulb, ArrowRight, ArrowUpRight, MessageCircle, CheckCircle2 } from 'lucide-react';
 
 const topicIcons = { ideas: Lightbulb, support: Plug };
 
-const ContactPage = () => {
+const ContactContent = () => {
   const state = useContactPage();
   return (
     <>
@@ -159,6 +160,21 @@ const ContactPage = () => {
       <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />
     </>
   );
+};
+
+const ContactPage = () => {
+  const { error, flags, ready } = useFeatureFlags();
+  if (ready && flags.contact) return <ContactContent />;
+  const message = !ready && !error ? `Loading Contact…` : `Contact Is Currently Unavailable`;
+  return <>
+    <PageMeta noIndex title={`Contact`} canonicalPath={`/contact`} description={message} />
+    <article id={`contact-page`} className={`contact-page`} aria-busy={!ready && !error} aria-labelledby={`contact-title`}>
+      <section id={`contact-unavailable`} className={`contact-intro`}>
+        <h1 id={`contact-title`} className={`contact-title`}>{`Contact`}</h1>
+        <p role={`status`} id={`contact-unavailable-message`} className={`contact-description`}>{message}</p>
+      </section>
+    </article>
+  </>;
 };
 
 export default ContactPage;

@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import { accountDate } from './data';
 import { StatusCell } from '../AdminWidgets';
 import { createStyles } from './styles.native';
+import { routes } from '../../shared/routes';
 import { Text, View, Pressable } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -15,7 +16,7 @@ const AdminRecordPreviews = ({ snapshot }: { snapshot: AdminSnapshot }) => {
   const styles = useMemo(() => createStyles(palette), [palette]);
   return <View {...elementProps(`admin-record-previews`)}>
     {([{ id: `users`, title: `Users`, Icon: Users, records: snapshot.users }, { id: `domains`, title: `Domains`, Icon: Globe2, records: snapshot.domains }] as const).map(({ id, title, Icon, records }) => <View key={id} {...elementProps(`admin-recent-records`, id)} style={styles.root}>
-      <View {...elementProps(`admin-recent-records-heading`, id)} style={styles.heading}><View {...elementProps(`admin-recent-records-title-row`, id)} style={styles.titleRow}><Icon {...elementProps(`admin-recent-records-icon`, id)} size={22} color={palette.accent} /><Text {...elementProps(`admin-recent-records-title`, id)} style={styles.title}>{title}</Text></View><Link href={id === `users` ? `/admin/users` : `/admin/domains`} asChild><Pressable {...elementProps(`admin-recent-records-view-all`, id)} style={styles.link}><Text {...elementProps(`admin-recent-records-view-all-label`, id)} style={styles.detail}>{`View All`}</Text><ArrowUpRight {...elementProps(`admin-recent-records-arrow`, id)} size={13} color={palette.accent} /></Pressable></Link></View>
+      <View {...elementProps(`admin-recent-records-heading`, id)} style={styles.heading}><View {...elementProps(`admin-recent-records-title-row`, id)} style={styles.titleRow}><Icon {...elementProps(`admin-recent-records-icon`, id)} size={22} color={palette.accent} /><Text {...elementProps(`admin-recent-records-title`, id)} style={styles.title}>{title}</Text></View><Link href={id === `users` ? routes.adminUsers.href : routes.adminDomains.href} asChild><Pressable {...elementProps(`admin-recent-records-view-all`, id)} style={styles.link}><Text {...elementProps(`admin-recent-records-view-all-label`, id)} style={styles.detail}>{`View All`}</Text><ArrowUpRight {...elementProps(`admin-recent-records-arrow`, id)} size={13} color={palette.accent} /></Pressable></Link></View>
       <View {...elementProps(`admin-recent-records-table`, id)} style={styles.table}>{records.length ? records.slice(0, 5).sort((first, second) => first.number - second.number).map(record => {
         const status = `active` in record ? record.active ? `Active` : `Inactive` : getDomainStatus(record);
         const detail = `emailVerified` in record ? `${record.email} · ${accountDate(record.created)}` : `${record.registrar} · ${formatDate(record.expiresAt)}`;

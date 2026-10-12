@@ -1,11 +1,11 @@
-.dd-observability-trend { min-width: 0; }
-.dd-observability-trend-reading { display: flex; min-width: 0; min-height: 36px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-bottom: 4px; }
+.dd-observability-trend { display: flex; min-width: 0; min-height: 0; flex-direction: column; }
+.dd-observability-trend-reading { display: flex; min-width: 0; min-height: 36px; flex: none; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-bottom: 4px; }
 .dd-observability-trend-timestamp { display: inline-flex; min-width: 0; align-items: center; gap: 6px; color: var(--dd-panel-muted, var(--muted)); font-size: 10px; }
 .dd-observability-trend-timestamp > svg { flex: none; }
 .dd-observability-trend-value { display: inline-flex; min-width: 0; flex-wrap: wrap; align-items: baseline; gap: 7px; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 25px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .dd-observability-trend-caption { color: var(--dd-panel-muted, var(--muted)); font-family: var(--font-body); font-size: 9px; font-weight: 400; line-height: 1.6; }
-.dd-observability-trend-plot { position: relative; min-width: 0; }
-.dd-observability-trend-chart { display: block; width: 100%; min-width: 0; height: 220px; overflow: visible; color: var(--dd-highlight, var(--accent)); }
+.dd-observability-trend-plot { position: relative; min-width: 0; min-height: 0; height: 220px; }
+.dd-observability-trend-chart { display: block; width: 100%; min-width: 0; height: 100%; color: var(--dd-highlight, var(--accent)); }
 .dd-observability-trend-grid line { stroke: color-mix(in srgb, var(--accent) 10%, transparent); stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
 .dd-observability-trend-grid text, .dd-observability-trend-label { fill: var(--dd-panel-muted, var(--muted)); font-family: var(--font-body); font-size: 11px; }
 .dd-observability-trend-area { animation: dd-observability-area-reveal .8s ease backwards; }
@@ -14,11 +14,18 @@
 .dd-observability-trend-active line { stroke: currentColor; stroke-opacity: .2; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
 .dd-observability-trend-active circle { fill: var(--dd-panel-surface, var(--paper)); stroke: currentColor; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
 .dd-observability-trend-empty { position: absolute; inset: 20px 12px 38px; display: grid; align-content: center; margin: 0; color: var(--dd-panel-muted, var(--muted)); font-size: 11px; line-height: 1.7; text-align: center; }
-.dd-observability-trend-slider-label { display: flex; min-width: 0; align-items: center; gap: 12px; padding-left: 9.5%; }
-.dd-observability-trend-slider-label > span { flex: none; }
-.dd-observability-trend-slider { width: 100%; min-width: 0; height: 18px; accent-color: var(--accent); cursor: pointer; }
-.dd-observability-trend-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.dd-observability-panel.is-compact .dd-observability-trend-chart { height: 132px; }
+.dd-observability-trend-slider-label { display: flex; min-width: 0; flex: none; align-items: center; gap: 12px; padding-left: 76px; }
+.dd-observability-trend-slider-copy { display: flex; flex: none; flex-direction: column; }
+.dd-observability-trend-slider-caption { display: inline-flex; align-items: center; gap: 5px; color: var(--dd-highlight, var(--accent)); }
+.dd-observability-trend-slider-hint { font-size: 9px; line-height: 1.2; }
+.dd-observability-trend-slider { width: 100%; min-width: 0; height: 24px; margin: 0; padding: 0; appearance: none; -webkit-appearance: none; background: transparent; cursor: ew-resize; }
+.dd-observability-trend-slider::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--dd-highlight, var(--accent)) 45%, transparent); }
+.dd-observability-trend-slider::-moz-range-track { height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--dd-highlight, var(--accent)) 45%, transparent); }
+.dd-observability-trend-slider::-webkit-slider-thumb { width: 12px; height: 12px; margin-top: -5px; box-sizing: border-box; appearance: none; -webkit-appearance: none; border: 2px solid var(--dd-highlight, var(--accent)); border-radius: 50%; background: var(--dd-panel-surface, var(--paper)); }
+.dd-observability-trend-slider::-moz-range-thumb { width: 12px; height: 12px; box-sizing: border-box; border: 2px solid var(--dd-highlight, var(--accent)); border-radius: 50%; background: var(--dd-panel-surface, var(--paper)); }
+.dd-observability-trend-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 5px; }
+.dd-observability-panel.is-compact .dd-observability-trend { flex: 1 1 auto; }
+.dd-observability-panel.is-compact .dd-observability-trend-plot { min-height: 132px; height: 132px; flex: 1 1 auto; }
 .dd-observability-panel.is-compact .dd-observability-trend-value { font-size: 22px; }
 .dd-observability-panel.is-compact .dd-observability-trend-reading { gap: 4px 9px; }
 @keyframes dd-observability-line-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }

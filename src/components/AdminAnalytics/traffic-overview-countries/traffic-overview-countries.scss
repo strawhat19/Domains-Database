@@ -11,4 +11,16 @@
 .dd-traffic-overview-countries .dd-traffic-overview-breakdown-scroll { max-height: 220px; }
 .dd-traffic-overview-countries .dd-traffic-overview-breakdown-button { min-height: 43px; gap: 5px 6px; padding-block: 6px; }
 .dd-traffic-overview-countries .dd-traffic-overview-breakdown-primary { gap: 5px; }
+.dd-traffic-overview-countries.is-inline { display: none; height: 32px; max-width: 520px; flex: 0 1 400px; flex-direction: row; align-items: center; gap: 7px; margin-left: auto; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-countries-heading { gap: 3px; padding: 0; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-countries-title { font-size: 11px; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-countries-explore { width: 26px; min-height: 32px; justify-content: center; padding: 4px; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-countries-content, .dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown { height: 32px; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-countries-explore > span, .dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-heading, .dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-rank, .dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-raw, .dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-track, .dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-arrow, .dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-alternate { display: none; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-scroll { max-height: none; overflow-x: auto; overflow-y: hidden; scrollbar-gutter: auto; scrollbar-width: none; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-rows { display: flex; width: max-content; gap: 4px; padding: 0; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-row { flex: none; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-button { height: 32px; min-height: 32px; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 4px; border-color: color-mix(in srgb, var(--accent) 10%, transparent); padding: 5px 6px; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-values { display: block; }
+.dd-traffic-overview-countries.is-inline .dd-traffic-overview-breakdown-empty { padding: 0; font-size: 9px; line-height: 1.4; }
 @media (prefers-reduced-motion: reduce) { .dd-traffic-overview-countries-explore { transition: none; } }

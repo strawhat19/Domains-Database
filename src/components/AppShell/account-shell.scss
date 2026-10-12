@@ -25,7 +25,7 @@
     :is(.account-layout, [data-class='account-layout']) { gap: max(28px, var(--account-gutter)) !important; min-height: calc(100dvh - var(--account-header-height)); }
     :is(.account-layout, [data-class='account-layout']) > :not(.account-sidebar) { grid-column: 2; min-width: 0; padding: 32px var(--account-gutter) clamp(32px, 4vw, 56px) 0 !important; }
     .account-sidebar { left: 0; bottom: 0; z-index: 20; position: fixed !important; border-radius: 0 !important; border-width: 0 1px 0 0 !important; padding: 16px 8px 0 !important; top: var(--account-header-height) !important; width: var(--account-sidebar-width) !important; height: calc(100dvh - var(--account-header-height)) !important; max-height: none !important; transition: width .3s cubic-bezier(.22, 1, .36, 1), background-color .35s ease, border-color .35s ease, color .35s ease; }
-    .account-sidebar:not(.is-collapsed) { padding: 9px 8px 5px !important; }
+    .account-sidebar:not(.is-collapsed) { --account-sidebar-heading-gap: 9px; padding: var(--account-sidebar-heading-gap) 8px 5px !important; }
     &:has(.account-sidebar) .site-footer { margin-left: var(--account-sidebar-width); transition: margin-left .3s cubic-bezier(.22, 1, .36, 1), background-color .38s ease, color .38s ease; }
     &:not(:has(.account-sidebar)) {
       .header-inner { padding-inline-start: var(--account-gutter); }

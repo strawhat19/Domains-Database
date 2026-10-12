@@ -2,7 +2,7 @@
 
 import './traffic-trend.scss';
 import { useState } from 'react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, MoveHorizontal } from 'lucide-react';
 import type { AnalyticsTrendPoint } from '../../../shared/analytics/types';
 import { formatTrafficDate, formatTrafficCount, type TrafficMetric } from '../data';
 
@@ -65,7 +65,26 @@ const TrafficTrend = ({ points, metric, onMetricChange, showArea = true, showHea
         {active && <g id={`dd-traffic-trend-active`} className={`dd-traffic-trend-active`} aria-hidden={`true`}><line x1={active.x} y1={plot.top} x2={active.x} y2={plot.bottom} /><circle r={5} cx={active.x} cy={active.y} /></g>}
         {labels.map((index) => <text key={index} x={coordinates[index].x} y={230} textAnchor={index === 0 ? `start` : index === points.length - 1 ? `end` : `middle`} id={`dd-traffic-trend-label-${index}`} className={`dd-traffic-trend-label`} aria-hidden={`true`}>{formatTrafficDate(points[index].date, true)}</text>)}
       </svg>
-      {showDaySlider && points.length > 1 && <label id={`dd-traffic-trend-slider-label`} className={`dd-traffic-trend-slider-label`} htmlFor={`dd-traffic-trend-slider`}><span id={`dd-traffic-trend-slider-caption`} className={`dd-traffic-caption`}>Explore Each Day</span><input min={0} type={`range`} step={1} max={points.length - 1} value={Math.max(0, activeIndex)} id={`dd-traffic-trend-slider`} className={`dd-traffic-trend-slider`} aria-valuetext={active ? `${formatTrafficDate(active.date)}, ${formatTrafficCount(active[metric])} ${label}` : undefined} onChange={(event) => { setHovered(null); setSelected(Number(event.target.value)); }} /></label>}
+      {showDaySlider && points.length > 1 && <label id={`dd-traffic-trend-slider-label`} className={`dd-traffic-trend-slider-label`} htmlFor={`dd-traffic-trend-slider`}>
+        <span id={`dd-traffic-trend-slider-copy`} className={`dd-traffic-trend-slider-copy`}>
+          <span id={`dd-traffic-trend-slider-caption`} className={`dd-traffic-caption dd-traffic-trend-slider-caption`}><MoveHorizontal size={12} aria-hidden={`true`} className={`dd-report-icon`} />Day Timeline</span>
+          <span id={`dd-traffic-trend-slider-hint`} className={`dd-traffic-caption dd-traffic-trend-slider-hint`}>Drag To Inspect</span>
+        </span>
+        <input
+          min={0}
+          step={1}
+          type={`range`}
+          max={points.length - 1}
+          value={Math.max(0, activeIndex)}
+          id={`dd-traffic-trend-slider`}
+          className={`dd-traffic-trend-slider`}
+          aria-labelledby={`dd-traffic-trend-slider-caption`}
+          aria-describedby={`dd-traffic-trend-slider-hint`}
+          title={`Drag Or Use Arrow Keys To Inspect Each Day`}
+          aria-valuetext={active ? `${formatTrafficDate(active.date)}, ${formatTrafficCount(active[metric])} ${label}` : undefined}
+          onChange={(event) => { setHovered(null); setSelected(Number(event.target.value)); }}
+        />
+      </label>}
     </section>
   );
 };

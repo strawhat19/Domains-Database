@@ -22,6 +22,7 @@ import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { usePortfolioSearch } from '../../shared/portfolioPreferences/usePortfolioSearch';
+import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { buildPortfolioCopyText, excludeHiddenPortfolioSections, type PortfolioCopyFormat } from './copyFormats';
 import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
@@ -77,6 +78,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const visibleIds = useMemo(() => {
     return [...collectionVisibleIds.values()].flat().concat(mainVisibleIds);
   }, [collectionVisibleIds, mainVisibleIds]);
+  const organizationSummary = useMemo(() => {
+    const apps = preferences.customGroups.filter(group => group.isApp).length;
+    const { ungroupedCount } = buildPortfolioDestinationTree(portfolio.domains, preferences.customGroups, preferences.collections);
+    return `Collections: ${preferences.collections.length} · Groups: ${preferences.customGroups.length - apps} · Apps: ${apps} · Ungrouped: ${ungroupedCount}`;
+  }, [portfolio.domains, preferences.customGroups, preferences.collections]);
+  const footerSummary = `Showing ${visibleIds.length} Of ${search.searching ? portfolio.registrarDomains.length : portfolio.filteredDomains.length} · ${organizationSummary}`;
   const copyIds = useMemo(() => {
     const mainDomains = mainGroups.flatMap(group => group.domains);
     const collectionDomains = sections.collections.flatMap(section => compact ? section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : section.domains);
@@ -650,8 +657,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           onToggleGroupSearch={(key, collectionId) => search.toggleGroup(collectionId, key)}
         />
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
-          <span id={`portfolio-visible-count`} className={`portfolio-visible-count`}>
-            {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-visible-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-footer`} /> : `Showing ${visibleIds.length} Of ${search.searching ? portfolio.registrarDomains.length : portfolio.filteredDomains.length}`}
+          <span id={`portfolio-visible-count`} className={`portfolio-visible-count`} title={portfolio.loading ? undefined : footerSummary}>
+            {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-visible-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-footer`} /> : footerSummary}
           </span>
           <button type={`button`} disabled={portfolio.loading} onClick={portfolio.openSetup} id={`portfolio-connect-registrar`} className={`portfolio-button portfolio-button-quiet`}>
             <Link2 size={13} aria-hidden={`true`} id={`portfolio-connect-registrar-icon`} className={`portfolio-button-icon`} />

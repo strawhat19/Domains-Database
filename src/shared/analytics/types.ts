@@ -4,7 +4,7 @@ export type AnalyticsFailure = { code: string; message: string };
 export type AnalyticsFilters = { to: string; from: string; path: string; device: string; country: string; referrer: string };
 export type AnalyticsTotals = { visitors: number; pageviews: number };
 export type AnalyticsTrendPoint = AnalyticsTotals & { date: string };
-export type AnalyticsBreakdown = AnalyticsTotals & { value: string };
+export type AnalyticsBreakdown = AnalyticsTotals & { value: string; hostname?: string };
 export interface TrafficReport {
   fetchedAt: string;
   period: number;

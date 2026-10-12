@@ -11,10 +11,13 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { Check, ArrowUpRight, RefreshCw } from 'lucide-react-native';
 import { Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { getPricingFeatures } from '../../shared/plans/pricingFeatures';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { getPricingAmount, getPricingPeriod, pricingDescription } from './presentation';
 
 const Pricing = () => {
   const state = usePricing();
+  const { flags, ready } = useFeatureFlags();
+  const contactEnabled = ready && flags.contact;
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -30,7 +33,7 @@ const Pricing = () => {
       <View {...elementProps(`landing-pricing-heading`)} style={styles.heading}>
         <Text {...elementProps(`landing-pricing-eyebrow`)} style={styles.eyebrow}>{`ROOM TO GROW`}</Text>
         <Text {...elementProps(`landing-pricing-title`)} style={styles.title} accessibilityRole={`header`}>{`Plans for your next idea.`}</Text>
-        <Text {...elementProps(`landing-pricing-description`)} style={styles.description}>{pricingDescription}</Text>
+        <Text {...elementProps(`landing-pricing-description`)} style={styles.description}>{contactEnabled ? pricingDescription : `Explore the plans and features for your next idea.`}</Text>
       </View>
       {state.loading ? <PricingSkeleton cardWidth={cardWidth} expanded={state.showFeaturePreview} /> : state.error ? <View {...elementProps(`pricing-error`)} style={styles.feedback}>
         <Text {...elementProps(`pricing-error-description`)} style={[styles.description, { color: palette.danger }]} accessibilityRole={`alert`}>{state.error}</Text>
@@ -55,7 +58,7 @@ const Pricing = () => {
               <Text style={styles.featureText} {...elementProps(`landing-pricing-feature-text`, `${plan.id}-${index}`)}>{feature}</Text>
             </View>)}
           </View>
-          <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><Pressable {...elementProps(`landing-pricing-plan-link`, plan.id)} accessibilityRole={`link`} style={[styles.button, !plan.highlighted && styles.secondaryButton]}><Text {...elementProps(`landing-pricing-plan-link-label`, plan.id)} style={[styles.buttonText, !plan.highlighted && styles.secondaryButtonText]}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${plan.name}`}</Text><ArrowUpRight {...elementProps(`landing-pricing-plan-link-icon`, plan.id)} size={15} color={plan.highlighted ? palette.contrast : palette.accent} /></Pressable></Link>
+          {(contactEnabled || (plan.priceCents === 0 && plan.slug === `free`)) && <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><Pressable {...elementProps(`landing-pricing-plan-link`, plan.id)} accessibilityRole={`link`} style={[styles.button, !plan.highlighted && styles.secondaryButton]}><Text {...elementProps(`landing-pricing-plan-link-label`, plan.id)} style={[styles.buttonText, !plan.highlighted && styles.secondaryButtonText]}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${plan.name}`}</Text><ArrowUpRight {...elementProps(`landing-pricing-plan-link-icon`, plan.id)} size={15} color={plan.highlighted ? palette.contrast : palette.accent} /></Pressable></Link>}
         </View>)}
       </View> : <View {...elementProps(`pricing-empty`)} style={styles.feedback}>
         <Text {...elementProps(`pricing-empty-description`)} style={styles.description}>{`Plan details will be available here soon. You can start organizing your domains today.`}</Text>

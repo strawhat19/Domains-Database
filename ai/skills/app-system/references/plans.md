@@ -20,3 +20,11 @@ Keep plan CTAs truthful: View Details, Contact, or the app's already supported p
 
 Put the destination's currency set, schema/route mapping, catalog migration, and entitlement relationship in project docs outside ai/. A new starter can have an empty published catalog with a working editor; record owner-supplied prices/content as setup needed rather than pretending they are configured.
 
+## Feature Tier Targeting
+
+For requested feature flags or the connected starter, follow [Owner Features](../../admin/references/features.md). The Features table offers actual paid catalog tiers as a single minimum selection, with no Free button; no selection means Free And Above, and selecting the highlighted tier again clears it. Roles are configured separately in the feature settings modal. Eligibility is the saved global boolean AND permitted current role AND an already trusted user plan at or above the threshold.
+
+Compare current catalog `displayOrder`, then immutable app-owned `number`; Free is the baseline. Do not hardcode paid names, rank by price, or persist a list of only today's higher tiers. New higher catalog tiers qualify dynamically for users whose trusted entitlement already references them. Editing rank can change this explicit eligibility policy, while editing/publication never assigns an entitlement or processes payment.
+
+Maintain a bounded public-safe slug/rank index containing only ID, slug, number and displayOrder, including inactive tiers still referenced by entitlements. Pricing remains active-only; drafts/private notes and provider metadata never enter the rank projection. Create/edit/status operations atomically maintain matching rank/reservation metadata, with rules checking catalog equality. Backfill existing metadata and migrate legacy exact feature allowlists through the Owner-authorized confirmed operation described in Features before enabling plan changes. Preserve unknown saved thresholds as unavailable/recoverable instead of guessing a tier.
+

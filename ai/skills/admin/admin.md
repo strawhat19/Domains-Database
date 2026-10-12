@@ -13,6 +13,8 @@ Profile, AccountNavigation, AdminDashboard, AdminRecords, AnalyticsCharts and Ob
 | Setup and adoption | [Adoption](../../adoption.md) |
 | Firebase/account hydration, IDs/counters, realtime subscriptions, roles, rules/indexes and scaling | [Firestore](references/firestore.md) |
 | Profile/users, notifications/read state, public forms/private review, persisted actions and optional delivery | [Workflows](references/workflows.md) |
+| Private account connection configuration and permitted typed provider sync | [Connections](references/connections.md) |
+| Owner global feature controls, role/minimum-plan targeting, public-safe tier ranks and gated consumers/intake | [Features](references/features.md) |
 | Traffic/runtime adapters, range semantics, source/units/cache, flags/device/source/page icons and exports | [Analytics](references/analytics.md) |
 | Shell/sidebar/editor/chart sizing, controls, motion and platform rendering | [Layout](layout.md) |
 | Complete public/private common core | [App System](../app-system/SKILL.md) |
@@ -46,6 +48,12 @@ Profile exposes supported editable details/preferences, private tools and provid
 Follow [notifications and account workflows](references/workflows.md), including their typed operation map, canonical publication state, unique-slug/identity preservation, persisted CRUD/status actions, private read-state hydration, reload recovery and deliberate own-data resets. A read-only gallery or decorative toggle is not completed management.
 
 Account-specific read preferences never alter shared announcement status. A connected starter uses private account-scoped read persistence; existing session/device state must be labelled accurately. Email/push delivery exists only with its separately configured trusted transport.
+
+## Owner Features And Plan Eligibility
+
+Follow [Features](references/features.md) for persisted global settings and the Owner-only Features item last in Dashboard submenus. Its shared record table uses No., Feature, Description, Value, Plans, Actions; slimmer Disable/Enable segments sit beside a settings gear, and the accessible modal contains Description and independent role segments.
+
+Availability combines the global boolean, current role and current minimum plan tier. No selected paid plan means Free And Above; one selected paid threshold admits that tier and future higher tiers using actual catalog order and stable record number. Keep raw global settings separate from effective viewer flags, and catalog rank metadata separate from publication and trusted entitlements. Map Theme Toggle, Top Bar Infinite Marquee, Notifications and Contact across all consumers and authoritative intake/read gates. Preserve saved theme preferences while forcing dark, remeasure header offsets when the marquee changes, and retain authorized management when public surfaces are disabled.
 
 ## Contact Intake And Private Request Review
 

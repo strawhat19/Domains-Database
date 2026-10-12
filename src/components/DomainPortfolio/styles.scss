@@ -16,6 +16,8 @@
   gap: 24px;
   display: flex;
   padding-block: 12px;
+  container-type: inline-size;
+  container-name: portfolio-heading;
   padding-inline: var(--portfolio-inline-padding, 16px);
   align-items: center;
   background: var(--paper);
@@ -401,7 +403,7 @@
   .portfolio-search-tools { flex-basis: 100%; }
   .portfolio-toolbar-actions { margin-left: auto; }
 }
-@media (min-width: 1200px) {
+@container portfolio-heading (min-width: 700px) {
   .portfolio-heading { display: grid; grid-template-columns: max-content minmax(0, 1fr); }
   .portfolio-heading .portfolio-heading-count {
     border: 0;
@@ -428,6 +430,8 @@
   .portfolio-heading .portfolio-heading-filter { display: inline-flex; }
   .portfolio-extension-summary { grid-row: 1; }
   .portfolio-primary-actions { flex-shrink: 0; }
+}
+@media (min-width: 1200px) {
   .portfolio-search-count {
     opacity: 0;
     max-width: 0;

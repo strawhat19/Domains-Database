@@ -1,13 +1,17 @@
 import { Platform } from 'react-native';
 import { useLocalStorage } from '../config';
 import { FirebaseError } from 'firebase/app';
+import type { PlanTier } from '../plans/types';
 import { Roles, Types } from '../../types/types';
+import { readPlanTier } from '../plans/firebase';
 import { firebaseEnabled } from '../firebase/config';
 import { getAppCollectionIDNumber } from '../common/ids';
+import { getFeatureFlags } from '../featureFlags/service';
 import { assertOwnerSession } from '../authentication/firebase';
 import { restoreSession, subscribeAuthState } from '../authentication/service';
 import { FormSubmission } from '../models/forms/FormSubmission';
 import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
+import { isFeaturePlan, featureSettingsId, readFeatureSettings, createFeatureSettings, resolveFeatureFlags } from '../featureFlags/values';
 import type { ContactSubmissionInput, SubmissionStatus } from './types';
 import { createFirestoreCollection, numberCollectionPage, type CollectionPage } from '../firebase/collection';
 import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
@@ -93,6 +97,7 @@ const runOperation = async <T,>(operation: () => Promise<T>): Promise<T> => {
 export const submitContact = (input: ContactSubmissionInput): Promise<FormSubmission> => runOperation(async () => {
   const normalized = normalizeInput(input);
   if (!cloudEnabled) return serialize(async () => {
+    if (!(await getFeatureFlags()).contact) throw new Error(`Contact Is Currently Unavailable`);
     const snapshot = await readLocal();
     const record = new FormSubmission({ ...normalized, number: snapshot.nextNumber });
     if (!Number.isSafeInteger(record.number + 1)) throw new Error(`Submission Number Limit Reached`);
@@ -104,10 +109,28 @@ export const submitContact = (input: ContactSubmissionInput): Promise<FormSubmis
   const auth = getFirebaseAuth();
   await auth.authStateReady();
   const firebaseUid = auth.currentUser?.uid ?? ``;
+  const viewer = (await restoreSession())?.user ?? null;
+  if (firebaseUid && viewer?.firebase_uid !== firebaseUid) throw new Error(`Sign In Again To Contact Us`);
   const database = getFirebaseDb();
   const counterRef = doc(database, `counters`, `formSubmissions`);
   return runTransaction(database, async transaction => {
     assertActor(firebaseUid);
+    const settings = await transaction.get(doc(database, `featureSettings`, featureSettingsId));
+    const featureSettings = settings.exists() ? readFeatureSettings(settings.data()) : createFeatureSettings();
+    const account = viewer ? (await transaction.get(doc(database, `users`, viewer.id))).data() : undefined;
+    const audience = viewer ? { role: typeof account?.role === `string` ? account.role : ``, plan: account?.plan === undefined ? `free` : typeof account.plan === `string` ? account.plan : ``, active: account?.active === true && account?.id === viewer.id && account?.firebase_uid === firebaseUid } : null;
+    const contact = featureSettings.audiences.contact;
+    const minimum = contact.plans?.[0];
+    const plan = audience?.plan?.toLowerCase() ?? `free`;
+    const tiers: PlanTier[] = [];
+    if (featureSettings.flags.contact && contact.planMode === `minimum` && minimum && minimum !== `free` && plan !== `free` && isFeaturePlan(plan)) {
+      for (const slug of new Set([minimum, plan])) {
+        const snapshot = await transaction.get(doc(database, `planSlugs`, slug));
+        const tier = snapshot.exists() ? readPlanTier(snapshot.data(), slug) : null;
+        if (tier) tiers.push(tier);
+      }
+    }
+    if (!resolveFeatureFlags(featureSettings, audience, tiers).contact) throw new Error(`Contact Is Currently Unavailable`);
     const counterSnapshot = await transaction.get(counterRef);
     const counter = counterSnapshot.data();
     const previous = counterSnapshot.exists() ? counter?.number : 0;

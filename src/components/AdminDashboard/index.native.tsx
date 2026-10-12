@@ -3,6 +3,7 @@ import AdminPlans from '../AdminPlans';
 import AdminEvents from '../AdminEvents';
 import { useMemo, useState } from 'react';
 import AdminDomains from '../AdminDomains';
+import AdminFeatures from '../AdminFeatures';
 import AdminFeedback from '../AdminFeedback';
 import HeadingActions from './HeadingActions';
 import AccountSidebar from '../AccountSidebar';
@@ -20,11 +21,12 @@ import AdminDashboardSummary from '../AdminDashboardSummary';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import type { AdminSection } from '../../shared/admin/permissions';
 import { Text, View, Pressable, useWindowDimensions } from 'react-native';
-import { Bot, Cpu, Bell, Star, Users, Wallet, Globe2, FileText, RotateCcw, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard } from 'lucide-react-native';
+import { Bot, Cpu, Bell, Star, Users, Wallet, Globe2, FileText, RotateCcw, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, SlidersHorizontal } from 'lucide-react-native';
 
 const sections = {
   overview: { title: `Dashboard`, parent: `Dashboard`, Icon: LayoutDashboard },
   users: { title: `Users`, parent: `Dashboard`, Icon: Users },
+  features: { title: `Features`, parent: `Dashboard`, Icon: SlidersHorizontal },
   plans: { title: `Plans`, parent: `Dashboard`, Icon: Wallet },
   domains: { title: `Domains`, parent: `Dashboard`, Icon: Globe2 },
   events: { title: `Events`, parent: `Dashboard`, Icon: CalendarDays },
@@ -53,7 +55,7 @@ const DashboardContent = ({ section }: { section: AdminSection }) => {
   return <View {...elementProps(`account-layout`, `admin-${section}`)} style={[styles.root, width <= 650 && styles.compact]}>
     <AccountSidebar section={section} counts={snapshot?.canInspectAccounts ? { users: snapshot.userCoverage.loaded, domains: snapshot.domainCoverage.loaded, notifications: snapshot.notificationCoverage?.loaded } : undefined} countsLoading={state.loading} />
     <View {...elementProps(`admin-dashboard-content`, section)} style={[styles.content, width <= 650 && styles.compactContent]}>
-      <View {...elementProps(`admin-dashboard-heading`, section)} style={[styles.heading, width <= 850 && !analytics && styles.headingCompact, (section === `users` || section === `plans` || section === `domains` || section === `notifications`) && styles.tableHeading]}>
+      <View {...elementProps(`admin-dashboard-heading`, section)} style={[styles.heading, width <= 850 && !analytics && styles.headingCompact, (section === `users` || section === `features` || section === `plans` || section === `domains` || section === `notifications`) && styles.tableHeading]}>
         <View {...elementProps(`admin-dashboard-heading-copy`, section)} style={styles.headingCopy}>
           <View {...elementProps(`admin-dashboard-eyebrow`, section)} style={styles.eyebrow}>
             <View {...elementProps(`admin-dashboard-eyebrow-line`, section)} style={styles.eyebrowLine} />
@@ -74,15 +76,15 @@ const DashboardContent = ({ section }: { section: AdminSection }) => {
         <AdminObservability compact />
         {state.loading ? <View {...elementProps(`admin-dashboard-loading`)} style={styles.loading}><AdminLoading id={`database-overview`} label={`Loading Domain Activity And Account Records`} /></View> : null}
         {snapshot ? <AdminDashboardSummary snapshot={snapshot} onRefresh={state.refresh} /> : null}
-      </> : section === `feedback` || section === `reviews` || section === `aiChats` || section === `messages` ? <AdminFeedback section={section} /> : section === `events` ? <AdminEvents /> : section === `users` ? <AdminUsers /> : section === `plans` ? <AdminPlans headingActionsTarget={headingActionsTarget} /> : section === `domains` ? <AdminDomains snapshot={snapshot} loading={state.loading} /> : section === `requests` || section === `formSubmissions` ? <FormSubmissions /> : section === `reports` ? <>
+      </> : section === `feedback` || section === `reviews` || section === `aiChats` || section === `messages` ? <AdminFeedback section={section} /> : section === `events` ? <AdminEvents /> : section === `users` ? <AdminUsers /> : section === `features` ? <AdminFeatures /> : section === `plans` ? <AdminPlans headingActionsTarget={headingActionsTarget} /> : section === `domains` ? <AdminDomains snapshot={snapshot} loading={state.loading} /> : section === `requests` || section === `formSubmissions` ? <FormSubmissions /> : section === `reports` ? <>
         {state.loading ? <AdminLoading id={`reports`} label={`Loading Account And Domain Reports`} /> : snapshot ? <AdminRecordPreviews snapshot={snapshot} /> : null}
         <FormSubmissions />
       </> : section === `notifications` ? <AdminNotifications headingActionsTarget={headingActionsTarget} /> : <>
         <View {...elementProps(`admin-analytics-views`)} style={styles.analyticsViews} accessibilityLabel={`Analytics View`}>
-          {([{ id: `traffic`, label: `Website Traffic`, Icon: Globe2 }, { id: `runtime`, label: `Health`, Icon: Cpu }] as const).map(({ id, label, Icon }) => <Pressable key={id} {...elementProps(`admin-analytics-view`, id)} accessibilityRole={`button`} accessibilityState={{ selected: analyticsPanel === id }} onPress={() => setAnalyticsPanel(id)} style={[styles.analyticsView, analyticsPanel === id && styles.analyticsViewActive]}><Icon {...elementProps(`admin-analytics-view-icon`, id)} size={15} color={analyticsPanel === id ? palette.accent : palette.muted} /><Text {...elementProps(`admin-analytics-view-label`, id)} style={[styles.analyticsViewText, analyticsPanel === id && { color: palette.accent }]}>{label}</Text></Pressable>)}
+          {([{ id: `traffic`, label: `Traffic`, Icon: Globe2 }, { id: `runtime`, label: `Health`, Icon: Cpu }] as const).map(({ id, label, Icon }) => <Pressable key={id} {...elementProps(`admin-analytics-view`, id)} accessibilityRole={`button`} accessibilityState={{ selected: analyticsPanel === id }} onPress={() => setAnalyticsPanel(id)} style={[styles.analyticsView, analyticsPanel === id && styles.analyticsViewActive]}><Icon {...elementProps(`admin-analytics-view-icon`, id)} size={15} color={analyticsPanel === id ? palette.accent : palette.muted} /><Text {...elementProps(`admin-analytics-view-label`, id)} style={[styles.analyticsViewText, analyticsPanel === id && { color: palette.accent }]}>{label}</Text></Pressable>)}
         </View>
         {analyticsPanel === `traffic` ? <AdminAnalytics headingActionsTarget={headingActionsTarget} outcomesLoading={state.loading} outcomes={snapshot?.canInspectAccounts ? { accounts: snapshot.users.map(record => record.created), domains: snapshot.domains.map(record => record.created) } : undefined} /> : <AdminObservability headingActionsTarget={headingActionsTarget} />}
-        {snapshot ? <AdminDashboardSummary snapshot={snapshot} onRefresh={state.refresh} previewRecords={false} /> : null}
+        {snapshot ? <AdminDashboardSummary showSource snapshot={snapshot} onRefresh={state.refresh} /> : null}
       </>}
     </View>
   </View>;

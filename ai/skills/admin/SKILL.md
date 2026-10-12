@@ -1,13 +1,15 @@
 ---
 name: admin
-description: Build or update connected account/profile/admin workflows, roles, realtime Firestore dashboards, notifications, saved forms, and protected analytics reports in an existing app.
+description: Build or update connected account/profile/admin workflows, roles, realtime Firestore dashboards, Owner feature configuration, notifications, saved forms, and protected analytics reports in an existing app.
 ---
 
 1. Read the applicable shared guides in AGENTS.md order, then [admin.md](admin.md) for the system map. Preserve the existing framework, theme, schema, routes and narrower permissions; a focused task does not add every module.
 
-2. Read [references/firestore.md](references/firestore.md) for Firebase/provider setup, identity/roles, atomic records, scoped realtime listeners, rules/indexes and scaling. Read [references/workflows.md](references/workflows.md) for profile/users, persisted notification CRUD/read state, guest intake/private review, resets and optional delivery. Read [references/analytics.md](references/analytics.md) for provider queries, ranges/filters, source/cache/capability states and identity icons.
+2. Read [references/firestore.md](references/firestore.md) for Firebase/provider setup, identity/roles, atomic records, scoped realtime listeners, rules/indexes and scaling. Read [references/workflows.md](references/workflows.md) for profile/users, persisted notification CRUD/read state, guest intake/private review, resets and optional delivery. Read [references/connections.md](references/connections.md) for private account connections and typed provider sync. Read [references/analytics.md](references/analytics.md) for provider queries, ranges/filters, source/cache/capability states and identity icons.
 
 3. Read [layout.md](layout.md) for account shell/sidebar persistence, profile/table/editor controls, chart geometry/inspection, responsive behavior and platform icons. Layout parity includes relevant working persisted actions; retain the destination's colors/fonts and business labels.
+
+Read [references/features.md](references/features.md) for requested Owner feature controls or the connected starter: global settings, role/minimum-tier targeting, public-safe catalog ranks, consumer/intake enforcement and the slim table/settings modal. Feature eligibility uses existing trusted entitlements; it does not assign paid access.
 
 4. Use [adoption](../../adoption.md) when connecting the system in another project. Keep actual project IDs, schemas, credentials, bootstrap identities and history outside ai/. Complete source and configuration examples within scope; describe external prerequisites accurately. Do not turn missing configuration into local authentication/data success.
 

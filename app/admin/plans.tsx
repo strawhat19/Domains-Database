@@ -1,10 +1,6 @@
+import { Redirect } from 'expo-router';
 import { routes } from '../../src/shared/routes';
-import PageMeta from '../../src/components/PageMeta';
-import AdminDashboard from '../../src/components/AdminDashboard';
 
-const AdminPlansRoute = () => <>
-  <PageMeta title={`Admin · Plans`} description={`Manage plans, prices, and published pricing features`} />
-  <AdminDashboard section={routes.adminPlans.adminSection} />
-</>;
+const AdminPlansRoute = () => <Redirect href={routes.adminPlans.href} />;
 
 export default AdminPlansRoute;

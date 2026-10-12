@@ -11,20 +11,21 @@ export const routes = {
   connections: { href: `/profile/connections`, label: `Connections`, icon: `PlugZap`, minRole: Roles.Subscriber },
   profile: { href: `/profile`, label: `Profile`, icon: `UserRound`, minRole: Roles.Subscriber, redirects: [`account`] },
   dashboard: { href: `/dashboard`, label: `Overview`, icon: `LayoutDashboard`, adminSection: `overview` },
-  adminUsers: { href: `/admin/users`, label: `Users`, icon: `UsersRound`, adminSection: `users` },
+  adminUsers: { href: `/users`, label: `Users`, icon: `UsersRound`, adminSection: `users`, redirects: [`admin/users`] },
+  adminFeatures: { href: `/features`, label: `Features`, icon: `SlidersHorizontal`, adminSection: `features`, redirects: [`admin/features`] },
   adminDomains: { href: `/admin/domains`, label: `Domains`, icon: `Globe2`, adminSection: `domains` },
-  adminEvents: { href: `/admin/events`, label: `Events`, icon: `CalendarDays`, adminSection: `events` },
-  adminPlans: { href: `/admin/plans`, label: `Plans`, icon: `Wallet`, adminSection: `plans` },
+  adminEvents: { href: `/events`, label: `Events`, icon: `CalendarDays`, adminSection: `events`, redirects: [`admin/events`] },
+  adminPlans: { href: `/plans`, label: `Plans`, icon: `Wallet`, adminSection: `plans`, redirects: [`admin/plans`] },
   adminNotifications: { href: `/admin/notifications`, label: `Notifications`, icon: `Bell`, adminSection: `notifications` },
-  adminFeedback: { href: `/admin/feedback`, label: `Feedback`, icon: `MessageCircle`, adminSection: `feedback` },
-  adminReviews: { href: `/admin/feedback/reviews`, label: `Reviews`, icon: `Star`, adminSection: `reviews` },
-  adminAIChats: { href: `/admin/feedback/ai-chats`, label: `Chats`, icon: `Bot`, adminSection: `aiChats` },
-  adminMessages: { href: `/admin/feedback/messages`, label: `Messages`, icon: `MessagesSquare`, adminSection: `messages` },
-  adminRequests: { href: `/admin/requests`, label: `Forms`, icon: `ClipboardList`, adminSection: `formSubmissions` },
-  adminFormSubmissions: { href: `/admin/feedback/form-submissions`, label: `Forms`, icon: `ClipboardList`, adminSection: `formSubmissions` },
-  adminReports: { href: `/admin/reports`, label: `Reports`, icon: `FileText`, adminSection: `reports` },
-  adminAnalytics: { href: `/admin/analytics`, label: `Analytics`, icon: `ChartNoAxesCombined`, adminSection: `analytics` },
-  adminObservability: { href: `/admin/observability`, label: `Health`, icon: `Activity`, adminSection: `observability` },
+  adminFeedback: { href: `/feedback`, label: `Feedback`, icon: `MessageCircle`, adminSection: `feedback`, redirects: [`admin/feedback`] },
+  adminReviews: { href: `/reviews`, label: `Reviews`, icon: `Star`, adminSection: `reviews`, redirects: [`admin/feedback/reviews`] },
+  adminAIChats: { href: `/ai-chats`, label: `Chats`, icon: `Bot`, adminSection: `aiChats`, redirects: [`admin/feedback/ai-chats`] },
+  adminMessages: { href: `/messages`, label: `Messages`, icon: `MessagesSquare`, adminSection: `messages`, redirects: [`admin/feedback/messages`] },
+  adminRequests: { href: `/requests`, label: `Forms`, icon: `ClipboardList`, adminSection: `formSubmissions`, redirects: [`admin/requests`] },
+  adminFormSubmissions: { href: `/form-submissions`, label: `Forms`, icon: `ClipboardList`, adminSection: `formSubmissions`, redirects: [`admin/feedback/form-submissions`] },
+  adminReports: { href: `/reports`, label: `Reports`, icon: `FileText`, adminSection: `reports`, redirects: [`admin/reports`] },
+  adminAnalytics: { href: `/analytics`, label: `Analytics`, icon: `ChartNoAxesCombined`, adminSection: `analytics`, redirects: [`admin/analytics`] },
+  adminObservability: { href: `/observability`, label: `Health`, icon: `Activity`, adminSection: `observability`, redirects: [`admin/observability`] },
   signin: { href: `/signin`, label: `Sign In`, icon: `LogIn`, redirects: [`login`, `log-in`, `sign-in`] },
   signup: { href: `/signup`, label: `Sign Up`, icon: `UserPlus`, redirects: [`register`, `sign-up`] },
   about: { href: `/about`, label: `About`, icon: `Info`, redirects: [`about-us`] },
@@ -40,10 +41,13 @@ export const getNotificationHref = (id: string) => ({
   pathname: `/notifications/[id]` as const,
 });
 
-export type AuthReturnPath = Exclude<(typeof routes)[keyof typeof routes][`href`], `/signin` | `/signup`>;
-const authReturnPaths = Object.values(routes).map(route => route.href)
-  .filter((href): href is AuthReturnPath => href !== routes.signin.href && href !== routes.signup.href);
-export const resolveAuthReturnTo = (value: unknown): AuthReturnPath => authReturnPaths.find(href => href === value) ?? routes.domains.href;
+type AuthReturnRoute = (typeof routes)[Exclude<keyof typeof routes, `signin` | `signup`>];
+export type AuthReturnPath = AuthReturnRoute[`href`];
+const authReturnRoutes = Object.values(routes).filter((route): route is AuthReturnRoute => route.href !== routes.signin.href && route.href !== routes.signup.href);
+export const resolveAuthReturnTo = (value: unknown): AuthReturnPath => authReturnRoutes.find(route => route.href === value
+  || (`redirects` in route && route.redirects.some(alias => `/${alias}` === value)))?.href ?? routes.domains.href;
+const adminPaths: readonly string[] = Object.values(routes).filter(route => `adminSection` in route).map(route => route.href);
+export const isAdminPath = (pathname: string) => adminPaths.includes(pathname) || pathname === `/admin` || pathname.startsWith(`/admin/`);
 
 export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.search, routes.watching, routes.auction, routes.community, routes.contact];
 export const footerLinks = [routes.terms, routes.privacy];

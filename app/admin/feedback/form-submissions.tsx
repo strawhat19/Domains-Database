@@ -1,12 +1,6 @@
+import { Redirect } from 'expo-router';
 import { routes } from '../../../src/shared/routes';
-import PageMeta from '../../../src/components/PageMeta';
-import AdminDashboard from '../../../src/components/AdminDashboard';
 
-const AdminFormSubmissionsRoute = () => (
-  <>
-    <PageMeta title={`Admin · Forms`} description={`Review saved contact form submissions and update their status`} />
-    <AdminDashboard section={routes.adminFormSubmissions.adminSection} />
-  </>
-);
+const AdminFormSubmissionsRoute = () => <Redirect href={routes.adminFormSubmissions.href} />;
 
 export default AdminFormSubmissionsRoute;

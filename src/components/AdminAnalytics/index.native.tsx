@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import TrendChart from '../AdminCharts';
 import { useMemo, useState } from 'react';
+import { routes } from '../../shared/routes';
 import { exportReport } from './exportReport';
 import { createStyles } from './styles.native';
 import { Text, View, Pressable } from 'react-native';
@@ -63,7 +64,7 @@ const AdminAnalytics = ({ compact = false }: { compact?: boolean; outcomes?: Tra
   };
   return <View {...elementProps(`admin-analytics`, compact ? `preview` : `full`)} style={styles.root}>
     <View {...elementProps(`admin-analytics-toolbar`)} style={styles.toolbar}>
-      {compact ? <Text {...elementProps(`admin-analytics-preview-title`)} style={styles.title} accessibilityRole={`header`}>{`Website Traffic`}</Text> : <View {...elementProps(`admin-analytics-periods`)} style={styles.periods}>
+      {compact ? <Text {...elementProps(`admin-analytics-preview-title`)} style={styles.title} accessibilityRole={`header`}>{`Traffic`}</Text> : <View {...elementProps(`admin-analytics-periods`)} style={styles.periods}>
         {([7, 30, 90] as TrafficPeriod[]).map(period => <Pressable key={period} {...elementProps(`admin-analytics-period`, String(period))} style={[styles.period, state.period === period && styles.selected]} accessibilityRole={`button`} accessibilityState={{ selected: state.period === period }} onPress={() => { setExportError(``); state.setPeriod(period); }}><Text {...elementProps(`admin-analytics-period-label`, String(period))} style={styles.label}>{`${period} Days`}</Text></Pressable>)}
       </View>}
       <View {...elementProps(`admin-analytics-actions`)} style={styles.periods}>
@@ -98,7 +99,7 @@ const AdminAnalytics = ({ compact = false }: { compact?: boolean; outcomes?: Tra
       {compact && <TrafficBreakdown id={`traffic-preview-countries`} title={`Countries`} segment={`country`} rows={report.countries} />}
       <Text {...elementProps(`admin-analytics-freshness`)} style={styles.copy}>{`Fetched ${new Date(report.fetchedAt).toLocaleString()} · Cached Until ${new Date(report.cacheExpiresAt).toLocaleTimeString()} · Refresh May Reuse The Current Cache`}</Text>
     </> : null}
-    {compact ? <Link href={`/admin/analytics`} asChild><Pressable {...elementProps(`admin-analytics-link`)} style={styles.link}><Globe2 {...elementProps(`admin-analytics-link-icon`)} size={14} color={palette.accent} /><Text {...elementProps(`admin-analytics-link-label`)} style={styles.linkText}>{`Open Website Analytics`}</Text><ArrowRight {...elementProps(`admin-analytics-link-arrow`)} size={14} color={palette.accent} /></Pressable></Link> : null}
+    {compact ? <Link href={routes.adminAnalytics.href} asChild><Pressable {...elementProps(`admin-analytics-link`)} style={styles.link}><Globe2 {...elementProps(`admin-analytics-link-icon`)} size={14} color={palette.accent} /><Text {...elementProps(`admin-analytics-link-label`)} style={styles.linkText}>{`Open Website Analytics`}</Text><ArrowRight {...elementProps(`admin-analytics-link-arrow`)} size={14} color={palette.accent} /></Pressable></Link> : null}
   </View>;
 };
 

@@ -6,17 +6,18 @@
 .account-sidebar .account-sidebar-collapse-toggle { width: 38px; height: 38px; flex: none; justify-content: center; padding: 0; cursor: pointer; }
 .account-sidebar-collapse-toggle > svg { transition: transform .3s cubic-bezier(.22, 1, .36, 1); }
 .account-sidebar.is-collapsed .account-sidebar-collapse-toggle > svg { transform: rotate(180deg); }
-.account-sidebar-links { display: grid; min-width: 0; align-content: start; gap: 14px; }
+.account-sidebar-links { display: grid; min-width: 0; align-content: start; gap: var(--account-sidebar-heading-gap, 14px); }
 .account-sidebar-count-error { margin: 0; color: var(--accent); font-size: 10px; line-height: 1.5; }
 .account-sidebar-preference-error { margin: 0; color: var(--danger); font-size: 10px; line-height: 1.5; }
 .account-sidebar-count-skeleton { min-width: 22px; background: color-mix(in srgb, currentColor 16%, transparent); animation: account-sidebar-count-pulse 1.2s ease-in-out infinite alternate; }
 @keyframes account-sidebar-count-pulse { to { opacity: .4; } }
 .account-sidebar-group { display: grid; min-width: 0; gap: 8px; }
-.account-sidebar-title { grid-column: 1 / -1; margin: 0 0 6px; color: var(--accent); font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; }
+.account-sidebar-title { grid-column: 1 / -1; margin: 0 0 calc(var(--account-sidebar-heading-gap, 14px) - 8px); color: var(--accent); font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; }
 .account-sidebar-item { display: grid; min-width: 0; align-self: start; }
 .account-sidebar-heading { display: flex; min-width: 0; }
 .account-sidebar-link { position: relative; display: flex; min-width: 0; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 11px 10px; background: var(--paper); color: var(--accent); font-size: 11px; line-height: 1.5; transition: background-color .2s ease, border-color .2s ease, color .2s ease; }
 .account-sidebar-link-label { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:root[data-theme='light'] .account-sidebar-link:not([aria-current='page']):not(.account-sidebar-heading.has-submenu.is-current > .account-sidebar-link) > .account-sidebar-link-label { color: var(--ink); }
 .account-sidebar-child-link { gap: 6px; padding-inline: 8px; }
 .account-sidebar-heading > .account-sidebar-link { flex: 1; }
 .account-sidebar-link > svg { width: 15px; height: 15px; flex: none; }

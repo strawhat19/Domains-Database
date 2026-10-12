@@ -9,17 +9,20 @@ import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
 import { Check, ArrowUpRight, RefreshCw } from 'lucide-react';
 import { getPricingFeatures } from '../../shared/plans/pricingFeatures';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { getPricingAmount, getPricingPeriod, pricingDescription } from './presentation';
 
 const Pricing = () => {
   const state = usePricing();
+  const { flags, ready } = useFeatureFlags();
+  const contactEnabled = ready && flags.contact;
   return <section id={`landing-pricing`} className={`landing-section landing-pricing`} aria-labelledby={`landing-pricing-title`} aria-busy={state.loading}>
     <div id={`landing-pricing-inner`} className={`landing-section-inner`}>
       <div id={`landing-pricing-heading`} className={`landing-section-heading landing-pricing-heading`}>
         <div id={`landing-pricing-copy`} className={`landing-heading-copy`}>
           <p id={`landing-pricing-eyebrow`} className={`landing-eyebrow`}>{`Room To Grow`}</p>
           <h2 id={`landing-pricing-title`} className={`landing-section-title`}>{`Plans for your next idea.`}</h2>
-          <p id={`landing-pricing-description`} className={`landing-section-description`}>{pricingDescription}</p>
+          <p id={`landing-pricing-description`} className={`landing-section-description`}>{contactEnabled ? pricingDescription : `Explore the plans and features for your next idea.`}</p>
         </div>
       </div>
       {state.loading ? <PricingSkeleton expanded={state.showFeaturePreview} /> : state.error ? <div id={`pricing-error`} className={`pricing-feedback pricing-error`} role={`alert`}>
@@ -47,7 +50,7 @@ const Pricing = () => {
               <span className={`landing-feature-label`} id={`landing-plan-feature-label-${plan.id}-${index}`}>{feature}</span>
             </li>)}
           </ul>
-          <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><RouterAnchor id={`landing-plan-action-${plan.id}`} className={`landing-button${plan.highlighted ? ` landing-button-primary` : ``}`}><span id={`landing-plan-action-label-${plan.id}`} className={`landing-link-label`}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${plan.name}`}</span><ArrowUpRight size={15} aria-hidden id={`landing-plan-action-arrow-${plan.id}`} className={`landing-link-icon`} /></RouterAnchor></Link>
+          {(contactEnabled || (plan.priceCents === 0 && plan.slug === `free`)) && <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><RouterAnchor id={`landing-plan-action-${plan.id}`} className={`landing-button${plan.highlighted ? ` landing-button-primary` : ``}`}><span id={`landing-plan-action-label-${plan.id}`} className={`landing-link-label`}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${plan.name}`}</span><ArrowUpRight size={15} aria-hidden id={`landing-plan-action-arrow-${plan.id}`} className={`landing-link-icon`} /></RouterAnchor></Link>}
         </article>)}
       </div> : <div id={`pricing-empty`} className={`pricing-feedback`}>
         <p id={`pricing-empty-description`} className={`pricing-feedback-copy`}>{`Plan details will be available here soon. You can start organizing your domains today.`}</p>

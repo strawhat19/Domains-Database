@@ -29,6 +29,8 @@ Map these logical records to the destination's existing collections. Keep the ac
 | Read preferences | Own account key, notification IDs/read cursor, update time | Own account only; bounded/versioned state and account reset policy |
 | Form submission | ID/number, allowed form fields, New/Read/Archived review state, timestamps, optional verified actor | Validated public creation; explicit private review capability |
 | Private connections | Account scope, provider metadata and secret references | Own safe metadata operations; real production secrets remain server-owned |
+| Global feature settings | Destination-generated singleton app ID/number, version, booleans, role audiences, minimum-plan pointers, timestamps | Exact public-safe read; active trusted Owner changes with atomic singleton counter |
+| Public plan tier index | Immutable slug key, stable plan ID/number and displayOrder only | Bounded public rank reads; authorized catalog writes atomically maintain matching metadata |
 
 Counter, mapping, read-state, slug reservation, and aggregate keys are infrastructure exceptions to content naming; document them explicitly instead of changing existing content IDs to Firebase UIDs. Notification/contact/chat/plan/blog content records are not exceptions.
 
@@ -59,6 +61,8 @@ Use includeMetadataChanges when cache/pending-write transitions affect visible s
 | Private intake | Explicit review capability, supported status/order and cursor | Current bounded page |
 | Dashboard summaries | Exact authorized scope | Maintained summary documents |
 | Public plans/articles | Active/published constraints and deterministic order | Current permitted list/detail |
+| Global feature settings | Exact destination-owned singleton identity | Shared confirmed configuration for effective viewer flags |
+| Plan tier metadata | Public-safe rank projection, explicit bound and stable catalog identity | Current ranks for minimum-plan comparison, separate from active-only pricing |
 | Chat | Participant constraint and eligible thread | Current conversations/recent messages; older pages fetched separately |
 
 Choose and document actual limits in the destination. Use a small overview window and a bounded record page, not unbounded getDocs/onSnapshot calls. Stable cursors include a tie-breaker when the order field can repeat. Reset paging when server filters change; merge live and fetched pages by ID where they overlap. Handle insertions/deletions that shift a live window. Loaded-page search/filter/counts are labelled as such and keep Next/Previous available when no displayed rows match.
@@ -80,9 +84,13 @@ Keep rules_version = '2' and a deny-by-default boundary. Define safe missing-aut
 | Read preferences | Own account only; valid eligible notification references/cursor and allowed fields |
 | Counter/mapping write | Atomic coupling and immutable ownership; no arbitrary increment, relink, public promotion or deletion |
 | Summary write | Trusted writer only; no browser-supplied totals or forged source/coverage |
+| Feature settings write | Current active Owner; exact singleton schema/identity; initial counter coupling; immutable created fields and validated booleans/audiences |
+| Plan tier metadata write | Authorized catalog operation; safe fields only; identity/slug fixed and rank equal to matching catalog via getAfter |
 | Other collections | Explicit feature policy; unmatched paths denied |
 
 Rules validate document key equals stored id, positive integer number, ID-number agreement, required/allowed keys, field types, canonical statuses, timestamp semantics, and immutable relationships. Updates use changedKeys/affectedKeys allowlists appropriate to the chosen schema; deletes use resource rather than request.resource. Treat missing/legacy fields deliberately through a compatible migration, without temporarily opening all writes.
+
+For [feature configuration](features.md), use the same global boolean AND role AND minimum-tier policy in consumers, rules and trusted endpoints. Public announcement reads and contact intake are denied when their viewer policy is disabled; authorized management/private review retain their separate capability. Validate authoritative rank metadata against the catalog instead of accepting browser ranks or treating publication as entitlement. Keep the singleton identity/rules references generated for the destination and record deployment/backfill status outside ai/.
 
 Firestore rules protect entire documents. Public projection must be a separately safe document, not a UI hide-field filter. Queries carry the same audience, participant, status, and bounded-limit constraints that rules require; rules do not remove forbidden rows. Maintain a query-to-index table for actual combinations, including collection-group scope where used. Surface the supplied missing-index error; index source existing in Git does not mean it is deployed or ready. [Secure queries](https://firebase.google.com/docs/firestore/security/rules-query)
 

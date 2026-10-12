@@ -9,13 +9,14 @@ import ScrollToTop from '../ScrollToTop';
 import DomainMarquee from '../DomainMarquee';
 import AuthFeedback from '../AuthFeedback';
 import NotificationBell from '../NotificationBell';
-import { routes } from '../../shared/routes';
+import { routes, isAdminPath } from '../../shared/routes';
 import { createStyles } from './styles.native';
 import { BlurView, BlurTargetView } from 'expo-blur';
 import { useShellScroll } from './useShellScroll.native';
 import { useAppShell, footerLinks } from './useAppShell';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Eye, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react-native';
@@ -28,11 +29,11 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
   const [viewportHeight, setViewportHeight] = useState(height);
   const [footerHeight, setFooterHeight] = useState(insets.bottom + 64);
   const { isDark, palette, error: themeError, clearError: clearThemeError } = useTheme();
+  const { flags, ready: featuresReady } = useFeatureFlags();
   const blurTargetRef = useRef<View>(null);
   const styles = useMemo(() => createStyles(palette), [palette]);
   const scroll = useShellScroll(pathname, sticky);
-  const accountShell = pathname === `/admin` || pathname.startsWith(`/admin/`)
-    || pathname === routes.dashboard.href || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
+  const accountShell = isAdminPath(pathname) || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
   const blurOpacity = useMemo(() => scroll.headerOpacity.interpolate({
     inputRange: [.86, 1],
     outputRange: [1, 0],
@@ -71,7 +72,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
           </Animated.View>
         )}
         <Animated.View {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, { pointerEvents: `none`, opacity: scroll.headerOpacity, backgroundColor: accountShell ? palette.subtle : palette.paper }]} />
-        <DomainMarquee translucent={scroll.scrolled} backgroundColor={accountShell ? palette.subtle : undefined} />
+        {featuresReady && flags.domainMarquee && <DomainMarquee translucent={scroll.scrolled} backgroundColor={accountShell ? palette.subtle : undefined} />}
         <View {...elementProps(`native-header-row`)} style={styles.headerRow}>
           <Link href={`/`} asChild>
             <Pressable {...elementProps(`native-brand-link`)} accessibilityLabel={`Domains Database Home`}>
@@ -96,7 +97,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
               )}
             </View>
             <ThemeToggle />
-            <NotificationBell />
+            {featuresReady && flags.notifications && <NotificationBell />}
             {(signedIn || authLoading) && <UserMenu />}
           </View>
         </View>

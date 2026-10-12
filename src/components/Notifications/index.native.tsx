@@ -6,13 +6,14 @@ import NotificationCard from '../NotificationCard';
 import { useMemo, useEffect, useContext } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { getNotificationSpacing } from '../NotificationCard/content';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { useNotificationsPage, type NotificationsProps } from './useNotificationsPage';
 import { Bell, Info, Heart, Sparkles, ArrowLeft, CheckCheck, RotateCcw, Construction } from 'lucide-react-native';
 
-const Notifications = ({ detail = false }: NotificationsProps) => {
+const NotificationsContent = ({ detail = false }: NotificationsProps) => {
   const state = useNotificationsPage(detail);
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
@@ -145,6 +146,24 @@ const Notifications = ({ detail = false }: NotificationsProps) => {
       </View>
     </>
   );
+};
+
+const NotificationsUnavailable = ({ message }: { message: string }) => {
+  const { palette } = useTheme();
+  const styles = useMemo(() => createStyles(palette), [palette]);
+  return <>
+    <PageMeta noIndex title={`Notifications`} canonicalPath={routes.notifications.href} description={message} />
+    <View {...elementProps(`notifications-page`)} style={styles.page}>
+      <Text {...elementProps(`notifications-title`)} style={styles.title} accessibilityRole={`header`}>{`Notifications`}</Text>
+      <Text {...elementProps(`notifications-unavailable-message`)} style={styles.status} accessibilityLiveRegion={`polite`}>{message}</Text>
+    </View>
+  </>;
+};
+
+const Notifications = ({ detail = false }: NotificationsProps) => {
+  const { error, flags, ready } = useFeatureFlags();
+  const message = !ready && !error ? `Loading Notifications…` : `Notifications Are Currently Unavailable`;
+  return ready && flags.notifications ? <NotificationsContent detail={detail} /> : <NotificationsUnavailable message={message} />;
 };
 
 export default Notifications;

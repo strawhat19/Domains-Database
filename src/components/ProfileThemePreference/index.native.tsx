@@ -4,6 +4,7 @@ import { Sun, Moon } from 'lucide-react-native';
 import { Pressable, Text, View } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 
 const themeOptions = [
   { value: `light`, label: `Light`, Icon: Sun },
@@ -12,7 +13,9 @@ const themeOptions = [
 
 const ProfileThemePreference = ({ roomy = false }: { roomy?: boolean }) => {
   const { theme, ready, error, palette, setThemePreference } = useTheme();
+  const { flags, ready: featuresReady } = useFeatureFlags();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  if (!featuresReady || !flags.themeToggle) return null;
   return (
     <View {...elementProps(`profile-theme-preference`)} style={[styles.root, roomy && styles.roomy]}>
       <View {...elementProps(`profile-theme-heading`)} style={styles.heading}>

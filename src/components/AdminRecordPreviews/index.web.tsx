@@ -1,5 +1,6 @@
 import './styles.scss';
 import { Link } from 'expo-router';
+import { routes } from '../../shared/routes';
 import { accountDate, renewalCost } from './data';
 import { Users, Globe2, ArrowUpRight } from 'lucide-react';
 import type { AdminSnapshot } from '../../shared/admin/types';
@@ -11,7 +12,7 @@ const AdminRecordPreviews = ({ snapshot }: { snapshot: AdminSnapshot }) => {
     <section id={`admin-recent-users`} className={`admin-recent-records`} aria-labelledby={`admin-recent-users-title`}>
       <div id={`admin-recent-users-heading`} className={`admin-recent-records-heading`}>
         <h2 id={`admin-recent-users-title`} className={`admin-recent-records-title`}><Users id={`admin-recent-users-icon`} className={`admin-recent-records-icon`} size={22} aria-hidden />Users</h2>
-        <Link href={`/admin/users`} id={`admin-recent-users-view-all`} className={`admin-recent-records-view-all`}>View All<ArrowUpRight id={`admin-recent-users-arrow`} className={`admin-recent-records-arrow`} size={13} aria-hidden /></Link>
+        <Link href={routes.adminUsers.href} id={`admin-recent-users-view-all`} className={`admin-recent-records-view-all`}>View All<ArrowUpRight id={`admin-recent-users-arrow`} className={`admin-recent-records-arrow`} size={13} aria-hidden /></Link>
       </div>
       {snapshot.users.length ? <div id={`admin-recent-users-table-wrap`} className={`admin-recent-table-wrap`}>
         <table id={`admin-recent-users-table`} className={`admin-recent-table`}>
@@ -31,7 +32,7 @@ const AdminRecordPreviews = ({ snapshot }: { snapshot: AdminSnapshot }) => {
     <section id={`admin-recent-domains`} className={`admin-recent-records`} aria-labelledby={`admin-recent-domains-title`}>
       <div id={`admin-recent-domains-heading`} className={`admin-recent-records-heading`}>
         <h2 id={`admin-recent-domains-title`} className={`admin-recent-records-title`}><Globe2 id={`admin-recent-domains-icon`} className={`admin-recent-records-icon`} size={22} aria-hidden />Domains</h2>
-        <Link href={`/admin/domains`} id={`admin-recent-domains-view-all`} className={`admin-recent-records-view-all`}>View All<ArrowUpRight id={`admin-recent-domains-arrow`} className={`admin-recent-records-arrow`} size={13} aria-hidden /></Link>
+        <Link href={routes.adminDomains.href} id={`admin-recent-domains-view-all`} className={`admin-recent-records-view-all`}>View All<ArrowUpRight id={`admin-recent-domains-arrow`} className={`admin-recent-records-arrow`} size={13} aria-hidden /></Link>
       </div>
       {snapshot.domains.length ? <div id={`admin-recent-domains-table-wrap`} className={`admin-recent-table-wrap`}>
         <table id={`admin-recent-domains-table`} className={`admin-recent-table`}>

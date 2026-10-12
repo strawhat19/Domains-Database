@@ -2,6 +2,8 @@ export const planCurrencies = [`USD`, `EUR`, `GBP`, `CAD`, `AUD`, `BDT`] as cons
 export const planBillingIntervals = [`month`, `year`, `one-time`] as const;
 export type PlanCurrency = typeof planCurrencies[number];
 export type PlanBillingInterval = typeof planBillingIntervals[number];
+export interface PlanTier { id: string; slug: string; number: number; displayOrder: number }
+export const planTierLimit = 200;
 
 export interface PlanInput {
   name: string;

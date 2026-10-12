@@ -122,7 +122,8 @@ const MarqueeTrack = ({ items, compact }: { items: DomainMarqueeItem[]; compact:
 };
 
 const DomainMarquee = () => {
-  const { items, loading, showDomains } = useDomainMarquee();
+  const { items, loading, visible, showDomains } = useDomainMarquee();
+  if (!visible || (!loading && !items.length)) return null;
   return (
     <section
       aria-busy={loading}

@@ -2,6 +2,12 @@
 
 Domains Database is a domain inventory built with Expo, React Native, TypeScript, and Sass, with Firebase Authentication, private Firestore account storage, and a read-only server relay for registrar APIs. The landing page uses the v8 logo and opens with a compact portfolio. The full portfolio combines registered domains and their custom project details in the signed-in account.
 
+## License
+
+Original project code and documentation, including AGENTS.md and the reusable ai/ guides, are licensed under [MIT](LICENSE), copyright 2026 strawhat19. The portable ai/ pack includes its own [LICENSE](ai/LICENSE); retain it and the copyright notice when copying the guides into another project.
+
+Third-party dependencies and assets retain their own licenses and notices, including dependency ISC and font OFL terms. The bundled country flags retain their upstream MIT license; brand assets retain their supplied licenses, provenance and brand disclaimers, including any individual icon terms. Google brand images in assets/icons/google-g.png and public/images/google-g.png are excluded from this project's MIT grant; their source permission is not established by this repository. This project's MIT license does not replace third-party terms or grant trademark permissions.
+
 ## Run locally
 
 Use Node.js 22.20.0 or another version supported by Expo SDK 57. Node 22.20.0 is already installed on this computer through nvm-windows.
@@ -213,7 +219,9 @@ Reddit [announced that RSS support ends November 13, 2026](https://support.reddi
 
 ## Web and mobile publishing
 
-Feedback is its own ADMIN menu directly below Dashboard, grouping Forms, Reviews, Chats, and Messages. Forms keeps the existing private Owner-only realtime contact review, paging, filters, and saved status controls at `/admin/feedback/form-submissions`; `/admin/requests` redirects there. The Feedback overview links to all four sections. Reviews, Chats, and Messages currently show Coming Soon pages without records or messaging/AI operations. Their menu state shares the existing per-account sidebar preferences. This navigation change does not alter the submission collection or its access rules.
+Admin pages use top-level URLs: `/users`, `/features`, `/events`, `/plans`, `/reports`, `/analytics`, `/observability`, `/feedback`, `/reviews`, `/ai-chats`, `/messages`, and `/form-submissions`. Their previous `/admin/...` URLs redirect to the matching pages. Domain and notification administration remain at `/admin/domains` and `/admin/notifications` because the public pages already use `/domains` and `/notifications`. Page permissions and private API URLs remain the same.
+
+Feedback is its own ADMIN menu directly below Dashboard, grouping Forms, Reviews, Chats, and Messages. Forms keeps the existing private Owner-only realtime contact review, paging, filters, and saved status controls at `/form-submissions`; `/requests` and `/admin/requests` redirect there. The Feedback overview links to all four sections. Reviews, Chats, and Messages currently show Coming Soon pages without records or messaging/AI operations. Their menu state shares the existing per-account sidebar preferences. This navigation change does not alter the submission collection or its access rules.
 
 Admin → Events opens a month calendar with saved scheduled events, day agendas, and create/edit/delete actions. Active Owner, Admin, and legacy Administrator accounts can manage the private `events` collection; other roles have no event access. Events use app-owned `Event_Number_Name_Date_UUID` IDs and an atomic `counters/events` sequence. Timed events are stored as UTC instants and shown in the device time zone. All-day events use UTC midnight calendar boundaries with an exclusive end date so their dates stay consistent across time zones. Each displayed calendar window loads up to 500 overlapping events and reports when more exist. Explicit local demo mode keeps its events on that browser or device.
 
