@@ -9,7 +9,7 @@ import { AdminLoading } from '../AdminWidgets';
 import { useAdminPlans } from './useAdminPlans';
 import { Layers3, Plus, Search, CircleCheck, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
 
-const columns = [`No.`, `Plan`, `Price`, `Features`, `Status`, `Order`, `Updated`, `Actions`];
+const columns = [`No.`, `Plan`, `Price`, `Score`, `Features`, `Status`, `Order`, `Updated`, `Actions`];
 const AdminPlans = ({ headingActionsTarget }: AdminPlansProps = {}) => {
   const state = useAdminPlans();
   if (!state.allowed) return <p id={`admin-plans-access`} className={`admin-records-error`} role={`alert`}>{`Active Admin Or Owner Access Is Required`}</p>;
@@ -31,6 +31,7 @@ const AdminPlans = ({ headingActionsTarget }: AdminPlansProps = {}) => {
       </dl>
     </div>
     {!!state.error && <p id={`admin-plans-error`} className={`admin-records-error`} role={`alert`}>{state.error}</p>}
+    {!!state.scores.error && <p id={`admin-plans-score-error`} className={`admin-records-error`} role={`alert`}>{`Plan Scores: ${state.scores.error}${state.scores.ready ? ` · Last Confirmed Scores` : ``}`}</p>}
     {!!state.notice && <p id={`admin-plans-notice`} className={`admin-records-notice`} role={`status`}><CircleCheck size={14} aria-hidden id={`admin-plans-notice-icon`} className={`admin-plans-notice-icon`} />{state.notice}</p>}
     {state.editor && <EditorModal busy={state.busy} error={state.error} key={editorId} onClose={state.closeEditor} id={`admin-plans-editor-modal`} labelledBy={`admin-plan-editor-${editorId}-title`}>{dismiss => <PlanEditor busy={state.busy} record={record} onSave={state.save} onClose={dismiss} />}</EditorModal>}
     <div id={`admin-plans-filters`} className={`admin-records-filters`}>
@@ -48,15 +49,15 @@ const AdminPlans = ({ headingActionsTarget }: AdminPlansProps = {}) => {
         <caption id={`admin-plans-caption`} className={`admin-records-table-caption`}>{`Saved Pricing Plans · Realtime Page ${state.page.page}`}</caption>
         <thead id={`admin-plans-table-head`} className={`admin-records-table-head`}><tr id={`admin-plans-column-row`} className={`admin-records-column-row`}>{columns.map((label, index) => <th key={label} scope={`col`} id={`admin-plans-column-${index}`} className={`admin-records-column`}>{label}</th>)}</tr></thead>
         <tbody id={`admin-plans-table-body`} className={`admin-records-table-body`}>
-          {state.page.loading ? <tr id={`admin-plans-loading-row`} className={`admin-plans-loading-row`}><td colSpan={8} id={`admin-plans-loading-cell`} className={`admin-records-state-cell`}><AdminLoading id={`plans`} label={`Loading Realtime Plans`} /></td></tr> : state.matchingRecords.length ? state.matchingRecords.map(plan => <PlanRow key={plan.id} busy={state.busy} record={plan} onEdit={state.edit} saving={state.pendingId === plan.id} onArchive={state.archive} onStatus={state.changeStatus} onRequestArchive={state.requestArchive} confirming={state.archivingId === plan.id} onCancelArchive={state.cancelArchive} />) : <tr id={`admin-plans-empty-row`} className={`admin-plans-empty-row`}><td colSpan={8} id={`admin-plans-empty-cell`} className={`admin-records-state-cell`}><p id={`admin-plans-empty`} className={`admin-records-empty`}>{state.page.error ? `Plan Records Unavailable` : state.records.length ? `No plans match these filters.` : `No plans saved yet. Add a plan to get started.`}</p></td></tr>}
+          {state.page.loading ? <tr id={`admin-plans-loading-row`} className={`admin-plans-loading-row`}><td colSpan={columns.length} id={`admin-plans-loading-cell`} className={`admin-records-state-cell`}><AdminLoading id={`plans`} label={`Loading Realtime Plans`} /></td></tr> : state.matchingRecords.length ? state.matchingRecords.map(plan => <PlanRow key={plan.id} busy={state.busy} record={plan} onEdit={state.edit} score={state.scores.score(plan.id)} scoreLoading={state.scores.loading} saving={state.pendingId === plan.id} onArchive={state.archive} onStatus={state.changeStatus} onRequestArchive={state.requestArchive} confirming={state.archivingId === plan.id} onCancelArchive={state.cancelArchive} />) : <tr id={`admin-plans-empty-row`} className={`admin-plans-empty-row`}><td colSpan={columns.length} id={`admin-plans-empty-cell`} className={`admin-records-state-cell`}><p id={`admin-plans-empty`} className={`admin-records-empty`}>{state.page.error ? `Plan Records Unavailable` : state.records.length ? `No plans match these filters.` : `No plans saved yet. Add a plan to get started.`}</p></td></tr>}
         </tbody>
-        <tfoot id={`admin-plans-table-footer`} className={`admin-records-table-footer`}><tr id={`admin-plans-pagination-row`} className={`admin-plans-pagination-row`}><td colSpan={8} id={`admin-plans-pagination-cell`} className={`admin-plans-pagination-cell`}>
+        <tfoot id={`admin-plans-table-footer`} className={`admin-records-table-footer`}><tr id={`admin-plans-pagination-row`} className={`admin-plans-pagination-row`}><td colSpan={columns.length} id={`admin-plans-pagination-cell`} className={`admin-plans-pagination-cell`}>
           <div id={`admin-plans-pagination`} className={`admin-record-pagination`}>
             <span id={`admin-plans-pagination-label`} className={`admin-record-pagination-label`}>{`Page ${state.page.page} · ${state.matchingRecords.length} Matching Plan(s) In This Realtime Page`}</span>
             <div id={`admin-plans-pagination-controls`} className={`admin-record-pagination-controls`}>
               <button type={`button`} disabled={state.busy || !state.page.hasPrevious} onClick={state.page.previousPage} id={`admin-plans-previous`} className={`admin-record-pagination-button`}><ArrowLeft size={11} aria-hidden id={`admin-plans-previous-icon`} className={`admin-record-pagination-icon`} />{`Previous`}</button>
               <button type={`button`} disabled={state.busy || !state.page.hasNext} onClick={state.page.nextPage} id={`admin-plans-next`} className={`admin-record-pagination-button`}>{`Next`}<ArrowRight size={11} aria-hidden id={`admin-plans-next-icon`} className={`admin-record-pagination-icon`} /></button>
-              <button type={`button`} disabled={state.busy} onClick={state.page.refresh} id={`admin-plans-latest`} className={`admin-record-pagination-button`}><RotateCcw size={11} aria-hidden id={`admin-plans-latest-icon`} className={`admin-record-pagination-icon`} />{`Latest`}</button>
+              <button type={`button`} disabled={state.busy} onClick={state.refresh} id={`admin-plans-latest`} className={`admin-record-pagination-button`}><RotateCcw size={11} aria-hidden id={`admin-plans-latest-icon`} className={`admin-record-pagination-icon`} />{`Latest`}</button>
             </div>
           </div>
         </td></tr></tfoot>

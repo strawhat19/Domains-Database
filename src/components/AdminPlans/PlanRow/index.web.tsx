@@ -1,9 +1,9 @@
 import './styles.scss';
 import type { PlanRowProps } from './types';
 import { formatPlanDate, formatPlanPrice } from '../values';
-import { X, Star, Layers3, Archive, Settings } from 'lucide-react';
+import { X, Star, Layers3, Archive, Settings, ThumbsUp } from 'lucide-react';
 
-const PlanRow = ({ busy, saving, record, confirming, onEdit, onArchive, onStatus, onRequestArchive, onCancelArchive }: PlanRowProps) => {
+const PlanRow = ({ busy, score, saving, record, confirming, scoreLoading, onEdit, onArchive, onStatus, onRequestArchive, onCancelArchive }: PlanRowProps) => {
   const rowId = `admin-plan-${record.id}`;
   return <tr id={rowId} className={`admin-plan-row`} aria-busy={saving}>
     <td id={`${rowId}-number`} className={`admin-plan-number`}><span id={`${rowId}-number-badge`} className={`admin-record-number-badge`}>{record.number}</span></td>
@@ -17,6 +17,7 @@ const PlanRow = ({ busy, saving, record, confirming, onEdit, onArchive, onStatus
       </div>
     </div></td>
     <td id={`${rowId}-price`} className={`admin-plan-price`}>{formatPlanPrice(record)}</td>
+    <td id={`${rowId}-score`} className={`admin-plan-score`} aria-busy={scoreLoading} title={scoreLoading ? `Loading Upvote Score` : score === null ? `Upvote Score Unavailable` : `${score} Upvote(s)`}><span id={`${rowId}-score-value`} className={`admin-plan-score-value`}><ThumbsUp size={13} aria-hidden id={`${rowId}-score-icon`} className={`admin-plan-score-icon`} />{score ?? `—`}</span></td>
     <td id={`${rowId}-features-cell`} className={`admin-plan-features-cell`}>
       {record.features.length ? <ul id={`${rowId}-features`} className={`admin-plan-features`}>{record.features.slice(0, 3).map((feature, index) => <li key={index} id={`${rowId}-feature-${index}`} className={`admin-plan-feature`}>{feature}</li>)}</ul> : <span id={`${rowId}-features-empty`} className={`admin-plan-features-empty`}>{`No Features`}</span>}
       {record.features.length > 3 && <span id={`${rowId}-features-more`} className={`admin-plan-features-more`}>{`+${record.features.length - 3} Feature(s)`}</span>}

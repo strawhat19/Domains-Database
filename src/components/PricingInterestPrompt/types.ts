@@ -9,6 +9,6 @@ export interface PricingInterestPromptProps {
   onConfirm: () => void;
   onRefresh: () => void;
   state: PricingInterestState;
-  onVote: (direction: `up` | `down`) => void;
+  onVote: () => void;
   onAuth: (mode: `signin` | `signup`) => void;
 }

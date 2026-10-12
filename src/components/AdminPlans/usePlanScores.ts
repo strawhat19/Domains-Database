@@ -1,19 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { planInterestAPI } from '../../api/planInterest';
 import { useAuth } from '../../shared/authContext/useAuth';
-import { canManageFeatures } from '../../shared/admin/permissions';
+import { canManagePlans } from '../../shared/admin/permissions';
 import type { PlanInterestSummary } from '../../shared/planInterest/types';
-import { planInterestStorageSource } from '../../shared/planInterest/service';
 
-type InterestReportState = { scope: string; ready: boolean; loading: boolean; error: string; records: PlanInterestSummary[] };
-const emptyState = (scope: string): InterestReportState => ({ scope, ready: false, loading: true, error: ``, records: [] });
-export const useAdminPlanInterest = () => {
+type ScoreState = { scope: string; ready: boolean; loading: boolean; error: string; records: PlanInterestSummary[] };
+const emptyState = (scope: string): ScoreState => ({ scope, ready: false, loading: true, error: ``, records: [] });
+export const usePlanScores = () => {
   const { user } = useAuth();
-  const scope = JSON.stringify([user?.id, user?.role, user?.active]);
-  const allowed = canManageFeatures(user);
+  const allowed = canManagePlans(user);
+  const scope = JSON.stringify([user?.id, user?.role, user?.active, user?.firebase_uid]);
   const [revision, setRevision] = useState(0);
   const [state, setState] = useState(() => emptyState(scope));
   const current = state.scope === scope ? state : emptyState(scope);
+  const scores = useMemo(() => new Map(current.records.map(record => [record.planId, record.up])), [current.records]);
   useEffect(() => {
     let active = true;
     setState(previous => ({ ...(previous.scope === scope ? previous : emptyState(scope)), loading: allowed, error: `` }));
@@ -25,5 +25,11 @@ export const useAdminPlanInterest = () => {
     });
     return () => { active = false; unsubscribe(); };
   }, [scope, revision, allowed]);
-  return { ...current, allowed, source: planInterestStorageSource, refresh: () => setRevision(value => value + 1) };
+  return {
+    ready: current.ready,
+    error: current.error,
+    loading: current.loading,
+    refresh: () => setRevision(value => value + 1),
+    score: (id: string) => current.ready ? scores.get(id) ?? 0 : null,
+  };
 };

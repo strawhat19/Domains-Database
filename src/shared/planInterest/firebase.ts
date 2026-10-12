@@ -5,10 +5,10 @@ import type { User } from '../models/users/User';
 import { readPlanInterestSummary } from './values';
 import { planId, readPlan } from '../plans/values';
 import { getAppCollectionIDNumber } from '../common/ids';
-import { canManageFeatures } from '../admin/permissions';
+import { canManagePlans } from '../admin/permissions';
 import type { PlanVote, PlanInterestState } from './types';
 import { PlanInterest } from '../models/plans/PlanInterest';
-import { readPlanInterest, planInterestState } from './values';
+import { readPlanInterest, normalizePlanVote, planInterestState } from './values';
 import { getFirebaseDb, getFirebaseAuth } from '../firebase/client';
 import { planInterestLimit, type PlanInterestSummary } from './types';
 import { restoreSession, subscribeAuthState } from '../authentication/service';
@@ -103,6 +103,7 @@ const ensureInterestMode = async (transaction: Transaction, actor: InterestActor
 const saveCloudState = async (id: string, action: `vote` | `interest`, vote: PlanVote): Promise<PlanInterestState> => {
   try {
     planId(id);
+    normalizePlanVote(vote);
     const actor = await getActor(true, action === `interest`);
     if (!actor) throw new Error(`Guest Voting Is Not Available Yet`);
     const recordId = await runTransaction(actor.database, async transaction => {
@@ -121,7 +122,7 @@ const saveCloudState = async (id: string, action: `vote` | `interest`, vote: Pla
         originalCreated = record.data()?.created;
         original = actorRecord(record.data(), recordId, id, actor);
       }
-      const desiredVote = action === `vote` ? vote ?? `none` : original?.vote ?? `none`;
+      const desiredVote = action === `vote` ? vote ?? `none` : original?.vote === `up` ? `up` : `none`;
       const interested = action === `interest` || original?.interested === true;
       if (original && original.vote === desiredVote && original.interested === interested) return original.id;
       if (!original && desiredVote === `none` && !interested) return null;
@@ -154,7 +155,7 @@ const saveCloudState = async (id: string, action: `vote` | `interest`, vote: Pla
         updated: serverTimestamp(),
         lastInterestId: record.id,
         up: increment(Number(desiredVote === `up`) - Number(original?.vote === `up`)),
-        down: increment(Number(desiredVote === `down`) - Number(original?.vote === `down`)),
+        down: increment(-Number(original?.vote === `down`)),
         interested: increment(Number(interested) - Number(original?.interested === true)),
       }, { merge: true });
       return record.id;
@@ -179,18 +180,18 @@ export const subscribeCloudPlanInterestSummary = (onValue: (summaries: PlanInter
   stops.push(() => clearTimeout(timeout));
   void restoreSession().then(async session => {
     const user = session?.user;
-    if (!canManageFeatures(user) || !user?.firebase_uid) throw new Error(`Owner Access Is Required`);
+    if (!canManagePlans(user) || !user?.firebase_uid) throw new Error(`Admin Access Is Required`);
     const actor = { id: user.id, uid: user.firebase_uid };
     const assertActor = () => { if (getFirebaseAuth().currentUser?.uid !== actor.uid) throw new Error(`Your Account Changed — Try Again`); };
     assertActor();
     const account = (await getDocFromServer(doc(getFirebaseDb(), `users`, actor.id))).data();
     assertActor();
-    if (account?.id !== actor.id || account?.firebase_uid !== actor.uid || !canManageFeatures({ id: account.id, role: account.role, active: account.active })) throw new Error(`Owner Access Is Required`);
+    if (account?.id !== actor.id || account?.firebase_uid !== actor.uid || !canManagePlans({ id: account.id, role: account.role, active: account.active })) throw new Error(`Admin Access Is Required`);
     if (!active) return;
     stops.push(subscribeAuthState(() => {
       if (!active) return;
       void restoreSession().then(current => {
-        if (active && (current?.user.id !== actor.id || !canManageFeatures(current?.user))) fail(new Error(`Your Plan Interest Access Changed — Refresh This Page`));
+        if (active && (current?.user.id !== actor.id || !canManagePlans(current?.user))) fail(new Error(`Your Plan Interest Access Changed — Refresh This Page`));
       }).catch(fail);
     }));
     stops.push(onSnapshot(query(collection(getFirebaseDb(), `planInterestSummary`), limit(planInterestLimit + 1)), { includeMetadataChanges: true }, snapshot => {

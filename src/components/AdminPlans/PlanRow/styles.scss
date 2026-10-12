@@ -12,6 +12,9 @@
 .admin-plan-actions-cell { min-width: 142px; text-align: right; }
 .admin-plan-price { min-width: 130px; white-space: nowrap; }
 .admin-plan-order { font-family: var(--font-mono); font-size: 10px; }
+.admin-plan-score { min-width: 56px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.admin-plan-score-value { gap: 6px; display: inline-flex; align-items: center; }
+.admin-plan-score-icon { color: var(--accent); }
 .admin-plan-highlighted { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--accent); font-size: 9px; }
 .admin-plan-features-cell { min-width: 160px; max-width: 240px; }
 .admin-plan-features { display: grid; gap: 5px; margin: 0; padding-left: 12px; color: var(--muted); font-size: 10px; line-height: 1.6; }

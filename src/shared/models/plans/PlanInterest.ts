@@ -8,7 +8,7 @@ export class PlanInterest extends Data {
   actorKey: string;
   migratedTo: string;
   interested: boolean;
-  vote: Exclude<PlanVote, null> | `none`;
+  vote: Exclude<PlanVote, null> | `down` | `none`;
 
   constructor(data: Partial<PlanInterest> = {}) {
     super({ ...data, name: `Plan`, type: Types.PlanInterest });

@@ -89,6 +89,10 @@ service cloud.firestore {
         && (plans == null || plans.size() == 0 || plans[0] == 'free'
           || (plan != 'free' && livePlanTier(plan) && livePlanTier(plans[0]) && planTierAtLeast(plan, plans[0])));
     }
+    function isAccountAdmin() {
+      return signedIn() && exists(identityPath()) && ownsAccount(actorId())
+        && get(userPath(actorId())).data.role in ['Owner', 'Admin', 'Administrator'];
+    }
     function planInterestPath(interestId) { return /databases/$(database)/documents/planInterestRecords/$(interestId); }
     function planInterestCounterPath() { return /databases/$(database)/documents/counters/planInterest; }
     function planInterestSummaryPath(planId) { return /databases/$(database)/documents/planInterestSummary/$(planId); }
@@ -115,7 +119,7 @@ service cloud.firestore {
       return data.keys().hasAll(['id', 'type', 'number', 'planId', 'vote', 'userId', 'actorKey', 'migratedTo', 'interested', 'created', 'updated'])
         && data.keys().hasOnly(['id', 'type', 'number', 'planId', 'vote', 'userId', 'actorKey', 'migratedTo', 'interested', 'created', 'updated'])
         && planInterestIdentity(data, interestId) && data.planId is string && data.planId.size() > 0 && data.planId.size() <= 240
-        && data.vote in ['up', 'down', 'none'] && data.actorKey == request.auth.uid
+        && data.vote in ['up', 'none'] && data.actorKey == request.auth.uid
         && data.userId == planInterestUserId() && data.migratedTo == '' && data.interested is bool
         && (!anonymousPlanVoter() || data.interested == false) && data.created is timestamp && data.updated == request.time;
     }
@@ -281,8 +285,8 @@ service cloud.firestore {
       allow update: if newPlanInterestCounter() && request.resource.data.number == resource.data.number + 1;
     }
     match /planInterestSummary/{planId} {
-      allow get: if isOwner();
-      allow list: if isOwner() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 201;
+      allow get: if isAccountAdmin();
+      allow list: if isAccountAdmin() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 201;
       allow create: if planInterestSummaryValues(planId) && !exists(planInterestPath(request.resource.data.lastInterestId))
         && planInterestSummaryChange(planId, {});
       allow update: if planInterestSummaryValues(planId) && planInterestSummaryChange(planId, resource.data);

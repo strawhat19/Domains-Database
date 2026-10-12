@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { usePlanScores } from './usePlanScores';
 import { useLocalStorage } from '../../shared/config';
 import { formatPlanPrice, billingLabels } from './values';
 import { plansAPI, type PlanInput } from '../../api/plans';
@@ -12,6 +13,7 @@ type Editor = Plan | `new` | null;
 const emptyControls = (actor: string) => ({ actor, search: ``, filter: `all`, archivingId: ``, editor: null as Editor });
 export const useAdminPlans = () => {
   const { user } = useAuth();
+  const scores = usePlanScores();
   const allowed = canManagePlans(user);
   const actor = allowed ? `${user?.id}:${user?.role}` : ``;
   const page = useCollectionPage(actor, plansAPI.subscribePlansPage);
@@ -51,7 +53,8 @@ export const useAdminPlans = () => {
   const archive = (plan: Plan) => runMutation(plan.id, () => plansAPI.archivePlan(plan.id), `Plan Archived`);
   const changeStatus = (plan: Plan) => runMutation(plan.id, () => plansAPI.setPlanActive(plan.id, !plan.active), plan.active ? `Plan Deactivated` : `Plan Activated`);
   return {
-    page, save, active, allowed, archive, records, changeStatus, matchingRecords,
+    page, save, scores, active, allowed, archive, records, changeStatus, matchingRecords,
+    refresh: () => { page.refresh(); scores.refresh(); },
     editor: current.editor,
     search: current.search,
     filter: current.filter,

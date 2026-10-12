@@ -2,7 +2,6 @@ import '../AdminUsers/records.scss';
 import './styles.scss';
 import { useState } from 'react';
 import { AdminLoading } from '../AdminWidgets';
-import AdminPlanInterest from '../AdminPlanInterest';
 import { featureDefinitions } from './features';
 import TableStatus from '../AdminUsers/TableStatus';
 import { useAdminFeatures } from './useAdminFeatures';
@@ -82,7 +81,6 @@ const AdminFeatures = () => {
         </tbody>
       </table>
     </div>
-    <AdminPlanInterest />
     {details ? <FeatureDetails
       feature={details}
       onClose={() => setDetailsKey(null)}

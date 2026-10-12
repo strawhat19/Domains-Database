@@ -6,14 +6,14 @@ import type { PlanVote, PlanInterestState, PlanInterestSummary } from './types';
 
 const unreadable = () => new Error(`Saved Plan Interest Needs Attention — Nothing Was Changed`);
 export const normalizePlanVote = (value: unknown): PlanVote => {
-  if (value !== null && value !== `up` && value !== `down`) throw new Error(`Choose A Valid Plan Vote`);
+  if (value !== null && value !== `up`) throw new Error(`Choose A Valid Plan Vote`);
   return value;
 };
 export const readPlanInterestState = (value: unknown): PlanInterestState => {
   if (!value || typeof value !== `object` || Array.isArray(value)) throw unreadable();
   const data = value as Record<string, unknown>;
   if (Object.keys(data).length !== 3 || typeof data.interested !== `boolean`) throw unreadable();
-  return { planId: planId(data.planId), vote: normalizePlanVote(data.vote), interested: data.interested };
+  return { planId: planId(data.planId), vote: normalizePlanVote(data.vote === `down` ? null : data.vote), interested: data.interested };
 };
 const date = (value: unknown) => {
   const text = value instanceof Timestamp ? value.toDate().toISOString() : value;
@@ -45,7 +45,7 @@ export const readPlanInterestSummary = (value: unknown): PlanInterestSummary => 
 export const planInterestState = (planId: string, record?: PlanInterest | null): PlanInterestState => ({
   planId,
   interested: record?.interested ?? false,
-  vote: record?.vote === `up` || record?.vote === `down` ? record.vote : null,
+  vote: record?.vote === `up` ? `up` : null,
 });
 export const adjustPlanInterestSummary = (summary: PlanInterestSummary, oldRecords: readonly PlanInterest[], record: PlanInterest, planName: string): PlanInterestSummary => {
   const count = (vote: `up` | `down`) => oldRecords.reduce((total, current) => total + Number(current.vote === vote), 0);

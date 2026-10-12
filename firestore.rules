@@ -281,7 +281,7 @@ service cloud.firestore {
       return data.keys().hasAll(['id', 'type', 'number', 'planId', 'vote', 'userId', 'actorKey', 'migratedTo', 'interested', 'created', 'updated'])
         && data.keys().hasOnly(['id', 'type', 'number', 'planId', 'vote', 'userId', 'actorKey', 'migratedTo', 'interested', 'created', 'updated'])
         && planInterestIdentity(data, interestId) && data.planId is string && data.planId.size() > 0 && data.planId.size() <= 240
-        && data.vote in ['up', 'down', 'none'] && data.actorKey == request.auth.uid
+        && data.vote in ['up', 'none'] && data.actorKey == request.auth.uid
         && data.userId == planInterestUserId() && data.migratedTo == '' && data.interested is bool
         && (!anonymousPlanVoter() || data.interested == false) && data.created is timestamp && data.updated == request.time;
     }
@@ -505,8 +505,8 @@ service cloud.firestore {
         && getAfter(planPath(request.resource.data.id)).data.displayOrder == request.resource.data.displayOrder;
     }
     match /planInterestSummary/{planId} {
-      allow get: if isOwner();
-      allow list: if isOwner() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 201;
+      allow get: if isAccountAdmin();
+      allow list: if isAccountAdmin() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 201;
       allow create: if planInterestSummaryValues(planId) && !exists(planInterestPath(request.resource.data.lastInterestId))
         && planInterestSummaryChange(planId, {});
       allow update: if planInterestSummaryValues(planId) && planInterestSummaryChange(planId, resource.data);

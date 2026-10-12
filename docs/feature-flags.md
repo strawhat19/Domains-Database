@@ -1,6 +1,6 @@
 # Features
 
-`/features` appears last in the Dashboard submenu and requires an active Owner at navigation, direct-route, service, and Firestore-rule boundaries. `/admin/features` redirects to it. The original four flags and Pricing Table default to true after a confirmed missing record; Ads and Name Switch default to false.
+`/features` appears after Plans in the Dashboard submenu, followed by Health and Analytics, and requires an active Owner at navigation, direct-route, service, and Firestore-rule boundaries. `/admin/features` redirects to it. The original four flags and Pricing Table default to true after a confirmed missing record; Ads and Name Switch default to false.
 
 | Flag | False Behavior |
 | --- | --- |
@@ -8,7 +8,7 @@
 | `domainMarquee` | Remove the top marquee and remeasure the header |
 | `notifications` | Hide the bell, public notification pages, and marquee announcements; stop public notification subscriptions |
 | `contact` | Hide Contact navigation and contact actions, disable the public form, and reject new submissions |
-| `pricingTable` | Keep published plan previews; replace plan actions with signed-in interest and account-free up/down voting |
+| `pricingTable` | Keep published plan previews; replace plan actions with signed-in interest and account-free upvotes |
 | `ads` | Disable future ad eligibility for everyone; no ad placements are connected yet |
 | `nameSwitch` | Display Domains Database; enabling it displays Domain Databases in UI, page copy, and browser titles |
 
@@ -26,4 +26,4 @@ The shared provider publishes confirmed snapshots and retains the last confirmed
 
 Deploy the updated `firestore.rules` with the matching client before using the new controls in Firebase mode. Source changes do not deploy rules or confirm a live connection. Public notification reads and Contact creation respect their flags; authorized notification management and Owner submission review remain available.
 
-The Plan Interest section below Features displays saved per-plan upvotes, downvotes, and signed-in interest directly from Firestore. No pricing action grants a plan entitlement or processes a payment. Guest voting uses isolated Anonymous Authentication in the same Firebase project as described in `docs/plan-interest.md`; local mode labels its results as saved on this device.
+The Plans Admin table has a Score column showing each plan's confirmed upvote total directly from Firestore. Clicking an existing upvote removes it; downvote actions are unavailable. The separate Plan Interest section was removed from Features. No pricing action grants a plan entitlement or processes a payment. Guest voting uses isolated Anonymous Authentication in the same Firebase project as described in `docs/plan-interest.md`; local mode labels its results as saved on this device.

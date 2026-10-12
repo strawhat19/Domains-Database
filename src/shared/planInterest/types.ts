@@ -1,4 +1,4 @@
-export type PlanVote = `up` | `down` | null;
+export type PlanVote = `up` | null;
 export interface PlanInterestState { planId: string; vote: PlanVote; interested: boolean }
 export interface PlanInterestSummary {
   up: number;

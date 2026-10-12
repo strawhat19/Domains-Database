@@ -38,12 +38,12 @@ export const useAccountSidebar = ({ section, counts, countsLoading = false }: Ac
   const adminCandidates: SidebarLink[] = [
     { id: `users`, Icon: UsersRound, ...routes.adminUsers, section: `users`, count: counts?.users, countLoading: countsLoading },
     { id: `events`, Icon: CalendarDays, ...routes.adminEvents, section: `events` },
-    { id: `plans`, Icon: Wallet, ...routes.adminPlans, section: `plans` },
     { id: `notifications`, Icon: Bell, ...routes.adminNotifications, section: `notifications`, count: counts?.notifications, countLoading: countsLoading },
     { id: `reports`, Icon: FileText, ...routes.adminReports, section: `reports` },
-    { id: `analytics`, Icon: ChartNoAxesCombined, ...routes.adminAnalytics, section: `analytics` },
-    { id: `observability`, Icon: Activity, ...routes.adminObservability, section: `observability` },
+    { id: `plans`, Icon: Wallet, ...routes.adminPlans, section: `plans` },
     { id: `features`, Icon: SlidersHorizontal, ...routes.adminFeatures, section: `features` },
+    { id: `observability`, Icon: Activity, ...routes.adminObservability, section: `observability` },
+    { id: `analytics`, Icon: ChartNoAxesCombined, ...routes.adminAnalytics, section: `analytics` },
   ];
   const adminChildren = adminCandidates.filter(link => canAccessAdmin(user, link.section));
   const adminLinks: SidebarLink[] = [

@@ -71,8 +71,8 @@ const Pricing = () => {
               className={`landing-button${plan.highlighted ? ` landing-button-primary` : ``}`}
               disabled={planInterest.pending || planInterest.interested || (interest.signedIn && !planInterest.ready)}
             >{planInterest.interested ? <Check id={`landing-plan-interest-icon-${plan.id}`} size={15} aria-hidden /> : <ThumbsUp id={`landing-plan-interest-icon-${plan.id}`} size={15} aria-hidden />}<span id={`landing-plan-interest-label-${plan.id}`} className={`landing-link-label`}>{planInterest.pending ? `Saving…` : planInterest.interested ? `Interest Saved` : `I'm Interested`}</span></button>
-            <p id={`landing-plan-votes-label-${plan.id}`} className={`pricing-plan-interest-note`}>{interest.signedIn ? `Share Your Feedback` : `Vote Without Signup`}</p>
-            <PricingPlanVotes id={`landing-plan-votes-${plan.id}`} name={brand.formatText(plan.name)} state={planInterest} onVote={direction => { void interest.vote(plan.id, direction); }} />
+            <p id={`landing-plan-votes-label-${plan.id}`} className={`pricing-plan-interest-note`}>{interest.signedIn ? `Upvote This Plan` : `Upvote Without Signup`}</p>
+            <PricingPlanVotes id={`landing-plan-votes-${plan.id}`} name={brand.formatText(plan.name)} state={planInterest} onVote={() => { void interest.vote(plan.id); }} />
             {planInterest.loading ? <p id={`landing-plan-interest-loading-${plan.id}`} className={`pricing-plan-interest-note`} role={`status`}>{`Loading Your Feedback…`}</p> : null}
             {planInterest.notice ? <p id={`landing-plan-interest-notice-${plan.id}`} className={`pricing-plan-interest-notice`} role={`status`}>{planInterest.notice}</p> : null}
             {planInterest.error ? <div id={`landing-plan-interest-feedback-${plan.id}`} className={`pricing-plan-interest-feedback`}><p id={`landing-plan-interest-error-${plan.id}`} className={`pricing-plan-interest-error`} role={`alert`}>{planInterest.error}</p>{!planInterest.ready ? <button id={`landing-plan-interest-retry-${plan.id}`} className={`landing-button`} type={`button`} onClick={interest.refresh}><RefreshCw id={`landing-plan-interest-retry-icon-${plan.id}`} size={14} aria-hidden />{`Try Again`}</button> : null}</div> : null}
@@ -93,7 +93,7 @@ const Pricing = () => {
       onAuth={interest.authenticate}
       state={interest.getState(interest.prompt.id)}
       onConfirm={() => { if (interest.prompt) void interest.register(interest.prompt.id); }}
-      onVote={direction => { if (interest.prompt) void interest.vote(interest.prompt.id, direction); }}
+      onVote={() => { if (interest.prompt) void interest.vote(interest.prompt.id); }}
     /> : null}
   </section>;
 };

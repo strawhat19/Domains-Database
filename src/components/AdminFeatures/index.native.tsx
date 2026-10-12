@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createStyles } from './styles.native';
 import { featureDefinitions } from './features';
-import AdminPlanInterest from '../AdminPlanInterest';
 import { Text, View, Pressable } from 'react-native';
 import { useAdminFeatures } from './useAdminFeatures';
 import FeatureDetails from './FeatureDetails/index.native';
@@ -79,7 +78,6 @@ const AdminFeatures = () => {
           </View>;
         })}
       </View>}
-      <AdminPlanInterest />
     </View>
     {details ? <FeatureDetails
       feature={details}

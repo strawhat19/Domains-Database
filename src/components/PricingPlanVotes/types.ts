@@ -4,5 +4,5 @@ export interface PricingPlanVotesProps {
   id: string;
   name: string;
   state: PricingInterestState;
-  onVote: (direction: `up` | `down`) => void;
+  onVote: () => void;
 }

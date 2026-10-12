@@ -4,7 +4,9 @@ export interface PlanRowProps {
   busy: boolean;
   record: Plan;
   saving: boolean;
+  score: number | null;
   confirming: boolean;
+  scoreLoading: boolean;
   onEdit: (record: Plan) => void;
   onCancelArchive: () => void;
   onRequestArchive: (record: Plan) => void;

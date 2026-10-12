@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
-export const planColumns = [60, 260, 150, 180, 120, 75, 100, 160];
+export const planColumns = [60, 260, 150, 80, 180, 120, 75, 100, 160];
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   root: { gap: 18, minWidth: 0 },
   disabled: { opacity: .5 },
@@ -25,7 +25,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   add: { gap: 6, minHeight: 38, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, backgroundColor: palette.accent, flexDirection: `row`, alignItems: `center` },
   addLabel: { color: palette.contrast, fontSize: 10, fontFamily: `DMSans_600SemiBold` },
   tableWrap: { borderWidth: 1, borderRadius: 12, overflow: `hidden`, borderColor: palette.line },
-  table: { width: 1105 },
+  table: { width: planColumns.reduce((total, width) => total + width, 0) },
   tableHead: { flexDirection: `row`, backgroundColor: palette.accent },
   column: { padding: 12, fontSize: 10, color: palette.contrast, fontFamily: `DMSans_600SemiBold` },
   empty: { padding: 24, fontSize: 12, lineHeight: 20, color: palette.muted, fontFamily: `DMSans_400Regular` },

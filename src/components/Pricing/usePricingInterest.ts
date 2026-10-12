@@ -106,9 +106,9 @@ export const usePricingInterest = (plans: readonly Plan[], enabled: boolean) => 
       }
     }
   };
-  const vote = (planId: string, direction: `up` | `down`) => {
-    const selected = getState(planId).vote === direction;
-    return mutate(planId, () => planInterestAPI.setPlanVote(planId, selected ? null : direction), selected ? `Vote Removed` : `Vote Saved`);
+  const vote = (planId: string) => {
+    const selected = getState(planId).vote === `up`;
+    return mutate(planId, () => planInterestAPI.setPlanVote(planId, selected ? null : `up`), selected ? `Upvote Removed` : `Upvote Saved`);
   };
   const register = (planId: string) => {
     if (!enabled || authLoading || !plans.some(plan => plan.id === planId)) return;

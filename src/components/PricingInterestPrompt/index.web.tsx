@@ -23,7 +23,7 @@ const PricingInterestPrompt = ({ plan, local, state, signedIn, onClose, onConfir
         </>}
       </div>}
       {!signedIn && <div id={`${id}-guest`} className={`pricing-interest-guest`}>
-        <p id={`${id}-guest-description`} className={`pricing-interest-description`}>{`Prefer to skip signup? Vote without an account.`}</p>
+        <p id={`${id}-guest-description`} className={`pricing-interest-description`}>{`Prefer to skip signup? Upvote without an account.`}</p>
         <PricingPlanVotes id={`${id}-votes`} name={name} state={state} onVote={onVote} />
         {!local ? <p id={`${id}-guest-account-note`} className={`pricing-interest-note`}>{`Guest votes stay separate from account feedback.`}</p> : null}
       </div>}

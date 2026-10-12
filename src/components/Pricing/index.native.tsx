@@ -79,8 +79,8 @@ const Pricing = () => {
               style={[styles.button, !plan.highlighted && styles.secondaryButton, (planInterest.pending || planInterest.interested || (interest.signedIn && !planInterest.ready)) && styles.disabled]}
               accessibilityState={{ busy: planInterest.pending, disabled: planInterest.pending || planInterest.interested || (interest.signedIn && !planInterest.ready) }}
             >{planInterest.interested ? <Check {...elementProps(`landing-plan-interest-icon`, plan.id)} size={15} color={plan.highlighted ? palette.contrast : palette.accent} /> : <ThumbsUp {...elementProps(`landing-plan-interest-icon`, plan.id)} size={15} color={plan.highlighted ? palette.contrast : palette.accent} />}<Text {...elementProps(`landing-plan-interest-label`, plan.id)} style={[styles.buttonText, !plan.highlighted && styles.secondaryButtonText]}>{planInterest.pending ? `Saving…` : planInterest.interested ? `Interest Saved` : `I'm Interested`}</Text></Pressable>
-            <Text {...elementProps(`landing-plan-votes-label`, plan.id)} style={styles.interestNote}>{interest.signedIn ? `Share Your Feedback` : `Vote Without Signup`}</Text>
-            <PricingPlanVotes id={`landing-plan-votes-${plan.id}`} name={brand.formatText(plan.name)} state={planInterest} onVote={direction => { void interest.vote(plan.id, direction); }} />
+            <Text {...elementProps(`landing-plan-votes-label`, plan.id)} style={styles.interestNote}>{interest.signedIn ? `Upvote This Plan` : `Upvote Without Signup`}</Text>
+            <PricingPlanVotes id={`landing-plan-votes-${plan.id}`} name={brand.formatText(plan.name)} state={planInterest} onVote={() => { void interest.vote(plan.id); }} />
             {planInterest.loading ? <Text {...elementProps(`landing-plan-interest-loading`, plan.id)} style={styles.interestNote} accessibilityLiveRegion={`polite`}>{`Loading Your Feedback…`}</Text> : null}
             {planInterest.notice ? <Text {...elementProps(`landing-plan-interest-notice`, plan.id)} style={[styles.interestNote, { color: palette.success }]} accessibilityLiveRegion={`polite`}>{planInterest.notice}</Text> : null}
             {planInterest.error ? <View {...elementProps(`landing-plan-interest-feedback`, plan.id)} style={styles.interest}><Text {...elementProps(`landing-plan-interest-error`, plan.id)} style={[styles.interestNote, { color: palette.danger }]} accessibilityRole={`alert`}>{planInterest.error}</Text>{!planInterest.ready ? <Pressable {...elementProps(`landing-plan-interest-retry`, plan.id)} style={[styles.button, styles.secondaryButton]} accessibilityRole={`button`} onPress={interest.refresh}><RefreshCw {...elementProps(`landing-plan-interest-retry-icon`, plan.id)} size={14} color={palette.accent} /><Text {...elementProps(`landing-plan-interest-retry-label`, plan.id)} style={[styles.buttonText, styles.secondaryButtonText]}>{`Try Again`}</Text></Pressable> : null}</View> : null}
@@ -101,7 +101,7 @@ const Pricing = () => {
       onAuth={interest.authenticate}
       state={interest.getState(interest.prompt.id)}
       onConfirm={() => { if (interest.prompt) void interest.register(interest.prompt.id); }}
-      onVote={direction => { if (interest.prompt) void interest.vote(interest.prompt.id, direction); }}
+      onVote={() => { if (interest.prompt) void interest.vote(interest.prompt.id); }}
     /> : null}
   </View>;
 };

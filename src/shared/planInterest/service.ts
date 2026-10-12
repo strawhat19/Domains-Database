@@ -3,7 +3,7 @@ import { getPlanVisitor } from './client';
 import { useLocalStorage } from '../config';
 import type { Plan } from '../models/plans/Plan';
 import { firebaseEnabled } from '../firebase/config';
-import { canManageFeatures } from '../admin/permissions';
+import { canManagePlans } from '../admin/permissions';
 import { getFeatureFlags } from '../featureFlags/service';
 import { restoreSession } from '../authentication/service';
 import { subscribePublishedPlans } from '../plans/service';
@@ -87,7 +87,7 @@ const saveLocal = (id: string, vote: PlanVote, action: `vote` | `interest`): Pro
   if (action === `interest` && !actor.user) throw new Error(`Sign In To Share Your Plan Interest`);
   const { own, guest } = pair(snapshot, id, actor);
   const original = own ?? guest;
-  const desiredVote = action === `vote` ? vote ?? `none` : original?.vote ?? `none`;
+  const desiredVote = action === `vote` ? vote ?? `none` : original?.vote === `up` ? `up` : `none`;
   const interested = action === `interest` || own?.interested === true;
   if (own && !guest && own.vote === desiredVote && own.interested === interested) return planInterestState(id, own);
   if (!original && desiredVote === `none` && !interested) return planInterestState(id);
@@ -131,14 +131,14 @@ export const subscribePlanInterestSummary = (onValue: (summaries: PlanInterestSu
   let revision = 0;
   const fail = (error: unknown) => { if (active) onError?.(error instanceof Error ? error : new Error(`Plan Interest Could Not Be Loaded`)); };
   void restoreSession().then(session => {
-    if (!useLocalStorage || !canManageFeatures(session?.user)) throw new Error(`Owner Access Is Required`);
+    if (!useLocalStorage || !canManagePlans(session?.user)) throw new Error(`Admin Access Is Required`);
     const actorId = session!.user.id;
     if (!active) return;
     stop = subscribeStorage(storageKey, saved => {
       const request = ++revision;
       void restoreSession().then(current => {
         if (!active || request !== revision) return;
-        if (current?.user.id !== actorId || !canManageFeatures(current?.user)) throw new Error(`Your Plan Interest Access Changed — Refresh This Page`);
+        if (current?.user.id !== actorId || !canManagePlans(current?.user)) throw new Error(`Your Plan Interest Access Changed — Refresh This Page`);
         onValue(readSnapshot(saved).summaries);
       }).catch(fail);
     }, fail);

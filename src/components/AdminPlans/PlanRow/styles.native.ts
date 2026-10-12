@@ -9,6 +9,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   thumbnail: { width: 36, height: 36, borderWidth: 1, borderRadius: 18, borderColor: palette.line, backgroundColor: palette.subtle, alignItems: `center`, justifyContent: `center` },
   copy: { flex: 1, minWidth: 0 },
   featureList: { gap: 5 },
+  score: { gap: 6, flexDirection: `row`, alignItems: `center` },
   highlighted: { gap: 5, marginTop: 8, flexDirection: `row`, alignItems: `center` },
   highlightedLabel: { fontSize: 9, color: palette.accent, fontFamily: `DMSans_400Regular` },
   title: { marginBottom: 6, fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
