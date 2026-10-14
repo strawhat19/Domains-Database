@@ -2,6 +2,7 @@ import '../DomainEditor/styles.scss';
 import './styles.scss';
 import TagPicker from '../TagPicker/index.web';
 import ModalTabs from '../ModalTabs/index.web';
+import MobileSheetHandle from '../MobileSheet/index.web';
 import StarButton from '../StarButton/index.web';
 import ModalTitle from '../ModalTitle/index.web';
 import DomainLinks from '../DomainLinks/index.web';
@@ -47,8 +48,11 @@ const DomainGroupSettings = ({ group, onClose, copyGroup, convertToCollection = 
     <div
       role={`presentation`}
       id={`domain-group-settings-backdrop`}
-      className={`domain-dialog-backdrop`}
-      onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}
+      {...settings.sheet.pressProps}
+      style={settings.sheet.style}
+      className={`domain-dialog-backdrop${settings.sheet.className}`}
+      onClick={event => { if (settings.sheet.mobile && event.target === event.currentTarget) settings.close(); }}
+      onMouseDown={event => { if (!settings.sheet.mobile && event.target === event.currentTarget) settings.close(); }}
     >
       <div
         tabIndex={-1}
@@ -59,6 +63,7 @@ const DomainGroupSettings = ({ group, onClose, copyGroup, convertToCollection = 
         aria-labelledby={`domain-group-settings-title`}
         className={`domain-dialog domain-group-settings`}
       >
+        <MobileSheetHandle id={`domain-group-settings-${group.id}`} sheet={settings.sheet} />
         <header id={`domain-group-settings-header`} className={`domain-dialog-header domain-group-settings-header`}>
           <div id={`domain-group-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-group-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
@@ -108,7 +113,7 @@ const DomainGroupSettings = ({ group, onClose, copyGroup, convertToCollection = 
             />
             <button
               type={`button`}
-              onClick={onClose}
+              onClick={settings.close}
               id={`domain-group-settings-close`}
               aria-label={`Close Group Settings`}
               className={`domain-dialog-close domain-group-settings-close`}
@@ -522,7 +527,7 @@ const DomainGroupSettings = ({ group, onClose, copyGroup, convertToCollection = 
             <div id={`domain-group-settings-actions`} className={`domain-dialog-actions`}>
               <button
                 type={`button`}
-                onClick={onClose}
+                onClick={settings.close}
                 id={`domain-group-settings-cancel`}
                 className={`portfolio-button portfolio-button-secondary`}
               >

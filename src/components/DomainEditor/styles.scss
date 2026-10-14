@@ -7,6 +7,7 @@
   overflow: hidden;
   align-items: center;
   justify-content: center;
+  -webkit-backdrop-filter: blur(7px);
   backdrop-filter: blur(7px);
   background: var(--overlay);
   animation: domain-dialog-reveal .18s ease both;

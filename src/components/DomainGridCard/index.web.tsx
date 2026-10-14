@@ -1,4 +1,5 @@
 import './styles.scss';
+import { boardEntityProps, type BoardEntity } from '../MobilePortfolioBoard/types';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainNewBadge from '../DomainNewBadge/index.web';
@@ -19,7 +20,9 @@ import {
   type PortfolioColumn,
 } from '../../shared/portfolioColumns';
 
-export interface DomainGridCardProps extends DomainItemProps, DomainDragProps<HTMLElement> {}
+export interface DomainGridCardProps extends DomainItemProps, DomainDragProps<HTMLElement> {
+  boardEntity?: BoardEntity;
+}
 
 const DomainGridCard = ({
   busy,
@@ -37,6 +40,7 @@ const DomainGridCard = ({
   onDragOver,
   onMoveDown,
   onDragStart,
+  boardEntity,
   onToggleAutoRenew,
   selectionDescriptionId,
   reorderable = draggable,
@@ -55,6 +59,7 @@ const DomainGridCard = ({
 
   return (
     <article
+      {...(boardEntity ? boardEntityProps(boardEntity) : {})}
       id={scope}
       onDrop={onDrop}
       draggable={draggable}

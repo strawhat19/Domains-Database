@@ -1,7 +1,8 @@
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { normalizeDomainTags } from '../../shared/domainTags';
-import { useModalFocus } from '../DomainEditor/useDomainEditor';
+import { useMobileSheet } from '../MobileSheet/useMobileSheet';
+import { useModalFocus } from '../MobileSheet/useModalFocus';
 import type { DomainLinkField } from '../DomainLinks/index.web';
 import { normalizeSiteIconUrl } from '../../shared/domainSiteIcon';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
@@ -30,7 +31,7 @@ const GROUP_LINK_FIELDS: { key: DomainLinkField; label: string; multiple?: boole
 type GroupSettingsField = keyof PortfolioGroupDetails
   | `name` | `description` | `collection` | `collectionName` | `collectionDescription`;
 
-export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () => void, convertToCollection = false) => {
+export const useDomainGroupSettings = (group: CustomPortfolioGroup, onDismiss: () => void, convertToCollection = false) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
   const [activeTab, setActiveTab] = useState<`general` | `project` | `organization`>(convertToCollection ? `organization` : `general`);
@@ -68,6 +69,8 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   const collectionNameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const collectionDescriptionInputRef = useRef<HTMLTextAreaElement>(null);
+  const sheet = useMobileSheet(onDismiss);
+  const onClose = sheet.close;
   const creatingCollection = collectionId === CREATE_COLLECTION_OPTION;
   const convertingToCollection = collectionId === CONVERT_COLLECTION_OPTION;
   const addingCollection = creatingCollection || convertingToCollection;
@@ -187,7 +190,7 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
       setError(`Could Not Delete Group. Try Again Shortly`);
       return;
     }
-    onClose();
+    onDismiss();
     window.requestAnimationFrame(() => document.getElementById(`portfolio-table-settings`)?.focus({ preventScroll: true }));
   };
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -281,6 +284,8 @@ export const useDomainGroupSettings = (group: CustomPortfolioGroup, onClose: () 
   };
 
   return {
+    sheet,
+    close: onClose,
     name,
     hidden,
     details,

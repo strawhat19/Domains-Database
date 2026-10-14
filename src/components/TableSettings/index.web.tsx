@@ -1,6 +1,7 @@
 import './styles.scss';
 import '../DomainEditor/styles.scss';
 import ModalTabs from '../ModalTabs/index.web';
+import MobileSheetHandle from '../MobileSheet/index.web';
 import type { TableSettingsProps } from './types';
 import { useTableSettings } from './useTableSettings';
 import GroupControls from '../GroupControls/index.web';
@@ -62,8 +63,11 @@ const TableSettings = ({
     <div
       role={`presentation`}
       id={`table-settings-backdrop`}
-      className={`domain-dialog-backdrop table-settings-backdrop`}
-      onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}
+      {...settings.sheet.pressProps}
+      style={settings.sheet.style}
+      className={`domain-dialog-backdrop table-settings-backdrop${settings.sheet.className}`}
+      onClick={event => { if (settings.sheet.mobile && event.target === event.currentTarget) settings.close(); }}
+      onMouseDown={event => { if (!settings.sheet.mobile && event.target === event.currentTarget) settings.close(); }}
     >
       <div
         tabIndex={-1}
@@ -74,6 +78,7 @@ const TableSettings = ({
         aria-labelledby={`table-settings-title table-settings-eyebrow`}
         className={`domain-dialog table-settings`}
       >
+        <MobileSheetHandle id={`table-settings`} sheet={settings.sheet} />
         <header id={`table-settings-header`} className={`domain-dialog-header table-settings-header`}>
           <div id={`table-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`table-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
@@ -85,7 +90,7 @@ const TableSettings = ({
           </div>
           <button
             type={`button`}
-            onClick={onClose}
+            onClick={settings.close}
             id={`table-settings-close`}
             className={`domain-dialog-close`}
             aria-label={`Close Table Settings`}
@@ -113,7 +118,7 @@ const TableSettings = ({
               <div id={`table-settings-view`} className={`table-settings-field table-settings-view`}>
                 <span id={`table-settings-view-label`} className={`table-settings-label`}>
                   <LayoutGrid size={14} aria-hidden={`true`} id={`table-settings-view-icon`} className={`table-settings-field-icon`} />
-                  <span id={`table-settings-view-label-text`} className={`table-settings-label-text`}>{`View`}</span>
+                  <span id={`table-settings-view-label-text`} className={`table-settings-label-text`}>{settings.mobile ? `Desktop View` : `View`}</span>
                 </span>
                 <SegmentedControl
                   value={settings.view}
@@ -122,7 +127,13 @@ const TableSettings = ({
                   disabled={settings.loading}
                   id={`table-settings-view-choices`}
                   labelledBy={`table-settings-view-label`}
+                  describedBy={settings.mobile ? `table-settings-view-help` : undefined}
                 />
+                {settings.mobile && (
+                  <p id={`table-settings-view-help`} className={`table-settings-view-help`}>
+                    {`Small screens use the board. This preference applies on larger screens.`}
+                  </p>
+                )}
               </div>
               <div id={`table-settings-visibility`} className={`table-settings-field table-settings-visibility`}>
                 <span id={`table-settings-visibility-label`} className={`table-settings-label`}>
@@ -353,7 +364,7 @@ const TableSettings = ({
           )}
           <button
             type={`button`}
-            onClick={onClose}
+            onClick={settings.close}
             id={`table-settings-done`}
             className={`portfolio-button portfolio-button-primary table-settings-done`}
           >

@@ -1,6 +1,7 @@
 import './styles.scss';
 import TagPicker from '../TagPicker/index.web';
 import ModalTabs from '../ModalTabs/index.web';
+import MobileSheetHandle from '../MobileSheet/index.web';
 import ModalTitle from '../ModalTitle/index.web';
 import { REGISTRARS } from '../../shared/config';
 import ConnectRegistrar from './ConnectRegistrar';
@@ -34,6 +35,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
     error,
     input,
     close,
+    sheet,
     activeTab,
     setActiveTab,
     invalidField,
@@ -89,8 +91,11 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
     <div
       role={`presentation`}
       id={`domain-editor-backdrop`}
-      className={`domain-dialog-backdrop`}
-      onMouseDown={event => { if (event.target === event.currentTarget) close(); }}
+      {...sheet.pressProps}
+      style={sheet.style}
+      className={`domain-dialog-backdrop${sheet.className}`}
+      onClick={event => { if (sheet.mobile && event.target === event.currentTarget) close(); }}
+      onMouseDown={event => { if (!sheet.mobile && event.target === event.currentTarget) close(); }}
     >
       <div
         tabIndex={-1}
@@ -102,6 +107,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
         aria-labelledby={`domain-editor-title`}
         aria-describedby={!isEditing && activeTab === `general` ? `domain-editor-description` : undefined}
       >
+        <MobileSheetHandle id={`domain-editor-${domain?.id ?? `new`}`} sheet={sheet} />
         <header id={`domain-editor-header`} className={`domain-dialog-header`}>
           <div id={`domain-editor-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-editor-eyebrow`} className={`domain-dialog-eyebrow`}>

@@ -4,6 +4,8 @@ import { createStyles } from './styles.native';
 import { REGISTRARS } from '../../shared/config';
 import TagPicker from '../TagPicker/index.native';
 import DomainCard from '../DomainCard/index.native';
+import NativePortfolioBoard from '../NativePortfolioBoard/index.native';
+import NativePortfolioSheet from '../NativePortfolioSheet/index.native';
 import CurrencyField from '../CurrencyField/index.native';
 import DomainSiteIcon from '../DomainSiteIcon/index.native';
 import DomainStarButton from '../DomainStarButton/index.native';
@@ -17,15 +19,15 @@ import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { normalizeDomainLink } from '../../shared/domainLinks';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { getDomainDeletionRestriction } from '../../shared/domainUtils';
+import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { NativeDragSource, NativeDropZone } from '../NativePortfolioDrag/index.native';
 import ModalTitle, { type NativeModalTitleHandle } from '../ModalTitle/index.native';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
-import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { ActivityIndicator, Image, Linking, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { CheckSquare, Square, ArrowDownAZ, ArrowDownWideNarrow, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, Trash2, RefreshCw } from 'lucide-react-native';
+import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { CheckSquare, Square, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, Trash2, RefreshCw } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -42,18 +44,17 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const appDomainIds = useMemo(() => new Set(customGroups
     .filter(group => group.isApp)
     .flatMap(group => group.domainIds)), [customGroups]);
+  const groupByDomainId = useMemo(() => new Map(customGroups.flatMap(group => group.domainIds.map(id => [id, group.id] as const))), [customGroups]);
   const router = useRouter();
   const { user } = useAuth();
   const [editorIconFailed, setEditorIconFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionToolsWidth, setSelectionToolsWidth] = useState(0);
   const editorTitleRef = useRef<NativeModalTitleHandle>(null);
-  const insets = useSafeAreaInsets();
-  const SortIcon = state.sortByName ? ArrowDownAZ : ArrowDownWideNarrow;
   const manualSyncBlocked = state.loading || state.syncing || state.manualSyncWaitSeconds > 0;
   const manualSyncLabel = state.syncing ? `Syncing…` : state.manualSyncWaitSeconds > 0
     ? `Wait ${Math.floor(state.manualSyncWaitSeconds / 60)}:${String(state.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
-  const visibleIds = state.visibleDomains.map(domain => domain.id);
+  const visibleIds = state.visibleDomainIds;
   const editorSiteIconUrl = getDomainSiteIconUrl(state.input);
   const editorHasCustomSiteIcon = Boolean(getCustomSiteIconUrl(state.input).trim());
   const developmentLinkActions = (state.input.developmentLinks ?? []).flatMap((value, index) => {
@@ -262,9 +263,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               accessibilityLabel={`Search Domains`}
             />
           </View>
-          <Pressable {...elementProps(`native-portfolio-sort`)} style={styles.sortButton} accessibilityRole={`button`} accessibilityLabel={state.sortByName ? `Sort By Soonest Expiry` : `Sort By Domain Name`} onPress={() => state.setSortByName(current => !current)}>
-            <SortIcon {...elementProps(`native-portfolio-sort-icon`)} size={17} color={palette.muted} />
-          </Pressable>
         </View>
         <ScrollView {...elementProps(`native-portfolio-registrars`)} horizontal showsHorizontalScrollIndicator={false} style={styles.registrarScroll} contentContainerStyle={styles.registrarList}>
           {([`All`, ...REGISTRARS] as const).map(registrar => (
@@ -335,17 +333,51 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         </ScrollView>
       </View>
       <View {...elementProps(`native-portfolio-records`)} style={styles.records} accessibilityState={{ busy: state.loading }}>
-        {state.loading ? [0, 1, 2].map(index => <DomainCard key={index} index={index} loading />) : state.visibleDomains.map((domain, index) => (
-          <DomainCard
-            key={domain.id}
-            index={index}
-            domain={domain}
+        {state.loading ? [0, 1, 2].map(index => <DomainCard key={index} index={index} loading />) : (
+          <NativePortfolioBoard
             onSelect={selectDomain}
             onEdit={state.openEditor}
-            selected={selectedIds.includes(domain.id)}
-            hideProjectDetails={appDomainIds.has(domain.id)}
+            domains={state.visibleDomains}
+            selectedIds={selectedIds}
+            renderMain={openActions => state.mainDomains.length ? (
+              <NativeDropZone
+                accepts={[`group`, `domain`]}
+                style={styles.records}
+                id={`main-domains`}
+                target={{ collectionId: null }}
+              >
+                {state.mainDomains.map((domain, index) => (
+                  <NativeDropZone
+                    key={domain.id}
+                    accepts={[`domain`]}
+                    id={`main-domain-${domain.id}`}
+                    target={{ targetId: domain.id, collectionId: null, groupId: groupByDomainId.get(domain.id) }}
+                  >
+                    <View {...elementProps(`native-main-domain`, domain.id)} style={styles.mainRecord}>
+                      <DomainCard
+                        index={index}
+                        domain={domain}
+                        onSelect={selectDomain}
+                        onEdit={state.openEditor}
+                        selected={selectedIds.includes(domain.id)}
+                        hideProjectDetails={appDomainIds.has(domain.id)}
+                      />
+                      {/* Keep the original card controls independent of the favicon hold target. */}
+                      <NativeDragSource
+                        onTap={() => state.openEditor(domain)}
+                        onHold={() => openActions(domain)}
+                        style={styles.mainRecordDragHandle}
+                        item={{ kind: `domain`, id: domain.id, label: domain.name }}
+                      >
+                        <View {...elementProps(`native-main-domain-drag-target`, domain.id)} style={styles.mainRecordHandleTarget} />
+                      </NativeDragSource>
+                    </View>
+                  </NativeDropZone>
+                ))}
+              </NativeDropZone>
+            ) : null}
           />
-        ))}
+        )}
         {!state.loading && !state.visibleDomains.length && (
           <View {...elementProps(`native-portfolio-empty`)} style={styles.empty}>
             <Globe2 {...elementProps(`native-portfolio-empty-icon`)} size={26} color={palette.accent} />
@@ -384,7 +416,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </View>
         ) : (
           <Text {...elementProps(`native-portfolio-showing`)} numberOfLines={1} style={styles.bottomText}>
-            {`Showing ${state.visibleDomains.length} Of ${state.filteredDomains.length}`}
+            {`Showing ${state.visibleDomainIds.length} Of ${state.filteredDomains.length}`}
           </Text>
         )}
         {compact ? (
@@ -413,9 +445,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           onSync={connectionId => void state.syncManually(connectionId)}
         />
       )}
-      <Modal visible={state.editorOpen && !state.loading} transparent animationType={`fade`} onRequestClose={state.closeEditor}>
-        <View {...elementProps(`native-domain-editor-overlay`)} style={[styles.overlay, { paddingTop: insets.top + 18, paddingBottom: insets.bottom + 18 }]}>
-          <KeyboardAvoidingView {...elementProps(`native-domain-editor-keyboard`)} style={styles.keyboard} behavior={Platform.OS === `ios` ? `padding` : `height`}>
+      <NativePortfolioSheet
+        disabled={state.saving}
+        onClose={state.closeEditor}
+        id={`native-domain-editor-sheet`}
+        visible={state.editorOpen && !state.loading}
+      >
             <View {...elementProps(`native-domain-editor`)} style={styles.modal} accessibilityViewIsModal>
               <View {...elementProps(`native-domain-editor-header`)} style={styles.modalHeader}>
                 <View {...elementProps(`native-domain-editor-heading`)} style={styles.modalHeading}>
@@ -877,7 +912,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     onChangeText={value => state.updateInput(`description`, value)}
                   />
                 </View>
-              </ScrollView>
               <View {...elementProps(`native-domain-editor-footer`)} style={styles.modalFooter}>
                 <Pressable {...elementProps(`native-domain-editor-save`)} style={[styles.primaryButton, state.saving && styles.disabled]} disabled={state.saving} onPress={() => void state.saveDomain(state.editingDomain && !editingSyncedDomain ? editorTitleRef.current?.getValue() : undefined)} accessibilityRole={`button`} accessibilityLabel={`Save Domain`}>
                   {state.saving && !state.deleting ? <ActivityIndicator {...elementProps(`native-domain-editor-save-progress`)} size={`small`} color={`#ffffff`} /> : <Save {...elementProps(`native-domain-editor-save-icon`)} size={14} color={`#ffffff`} />}
@@ -926,10 +960,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   {`Registrar accounts stay as they are.`}
                 </Text>
               </View>
+              </ScrollView>
             </View>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
+      </NativePortfolioSheet>
     </View>
   );
 };

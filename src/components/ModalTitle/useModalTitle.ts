@@ -1,5 +1,7 @@
 import type { RefObject, KeyboardEvent } from 'react';
 import { useRef, useState, useEffect, useLayoutEffect } from 'react';
+import { isMobileSheet } from '../MobileSheet/useMobileSheet';
+import { portfolioHaptic } from '../../shared/common/haptics.web';
 
 interface ModalTitleInput {
   value: string;
@@ -23,6 +25,7 @@ export const useModalTitle = ({ value, onChange, inputRef, focusRequest = 0, inv
 
   const open = () => {
     if (!editable) return;
+    if (isMobileSheet() && triggerRef.current?.closest(`.mobile-sheet-backdrop`)) portfolioHaptic(`tap`);
     setDraft(value);
     restoreFocusRef.current = false;
     editingRef.current = true;

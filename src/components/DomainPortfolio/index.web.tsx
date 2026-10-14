@@ -13,12 +13,14 @@ import { formatCurrency } from '../../shared/domainUtils';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { usePortfolioToolbar } from './usePortfolioToolbar';
 import PortfolioRecords from '../PortfolioRecords/index.web';
+import MobilePortfolioBoard from '../MobilePortfolioBoard/index.web';
 import { usePortfolio, type SortField } from './usePortfolio';
 import PortfolioSelection from '../PortfolioSelection/index.web';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import PortfolioCopyOptions from '../PortfolioCopyOptions/index.web';
 import PortfolioSyncOptions from '../PortfolioSyncOptions/index.web';
 import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion';
+import { useMobilePortfolio } from '../MobilePortfolioBoard/useMobilePortfolio.web';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { usePortfolioSearch } from '../../shared/portfolioPreferences/usePortfolioSearch';
@@ -32,17 +34,20 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
   const toolbar = usePortfolioToolbar();
   const portfolioRef = useRef<HTMLElement>(null);
+  const mobileBoardRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { user } = useAuth();
   const { visibleColumns, columnWidths, toggleColumn, resetColumns, setColumnWidths } = useColumns();
   const preferences = usePortfolioPreferences();
   const expansion = usePortfolioExpansion();
+  const mobile = useMobilePortfolio();
   const fullSections = useMemo(() => buildPortfolioSections(portfolio.registrarDomains, preferences), [portfolio.registrarDomains, preferences]);
-  const orderedSections = useMemo(() => portfolio.sortField ? {
-    ...fullSections,
-    mainGroups: buildPortfolioSections(portfolio.registrarDomains, { ...preferences, orders: {} }).mainGroups,
-  } : fullSections, [fullSections, portfolio.registrarDomains, portfolio.sortField, preferences]);
+  const orderedSections = useMemo(() => {
+    if (!portfolio.sortField) return fullSections;
+    const mainGroups = buildPortfolioSections(portfolio.registrarDomains, { ...preferences, orders: {} }).mainGroups;
+    return { ...fullSections, mainGroups };
+  }, [fullSections, portfolio.registrarDomains, portfolio.sortField, preferences]);
   const summaryFiltering = portfolio.activeFilterCount > 0;
   const facetSections = useMemo(() => summaryFiltering ? {
     ...orderedSections,
@@ -58,7 +63,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const mainGroups = sections.mainGroups;
   const showMainRecords = !showingFilteredRecords || mainGroups.length > 0 || !sections.collections.length;
   const tableVisible = preferences.view === `table` || (!portfolio.loading && !sections.mainDomains.length && !sections.collections.some(section => section.domains.length));
-  const sticky = useStickyPortfolio(`${preferences.view}|${tableVisible}|${showMainRecords}|${visibleColumns.join(`|`)}`);
+  const sticky = useStickyPortfolio(`${mobile}|${preferences.view}|${tableVisible}|${showMainRecords}|${visibleColumns.join(`|`)}`);
   const columns = getOrderedPortfolioColumns(visibleColumns);
   const columnCounts = useMemo(() => getPortfolioColumnCounts(portfolio.domains), [portfolio.domains]);
   const showAnnualSpend = visibleColumns.some(field => field === `renewalPrice` || field === `monthlyCost`)
@@ -76,8 +81,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       ? [] : domains.filter(domain => expandedIds.has(domain.id)).map(domain => domain.id)] as const;
   })), [sections.collections, compact, expansion.collapsedGroups, expansion.collapsedCollections]);
   const visibleIds = useMemo(() => {
-    return [...collectionVisibleIds.values()].flat().concat(mainVisibleIds);
-  }, [collectionVisibleIds, mainVisibleIds]);
+    const collectionIds = [...collectionVisibleIds.values()].flat();
+    return mobile ? mainVisibleIds.concat(collectionIds) : collectionIds.concat(mainVisibleIds);
+  }, [mobile, collectionVisibleIds, mainVisibleIds]);
   const organizationSummary = useMemo(() => {
     const apps = preferences.customGroups.filter(group => group.isApp).length;
     const { ungroupedCount } = buildPortfolioDestinationTree(portfolio.domains, preferences.customGroups, preferences.collections);
@@ -195,7 +201,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           {`Loading Domains…`}
         </p>
       )}
-      <div id={`portfolio-card`} className={`portfolio-card`}>
+      <div ref={mobileBoardRef} id={`portfolio-card`} className={`portfolio-card`}>
         <div ref={sticky.headingRef} id={`portfolio-heading-row`} className={`portfolio-heading-row`}>
           <div id={`portfolio-heading`} className={`portfolio-heading`}>
             <button
@@ -647,23 +653,35 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             {toolbar.copyOpen ? `` : toolbar.copyMessage}
           </p>
         </div>
-        <PortfolioRecords
+        {(!mobile || showMainRecords || portfolio.loading) && <PortfolioRecords
           {...recordProps}
           sticky={sticky}
           compact={compact}
-          {...selectionFor(visibleIds)}
+          mobileBoard={mobile}
+          showAddCollection={!mobile}
           showMainRecords={showMainRecords}
           domains={sections.mainDomains}
           sortField={portfolio.sortField}
-          onSort={changeSort}
           sortDirection={portfolio.sortDirection}
-          collectionSections={sections.collections}
+          {...selectionFor(mobile ? mainVisibleIds : visibleIds)}
+          collectionSections={mobile ? [] : sections.collections}
+          showDatabaseHeading={mobile && sections.collections.length > 0}
+          onSort={mobile ? portfolio.changeSort : changeSort}
           searchGroups={showingFilteredRecords ? mainGroups : undefined}
           onToggleCollectionSearch={search.toggleCollection}
           isCollectionShowingAll={id => search.showAllCollections.has(id)}
           isGroupShowingAll={(key, collectionId) => search.isGroupShowingAll(collectionId, key)}
           onToggleGroupSearch={(key, collectionId) => search.toggleGroup(collectionId, key)}
-        />
+        />}
+        {mobile && <MobilePortfolioBoard
+          {...recordProps}
+          compact={compact}
+          sections={sections}
+          surfaceRef={mobileBoardRef}
+          mainSortField={portfolio.sortField}
+          mainSortDirection={portfolio.sortDirection}
+          onManualOrder={() => { if (portfolio.sortField) portfolio.toggleManualOrder(); }}
+        />}
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
           <span id={`portfolio-visible-count`} className={`portfolio-visible-count`} title={portfolio.loading ? undefined : footerSummary}>
             {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-visible-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-footer`} /> : footerSummary}

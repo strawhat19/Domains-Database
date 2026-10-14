@@ -33,7 +33,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
   const { flags, ready: featuresReady } = useFeatureFlags();
   const blurTargetRef = useRef<View>(null);
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const scroll = useShellScroll(pathname, sticky);
+  const scroll = useShellScroll(pathname, sticky, blurTargetRef, insets.bottom);
   const accountShell = isAdminPath(pathname) || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
   const blurOpacity = useMemo(() => scroll.headerOpacity.interpolate({
     inputRange: [.86, 1],
@@ -42,7 +42,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
   const pageContentHeight = fitViewport || searchViewport
     ? Math.max(0, viewportHeight - scroll.headerHeight - footerHeight)
     : undefined;
-  const heroContext = useMemo(() => ({ pageContentHeight, setHeroBottom: scroll.setHeroBottom }), [pageContentHeight, scroll.setHeroBottom]);
+  const heroContext = useMemo(() => ({ pageContentHeight, pageScroll: scroll.pageScroll, setHeroBottom: scroll.setHeroBottom }), [pageContentHeight, scroll.pageScroll, scroll.setHeroBottom]);
   const openPiratechs = async () => {
     try {
       await Linking.openURL(`https://piratechs.com/`);
@@ -160,7 +160,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
           <ScrollView
             ref={scroll.scrollRef}
             onScroll={scroll.onScroll}
-            onLayout={({ nativeEvent }) => setViewportHeight(nativeEvent.layout.height)}
+            onLayout={event => { scroll.onViewportLayout(event); setViewportHeight(event.nativeEvent.layout.height); }}
+            onContentSizeChange={scroll.onContentSizeChange}
             style={styles.scroll}
             scrollEventThrottle={16}
             {...elementProps(`native-app-scroll`)}

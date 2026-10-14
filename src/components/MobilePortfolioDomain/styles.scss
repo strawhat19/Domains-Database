@@ -1,0 +1,28 @@
+.mobile-domain-task {
+  min-width: 0;
+  border-radius: 7px;
+  background: var(--paper);
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  &:has(.mobile-domain-selection:checked) { background: var(--subtle); }
+}
+.mobile-domain-task + .mobile-domain-task { border-top: 1px solid var(--line); }
+.mobile-domain-heading { gap: 4px; display: flex; min-width: 0; min-height: 46px; padding-right: 2px; align-items: center; }
+.mobile-domain-selection { width: 16px; height: 16px; margin: 0; flex: none; accent-color: var(--accent); }
+.mobile-domain-selection-target { width: 32px; min-height: 44px; display: grid; flex: none; place-items: center; cursor: pointer; }
+.mobile-domain-identity { width: 20px; height: 22px; display: flex; flex: none; position: relative; align-items: center; }
+.mobile-domain-name { flex: 1; border: 0; padding: 10px 0; min-width: 0; min-height: 44px; overflow: hidden; color: var(--ink); cursor: pointer; white-space: nowrap; text-overflow: ellipsis; background: transparent; text-align: left; font: 500 12px/1.45 var(--font-body); }
+.mobile-domain-heading .mobile-domain-actions { width: 38px; height: 44px; min-width: 38px; }
+.mobile-domain-task .mobile-domain-heading .mobile-domain-project-status { flex: none; width: 28px; padding: 0; border: 0; min-width: 28px; max-width: 28px; min-height: 44px; box-shadow: none; justify-content: center; background: transparent; color: var(--project-status-icon); }
+.mobile-domain-task .mobile-domain-heading .mobile-domain-project-status .domain-project-badge-icon-wrap,
+.mobile-domain-task .mobile-domain-heading .mobile-domain-project-status .domain-project-badge-icon { width: 14px; height: 14px; }
+.mobile-domain-project-status .domain-project-badge-chevron { display: none; }
+.mobile-domain-project-status .domain-project-badge-label { width: 1px; height: 1px; padding: 0; border: 0; margin: -1px; overflow: hidden; position: absolute; white-space: nowrap; clip-path: inset(50%); }
+.mobile-domain-project-status .domain-project-badge-select { font-size: 16px; }
+.mobile-domain-status { right: -1px; bottom: 0; position: absolute; }
+.mobile-domain-status .statusDotWrap { width: 9px; height: 9px; display: grid; place-items: center; border-radius: 50%; background: var(--paper); }
+.mobile-domain-status .statusDot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted); }
+.mobile-domain-status[data-status='active'] .statusDot { background: var(--success); }
+.mobile-domain-status[data-status='warning'] .statusDot { background: var(--danger); }
+.mobile-domain-status-text { width: 1px; height: 1px; padding: 0; border: 0; margin: -1px; overflow: hidden; position: absolute; white-space: nowrap; clip-path: inset(50%); }
+@media (prefers-reduced-motion: reduce) { .mobile-domain-task { transition: none; } }

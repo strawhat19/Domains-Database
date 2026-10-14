@@ -148,7 +148,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  &-nameservers { min-width: 160px; white-space: normal; overflow-wrap: anywhere; }
+  &-nameservers { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 }
 .domain-registrar { gap: 9px; display: flex; align-items: center; white-space: nowrap; }
 .domain-registrar-copy { gap: 3px; min-width: 0; display: flex; align-items: flex-start; flex-direction: column; }

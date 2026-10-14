@@ -314,10 +314,10 @@
 .portfolio-toolbar-meta { display: flex; margin-left: auto; align-items: center; }
 .portfolio-sample-label { gap: 5px; display: flex; padding: 6px 8px; font-size: 10px; color: var(--warning); border-radius: 3px; align-items: center; white-space: nowrap; background: var(--warning-bg); font-family: var(--font-mono); }
 .portfolio-table-scroll {
-  width: 100%; overflow-x: auto; scrollbar-width: none;
+  width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
-.portfolio-table { width: 100%; min-width: var(--portfolio-table-width, 860px); border-spacing: 0; border-collapse: separate; }
+.portfolio-table { width: 100%; min-width: 0; border-spacing: 0; border-collapse: separate; }
 .portfolio-table-head { background: var(--input); }
 .portfolio-table-heading {
   z-index: 2;
@@ -331,12 +331,7 @@
   box-shadow: 0 1px 0 var(--line);
   border-top: 1px solid var(--line);
 }
-.portfolio-table-heading-name { min-width: 230px; }
-.portfolio-table-heading-registrar { min-width: 160px; }
-.portfolio-table-heading-expiresAt { min-width: 155px; }
-.portfolio-table-heading-autoRenew { min-width: 110px; }
-.portfolio-table-heading-renewalPrice { min-width: 125px; text-align: right; }
-.portfolio-table-heading-monthlyCost { min-width: 125px; text-align: right; }
+.portfolio-table-heading-renewalPrice, .portfolio-table-heading-monthlyCost { text-align: right; }
 .portfolio-table-heading-actions { width: 176px; }
 .portfolio-table-heading-position { width: 38px; min-width: 38px; padding: 10px 0; text-align: center; color: var(--muted); font-size: 10px; font-family: var(--font-mono); }
 .portfolio-table-heading-selection { width: 36px; min-width: 36px; padding: 10px 0; text-align: center; }

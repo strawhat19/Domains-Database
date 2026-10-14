@@ -7,10 +7,11 @@ import type { PortfolioNameEditorInput } from './usePortfolioNameEditor';
 
 interface PortfolioNameEditorProps extends PortfolioNameEditorInput {
   id: string;
+  dragHandle?: boolean;
   className?: string;
 }
 
-const PortfolioNameEditor = ({ id, value, kind, busy, onSave, className, onEditingChange }: PortfolioNameEditorProps) => {
+const PortfolioNameEditor = ({ id, value, kind, busy, onSave, className, onEditingChange, dragHandle = false }: PortfolioNameEditorProps) => {
   const editor = usePortfolioNameEditor({ value, kind, busy, onSave, onEditingChange });
   const label = `Edit ${kind} Name: ${value}`;
 
@@ -93,6 +94,7 @@ const PortfolioNameEditor = ({ id, value, kind, busy, onSave, className, onEditi
           onClick={editor.edit}
           ref={editor.triggerRef}
           disabled={editor.disabled}
+          data-board-handle={dragHandle || undefined}
           className={`portfolio-name-editor-trigger`}
         >
           <span id={`${id}-text`} className={`portfolio-name-editor-value`}>{value}</span>

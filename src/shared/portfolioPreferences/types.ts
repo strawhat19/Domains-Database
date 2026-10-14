@@ -73,9 +73,11 @@ export interface PortfolioPreferences {
   showHiddenGroups: boolean;
   showHiddenDomains: boolean;
   collectionNumber: number;
+  manualCollectionOrder: boolean;
   hiddenCollectionIds: string[];
   showHiddenCollections: boolean;
   collapsedCollectionIds: string[];
+  manualGroupOrderScopes: string[];
   customGroups: CustomPortfolioGroup[];
   orders: Record<string, string[]>;
   collections: CustomPortfolioCollection[];

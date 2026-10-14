@@ -1,6 +1,7 @@
 import { useRef, useMemo, useState } from 'react';
 import { FILTER_TABS, FILTER_TAB_FIELDS, type PortfolioFiltersTab } from './tabs';
-import { useModalFocus } from '../DomainEditor/useDomainEditor';
+import { useMobileSheet } from '../MobileSheet/useMobileSheet';
+import { useModalFocus } from '../MobileSheet/useModalFocus';
 import type { usePortfolio } from '../DomainPortfolio/usePortfolio';
 
 export interface PortfolioFiltersProps {
@@ -8,7 +9,9 @@ export interface PortfolioFiltersProps {
   portfolio: ReturnType<typeof usePortfolio>;
 }
 
-export const usePortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
+export const usePortfolioFilters = ({ portfolio, onClose: onDismiss }: PortfolioFiltersProps) => {
+  const sheet = useMobileSheet(onDismiss);
+  const onClose = sheet.close;
   const modalRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<PortfolioFiltersTab>(`common`);
   const destinationBranches = portfolio.destinationBranches.filter(branch => branch.count > 0);
@@ -71,5 +74,5 @@ export const usePortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProp
     onClose();
   };
   useModalFocus(modalRef, true, onClose, true);
-  return { tab, tabs, setTab, modalRef, applyFilter, filterCount, clearFilters, registrarTotals, activeSelections, visibleSections, destinationBranches, manualSyncBlocked };
+  return { sheet, close: onClose, tab, tabs, setTab, modalRef, applyFilter, filterCount, clearFilters, registrarTotals, activeSelections, visibleSections, destinationBranches, manualSyncBlocked };
 };

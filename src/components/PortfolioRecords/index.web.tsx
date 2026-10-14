@@ -4,6 +4,7 @@ import StarButton from '../StarButton/index.web';
 import PortfolioEmptyState from './EmptyState.web';
 import { Fragment, useMemo, useState } from 'react';
 import { useDomainReorder } from './useDomainReorder';
+import { boardEntityProps, type BoardEntity } from '../MobilePortfolioBoard/types';
 import type { DomainRecord } from '../../shared/types';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainRow, { DomainRowSkeleton } from '../DomainRow';
@@ -29,7 +30,7 @@ import { useStickyPortfolioGroup } from './useStickyPortfolioGroup';
 import PortfolioAddCollection from '../PortfolioAddCollection/index.web';
 import type { usePortfolioExpansion } from './usePortfolioExpansion';
 import { useGroupContextMenu } from '../GroupContextMenu/useGroupContextMenu';
-import { getPortfolioColumnWidth } from '../DomainPortfolio/columnLayout.web';
+import { getResponsivePortfolioColumnWidths } from '../DomainPortfolio/columnLayout.web';
 import { useCollectionReorder } from '../DomainPortfolio/useCollectionReorder';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
@@ -47,8 +48,11 @@ export interface PortfolioRecordsProps {
   busy: boolean;
   loading: boolean;
   compact: boolean;
+  mobileBoard?: boolean;
   idPrefix?: string;
   searching?: boolean;
+  showAddCollection?: boolean;
+  showDatabaseHeading?: boolean;
   showMainRecords?: boolean;
   searchGroups?: PortfolioGroup[];
   collectionSections?: PortfolioCollectionSection[];
@@ -87,6 +91,8 @@ const PortfolioRecords = ({
   searchGroups, isGroupShowingAll, onToggleGroupSearch, onChangeDescription, onChangeProjectStatus,
   onToggleCollectionSearch, isCollectionShowingAll, collectionSections = EMPTY_COLLECTIONS,
   idPrefix = `portfolio`, searching = false, showMainRecords = true,
+  showAddCollection = true, showDatabaseHeading = false,
+  mobileBoard = false,
 }: PortfolioRecordsProps) => {
   const [menuError, setMenuError] = useState(``);
   const [editingGroupNameKey, setEditingGroupNameKey] = useState(``);
@@ -221,6 +227,29 @@ const PortfolioRecords = ({
   const appDomainIds = useMemo(() => new Set(preferences.customGroups
     .filter(group => group.isApp)
     .flatMap(group => group.domainIds)), [preferences.customGroups]);
+  const domainBoardOwnership = useMemo(() => {
+    const ownership = new Map<string, Pick<BoardEntity, `groupKey` | `collectionId`>>();
+    preferences.customGroups.forEach(group => group.domainIds.forEach(id => ownership.set(id, {
+      groupKey: `custom:${group.id}`,
+      collectionId: group.collectionId,
+    })));
+    preferences.collections.forEach(collection => collection.domainIds?.forEach(id => {
+      if (!ownership.has(id)) ownership.set(id, { groupKey: `collection:${collection.id}`, collectionId: collection.id });
+    }));
+    return ownership;
+  }, [preferences.customGroups, preferences.collections]);
+  const domainBoardEntity = (domain: DomainRecord, displayGroupKey: string): BoardEntity | undefined => {
+    if (!mobileBoard) return undefined;
+    const ownership: Pick<BoardEntity, `groupKey` | `collectionId`> = domainBoardOwnership.get(domain.id) ?? { groupKey: `custom:ungrouped` };
+    return {
+      ...ownership,
+      displayGroupKey,
+      id: domain.id,
+      kind: `domain`,
+      label: domain.name,
+      main: !ownership.collectionId,
+    };
+  };
   const { columnWidths, flexibleColumns } = useColumns();
   const orderingPreferences = useMemo(() => sortField
     ? { ...preferences, orders: {} }
@@ -275,12 +304,9 @@ const PortfolioRecords = ({
       : Number.parseFloat(window.getComputedStyle(scroll).getPropertyValue(`--portfolio-row-actions-cell-width`)) || 176;
   }, [sticky.header, sticky.scrollRef]);
   const fixedWidth = 38 + 36 + actionsWidth;
-  const baseWidths = columns.map(column => getPortfolioColumnWidth(column.field, columnWidths));
-  const flexibleCount = columns.filter(column => flexibleColumns.includes(column.field)).length;
-  const unusedWidth = Math.max(0, sticky.header.width - baseWidths.reduce((total, width) => total + width, fixedWidth));
-  const dataWidths = columns.map((column, index) => (baseWidths[index] ?? 72)
-    + (flexibleColumns.includes(column.field) && flexibleCount ? unusedWidth / flexibleCount : 0));
-  const widths = [38, 36, ...dataWidths, flexibleCount ? 0 : unusedWidth, actionsWidth];
+  const dataWidths = getResponsivePortfolioColumnWidths(columns, columnWidths, flexibleColumns, sticky.header.width, fixedWidth);
+  const unusedWidth = Math.max(0, sticky.header.width - dataWidths.reduce((total, width) => total + width, fixedWidth));
+  const widths = [38, 36, ...dataWidths, unusedWidth, actionsWidth];
   const tableWidth = widths.reduce((total, width) => total + width, 0);
   const loadingWeight = columns.reduce((total, column) => total + (column.field === `name` ? 2 : 1), 0) || 1;
   const loadingDataWidths = columns.map(column => {
@@ -404,9 +430,17 @@ const PortfolioRecords = ({
     ) : null;
     return (
       <div
+        {...(mobileBoard && customGroup ? boardEntityProps({
+          kind: `group`,
+          id: customGroup.id,
+          label: customGroup.name,
+          groupKey: `custom:${customGroup.id}`,
+          collectionId: customGroup.collectionId,
+          main: !customGroup.collectionId,
+        }) : {})}
         id={`${scope}-heading`}
         data-group-context-key={key}
-        {...(grid ? reorder.groupHandlers(group, editingGroupNameKey === key) : {})}
+        {...(grid && !mobileBoard ? reorder.groupHandlers(group, editingGroupNameKey === key) : {})}
         onContextMenu={grid ? event => openGroupContextMenu(event, group) : undefined}
         className={`portfolio-group-heading${collection ? ` portfolio-group-heading-collection` : ``}${customGroup?.isApp ? ` portfolio-group-heading-app` : ``}${collapsed ? ` portfolio-group-heading-collapsed` : ``}${hidden ? ` portfolio-group-heading-hidden` : ``}${grid && reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-dragging` : ``}${grid && reorder.targetGroupKey === key ? ` portfolio-group-heading-drop-target` : ``}`}
       >
@@ -418,7 +452,7 @@ const PortfolioRecords = ({
             aria-label={`Reorder ${label}`}
             aria-describedby={`${idPrefix}-group-interaction-help`}
           >
-            <span id={`${scope}-drag-handle`} className={`portfolio-group-drag-handle`} title={`Drag to reorder ${label}`} aria-hidden={`true`}>
+            <span data-board-handle={mobileBoard || undefined} id={`${scope}-drag-handle`} className={`portfolio-group-drag-handle`} title={`Drag to reorder ${label}`} aria-hidden={`true`}>
               <GripVertical size={14} id={`${scope}-drag-handle-icon`} className={`portfolio-group-drag-handle-icon`} />
             </span>
             <div id={`${scope}-move-actions`} className={`portfolio-group-move-actions`}>
@@ -462,6 +496,7 @@ const PortfolioRecords = ({
         <div id={`${scope}-copy`} className={`portfolio-group-copy`}>
           {customGroup ? (
             <PortfolioNameEditor
+              dragHandle={mobileBoard}
               kind={`Group`}
               busy={menuDisabled}
               id={`${scope}-label`}
@@ -712,8 +747,9 @@ const PortfolioRecords = ({
       onToggleSearch={() => onToggleCollectionSearch?.(section.collection.id)}
     />
   );
-  const mainHeading = collections.length > 0 && showMainContent && (
+  const mainHeading = (showDatabaseHeading || collections.length > 0) && showMainContent && (
     <div
+      {...(mobileBoard ? boardEntityProps({ id: `main`, main: true, kind: `collection`, label: `Database` }, false) : {})}
       onDrop={mainHandlers.onDrop}
       onDragOver={mainHandlers.onDragOver}
       onDragLeave={mainHandlers.onDragLeave}
@@ -772,7 +808,7 @@ const PortfolioRecords = ({
       </PortfolioCollapse>
     );
   };
-  const addCollectionContent = (grid = false) => (
+  const addCollectionContent = (grid = false) => showAddCollection && (
     <PortfolioCollapse id={`${idPrefix}-${grid ? `grid` : `table`}-add-collection-content`} collapsed={!preferences.showAddRows}>
       <PortfolioAddCollection idPrefix={idPrefix} disabled={loading || busy} />
     </PortfolioCollapse>
@@ -816,6 +852,7 @@ const PortfolioRecords = ({
       {hasGroupHeading(group) && (
         <tr
           {...reorder.groupHandlers(group, editingGroupNameKey === group.key)}
+          {...(mobileBoard ? { draggable: false } : {})}
           data-group-context-key={group.key}
           onContextMenu={event => openGroupContextMenu(event, group)}
           inert={isGroupParentCollapsed(group)}
@@ -852,6 +889,8 @@ const PortfolioRecords = ({
           onChangeDescription={onChangeDescription}
           onChangeProjectStatus={onChangeProjectStatus}
           {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
+          {...(mobileBoard ? { draggable: false } : {})}
+          boardEntity={domainBoardEntity(domain, group.key)}
         />
       ))}
       {!group.domains.length && (
@@ -895,6 +934,8 @@ const PortfolioRecords = ({
               selectionDescriptionId={`portfolio-selection-help`}
               onToggleAutoRenew={onToggleAutoRenew}
               {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
+              {...(mobileBoard ? { draggable: false } : {})}
+              boardEntity={domainBoardEntity(domain, group.key)}
             />
           ))}
         </div>
@@ -1156,7 +1197,7 @@ const PortfolioRecords = ({
                   {addGroupRow(section.collection.id)}
                 </Fragment>
               ))}
-              <tbody id={`${idPrefix}-add-collection-body`} className={`portfolio-add-collection-body`}>
+              {showAddCollection && <tbody id={`${idPrefix}-add-collection-body`} className={`portfolio-add-collection-body`}>
                 <tr
                   inert={!preferences.showAddRows}
                   aria-hidden={!preferences.showAddRows || undefined}
@@ -1168,7 +1209,7 @@ const PortfolioRecords = ({
                     {addCollectionContent()}
                   </td>
                 </tr>
-              </tbody>
+              </tbody>}
               {!databaseAboveCollections && mainRecordsContent()}
             </>
           )}

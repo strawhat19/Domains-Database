@@ -1,0 +1,106 @@
+.mobile-sheet-handle { display: none; }
+.domain-context-menu-backdrop { display: contents; }
+
+@media (max-width: 900px) {
+  .domain-dialog-backdrop.mobile-sheet-backdrop,
+  .domain-context-menu-backdrop.mobile-sheet-backdrop {
+    inset: auto 0;
+    opacity: 0;
+    padding: 0;
+    z-index: 90;
+    display: flex;
+    animation: none;
+    position: fixed;
+    overflow: hidden;
+    align-items: flex-end;
+    justify-content: center;
+    background: var(--overlay);
+    top: var(--mobile-sheet-viewport-top, 0px);
+    height: var(--mobile-sheet-viewport-height, 100dvh);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition: opacity .22s ease;
+  }
+  .mobile-sheet-backdrop > .domain-dialog,
+  .mobile-sheet-backdrop > .domain-context-menu {
+    margin: 0;
+    width: 100%;
+    min-height: 0;
+    max-width: 100%;
+    animation: none;
+    border-radius: 24px 24px 0 0;
+    transform: translateY(100%);
+    padding: 0 max(18px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+    max-height: calc(var(--mobile-sheet-viewport-height, 100dvh) - max(12px, env(safe-area-inset-top)));
+    transition: transform .32s cubic-bezier(.22, 1, .36, 1);
+  }
+  .mobile-sheet-backdrop.mobile-sheet-entered { opacity: 1; }
+  .mobile-sheet-entered > .domain-dialog,
+  .mobile-sheet-entered > .domain-context-menu { transform: translateY(var(--mobile-sheet-offset, 0px)); }
+  .mobile-sheet-backdrop > .domain-context-menu {
+    top: auto !important;
+    left: auto !important;
+    position: relative;
+    padding-inline: 14px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-sheet-backdrop .domain-context-menu-target { padding: 8px 10px 14px; font-size: 14px; white-space: normal; overflow-wrap: anywhere; }
+  .mobile-sheet-backdrop .domain-context-menu-item { min-height: 48px; padding: 12px 10px; font-size: 14px; }
+  .mobile-sheet-backdrop .domain-context-menu-icon { width: 18px; height: 18px; }
+  .mobile-sheet-backdrop .portfolio-destination-tree-row { min-height: 44px; }
+  .mobile-sheet-handle {
+    border: 0;
+    padding: 0;
+    width: 100%;
+    height: 44px;
+    display: grid;
+    flex-shrink: 0;
+    cursor: grab;
+    touch-action: none;
+    place-items: center;
+    background: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    &:active { cursor: grabbing; }
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; border-radius: 8px; }
+    &:disabled { cursor: wait; }
+  }
+  .mobile-sheet-grip { width: 38px; height: 4px; border-radius: 4px; background: var(--line-strong); }
+  .mobile-sheet-backdrop > .table-settings { --table-settings-control-height: 46px; }
+  .mobile-sheet-backdrop .domain-dialog-header { gap: 12px; margin-bottom: 14px; }
+  .mobile-sheet-backdrop .domain-dialog-title { font-size: 27px; }
+  .mobile-sheet-backdrop .domain-dialog-close { width: 44px; height: 44px; }
+  .mobile-sheet-backdrop .domain-dialog-form { flex: 1 1 auto; }
+  .mobile-sheet-backdrop .domain-dialog-body { -webkit-overflow-scrolling: touch; padding-bottom: 12px; scroll-padding-block: 12px; }
+  .mobile-sheet-backdrop .domain-dialog-footer { gap: 10px; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .mobile-sheet-backdrop .domain-dialog-actions { width: 100%; }
+  .mobile-sheet-backdrop .domain-dialog-actions .portfolio-button { flex: 1; }
+  .mobile-sheet-backdrop .domain-editor-fields,
+  .mobile-sheet-backdrop .domain-collection-settings-fields,
+  .mobile-sheet-backdrop .domain-group-settings .domain-group-settings-fields,
+  .mobile-sheet-backdrop .domain-group-settings-new-collection,
+  .mobile-sheet-backdrop .domain-settings-links-pane .domain-links-fields { grid-template-columns: minmax(0, 1fr); }
+  .mobile-sheet-backdrop :is(input, textarea, select) { font-size: 16px; scroll-margin-block: 16px; }
+  .mobile-sheet-backdrop :is(.portfolio-button, .modal-title-action, .domain-project-select-option, .segmented-control-option, .settings-field-trigger, .settings-field-done, .destination-choice) { min-height: 44px; }
+  .mobile-sheet-backdrop :is(.domain-editor-input:not(textarea), .currency-field, .domain-project-select-trigger) { min-height: 44px; }
+  .mobile-sheet-backdrop .settings-field-trigger { gap: 12px; padding: 8px 0; align-items: center; }
+  .mobile-sheet-backdrop .settings-field-edit-icon,
+  .mobile-sheet-backdrop .modal-title-edit-icon { opacity: .65; }
+  .mobile-sheet-backdrop .settings-field-done { padding: 8px 12px; }
+  .mobile-sheet-backdrop .modal-title-action { min-width: 44px; }
+  .mobile-sheet-backdrop .modal-tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+  .mobile-sheet-backdrop .modal-tab { flex: 1 0 auto; min-height: 44px; }
+  .mobile-sheet-dragging > .domain-dialog,
+  .mobile-sheet-dragging > .domain-context-menu { transition: none; }
+  .domain-dialog-backdrop.mobile-sheet-closing,
+  .domain-context-menu-backdrop.mobile-sheet-closing { opacity: 0; pointer-events: none; }
+  .mobile-sheet-closing > .domain-dialog,
+  .mobile-sheet-closing > .domain-context-menu { transform: translateY(100%); transition-duration: .22s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-sheet-backdrop,
+  .mobile-sheet-backdrop > .domain-dialog,
+  .mobile-sheet-backdrop > .domain-context-menu { animation: none; transition: none; }
+}

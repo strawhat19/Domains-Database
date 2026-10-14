@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import type { FocusEvent, KeyboardEvent } from 'react';
+import { isMobileSheet } from '../MobileSheet/useMobileSheet';
+import { portfolioHaptic } from '../../shared/common/haptics.web';
 
 interface SettingsFieldInput {
   invalid?: boolean;
@@ -21,10 +23,13 @@ export const useSettingsField = ({ invalid = false, enabled = true, readOnly = f
   const editorRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef(false);
+  const pendingBlurRef = useRef(false);
+  const pointerRef = useRef<number | null>(null);
   const [editing, setEditing] = useState(false);
 
   const open = () => {
     if (disabled || readOnly || !enabled) return;
+    if (isMobileSheet() && rootRef.current?.closest(`.mobile-sheet-backdrop`)) portfolioHaptic(`tap`);
     restoreFocusRef.current = false;
     setEditing(true);
   };
@@ -43,6 +48,10 @@ export const useSettingsField = ({ invalid = false, enabled = true, readOnly = f
 
   const onBlur = (event: FocusEvent<HTMLDivElement>) => {
     if (!editing || event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+    if (isMobileSheet() && pointerRef.current !== null) {
+      pendingBlurRef.current = true;
+      return;
+    }
     close(false);
   };
 
@@ -84,11 +93,57 @@ export const useSettingsField = ({ invalid = false, enabled = true, readOnly = f
 
   useEffect(() => {
     if (!editing) return;
-    const closeOutside = (event: PointerEvent) => {
+    const closeOutside = (event: Event) => {
       if (event.target instanceof Node && !rootRef.current?.contains(event.target)) close(false);
     };
-    document.addEventListener(`pointerdown`, closeOutside);
-    return () => document.removeEventListener(`pointerdown`, closeOutside);
+    if (!isMobileSheet()) {
+      document.addEventListener(`pointerdown`, closeOutside);
+      return () => document.removeEventListener(`pointerdown`, closeOutside);
+    }
+    let releaseTimer: number | undefined;
+    const settlePointer = (keepEditing = false) => {
+      window.clearTimeout(releaseTimer);
+      pointerRef.current = null;
+      const blurred = pendingBlurRef.current;
+      pendingBlurRef.current = false;
+      if (blurred && !keepEditing && !rootRef.current?.contains(document.activeElement)) close(false);
+    };
+    const beginPointer = (event: PointerEvent) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      window.clearTimeout(releaseTimer);
+      pointerRef.current = event.pointerId;
+    };
+    const releasePointer = (event: PointerEvent) => {
+      if (pointerRef.current !== event.pointerId) return;
+      // Compatibility clicks can follow touch release; keep the layout stable until then.
+      releaseTimer = window.setTimeout(() => settlePointer(), 400);
+    };
+    const cancelPointer = (event: PointerEvent) => {
+      if (pointerRef.current === event.pointerId) settlePointer();
+    };
+    const completeClick = (event: MouseEvent) => {
+      const inside = event.target instanceof Node && Boolean(rootRef.current?.contains(event.target));
+      settlePointer(inside);
+      if (!inside) close(false);
+    };
+    const keyboard = (event: globalThis.KeyboardEvent) => {
+      if (event.key === `Tab`) settlePointer();
+    };
+    document.addEventListener(`click`, completeClick, true);
+    document.addEventListener(`keydown`, keyboard, true);
+    document.addEventListener(`pointerup`, releasePointer, true);
+    document.addEventListener(`pointerdown`, beginPointer, true);
+    document.addEventListener(`pointercancel`, cancelPointer, true);
+    return () => {
+      window.clearTimeout(releaseTimer);
+      pointerRef.current = null;
+      pendingBlurRef.current = false;
+      document.removeEventListener(`click`, completeClick, true);
+      document.removeEventListener(`keydown`, keyboard, true);
+      document.removeEventListener(`pointerup`, releasePointer, true);
+      document.removeEventListener(`pointerdown`, beginPointer, true);
+      document.removeEventListener(`pointercancel`, cancelPointer, true);
+    };
   }, [close, editing]);
 
   return { open, close, onBlur, editing, rootRef, editorRef, onKeyDown, triggerRef, onKeyDownCapture };

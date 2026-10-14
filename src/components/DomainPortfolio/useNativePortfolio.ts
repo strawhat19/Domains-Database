@@ -5,6 +5,7 @@ import { REGISTRARS, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { normalizeDomainTags } from '../../shared/domainTags';
+import { portfolioHaptic } from '../../shared/common/haptics.native';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getDomainSource, getDomainStatus, getRegistrarCounts, getDomainDeletionRestriction } from '../../shared/domainUtils';
@@ -14,6 +15,7 @@ import { useColumns } from '../../shared/columnContext/useColumns';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
 import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import type { DomainInput, DomainRecord, Registrar } from '../../shared/types';
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : `Something Went Wrong`;
@@ -43,7 +45,8 @@ const newDomain = (): DomainInput => {
 export const useNativePortfolio = (compact = false) => {
   const context = useDomains();
   const { loading: columnsLoading } = useColumns();
-  const { loading: preferencesLoading } = usePortfolioPreferences();
+  const preferences = usePortfolioPreferences();
+  const preferencesLoading = preferences.loading;
   const loading = context.loading || columnsLoading || preferencesLoading;
   const registrarCounts = useMemo(() => getRegistrarCounts(context.domains), [context.domains]);
   const [search, setSearch] = useState(``);
@@ -83,7 +86,21 @@ export const useNativePortfolio = (compact = false) => {
       ].some(value => value?.toLowerCase().includes(query)))
       .sort((first, second) => sortByName ? first.name.localeCompare(second.name) : first.expiresAt.localeCompare(second.expiresAt));
   }, [context.domains, search, registrar, sortByName]);
-  const visibleDomains = compact ? filteredDomains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : filteredDomains;
+  const visibleDomains = useMemo(() => compact ? filteredDomains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : filteredDomains, [compact, filteredDomains]);
+  const portfolioSections = useMemo(() => buildPortfolioSections(visibleDomains, { ...preferences, groupBy: `custom` }), [visibleDomains, preferences]);
+  const mainDomains = useMemo(() => [
+    ...portfolioSections.mainGroups.filter(group => !group.customGroupId),
+    ...portfolioSections.mainGroups.filter(group => Boolean(group.customGroupId)),
+  ].flatMap(group => group.domains), [portfolioSections]);
+  const visibleDomainIds = useMemo(() => {
+    const collapsedGroups = new Set(preferences.collapsedGroupKeys);
+    const collapsedCollections = new Set(preferences.collapsedCollectionIds);
+    const groups = portfolioSections.collections.filter(section => !collapsedCollections.has(section.collection.id)).flatMap(section => section.groups);
+    return [...new Set([
+      ...mainDomains.map(domain => domain.id),
+      ...groups.filter(group => group.directCollectionId || !collapsedGroups.has(group.key)).flatMap(group => group.domains.map(domain => domain.id)),
+    ])];
+  }, [mainDomains, portfolioSections, preferences.collapsedGroupKeys, preferences.collapsedCollectionIds]);
   const dueSoon = context.domains.filter(domain => getDomainStatus(domain) !== `Active`).length;
   const openSetup = () => {
     if (loading) return;
@@ -122,6 +139,7 @@ export const useNativePortfolio = (compact = false) => {
       description: domain.description ?? ``,
     } : newDomain());
     setEditorOpen(true);
+    portfolioHaptic(`tap`);
   };
 
   const closeEditor = () => {
@@ -171,6 +189,7 @@ export const useNativePortfolio = (compact = false) => {
         await groupEditor.saveGroup(editingId);
       }
       else await context.addDomain(record);
+      portfolioHaptic(`drop`);
       setEditorOpen(false);
     } catch (error) {
       setFormError(errorMessage(error));
@@ -203,6 +222,7 @@ export const useNativePortfolio = (compact = false) => {
           setFormError(``);
           try {
             await context.deleteDomain(targetId);
+            portfolioHaptic(`drop`);
             setEditorOpen(false);
           } catch (error) {
             setFormError(errorMessage(error));
@@ -292,7 +312,9 @@ export const useNativePortfolio = (compact = false) => {
     renewalPrice,
     editingDomain,
     editingSyncedDomain,
+    mainDomains,
     visibleDomains,
+    visibleDomainIds,
     registrarCounts,
     filteredDomains,
     openEditor,

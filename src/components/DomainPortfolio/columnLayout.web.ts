@@ -17,6 +17,40 @@ export const getPortfolioColumnWidth = (field: PortfolioColumn, widths: ColumnWi
   return typeof width === `number` && Number.isFinite(width) ? width : DEFAULT_COLUMN_WIDTHS[field];
 };
 
+export const getResponsivePortfolioColumnWidths = (
+  columns: readonly PortfolioColumnDefinition[],
+  widths: ColumnWidths,
+  flexibleColumns: readonly PortfolioColumn[],
+  availableWidth: number,
+  reservedWidth: number,
+): number[] => {
+  const rendered = columns.map(column => Math.max(72, getPortfolioColumnWidth(column.field, widths)));
+  if (!Number.isFinite(availableWidth) || availableWidth <= 0) return rendered;
+  const minimums = columns.map((column, index) => Math.min(rendered[index],
+    column.field === `name` ? 230 : column.field === `registrar` ? 120
+      : column.field === `expiresAt` ? 112 : column.field === `autoRenew` || column.price || column.field === `monthlyCost` ? 96 : 100,
+  ));
+  const flexible = columns.flatMap((column, index) => flexibleColumns.includes(column.field) ? [index] : []);
+  const fixed = columns.flatMap((column, index) => flexibleColumns.includes(column.field) ? [] : [index]);
+  const budget = Math.max(0, Math.floor(availableWidth) - reservedWidth);
+  const total = rendered.reduce((sum, width) => sum + width, 0);
+  let deficit = Math.max(0, total - budget);
+  const shrink = (indices: number[]) => {
+    const capacity = indices.reduce((sum, index) => sum + rendered[index] - minimums[index], 0);
+    if (!capacity || !deficit) return;
+    const reduction = Math.min(deficit, capacity);
+    indices.forEach(index => {
+      rendered[index] = Math.max(minimums[index], rendered[index] - reduction * (rendered[index] - minimums[index]) / capacity);
+    });
+    deficit = Math.max(0, deficit - reduction);
+  };
+  // Keep saved widths as preferences; only the current viewport's rendered widths shrink.
+  shrink(flexible);
+  shrink(fixed);
+  if (total < budget && flexible.length) flexible.forEach(index => { rendered[index] += (budget - total) / flexible.length; });
+  return rendered;
+};
+
 const readPixels = (value?: string, fallback = 0) => {
   const number = Number.parseFloat(value ?? ``);
   return Number.isFinite(number) ? number : fallback;

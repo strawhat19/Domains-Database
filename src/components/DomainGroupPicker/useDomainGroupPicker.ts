@@ -1,7 +1,8 @@
 import type { FormEvent } from 'react';
 import type { DomainRecord } from '../../shared/types';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useModalFocus } from '../DomainEditor/useDomainEditor';
+import { useMobileSheet, isMobileSheet } from '../MobileSheet/useMobileSheet';
+import { useModalFocus } from '../MobileSheet/useModalFocus';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { scrollToPortfolioGroup, scrollToPortfolioCollection } from './scrollToGroup.web';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
@@ -48,6 +49,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
   const [invalidField, setInvalidField] = useState<GroupPickerField | null>(null);
   const [collectionId, setCollectionIdValue] = useState(defaultCollectionId);
   const collectionDefaultApplied = useRef(!loading);
+  const initialFocusApplied = useRef(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const groupChoicesRef = useRef<HTMLDivElement>(null);
@@ -80,7 +82,8 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
   const groupError = missingGroup ? `This Group Is No Longer Available. Choose Another Group` : ``;
   const collectionError = missingCollection ? `This Collection Is No Longer Available. Choose Another Collection` : ``;
   const disabled = externallyDisabled || Boolean(availabilityError);
-  const handleClose = () => { if (!externallyDisabled) onClose(); };
+  const sheet = useMobileSheet(onClose, { open: !embedded, disabled: externallyDisabled });
+  const handleClose = () => { if (!externallyDisabled) embedded ? onClose() : sheet.close(); };
 
   useModalFocus(modalRef, !embedded, handleClose, true);
 
@@ -107,9 +110,14 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
 
   useEffect(() => {
     if (disabled) return;
+    if (!initialFocusApplied.current && !embedded && isMobileSheet()) {
+      initialFocusApplied.current = true;
+      return;
+    }
+    initialFocusApplied.current = true;
     if (creatingGroup) nameInputRef.current?.focus({ preventScroll: true });
     else if (creatingNewCollection) collectionNameInputRef.current?.focus({ preventScroll: true });
-  }, [disabled, creatingGroup, creatingNewCollection]);
+  }, [disabled, embedded, creatingGroup, creatingNewCollection]);
 
   const clearError = () => {
     setError(``);
@@ -250,17 +258,22 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
       setError(`Could Not Update Groups. The Portfolio Or Selected Group May Have Changed`);
       return;
     }
-    onGrouped?.();
-    onClose();
-    if (scrollToGroup && !embedded) {
-      if (selectingCollection) scrollToPortfolioCollection(destinationCollectionId);
-      else {
-        const groupCollectionId = creatingGroup
-          ? !creatingCollection && collectionId !== MAIN_DATABASE_COLLECTION_OPTION ? collectionId : undefined
-          : preferences.customGroups.find(group => group.id === destinationGroupId)?.collectionId;
-        scrollToPortfolioGroup(destinationGroupId, groupCollectionId);
+    const finishMove = () => {
+      onGrouped?.();
+      if (scrollToGroup && !embedded) {
+        if (selectingCollection) scrollToPortfolioCollection(destinationCollectionId);
+        else {
+          const groupCollectionId = creatingGroup
+            ? !creatingCollection && collectionId !== MAIN_DATABASE_COLLECTION_OPTION ? collectionId : undefined
+            : preferences.customGroups.find(group => group.id === destinationGroupId)?.collectionId;
+          scrollToPortfolioGroup(destinationGroupId, groupCollectionId);
+        }
       }
-    }
+    };
+    if (embedded) {
+      onClose();
+      finishMove();
+    } else sheet.dismiss(finishMove);
   };
   const submit = () => applyDestination({ groupId, collectionId, type: destinationType });
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -269,6 +282,7 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
   };
 
   return {
+    sheet,
     name,
     submit,
     groupId,

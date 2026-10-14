@@ -1,6 +1,8 @@
 import { REGISTRARS } from '../../shared/config';
-import type { FormEvent, RefObject } from 'react';
+import type { FormEvent } from 'react';
 import { useEffect, useRef, useMemo, useState } from 'react';
+import { useMobileSheet } from '../MobileSheet/useMobileSheet';
+import { useModalFocus } from '../MobileSheet/useModalFocus';
 import type { DomainLinkField } from '../DomainLinks/index.web';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { DomainInput, DomainRecord } from '../../shared/types';
@@ -14,62 +16,7 @@ import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomai
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { getDomainSource, normalizeDomainName, getDomainDeletionRestriction } from '../../shared/domainUtils';
 
-export const useModalFocus = (
-  container: RefObject<HTMLDivElement | null>,
-  open: boolean,
-  onClose: () => void,
-  preventRestoreScroll = false,
-) => {
-  const closeHandler = useRef(onClose);
-  closeHandler.current = onClose;
-  useEffect(() => {
-    if (!open) return;
-    const previousFocus = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = `hidden`;
-    const getFocusableElements = () => Array.from(container.current?.querySelectorAll<HTMLElement>(
-      `button:not([disabled]):not([tabindex="-1"]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]`,
-    ) ?? []).filter(element => element.offsetParent !== null);
-    const frame = window.requestAnimationFrame(() => {
-      const initialFocus = container.current?.querySelector<HTMLElement>(`[data-autofocus]`);
-      (initialFocus ?? getFocusableElements()?.[0] ?? container.current)?.focus();
-    });
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === `Escape`) {
-        event.preventDefault();
-        closeHandler.current();
-      }
-      if (event.key !== `Tab`) return;
-      const focusable = getFocusableElements();
-      const last = focusable?.[focusable.length - 1];
-      const first = focusable?.[0];
-      if (!first) {
-        event.preventDefault();
-        container.current?.focus();
-      } else if (event.shiftKey && (document.activeElement === first || !container.current?.contains(document.activeElement))) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !container.current?.contains(document.activeElement))) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener(`keydown`, handleKeyDown);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener(`keydown`, handleKeyDown);
-      if (previousFocus?.isConnected) {
-        const unavailable = previousFocus.matches(`:disabled`) || previousFocus.closest(`[aria-hidden='true']`);
-        const fallbackId = unavailable ? previousFocus.dataset.focusFallback : undefined;
-        const fallback = fallbackId ? document.getElementById(fallbackId) : null;
-        if (fallback?.isConnected && !fallback.matches(`:disabled`) && !fallback.closest(`[aria-hidden='true'], [hidden], [inert]`)) {
-          fallback.focus({ preventScroll: true });
-        } else previousFocus.focus({ preventScroll: preventRestoreScroll });
-      }
-    };
-  }, [container, open, preventRestoreScroll]);
-};
+export { useModalFocus } from '../MobileSheet/useModalFocus';
 
 const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
   const nextYear = new Date();
@@ -138,7 +85,8 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const moveButtonRef = useRef<HTMLButtonElement>(null);
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const [input, setInput] = useState<DomainInput>(() => getInitialInput(domain));
-  const close = () => { if (!pendingActionRef.current) onClose(); };
+  const sheet = useMobileSheet(onClose, { disabled: saving || deleting });
+  const close = () => { if (!pendingActionRef.current) sheet.close(); };
   const hidden = Boolean(domain?.id && preferences.hiddenDomainIds.includes(domain.id));
   const currentGroup = preferences.customGroups.find(group => domain?.id && group.domainIds.includes(domain.id));
   const currentCollection = preferences.collections.find(collection => currentGroup
@@ -224,7 +172,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     setDeleting(true);
     try {
       await deleteDomain(domain.id);
-      onClose();
+      sheet.dismiss();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `Unable To Delete Domain`);
     } finally {
@@ -293,7 +241,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
         await updateDomain(domain.id, domainInput);
         groupEditor.saveGroup(domain.id);
       } else await addDomain(domainInput);
-      onClose();
+      sheet.dismiss();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : `Unable To Save Domain`);
     } finally {
@@ -305,6 +253,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     error,
     input,
     close,
+    sheet,
     activeTab,
     setActiveTab,
     invalidField,

@@ -1,6 +1,7 @@
 import '../DomainEditor/styles.scss';
 import './styles.scss';
 import ModalTabs from '../ModalTabs/index.web';
+import MobileSheetHandle from '../MobileSheet/index.web';
 import StackPillShape from '../StackPillShape/index.web';
 import type { PortfolioFilterField } from '../DomainPortfolio/filters';
 import PortfolioDestinationTree from '../PortfolioDestinationTree/index.web';
@@ -31,8 +32,11 @@ const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
     <div
       role={`presentation`}
       id={`portfolio-filters-backdrop`}
-      className={`domain-dialog-backdrop`}
-      onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}
+      {...filters.sheet.pressProps}
+      style={filters.sheet.style}
+      className={`domain-dialog-backdrop${filters.sheet.className}`}
+      onClick={event => { if (filters.sheet.mobile && event.target === event.currentTarget) filters.close(); }}
+      onMouseDown={event => { if (!filters.sheet.mobile && event.target === event.currentTarget) filters.close(); }}
     >
       <div
         tabIndex={-1}
@@ -43,6 +47,7 @@ const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
         className={`domain-dialog portfolio-filters`}
         aria-labelledby={`portfolio-filters-title`}
       >
+        <MobileSheetHandle id={`portfolio-filters`} sheet={filters.sheet} />
         <header id={`portfolio-filters-header`} className={`domain-dialog-header portfolio-filters-header`}>
           <div id={`portfolio-filters-heading`} className={`domain-dialog-heading`}>
             <span id={`portfolio-filters-eyebrow`} className={`domain-dialog-eyebrow`}>
@@ -54,7 +59,7 @@ const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
           </div>
           <button
             type={`button`}
-            onClick={onClose}
+            onClick={filters.close}
             id={`portfolio-filters-close`}
             aria-label={`Close Filters`}
             className={`domain-dialog-close portfolio-filters-close`}
@@ -335,7 +340,7 @@ const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
           </button>
           <button
             type={`button`}
-            onClick={onClose}
+            onClick={filters.close}
             id={`portfolio-filters-done`}
             className={`portfolio-button portfolio-button-primary portfolio-filters-footer-button`}
           >

@@ -6,6 +6,7 @@ import { createOperationQueue } from '../common/storage';
 import { subscribeAccountDataReset } from '../accountData/state';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { normalizeGroupDetails, restoreGroupDetails } from './details';
+import { getGroupOrderScope, initializePortfolioOrder } from './ordering';
 import { savePortfolioPreferences, subscribePortfolioPreferences } from './storage';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../domainProject';
@@ -22,6 +23,7 @@ const DEFAULT_PREFERENCES: PortfolioPreferences = {
   showAddRows: true,
   customGroups: [],
   collectionNumber: 0,
+  manualCollectionOrder: false,
   databasePosition: `below`,
   hiddenDomainIds: [],
   hiddenGroupKeys: [],
@@ -32,6 +34,7 @@ const DEFAULT_PREFERENCES: PortfolioPreferences = {
   hiddenCollectionIds: [],
   showHiddenCollections: false,
   collapsedCollectionIds: [],
+  manualGroupOrderScopes: [],
   collapsedColumnCategories: [...DEFAULT_COLLAPSED_COLUMN_CATEGORIES],
 };
 const uniqueIds = (value: unknown): string[] => Array.isArray(value)
@@ -54,7 +57,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
     seenCollectionNumbers.add(number);
     seenCollectionNames.add(name.toLowerCase());
     const description = typeof value.description === `string` ? value.description.trim() : ``;
-    const sortField = value.sortField === null ? null : PORTFOLIO_FIELDS.some(column => column.field === value.sortField) ? value.sortField : `name`;
+    const sortField = value.sortField === null ? null : PORTFOLIO_FIELDS.some(column => column.field === value.sortField) ? value.sortField : null;
     let projectStatus = DEFAULT_DOMAIN_PROJECT_STATUS;
     try { projectStatus = normalizeDomainProjectStatus(value.projectStatus); }
     catch { /* Preserve collections with an invalid saved status. */ }
@@ -110,11 +113,18 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
   const groupBy = saved.groupBy === `custom` || GROUPABLE_COLUMNS.some(column => column.field === saved.groupBy)
     ? saved.groupBy as PortfolioPreferences[`groupBy`]
     : `none`;
-  return {
+  const groupOrderScopes = new Set(customGroups.map(group => getGroupOrderScope(group.collectionId)));
+  // Older preferences stored manual order directly in these arrays, without a separate marker.
+  const manualGroupOrderScopes = Array.isArray(saved.manualGroupOrderScopes)
+    ? uniqueIds(saved.manualGroupOrderScopes).filter(scope => groupOrderScopes.has(scope))
+    : [...groupOrderScopes];
+  return initializePortfolioOrder({
     orders,
     groupBy,
     customGroups,
     collectionNumber,
+    manualGroupOrderScopes,
+    manualCollectionOrder: typeof saved.manualCollectionOrder === `boolean` ? saved.manualCollectionOrder : restoredCollections.length > 0,
     databasePosition: saved.databasePosition === `above` ? `above` : `below`,
     collections: restoredCollections,
     showCosts: saved.showCosts === true,
@@ -132,7 +142,7 @@ const restorePreferences = (value: unknown): PortfolioPreferences => {
       ? uniqueIds(saved.collapsedColumnCategories).filter((category): category is PortfolioColumnCategory => COLUMN_CATEGORY_IDS.some(id => id === category))
       : [...DEFAULT_COLLAPSED_COLUMN_CATEGORIES],
     view: saved.view === `grid` ? `grid` : `table`,
-  };
+  });
 };
 
 const createPortfolioCollection = (current: PortfolioPreferences, value: { name: string; description: string }, groupId?: string): CustomPortfolioCollection | undefined => {
@@ -149,7 +159,7 @@ const createPortfolioCollection = (current: PortfolioPreferences, value: { name:
     downvotes: 0,
     description,
     currentVote: null,
-    sortField: `name`,
+    sortField: null,
     visibility: `private`,
     sortDirection: `asc`,
     createdAt: new Date().toISOString(),
@@ -317,7 +327,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     if (!enabled || !active.current || !storageReady.current) return;
     changed.current = true;
     ++mutationRevision.current;
-    const next = update(preferenceRef.current);
+    const next = initializePortfolioOrder(update(preferenceRef.current));
     preferenceRef.current = next;
     setPreferences(next);
   }, [enabled]);
@@ -629,7 +639,8 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
       const customGroups = current.customGroups.filter(group => group.id !== groupId);
       const targetIndex = customGroups.findIndex(group => group.id === targetId) + (placement === `after` ? 1 : 0);
       customGroups.splice(targetIndex, 0, { ...source, collectionId: target.collectionId });
-      return { ...current, customGroups };
+      const scope = getGroupOrderScope(target.collectionId);
+      return { ...current, customGroups, manualGroupOrderScopes: uniqueIds([...current.manualGroupOrderScopes, scope]) };
     });
     return true;
   }, [ready, change, userId, enabled]);
@@ -707,7 +718,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
       const collections = current.collections.filter(collection => collection.id !== id);
       const targetIndex = collections.findIndex(collection => collection.id === targetId) + (placement === `after` ? 1 : 0);
       collections.splice(targetIndex, 0, source);
-      return { ...current, collections };
+      return { ...current, collections, manualCollectionOrder: true };
     });
     return true;
   }, [ready, change, userId, enabled]);

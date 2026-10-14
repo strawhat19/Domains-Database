@@ -1,4 +1,5 @@
 import './styles.scss';
+import MobileSheetHandle from '../MobileSheet/index.web';
 import '../DomainEditor/styles.scss';
 import type { DomainRecord } from '../../shared/types';
 import DestinationChoices from '../DestinationChoices/index.web';
@@ -316,8 +317,11 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
     <div
       role={`presentation`}
       id={`domain-group-picker-backdrop`}
-      className={`domain-dialog-backdrop`}
-      onMouseDown={event => { if (event.target === event.currentTarget) picker.handleClose(); }}
+      {...picker.sheet.pressProps}
+      style={picker.sheet.style}
+      className={`domain-dialog-backdrop${picker.sheet.className}`}
+      onClick={event => { if (picker.sheet.mobile && event.target === event.currentTarget) picker.handleClose(); }}
+      onMouseDown={event => { if (!picker.sheet.mobile && event.target === event.currentTarget) picker.handleClose(); }}
     >
       <div
         tabIndex={-1}
@@ -329,6 +333,7 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
         className={`domain-dialog domain-group-picker`}
         aria-describedby={`domain-group-picker-description`}
       >
+        <MobileSheetHandle id={`domain-group-picker`} sheet={picker.sheet} />
         <header id={`domain-group-picker-header`} className={`domain-dialog-header`}>
           <div id={`domain-group-picker-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-group-picker-eyebrow`} className={`domain-dialog-eyebrow`}>

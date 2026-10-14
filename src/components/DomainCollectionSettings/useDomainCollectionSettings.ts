@@ -1,13 +1,14 @@
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { useModalFocus } from '../DomainEditor/useDomainEditor';
+import { useMobileSheet } from '../MobileSheet/useMobileSheet';
+import { useModalFocus } from '../MobileSheet/useModalFocus';
 import type { DomainProjectStatus } from '../../shared/domainProject';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { isPortfolioNameTaken } from '../../shared/portfolioPreferences/names';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import type { CollectionVisibility, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 
-export const useDomainCollectionSettings = (collection: CustomPortfolioCollection, onClose: () => void) => {
+export const useDomainCollectionSettings = (collection: CustomPortfolioCollection, onDismiss: () => void) => {
   const preferences = usePortfolioPreferences();
   const [error, setError] = useState(``);
   const [activeTab, setActiveTab] = useState<`general` | `sharing`>(`general`);
@@ -24,6 +25,8 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
   const nameInputRef = useRef<HTMLTextAreaElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const missingCollection = !preferences.collections.some(current => current.id === collection.id);
+  const sheet = useMobileSheet(onDismiss);
+  const onClose = sheet.close;
   const hidden = preferences.hiddenCollectionIds.includes(collection.id);
   const availabilityError = missingCollection ? `This Collection Is No Longer Available` : ``;
 
@@ -115,6 +118,8 @@ export const useDomainCollectionSettings = (collection: CustomPortfolioCollectio
   };
 
   return {
+    sheet,
+    close: onClose,
     name,
     activeTab,
     setActiveTab,

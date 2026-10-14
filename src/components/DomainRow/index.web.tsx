@@ -1,5 +1,6 @@
 import './styles.scss';
 import type { MouseEventHandler } from 'react';
+import { boardEntityProps, type BoardEntity } from '../MobilePortfolioBoard/types';
 import LinkSiteIcon from '../LinkSiteIcon/index.web';
 import DomainMetadata from '../DomainMetadata/index.web';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
@@ -30,6 +31,7 @@ import {
 export interface DomainRowProps extends DomainItemProps, DomainDragProps<HTMLTableRowElement> {
   collapsed?: boolean;
   showCosts?: boolean;
+  boardEntity?: BoardEntity;
   detailsExpanded: boolean;
   onToggleDetails: () => void;
   onContextMenu?: MouseEventHandler<HTMLTableRowElement>;
@@ -53,6 +55,7 @@ const DomainRow = ({
   onDragOver,
   onDragStart,
   onMoveDown,
+  boardEntity,
   onToggleDetails,
   detailsExpanded,
   onContextMenu,
@@ -98,7 +101,7 @@ const DomainRow = ({
           <div id={`${scope}-identity`} className={`domain-identity`}>
             {reorderable && (
               <div id={`${scope}-reorder`} className={`domain-reorder`}>
-                <span id={`${scope}-drag-handle`} className={`domain-drag-handle`} title={`Drag to reorder ${domain.name}`}>
+                <span data-board-handle={Boolean(boardEntity) || undefined} id={`${scope}-drag-handle`} className={`domain-drag-handle`} title={`Drag to reorder ${domain.name}`}>
                   <GripVertical size={14} aria-hidden={`true`} id={`${scope}-drag-handle-icon`} className={`domain-drag-handle-icon`} />
                 </span>
                 <div id={`${scope}-move-actions`} className={`domain-move-actions`}>
@@ -304,6 +307,7 @@ const DomainRow = ({
   return (
     <>
       <tr
+        {...(boardEntity && !collapsed ? boardEntityProps(boardEntity) : {})}
         ref={rowRef}
         id={scope}
         inert={collapsed}

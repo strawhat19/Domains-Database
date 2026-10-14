@@ -33,7 +33,7 @@ export const usePortfolio = () => {
   const loading = data.loading || columnsLoading || preferencesLoading;
   const [query, setQuery] = useState(``);
   const [localError, setLocalError] = useState(``);
-  const [sortField, setSortField] = useState<SortField | null>(`name`);
+  const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<`asc` | `desc`>(`asc`);
   const [setupOpen, setSetupOpen] = useState(false);
   const [editingDomain, setEditingDomain] = useState<DomainRecord | null>(null);

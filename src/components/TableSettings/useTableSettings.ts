@@ -1,11 +1,16 @@
 import { useRef, useState } from 'react';
 import type { TableSettingsTab } from './types';
-import { useModalFocus } from '../DomainEditor/useDomainEditor';
+import { useMobileSheet } from '../MobileSheet/useMobileSheet';
+import { useModalFocus } from '../MobileSheet/useModalFocus';
+import { useMobilePortfolio } from '../MobilePortfolioBoard/useMobilePortfolio.web';
 import { usePortfolioAddCollection } from '../PortfolioAddCollection/usePortfolioAddCollection';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
-export const useTableSettings = (onClose: () => void) => {
+export const useTableSettings = (onDismiss: () => void) => {
+  const mobile = useMobilePortfolio();
   const modalRef = useRef<HTMLDivElement>(null);
+  const sheet = useMobileSheet(onDismiss);
+  const onClose = sheet.close;
   const [tab, setTab] = useState<TableSettingsTab>(`general`);
   const preferences = usePortfolioPreferences();
   const collectionForm = usePortfolioAddCollection({ idPrefix: `table-settings`, onCreated: () => preferences.setGroupBy(`custom`) });
@@ -20,5 +25,5 @@ export const useTableSettings = (onClose: () => void) => {
     preferences.setShowHiddenCollections(value);
   };
 
-  return { ...preferences, tab, setTab, modalRef, collectionForm, setShowHidden, showHiddenState };
+  return { ...preferences, mobile, sheet, close: onClose, tab, setTab, modalRef, collectionForm, setShowHidden, showHiddenState };
 };

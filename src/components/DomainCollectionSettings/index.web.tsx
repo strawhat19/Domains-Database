@@ -1,6 +1,7 @@
 import '../DomainEditor/styles.scss';
 import './styles.scss';
 import ModalTabs from '../ModalTabs/index.web';
+import MobileSheetHandle from '../MobileSheet/index.web';
 import ModalTitle from '../ModalTitle/index.web';
 import SettingsField from '../SettingsField/index.web';
 import SegmentedControl from '../SegmentedControl/index.web';
@@ -26,8 +27,11 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
     <div
       role={`presentation`}
       id={`domain-collection-settings-backdrop`}
-      className={`domain-dialog-backdrop`}
-      onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}
+      {...settings.sheet.pressProps}
+      style={settings.sheet.style}
+      className={`domain-dialog-backdrop${settings.sheet.className}`}
+      onClick={event => { if (settings.sheet.mobile && event.target === event.currentTarget) settings.close(); }}
+      onMouseDown={event => { if (!settings.sheet.mobile && event.target === event.currentTarget) settings.close(); }}
     >
       <div
         tabIndex={-1}
@@ -38,6 +42,7 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
         className={`domain-dialog domain-collection-settings`}
         aria-labelledby={`domain-collection-settings-title`}
       >
+        <MobileSheetHandle id={`domain-collection-settings-${collection.id}`} sheet={settings.sheet} />
         <header id={`domain-collection-settings-header`} className={`domain-dialog-header`}>
           <div id={`domain-collection-settings-heading`} className={`domain-dialog-heading`}>
             <span id={`domain-collection-settings-eyebrow`} className={`domain-dialog-eyebrow`}>
@@ -74,7 +79,7 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
             </button>
             <button
               type={`button`}
-              onClick={onClose}
+              onClick={settings.close}
               id={`domain-collection-settings-close`}
               aria-label={`Close Collection Settings`}
               className={`domain-dialog-close domain-collection-settings-close`}
@@ -230,7 +235,7 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
             <div id={`domain-collection-settings-actions`} className={`domain-dialog-actions`}>
               <button
                 type={`button`}
-                onClick={onClose}
+                onClick={settings.close}
                 id={`domain-collection-settings-cancel`}
                 className={`portfolio-button portfolio-button-secondary`}
               >
