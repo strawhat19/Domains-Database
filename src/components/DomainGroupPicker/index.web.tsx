@@ -158,7 +158,7 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
                 ? `Domains move directly into the collection or Database, without a group.`
                 : picker.groupId === UNGROUPED_GROUP_OPTION
                 ? `${UNGROUPED_GROUP_LABEL} removes these domains from their current groups or apps.`
-                : `Clicking a group moves these domains out of their current custom groups.`}
+                : `Custom Groups`}
             </p>
             {(picker.creatingGroup || picker.creatingNewCollection) && (
               <div id={`domain-group-picker-create-fields`} className={`domain-group-picker-create-fields`}>

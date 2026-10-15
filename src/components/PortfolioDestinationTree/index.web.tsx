@@ -1,8 +1,8 @@
 import './styles.scss';
-import { useState } from 'react';
 import type { RefObject } from 'react';
 import PortfolioCollapse from '../PortfolioCollapse/index.web';
-import { Check, Folder, Layers3, Database, AppWindow, ChevronDown } from 'lucide-react';
+import { usePortfolioDestinationTree } from './usePortfolioDestinationTree';
+import { Check, Folder, Search, Layers3, Database, AppWindow, ChevronDown } from 'lucide-react';
 import type { DestinationBranch } from '../../shared/portfolioPreferences/destinationTree';
 
 interface PortfolioDestinationTreeProps {
@@ -21,13 +21,14 @@ interface PortfolioDestinationTreeProps {
   selectCollections?: boolean;
   selectedCollectionIds?: string[];
   branches: DestinationBranch[];
+  searchBranches?: DestinationBranch[];
   onSelect: (id: string) => void;
   onSelectCollection?: (id: string) => void;
   choicesRef?: RefObject<HTMLDivElement | null>;
 }
 
-const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, compact, menu, labelId, describedBy, invalid, choicesRef, collectionValue, defaultCollapsed, onSelectCollection, filterMode = false, selectCollections = false, selectedGroupIds = [], selectedCollectionIds = [] }: PortfolioDestinationTreeProps) => {
-  const [collapsedBranches, setCollapsedBranches] = useState<Map<string, boolean>>(new Map());
+const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, compact, menu, labelId, describedBy, invalid, choicesRef, collectionValue, searchBranches, defaultCollapsed, onSelectCollection, filterMode = false, selectCollections = false, selectedGroupIds = [], selectedCollectionIds = [] }: PortfolioDestinationTreeProps) => {
+  const { search, setSearch, searching, filteredBranches, collapsedBranches, setCollapsedBranches } = usePortfolioDestinationTree(branches, searchBranches);
   const setBranchCollapsed = (branchId: string, collapsed: boolean, branchElement?: HTMLElement | null) => {
     if (disabled) return;
     if (collapsed && branchElement?.querySelector(`.portfolio-collapse`)?.contains(document.activeElement)) {
@@ -40,7 +41,7 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
     });
   };
 
-  return (
+  const destinations = (
     <div
       id={id}
       role={`group`}
@@ -50,9 +51,10 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
       aria-describedby={describedBy}
       className={`portfolio-destination-tree${compact ? ` portfolio-destination-tree-compact` : ``}${menu ? ` portfolio-destination-tree-menu` : ``}${filterMode ? ` portfolio-destination-tree-filter` : ``}`}
     >
-      {branches.map(branch => {
+      {filteredBranches.map(branch => {
         const BranchIcon = branch.main ? Database : Folder;
-        const collapsed = collapsedBranches.get(branch.id) ?? (defaultCollapsed && branch.groups.some(group => selectedGroupIds.includes(group.id)) ? false : defaultCollapsed ?? selectCollections);
+        const collapsed = collapsedBranches.get(branch.id) ?? (searching ? false
+          : defaultCollapsed && branch.groups.some(group => selectedGroupIds.includes(group.id)) ? false : defaultCollapsed ?? selectCollections);
         const collectionDestination = filterMode || (selectCollections ? !branch.main : Boolean(onSelectCollection));
         const currentCollection = filterMode ? selectedCollectionIds.includes(branch.id) : collectionDestination && (selectCollections ? value : collectionValue) === branch.id;
         const branchId = `${id}-branch-${encodeURIComponent(branch.id)}`;
@@ -216,6 +218,38 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
           </section>
         );
       })}
+    </div>
+  );
+
+  return (
+    <div
+      id={`${id}-picker`}
+      className={`portfolio-destination-tree-picker${compact ? ` portfolio-destination-tree-picker-compact` : ``}`}
+    >
+      <label
+        htmlFor={`${id}-search`}
+        id={`${id}-search-label`}
+        className={`portfolio-destination-tree-search`}
+      >
+        <Search size={15} aria-hidden={`true`} id={`${id}-search-icon`} className={`portfolio-destination-tree-search-icon`} />
+        <input
+          type={`search`}
+          value={search}
+          disabled={disabled}
+          id={`${id}-search`}
+          aria-controls={id}
+          autoComplete={`off`}
+          className={`portfolio-destination-tree-search-input`}
+          aria-label={`Search Collections Or Groups`}
+          placeholder={`Search Collections Or Groups`}
+          onChange={event => setSearch(event.currentTarget.value)}
+          onKeyDown={event => { if (event.key === `Enter`) { event.preventDefault(); event.stopPropagation(); } }}
+        />
+      </label>
+      {destinations}
+      {searching && !filteredBranches.length && (
+        <p role={`status`} id={`${id}-search-empty`} className={`portfolio-destination-tree-empty`}>{`No Matching Collections Or Groups`}</p>
+      )}
     </div>
   );
 };

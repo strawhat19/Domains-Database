@@ -1215,7 +1215,12 @@ const PortfolioRecords = ({
           )}
         </table>
       </div>
-      <DomainContextMenu {...contextMenu} branches={quickBranches} busy={menuDisabled} />
+      <DomainContextMenu
+        {...contextMenu}
+        busy={menuDisabled}
+        branches={quickBranches}
+        searchBranches={destinationTree.branches}
+      />
       <GroupContextMenu
         {...groupContextMenu}
         branches={destinationTree.branches.filter(branch => !branch.main)}

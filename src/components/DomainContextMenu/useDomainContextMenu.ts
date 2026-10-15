@@ -8,14 +8,19 @@ import { useRef, useState, useEffect, useCallback, useLayoutEffect } from 'react
 interface DomainContextMenuTarget {
   x: number;
   y: number;
+  anchorTop: number;
   domain: DomainRecord;
   domains: DomainRecord[];
 }
 
 export type DomainContextMenuAction = `close` | `group` | `settings` | `assign-group` | `assign-collection`;
 
-const getMenuItems = (element: HTMLDivElement | null) => Array.from(
+const getMenuItems = (element: HTMLElement | null) => Array.from(
   element?.querySelectorAll<HTMLButtonElement>(`[role='menuitem']:not([disabled])`) ?? [],
+).filter(item => !item.closest(`[hidden], [inert], [aria-hidden='true']`));
+
+const getMenuControls = (element: HTMLElement | null) => Array.from(
+  element?.querySelectorAll<HTMLElement>(`input[type='search']:not([disabled]), [role='menuitem']:not([disabled])`) ?? [],
 ).filter(item => !item.closest(`[hidden], [inert], [aria-hidden='true']`));
 
 export const useDomainContextMenu = (
@@ -68,6 +73,7 @@ export const useDomainContextMenu = (
       domains,
       x: point?.x ?? bounds.left,
       y: point?.y ?? bounds.bottom,
+      anchorTop: point?.y ?? bounds.top,
     });
   };
 
@@ -99,8 +105,11 @@ export const useDomainContextMenu = (
     const reposition = () => {
       if (isMobileSheet()) return;
       const { width, height } = element.getBoundingClientRect();
-      element.style.left = `${Math.max(8, Math.min(menu.x, window.innerWidth - width - 8))}px`;
-      element.style.top = `${Math.max(8, Math.min(menu.y, window.innerHeight - height - 8))}px`;
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = document.documentElement.clientHeight;
+      const top = menu.y + height <= viewportHeight - 5 ? menu.y : menu.anchorTop - height;
+      element.style.left = `${Math.max(5, Math.min(menu.x, viewportWidth - width - 5))}px`;
+      element.style.top = `${Math.max(5, Math.min(top, viewportHeight - height - 5))}px`;
     };
     reposition();
     if (!isMobileSheet()) getMenuItems(element)[0]?.focus({ preventScroll: true });
@@ -148,6 +157,30 @@ export const useDomainContextMenu = (
   }, [menu, close]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === `Tab` && !isMobileSheet()) {
+      const controls = getMenuControls(menuRef.current);
+      const index = controls.findIndex(control => control === document.activeElement);
+      const next = controls[index + (event.shiftKey ? -1 : 1)];
+      if (index < 0 || !next) return;
+      event.preventDefault();
+      event.stopPropagation();
+      next.focus({ preventScroll: true });
+      next.scrollIntoView({ block: `nearest` });
+      return;
+    }
+    const editable = event.target instanceof HTMLElement ? event.target.closest(`input, textarea, [contenteditable='true']`) : null;
+    if (editable) {
+      if (!editable.matches(`input[type='search']`) || ![`ArrowUp`, `ArrowDown`].includes(event.key)) return;
+      const tree = editable.closest(`.portfolio-destination-tree-picker`)?.querySelector<HTMLElement>(`.portfolio-destination-tree`);
+      const items = getMenuItems(tree ?? null);
+      const next = event.key === `ArrowDown` ? items[0] : items[items.length - 1];
+      if (!next) return;
+      event.preventDefault();
+      event.stopPropagation();
+      next.focus({ preventScroll: true });
+      next.scrollIntoView({ block: `nearest` });
+      return;
+    }
     if (![`End`, `Home`, `ArrowUp`, `ArrowDown`].includes(event.key)) return;
     event.preventDefault();
     event.stopPropagation();

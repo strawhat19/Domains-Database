@@ -53,6 +53,29 @@
 .domain-context-menu-destinations { margin: 2px 0 6px; padding: 6px 4px 8px; border-block: 1px solid var(--line); }
 .domain-context-menu-destinations-label { margin: 0 6px 6px; font-size: 10px; color: var(--muted); }
 .domain-context-menu-icon { flex-shrink: 0; }
+@media (min-width: 901px) {
+  .domain-row-context-menu {
+    padding-block: 3px;
+    max-height: calc(50dvh - 8px);
+    .domain-context-menu-target { margin-bottom: 2px; padding-block: 2px; line-height: 1.2; }
+    .domain-context-menu-item { min-height: 20px; padding-block: 1px; }
+    .domain-context-menu-command { padding-block: 2px; }
+    .domain-context-menu-content { gap: 1px; }
+    .domain-context-menu-label,
+    .domain-context-menu-description { line-height: 1.2; }
+    .domain-context-menu-destinations { margin: 1px 0 3px; padding-block: 3px 4px; }
+    .domain-context-menu-destinations-label { margin-bottom: 3px; line-height: 1.2; }
+    .portfolio-destination-tree,
+    .portfolio-destination-tree-groups { gap: 2px; }
+    .portfolio-destination-tree-header,
+    .portfolio-destination-tree-group { min-height: 20px; padding-block: 1px; }
+    .portfolio-destination-tree-icon-wrap { height: 16px; }
+    .portfolio-destination-tree-name { line-height: 1.2; }
+    .portfolio-destination-tree-count { padding-block: 0; line-height: 1.2; }
+    .portfolio-destination-tree-groups { padding-bottom: 2px; }
+    .portfolio-destination-tree-empty { padding-block: 3px; line-height: 1.2; }
+  }
+}
 @keyframes domain-context-menu-enter { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .domain-context-menu { animation: none; }

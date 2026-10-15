@@ -13,8 +13,12 @@ interface GroupContextMenuTarget {
 
 export type GroupContextMenuAction = `delete` | `convert` | `convert-to-app` | `convert-to-group` | `assign-collection`;
 
-const getMenuItems = (element: HTMLDivElement | null) => Array.from(
+const getMenuItems = (element: HTMLElement | null) => Array.from(
   element?.querySelectorAll<HTMLButtonElement>(`[role='menuitem']:not([disabled])`) ?? [],
+).filter(item => !item.closest(`[hidden], [inert], [aria-hidden='true']`));
+
+const getMenuControls = (element: HTMLElement | null) => Array.from(
+  element?.querySelectorAll<HTMLElement>(`input[type='search']:not([disabled]), [role='menuitem']:not([disabled])`) ?? [],
 ).filter(item => !item.closest(`[hidden], [inert], [aria-hidden='true']`));
 
 export const useGroupContextMenu = (
@@ -134,6 +138,30 @@ export const useGroupContextMenu = (
   }, [menu, close]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === `Tab` && !isMobileSheet()) {
+      const controls = getMenuControls(menuRef.current);
+      const index = controls.findIndex(control => control === document.activeElement);
+      const next = controls[index + (event.shiftKey ? -1 : 1)];
+      if (index < 0 || !next) return;
+      event.preventDefault();
+      event.stopPropagation();
+      next.focus({ preventScroll: true });
+      next.scrollIntoView({ block: `nearest` });
+      return;
+    }
+    const editable = event.target instanceof HTMLElement ? event.target.closest(`input, textarea, [contenteditable='true']`) : null;
+    if (editable) {
+      if (!editable.matches(`input[type='search']`) || ![`ArrowUp`, `ArrowDown`].includes(event.key)) return;
+      const tree = editable.closest(`.portfolio-destination-tree-picker`)?.querySelector<HTMLElement>(`.portfolio-destination-tree`);
+      const items = getMenuItems(tree ?? null);
+      const next = event.key === `ArrowDown` ? items[0] : items[items.length - 1];
+      if (!next) return;
+      event.preventDefault();
+      event.stopPropagation();
+      next.focus({ preventScroll: true });
+      next.scrollIntoView({ block: `nearest` });
+      return;
+    }
     if (![`End`, `Home`, `ArrowUp`, `ArrowDown`].includes(event.key)) return;
     event.preventDefault();
     event.stopPropagation();

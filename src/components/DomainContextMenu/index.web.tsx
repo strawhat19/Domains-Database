@@ -17,9 +17,10 @@ type DomainContextMenuProps = ReturnType<typeof useDomainContextMenu> & {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   branches: DestinationBranch[];
+  searchBranches?: DestinationBranch[];
 };
 
-const DomainContextMenu = ({ menu, close, sheet, menuRef, disabled, activate, perform, onKeyDown, branches, onMoveUp, onMoveDown, busy = false }: DomainContextMenuProps) => {
+const DomainContextMenu = ({ menu, close, sheet, menuRef, disabled, activate, perform, onKeyDown, branches, onMoveUp, onMoveDown, searchBranches, busy = false }: DomainContextMenuProps) => {
   const reorderHandlers = useRef({ onMoveUp, onMoveDown });
   reorderHandlers.current = { onMoveUp, onMoveDown };
   if (!menu) return null;
@@ -112,6 +113,7 @@ const DomainContextMenu = ({ menu, close, sheet, menuRef, disabled, activate, pe
                     compact
                     branches={branches}
                     disabled={unavailable}
+                    searchBranches={searchBranches}
                     id={`${scope}-destination-tree`}
                     labelId={`${scope}-destinations-label`}
                     onSelect={groupId => activate(`assign-group`, groupId)}
