@@ -5,6 +5,7 @@ import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
 import { createStyles } from './styles.native';
 import LandingOverview from '../LandingOverview';
+import DomainEtymology from '../DomainEtymology';
 import { useMemo, useState, useEffect } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { getBlogHref } from '../../shared/blog/metadata';
@@ -93,6 +94,7 @@ const LandingSections = () => {
       <View {...elementProps(`landing-domain-basics`)} style={[styles.section, compact && styles.compactSection]}>
         <View {...elementProps(`landing-domain-basics-inner`)} style={styles.inner}>
           {renderHeading(`landing-domain-basics`, `THE BASICS`, `What are domains?`, `Your address, your hosting, and your website work together. Each has a different job.`)}
+          <DomainEtymology compact id={`landing-etymology-graphic`} />
           <View {...elementProps(`landing-domain-basics-grid`)} style={styles.grid}>
             {domainBasics.map(item => {
               const Icon = item.id === `domain` ? Globe2 : item.id === `hosting` ? Server : PanelTop;

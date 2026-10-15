@@ -6,6 +6,7 @@ import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
 import StackPillShape from '../StackPillShape';
 import LandingOverview from '../LandingOverview';
+import DomainEtymology from '../DomainEtymology';
 import { getBlogHref } from '../../shared/blog/metadata';
 import { domainBasics, ctaActivityCells } from './content';
 import { useLandingActivity } from './useLandingActivity.web';
@@ -49,6 +50,9 @@ const LandingSections = () => {
               </RouterAnchor>
             </Link>
           </div>
+          <div id={`landing-domain-etymology`} className={`landing-etymology`}>
+            <DomainEtymology compact id={`landing-etymology-graphic`} />
+          </div>
           <div id={`landing-basics-grid`} className={`landing-basics-grid`}>
             {domainBasics.map(basic => {
               const Icon = basicIcons[basic.id as keyof typeof basicIcons];
@@ -66,10 +70,6 @@ const LandingSections = () => {
               );
             })}
           </div>
-          <p id={`landing-basics-dns`} className={`landing-section-note`}>
-            <span id={`landing-basics-dns-label`} className={`landing-note-label`}>{`The Connection? DNS.`}</span>
-            {` It points your domain to the services you use. You can keep your name even when your hosting changes.`}
-          </p>
         </div>
       </section>
 

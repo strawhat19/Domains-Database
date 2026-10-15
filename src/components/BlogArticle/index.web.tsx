@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import BlogCard from '../BlogCard';
 import PageMeta from '../PageMeta';
 import RouterAnchor from '../RouterAnchor';
+import DomainEtymology from '../DomainEtymology';
 import { useBlogArticle } from './useBlogArticle';
 import { Clock3, ArrowLeft, ArrowUpRight } from 'lucide-react';
 import { formatBlogDate, getArticleSchema } from '../../shared/blog/metadata';
@@ -92,6 +93,7 @@ const BlogArticle = () => {
                 {section.paragraphs.map((paragraph, index) => (
                   <p key={index} id={`${id}-${section.id}-paragraph-${index}`} className={`blog-article-paragraph`}>{paragraph}</p>
                 ))}
+                {section.graphic === `domain-etymology` && <DomainEtymology id={`${id}-${section.id}-graphic`} />}
                 {!!section.bullets?.length && (
                   <ul id={`${id}-${section.id}-list`} className={`blog-article-list`}>
                     {section.bullets.map((bullet, index) => <li key={index} id={`${id}-${section.id}-item-${index}`} className={`blog-article-list-item`}>{bullet}</li>)}

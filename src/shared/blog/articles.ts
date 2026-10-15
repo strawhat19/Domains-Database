@@ -5,6 +5,7 @@ export type BlogSection = {
   title: string;
   bullets?: string[];
   paragraphs: string[];
+  graphic?: `domain-etymology`;
 };
 
 export type BlogArticle = {
@@ -27,15 +28,15 @@ export type BlogArticle = {
 export const blogArticles: BlogArticle[] = [
   {
     category: `Basics`,
-    readMinutes: 5,
+    readMinutes: 6,
     publishedAt: `2026-10-07`,
     slug: `domain-vs-hosting-vs-website`,
     title: `What Is a Domain? Domain vs Hosting vs Website Explained`,
     image: `/images/blog/domain-vs-hosting-vs-website.svg`,
     imageAlt: `Illustration of a website neighborhood with a domain street address, hosting plot, website house, and DNS directory`,
     imageCaption: `The domain is your address, hosting provides the space, the website is the house, and DNS helps visitors find it.`,
-    excerpt: `Understand domains, hosting, websites, and DNS through a neighborhood analogy, then see how the pieces connect in a real setup.`,
-    description: `Learn the difference between a domain, web hosting, a website, and DNS with a simple analogy, practical setup steps, and renewal and migration tips.`,
+    excerpt: `Understand domains, hosting, websites, and DNS through a neighborhood analogy, trace the word domain, and learn how to read a URL.`,
+    description: `Learn domain word origins, URL anatomy, and the differences between domains, hosting, websites, and DNS, with practical setup and renewal tips.`,
     takeaway: `A domain names the destination, hosting supplies the infrastructure, the website delivers the experience, and DNS connects the address to its services.`,
     relatedSlugs: [`how-to-choose-a-domain-name`, `domain-name-security`],
     sections: [
@@ -53,6 +54,16 @@ export const blogArticles: BlogArticle[] = [
         paragraphs: [
           `A domain is a readable name such as example.com. You register the right to use an available name through a registrar and maintain that registration under its terms. Registration alone does not create a website. You can also use a domain for services such as email, or keep it registered while you prepare a future project.`,
           `Hosting makes your site's files and, when needed, application services available online. The website is the content and functionality visitors receive: a home page, product catalog, booking form, or blog. A website builder helps you create that experience and may include hosting. A registrar may sell all three, but these remain distinct services even when one company bundles them.`,
+        ],
+      },
+      {
+        id: `domain-and-url-etymology`,
+        graphic: `domain-etymology`,
+        title: `Domain and URL: word origins and address anatomy`,
+        paragraphs: [
+          `The English word domain traces through Middle English demayne and Anglo-French demeine to Latin dominium, meaning ownership or rule. Its older sense of a territory helps explain the computing term: in DNS, a domain is a named part of a hierarchy, including the names beneath it. This does not turn registration into land ownership; the right to use a registered name still depends on its registration terms.`,
+          `URL expands to Uniform Resource Locator. It identifies a resource by describing its access mechanism and location. For a typical web address, the domain name is only one part of the URL; the address can also include a scheme, path, query, and fragment. A hostname may include a subdomain as well as the registered domain.`,
+          `Read https://shop.example.com/guides?topic=dns#intro from left to right: https is the scheme, shop.example.com is the host, /guides is the path, topic=dns is the query, and intro is the fragment. Here, example.com is the registered domain, shop is a subdomain label, and com is the top-level domain. The fragment can identify a section within the resource rather than a separate domain.`,
         ],
       },
       {
@@ -103,6 +114,10 @@ export const blogArticles: BlogArticle[] = [
       },
     ],
     sources: [
+      { label: `RFC 1738: Uniform Resource Locators (URL)`, url: `https://www.rfc-editor.org/rfc/rfc1738.html` },
+      { label: `Merriam-Webster: Domain Word History`, url: `https://www.merriam-webster.com/dictionary/domain` },
+      { label: `RFC 3986: URI Syntax and Components`, url: `https://www.rfc-editor.org/rfc/rfc3986.html` },
+      { label: `RFC 1034: Domain Names, Concepts and Facilities`, url: `https://www.rfc-editor.org/rfc/rfc1034.html` },
       { label: `MDN: What Is a Domain Name?`, url: `https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_domain_name` },
       { label: `MDN: What Is a Web Server?`, url: `https://developer.mozilla.org/en-US/docs/Learn_web_development/Howto/Web_mechanics/What_is_a_web_server` },
       { label: `ICANN: Registrar and Registration FAQs`, url: `https://www.icann.org/resources/pages/about-icann-faqs-2019-02-25-en` },

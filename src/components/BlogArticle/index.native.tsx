@@ -2,6 +2,7 @@ import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import BlogCard from '../BlogCard';
 import PageMeta from '../PageMeta';
+import DomainEtymology from '../DomainEtymology';
 import { useMemo, useEffect, useContext } from 'react';
 import { createStyles } from './styles.native';
 import { useBlogArticle } from './useBlogArticle';
@@ -118,6 +119,7 @@ const BlogArticle = () => {
                   {paragraph}
                 </Text>
               ))}
+              {section.graphic === `domain-etymology` && <DomainEtymology id={`native-blog-article-${suffix}-${section.id}-graphic`} />}
               {!!section.bullets?.length && (
                 <View {...elementProps(`native-blog-article-list`, `${suffix}-${section.id}`)} style={styles.list}>
                   {section.bullets.map((bullet, index) => (

@@ -1,0 +1,41 @@
+.domain-etymology { min-width: 0; margin: 0; padding: clamp(20px, 3vw, 32px); color: var(--ink); border: 1px solid var(--line); background: var(--input); }
+.domain-etymology-heading { max-width: 620px; }
+.domain-etymology-eyebrow { margin: 0 0 10px; font-size: 9px; line-height: 1.6; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-family: var(--font-mono); }
+.domain-etymology-title { margin: 0; font-size: clamp(20px, 2.2vw, 26px); line-height: 1.3; letter-spacing: -.025em; font-family: var(--font-bold); }
+.domain-etymology-intro { margin: 12px 0 0; font-size: 12px; line-height: 1.8; color: var(--muted); }
+.domain-etymology-origins { gap: 24px; margin: 24px 0 0; padding: 0; display: grid; list-style: none; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.domain-etymology-origin { gap: 5px; min-width: 0; padding: 16px; display: flex; position: relative; flex-direction: column; border: 1px solid var(--line); background: var(--paper); }
+.domain-etymology-language { font-size: 9px; line-height: 1.5; color: var(--muted); font-family: var(--font-mono); }
+.domain-etymology-word { font-size: clamp(20px, 2.1vw, 28px); line-height: 1.3; color: var(--accent); font-family: var(--font-display); overflow-wrap: anywhere; }
+.domain-etymology-meaning { font-size: 11px; line-height: 1.6; color: var(--muted); }
+.domain-etymology-origin-arrow { top: 50%; right: -21px; font-size: 18px; line-height: 1; position: absolute; color: var(--accent); transform: translateY(-50%); }
+.domain-etymology-roots-note { margin: 8px 0 0; font-size: 9px; line-height: 1.6; color: var(--muted); }
+.domain-etymology-anatomy { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+.domain-etymology-anatomy-title { margin: 0; font-size: 14px; line-height: 1.6; font-family: var(--font-bold); }
+.domain-etymology-full-url { display: block; margin-top: 10px; font-size: 11px; line-height: 1.8; color: var(--muted); font-family: var(--font-mono); overflow-wrap: anywhere; }
+.domain-etymology-url-parts { gap: 14px 12px; display: flex; margin-top: 22px; flex-wrap: wrap; align-items: flex-start; }
+.domain-etymology-part { gap: 7px; min-width: 0; display: flex; flex-direction: column; }
+.domain-etymology-part-value { padding: 9px 10px; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; color: var(--ink); background: var(--paper); border-top: 2px solid var(--line); font-family: var(--font-mono); }
+.domain-etymology-part-label { max-width: 100%; font-size: 10px; line-height: 1.6; overflow-wrap: anywhere; color: var(--muted); }
+.domain-etymology-part-subdomain .domain-etymology-part-value, .domain-etymology-part-name .domain-etymology-part-value, .domain-etymology-part-tld .domain-etymology-part-value { color: var(--accent); background: var(--subtle); border-color: var(--accent); }
+.domain-etymology-hostname { min-width: 0; max-width: 100%; }
+.domain-etymology-hostname-parts, .domain-etymology-registered-parts { gap: 3px; min-width: 0; display: flex; align-items: flex-start; }
+.domain-etymology-registered-domain { min-width: 0; }
+.domain-etymology-group-label { display: block; padding-top: 7px; margin-top: 9px; font-size: 10px; line-height: 1.6; text-align: center; color: var(--accent); border-top: 1px solid var(--accent); overflow-wrap: anywhere; }
+.domain-etymology-hostname-label { margin-top: 9px; border-color: var(--muted); color: var(--muted); }
+.domain-etymology-caption { margin-top: 22px; font-size: 10px; line-height: 1.8; color: var(--muted); overflow-wrap: anywhere; }
+.domain-etymology-compact { padding: 0; border: 0; width: 100%; max-width: 100%; background: transparent; }
+.domain-etymology-compact .domain-etymology-url-parts { gap: 12px; margin-top: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.domain-etymology-compact .domain-etymology-part-value { padding: 8px 10px; font-size: 12px; }
+@media (max-width: 600px) {
+  .domain-etymology-compact .domain-etymology-url-parts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .domain-etymology-origins { gap: 24px; grid-template-columns: minmax(0, 1fr); }
+  .domain-etymology-origin { gap: 4px 12px; padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .domain-etymology-origin-arrow { top: auto; right: 50%; bottom: -20px; font-size: 16px; transform: translateX(50%) rotate(90deg); }
+  .domain-etymology-word { grid-row: 1 / 3; grid-column: 2; align-self: center; }
+  .domain-etymology-language, .domain-etymology-meaning { grid-column: 1; }
+  .domain-etymology-part-value { padding: 9px 7px; font-size: 12px; }
+}
+@media (max-width: 380px) {
+  .domain-etymology-part-value { padding-inline: 5px; font-size: 11px; }
+}
