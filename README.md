@@ -1,6 +1,6 @@
 # Domains Database
 
-Domains Database is a domain inventory built with Expo, React Native, TypeScript, and Sass, with Firebase Authentication, private Firestore account storage, and a read-only server relay for registrar APIs. The landing page uses the v8 logo and opens with a compact portfolio. The full portfolio combines registered domains and their custom project details in the signed-in account.
+Domains Database is a domain inventory built with Expo, React Native, TypeScript, and Sass, with Firebase Authentication, private Firestore account storage, and a read-only server relay for registrar APIs. The landing page uses the v8 logo and opens with a compact portfolio. The full portfolio combines registered domains and their custom project details in the signed-in account. 0.0.5.7.
 
 ## License
 
