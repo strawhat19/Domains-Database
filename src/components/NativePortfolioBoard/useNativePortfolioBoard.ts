@@ -1,5 +1,6 @@
 import { Alert } from 'react-native';
 import { useMemo, useRef, useState } from 'react';
+import { allowDomainsInCollections } from '../../shared/config';
 import type { DomainInput, DomainRecord } from '../../shared/types';
 import type { NativeDragItem, NativeDropTarget } from '../NativePortfolioDrag/index.native';
 import { portfolioHaptic } from '../../shared/common/haptics.native';
@@ -144,6 +145,7 @@ export const useNativePortfolioBoard = (domains: DomainRecord[], onEditDomain: (
       const group = target.groupId ? pref.customGroups.find(group => group.id === target.groupId) : undefined;
       if (target.groupId && (!group || (group.collectionId ?? null) !== (target.collectionId ?? null))) return;
       const collectionId = group?.collectionId ?? target.collectionId ?? undefined;
+      if (!allowDomainsInCollections && collectionId && !group) return;
       const collection = pref.collections.find(collection => collection.id === collectionId);
       if (collectionId && !collection) return;
       const groupKey = group ? `custom:${group.id}` : collectionId ? `collection:${collectionId}` : `custom:ungrouped`;

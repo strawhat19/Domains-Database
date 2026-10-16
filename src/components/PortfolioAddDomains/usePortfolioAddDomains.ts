@@ -1,5 +1,6 @@
 import type { FormEvent, KeyboardEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { allowDomainsInCollections } from '../../shared/config';
 import { useModalFocus } from '../DomainEditor/useDomainEditor';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
@@ -36,12 +37,14 @@ export const usePortfolioAddDomains = ({ group, collection, idPrefix, onGrouped,
   const isApp = !collection && (currentGroup?.isApp ?? group?.isApp ?? false);
   const targetKind = collection ? `collection` : isApp ? `app` : `group`;
   const loading = portfolio.loading || preferences.loading || !portfolio.loaded;
-  const unavailable = disabled || loading || !currentTarget;
-  const availabilityError = !currentTarget && !preferences.loading ? `This ${collection ? `Collection` : `Group`} Is No Longer Available`
+  const collectionUnavailable = Boolean(collection) && !allowDomainsInCollections;
+  const unavailable = disabled || loading || !currentTarget || collectionUnavailable;
+  const availabilityError = collectionUnavailable ? `Collections Contain Groups Or Apps`
+    : !currentTarget && !preferences.loading ? `This ${collection ? `Collection` : `Group`} Is No Longer Available`
     : loading ? `Portfolio Is Loading — Try Again Shortly` : disabled ? `Portfolio Is Busy — Try Again Shortly` : ``;
   const assignedDomainIds = useMemo(() => new Set([
     ...preferences.customGroups.flatMap(current => current.domainIds),
-    ...preferences.collections.flatMap(current => current.domainIds ?? []),
+    ...(allowDomainsInCollections ? preferences.collections.flatMap(current => current.domainIds ?? []) : []),
   ]), [preferences.collections, preferences.customGroups]);
   const ungroupedDomains = useMemo(() => {
     const domains = new Map(portfolio.domains.map(domain => [domain.id, domain]));
@@ -63,7 +66,7 @@ export const usePortfolioAddDomains = ({ group, collection, idPrefix, onGrouped,
   }, [query, quickCandidates]);
 
   const assignToTarget = (ids: string[]) => collection
-    ? Boolean(currentCollection && preferences.assignDomainsToCollection(ids, currentCollection.id))
+    ? Boolean(allowDomainsInCollections && currentCollection && preferences.assignDomainsToCollection(ids, currentCollection.id))
     : Boolean(currentGroup && preferences.assignDomains(ids, currentGroup.id));
 
   const closePicker = () => {
@@ -125,7 +128,7 @@ export const usePortfolioAddDomains = ({ group, collection, idPrefix, onGrouped,
     setError(``);
     if (unavailable || !currentTarget) { setError(availabilityError || `Could Not Add Domain`); return false; }
     if (!portfolio.domains.some(domain => domain.id === id)) { setError(`This Domain Is No Longer Available`); return false; }
-    if (assignedDomainIds.has(id)) { setError(`This Domain Already Belongs To A Group Or Collection`); return false; }
+    if (assignedDomainIds.has(id)) { setError(allowDomainsInCollections ? `This Domain Already Belongs To A Group Or Collection` : `This Domain Already Belongs To A Group Or App`); return false; }
     if (!preferences.showHiddenDomains && preferences.hiddenDomainIds.includes(id)) { setError(`This Domain Is Hidden — Show Hidden Domains To Add It`); return false; }
     quickAddPending.current = true;
     if (!assignToTarget([id])) {
@@ -172,7 +175,8 @@ export const usePortfolioAddDomains = ({ group, collection, idPrefix, onGrouped,
       return;
     }
     if (domainIds.some(id => assignedDomainIds.has(id))) {
-      setError(`Some Selected Domains Already Belong To A Group Or Collection — Reopen To Select Again`);
+      setError(allowDomainsInCollections ? `Some Selected Domains Already Belong To A Group Or Collection — Reopen To Select Again`
+        : `Some Selected Domains Already Belong To A Group Or App — Reopen To Select Again`);
       return;
     }
     if (!preferences.showHiddenDomains && domainIds.some(id => preferences.hiddenDomainIds.includes(id))) {

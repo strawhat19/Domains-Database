@@ -17,7 +17,7 @@ import MobilePortfolioDomain from '../MobilePortfolioDomain/index.web';
 import DomainCollectionSettings from '../DomainCollectionSettings/index.web';
 import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
-import { PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
+import { PORTFOLIO_PREVIEW_LIMIT, allowDomainsInCollections } from '../../shared/config';
 import { portfolioHaptic } from '../../shared/common/haptics.web';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
@@ -63,7 +63,7 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
     }
     if (action === `group`) { setGroupingIds(ids); return; }
     const saved = action === `assign-group` && targetId ? preferences.assignDomains(ids, targetId)
-      : action === `assign-collection` && targetId ? preferences.assignDomainsToCollection(ids, targetId === `main` ? null : targetId) : false;
+      : action === `assign-collection` && targetId && (targetId === `main` || allowDomainsInCollections) ? preferences.assignDomainsToCollection(ids, targetId === `main` ? null : targetId) : false;
     if (saved) props.onGrouped();
     else if (action === `assign-group` || action === `assign-collection`) setError(`Could Not Move Domain(s)`);
   }, blocked);
@@ -86,7 +86,11 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
   const boardGroups = [...props.sections.mainGroups, ...props.sections.collections.flatMap(section => section.groups)];
   const copyGroup = boardGroups.find(group => group.customGroupId === editingGroupId);
   const copySection = props.sections.collections.find(section => section.collection.id === editingCollectionId);
-  const menuGroup = contextMenu.menu ? boardGroups.find(group => group.domains.some(domain => domain.id === contextMenu.menu?.domain.id)) : undefined;
+  const menuGroup = contextMenu.menu ? boardGroups.find(group => (
+    group.key !== `all`
+    && group.key !== `custom:ungrouped`
+    && group.domains.some(domain => domain.id === contextMenu.menu?.domain.id)
+  )) : undefined;
   const menuIndex = menuGroup?.domains.findIndex(domain => domain.id === contextMenu.menu?.domain.id) ?? -1;
   const menuSelection = contextMenu.menu && props.selectedIds.has(contextMenu.menu.domain.id) ? props.selectedIds : new Set([contextMenu.menu?.domain.id]);
   const previousMenuDomain = menuGroup?.domains.slice(0, menuIndex).reverse().find(domain => !menuSelection.has(domain.id));
@@ -107,11 +111,12 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
     ...props.sections.collections.flatMap(section => section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT)),
   ].map(domain => domain.id)) : null, [props.compact, props.sections]);
   const limit = (domains: MobilePortfolioBoardProps[`allDomains`]) => previewIds ? domains.filter(domain => previewIds.has(domain.id)) : domains;
-  const renderDomains = (group: PortfolioGroup, collectionId?: string) => limit(group.domains).map(domain => (
+  const renderDomains = (group: PortfolioGroup, collectionId?: string) => limit(group.domains).map((domain, index) => (
     <MobilePortfolioDomain
       key={domain.id}
       domain={domain}
       busy={disabled}
+      position={index + 1}
       groupKey={group.key}
       onEdit={props.onEdit}
       onSelect={props.onSelect}
@@ -247,7 +252,7 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
           {groups.map(group => renderGroup(group, siblings, id))}
           {!groups.length && (
             <p id={`${scope}-empty`} className={`mobile-board-drop-hint`}>
-              {`Drop Groups, Apps Or Domains Here`}
+              {allowDomainsInCollections ? `Drop Groups, Apps Or Domains Here` : `Drop Groups Or Apps Here`}
             </p>
           )}
           {preferences.showAddRows && (

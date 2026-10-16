@@ -12,6 +12,7 @@ import CurrencyField from '../CurrencyField/index.web';
 import SettingsField from '../SettingsField/index.web';
 import type { DomainRecord } from '../../shared/types';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
+import DomainMetadata from '../DomainMetadata/index.web';
 import DomainStarButton from '../DomainStarButton/index.web';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
@@ -22,7 +23,7 @@ import DomainAnalyticsButton from '../DomainAnalyticsButton/index.web';
 import PortfolioSettingsActions from '../PortfolioSettingsActions/index.web';
 import type { DomainLinkField, DomainLinkValues } from '../DomainLinks/index.web';
 import { formatCurrency, getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
-import { X, Plus, Link, Check, Trash2, Settings2, FolderTree, ChevronDown, BriefcaseBusiness } from 'lucide-react';
+import { X, Plus, Link, Info, Check, Trash2, Settings2, FolderTree, ChevronDown, BriefcaseBusiness } from 'lucide-react';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 
 interface DomainEditorProps {
@@ -61,6 +62,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
     confirmingDelete,
     actionsDisabled,
     destinationLabel,
+    hideProjectDetails,
     toggleVisibility,
   } = useDomainEditor(domain, onClose);
   const tabsId = `domain-editor-sections-${domain?.id ?? `new`}`;
@@ -185,6 +187,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               { id: `project`, label: `Project`, Icon: BriefcaseBusiness },
               ...(isEditing ? [
                 { id: `links` as const, label: `Links`, Icon: Link },
+                { id: `details` as const, label: `Details`, Icon: Info },
                 { id: `actions` as const, label: `Actions`, Icon: FolderTree },
               ] : []),
             ]}
@@ -600,6 +603,24 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
                       id={`domain-editor-links-${domain?.id}`}
                     />
                   </>
+                )}
+              </section>
+            )}
+            {domain && (
+              <section
+                tabIndex={0}
+                role={`tabpanel`}
+                hidden={activeTab !== `details`}
+                id={`${tabsId}-panel-details`}
+                aria-labelledby={`${tabsId}-tab-details`}
+                className={`domain-editor-pane domain-editor-details-pane`}
+              >
+                {activeTab === `details` && (
+                  <DomainMetadata
+                    domain={domain}
+                    idPrefix={`domain-editor-metadata`}
+                    hideProjectDetails={hideProjectDetails}
+                  />
                 )}
               </section>
             )}

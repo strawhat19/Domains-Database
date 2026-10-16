@@ -33,6 +33,7 @@ export interface DomainRowProps extends DomainItemProps, DomainDragProps<HTMLTab
   showCosts?: boolean;
   boardEntity?: BoardEntity;
   detailsExpanded: boolean;
+  detailsInSettings?: boolean;
   onToggleDetails: () => void;
   onContextMenu?: MouseEventHandler<HTMLTableRowElement>;
   onChangeDescription: (domain: DomainItemProps[`domain`], description: string) => Promise<boolean>;
@@ -66,6 +67,7 @@ const DomainRow = ({
   collapsed = false,
   showCosts = false,
   reorderable = draggable,
+  detailsInSettings = false,
   hideProjectDetails = false,
   visibleColumns = DEFAULT_VISIBLE_COLUMNS,
 }: DomainRowProps) => {
@@ -131,11 +133,12 @@ const DomainRow = ({
               </div>
             )}
             <DomainSiteIcon
+              size={detailsInSettings ? 18 : 28}
               disabled={busy}
               fallback={`link`}
               domain={domain.name}
               id={`${scope}-symbol`}
-              onEdit={() => onEdit(domain)}
+              onEdit={detailsInSettings ? undefined : () => onEdit(domain)}
               iconUrl={getCustomSiteIconUrl(domain)}
               editLabel={`Add A Logo Or Site Icon For ${domain.name}`}
             />
@@ -186,7 +189,7 @@ const DomainRow = ({
                     <LinkSiteIcon size={13} url={githubRepoLink} id={`${scope}-github-icon`} />
                   </a>
                 )}
-                {!hideProjectDetails && (
+                {!hideProjectDetails && !detailsInSettings && (
                   <DomainProjectBadge
                     disabled={busy}
                     field={`projectStatus`}
@@ -198,7 +201,14 @@ const DomainRow = ({
                   />
                 )}
               </div>
-              {!hideProjectDetails && (
+              {!hideProjectDetails && detailsInSettings && domain.description && (
+                <div id={`${scope}-description`} className={`domain-description`}>
+                  <span id={`${scope}-description-text`} className={`domain-site-description`}>
+                    {domain.description}
+                  </span>
+                </div>
+              )}
+              {!hideProjectDetails && !detailsInSettings && (
                 <DomainDescription
                   busy={busy}
                   id={`${scope}-description`}
@@ -410,40 +420,44 @@ const DomainRow = ({
               >
                 <Settings size={14} aria-hidden={`true`} id={`${scope}-edit-icon`} className={`domain-row-action-icon`} />
               </button>
-              <button
-                type={`button`}
-                disabled={busy}
-                draggable={false}
-                title={detailsLabel}
-                aria-label={detailsLabel}
-                aria-expanded={detailsExpanded}
-                id={`${scope}-details-toggle`}
-                aria-controls={`${scope}-details-panel`}
-                onMouseDown={event => event.stopPropagation()}
-                onPointerDown={event => event.stopPropagation()}
-                onClick={event => { event.stopPropagation(); onToggleDetails(); }}
-                onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}
-                className={`domain-row-action domain-details-toggle portfolio-row-collapse-action${detailsExpanded ? `` : ` domain-details-toggle-collapsed`}`}
-              >
-                <ChevronDown size={14} aria-hidden={`true`} id={`${scope}-details-toggle-icon`} className={`domain-details-toggle-icon`} />
-              </button>
+              {!detailsInSettings && (
+                <button
+                  type={`button`}
+                  disabled={busy}
+                  draggable={false}
+                  title={detailsLabel}
+                  aria-label={detailsLabel}
+                  aria-expanded={detailsExpanded}
+                  id={`${scope}-details-toggle`}
+                  aria-controls={`${scope}-details-panel`}
+                  onMouseDown={event => event.stopPropagation()}
+                  onPointerDown={event => event.stopPropagation()}
+                  onClick={event => { event.stopPropagation(); onToggleDetails(); }}
+                  onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}
+                  className={`domain-row-action domain-details-toggle portfolio-row-collapse-action${detailsExpanded ? `` : ` domain-details-toggle-collapsed`}`}
+                >
+                  <ChevronDown size={14} aria-hidden={`true`} id={`${scope}-details-toggle-icon`} className={`domain-details-toggle-icon`} />
+                </button>
+              )}
             </div>
           </PortfolioCollapse>
         </td>
       </tr>
-      <tr
-        inert={detailsCollapsed}
-        aria-hidden={detailsCollapsed || undefined}
-        data-collapsed={detailsCollapsed}
-        id={`${scope}-details-row`}
-        className={`domain-details-row portfolio-collapse-row`}
-      >
-        <td colSpan={columns.length + 4} id={`${scope}-details-cell`} className={`domain-details-cell`}>
-          <PortfolioCollapse collapsed={detailsCollapsed} id={`${scope}-details-panel`}>
-            <DomainMetadata domain={domain} hideProjectDetails={hideProjectDetails} />
-          </PortfolioCollapse>
-        </td>
-      </tr>
+      {!detailsInSettings && (
+        <tr
+          inert={detailsCollapsed}
+          aria-hidden={detailsCollapsed || undefined}
+          data-collapsed={detailsCollapsed}
+          id={`${scope}-details-row`}
+          className={`domain-details-row portfolio-collapse-row`}
+        >
+          <td colSpan={columns.length + 4} id={`${scope}-details-cell`} className={`domain-details-cell`}>
+            <PortfolioCollapse collapsed={detailsCollapsed} id={`${scope}-details-panel`}>
+              <DomainMetadata domain={domain} hideProjectDetails={hideProjectDetails} />
+            </PortfolioCollapse>
+          </td>
+        </tr>
+      )}
     </>
   );
 };

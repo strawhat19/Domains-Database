@@ -1,5 +1,6 @@
 import './styles.scss';
 import type { RefObject } from 'react';
+import { allowDomainsInCollections } from '../../shared/config';
 import PortfolioCollapse from '../PortfolioCollapse/index.web';
 import { usePortfolioDestinationTree } from './usePortfolioDestinationTree';
 import { Check, Folder, Search, Layers3, Database, AppWindow, ChevronDown } from 'lucide-react';
@@ -55,7 +56,7 @@ const PortfolioDestinationTree = ({ id, branches, onSelect, value, disabled, com
         const BranchIcon = branch.main ? Database : Folder;
         const collapsed = collapsedBranches.get(branch.id) ?? (searching ? false
           : defaultCollapsed && branch.groups.some(group => selectedGroupIds.includes(group.id)) ? false : defaultCollapsed ?? selectCollections);
-        const collectionDestination = filterMode || (selectCollections ? !branch.main : Boolean(onSelectCollection));
+        const collectionDestination = filterMode || (selectCollections ? !branch.main : Boolean(onSelectCollection) && (allowDomainsInCollections || branch.main));
         const currentCollection = filterMode ? selectedCollectionIds.includes(branch.id) : collectionDestination && (selectCollections ? value : collectionValue) === branch.id;
         const branchId = `${id}-branch-${encodeURIComponent(branch.id)}`;
         const branchDetails = `${branch.name}${branch.description ? ` — ${branch.description}` : ``}, ${branch.count} Domain(s)`;

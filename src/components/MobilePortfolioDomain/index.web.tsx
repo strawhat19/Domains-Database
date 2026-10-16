@@ -9,6 +9,7 @@ import type { MobilePortfolioBoardProps } from '../MobilePortfolioBoard/types';
 interface MobilePortfolioDomainProps extends Pick<MobilePortfolioBoardProps,
   `busy` | `onEdit` | `onSelect` | `onChangeDescription` | `onChangeProjectStatus`> {
   selected: boolean;
+  position: number;
   groupKey: string;
   collectionId?: string;
   domain: MobilePortfolioBoardProps[`allDomains`][number];
@@ -20,6 +21,7 @@ const MobilePortfolioDomain = ({
   domain,
   onEdit,
   selected,
+  position,
   groupKey,
   onSelect,
   onActions,
@@ -34,6 +36,7 @@ const MobilePortfolioDomain = ({
     <article
       id={id}
       tabIndex={0}
+      data-position={position}
       className={`mobile-domain-task`}
       aria-label={`${domain.name}, ${status}`}
       {...boardEntityProps({
@@ -51,6 +54,13 @@ const MobilePortfolioDomain = ({
       }}
     >
       <div id={`${id}-heading`} className={`mobile-domain-heading`}>
+        <span
+          id={`${id}-position`}
+          aria-label={`Position ${position}`}
+          className={`domain-row-position mobile-domain-position`}
+        >
+          {position}
+        </span>
         <label
           htmlFor={`${id}-selection`}
           id={`${id}-selection-target`}

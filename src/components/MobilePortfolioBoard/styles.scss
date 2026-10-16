@@ -16,12 +16,13 @@
   &:disabled { opacity: .35; cursor: default; }
 }
 .mobile-board-count { flex: none; min-width: 20px; font-size: 11px; color: var(--muted); text-align: center; }
-.mobile-board-count-toggle { border: 0; padding: 0 5px; min-width: 32px; min-height: 44px; cursor: pointer; border-radius: 6px; background: transparent; font-family: var(--font-mono); }
+.mobile-board-count-toggle { border: 0; padding: 0 2px; min-width: 26px; min-height: 44px; cursor: pointer; border-radius: 6px; background: transparent; font-family: var(--font-mono); }
 .mobile-board-count-toggle[aria-expanded='false'] { color: var(--accent); background: var(--input); }
 .mobile-board-columns { gap: 10px; width: 100%; display: flex; min-width: 0; max-width: 100%; flex-wrap: nowrap; align-items: stretch; overflow-x: auto; padding: 0 0 12px; scroll-snap-type: x proximity; scroll-padding-inline: 0; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
 .mobile-board-column { flex: 0 0 min(340px, 84vw); display: flex; min-width: 0; overflow: hidden; border-radius: 10px; flex-direction: column; background: var(--subtle); border: 1px solid var(--line); scroll-snap-align: start; }
 .mobile-board-column:has(.mobile-board-column-body[hidden]) { align-self: flex-start; }
-.mobile-board-column-header { gap: 5px; z-index: 4; display: flex; min-width: 0; flex-shrink: 0; position: relative; align-items: center; padding: 3px 5px 3px 12px; background: var(--subtle); transform: translateY(var(--mobile-board-header-offset, 0px)); -webkit-touch-callout: none; }
+.mobile-board-column-header { gap: 3px; z-index: 4; display: flex; min-width: 0; flex-shrink: 0; position: relative; align-items: center; padding: 3px 5px 3px 12px; background: var(--subtle); transform: translateY(var(--mobile-board-header-offset, 0px)); -webkit-touch-callout: none; }
+.mobile-board-column-header > .mobile-board-icon { width: 32px; }
 .mobile-board-column-header[data-board-frozen='true'] { box-shadow: 0 1px 0 var(--line); }
 .mobile-board-folder { flex: none; color: var(--muted); }
 .mobile-board-column-header .portfolio-name-editor { flex: 1; min-width: 0; }

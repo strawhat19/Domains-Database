@@ -1,5 +1,6 @@
 import type { DomainRecord } from '../types';
 import { UNGROUPED_GROUP_LABEL } from './names';
+import { allowDomainsInCollections } from '../config';
 import type { PortfolioColumn } from '../portfolioColumns';
 import type { PortfolioPreferences, PortfolioGroup, PortfolioSections } from './types';
 import { getPortfolioColumnDisplay, getPortfolioColumnValue, hasPortfolioColumnValue, PORTFOLIO_FIELDS } from '../portfolioColumns';
@@ -90,7 +91,7 @@ export const buildPortfolioSections = (domains: DomainRecord[], preferences: Por
   const collectionIds = new Set(preferences.collections.map(collection => collection.id));
   const groupedDomainIds = new Set(preferences.customGroups.flatMap(group => group.domainIds));
   const directMembership = new Map<string, string>();
-  preferences.collections.forEach(collection => (collection.domainIds ?? []).forEach(id => {
+  if (allowDomainsInCollections) preferences.collections.forEach(collection => (collection.domainIds ?? []).forEach(id => {
     if (!groupedDomainIds.has(id) && !directMembership.has(id)) directMembership.set(id, collection.id);
   }));
   const assignedDomainIds = new Set(preferences.customGroups

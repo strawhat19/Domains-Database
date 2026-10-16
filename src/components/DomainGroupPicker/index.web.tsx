@@ -2,6 +2,7 @@ import './styles.scss';
 import MobileSheetHandle from '../MobileSheet/index.web';
 import '../DomainEditor/styles.scss';
 import type { DomainRecord } from '../../shared/types';
+import { allowDomainsInCollections } from '../../shared/config';
 import DestinationChoices from '../DestinationChoices/index.web';
 import BooleanSetting from '../SegmentedControl/BooleanSetting.web';
 import PortfolioDestinationTree from '../PortfolioDestinationTree/index.web';
@@ -33,14 +34,15 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
     { icon: FolderPlus, label: `New Collection`, id: CREATE_COLLECTION_OPTION },
   ];
   const actionLabel = picker.creatingNewCollection ? `Create & Move` : `Create & Group`;
+  const destinationLabel = allowDomainsInCollections ? `a collection or group` : `a group or app`;
 
   const formContent = (
     <>
       <div id={`domain-group-picker-body`} className={`domain-dialog-body`}>
         <p id={`domain-group-picker-description`} className={`domain-dialog-description`}>
           {picker.count === 1
-            ? `Click a collection or group to move this domain, or create a new destination.`
-            : `Click a collection or group to move all ${picker.count} selected domains, or create a new destination.`}
+            ? `Click ${destinationLabel} to move this domain, or create a new group.`
+            : `Click ${destinationLabel} to move all ${picker.count} selected domains, or create a new group.`}
         </p>
         <div id={`domain-group-picker-selection`} className={`domain-group-picker-selection`}>
           <span id={`domain-group-picker-count`} className={`domain-group-picker-count`}>
@@ -87,7 +89,7 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
                     <span id={`domain-group-picker-create-command-description`} className={`domain-group-picker-command-description`}>{`Create a group and choose its collection`}</span>
                   </span>
                 </button>
-                <button
+                {allowDomainsInCollections && <button
                   type={`button`}
                   disabled={picker.disabled}
                   id={`domain-group-picker-create-collection-command`}
@@ -101,7 +103,7 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
                     <span id={`domain-group-picker-create-collection-command-label`} className={`domain-group-picker-command-label`}>{`Create New Collection`}</span>
                     <span id={`domain-group-picker-create-collection-command-description`} className={`domain-group-picker-command-description`}>{`Move domains into a collection without a group`}</span>
                   </span>
-                </button>
+                </button>}
                 <button
                   type={`button`}
                   disabled={picker.disabled}

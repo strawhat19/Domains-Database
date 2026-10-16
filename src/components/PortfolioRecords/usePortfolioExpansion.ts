@@ -3,7 +3,7 @@ import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePo
 
 export const usePortfolioExpansion = () => {
   const { collapsedGroupKeys, collapsedCollectionIds, toggleGroupCollapsed, toggleCollectionCollapsed } = usePortfolioPreferences();
-  const collapsedGroups = useMemo(() => new Set(collapsedGroupKeys), [collapsedGroupKeys]);
+  const collapsedGroups = useMemo(() => new Set(collapsedGroupKeys.filter(key => key !== `custom:ungrouped`)), [collapsedGroupKeys]);
   const collapsedCollections = useMemo(() => new Set(collapsedCollectionIds), [collapsedCollectionIds]);
   const toggleGroup = useCallback((key: string) => {
     toggleGroupCollapsed(key);

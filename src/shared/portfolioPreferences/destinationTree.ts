@@ -1,4 +1,5 @@
 import type { DomainRecord } from '../types';
+import { allowDomainsInCollections } from '../config';
 import type { CustomPortfolioGroup, CustomPortfolioCollection } from './types';
 
 export interface DestinationGroup {
@@ -50,7 +51,7 @@ export const buildPortfolioDestinationTree = (
     };
   });
   const directlyCollectedIds = new Set<string>();
-  collections.forEach(collection => (collection.domainIds ?? []).forEach(id => {
+  if (allowDomainsInCollections) collections.forEach(collection => (collection.domainIds ?? []).forEach(id => {
     if (!domainIds.has(id) || groupedIds.has(id) || directlyCollectedIds.has(id)) return;
     directlyCollectedIds.add(id);
     collectionDomains.get(collection.id)?.add(id);

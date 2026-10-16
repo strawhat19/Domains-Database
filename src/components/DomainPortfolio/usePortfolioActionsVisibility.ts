@@ -21,7 +21,8 @@ export const usePortfolioActionsVisibility = () => {
         ? Math.max(0, header.getBoundingClientRect().bottom)
         : 0;
       const bounds = heading.getBoundingClientRect();
-      const compact = bounds.width > 0 && bounds.height > 0 && bounds.bottom <= headerBottom;
+      const compact = window.getComputedStyle(heading).display === `none`
+        || (bounds.width > 0 && bounds.height > 0 && bounds.bottom <= headerBottom);
       if (!compact) {
         const focusedId = document.activeElement?.id;
         const fullButtonId = focusedId === `portfolio-toolbar-sync-domains` ? `portfolio-sync-domains`

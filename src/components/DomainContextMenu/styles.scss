@@ -53,6 +53,9 @@
 .domain-context-menu-destinations { margin: 2px 0 6px; padding: 6px 4px 8px; border-block: 1px solid var(--line); }
 .domain-context-menu-destinations-label { margin: 0 6px 6px; font-size: 10px; color: var(--muted); }
 .domain-context-menu-icon { flex-shrink: 0; }
+@media (max-width: 900px) {
+  .domain-row-context-menu .portfolio-destination-tree-picker .portfolio-destination-tree-search { min-height: 32px; padding: 3px 8px; }
+}
 @media (min-width: 901px) {
   .domain-row-context-menu {
     padding-block: 3px;

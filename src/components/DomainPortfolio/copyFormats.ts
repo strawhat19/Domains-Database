@@ -1,4 +1,5 @@
 import type { DomainRecord } from '../../shared/types';
+import { allowDomainsInCollections } from '../../shared/config';
 import type { PortfolioGroup, PortfolioSections, PortfolioPreferences } from '../../shared/portfolioPreferences/types';
 
 export type PortfolioCopyFormat = `list` | `tree` | `detail-tree`;
@@ -19,7 +20,7 @@ export const excludeHiddenPortfolioSections = (sections: PortfolioSections, pref
     if (hiddenGroups.has(`custom:${group.id}`) || group.collectionId && collectionIds.has(group.collectionId) && hiddenCollections.has(group.collectionId)) hiddenDomains.add(id);
   });
   const directOwners = new Set<string>();
-  preferences.collections.forEach(collection => (collection.domainIds ?? []).forEach(id => {
+  preferences.collections.forEach(collection => (allowDomainsInCollections ? collection.domainIds ?? [] : []).forEach(id => {
     if (membership.has(id) || directOwners.has(id)) return;
     directOwners.add(id);
     if (hiddenCollections.has(collection.id)) hiddenDomains.add(id);

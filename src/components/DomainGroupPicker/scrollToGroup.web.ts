@@ -4,7 +4,8 @@ export const scrollToPortfolioGroup = (groupId: string | null, collectionId?: st
     const scope = collectionId ? `portfolio-collection-${collectionId}` : `portfolio`;
     const key = `custom:${groupId ?? `ungrouped`}`;
     const heading = document.getElementById(`portfolio-group-${encodeURIComponent(key)}-heading`)
-      ?? document.getElementById(`${scope}-group-${encodeURIComponent(key)}-heading`);
+      ?? document.getElementById(`${scope}-group-${encodeURIComponent(key)}-heading`)
+      ?? (groupId ? null : document.getElementById(`portfolio-main-database-heading`));
     if (!heading) return;
     const tableHeader = heading.closest(`.portfolio-records-table`)?.querySelector<HTMLElement>(`.portfolio-sticky-head:not([hidden])`);
     const targetCollectionId = heading.closest(`tbody`)?.dataset.portfolioCollectionKey ?? collectionId;

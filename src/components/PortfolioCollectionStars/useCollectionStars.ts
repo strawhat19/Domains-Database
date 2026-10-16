@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { allowDomainsInCollections } from '../../shared/config';
 import { copyText } from '../../shared/common/clipboard.web';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import type { PortfolioCopyFormat } from '../DomainPortfolio/copyFormats';
@@ -22,8 +23,9 @@ export const useCollectionStars = (collection: CustomPortfolioCollection, busy =
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [copyState, setCopyState] = useState<`idle` | `copying` | `copied` | `error`>(`idle`);
   const loading = busy || starring || domains.loading || preferences.loading;
-  const summary = useMemo(() => buildCollectionStars(collection.id, preferences.customGroups, domains.domains, collection.domainIds ?? []),
-    [collection.id, collection.domainIds, preferences.customGroups, domains.domains]);
+  const directDomainIds = useMemo(() => allowDomainsInCollections ? collection.domainIds ?? [] : [], [collection.domainIds]);
+  const summary = useMemo(() => buildCollectionStars(collection.id, preferences.customGroups, domains.domains, directDomainIds),
+    [collection.id, directDomainIds, preferences.customGroups, domains.domains]);
   const showHiddenOptions = preferences.showHiddenCollections || preferences.showHiddenGroups || preferences.showHiddenDomains;
   const copySummary = useMemo(() => {
     if (!showHiddenOptions || includeHidden) return summary;
@@ -33,9 +35,9 @@ export const useCollectionStars = (collection: CustomPortfolioCollection, busy =
     const groupedIds = new Set(preferences.customGroups.flatMap(group => group.domainIds));
     const groups = preferences.customGroups.filter(group => !hiddenGroups.has(`custom:${group.id}`));
     const records = domains.domains.filter(domain => !hiddenDomains.has(domain.id));
-    const directIds = (collection.domainIds ?? []).filter(id => !groupedIds.has(id));
+    const directIds = directDomainIds.filter(id => !groupedIds.has(id));
     return buildCollectionStars(collection.id, groups, records, directIds);
-  }, [summary, includeHidden, showHiddenOptions, collection.id, collection.domainIds, domains.domains, preferences.customGroups,
+  }, [summary, includeHidden, showHiddenOptions, collection.id, directDomainIds, domains.domains, preferences.customGroups,
     preferences.hiddenGroupKeys, preferences.hiddenDomainIds, preferences.hiddenCollectionIds]);
 
   useEffect(() => {
@@ -70,7 +72,7 @@ export const useCollectionStars = (collection: CustomPortfolioCollection, busy =
     const groupedIds = new Set(preferences.customGroups.flatMap(group => group.domainIds));
     const selectedIds = new Set([
       ...groups.flatMap(group => group.domainIds),
-      ...(collection.domainIds ?? []).filter(id => !groupedIds.has(id)),
+      ...directDomainIds.filter(id => !groupedIds.has(id)),
     ]);
     const domainIds = domains.domains.filter(domain => selectedIds.has(domain.id)).map(domain => domain.id);
     if (!groups.length && !domainIds.length) return;

@@ -257,6 +257,20 @@
     flex-direction: column;
   }
 }
+@media (max-width: 900px) {
+  .portfolio-records-table[data-compact-actions='true'] {
+    .domain-row {
+      .domain-name-cell { padding-inline-start: 4px; }
+      .domain-position-cell, .domain-selection-cell { width: 32px; }
+    }
+    .domain-selection, .portfolio-select-all { width: 16px; height: 16px; }
+    .domain-row-position { padding-inline: 2px; }
+    .domain-identity {
+      gap: 6px;
+      > .domain-site-icon { border-radius: 50%; }
+    }
+  }
+}
 @media (max-width: 820px) {
   .domain-identity { gap: 10px; }
 }

@@ -4,6 +4,7 @@
   flex-direction: column;
   --header-logo-width: 220px;
   --header-action-gap: 12px;
+  --header-block-padding: 6px;
   --page-content-height: calc(100dvh - var(--shell-header-height, 128px) - var(--site-footer-height, 84px) - 32px);
   --shell-gutter: clamp(24px, 3vw, 48px);
 }
@@ -30,7 +31,7 @@
   gap: var(--header-action-gap);
   width: 100%;
   display: flex;
-  padding: 6px var(--shell-gutter);
+  padding: var(--header-block-padding) var(--shell-gutter);
   align-items: center;
   justify-content: space-between;
 }
@@ -127,6 +128,13 @@
   --page-content-height: calc(100dvh - var(--shell-header-height, 128px) - var(--site-footer-height, 84px));
   .main-content { padding-block: 0; justify-content: flex-start; }
   .site-footer { margin-top: 0; }
+}
+
+@media (max-width: 900px) {
+  .app-shell:has(.domain-portfolio-full) {
+    .site-footer { margin-top: 0; }
+    .main-content { padding-bottom: var(--shell-gutter); }
+  }
 }
 
 @media (min-width: 901px) {

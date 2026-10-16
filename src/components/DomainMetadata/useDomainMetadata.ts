@@ -4,6 +4,7 @@ import { normalizeDomainTags } from '../../shared/domainTags';
 import { getPortfolioColumnValue, getPortfolioColumnDisplay, hasPortfolioColumnValue, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 export interface DomainMetadataProps {
+  idPrefix?: string;
   domain: DomainRecord;
   hideProjectDetails?: boolean;
 }
@@ -54,7 +55,7 @@ const projectFields: DomainMetadataField[] = [
   { wide: true, field: `future`, label: `Future` },
 ];
 
-export const useDomainMetadata = ({ domain, hideProjectDetails = false }: DomainMetadataProps) => {
+export const useDomainMetadata = ({ domain, idPrefix = `domain-metadata`, hideProjectDetails = false }: DomainMetadataProps) => {
   const items = useMemo(() => {
     const fields = hideProjectDetails ? registrarFields : [...registrarFields, ...projectFields];
     const values: DomainMetadataItem[] = fields.flatMap(({ field, label, wide }) => (
@@ -73,5 +74,5 @@ export const useDomainMetadata = ({ domain, hideProjectDetails = false }: Domain
     )));
   }, [domain, hideProjectDetails]);
 
-  return { items, scope: `domain-metadata-${domain.id}` };
+  return { items, scope: `${idPrefix}-${domain.id}` };
 };

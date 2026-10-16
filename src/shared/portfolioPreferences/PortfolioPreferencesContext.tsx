@@ -2,6 +2,7 @@ import { GROUPABLE_COLUMNS } from './groups';
 import Toast from '../../components/Toast';
 import type { PropsWithChildren } from 'react';
 import { PORTFOLIO_FIELDS } from '../portfolioColumns';
+import { allowDomainsInCollections } from '../config';
 import { createOperationQueue } from '../common/storage';
 import { subscribeAccountDataReset } from '../accountData/state';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
@@ -191,6 +192,7 @@ const assignGroupDomains = (current: PortfolioPreferences, domainIds: string[], 
 };
 
 const assignCollectionDomains = (current: PortfolioPreferences, domainIds: string[], collectionId: string | null): PortfolioPreferences => {
+  if (collectionId !== null && !allowDomainsInCollections) return current;
   const selectedIds = new Set(domainIds);
   const destinationKey = collectionId === null ? `custom:ungrouped` : `collection:${collectionId}`;
   return {
@@ -562,7 +564,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     change(current => {
       const domainIds = new Set(uniqueIds(group.domainIds));
       const orderedIds = uniqueIds([...(current.orders[groupKey] ?? []).filter(id => domainIds.has(id)), ...domainIds]);
-      const collection = current.collections.find(collection => collection.id === group.collectionId);
+      const collection = allowDomainsInCollections ? current.collections.find(collection => collection.id === group.collectionId) : undefined;
       const destinationKey = collection ? `collection:${collection.id}` : `custom:ungrouped`;
       const next = assignCollectionDomains(current, orderedIds, collection?.id ?? null);
       const orders = Object.fromEntries(Object.entries(next.orders).filter(([key]) => key !== groupKey));
@@ -611,6 +613,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
 
   const assignDomainsToCollection = useCallback<PortfolioPreferencesContextValue[`assignDomainsToCollection`]>((domainIds, collectionId) => {
     if (!enabled || !active.current || !ready || !storageReady.current || loadedUserId.current !== userId) return false;
+    if (collectionId !== null && !allowDomainsInCollections) return false;
     const selectedIds = uniqueIds(domainIds);
     if (!selectedIds.length || (collectionId !== null && !preferenceRef.current.collections.some(collection => collection.id === collectionId))) return false;
     change(current => assignCollectionDomains(current, selectedIds, collectionId));

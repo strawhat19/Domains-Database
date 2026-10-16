@@ -2,6 +2,7 @@ import type { Registrar } from './types';
 import { firebaseEnabled } from './firebase/config';
 
 export const cubes = false;
+export const allowDomainsInCollections = false;
 export const useLocalStorage = !firebaseEnabled;
 export const persistenceEnabled = useLocalStorage || firebaseEnabled;
 export const useSampleData = false;

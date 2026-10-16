@@ -1,8 +1,8 @@
 import './styles.scss';
 import { useDomainMetadata, type DomainMetadataProps } from './useDomainMetadata';
 
-const DomainMetadata = ({ domain, hideProjectDetails = false }: DomainMetadataProps) => {
-  const { scope, items } = useDomainMetadata({ domain, hideProjectDetails });
+const DomainMetadata = ({ domain, idPrefix, hideProjectDetails = false }: DomainMetadataProps) => {
+  const { scope, items } = useDomainMetadata({ domain, idPrefix, hideProjectDetails });
 
   return (
     <div id={scope} className={`domain-metadata`}>

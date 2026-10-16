@@ -268,6 +268,23 @@
 @media (min-width: 1200px) {
   .domain-settings-links-pane .domain-links-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+@media (max-width: 900px) {
+  .domain-editor {
+    .domain-dialog-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+    .domain-dialog-heading { display: contents; }
+    .domain-dialog-eyebrow { grid-row: 1; grid-column: 1; align-self: center; }
+    .domain-editor-header-actions { grid-row: 1; grid-column: 2; }
+    .domain-editor-title-row {
+      gap: 8px;
+      grid-row: 2;
+      min-width: 0;
+      margin-top: 0;
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
 @media (max-width: 560px) {
   .domain-settings-links-pane .domain-links-fields { grid-template-columns: minmax(0, 1fr); }
   .domain-editor .domain-dialog-header { margin-bottom: 12px; }

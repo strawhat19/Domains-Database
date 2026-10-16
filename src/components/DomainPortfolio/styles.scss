@@ -176,7 +176,7 @@
 .portfolio-main-database-title { gap: 9px; margin: 0; font-size: 16px; display: inline-flex; align-items: center; font-family: var(--font-bold); }
 .portfolio-main-database-symbol { width: 28px; height: 28px; }
 .portfolio-main-database-icon { display: block; flex-shrink: 0; color: color-mix(in srgb, #16a34a 75%, var(--ink)); }
-.portfolio-main-database-help { margin: 0; font-size: 11px; color: var(--muted); }
+.portfolio-main-database-description { margin: 0; font-size: 11px; color: var(--muted); }
 .portfolio-toolbar {
   gap: 12px;
   z-index: 6;
@@ -446,6 +446,24 @@
     transform: translateX(0);
   }
 }
+@media (max-width: 900px) {
+  .domain-portfolio-full { padding-top: var(--shell-gutter, 20px); }
+  .portfolio-main-database-heading { min-height: 50px; }
+  .portfolio-heading-row { display: none; }
+  .portfolio-search-tools { order: 1; flex-basis: 100%; }
+  .portfolio-toolbar-actions { width: 100%; }
+  .portfolio-toolbar {
+    gap: var(--header-action-gap, 6px);
+    padding: var(--header-block-padding, 6px) var(--header-action-gap, 6px);
+    :is(.portfolio-search-row, .portfolio-controls-row, .portfolio-search-wrap, .portfolio-search-count, .portfolio-toolbar-actions, .portfolio-toolbar-domain-actions) { gap: var(--header-action-gap, 6px); }
+    .portfolio-search-wrap { padding-inline: var(--header-action-gap, 6px); }
+    .portfolio-search-count { margin-right: var(--header-action-gap, 6px); }
+    .portfolio-toolbar-domain-actions {
+      &[data-has-sync='true'] { --compact-actions-width: calc(80px + var(--header-action-gap, 6px)); }
+      &:not([data-visible='true']) { margin-right: calc(-1 * var(--header-action-gap, 6px)); }
+    }
+  }
+}
 @media (max-width: 720px) {
   .domain-portfolio { --portfolio-row-actions-cell-width: 112px; }
   .portfolio-heading { min-width: 0; max-width: 100%; }
@@ -460,12 +478,6 @@
   .portfolio-button-text-short { display: inline; }
   .portfolio-view-option-text { display: none; }
   .portfolio-button-icon { flex-shrink: 0; }
-  .portfolio-heading-row { gap: 18px; align-items: flex-start; flex-direction: column; }
-  .portfolio-primary-actions { width: 100%; align-items: stretch; flex-direction: column; }
-  .portfolio-primary-actions .portfolio-button { width: 100%; }
-  .portfolio-domain-actions { width: 100%; }
-  .portfolio-domain-actions .portfolio-button { flex: 1; width: auto; }
-  .portfolio-toolbar { gap: 12px; padding: 12px var(--portfolio-inline-padding, 16px); flex-wrap: wrap; }
   .portfolio-search { font-size: 16px; }
   .portfolio-toolbar-meta { margin-left: auto; }
   .portfolio-card-footer { gap: 9px; padding: 10px 10px 10px var(--portfolio-inline-padding, 16px); }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { DragEvent } from 'react';
+import { allowDomainsInCollections } from '../../shared/config';
 import { GROUP_DRAG_TYPE, DOMAIN_DRAG_TYPE, COLLECTION_DRAG_TYPE, readDomainDrag } from '../PortfolioRecords/dragData';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 
@@ -14,7 +15,7 @@ export const useCollectionReorder = (enabled: boolean, { onAssigned, availableId
   const handlers = (collectionId: string | null) => {
     const canDrop = (transfer: DataTransfer) => enabled && (
       transfer.types.includes(GROUP_DRAG_TYPE)
-      || Boolean(availableIds?.length) && transfer.types.includes(DOMAIN_DRAG_TYPE)
+      || (allowDomainsInCollections || collectionId === null) && Boolean(availableIds?.length) && transfer.types.includes(DOMAIN_DRAG_TYPE)
       || (Boolean(collectionId) && draggingId !== collectionId && transfer.types.includes(COLLECTION_DRAG_TYPE))
     );
     return {

@@ -1,4 +1,5 @@
 import type { DomainRecord } from '../types';
+import { allowDomainsInCollections } from '../config';
 import { buildPortfolioCopyText, type PortfolioCopyFormat } from '../../components/DomainPortfolio/copyFormats';
 import type { PortfolioGroup, PortfolioSections, CustomPortfolioGroup, CustomPortfolioCollection } from './types';
 
@@ -33,7 +34,7 @@ export const buildCollectionStars = (
     return [{ group, domains: groupDomains }];
   });
   const groupedDomainIds = new Set(groups.flatMap(group => group.domainIds));
-  const directDomains = [...new Set(directDomainIds)].flatMap(id => {
+  const directDomains = [...new Set(allowDomainsInCollections ? directDomainIds : [])].flatMap(id => {
     const domain = !groupedDomainIds.has(id) ? starredDomains.get(id) : undefined;
     return domain ? [domain] : [];
   });

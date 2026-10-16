@@ -3,11 +3,13 @@ import '../DomainEditor/styles.scss';
 import Toast from '../Toast/index.web';
 import { createPortal } from 'react-dom';
 import { X, Plus, Search } from 'lucide-react';
+import { allowDomainsInCollections } from '../../shared/config';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import { usePortfolioAddDomains, type PortfolioAddDomainsProps } from './usePortfolioAddDomains';
 
 const PortfolioAddDomains = (props: PortfolioAddDomainsProps) => {
   const picker = usePortfolioAddDomains(props);
+  if (props.collection && !allowDomainsInCollections) return null;
   const scope = `${props.idPrefix}-add-domains`;
   const destinationName = picker.destinationName;
   const destinationIcon = (size: number, id: string) => picker.isCollection ? (
@@ -244,7 +246,7 @@ const PortfolioAddDomains = (props: PortfolioAddDomainsProps) => {
                 ) : (
                   <div id={`${scope}-empty`} className={`portfolio-add-domains-empty`}>
                     <p id={`${scope}-empty-title`} className={`portfolio-add-domains-empty-title`}>{picker.ungroupedCount ? `No Matching Domains` : `No Available Database Domains`}</p>
-                    <p id={`${scope}-empty-help`} className={`portfolio-add-domains-empty-help`}>{picker.ungroupedCount ? `Try a different search.` : `All visible domains already belong to a group or collection.`}</p>
+                    <p id={`${scope}-empty-help`} className={`portfolio-add-domains-empty-help`}>{picker.ungroupedCount ? `Try a different search.` : allowDomainsInCollections ? `All visible domains already belong to a group or collection.` : `All visible domains already belong to a group or app.`}</p>
                   </div>
                 )}
                 {!picker.loading && picker.matchingCount > picker.suggestions.length && (

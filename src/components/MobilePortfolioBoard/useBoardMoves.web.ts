@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { allowDomainsInCollections } from '../../shared/config';
 import type { BoardEntity, MobilePortfolioBoardProps } from './types';
 import { buildPortfolioSections, sortPortfolioDomains } from '../../shared/portfolioPreferences/groups';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
@@ -41,7 +42,7 @@ export const useBoardMoves = (props: MobilePortfolioBoardProps, { disabled, onEr
     preferences.customGroups.forEach(group => group.domainIds.forEach(id => {
       if (domainMap.has(id)) items.set(id, { groupKey: `custom:${group.id}`, collectionId: group.collectionId });
     }));
-    preferences.collections.forEach(collection => collection.domainIds?.forEach(id => {
+    if (allowDomainsInCollections) preferences.collections.forEach(collection => collection.domainIds?.forEach(id => {
       if (domainMap.has(id) && !items.has(id)) items.set(id, { groupKey: `collection:${collection.id}`, collectionId: collection.id });
     }));
     props.allDomains.forEach(domain => {
@@ -117,6 +118,7 @@ export const useBoardMoves = (props: MobilePortfolioBoardProps, { disabled, onEr
     if (target.kind === `group` && (!group || target.collectionId !== group.collectionId)) return fail();
     const collectionId = target.kind === `collection` ? target.id === `main` ? undefined : target.id
       : group?.collectionId ?? targetLocation?.collectionId;
+    if (!allowDomainsInCollections && collectionId && !group) return false;
     const collection = collectionId ? preferences.collections.find(item => item.id === collectionId) : undefined;
     if (collectionId && !collection) return fail();
     const groupKey = mainDisplayGroup?.key ?? (group ? `custom:${group.id}` : collectionId ? `collection:${collectionId}` : `custom:ungrouped`);

@@ -1,14 +1,16 @@
 import './styles.scss';
 import MobileSheetHandle from '../MobileSheet/index.web';
 import { Fragment, useRef } from 'react';
-import { X, ArrowUp, Settings, ArrowDown, FolderTree } from 'lucide-react';
+import { allowDomainsInCollections } from '../../shared/config';
+import { X, ArrowUp, Settings, ArrowDown, FolderPlus, FolderTree } from 'lucide-react';
 import type { useDomainContextMenu } from './useDomainContextMenu';
 import PortfolioDestinationTree from '../PortfolioDestinationTree/index.web';
 import type { DestinationBranch } from '../../shared/portfolioPreferences/destinationTree';
 
 const options = [
   { key: `settings`, icon: Settings, label: `Settings` },
-  { key: `group`, icon: FolderTree, label: `Move To`, description: `All destinations, new groups, and new collections` },
+  { key: `new-group`, icon: FolderPlus, action: `group`, mobileOnly: true, label: `Add to New Group` },
+  { key: `group`, icon: FolderTree, label: `Move To`, description: allowDomainsInCollections ? `All destinations, new groups, and new collections` : `Groups, apps, and new groups` },
   { key: `close`, icon: X, label: `Close` },
 ] as const;
 
@@ -57,8 +59,9 @@ const DomainContextMenu = ({ menu, close, sheet, menuRef, disabled, activate, pe
         <p id={`${scope}-target`} className={`domain-context-menu-target`}>
           {target}
         </p>
-        {options.map(option => {
+        {options.filter(option => !(`mobileOnly` in option) || sheet.mobile).map(option => {
           const { key, icon: Icon, label } = option;
+          const action = `action` in option ? option.action : option.key;
           const description = `description` in option ? option.description : undefined;
           return (
             <Fragment key={key}>
@@ -82,12 +85,12 @@ const DomainContextMenu = ({ menu, close, sheet, menuRef, disabled, activate, pe
                 role={`menuitem`}
                 tabIndex={-1}
                 id={`${scope}-${key}`}
-                onClick={() => activate(key)}
+                onClick={() => activate(action)}
                 disabled={unavailable && key !== `close`}
                 className={`domain-context-menu-item${description ? ` domain-context-menu-command` : ``}`}
                 aria-describedby={description ? `${scope}-${key}-description` : undefined}
                 title={key === `settings` ? `Settings For ${menu.domain.name}` : undefined}
-                aria-haspopup={key === `group` || key === `settings` ? `dialog` : undefined}
+                aria-haspopup={action === `group` || action === `settings` ? `dialog` : undefined}
               >
                 <Icon
                   size={15}
@@ -97,7 +100,7 @@ const DomainContextMenu = ({ menu, close, sheet, menuRef, disabled, activate, pe
                 />
                 <span id={`${scope}-${key}-content`} className={`domain-context-menu-content`}>
                   <span id={`${scope}-${key}-label`} className={`domain-context-menu-label`}>
-                    {`${label}${key === `group` && menu.domains.length > 1 ? ` (${menu.domains.length})` : ``}`}
+                    {`${label}${action === `group` && menu.domains.length > 1 ? ` (${menu.domains.length})` : ``}`}
                   </span>
                   {description && <span id={`${scope}-${key}-description`} className={`domain-context-menu-description`}>{description}</span>}
                 </span>

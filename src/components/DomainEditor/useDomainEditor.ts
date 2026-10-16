@@ -1,4 +1,4 @@
-import { REGISTRARS } from '../../shared/config';
+import { REGISTRARS, allowDomainsInCollections } from '../../shared/config';
 import type { FormEvent } from 'react';
 import { useEffect, useRef, useMemo, useState } from 'react';
 import { useMobileSheet } from '../MobileSheet/useMobileSheet';
@@ -51,7 +51,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
   };
 };
 
-type DomainEditorTab = `general` | `project` | `links` | `actions`;
+type DomainEditorTab = `general` | `project` | `links` | `details` | `actions`;
 type DomainEditorField = keyof DomainInput | `siteIconUrl`;
 const DOMAIN_EDITOR_LINK_FIELDS: { key: DomainLinkField; label: string; multiple?: boolean }[] = [
   { key: `parentLink`, label: `Parent Link` },
@@ -90,7 +90,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const hidden = Boolean(domain?.id && preferences.hiddenDomainIds.includes(domain.id));
   const currentGroup = preferences.customGroups.find(group => domain?.id && group.domainIds.includes(domain.id));
   const currentCollection = preferences.collections.find(collection => currentGroup
-    ? collection.id === currentGroup.collectionId : collection.domainIds?.includes(domain?.id ?? ``));
+    ? collection.id === currentGroup.collectionId : allowDomainsInCollections && collection.domainIds?.includes(domain?.id ?? ``));
   const destinationLabel = [currentCollection?.name ?? `Database`, currentGroup?.name].filter(Boolean).join(` / `);
   const copySections = useMemo(() => ({
     collections: [],
@@ -279,6 +279,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     toggleVisibility,
     actionsDisabled: preferences.loading,
     destinationLabel,
+    hideProjectDetails: currentGroup?.isApp === true,
     invalidLinkField: DOMAIN_EDITOR_LINK_FIELDS.find(field => field.key === invalidField)?.key ?? null,
     saving: saving || deleting,
   };

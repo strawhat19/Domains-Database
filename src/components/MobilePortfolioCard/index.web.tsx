@@ -73,7 +73,7 @@ const MobilePortfolioCard = ({
           }
         }}
       >
-        <Icon size={16} aria-hidden={`true`} id={`${id}-icon`} className={`mobile-group-icon`} />
+        <Icon size={14} aria-hidden={`true`} id={`${id}-icon`} className={`mobile-group-icon`} />
         <PortfolioNameEditor
           dragHandle
           busy={busy}
@@ -82,6 +82,17 @@ const MobilePortfolioCard = ({
           id={`${id}-name`}
           onSave={name => preferences.renameGroup(group.customGroupId!, name)}
         />
+        {hasProjectStatus && (
+          <DomainProjectBadge
+            disabled={busy}
+            id={`${id}-status`}
+            field={`projectStatus`}
+            value={group.projectStatus}
+            className={`mobile-group-project-status`}
+            editLabel={`Change Status For ${group.label}`}
+            onChange={value => preferences.updateGroupProjectStatus(group.customGroupId!, value)}
+          />
+        )}
         <button
           type={`button`}
           disabled={busy}
@@ -113,28 +124,15 @@ const MobilePortfolioCard = ({
           />
         </button>
       </header>
-      {(hasDescription || hasProjectStatus) && (
+      {hasDescription && (
         <div id={`${id}-summary`} className={`mobile-group-summary`}>
-          {hasDescription && (
-            <DomainDescription
-              busy={busy}
-              id={`${id}-description`}
-              domainName={group.label}
-              value={group.description}
-              onSave={async value => preferences.updateGroup(group.customGroupId!, group.label, value)}
-            />
-          )}
-          {hasProjectStatus && (
-            <DomainProjectBadge
-              disabled={busy}
-              id={`${id}-status`}
-              field={`projectStatus`}
-              value={group.projectStatus}
-              className={`mobile-group-project-status`}
-              editLabel={`Change Status For ${group.label}`}
-              onChange={value => preferences.updateGroupProjectStatus(group.customGroupId!, value)}
-            />
-          )}
+          <DomainDescription
+            busy={busy}
+            id={`${id}-description`}
+            domainName={group.label}
+            value={group.description}
+            onSave={async value => preferences.updateGroup(group.customGroupId!, group.label, value)}
+          />
         </div>
       )}
       <PortfolioCollapse id={`${id}-domains`} collapsed={collapsed}>

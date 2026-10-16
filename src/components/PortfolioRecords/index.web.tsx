@@ -8,7 +8,7 @@ import { boardEntityProps, type BoardEntity } from '../MobilePortfolioBoard/type
 import type { DomainRecord } from '../../shared/types';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainRow, { DomainRowSkeleton } from '../DomainRow';
-import { PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
+import { PORTFOLIO_PREVIEW_LIMIT, allowDomainsInCollections } from '../../shared/config';
 import PortfolioRowCopy from '../PortfolioRowCopy/index.web';
 import PortfolioAddGroup from '../PortfolioAddGroup/index.web';
 import PortfolioCollapse from '../PortfolioCollapse/index.web';
@@ -233,7 +233,7 @@ const PortfolioRecords = ({
       groupKey: `custom:${group.id}`,
       collectionId: group.collectionId,
     })));
-    preferences.collections.forEach(collection => collection.domainIds?.forEach(id => {
+    preferences.collections.forEach(collection => (allowDomainsInCollections ? collection.domainIds : [])?.forEach(id => {
       if (!ownership.has(id)) ownership.set(id, { groupKey: `collection:${collection.id}`, collectionId: collection.id });
     }));
     return ownership;
@@ -292,33 +292,37 @@ const PortfolioRecords = ({
     groupEnabled: (collections.length > 0 || preferences.groupBy === `custom`) && !loading && !busy,
     disabledGroupKeys: new Set(fullGroups.filter(group => {
       const collection = groupCollections.get(group.key);
-      return collection ? collection.sortField : sortField;
+      return group.key === `all` || group.key === `custom:ungrouped` || (collection ? collection.sortField : sortField);
     }).map(group => group.key)),
     groupScopes: new Map(fullGroups.map(group => [group.key, groupCollections.get(group.key)?.id ?? null])),
   });
   const collectionReorder = useCollectionReorder(!loading && !busy, { onAssigned: onGrouped, availableIds: allDomains.map(domain => domain.id) });
   const mainHandlers = collectionReorder.handlers(null);
+  const compactDomainActions = mobileBoard;
   const actionsWidth = useMemo(() => {
+    if (compactDomainActions) return 64;
     const scroll = sticky.scrollRef.current;
     return typeof window === `undefined` || !scroll ? 176
       : Number.parseFloat(window.getComputedStyle(scroll).getPropertyValue(`--portfolio-row-actions-cell-width`)) || 176;
-  }, [sticky.header, sticky.scrollRef]);
-  const fixedWidth = 38 + 36 + actionsWidth;
+  }, [compactDomainActions, sticky.header, sticky.scrollRef]);
+  const positionWidth = mobileBoard ? 32 : 38;
+  const selectionWidth = mobileBoard ? 32 : 36;
+  const fixedWidth = positionWidth + selectionWidth + actionsWidth;
   const dataWidths = getResponsivePortfolioColumnWidths(columns, columnWidths, flexibleColumns, sticky.header.width, fixedWidth);
   const unusedWidth = Math.max(0, sticky.header.width - dataWidths.reduce((total, width) => total + width, fixedWidth));
-  const widths = [38, 36, ...dataWidths, unusedWidth, actionsWidth];
+  const widths = [positionWidth, selectionWidth, ...dataWidths, unusedWidth, actionsWidth];
   const tableWidth = widths.reduce((total, width) => total + width, 0);
   const loadingWeight = columns.reduce((total, column) => total + (column.field === `name` ? 2 : 1), 0) || 1;
   const loadingDataWidths = columns.map(column => {
     const share = (column.field === `name` ? 2 : 1) / loadingWeight;
     return `calc(${share * 100}% - ${share * fixedWidth}px)`;
   });
-  const renderedWidths = loading ? [38, 36, ...loadingDataWidths, 0, actionsWidth] : widths;
+  const renderedWidths = loading ? [positionWidth, selectionWidth, ...loadingDataWidths, 0, actionsWidth] : widths;
   const tableStyle: CSSProperties = loading
     ? { width: `100%`, minWidth: 0, tableLayout: `fixed` }
     : { width: `100%`, minWidth: tableWidth, tableLayout: `fixed` };
   const grouped = preferences.groupBy !== `none`;
-  const hasGroupHeading = (group: PortfolioGroup) => !group.directCollectionId && (grouped || Boolean(groupCollections.get(group.key)));
+  const hasGroupHeading = (group: PortfolioGroup) => group.key !== `custom:ungrouped` && !group.directCollectionId && (grouped || Boolean(groupCollections.get(group.key)));
   const isGroupParentCollapsed = (group: PortfolioGroup) => expansion.isCollectionCollapsed(groupCollections.get(group.key)?.id);
   const isGroupCollapsed = (group: PortfolioGroup) => isGroupParentCollapsed(group) || expansion.isGroupCollapsed(group.key);
   const renderedMainGroups = mainGroups.filter(group => group.domains.length || hasGroupHeading(group));
@@ -359,6 +363,9 @@ const PortfolioRecords = ({
     <DomainGroupSettings
       {...editingGroup}
       onClose={() => setEditingGroup(null)}
+      collapsed={expansion.isGroupCollapsed(`custom:${editingGroup.group.id}`)}
+      onToggleCollapsed={mobileBoard && !editingGroup.group.collectionId
+        ? () => expansion.toggleGroup(`custom:${editingGroup.group.id}`) : undefined}
       copyGroup={fullGroups.find(group => group.customGroupId === editingGroup.group.id)}
     />
   );
@@ -409,6 +416,7 @@ const PortfolioRecords = ({
     const VisibilityIcon = hidden ? EyeOff : Eye;
     const visibilityLabel = `${hidden ? `Show` : `Hide`} ${label}`;
     const collection = groupCollections.get(key);
+    const compactGroup = mobileBoard && Boolean(customGroup) && !collection;
     const collectionId = collection?.id ?? null;
     const groupSortField = collection ? collection.sortField : sortField;
     const showingAll = Boolean(isGroupShowingAll?.(key, collectionId));
@@ -417,7 +425,7 @@ const PortfolioRecords = ({
     const contentId = grid ? `${idPrefix}-grid-group-${encodeURIComponent(key)}-content`
       : group.domains.length ? group.domains.map(domain => `domain-row-${domain.id}`).join(` `)
         : `${idPrefix}-table-group-${encodeURIComponent(key)}-empty-row`;
-    const projectStatusBadge = customGroup ? (
+    const projectStatusBadge = customGroup && !compactGroup ? (
       <DomainProjectBadge
         field={`projectStatus`}
         disabled={busy || loading}
@@ -439,12 +447,13 @@ const PortfolioRecords = ({
           main: !customGroup.collectionId,
         }) : {})}
         id={`${scope}-heading`}
+        data-compact-group={compactGroup || undefined}
         data-group-context-key={key}
         {...(grid && !mobileBoard ? reorder.groupHandlers(group, editingGroupNameKey === key) : {})}
         onContextMenu={grid ? event => openGroupContextMenu(event, group) : undefined}
         className={`portfolio-group-heading${collection ? ` portfolio-group-heading-collection` : ``}${customGroup?.isApp ? ` portfolio-group-heading-app` : ``}${collapsed ? ` portfolio-group-heading-collapsed` : ``}${hidden ? ` portfolio-group-heading-hidden` : ``}${grid && reorder.draggingGroupId && reorder.draggingGroupId === group.customGroupId ? ` portfolio-group-heading-dragging` : ``}${grid && reorder.targetGroupKey === key ? ` portfolio-group-heading-drop-target` : ``}`}
       >
-        {customGroup && (
+        {customGroup && !compactGroup && (
           <div
             role={`group`}
             id={`${scope}-reorder`}
@@ -491,10 +500,10 @@ const PortfolioRecords = ({
           iconUrl={group.siteIconUrl}
           disabled={busy || loading}
           editLabel={`Add A Logo Or Icon For ${label}`}
-          onEdit={customGroup ? () => setEditingGroup({ group: customGroup }) : undefined}
+          onEdit={customGroup && !compactGroup ? () => setEditingGroup({ group: customGroup }) : undefined}
         />
         <div id={`${scope}-copy`} className={`portfolio-group-copy`}>
-          {customGroup ? (
+          {customGroup && !compactGroup ? (
             <PortfolioNameEditor
               dragHandle={mobileBoard}
               kind={`Group`}
@@ -519,7 +528,7 @@ const PortfolioRecords = ({
             <span id={`${scope}-label`} className={`portfolio-group-label`}>{label}</span>
           )}
           {!collapsed && projectStatusBadge}
-          {collapsed && (
+          {collapsed && !compactGroup && (
             <PortfolioAppDomains
               group={group}
               busy={menuDisabled}
@@ -531,7 +540,7 @@ const PortfolioRecords = ({
               }}
             />
           )}
-          {customGroup && (
+          {customGroup && !compactGroup && (
             <DomainDescription
               maxLength={280}
               domainName={label}
@@ -544,9 +553,9 @@ const PortfolioRecords = ({
               }}
             />
           )}
-          {!customGroup && description && (
+          {((compactGroup && customGroup?.description) || (!customGroup && description)) && (
             <span id={`${scope}-description`} className={`portfolio-group-description`}>
-              {description}
+              {compactGroup ? customGroup?.description : description}
             </span>
           )}
           {customGroup && <PortfolioGroupLinks group={customGroup} id={`${scope}-links`} />}
@@ -582,7 +591,7 @@ const PortfolioRecords = ({
               <Eye size={14} aria-hidden={`true`} id={`${scope}-search-toggle-icon`} className={`portfolio-group-search-toggle-icon`} />
             </button>
           )}
-          {!groupSortField && preferences.orders[key]?.length > 0 && (
+          {!compactGroup && key !== `all` && key !== `custom:ungrouped` && !groupSortField && preferences.orders[key]?.length > 0 && (
             <button
               type={`button`}
               draggable={false}
@@ -651,7 +660,7 @@ const PortfolioRecords = ({
                 </button>
               </>
             )}
-            <button
+            {!compactGroup && <button
               type={`button`}
               draggable={false}
               aria-controls={contentId}
@@ -671,7 +680,7 @@ const PortfolioRecords = ({
               }}
             >
               <ChevronDown size={14} aria-hidden={`true`} id={`${scope}-collapse-icon`} className={`portfolio-group-collapse-icon`} />
-            </button>
+            </button>}
           </div>
         </div>
       </div>
@@ -747,14 +756,14 @@ const PortfolioRecords = ({
       onToggleSearch={() => onToggleCollectionSearch?.(section.collection.id)}
     />
   );
-  const mainHeading = (showDatabaseHeading || collections.length > 0) && showMainContent && (
+  const mainHeading = (showDatabaseHeading || collections.length > 0 || mainGroups.some(group => group.key === `custom:ungrouped`)) && showMainContent && (
     <div
       {...(mobileBoard ? boardEntityProps({ id: `main`, main: true, kind: `collection`, label: `Database` }, false) : {})}
       onDrop={mainHandlers.onDrop}
       onDragOver={mainHandlers.onDragOver}
       onDragLeave={mainHandlers.onDragLeave}
       id={`${idPrefix}-main-database-heading`}
-      aria-describedby={`${idPrefix}-main-database-help`}
+      aria-describedby={`${idPrefix}-main-database-description`}
       className={`portfolio-main-database-heading${mainHandlers.dropTarget ? ` portfolio-main-database-drop-target` : ``}`}
     >
       <h3 id={`${idPrefix}-main-database-title`} className={`portfolio-main-database-title`}>
@@ -763,11 +772,12 @@ const PortfolioRecords = ({
         </span>
         {`Database`}
       </h3>
-      <p id={`${idPrefix}-main-database-help`} className={`portfolio-main-database-help`}>{`Drop a group or domain here to move it back to the main database`}</p>
+      <p id={`${idPrefix}-main-database-description`} className={`portfolio-main-database-description`}>{`Domains outside of Collections / Groups / Apps`}</p>
     </div>
   );
   const isAddGroupCollapsed = (collectionId: string | null) => !preferences.showAddRows || expansion.isCollectionCollapsed(collectionId);
   const addCollectionDomainsContent = (section: PortfolioCollectionSection, grid = false) => {
+    if (!allowDomainsInCollections) return null;
     const scope = `portfolio-collection-${section.collection.id}`;
     return (
       <PortfolioCollapse id={`${scope}-${grid ? `grid` : `table`}-add-domains-content`} collapsed={isAddGroupCollapsed(section.collection.id)}>
@@ -782,6 +792,7 @@ const PortfolioRecords = ({
     );
   };
   const addCollectionDomainsRow = (section: PortfolioCollectionSection) => {
+    if (!allowDomainsInCollections) return null;
     const scope = `portfolio-collection-${section.collection.id}`;
     const collapsed = isAddGroupCollapsed(section.collection.id);
     return (
@@ -847,7 +858,7 @@ const PortfolioRecords = ({
       data-portfolio-collection-key={groupCollections.get(group.key)?.id}
       data-portfolio-group-key={hasGroupHeading(group) && !isGroupParentCollapsed(group) ? group.key : undefined}
       id={`${idPrefix}-table-group-${encodeURIComponent(group.key)}`}
-      className={`portfolio-table-body${groupCollections.get(group.key) ? ` portfolio-table-body-collection` : ``}`}
+      className={`portfolio-table-body${group.key === `all` || group.key === `custom:ungrouped` ? ` portfolio-table-body-ungrouped` : ``}${groupCollections.get(group.key) ? ` portfolio-table-body-collection` : ``}`}
     >
       {hasGroupHeading(group) && (
         <tr
@@ -882,14 +893,15 @@ const PortfolioRecords = ({
           selected={selectedIds.has(domain.id)}
           position={positions.get(domain.id) ?? 1}
           visibleColumns={visibleColumns}
-          hideProjectDetails={appDomainIds.has(domain.id)}
+          hideProjectDetails={!mobileBoard && appDomainIds.has(domain.id)}
+          detailsInSettings={mobileBoard}
           selectionDescriptionId={`portfolio-selection-help`}
           onContextMenu={event => { groupContextMenu.close(); contextMenu.open(event, domain, menuDomains(domain)); }}
           onToggleAutoRenew={onToggleAutoRenew}
           onChangeDescription={onChangeDescription}
           onChangeProjectStatus={onChangeProjectStatus}
           {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
-          {...(mobileBoard ? { draggable: false } : {})}
+          {...(mobileBoard ? { draggable: false, reorderable: false } : {})}
           boardEntity={domainBoardEntity(domain, group.key)}
         />
       ))}
@@ -1020,6 +1032,7 @@ const PortfolioRecords = ({
     <div
       id={`${idPrefix}-records-table`}
       className={`portfolio-records-table`}
+      data-compact-actions={compactDomainActions || undefined}
       onKeyDown={openContextMenuFromKeyboard}
     >
       {groupHelp}
@@ -1157,7 +1170,7 @@ const PortfolioRecords = ({
             allSelected={allSelected}
             someSelected={someSelected}
             onSelectAll={onSelectAll}
-            columnWidths={loading ? undefined : widths}
+            columnWidths={loading ? [positionWidth, selectionWidth] : widths}
           />
           {loading ? (
             <tbody id={`${idPrefix}-table-body`} className={`portfolio-table-body`}>

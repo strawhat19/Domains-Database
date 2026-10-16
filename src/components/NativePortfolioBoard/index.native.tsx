@@ -8,6 +8,7 @@ import DomainSiteIcon from '../DomainSiteIcon/index.native';
 import DomainProjectSelect from '../DomainProjectSelect/index.native';
 import { useNativePortfolioBoard, type BoardTarget, type QuickField } from './useNativePortfolioBoard';
 import { getDomainSource } from '../../shared/domainUtils';
+import { allowDomainsInCollections } from '../../shared/config';
 import { useNativeStickyGroup, useNativeStickyColumn, type NativeStickyColumn } from './useNativeStickyHeaders';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
@@ -45,7 +46,7 @@ const BoardDomain = ({ domain, groupId, collectionId, logic, styles, selected, d
   const target: BoardTarget = { kind: `domain`, id: domain.id };
   return (
     <NativeDropZone
-      disabled={disabled}
+      disabled={disabled || !allowDomainsInCollections && !groupId}
       accepts={[`domain`]}
       id={`domain-${domain.id}`}
       target={{ groupId, collectionId, targetId: domain.id }}
@@ -204,14 +205,14 @@ const BoardColumn = ({ collection, groups, directDomains, logic, styles, width, 
         >
           <NativeDropZone
             style={styles.laneDropBody}
-            accepts={[`group`, `domain`]}
+            accepts={allowDomainsInCollections ? [`group`, `domain`] : [`group`]}
             id={`column-append-${id}`}
             target={{ collectionId: id }}
           >
             {!collapsed && groups.map(group => (
               <BoardGroup key={group.key} group={group} collectionId={id} logic={logic} styles={styles} selectedIds={selectedIds} stickyColumn={sticky} />
             ))}
-            {!collapsed && directDomains.map(domain => (
+            {allowDomainsInCollections && !collapsed && directDomains.map(domain => (
               <BoardDomain key={domain.id} domain={domain} collectionId={id} logic={logic} styles={styles} selected={selectedIds.includes(domain.id)} />
             ))}
           </NativeDropZone>
@@ -281,6 +282,7 @@ const BoardActions = ({ logic, styles, onSelect }: { logic: Logic; styles: Style
   const siblingGroups = logic.preferences.customGroups.filter(value => (value.collectionId ?? null) === (group?.collectionId ?? null));
   const groupIndex = group ? siblingGroups.findIndex(value => value.id === group.id) : -1;
   const domainGroup = domain ? logic.fullGroups.find(group => group.domains.some(item => item.id === domain.id)) : undefined;
+  const domainReorderable = Boolean(domainGroup?.customGroupId || domainGroup?.directCollectionId);
   const domainIndex = domainGroup?.domains.findIndex(item => item.id === domain?.id) ?? -1;
   const domainDestination = { groupId: domainGroup?.customGroupId, collectionId: domainGroup?.directCollectionId ?? logic.preferences.customGroups.find(group => group.id === domainGroup?.customGroupId)?.collectionId ?? null };
   const movingDomainIds = new Set(domain && logic.selectedIds.includes(domain.id) ? logic.selectedIds : domain ? [domain.id] : []);
@@ -293,7 +295,7 @@ const BoardActions = ({ logic, styles, onSelect }: { logic: Logic; styles: Style
     <ScrollView nativeID={`native-board-actions-scroll-${menuId}`} contentContainerStyle={styles.actions} keyboardShouldPersistTaps={`handled`}>
       {logic.moving ? <>
         {action(`move-main`, menu?.kind === `group` ? `Groups & Apps / No Collection` : `Ungrouped / No Collection`, Layers, () => logic.moveMenuItem({ collectionId: null }))}
-        {logic.preferences.collections.map(value => action(`move-collection-${value.id}`, value.name, Layers, () => logic.moveMenuItem({ collectionId: value.id })))}
+        {(menu?.kind === `group` || allowDomainsInCollections) && logic.preferences.collections.map(value => action(`move-collection-${value.id}`, value.name, Layers, () => logic.moveMenuItem({ collectionId: value.id })))}
         {menu?.kind === `domain` && logic.preferences.customGroups.map(value => action(`move-group-${value.id}`, `${value.isApp ? `App` : `Group`}: ${value.name}`, MoveRight, () => logic.moveMenuItem({ groupId: value.id, collectionId: value.collectionId ?? null })))}
       </> : <>
         {action(`settings`, `Settings`, Settings, () => domain ? logic.openDomainSettings() : menu && logic.handoff(() => logic.openEdit(menu)))}
@@ -306,8 +308,8 @@ const BoardActions = ({ logic, styles, onSelect }: { logic: Logic; styles: Style
         {domain && action(`future`, `Edit Future Plans`, Pencil, () => quick(`future`))}
         {domain && action(`open`, `Open Website`, ExternalLink, () => { logic.closeMenu(); void Linking.openURL(`https://${domain.name}`).catch(() => undefined); })}
         {(domain || group) && action(`move`, `Move To…`, MoveRight, () => logic.setMoving(true))}
-        {domain && action(`up`, `Move Up`, ArrowUp, () => logic.moveMenuItem({ ...domainDestination, targetId: previousDomain?.id, placement: `before` }), false, !previousDomain)}
-        {domain && action(`down`, `Move Down`, ArrowDown, () => logic.moveMenuItem({ ...domainDestination, targetId: nextDomain?.id, placement: `after` }), false, !nextDomain)}
+        {domain && domainReorderable && action(`up`, `Move Up`, ArrowUp, () => logic.moveMenuItem({ ...domainDestination, targetId: previousDomain?.id, placement: `before` }), false, !previousDomain)}
+        {domain && domainReorderable && action(`down`, `Move Down`, ArrowDown, () => logic.moveMenuItem({ ...domainDestination, targetId: nextDomain?.id, placement: `after` }), false, !nextDomain)}
         {collection && action(`left`, `Move Left`, ArrowLeft, () => logic.moveMenuItem({ targetId: logic.preferences.collections[collectionIndex - 1]?.id, placement: `before` }), false, collectionIndex <= 0)}
         {collection && action(`right`, `Move Right`, ArrowRight, () => logic.moveMenuItem({ targetId: logic.preferences.collections[collectionIndex + 1]?.id, placement: `after` }), false, collectionIndex >= logic.preferences.collections.length - 1)}
         {group && action(`up`, `Move Up`, ArrowUp, () => logic.moveMenuItem({ targetId: siblingGroups[groupIndex - 1]?.id, placement: `before` }), false, groupIndex <= 0)}

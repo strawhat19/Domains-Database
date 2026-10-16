@@ -19,7 +19,7 @@ import ProjectSelect from '../DomainEditor/ProjectSelect/index.web';
 import PortfolioSettingsActions from '../PortfolioSettingsActions/index.web';
 import { DOMAIN_PROJECT_STATUSES, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import type { PortfolioGroup, CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
-import { X, Eye, Link, Check, Folder, Trash2, Database, Settings2, AppWindow, FolderTree, FolderPlus } from 'lucide-react';
+import { X, Eye, Link, Check, Folder, Trash2, Database, Settings2, AppWindow, FolderTree, FolderPlus, ChevronDown, ChevronRight } from 'lucide-react';
 import {
   useDomainGroupSettings,
   CREATE_COLLECTION_OPTION,
@@ -29,12 +29,14 @@ import {
 
 interface DomainGroupSettingsProps {
   onClose: () => void;
+  collapsed?: boolean;
   copyGroup?: PortfolioGroup;
   convertToCollection?: boolean;
+  onToggleCollapsed?: () => void;
   group: CustomPortfolioGroup;
 }
 
-const DomainGroupSettings = ({ group, onClose, copyGroup, convertToCollection = false }: DomainGroupSettingsProps) => {
+const DomainGroupSettings = ({ group, onClose, copyGroup, onToggleCollapsed, collapsed = false, convertToCollection = false }: DomainGroupSettingsProps) => {
   const settings = useDomainGroupSettings(group, onClose, convertToCollection);
   const tabsId = `domain-group-settings-sections-${group.id}`;
   const deleteId = `domain-group-settings-delete-${group.id}`;
@@ -379,6 +381,22 @@ const DomainGroupSettings = ({ group, onClose, copyGroup, convertToCollection = 
                     id={`domain-group-settings-row-actions-${group.id}`}
                     sections={{ collections: [], mainDomains: copyGroup?.domains ?? [], mainGroups: copyGroup ? [copyGroup] : [] }}
                   />
+                  {onToggleCollapsed && (
+                    <div id={`domain-group-settings-domains-field-${group.id}`} className={`domain-editor-field domain-editor-field-full`}>
+                      <span id={`domain-group-settings-domains-label-${group.id}`} className={`domain-editor-label`}>{`Domains In Database`}</span>
+                      <SegmentedControl
+                        value={collapsed ? `collapsed` : `expanded`}
+                        disabled={settings.actionsDisabled}
+                        id={`domain-group-settings-domains-${group.id}`}
+                        labelledBy={`domain-group-settings-domains-label-${group.id}`}
+                        onChange={value => { if ((value === `collapsed`) !== collapsed) onToggleCollapsed(); }}
+                        options={[
+                          { value: `expanded`, label: `Expanded`, Icon: ChevronDown },
+                          { value: `collapsed`, label: `Collapsed`, Icon: ChevronRight },
+                        ]}
+                      />
+                    </div>
+                  )}
                   <div id={`domain-group-settings-collection-field`} className={`domain-editor-field domain-editor-field-full`}>
                     <span id={`domain-group-settings-collection-label`} className={`domain-editor-label`}>
                       {`Collection`}

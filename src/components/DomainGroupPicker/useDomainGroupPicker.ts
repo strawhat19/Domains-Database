@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react';
 import type { DomainRecord } from '../../shared/types';
+import { allowDomainsInCollections } from '../../shared/config';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMobileSheet, isMobileSheet } from '../MobileSheet/useMobileSheet';
 import { useModalFocus } from '../MobileSheet/useModalFocus';
@@ -182,6 +183,10 @@ export const useDomainGroupPicker = (domains: DomainRecord[], onClose: () => voi
     clearError();
     if (availabilityError) {
       setError(availabilityError);
+      return;
+    }
+    if (selectingCollection && !allowDomainsInCollections && collectionId !== MAIN_DATABASE_COLLECTION_OPTION) {
+      setError(`Move Domains Into A Group Or App Instead`);
       return;
     }
     if (!selectingCollection && (!groupId || missingGroup)) {

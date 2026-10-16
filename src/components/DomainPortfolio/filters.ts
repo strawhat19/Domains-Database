@@ -1,4 +1,5 @@
 import type { DomainRecord } from '../../shared/types';
+import { allowDomainsInCollections } from '../../shared/config';
 import { normalizeDomainTags } from '../../shared/domainTags';
 import { UNGROUPED_GROUP_LABEL } from '../../shared/portfolioPreferences/names';
 import { getDaysUntil, getDomainSource, getDomainStatus } from '../../shared/domainUtils';
@@ -146,7 +147,7 @@ export const buildPortfolioFilterLocations = (domains: DomainRecord[], groups: C
   }
   const directlyCollectedIds = new Set<string>();
   for (const collection of collections) {
-    for (const id of collection.domainIds ?? []) {
+    for (const id of allowDomainsInCollections ? collection.domainIds ?? [] : []) {
       if (!domainIds.has(id) || groupedIds.has(id) || directlyCollectedIds.has(id)) continue;
       directlyCollectedIds.add(id);
       collectionDomains.get(collection.id)?.add(id);
