@@ -261,6 +261,7 @@
 .portfolio-search-clear { width: 24px; height: 24px; padding: 0; flex-shrink: 0; border-radius: 50%; }
 .domain-portfolio .portfolio-search:focus { outline: none; }
 .portfolio-toolbar-actions { gap: 8px; min-width: 0; display: flex; flex-shrink: 0; flex-wrap: wrap; max-width: 100%; position: relative; align-items: center; justify-content: flex-end; }
+.portfolio-table-controls { gap: inherit; flex: none; display: flex; }
 .portfolio-toolbar-domain-actions {
   gap: 8px;
   width: 0;

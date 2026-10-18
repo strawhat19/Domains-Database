@@ -14,7 +14,7 @@ import { getPricingPlanVisual } from './planIcons';
 import { usePricingInterest } from './usePricingInterest';
 import PricingInterestPrompt from '../PricingInterestPrompt';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
-import { getPricingFeatures } from '../../shared/plans/pricingFeatures';
+import { getPricingFeatures, getPricingFeatureLabels } from '../../shared/plans/pricingFeatures';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { Gem, Zap, Check, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react';
 
@@ -57,7 +57,7 @@ const Pricing = () => {
               key={feature.id}
               feature={feature}
               id={`landing-plan-feature-${plan.id}-${feature.id}`}
-            />) : plan.features.map((feature, index) => <li
+            />) : getPricingFeatureLabels(plan).map((feature, index) => <li
               key={`${plan.id}-${index}`}
               className={`landing-plan-feature`}
               id={`landing-plan-feature-${plan.id}-${index}`}

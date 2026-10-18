@@ -15,7 +15,7 @@ import { usePricingInterest } from './usePricingInterest';
 import PricingInterestPrompt from '../PricingInterestPrompt';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
-import { getPricingFeatures } from '../../shared/plans/pricingFeatures';
+import { getPricingFeatures, getPricingFeatureLabels } from '../../shared/plans/pricingFeatures';
 import { Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { Gem, Zap, Check, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react-native';
@@ -34,7 +34,7 @@ const Pricing = () => {
   const { width } = useWindowDimensions();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const compact = width < 600;
-  const columns = width >= 1200 ? 4 : width >= 700 ? 2 : 1;
+  const columns = width >= 1200 ? 3 : width >= 700 ? 2 : 1;
   const cardWidth = (Math.max(0, Math.min(width - (compact ? 40 : 64), 1056)) - (columns - 1) * 14) / columns;
   return <View {...elementProps(`landing-pricing`)} style={[styles.section, compact && styles.compactSection]}>
     <View {...elementProps(`landing-pricing-inner`)} style={styles.inner}>
@@ -61,7 +61,7 @@ const Pricing = () => {
               key={feature.id}
               feature={feature}
               id={`${plan.id}-${feature.id}`}
-            />) : plan.features.map((feature, index) => <View
+            />) : getPricingFeatureLabels(plan).map((feature, index) => <View
               key={`${plan.id}-${index}`}
               style={styles.feature}
               {...elementProps(`landing-pricing-feature`, `${plan.id}-${index}`)}

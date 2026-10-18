@@ -13,7 +13,7 @@ export const usePricing = () => {
     let active = true;
     setState({ plans: [], loading: true, error: `` });
     const stop = plansAPI.subscribePublishedPlans(plans => {
-      if (active) setState({ plans, loading: false, error: `` });
+      if (active) setState({ plans: plans.filter(plan => plan.slug !== `enterprise`), loading: false, error: `` });
     }, failure => { if (active) setState({ plans: [], loading: false, error: failure.message }); });
     return () => { active = false; stop(); };
   }, [revision]);

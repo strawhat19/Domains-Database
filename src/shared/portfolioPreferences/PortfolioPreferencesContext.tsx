@@ -384,6 +384,20 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     return true;
   }, [ready, change, userId, enabled]);
 
+  const setGroupsCollapsed = useCallback<PortfolioPreferencesContextValue[`setGroupsCollapsed`]>((groupKeys, collapsed) => {
+    if (!enabled || !active.current || !ready || !storageReady.current || loadedUserId.current !== userId) return false;
+    const allowedKeys = new Set(preferenceRef.current.customGroups.map(group => `custom:${group.id}`));
+    const keys = new Set(groupKeys.filter(key => allowedKeys.has(key)));
+    if (!keys.size) return false;
+    change(current => ({
+      ...current,
+      collapsedGroupKeys: collapsed
+        ? uniqueIds([...current.collapsedGroupKeys, ...keys])
+        : current.collapsedGroupKeys.filter(key => !keys.has(key)),
+    }));
+    return true;
+  }, [ready, change, userId, enabled]);
+
   const toggleDomainExpansion = useCallback<PortfolioPreferencesContextValue[`toggleDomainExpansion`]>(domainId => {
     if (!enabled || !active.current || !ready || !storageReady.current || loadedUserId.current !== userId) return false;
     if (!domainId.trim()) return false;
@@ -770,6 +784,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     renameCollection,
     saveGroupSettings,
     setCollectionSort,
+    setGroupsCollapsed,
     setShowHiddenGroups,
     setShowHiddenDomains,
     setShowHiddenCollections,
@@ -784,7 +799,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     toggleCollectionCollapsed,
     updateGroupProjectStatus,
     toggleColumnCategoryCollapsed,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, starGroups, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, setShowAddRows, setDatabasePosition, voteCollection, createCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, renameCollection, saveGroupSettings, setCollectionSort, setShowHiddenGroups, setShowHiddenDomains, setShowHiddenCollections, toggleGroupCollapsed, toggleDomainExpansion, toggleGroupVisibility, assignGroupCollection, assignDomainsToCollection, toggleDomainVisibility, setCollectionVisibility, toggleCollectionVisibility, toggleCollectionCollapsed, updateGroupProjectStatus, toggleColumnCategoryCollapsed]);
+  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, starGroups, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, setShowAddRows, setDatabasePosition, voteCollection, createCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, renameCollection, saveGroupSettings, setCollectionSort, setGroupsCollapsed, setShowHiddenGroups, setShowHiddenDomains, setShowHiddenCollections, toggleGroupCollapsed, toggleDomainExpansion, toggleGroupVisibility, assignGroupCollection, assignDomainsToCollection, toggleDomainVisibility, setCollectionVisibility, toggleCollectionVisibility, toggleCollectionCollapsed, updateGroupProjectStatus, toggleColumnCategoryCollapsed]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

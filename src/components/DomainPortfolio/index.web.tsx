@@ -28,7 +28,7 @@ import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { buildPortfolioCopyText, excludeHiddenPortfolioSections, type PortfolioCopyFormat } from './copyFormats';
 import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
-import { X, Eye, Copy, Plus, Check, Gauge, Search, Link2, Filter, EyeOff, Settings, RefreshCw, ArrowRight, FlaskConical } from 'lucide-react';
+import { X, Eye, Copy, Plus, Check, Gauge, Search, Link2, Filter, EyeOff, Settings, RefreshCw, ArrowRight, FlaskConical, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
@@ -41,6 +41,10 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const { visibleColumns, columnWidths, toggleColumn, resetColumns, setColumnWidths } = useColumns();
   const preferences = usePortfolioPreferences();
   const expansion = usePortfolioExpansion();
+  const groupKeys = useMemo(() => preferences.customGroups.map(group => `custom:${group.id}`), [preferences.customGroups]);
+  const allGroupsCollapsed = groupKeys.length > 0 && groupKeys.every(key => expansion.collapsedGroups.has(key));
+  const GroupExpansionIcon = allGroupsCollapsed ? ChevronsUpDown : ChevronsDownUp;
+  const groupExpansionLabel = `${allGroupsCollapsed ? `Expand` : `Collapse`} All Groups / Apps`;
   const mobile = useMobilePortfolio();
   const fullSections = useMemo(() => buildPortfolioSections(portfolio.registrarDomains, preferences), [portfolio.registrarDomains, preferences]);
   const orderedSections = useMemo(() => {
@@ -628,20 +632,39 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   {activeFilterCount}
                 </span>
               </button>
-              <button
-                type={`button`}
-                title={`Table Settings`}
-                aria-haspopup={`dialog`}
-                aria-label={`Table Settings`}
-                ref={toolbar.settingsButtonRef}
-                id={`portfolio-table-settings`}
-                aria-expanded={toolbar.settingsOpen}
-                onClick={toolbar.openSettings}
-                aria-controls={`table-settings-dialog`}
-                className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button${toolbar.settingsOpen ? ` portfolio-toolbar-icon-button-active` : ``}`}
-              >
-                <Settings size={16} aria-hidden={`true`} id={`portfolio-table-settings-icon`} className={`portfolio-button-icon`} />
-              </button>
+              <div id={`portfolio-table-controls`} className={`portfolio-table-controls`}>
+                <button
+                  type={`button`}
+                  title={`Table Settings`}
+                  aria-haspopup={`dialog`}
+                  aria-label={`Table Settings`}
+                  ref={toolbar.settingsButtonRef}
+                  id={`portfolio-table-settings`}
+                  aria-expanded={toolbar.settingsOpen}
+                  onClick={toolbar.openSettings}
+                  aria-controls={`table-settings-dialog`}
+                  className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button${toolbar.settingsOpen ? ` portfolio-toolbar-icon-button-active` : ``}`}
+                >
+                  <Settings size={16} aria-hidden={`true`} id={`portfolio-table-settings-icon`} className={`portfolio-button-icon`} />
+                </button>
+                <button
+                  type={`button`}
+                  title={groupExpansionLabel}
+                  aria-label={groupExpansionLabel}
+                  id={`portfolio-groups-expansion-toggle`}
+                  aria-pressed={allGroupsCollapsed}
+                  disabled={portfolio.loading || preferences.loading || !groupKeys.length}
+                  onClick={() => preferences.setGroupsCollapsed(groupKeys, !allGroupsCollapsed)}
+                  className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button${allGroupsCollapsed ? ` portfolio-toolbar-icon-button-active` : ``}`}
+                >
+                  <GroupExpansionIcon
+                    size={16}
+                    aria-hidden={`true`}
+                    className={`portfolio-button-icon`}
+                    id={`portfolio-groups-expansion-toggle-icon`}
+                  />
+                </button>
+              </div>
             </div>
           </form>
           <p

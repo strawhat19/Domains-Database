@@ -31,7 +31,9 @@
       "billingInterval": "month",
       "description": "A home for your names and next ideas.",
       "features": [
+        "Remove Ads",
         "Domain portfolio",
+        "Domain Search with Trending Domains",
         "CSV import & export",
         "Projects, groups & tags",
         "Registrar & renewal tracking"

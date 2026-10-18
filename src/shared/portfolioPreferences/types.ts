@@ -124,6 +124,7 @@ export interface PortfolioPreferencesContextValue extends PortfolioPreferences {
   setShowHiddenCollections: (value: boolean) => void;
   toggleGroupVisibility: (groupKey: string) => boolean;
   toggleGroupCollapsed: (groupKey: string) => boolean;
+  setGroupsCollapsed: (groupKeys: readonly string[], collapsed: boolean) => boolean;
   toggleDomainExpansion: (domainId: string) => boolean;
   toggleDomainVisibility: (domainId: string) => boolean;
   toggleCollectionCollapsed: (collectionId: string) => boolean;

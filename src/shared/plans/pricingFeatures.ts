@@ -35,8 +35,10 @@ const statusBadges: Record<FeatureStatus, PricingFeatureBadge> = {
 type FeatureDetails = Omit<PricingFeature, `id` | `label`> & { label?: string };
 
 const catalogDetails: Record<string, FeatureDetails> = {
+  'remove ads': { status: `proposed` },
   'domain portfolio': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
   'everything in free': { status: `included` },
+  'domain search with trending domains': { status: `current`, origin: `highlight` },
   'csv import & export': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
   'projects, groups & tags': { status: `current`, origin: `highlight`, label: `Projects, groups, collections & tags` },
   'registrar & renewal tracking': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`], label: `Registrar, renewal dates & annual/monthly costs` },
@@ -86,8 +88,17 @@ const previewFeatures: Record<string, readonly PricingFeature[]> = {
 
 const normalizeLabel = (label: string) => label.trim().toLowerCase();
 
+export const getPricingFeatureLabels = (plan: Pick<Plan, `slug` | `features`>): string[] => {
+  if (plan.slug !== `free`) return plan.features;
+  const features = plan.features.filter(feature => normalizeLabel(feature) !== `remove ads`);
+  if (!features.some(feature => normalizeLabel(feature) === `domain search with trending domains`)) {
+    features.push(`Domain Search with Trending Domains`);
+  }
+  return [`Remove Ads`, ...features];
+};
+
 export const getPricingFeatures = (plan: Pick<Plan, `slug` | `features`>): PricingFeature[] => {
-  const features = plan.features.map((savedLabel, index): PricingFeature => {
+  const features = getPricingFeatureLabels(plan).map((savedLabel, index): PricingFeature => {
     const proposed = /^planned:\s*/i.test(savedLabel);
     const label = savedLabel.replace(/^planned:\s*/i, ``).trim();
     const details = catalogDetails[normalizeLabel(label)];
