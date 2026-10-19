@@ -27,13 +27,17 @@ export const getLinkSiteIconUrl = (value: string): string => {
   }
 };
 
-export const getDomainSiteIconUrl = (domain: Pick<DomainInput, `name` | `meta`>): string => {
+export const getDomainSiteIconUrls = (domain: Pick<DomainInput, `name` | `meta`>): string[] => {
   const name = domain.name?.trim()?.toLowerCase()?.replace(/\.$/, ``);
   const labels = name?.split(`.`) ?? [];
   const hasValidName = name && name.length <= 253 && labels.length >= 2
     && !/^\d+$/.test(labels[labels.length - 1] ?? ``)
     && labels.every(label => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label));
-  const defaultUrl = hasValidName ? `https://${name}/favicon.ico` : ``;
-  try { return normalizeSiteIconUrl(getCustomSiteIconUrl(domain)) || defaultUrl; }
-  catch { return defaultUrl; }
+  const defaults = hasValidName ? [`favicon.ico`, `favicon.svg`, `favicon.png`, `apple-touch-icon.png`].map(file => `https://${name}/${file}`) : [];
+  try {
+    const customUrl = normalizeSiteIconUrl(getCustomSiteIconUrl(domain));
+    return [...new Set([customUrl, ...defaults].filter(Boolean))];
+  } catch { return defaults; }
 };
+
+export const getDomainSiteIconUrl = (domain: Pick<DomainInput, `name` | `meta`>): string => getDomainSiteIconUrls(domain)?.[0] ?? ``;

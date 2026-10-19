@@ -43,7 +43,7 @@
 .contact-form { gap: 12px; display: flex; min-width: 0; flex-direction: column; }
 .contact-fields { gap: 14px; display: grid; min-width: 0; position: relative; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .contact-field { gap: 7px; display: flex; min-width: 0; flex-direction: column; }
-.contact-field-subject, .contact-field-message { grid-column: 1 / -1; }
+.contact-field-message { grid-column: 1 / -1; }
 .contact-label { color: var(--ink); font-size: 12px; font-family: var(--font-bold); }
 .contact-input { width: 100%; min-width: 0; padding: 12px 13px; color: var(--ink); font-size: 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); transition: border-color .2s ease, box-shadow .2s ease; }
 .contact-input::placeholder { color: var(--placeholder); }

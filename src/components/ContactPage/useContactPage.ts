@@ -29,7 +29,7 @@ export const useContactPage = () => {
   const [feedback, setFeedback] = useState(``);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState<SavedSubmission | null>(null);
-  const [fields, setFields] = useState<ContactFields>({ name: ``, email: ``, subject: ``, message: ``, website: `` });
+  const [fields, setFields] = useState<ContactFields>({ name: ``, email: ``, phone: ``, subject: ``, message: ``, website: `` });
 
   useEffect(() => {
     mounted.current = true;
@@ -56,9 +56,9 @@ export const useContactPage = () => {
   const submit = async () => {
     if (submitting.current) return;
     const nextErrors: FieldErrors = {};
-    const input = { ...fields, name: fields.name.trim(), email: fields.email.trim(), subject: fields.subject.trim(), message: fields.message.trim() };
+    const input = { ...fields, name: fields.name.trim(), email: fields.email.trim(), phone: fields.phone.trim(), subject: fields.subject.trim(), message: fields.message.trim() };
     contactFields.forEach(field => {
-      if (!input[field.id]) nextErrors[field.id] = `${field.label} Is Required`;
+      if (field.id !== `phone` && !input[field.id]) nextErrors[field.id] = `${field.label} Is Required`;
       else if (input[field.id].length > field.limit) nextErrors[field.id] = `${field.label} Must Be ${field.limit} Characters Or Fewer`;
     });
     if (input.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) nextErrors.email = `Enter A Valid Email Address`;

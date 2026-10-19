@@ -8,9 +8,6 @@
 .pricing-skeleton-feature { gap: 10px; display: flex; align-items: flex-start; }
 .pricing-skeleton-icon { width: 14px; height: 14px; flex-shrink: 0; }
 .pricing-skeleton-feature-content { gap: 5px; flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.pricing-skeleton-badges { gap: 5px; display: flex; flex-wrap: wrap; }
-.pricing-skeleton-badge { width: 50px; height: 17px; }
-.pricing-skeleton-badge-wide { width: 72px; }
 .pricing-skeleton-action { width: 100%; height: 44px; margin-top: auto; }
 
 @keyframes pricing-skeleton-pulse { 50% { opacity: .45; } }

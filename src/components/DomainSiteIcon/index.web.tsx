@@ -1,7 +1,7 @@
 import './styles.scss';
 import { Link2, Globe2, Pencil } from 'lucide-react';
 import { useDomainSiteIcon } from './useDomainSiteIcon';
-import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
+import { getDomainSiteIconUrls } from '../../shared/domainSiteIcon';
 
 interface DomainSiteIconProps {
   id: string;
@@ -18,14 +18,14 @@ interface DomainSiteIconProps {
 const SiteIconContent = ({
   id,
   onEdit,
-  iconUrl,
   disabled,
   editLabel,
+  sourceUrls,
   size = 28,
   compact = false,
   fallback = `globe`,
-}: DomainSiteIconProps) => {
-  const { failed, loaded, onLoad, onError } = useDomainSiteIcon();
+}: DomainSiteIconProps & { sourceUrls: string[] }) => {
+  const { failed, loaded, onLoad, onError, sourceUrl } = useDomainSiteIcon(sourceUrls);
   const editable = Boolean(onEdit) && (!loaded || failed);
   const FallbackIcon = fallback === `link` ? Link2 : Globe2;
   const imageSize = compact ? size : Math.min(20, size);
@@ -89,7 +89,7 @@ const SiteIconContent = ({
           className={`domain-site-icon-fallback`}
         />
       ))}
-      {!!iconUrl && !failed && (
+      {!!sourceUrl && !failed && (
         <img
           alt={``}
           width={imageSize}
@@ -100,7 +100,7 @@ const SiteIconContent = ({
           onError={onError}
           id={`${id}-image`}
           referrerPolicy={`no-referrer`}
-          src={iconUrl}
+          src={sourceUrl}
           className={`domain-site-icon-image${loaded ? ` domain-site-icon-image-loaded` : ``}`}
         />
       )}
@@ -143,8 +143,8 @@ const SiteIconContent = ({
 };
 
 const DomainSiteIcon = (props: DomainSiteIconProps) => {
-  const source = getDomainSiteIconUrl({ name: props.domain, meta: { siteIconUrl: props.iconUrl ?? `` } });
-  return <SiteIconContent {...props} key={source} iconUrl={source} />;
+  const sourceUrls = getDomainSiteIconUrls({ name: props.domain, meta: { siteIconUrl: props.iconUrl ?? `` } });
+  return <SiteIconContent {...props} sourceUrls={sourceUrls} key={JSON.stringify(sourceUrls)} />;
 };
 
 export default DomainSiteIcon;

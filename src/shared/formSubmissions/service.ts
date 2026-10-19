@@ -38,8 +38,11 @@ const normalizeInput = (input: ContactSubmissionInput) => {
   const email = requireText(input?.email, `An Email`, 254).toLowerCase();
   const subject = requireText(input?.subject, `A Subject`, 200);
   const message = requireText(input?.message, `A Message`, 5000);
+  if (input?.phone !== undefined && typeof input.phone !== `string`) throw new Error(`Enter A Valid Phone Number`);
+  const phone = input?.phone?.trim() ?? ``;
+  if (phone.length > 40) throw new Error(`Phone Number Must Be 40 Characters Or Fewer`);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error(`Enter A Valid Email Address`);
-  return { name, email, subject, message };
+  return { name, email, subject, message, ...(phone ? { phone } : {}) };
 };
 const readTimestamp = (value: unknown) => {
   if (value instanceof Timestamp) return value.toDate().toISOString();
@@ -47,7 +50,7 @@ const readTimestamp = (value: unknown) => {
   return new Date(value).toISOString();
 };
 const readRecord = (record: DocumentData, expectedId?: string): FormSubmission => {
-  if (!record || fields.some(field => !(field in record)) || Object.keys(record).some(field => !fields.includes(field))
+  if (!record || fields.some(field => !(field in record)) || Object.keys(record).some(field => field !== `phone` && !fields.includes(field))
     || record.type !== Types.FormSubmission || record.form !== `contact` || typeof record.uid !== `string`
     || (expectedId && record.id !== expectedId) || !Number.isSafeInteger(record.number) || record.number < 1
     || getAppCollectionIDNumber(record.id, Types.FormSubmission) !== record.number || !record.id?.startsWith?.(`FormSubmission_${record.number}_Contact_`)

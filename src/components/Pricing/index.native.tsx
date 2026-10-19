@@ -22,8 +22,8 @@ import { Gem, Zap, Check, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw,
 
 const planIcons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
-const Pricing = () => {
-  const state = usePricing();
+const Pricing = ({ landing = false }: { landing?: boolean }) => {
+  const state = usePricing(landing);
   const brand = useAppBrand();
   const { flags, ready } = useFeatureFlags();
   const contactEnabled = ready && flags.contact;
@@ -57,11 +57,11 @@ const Pricing = () => {
           <Text {...elementProps(`landing-pricing-plan-description`, plan.id)} style={styles.cardDescription}>{brand.formatText(plan.description)}</Text>
           <PricingPlanPrice plan={plan} id={`landing-pricing-plan-price-${plan.id}`} color={palette[visual.tone]} />
           <View {...elementProps(`landing-pricing-features`, plan.id)} style={styles.features}>
-            {state.showFeaturePreview ? getPricingFeatures(plan).map(feature => <PricingFeature
+            {state.showFeaturePreview ? getPricingFeatures(plan, brand.formatText).map(feature => <PricingFeature
               key={feature.id}
               feature={feature}
               id={`${plan.id}-${feature.id}`}
-            />) : getPricingFeatureLabels(plan).map((feature, index) => <View
+            />) : getPricingFeatureLabels(plan, brand.formatText).map((feature, index) => <View
               key={`${plan.id}-${index}`}
               style={styles.feature}
               {...elementProps(`landing-pricing-feature`, `${plan.id}-${index}`)}

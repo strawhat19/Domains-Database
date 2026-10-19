@@ -144,11 +144,12 @@ service cloud.firestore {
     }
     function submissionValues() {
       return request.resource.data.keys().hasAll(['id', 'uid', 'form', 'name', 'type', 'email', 'number', 'status', 'subject', 'message', 'created', 'updated'])
-        && request.resource.data.keys().hasOnly(['id', 'uid', 'form', 'name', 'type', 'email', 'number', 'status', 'subject', 'message', 'created', 'updated'])
+        && request.resource.data.keys().hasOnly(['id', 'uid', 'form', 'name', 'type', 'email', 'phone', 'number', 'status', 'subject', 'message', 'created', 'updated'])
         && request.resource.data.form == 'contact' && request.resource.data.type == 'FormSubmission'
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
         && request.resource.data.email is string && request.resource.data.email.size() > 0 && request.resource.data.email.size() <= 254
         && request.resource.data.email.matches('^[^\\s@]+@[^\\s@]+[.][^\\s@]+$')
+        && request.resource.data.get('phone', '') is string && request.resource.data.get('phone', '').size() <= 40
         && request.resource.data.subject is string && request.resource.data.subject.size() > 0 && request.resource.data.subject.size() <= 200
         && request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 5000
         && request.resource.data.status == 'new' && request.resource.data.uid == (signedIn() ? request.auth.uid : '')

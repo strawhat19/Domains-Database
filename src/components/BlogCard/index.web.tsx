@@ -1,12 +1,12 @@
 import './styles.scss';
 import { Link } from 'expo-router';
-import type { CSSProperties } from 'react';
 import RouterAnchor from '../RouterAnchor';
+import StackPillShape from '../StackPillShape';
+import { formatBlogDate } from './presentation';
+import { getBlogHref } from '../../shared/blog/metadata';
+import type { BlogArticle } from '../../shared/blog/articles';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { Star, Clock3, FileText, ArrowUpRight } from 'lucide-react';
-import { getBlogHref } from '../../shared/blog/metadata';
-import { formatBlogDate, getBlogCardAccent } from './presentation';
-import type { BlogArticle } from '../../shared/blog/articles';
 
 type BlogCardProps = {
   wide?: boolean;
@@ -23,11 +23,11 @@ const BlogCard = ({ article, wide = false, story = false, journal = false, compa
   const id = `${prefix}-card-${article.slug}`;
   const dated = journal || story || wide;
   const Heading = journal || wide ? `h3` : `h2`;
-  const accentStyle = journal ? { [`--blog-card-light-tone`]: getBlogCardAccent(article.category), [`--blog-card-dark-tone`]: getBlogCardAccent(article.category, true) } as CSSProperties : undefined;
 
   return (
-    <article id={id} style={accentStyle} className={`blog-card${wide ? ` blog-card-wide` : ``}${story ? ` blog-card-story` : ``}${journal ? ` blog-card-journal` : ``}${compact ? ` blog-card-compact` : ``}${featured ? ` blog-card-featured` : ``}`}>
-      {journal && <span aria-hidden id={`${id}-folder-tab`} className={`blog-card-folder-tab`} />}
+    <article id={id} className={`blog-card${wide ? ` blog-card-wide` : ``}${story ? ` blog-card-story` : ``}${journal ? ` blog-card-journal` : ``}${compact ? ` blog-card-compact` : ``}${featured ? ` blog-card-featured` : ``}`}>
+      <div aria-hidden id={`${id}-backing`} className={`blog-card-backing`}><StackPillShape id={`${id}-backing`} /></div>
+      <StackPillShape id={`${id}-foreground`} />
       <Link href={getBlogHref(article.slug)} asChild>
         <RouterAnchor id={`${id}-link`} className={`blog-card-link`} aria-labelledby={`${id}-title`}>
           {!journal && <div id={`${id}-visual`} className={`blog-card-visual`}>

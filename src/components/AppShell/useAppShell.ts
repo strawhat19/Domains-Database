@@ -24,9 +24,9 @@ export const useAppShell = () => {
   const watchingCount = watchingLoading ? undefined : records.filter(record => record.listName === `Watching`).length;
   const isBlogPage = pathname === routes.blog.href || pathname.startsWith(`${routes.blog.href}/`);
   const searchViewport = pathname === routes.search.href && width >= 1000;
-  const publicPages = [routes.signin.href, routes.signup.href, routes.about.href, routes.terms.href, routes.contact.href, routes.privacy.href, `/api`] as string[];
-  const fitViewport = publicPages.includes(pathname)
-    || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href);
+  const publicPages = [routes.signin.href, routes.signup.href, routes.terms.href, routes.contact.href, routes.privacy.href, `/api`] as string[];
+  const fitViewport = pathname !== routes.about.href && (publicPages.includes(pathname)
+    || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href));
   const visibleNavigation = navigation.filter(item =>
     (item.href !== routes.contact.href || (featuresReady && flags.contact))
     && (item.href !== routes.search.href || eligible || connectionsLoading)

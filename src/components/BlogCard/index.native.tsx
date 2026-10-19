@@ -1,16 +1,17 @@
-import { Link } from 'expo-router';
-import { Image } from 'expo-image';
 import { useMemo } from 'react';
-import { Text, View, Pressable } from 'react-native';
-import { Star, Clock3, FileText, ArrowUpRight } from 'lucide-react-native';
+import { Image } from 'expo-image';
+import { Link } from 'expo-router';
+import StackPillShape from '../StackPillShape';
 import { createStyles } from './styles.native';
+import { formatBlogDate } from './presentation';
+import { Text, View, Pressable } from 'react-native';
+import { elementProps } from '../../shared/elementProps';
 import { getBlogHref } from '../../shared/blog/metadata';
+import type { BlogArticle } from '../../shared/blog/articles';
 import { getBlogImage } from '../../shared/blog/images.native';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
-import type { BlogArticle } from '../../shared/blog/articles';
-import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { formatBlogDate, getBlogCardAccent } from './presentation';
+import { Star, Clock3, FileText, ArrowUpRight } from 'lucide-react-native';
 
 type BlogCardProps = {
   wide?: boolean;
@@ -23,16 +24,20 @@ type BlogCardProps = {
 };
 
 const BlogCard = ({ article, wide = false, story = false, journal = false, compact = false, featured = false, prefix = `blog` }: BlogCardProps) => {
-  const { palette, isDark } = useTheme();
+  const { palette } = useTheme();
   const { switched } = useAppBrand();
   const suffix = `${prefix}-${article.slug}`;
   const dated = journal || story || wide;
-  const accent = getBlogCardAccent(article.category, isDark);
   const styles = useMemo(() => createStyles(palette), [palette]);
 
   return (
-    <View {...elementProps(`native-blog-card`, suffix)} style={[styles.card, story && styles.storyCard, journal && styles.journalCard, journal && { borderTopColor: accent }]}>
-      {journal && <View {...elementProps(`native-blog-card-folder-tab`, suffix)} style={[styles.folderTab, { backgroundColor: accent }]} accessible={false} />}
+    <View {...elementProps(`native-blog-card`, suffix)} style={styles.card}>
+      <View accessible={false} pointerEvents={`none`} accessibilityElementsHidden importantForAccessibility={`no-hide-descendants`} {...elementProps(`native-blog-card-backing`, suffix)} style={styles.backing}>
+        <StackPillShape id={`native-blog-card-${suffix}-backing`} fill={palette.subtle} stroke={`${palette.accent}30`} />
+      </View>
+      <View accessible={false} pointerEvents={`none`} accessibilityElementsHidden importantForAccessibility={`no-hide-descendants`} {...elementProps(`native-blog-card-foreground`, suffix)} style={styles.foreground}>
+        <StackPillShape id={`native-blog-card-${suffix}-foreground`} fill={palette.paper} stroke={palette.line} />
+      </View>
       <Link href={getBlogHref(article.slug)} asChild>
         <Pressable
           accessibilityRole={`link`}
@@ -50,9 +55,9 @@ const BlogCard = ({ article, wide = false, story = false, journal = false, compa
           />}
           <View {...elementProps(`native-blog-card-body`, suffix)} style={[styles.body, compact && styles.compactBody, featured && styles.featuredBody, wide && styles.wideBody, story && styles.storyBody, journal && styles.journalBody]}>
             <View {...elementProps(`native-blog-card-meta`, suffix)} style={[styles.meta, (journal || story) && styles.journalMeta]}>
-              {journal && <View {...elementProps(`native-blog-card-symbol`, suffix)} style={[styles.symbol, { backgroundColor: `${accent}18` }]}><FileText size={23} color={accent} accessible={false} {...elementProps(`native-blog-card-symbol-icon`, suffix)} /></View>}
+              {journal && <View {...elementProps(`native-blog-card-symbol`, suffix)} style={styles.symbol}><FileText size={23} color={palette.accent} accessible={false} {...elementProps(`native-blog-card-symbol-icon`, suffix)} /></View>}
               {story && <Star size={15} color={palette.accent} accessible={false} {...elementProps(`native-blog-card-featured-star`, suffix)} />}
-              <Text {...elementProps(`native-blog-card-category`, suffix)} style={[styles.category, journal && { color: accent }]}>
+              <Text {...elementProps(`native-blog-card-category`, suffix)} style={styles.category}>
                 {story ? `Featured Story` : article.category}
               </Text>
               {!dated && <View {...elementProps(`native-blog-card-reading-time`, suffix)} style={styles.readingTime}>
@@ -75,10 +80,10 @@ const BlogCard = ({ article, wide = false, story = false, journal = false, compa
               <View {...elementProps(`native-blog-card-reading-time`, suffix)} style={styles.readingTime}><Clock3 size={12} color={palette.muted} accessible={false} {...elementProps(`native-blog-card-clock`, suffix)} /><Text {...elementProps(`native-blog-card-reading-time-text`, suffix)} style={styles.readingTimeText}>{`${article.readMinutes} min read`}</Text></View>
             </View>}
             <View {...elementProps(`native-blog-card-read`, suffix)} style={[styles.read, dated && styles.datedRead, story && styles.storyRead]}>
-              <Text {...elementProps(`native-blog-card-read-text`, suffix)} style={[styles.readText, journal && { color: accent }, story && styles.storyReadText]}>
+              <Text {...elementProps(`native-blog-card-read-text`, suffix)} style={[styles.readText, story && styles.storyReadText]}>
                 {story ? `Read The Story` : journal || wide ? `Read Article` : `Read guide`}
               </Text>
-              <ArrowUpRight {...elementProps(`native-blog-card-arrow`, suffix)} size={15} color={story ? palette.contrast : journal ? accent : palette.accent} accessible={false} />
+              <ArrowUpRight {...elementProps(`native-blog-card-arrow`, suffix)} size={15} color={story ? palette.contrast : palette.accent} accessible={false} />
             </View>
           </View>
         </Pressable>

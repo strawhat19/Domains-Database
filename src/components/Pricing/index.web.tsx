@@ -20,8 +20,8 @@ import { Gem, Zap, Check, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw,
 
 const planIcons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
-const Pricing = () => {
-  const state = usePricing();
+const Pricing = ({ landing = false }: { landing?: boolean }) => {
+  const state = usePricing(landing);
   const brand = useAppBrand();
   const { flags, ready } = useFeatureFlags();
   const contactEnabled = ready && flags.contact;
@@ -53,11 +53,11 @@ const Pricing = () => {
           <p id={`landing-plan-description-${plan.id}`} className={`landing-card-description`}>{brand.formatText(plan.description)}</p>
           <PricingPlanPrice plan={plan} id={`landing-plan-price-${plan.id}`} color={`var(--${visual.tone})`} />
           <ul id={`landing-plan-features-${plan.id}`} className={`landing-plan-features`}>
-            {state.showFeaturePreview ? getPricingFeatures(plan).map(feature => <PricingFeature
+            {state.showFeaturePreview ? getPricingFeatures(plan, brand.formatText).map(feature => <PricingFeature
               key={feature.id}
               feature={feature}
               id={`landing-plan-feature-${plan.id}-${feature.id}`}
-            />) : getPricingFeatureLabels(plan).map((feature, index) => <li
+            />) : getPricingFeatureLabels(plan, brand.formatText).map((feature, index) => <li
               key={`${plan.id}-${index}`}
               className={`landing-plan-feature`}
               id={`landing-plan-feature-${plan.id}-${index}`}

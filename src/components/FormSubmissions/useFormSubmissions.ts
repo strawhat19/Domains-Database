@@ -39,7 +39,7 @@ export const useFormSubmissions = () => {
   const disabled = pageState.loading || !!scoped.savingId;
   const query = search.trim().toLocaleLowerCase();
   const filtered = !!query || statusFilter !== `all`;
-  const visible = pageState.records.filter(record => (statusFilter === `all` || record.status === statusFilter) && [record.number, record.name, record.email, record.subject, record.message, record.status].join(` `).toLocaleLowerCase().includes(query));
+  const visible = pageState.records.filter(record => (statusFilter === `all` || record.status === statusFilter) && [record.number, record.name, record.email, record.phone, record.subject, record.message, record.status].join(` `).toLocaleLowerCase().includes(query));
 
   const updateStatus = async (id: string, status: FormSubmission[`status`]) => {
     const saved = pageState.records.find(submission => submission.id === id);

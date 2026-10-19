@@ -1,32 +1,31 @@
-.blog-page { max-width: none; width: calc(100% + var(--shell-gutter) * 2); margin-inline: calc(var(--shell-gutter) * -1); }
-.blog-content { width: calc(100% - var(--shell-gutter) * 2); max-width: 1200px; margin-inline: auto; }
-.blog-intro { padding-block: 28px 40px; }
-.blog-back-link { gap: 8px; display: inline-flex; min-height: 36px; align-items: center; color: var(--muted); font-size: 11px; }
+.blog-page { --blog-gutter: clamp(24px, 6vw, 112px); max-width: none; color: var(--ink); background: var(--paper); width: calc(100% + var(--shell-gutter) * 2); margin-inline: calc(var(--shell-gutter) * -1); }
+.blog-content { width: calc(100% - var(--blog-gutter) * 2); max-width: 1280px; margin-inline: auto; }
+.blog-intro { padding-block: 24px 44px; }
+.blog-back-link { gap: 8px; display: inline-flex; min-height: 44px; align-items: center; color: var(--muted); font-size: 11px; transition: color .2s ease; }
 .blog-back-link:hover { color: var(--accent); }
 .blog-back-icon, .blog-eyebrow-icon { flex-shrink: 0; }
-.blog-intro-heading { gap: 28px; display: grid; margin-top: 24px; align-items: center; grid-template-columns: minmax(0, 1fr) auto; }
+.blog-intro-heading { margin-top: 22px; }
 .blog-intro-copy { min-width: 0; max-width: 780px; }
-.blog-title { margin: 0 0 20px; color: var(--ink); font-size: 34px; line-height: 1.25; letter-spacing: -1px; font-family: var(--font-display); }
-.blog-description { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.9; }
-.blog-eyebrow { gap: 8px; margin: 0; display: inline-flex; padding: 10px 14px; align-items: center; border-radius: 999px; color: var(--accent); background: var(--subtle); border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line)); }
-.blog-eyebrow-label { font-size: 9px; letter-spacing: 1.3px; font-family: var(--font-bold); }
-.blog-featured { padding-block: 48px 36px; background-color: #248477; background-size: 24px 24px; background-image: radial-gradient(#ffffff24 1px, transparent 1px); }
-.blog-guides { padding-top: 46px; }
-.blog-guides-intro { max-width: 660px; margin-bottom: 36px; }
-.blog-section-eyebrow { margin: 0; color: var(--accent); font-size: 10px; line-height: 1.6; letter-spacing: 1.4px; font-family: var(--font-bold); }
-.blog-section-title { margin: 14px 0; font-size: 30px; line-height: 1.3; letter-spacing: -.9px; font-family: var(--font-display); }
+.blog-title { margin: 16px 0; color: var(--ink); font-size: clamp(36px, 4vw, 52px); line-height: 1.15; letter-spacing: -.035em; font-family: var(--font-bold); }
+.blog-description { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.8; }
+.blog-eyebrow { gap: 8px; margin: 0; display: inline-flex; align-items: center; color: var(--accent); }
+.blog-eyebrow-label { font-size: 9px; letter-spacing: 1.3px; font-family: var(--font-mono); }
+.blog-featured { padding-block: 40px; border-block: 1px solid var(--line); background-color: var(--input); background-size: 24px 24px; background-image: radial-gradient(color-mix(in srgb, var(--accent) 12%, transparent) 1px, transparent 1px); }
+.blog-guides { padding-top: 56px; }
+.blog-guides-intro { max-width: 660px; margin-bottom: 30px; }
+.blog-section-eyebrow { margin: 0; color: var(--accent); font-size: 10px; line-height: 1.6; letter-spacing: 1.4px; font-family: var(--font-mono); }
+.blog-section-title { margin: 14px 0; font-size: clamp(26px, 3vw, 36px); line-height: 1.2; letter-spacing: -.035em; font-family: var(--font-bold); }
 .blog-section-description { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.9; }
-.blog-grid { gap: 32px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.blog-grid { gap: 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .blog-history { min-width: 0; grid-column: 1 / -1; }
 @media (max-width: 1000px) { .blog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
-  .blog-intro-heading { gap: 20px; grid-template-columns: minmax(0, 1fr); }
-  .blog-eyebrow { justify-self: start; }
-  .blog-featured { padding-block: 36px 28px; }
+  .blog-featured { padding-block: 32px; }
 }
 @media (max-width: 600px) {
-  .blog-grid { gap: 30px; grid-template-columns: minmax(0, 1fr); }
+  .blog-grid { gap: 22px; grid-template-columns: minmax(0, 1fr); }
   .blog-intro { padding-bottom: 32px; }
   .blog-guides { padding-top: 36px; }
   .blog-section-title { font-size: 26px; }
 }
+@media (prefers-reduced-motion: reduce) { .blog-back-link { transition: none; } }

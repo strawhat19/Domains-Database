@@ -53,10 +53,6 @@ const PricingSkeleton = ({ cardWidth, expanded = false }: PricingSkeletonProps) 
               <Placeholder id={`${index}-${row}-icon`} style={[styles.placeholder, styles.icon]} />
               <View {...elementProps(`pricing-loading-feature-copy`, `${index}-${row}`)} style={styles.featureCopy}>
                 <Placeholder id={`${index}-${row}-label`} style={[styles.placeholder, styles.label, row % 2 ? styles.shortLabel : undefined]} />
-                {expanded && <View {...elementProps(`pricing-loading-feature-badges`, `${index}-${row}`)} style={styles.badges}>
-                  <Placeholder id={`${index}-${row}-badge-0`} style={[styles.placeholder, styles.badge]} />
-                  <Placeholder id={`${index}-${row}-badge-1`} style={[styles.placeholder, styles.badge, styles.wideBadge]} />
-                </View>}
               </View>
             </View>)}
           </View>

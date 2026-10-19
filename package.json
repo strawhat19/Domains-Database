@@ -1,6 +1,6 @@
 {
   "name": "domains-database",
-  "version": "0.0.5.9",
+  "version": "0.0.6.0",
   "private": true,
   "license": "MIT",
   "main": "expo-router/entry",

@@ -26,10 +26,6 @@ const PricingSkeleton = ({ expanded = false }: PricingSkeletonProps) => {
               <span id={`pricing-skeleton-feature-icon-${index}-${row}`} className={`pricing-skeleton-placeholder pricing-skeleton-icon`} />
               <div id={`pricing-skeleton-feature-content-${index}-${row}`} className={`pricing-skeleton-feature-content`}>
                 <span id={`pricing-skeleton-feature-label-${index}-${row}`} className={`pricing-skeleton-placeholder${row % 2 ? ` pricing-skeleton-short` : ``}`} />
-                {expanded ? <div id={`pricing-skeleton-feature-badges-${index}-${row}`} className={`pricing-skeleton-badges`}>
-                  <span id={`pricing-skeleton-feature-status-${index}-${row}`} className={`pricing-skeleton-placeholder pricing-skeleton-badge`} />
-                  <span id={`pricing-skeleton-feature-origin-${index}-${row}`} className={`pricing-skeleton-placeholder pricing-skeleton-badge pricing-skeleton-badge-wide`} />
-                </div> : null}
               </div>
             </div>)}
           </div>

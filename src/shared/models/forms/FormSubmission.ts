@@ -4,6 +4,7 @@ import type { SubmissionStatus } from '../../formSubmissions/types';
 
 export class FormSubmission extends Data {
   form: `contact`;
+  phone?: string;
   subject: string;
   message: string;
   status: SubmissionStatus;
@@ -12,6 +13,7 @@ export class FormSubmission extends Data {
     super({ ...data, name: `Contact`, type: Types.FormSubmission });
     this.form = `contact`;
     this.name = data.name?.trim() ?? ``;
+    this.phone = data.phone?.trim() || undefined;
     this.subject = data.subject?.trim() ?? ``;
     this.message = data.message?.trim() ?? ``;
     this.status = data.status ?? `new`;
@@ -26,6 +28,7 @@ export class FormSubmission extends Data {
       name: this.name,
       type: this.type,
       email: this.email,
+      ...(this.phone ? { phone: this.phone } : {}),
       number: this.number,
       status: this.status,
       subject: this.subject,

@@ -153,7 +153,7 @@ const BlogArticle = () => {
           <Link href={`/domains`} asChild>
             <Pressable {...elementProps(`native-blog-article-portfolio-link`, suffix)} style={styles.portfolioLink} accessibilityRole={`link`} accessibilityLabel={`Open Your Domain Portfolio`}>
               <Text {...elementProps(`native-blog-article-portfolio-text`, suffix)} style={styles.portfolioText}>{`Put your domain portfolio in order`}</Text>
-              <ArrowUpRight {...elementProps(`native-blog-article-portfolio-icon`, suffix)} size={16} color={`#ffffff`} accessible={false} />
+              <ArrowUpRight {...elementProps(`native-blog-article-portfolio-icon`, suffix)} size={16} color={palette.contrast} accessible={false} />
             </Pressable>
           </Link>
         </View>

@@ -37,7 +37,7 @@ const FormSubmissions = () => {
             <caption id={`form-submissions-caption`} className={`form-submissions-caption`}>{`${state.visible.length} Matching Submission(s) On This Page`}</caption>
             <thead id={`form-submissions-table-head`} className={`form-submissions-table-head`}>
               <tr id={`form-submissions-header-row`} className={`form-submissions-header-row`}>
-                {[`No.`, `Name`, `Email`, `Subject`, `Message`, `Submitted`, `Status`].map((label, index) => <th key={label} id={`form-submissions-header-${index}`} className={`form-submissions-header`} scope={`col`}>{label}</th>)}
+                {[`No.`, `Name`, `Contact`, `Subject`, `Message`, `Submitted`, `Status`].map((label, index) => <th key={label} id={`form-submissions-header-${index}`} className={`form-submissions-header`} scope={`col`}>{label}</th>)}
               </tr>
             </thead>
             <tbody id={`form-submissions-table-body`} className={`form-submissions-table-body`}>

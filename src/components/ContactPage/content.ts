@@ -1,6 +1,7 @@
 export const contactFields = [
   { id: `name`, label: `Name`, limit: 100, placeholder: `Your name` },
   { id: `email`, label: `Email`, limit: 254, placeholder: `you@example.com` },
+  { id: `phone`, label: `Phone Number (Optional)`, limit: 40, placeholder: `Your phone number` },
   { id: `subject`, label: `Subject`, limit: 200, placeholder: `What can we help with?` },
   { id: `message`, label: `Message`, limit: 5000, placeholder: `Tell us a little more…` },
 ] as const;

@@ -1,15 +1,15 @@
 import BlogCard from '../BlogCard';
 import PageMeta from '../PageMeta';
 import { Link } from 'expo-router';
+import { routes } from '../../shared/routes';
 import BlogResources from '../BlogResources';
+import { createStyles } from './styles.native';
+import { absoluteSiteUrl } from '../../shared/seo';
 import { useMemo, useEffect, useContext } from 'react';
 import { BookOpen, ArrowLeft } from 'lucide-react-native';
-import { View, Text, Pressable, useWindowDimensions } from 'react-native';
-import { createStyles } from './styles.native';
-import { routes } from '../../shared/routes';
-import { absoluteSiteUrl } from '../../shared/seo';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { View, Text, Pressable, useWindowDimensions } from 'react-native';
 import { blogTitle, blogDescription } from '../../shared/blog/metadata';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { blogArticles, historyBlogArticle, regularBlogArticles, featuredBlogArticle } from '../../shared/blog/articles';
@@ -61,18 +61,18 @@ const Blog = () => {
           </Link>
           <View {...elementProps(`native-blog-intro-heading`)} style={[styles.introHeading, wide && styles.wideIntroHeading]}>
             <View {...elementProps(`native-blog-intro-text`)} style={[styles.introText, wide && styles.wideIntroText]}>
+              <View {...elementProps(`native-blog-eyebrow`)} style={styles.eyebrow}>
+                <BookOpen {...elementProps(`native-blog-eyebrow-icon`)} size={15} color={palette.accent} accessible={false} />
+                <Text {...elementProps(`native-blog-eyebrow-text`)} style={styles.eyebrowText}>{`THE DOMAIN JOURNAL`}</Text>
+              </View>
               <Text {...elementProps(`native-blog-title`)} style={styles.title} accessibilityRole={`header`}>{`Blog`}</Text>
               <Text {...elementProps(`native-blog-description`)} style={styles.description}>{`Learn what domains are, explore the story of the internet, and find practical ways to choose, organize, and protect the names you own.`}</Text>
-            </View>
-            <View {...elementProps(`native-blog-eyebrow`)} style={styles.eyebrow}>
-              <BookOpen {...elementProps(`native-blog-eyebrow-icon`)} size={15} color={palette.accent} accessible={false} />
-              <Text {...elementProps(`native-blog-eyebrow-text`)} style={styles.eyebrowText}>{`THE DOMAIN JOURNAL`}</Text>
             </View>
           </View>
         </View>
         <View
           {...elementProps(`native-blog-featured`)}
-          style={[styles.featured, { marginHorizontal: -padding, paddingHorizontal: padding }]}
+          style={styles.featured}
           onLayout={({ nativeEvent }) => setHeroBottom?.(nativeEvent.layout.y + nativeEvent.layout.height)}
         >
           <BlogCard story article={featuredBlogArticle} featured={wide} prefix={`blog-featured`} />

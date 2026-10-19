@@ -7,7 +7,7 @@ import { useAccountPage } from './useAccountPage';
 import AccountConnections from '../AccountConnections';
 import ProfileThemePreference from '../ProfileThemePreference';
 import { canAccessAdmin } from '../../shared/admin/permissions';
-import { hasUnlimitedPlanAccess } from '../../shared/accountPlans';
+import { getPlanDisplayName, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { Crown, Globe2, UserRound, BadgeCheck, LockKeyhole, ShieldCheck, CalendarDays } from 'lucide-react';
 
 const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` }) => {
@@ -18,7 +18,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
   const PrivacyIcon = user.profilePrivacy === `public` ? Globe2 : LockKeyhole;
   const fields = [
     { id: `role`, label: `Role`, Icon: RoleIcon, value: user.role },
-    ...(!hasUnlimitedPlanAccess(user) ? [{ id: `plan`, label: `Plan`, Icon: BadgeCheck, value: user.plan === `free` ? `Free` : user.plan }] : []),
+    ...(!hasUnlimitedPlanAccess(user) ? [{ id: `plan`, label: `Plan`, Icon: BadgeCheck, value: getPlanDisplayName(user.plan === `free` ? `Free` : user.plan) }] : []),
     { id: `privacy`, label: `Profile`, Icon: PrivacyIcon, value: user.profilePrivacy === `public` ? `Public` : `Private` },
     { id: `joined`, label: `Joined`, Icon: CalendarDays, value: new Date(user.created).toLocaleDateString(`en-US`, { day: `numeric`, year: `numeric`, month: `long`, timeZone: `America/New_York` }) },
   ];

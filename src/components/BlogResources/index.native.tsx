@@ -129,7 +129,7 @@ const BlogResources = () => {
         {renderPattern(`youtube`)}
         <View {...elementProps(`native-blog-youtube-heading`)} style={styles.bandHeading}>
           <Text {...elementProps(`native-blog-youtube-eyebrow`)} style={[styles.eyebrowText, styles.bandEyebrow]}>{`WATCH. LEARN. BUILD.`}</Text>
-          <View {...elementProps(`native-blog-youtube-title-row`)} style={styles.titleRow}><CirclePlay size={23} accessible={false} color={`#ffffff`} {...elementProps(`native-blog-youtube-title-icon`)} /><Text {...elementProps(`native-blog-youtube-title`)} style={[styles.title, styles.bandTitle]} accessibilityRole={`header`}>{`From The Channels We Follow`}</Text></View>
+          <View {...elementProps(`native-blog-youtube-title-row`)} style={styles.titleRow}><CirclePlay size={23} accessible={false} color={palette.accent} {...elementProps(`native-blog-youtube-title-icon`)} /><Text {...elementProps(`native-blog-youtube-title`)} style={[styles.title, styles.bandTitle]} accessibilityRole={`header`}>{`From The Channels We Follow`}</Text></View>
           <Text {...elementProps(`native-blog-youtube-description`)} style={[styles.description, styles.bandDescription]}>{`Explore domain infrastructure, naming and website tips, and the search fundamentals that help a good website get found.`}</Text>
         </View>
         {renderSources(youtubeChannels, true)}

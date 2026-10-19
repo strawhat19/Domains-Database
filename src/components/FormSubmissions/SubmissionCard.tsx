@@ -34,6 +34,7 @@ const SubmissionCard = ({ styles, palette, submission, saving, disabled, updateS
         </View>
       </View>
       <Text {...elementProps(`form-submission-email`, submission.id)} style={styles.label} selectable>{submission.email}</Text>
+      {!!submission.phone && <Text {...elementProps(`form-submission-phone`, submission.id)} style={styles.label} selectable>{`Phone Number: ${submission.phone}`}</Text>}
       <Text {...elementProps(`form-submission-subject`, submission.id)} style={styles.subject} selectable>{submission.subject}</Text>
       <Text {...elementProps(`form-submission-message`, submission.id)} style={styles.message} numberOfLines={expanded ? undefined : 3} selectable>{submission.message}</Text>
       <Pressable {...elementProps(`form-submission-expand`, submission.id)} style={styles.expand} accessibilityRole={`button`} accessibilityState={{ expanded }} onPress={() => setExpanded(previous => !previous)}>

@@ -2,10 +2,11 @@ import './styles.scss';
 import { Link } from 'expo-router';
 import RouterAnchor from '../RouterAnchor';
 import StackPillShape from '../StackPillShape';
-import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { getBlogHref } from '../../shared/blog/metadata';
+import LandingOverviewPreview from '../LandingOverviewPreview';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { Globe2, Search, Layers3, BookOpen, CalendarDays, ArrowUpRight } from 'lucide-react';
-import { overviewNote, overviewTitle, overviewFeatures, overviewDescription } from './content';
+import { overviewTitle, overviewFeatures, overviewDescription } from './content';
 
 const featureIcons = { inventory: Globe2, renewals: CalendarDays, projects: Layers3, discovery: Search };
 
@@ -60,14 +61,18 @@ const LandingOverview = () => {
             return (
               <article key={feature.id} id={`landing-overview-feature-${feature.id}`} className={`landing-overview-feature`}>
                 {renderCardShape(`landing-overview-feature-${feature.id}`)}
-                <Icon size={21} aria-hidden id={`landing-overview-feature-icon-${feature.id}`} className={`landing-overview-feature-icon`} />
-                <h3 id={`landing-overview-feature-title-${feature.id}`} className={`landing-overview-feature-title`}>{feature.title}</h3>
-                <p id={`landing-overview-feature-description-${feature.id}`} className={`landing-card-description`}>{feature.description}</p>
+                <LandingOverviewPreview kind={feature.id} />
+                <div id={`landing-overview-feature-copy-${feature.id}`} className={`landing-overview-feature-copy`}>
+                  <div id={`landing-overview-feature-heading-${feature.id}`} className={`landing-overview-feature-heading`}>
+                    <Icon size={17} aria-hidden id={`landing-overview-feature-icon-${feature.id}`} className={`landing-overview-feature-icon`} />
+                    <h3 id={`landing-overview-feature-title-${feature.id}`} className={`landing-overview-feature-title`}>{feature.title}</h3>
+                  </div>
+                  <p id={`landing-overview-feature-description-${feature.id}`} className={`landing-card-description`}>{feature.description}</p>
+                </div>
               </article>
             );
           })}
         </div>
-        <p id={`landing-overview-note`} className={`landing-section-note`}>{overviewNote}</p>
       </div>
     </section>
   );

@@ -5,7 +5,7 @@ import { Link2, Globe2 } from 'lucide-react-native';
 import { useDomainSiteIcon } from './useDomainSiteIcon';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
+import { getDomainSiteIconUrls } from '../../shared/domainSiteIcon';
 
 interface DomainSiteIconProps {
   id: string;
@@ -16,9 +16,9 @@ interface DomainSiteIconProps {
   fallback?: `globe` | `link`;
 }
 
-const SiteIconContent = ({ id, sourceUrl, size = 28, compact = false, fallback = `globe` }: DomainSiteIconProps & { sourceUrl: string }) => {
+const SiteIconContent = ({ id, sourceUrls, size = 28, compact = false, fallback = `globe` }: DomainSiteIconProps & { sourceUrls: string[] }) => {
   const { palette } = useTheme();
-  const { failed, loaded, onLoad, onError } = useDomainSiteIcon();
+  const { failed, loaded, onLoad, onError, sourceUrl } = useDomainSiteIcon(sourceUrls);
   const styles = useMemo(() => createStyles(palette), [palette]);
   const FallbackIcon = fallback === `link` ? Link2 : Globe2;
   const imageSize = compact ? size : Math.min(20, size);
@@ -54,8 +54,8 @@ const SiteIconContent = ({ id, sourceUrl, size = 28, compact = false, fallback =
 };
 
 const DomainSiteIcon = (props: DomainSiteIconProps) => {
-  const sourceUrl = getDomainSiteIconUrl({ name: props.domain, meta: { siteIconUrl: props.iconUrl ?? `` } });
-  return <SiteIconContent key={sourceUrl} {...props} sourceUrl={sourceUrl} />;
+  const sourceUrls = getDomainSiteIconUrls({ name: props.domain, meta: { siteIconUrl: props.iconUrl ?? `` } });
+  return <SiteIconContent {...props} sourceUrls={sourceUrls} key={JSON.stringify(sourceUrls)} />;
 };
 
 export default DomainSiteIcon;

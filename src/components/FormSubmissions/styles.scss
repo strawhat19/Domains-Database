@@ -45,6 +45,7 @@
   .form-submissions-table td { color: var(--ink); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
   .form-submission-name { min-width: 95px; max-width: 140px; font-weight: 600; }
   .form-submission-email { min-width: 130px; max-width: 200px; }
+  .form-submission-phone { margin: 6px 0 0; color: var(--muted); font-size: 10px; }
   .form-submission-subject { min-width: 130px; max-width: 210px; font-weight: 600; }
   .form-submission-message-cell { min-width: 220px; max-width: 350px; }
   .form-submission-created { width: 120px; min-width: 100px; }

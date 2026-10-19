@@ -21,6 +21,5 @@ export const overviewFeatures = [
     title: `Find Your Next Possibility`,
     description: `Explore name ideas and compare availability and registration quotes through supported registrar connections.`,
   },
-];
+] as const;
 
-export const overviewNote = `Your inventory stays in this browser or device. Import and export CSV files whenever you need a portable copy.`;

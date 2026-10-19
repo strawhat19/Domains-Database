@@ -17,13 +17,14 @@
 .landing-overview-caption { gap: 12px; padding: 15px 10px 7px; display: flex; align-items: center; justify-content: space-between; }
 .landing-overview-caption-label { font-size: 9px; line-height: 1.6; color: var(--muted); font-family: var(--font-mono); }
 .landing-overview-features { gap: 18px; display: grid; margin-top: 40px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.landing-overview-feature { padding: 25px; --stack-pill-fill: var(--input); }
-.landing-overview-feature-icon { display: block; margin-bottom: 22px; color: var(--accent); }
+.landing-overview-feature { padding: 12px; --stack-pill-fill: var(--input); }
+.landing-overview-feature-copy { padding: 18px 9px 10px; }
+.landing-overview-feature-heading { gap: 9px; display: flex; align-items: flex-start; }
+.landing-overview-feature-icon { display: block; margin-top: 3px; flex-shrink: 0; color: var(--accent); }
 .landing-overview-feature-title { margin: 0; font-size: 16px; line-height: 1.45; letter-spacing: -.02em; font-family: var(--font-bold); }
 
 @media (max-width: 1100px) {
   .landing-overview-features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .landing-overview-feature { padding: 23px; }
 }
 @media (max-width: 850px) {
   .landing-overview-intro { grid-template-columns: minmax(0, 1fr); }
@@ -34,5 +35,4 @@
   .landing-overview-copy .landing-section-title { font-size: clamp(18px, 5.5vw, 28px); }
   .landing-overview-features { gap: 18px; margin-top: 30px; grid-template-columns: minmax(0, 1fr); }
   .landing-overview-caption { gap: 10px; align-items: flex-start; flex-direction: column; }
-  .landing-overview-feature-icon { margin-bottom: 18px; }
 }

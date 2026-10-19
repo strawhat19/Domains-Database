@@ -18,7 +18,10 @@ const SubmissionRow = ({ submission, saving, disabled, updateStatus }: Submissio
     <tr id={`form-submission-row-${submission.id}`} className={`form-submission-row`}>
       <td id={`form-submission-number-cell-${submission.id}`} className={`form-submission-number-cell`}><span id={`form-submission-number-${submission.id}`} className={`form-submission-number`}>{submission.number}</span></td>
       <td id={`form-submission-name-${submission.id}`} className={`form-submission-name`}>{submission.name}</td>
-      <td id={`form-submission-email-${submission.id}`} className={`form-submission-email`}>{submission.email}</td>
+      <td id={`form-submission-email-${submission.id}`} className={`form-submission-email`}>
+        {submission.email}
+        {!!submission.phone && <p id={`form-submission-phone-${submission.id}`} className={`form-submission-phone`}>{`Phone Number: ${submission.phone}`}</p>}
+      </td>
       <td id={`form-submission-subject-${submission.id}`} className={`form-submission-subject`}>{submission.subject}</td>
       <td id={`form-submission-message-cell-${submission.id}`} className={`form-submission-message-cell`}>
         <p id={`form-submission-message-${submission.id}`} className={`form-submission-message${expanded ? ` expanded` : ``}`}>{submission.message}</p>

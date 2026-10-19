@@ -110,7 +110,7 @@ const LandingSections = () => {
 
       <LandingOverview />
 
-      <Pricing />
+      <Pricing landing />
 
       <section id={`landing-final-cta`} className={`landing-section landing-final-cta`} aria-labelledby={`landing-final-title`}>
         <div id={`landing-final-inner`} className={`landing-section-inner landing-final-inner`}>

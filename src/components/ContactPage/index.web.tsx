@@ -115,7 +115,7 @@ const ContactContent = () => {
                         />
                       ) : (
                         <input
-                          required
+                          required={field.id !== `phone`}
                           name={field.id}
                           maxLength={field.limit}
                           className={`contact-input`}
@@ -123,8 +123,8 @@ const ContactContent = () => {
                           value={state.fields[field.id]}
                           placeholder={field.placeholder}
                           id={`contact-input-${field.id}`}
-                          type={field.id === `email` ? `email` : `text`}
-                          autoComplete={field.id === `subject` ? `off` : field.id}
+                          type={field.id === `phone` ? `tel` : field.id === `email` ? `email` : `text`}
+                          autoComplete={field.id === `phone` ? `tel` : field.id === `subject` ? `off` : field.id}
                           aria-invalid={Boolean(state.errors[field.id])}
                           aria-describedby={state.errors[field.id] ? `contact-error-${field.id}` : undefined}
                           onChange={event => state.updateField(field.id, event.target.value)}

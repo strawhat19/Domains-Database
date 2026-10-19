@@ -41,10 +41,10 @@ const Blog = () => (
         </Link>
         <div id={`blog-intro-heading`} className={`blog-intro-heading`}>
           <div id={`blog-intro-copy`} className={`blog-intro-copy`}>
+            <p id={`blog-eyebrow`} className={`blog-eyebrow`}><BookOpen size={15} aria-hidden id={`blog-eyebrow-icon`} className={`blog-eyebrow-icon`} /><span id={`blog-eyebrow-label`} className={`blog-eyebrow-label`}>{`THE DOMAIN JOURNAL`}</span></p>
             <h1 id={`blog-title`} className={`blog-title`}>{`Blog`}</h1>
             <p id={`blog-description`} className={`blog-description`}>{`Learn what domains are, explore the story of the internet, and find practical ways to choose, organize, and protect the names you own.`}</p>
           </div>
-          <p id={`blog-eyebrow`} className={`blog-eyebrow`}><BookOpen size={15} aria-hidden id={`blog-eyebrow-icon`} className={`blog-eyebrow-icon`} /><span id={`blog-eyebrow-label`} className={`blog-eyebrow-label`}>{`THE DOMAIN JOURNAL`}</span></p>
         </div>
       </header>
       <section data-scroll-hero id={`blog-featured`} className={`blog-featured`} aria-label={`Featured Story`}>

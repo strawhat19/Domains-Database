@@ -3,12 +3,13 @@ import { Image } from 'expo-image';
 import StackPillShape from '../StackPillShape';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
-import { getBlogImage } from '../../shared/blog/images.native';
-import { useAppBrand } from '../../shared/branding/useAppBrand';
+import LandingOverviewPreview from '../LandingOverviewPreview';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { Text, View, useWindowDimensions } from 'react-native';
+import { getBlogImage } from '../../shared/blog/images.native';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { Globe2, Search, Layers3, CalendarDays } from 'lucide-react-native';
-import { overviewNote, overviewTitle, overviewFeatures, overviewDescription } from './content';
+import { overviewTitle, overviewFeatures, overviewDescription } from './content';
 
 const featureIcons = { inventory: Globe2, renewals: CalendarDays, projects: Layers3, discovery: Search };
 const illustrationLabel = `Illustration of a portfolio dashboard with sample domain rows labeled Renew, Review, and Keep`;
@@ -81,16 +82,18 @@ const LandingOverview = () => {
             return (
               <View key={feature.id} {...elementProps(`landing-overview-feature`, feature.id)} style={[styles.featureCard, { width: featureWidth }]}>
                 {renderShape(`landing-overview-${feature.id}`)}
-                <View {...elementProps(`landing-overview-feature-heading`, feature.id)} style={styles.featureHeading}>
-                  <Text {...elementProps(`landing-overview-feature-title`, feature.id)} style={styles.featureTitle} accessibilityRole={`header`}>{feature.title}</Text>
-                  <Icon {...elementProps(`landing-overview-feature-icon`, feature.id)} size={20} color={palette.accent} accessible={false} />
+                <LandingOverviewPreview kind={feature.id} />
+                <View {...elementProps(`landing-overview-feature-copy`, feature.id)} style={styles.featureCopy}>
+                  <View {...elementProps(`landing-overview-feature-heading`, feature.id)} style={styles.featureHeading}>
+                    <Icon {...elementProps(`landing-overview-feature-icon`, feature.id)} size={17} color={palette.accent} accessible={false} />
+                    <Text {...elementProps(`landing-overview-feature-title`, feature.id)} style={styles.featureTitle} accessibilityRole={`header`}>{feature.title}</Text>
+                  </View>
+                  <Text {...elementProps(`landing-overview-feature-description`, feature.id)} style={styles.featureDescription}>{feature.description}</Text>
                 </View>
-                <Text {...elementProps(`landing-overview-feature-description`, feature.id)} style={styles.featureDescription}>{feature.description}</Text>
               </View>
             );
           })}
         </View>
-        <Text {...elementProps(`landing-overview-note`)} style={styles.note}>{overviewNote}</Text>
       </View>
     </View>
   );

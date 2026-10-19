@@ -166,7 +166,7 @@ const LandingSections = () => {
 
       <LandingOverview />
 
-      <Pricing />
+      <Pricing landing />
 
       <View {...elementProps(`landing-final-cta`)} style={[styles.section, styles.alternateSection, compact && styles.compactSection]}>
         <View {...elementProps(`landing-final-cta-inner`)} style={[styles.inner, styles.finalCta]}>

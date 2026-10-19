@@ -31,12 +31,34 @@
       "billingInterval": "month",
       "description": "A home for your names and next ideas.",
       "features": [
-        "Remove Ads",
+        "Up to 33 domains",
         "Domain portfolio",
         "Domain Search with Trending Domains",
         "CSV import & export",
         "Projects, groups & tags",
-        "Registrar & renewal tracking"
+        "Registrar & renewal dates"
+      ]
+    },
+    {
+      "name": "Starter",
+      "slug": "starter",
+      "active": true,
+      "currency": "USD",
+      "priceCents": 333,
+      "displayOrder": 1,
+      "billingInterval": "month",
+      "description": "A simple start for your growing portfolio. Introductory pricing; enquiries only.",
+      "features": [
+        "Up to 333 domains",
+        "Everything in Free",
+        "Remove Ads",
+        "Annual/monthly costs",
+        "Research, performance & Tranco rank",
+        "Hosted-domain discovery & registrar lookup",
+        "Registrar availability & price comparison",
+        "GoDaddy & Hostinger Connections",
+        "Squarespace, Namecheap & Vercel Connections",
+        "Planned: Domains Community"
       ]
     },
     {
@@ -44,33 +66,36 @@
       "slug": "pro",
       "active": true,
       "currency": "USD",
-      "priceCents": 500,
-      "displayOrder": 1,
+      "priceCents": 777,
+      "displayOrder": 2,
       "billingInterval": "month",
       "description": "More insight for your next decision. Planned tier with introductory pricing; enquiries only.",
       "features": [
+        "Up to 777 domains",
         "Everything in Free",
+        "Planned: Domain Auctions",
+        "Planned: Domains Market",
         "Planned: Scheduled registrar sync",
         "Planned: Advanced portfolio insights",
         "Planned: Automated renewal reminders"
       ]
     },
     {
-      "name": "Team",
+      "name": "Dom",
       "slug": "team",
       "active": true,
       "currency": "USD",
       "priceCents": 1500,
-      "displayOrder": 2,
+      "displayOrder": 3,
       "billingInterval": "month",
       "description": "Shared clarity from idea to launch. Planned collaboration tier with introductory pricing; enquiries only.",
       "features": [
+        "Up to 1,555 domains",
         "Everything in Free",
         "Planned: Pro features",
+        "Planned: Custom portfolio fields",
         "Planned: Priority support",
-        "Planned: Shared team workspaces",
-        "Planned: Portfolio activity history",
-        "Planned: Member roles & permissions"
+        "Planned: Portfolio activity history"
       ]
     },
     {
@@ -79,15 +104,38 @@
       "active": true,
       "currency": "USD",
       "priceCents": 3900,
-      "displayOrder": 3,
+      "displayOrder": 4,
       "billingInterval": "month",
       "description": "A tailored plan for larger portfolios and organizations. Planned tier with introductory pricing; enquiries only.",
       "features": [
+        "Up to 3,333 domains",
         "Everything in Free",
-        "Planned: Team features",
+        "Planned: Dom features",
+        "Planned: Shared team workspaces",
+        "Planned: Member roles & permissions",
+        "Planned: Bulk TXT ownership verification",
         "Planned: Configurable renewal workflows",
         "Planned: Organization-wide activity history",
         "Planned: Consolidated multi-portfolio reports"
+      ]
+    },
+    {
+      "name": "Registry",
+      "slug": "registry",
+      "active": true,
+      "currency": "USD",
+      "priceCents": 5000,
+      "displayOrder": 5,
+      "billingInterval": "month",
+      "description": "Room for your entire domain portfolio. Introductory pricing; enquiries only.",
+      "features": [
+        "Unlimited domains",
+        "Everything in Enterprise",
+        "Planned: SSL, hosting, DNS & IP asset tracking",
+        "Planned: WHM/cPanel server data imports",
+        "Planned: Per-user currency preferences",
+        "Planned: Access to Domains Connections Markets",
+        "Planned: Access to Domains Developer API"
       ]
     }
   ]

@@ -111,23 +111,24 @@ const ContactContent = () => {
               <View {...elementProps(`contact-form`)} style={styles.form} accessibilityState={{ busy: state.pending }}>
                 <View {...elementProps(`contact-fields`)} style={styles.fields}>
                   {contactFields.map(field => (
-                    <View key={field.id} {...elementProps(`contact-field`, field.id)} style={[styles.field, (field.id === `name` || field.id === `email`) && width > 520 && styles.halfField]}>
+                    <View key={field.id} {...elementProps(`contact-field`, field.id)} style={[styles.field, field.id !== `message` && width > 520 && styles.halfField]}>
                       <Text {...elementProps(`contact-label`, field.id)} style={styles.label}>{field.label}</Text>
                       <TextInput
-                        autoCorrect={field.id !== `email`}
+                        autoCorrect={field.id !== `email` && field.id !== `phone`}
                         editable={!state.pending}
                         maxLength={field.limit}
                         style={[styles.input, field.id === `message` && styles.messageInput, Boolean(state.errors[field.id]) && styles.invalidInput]}
                         value={state.fields[field.id]}
                         placeholder={field.placeholder}
                         multiline={field.id === `message`}
-                        accessibilityLabel={`${field.label} (Required)`}
+                        accessibilityLabel={field.id === `phone` ? field.label : `${field.label} (Required)`}
                         accessibilityHint={state.errors[field.id]}
                         placeholderTextColor={palette.placeholder}
                         {...elementProps(`contact-input`, field.id)}
-                        autoCapitalize={field.id === `email` ? `none` : `sentences`}
-                        autoComplete={field.id === `email` ? `email` : field.id === `name` ? `name` : `off`}
-                        keyboardType={field.id === `email` ? `email-address` : `default`}
+                        autoCapitalize={field.id === `email` || field.id === `phone` ? `none` : `sentences`}
+                        textContentType={field.id === `phone` ? `telephoneNumber` : undefined}
+                        autoComplete={field.id === `phone` ? `tel` : field.id === `email` ? `email` : field.id === `name` ? `name` : `off`}
+                        keyboardType={field.id === `phone` ? `phone-pad` : field.id === `email` ? `email-address` : `default`}
                         onChangeText={value => state.updateField(field.id, value)}
                       />
                       {state.errors[field.id] && <Text {...elementProps(`contact-error`, field.id)} style={styles.errorText}>{state.errors[field.id]}</Text>}

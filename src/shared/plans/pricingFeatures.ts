@@ -27,7 +27,7 @@ export const pricingMarketSources = {
 
 const statusBadges: Record<FeatureStatus, PricingFeatureBadge> = {
   catalog: { id: `catalog`, label: `Catalog`, description: `Listed in the published catalog; availability is not classified` },
-  included: { id: `included`, label: `Included`, description: `Includes the Free features listed in this catalog` },
+  included: { id: `included`, label: `Included`, description: `Includes features from the referenced plan in this catalog` },
   current: { id: `current`, label: `Current`, description: `Already implemented; existing account access and provider requirements apply` },
   proposed: { id: `proposed`, label: `Proposed`, description: `Display-only feature idea; not available through this pricing plan` },
 };
@@ -36,20 +36,39 @@ type FeatureDetails = Omit<PricingFeature, `id` | `label`> & { label?: string };
 
 const catalogDetails: Record<string, FeatureDetails> = {
   'remove ads': { status: `proposed` },
+  'domains market': { status: `proposed` },
+  'domain auctions': { status: `proposed` },
+  'domains community': { status: `proposed` },
+  'access to domains developer api': { status: `proposed` },
+  'access to domains connections markets': { status: `proposed` },
   'domain portfolio': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
   'everything in free': { status: `included` },
+  'everything in enterprise': { status: `included` },
   'domain search with trending domains': { status: `current`, origin: `highlight` },
+  'registrar availability & price comparison': { status: `current`, origin: `highlight` },
+  'hosted-domain discovery & registrar lookup': { status: `current`, origin: `highlight` },
+  'research, performance & tranco rank': { status: `current`, origin: `highlight` },
+  'godaddy & hostinger connections': { status: `current`, origin: `competitor`, sources: [`domainmod`] },
+  'squarespace, namecheap & vercel connections': { status: `catalog`, origin: `competitor`, sources: [`domainmod`] },
   'csv import & export': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
+  'annual/monthly costs': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
+  'registrar & renewal dates': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
   'projects, groups & tags': { status: `current`, origin: `highlight`, label: `Projects, groups, collections & tags` },
-  'registrar & renewal tracking': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`], label: `Registrar, renewal dates & annual/monthly costs` },
+  'registrar & renewal tracking': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`], label: `Registrar & renewal dates` },
   'scheduled registrar sync': { status: `proposed`, origin: `competitor`, sources: [`domainmod`], label: `Configurable background sync schedules` },
   'advanced portfolio insights': { status: `proposed`, origin: `competitor`, sources: [`efty`] },
   'automated renewal reminders': { status: `proposed`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
   'pro features': { status: `proposed` },
-  'team features': { status: `proposed` },
+  'dom features': { status: `proposed` },
+  'team features': { status: `proposed`, label: `Dom features` },
   'priority support': { status: `proposed`, origin: `competitor`, sources: [`efty`] },
+  'custom portfolio fields': { status: `proposed`, origin: `competitor`, sources: [`domainmod`] },
   'shared team workspaces': { status: `proposed`, origin: `competitor`, sources: [`trydomainio`] },
   'member roles & permissions': { status: `proposed`, origin: `competitor`, sources: [`trydomainio`] },
+  'bulk txt ownership verification': { status: `proposed`, origin: `competitor`, sources: [`aftermarket`] },
+  'per-user currency preferences': { status: `proposed`, origin: `competitor`, sources: [`domainmod`] },
+  'whm/cpanel server data imports': { status: `proposed`, origin: `competitor`, sources: [`domainmod`] },
+  'ssl, hosting, dns & ip asset tracking': { status: `proposed`, origin: `competitor`, sources: [`domainmod`] },
   'portfolio activity history': { status: `proposed`, origin: `highlight` },
   'configurable renewal workflows': { status: `proposed`, origin: `highlight` },
   'organization-wide activity history': { status: `proposed`, origin: `highlight` },
@@ -63,42 +82,42 @@ const previewFeatures: Record<string, readonly PricingFeature[]> = {
     { id: `portfolio-views`, status: `current`, origin: `competitor`, label: `Search, filters & flexible portfolio views`, sources: [`domainmod`] },
     { id: `project-stages`, status: `current`, origin: `highlight`, label: `Idea-to-launch stages & collection progress` },
     { id: `launch-links`, status: `current`, origin: `highlight`, label: `GitHub, preview & production links` },
-    { id: `provider-imports`, status: `current`, origin: `competitor`, label: `GoDaddy, Hostinger, Namecheap & Vercel imports`, sources: [`domainmod`] },
-    { id: `hosting-discovery`, status: `current`, origin: `highlight`, label: `Hosted-domain discovery & registrar lookup` },
-    { id: `domain-search`, status: `current`, origin: `highlight`, label: `Registrar availability & price comparison` },
-    { id: `domain-research`, status: `current`, origin: `highlight`, label: `Domain research, mobile performance & Tranco rank` },
   ],
   pro: [
     { id: `pro-imports`, status: `current`, origin: `competitor`, label: `Porkbun & NameSilo imports (existing Pro access)`, sources: [`domainmod`] },
     { id: `whois-monitoring`, status: `proposed`, origin: `competitor`, label: `WHOIS changes & domain status monitoring`, sources: [`trydomainio`] },
     { id: `sales-pages`, status: `proposed`, origin: `competitor`, label: `For-sale landing pages & a domain shop`, sources: [`efty`] },
-    { id: `ownership-verification`, status: `proposed`, origin: `competitor`, label: `Bulk TXT ownership verification`, sources: [`aftermarket`] },
   ],
   team: [
     { id: `branded-reports`, status: `proposed`, origin: `competitor`, label: `Branded reports & alerts`, sources: [`trydomainio`] },
     { id: `workflow-integrations`, status: `proposed`, origin: `competitor`, label: `Zapier & marketing integrations`, sources: [`efty`] },
   ],
-  enterprise: [
-    { id: `custom-fields`, status: `proposed`, origin: `competitor`, label: `Custom portfolio fields`, sources: [`domainmod`] },
-    { id: `asset-tracking`, status: `proposed`, origin: `competitor`, label: `SSL, hosting, DNS & IP asset tracking`, sources: [`domainmod`] },
-    { id: `currency-preferences`, status: `proposed`, origin: `competitor`, label: `Per-user currency preferences`, sources: [`domainmod`] },
-    { id: `server-imports`, status: `proposed`, origin: `competitor`, label: `WHM/cPanel server data imports`, sources: [`domainmod`] },
-  ],
 };
 
 const normalizeLabel = (label: string) => label.trim().toLowerCase();
 
-export const getPricingFeatureLabels = (plan: Pick<Plan, `slug` | `features`>): string[] => {
+const orderPricingFeatures = <T>(features: readonly T[], getLabel: (feature: T) => string): T[] => [
+  ...features.slice(0, 2),
+  ...features.slice(2)
+    .map((feature, index) => ({ index, feature, length: getLabel(feature).length }))
+    .sort((first, second) => first.length - second.length || first.index - second.index)
+    .map(({ feature }) => feature),
+];
+
+const getPlanFeatureLabels = (plan: Pick<Plan, `slug` | `features`>): string[] => {
   if (plan.slug !== `free`) return plan.features;
   const features = plan.features.filter(feature => normalizeLabel(feature) !== `remove ads`);
   if (!features.some(feature => normalizeLabel(feature) === `domain search with trending domains`)) {
     features.push(`Domain Search with Trending Domains`);
   }
-  return [`Remove Ads`, ...features];
+  return features;
 };
 
-export const getPricingFeatures = (plan: Pick<Plan, `slug` | `features`>): PricingFeature[] => {
-  const features = getPricingFeatureLabels(plan).map((savedLabel, index): PricingFeature => {
+export const getPricingFeatureLabels = (plan: Pick<Plan, `slug` | `features`>, formatLabel = (label: string) => label): string[] =>
+  orderPricingFeatures(getPlanFeatureLabels(plan), formatLabel);
+
+export const getPricingFeatures = (plan: Pick<Plan, `slug` | `features`>, formatLabel = (label: string) => label): PricingFeature[] => {
+  const features = getPlanFeatureLabels(plan).map((savedLabel, index): PricingFeature => {
     const proposed = /^planned:\s*/i.test(savedLabel);
     const label = savedLabel.replace(/^planned:\s*/i, ``).trim();
     const details = catalogDetails[normalizeLabel(label)];
@@ -106,7 +125,7 @@ export const getPricingFeatures = (plan: Pick<Plan, `slug` | `features`>): Prici
   });
   const labels = new Set(features.map(feature => normalizeLabel(feature.label)));
   const additions = Object.prototype.hasOwnProperty.call(previewFeatures, plan.slug) ? previewFeatures[plan.slug] : [];
-  return [...features, ...additions.filter(feature => !labels.has(normalizeLabel(feature.label)))];
+  return orderPricingFeatures([...features, ...additions.filter(feature => !labels.has(normalizeLabel(feature.label)))], feature => formatLabel(feature.label));
 };
 
 export const getPricingFeatureBadges = (feature: PricingFeature): PricingFeatureBadge[] => {
