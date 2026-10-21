@@ -1,0 +1,42 @@
+.overview-carousel { width: 100%; min-width: 0; }
+.overview-carousel-viewport { height: 360px; min-width: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); touch-action: pan-x pan-y pinch-zoom; }
+.overview-carousel-viewport::-webkit-scrollbar { display: none; }
+.overview-carousel-viewport[data-dragging='true'] { scroll-snap-type: none; }
+.overview-carousel-slide { width: 100%; height: 100%; min-width: 0; flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always; }
+.overview-carousel-slide .overview-preview { height: 100%; border: 0; border-radius: 0; box-shadow: none; }
+.overview-carousel-illustration { width: 100%; height: 100%; display: block; object-fit: cover; user-select: none; }
+.overview-carousel-caption { gap: 14px; display: flex; margin-top: 17px; min-height: 62px; align-items: flex-start; justify-content: space-between; }
+.overview-carousel-caption-copy { min-width: 0; }
+.overview-carousel-title { margin: 0; font-size: 16px; line-height: 1.4; color: var(--ink); font-family: var(--font-bold); }
+.overview-carousel-description { margin: 6px 0 0; max-width: 62ch; font-size: 11px; line-height: 1.7; color: var(--muted); }
+.overview-carousel-preview-label { flex-shrink: 0; margin-top: 2px; padding: 4px 7px; font-size: 9px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; font-family: var(--font-mono); }
+.overview-carousel-guide { gap: 6px; display: inline-flex; min-height: 44px; align-items: center; flex-shrink: 0; color: var(--accent); font-size: 11px; }
+.overview-carousel-controls { gap: 8px; display: flex; padding-top: 13px; margin-top: 10px; border-top: 1px solid var(--line); align-items: center; }
+.overview-carousel-pagination { gap: 4px; flex: 1; min-width: 0; display: flex; overflow-x: auto; position: relative; scrollbar-width: none; }
+.overview-carousel-pagination::-webkit-scrollbar { display: none; }
+.overview-carousel-page, .overview-carousel-arrow { gap: 6px; min-height: 44px; display: inline-flex; padding: 8px; flex-shrink: 0; align-items: center; justify-content: center; color: var(--muted); border: 1px solid transparent; border-radius: 5px; background: transparent; cursor: pointer; transition: color .18s ease, background-color .18s ease, border-color .18s ease; }
+.overview-carousel-page { flex: 1 0 auto; font-size: 10px; font-family: var(--font-bold); }
+.overview-carousel-page[aria-current='true'] { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 32%, var(--line)); background: var(--subtle); }
+.overview-carousel-arrow { width: 44px; padding: 7px; color: var(--accent); border-color: var(--line); }
+.overview-carousel-viewport[data-ready='false'] .overview-carousel-slide { visibility: hidden; }
+.overview-carousel-control-icon { flex-shrink: 0; }
+.overview-carousel-sr-only { width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; position: absolute; clip-path: inset(50%); white-space: nowrap; }
+.overview-carousel-viewport:focus-visible, .overview-carousel-page:focus-visible, .overview-carousel-arrow:focus-visible, .overview-carousel-guide:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.overview-carousel-page:focus-visible { outline-offset: -3px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .overview-carousel-viewport { cursor: grab; user-select: none; }
+  .overview-carousel-viewport[data-dragging='true'] { cursor: grabbing; }
+  .overview-carousel-page:hover, .overview-carousel-arrow:hover:not(:disabled) { color: var(--accent); background: var(--subtle); }
+  .overview-carousel-guide:hover { text-decoration: underline; }
+}
+@media (max-width: 600px) {
+  .overview-carousel-viewport { height: 320px; }
+  .overview-carousel-caption { min-height: 90px; }
+  .overview-carousel-title { font-size: 15px; }
+  .overview-carousel-page { gap: 5px; padding: 6px 7px; }
+  .overview-carousel-controls { gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overview-carousel-page, .overview-carousel-arrow { transition: none; }
+}

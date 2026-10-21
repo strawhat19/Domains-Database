@@ -3,7 +3,8 @@
 .pricing-error { color: var(--danger); }
 .landing-pricing .landing-pricing-heading { grid-template-columns: minmax(0, 1fr); }
 .landing-pricing .landing-heading-copy { width: 100%; max-width: none; }
-.landing-pricing .landing-pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.landing-pricing .landing-pricing-grid { display: flex; flex-wrap: wrap; }
+.landing-pricing .landing-plan { flex: 1 1 calc((100% - 36px) / 3); }
 .landing-pricing .landing-plan:not(.pricing-skeleton-card):is(:hover, :focus-within) { --stack-pill-border: var(--accent); --stack-pill-fill: color-mix(in srgb, var(--subtle) 32%, var(--paper)); }
 .landing-pricing .landing-plan:is(:hover, :focus-within) .landing-plan-action { color: var(--contrast); background: var(--accent); border-color: var(--accent); }
 .landing-pricing .landing-plan .landing-plan-action:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -19,10 +20,10 @@
 .pricing-plan-interest .pricing-plan-vote { flex: 1; }
 
 @media (max-width: 1199px) {
-  .landing-pricing .landing-pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .landing-pricing .landing-plan { flex-basis: calc((100% - 18px) / 2); }
 }
 @media (max-width: 700px) {
-  .landing-pricing .landing-pricing-grid { grid-template-columns: minmax(0, 1fr); }
+  .landing-pricing .landing-plan { flex-basis: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-pricing .landing-plan-action { transition: none; }

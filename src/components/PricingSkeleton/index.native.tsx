@@ -33,7 +33,7 @@ const PricingSkeleton = ({ cardWidth, expanded = false }: PricingSkeletonProps) 
       {pricingSkeletonCards.map(index => <View
         key={index}
         {...elementProps(`pricing-loading-card`, `${index}`)}
-        style={[styles.plan, cardWidth === undefined ? styles.fullCard : { width: cardWidth }]}
+        style={[styles.plan, styles.card, cardWidth === undefined ? styles.fullCard : { width: cardWidth }]}
       >
         <View {...elementProps(`pricing-loading-card-backing`, `${index}`)} style={styles.cardBacking} pointerEvents={`none`}>
           <StackPillShape id={`pricing-loading-card-${index}-backing`} fill={palette.subtle} stroke={`${palette.accent}30`} />

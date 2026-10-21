@@ -499,6 +499,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
       ...current,
       groupBy: `custom`,
       collectionNumber: createdCollection?.number ?? current.collectionNumber,
+      collapsedGroupKeys: [...current.collapsedGroupKeys, `custom:${id}`],
       collections: createdCollection ? [...current.collections, createdCollection] : current.collections,
       customGroups: [...current.customGroups, { id, name, isApp: false, domainIds: [], createdAt: new Date().toISOString(),
         ...(collectionId ? { collectionId } : {}), projectStatus: DEFAULT_DOMAIN_PROJECT_STATUS }],

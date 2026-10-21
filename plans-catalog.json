@@ -36,7 +36,8 @@
         "Domain Search with Trending Domains",
         "CSV import & export",
         "Projects, groups & tags",
-        "Registrar & renewal dates"
+        "Registrar & renewal dates",
+        "GoDaddy & Hostinger Connections"
       ]
     },
     {
@@ -53,18 +54,19 @@
         "Everything in Free",
         "Remove Ads",
         "Annual/monthly costs",
+        "Porkbun & NameSilo imports",
         "Research, performance & Tranco rank",
         "Hosted-domain discovery & registrar lookup",
         "Registrar availability & price comparison",
-        "GoDaddy & Hostinger Connections",
         "Squarespace, Namecheap & Vercel Connections",
+        "Planned: Domain Auctions",
         "Planned: Domains Community"
       ]
     },
     {
       "name": "Pro",
       "slug": "pro",
-      "active": true,
+      "active": false,
       "currency": "USD",
       "priceCents": 777,
       "displayOrder": 2,
@@ -73,7 +75,6 @@
       "features": [
         "Up to 777 domains",
         "Everything in Free",
-        "Planned: Domain Auctions",
         "Planned: Domains Market",
         "Planned: Scheduled registrar sync",
         "Planned: Advanced portfolio insights",

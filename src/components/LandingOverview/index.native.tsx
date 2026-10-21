@@ -1,98 +1,33 @@
 import { useMemo } from 'react';
-import { Image } from 'expo-image';
-import StackPillShape from '../StackPillShape';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
-import LandingOverviewPreview from '../LandingOverviewPreview';
+import { overviewTitle, overviewDescription } from './content';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { Text, View, useWindowDimensions } from 'react-native';
-import { getBlogImage } from '../../shared/blog/images.native';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
-import { Globe2, Search, Layers3, CalendarDays } from 'lucide-react-native';
-import { overviewTitle, overviewFeatures, overviewDescription } from './content';
-
-const featureIcons = { inventory: Globe2, renewals: CalendarDays, projects: Layers3, discovery: Search };
-const illustrationLabel = `Illustration of a portfolio dashboard with sample domain rows labeled Renew, Review, and Keep`;
+import LandingOverviewCarousel from '../LandingOverviewCarousel';
 
 const LandingOverview = () => {
   const { palette } = useTheme();
-  const { switched, formatText } = useAppBrand();
   const { width } = useWindowDimensions();
+  const { formatText } = useAppBrand();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const compact = width < 600;
-  const wide = width >= 900;
-  const columns = compact ? 1 : 2;
-  const contentWidth = Math.max(0, Math.min(width - (compact ? 40 : 64), 1056));
-  const featureWidth = (contentWidth - (columns - 1) * 14) / columns;
-  const illustrationWidth = wide ? (contentWidth - 36) / 2 : contentWidth;
-
-  const renderShape = (id: string, fill = palette.input) => (
-    <>
-      <View
-        accessible={false}
-        pointerEvents={`none`}
-        style={styles.cardBacking}
-        accessibilityElementsHidden
-        importantForAccessibility={`no-hide-descendants`}
-        {...elementProps(`landing-overview-backing`, id)}
-      >
-        <StackPillShape id={`${id}-backing`} fill={palette.subtle} stroke={`${palette.accent}30`} />
-      </View>
-      <View
-        accessible={false}
-        pointerEvents={`none`}
-        style={styles.cardForeground}
-        accessibilityElementsHidden
-        importantForAccessibility={`no-hide-descendants`}
-        {...elementProps(`landing-overview-foreground`, id)}
-      >
-        <StackPillShape id={`${id}-foreground`} fill={fill} stroke={palette.line} />
-      </View>
-    </>
-  );
+  const wide = width >= 1040;
 
   return (
     <View {...elementProps(`landing-overview`)} style={[styles.section, compact && styles.compactSection]}>
       <View {...elementProps(`landing-overview-inner`)} style={styles.inner}>
         <View {...elementProps(`landing-overview-intro`)} style={[styles.intro, wide && styles.wideIntro]}>
           <View {...elementProps(`landing-overview-copy`)} style={[styles.copy, wide && styles.wideCopy]}>
-            <Text {...elementProps(`landing-overview-eyebrow`)} style={styles.eyebrow}>{`PLAN IT. MANAGE IT.`}</Text>
-            <Text {...elementProps(`landing-overview-title`)} adjustsFontSizeToFit numberOfLines={1} style={styles.title} accessibilityRole={`header`}>{formatText(overviewTitle)}</Text>
+            <Text {...elementProps(`landing-overview-eyebrow`)} style={styles.eyebrow}>{`From Scattered Names To Clear Plans`}</Text>
+            <Text {...elementProps(`landing-overview-title`)} style={styles.title} accessibilityRole={`header`}>{formatText(overviewTitle)}</Text>
             <Text {...elementProps(`landing-overview-description`)} style={styles.description}>{overviewDescription}</Text>
+            <Text {...elementProps(`landing-overview-summary`)} style={styles.summary}>{`Know what you own, what it costs, and what you want to build next.`}</Text>
           </View>
-          <View {...elementProps(`landing-overview-illustration-frame`)} style={[styles.illustrationFrame, { width: illustrationWidth }]}>
-            {renderShape(`landing-overview-portfolio`, palette.paper)}
-            <Image
-              accessible
-              alt={illustrationLabel}
-              contentFit={`contain`}
-              style={styles.illustration}
-              accessibilityLabel={illustrationLabel}
-              source={getBlogImage(`domain-portfolio-management`, switched)}
-              {...elementProps(`landing-overview-portfolio-illustration`)}
-            />
-            <Text {...elementProps(`landing-overview-illustration-caption`)} style={styles.caption}>
-              {`A portfolio illustration, with a next step for every name`}
-            </Text>
+          <View {...elementProps(`landing-overview-carousel-column`)} style={[styles.carousel, wide && styles.wideCarousel]}>
+            <LandingOverviewCarousel />
           </View>
-        </View>
-        <View {...elementProps(`landing-overview-features`)} style={styles.grid}>
-          {overviewFeatures.map(feature => {
-            const Icon = featureIcons[feature.id as keyof typeof featureIcons] ?? Globe2;
-            return (
-              <View key={feature.id} {...elementProps(`landing-overview-feature`, feature.id)} style={[styles.featureCard, { width: featureWidth }]}>
-                {renderShape(`landing-overview-${feature.id}`)}
-                <LandingOverviewPreview kind={feature.id} />
-                <View {...elementProps(`landing-overview-feature-copy`, feature.id)} style={styles.featureCopy}>
-                  <View {...elementProps(`landing-overview-feature-heading`, feature.id)} style={styles.featureHeading}>
-                    <Icon {...elementProps(`landing-overview-feature-icon`, feature.id)} size={17} color={palette.accent} accessible={false} />
-                    <Text {...elementProps(`landing-overview-feature-title`, feature.id)} style={styles.featureTitle} accessibilityRole={`header`}>{feature.title}</Text>
-                  </View>
-                  <Text {...elementProps(`landing-overview-feature-description`, feature.id)} style={styles.featureDescription}>{feature.description}</Text>
-                </View>
-              </View>
-            );
-          })}
         </View>
       </View>
     </View>

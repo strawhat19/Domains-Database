@@ -33,15 +33,15 @@ Use genuine bounded subscriptions for live records and summaries, cursor pages f
 
 ## Roles And Authorization
 
-Use [the account authorization contract](references/firestore.md#sdk-providers-and-private-configuration) and [operation rules](references/firestore.md#firestore-rules-and-indexes). Subscriber has own-account access; Developer only granted technical reports; Admin explicitly granted operations; Owner trusted role/configuration control. Existing narrower policies remain in force.
+Use [the account authorization contract](references/firestore.md#sdk-providers-and-private-configuration) and [operation rules](references/firestore.md#firestore-rules-and-indexes). The default ADMIN boundary is active trusted Owner only, including Dashboard, Feedback, operations and technical reports. Every other role, including Admin and Developer, retains Profile and supported own-account tools without automatic administrative access. Broaden a role's capability only when the user explicitly chooses that destination policy; retain narrower record/participant constraints. Roles are not a numerical permission hierarchy.
 
 The same capability drives menu visibility, direct route, service, rules and privileged server checks. Clients cannot promote themselves through profile or mapping edits. Trusted role/status actions preserve identity and require an immutable atomic audit where the app policy specifies it. Protect elevated targets, self-access and the last active Owner. Authorize current active identity before returning cached reports.
 
 ## Profile And Admin Navigation
 
-Follow [the account layout](layout.md#account-canvas-and-sidebar) for a full-width canvas, measured header/safe-area offset, flush-left full-height desktop sidebar, persisted account-scoped collapse/submenus, bottom identity/Profile controls and the reference mobile inline groups. Keep the destination's theme/fonts, icons, canonical routes and business labels.
+Follow [the account layout](layout.md#account-canvas-and-sidebar) for a full-width header inner row and canvas beyond the public box, measured header/safe-area offset, and flush-left full-height desktop sidebar whose expanded right edge follows the natural logo-plus-wordmark right edge relative to account-shell/viewport left, including the existing leading inset with no added trailing padding. Keep persisted account-scoped collapse/submenus, bottom identity/Profile controls and mobile inline navigation. Keep the destination's palette/fonts, icons, canonical routes and business labels.
 
-Profile exposes supported editable details/preferences, private tools and provider photo/themed initial. Dashboard/records/notifications/users/reports sections appear only when supported and permitted. Clear scoped shell preferences and private views before hydrating the next account. Use actual counts/loading/error states, keyboard/touch behavior, labels and reduced motion.
+Profile is the only top-level ACCOUNT link; supported private Connections, My Submissions and own tools stay inside it. Only the Owner sees ADMIN and its supported Dashboard/Feedback children by default. Profile exposes supported editable details/preferences and provider photo/themed initial. The header avatar opens the shared popup with role pills for all signed-in roles, trusted-plan pills only for non-Owners, Profile, permitted admin links and Sign Out last; visible unknown plan state remains truthful. Hide the popup plan pill by actual Owner role, independently of administrative capability; retain Profile Account Details. Clear scoped shell preferences and private views before hydrating the next account. Use actual counts/loading/error states, keyboard/touch behavior, labels and reduced motion.
 
 ## Persisted Administrative Actions
 

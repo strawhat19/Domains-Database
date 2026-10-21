@@ -49,6 +49,7 @@ const catalogDetails: Record<string, FeatureDetails> = {
   'hosted-domain discovery & registrar lookup': { status: `current`, origin: `highlight` },
   'research, performance & tranco rank': { status: `current`, origin: `highlight` },
   'godaddy & hostinger connections': { status: `current`, origin: `competitor`, sources: [`domainmod`] },
+  'porkbun & namesilo imports': { status: `current`, origin: `competitor`, sources: [`domainmod`] },
   'squarespace, namecheap & vercel connections': { status: `catalog`, origin: `competitor`, sources: [`domainmod`] },
   'csv import & export': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
   'annual/monthly costs': { status: `current`, origin: `competitor`, sources: [`trydomainio`, `domainmod`] },
@@ -84,7 +85,6 @@ const previewFeatures: Record<string, readonly PricingFeature[]> = {
     { id: `launch-links`, status: `current`, origin: `highlight`, label: `GitHub, preview & production links` },
   ],
   pro: [
-    { id: `pro-imports`, status: `current`, origin: `competitor`, label: `Porkbun & NameSilo imports (existing Pro access)`, sources: [`domainmod`] },
     { id: `whois-monitoring`, status: `proposed`, origin: `competitor`, label: `WHOIS changes & domain status monitoring`, sources: [`trydomainio`] },
     { id: `sales-pages`, status: `proposed`, origin: `competitor`, label: `For-sale landing pages & a domain shop`, sources: [`efty`] },
   ],
@@ -104,6 +104,28 @@ const orderPricingFeatures = <T>(features: readonly T[], getLabel: (feature: T) 
     .map(({ feature }) => feature),
 ];
 
+const positionFreeFeatures = <T>(slug: string, features: T[], getLabel: (feature: T) => string): T[] => {
+  if (slug !== `free`) return features;
+  const labels = new Set([
+    `projects, groups & tags`,
+    `github, preview & production links`,
+    `projects, groups, collections & tags`,
+    `search, filters & flexible portfolio views`,
+  ]);
+  const precedesConnections = (feature: T) => labels.has(normalizeLabel(getLabel(feature)));
+  const movedFeatures = features.filter(precedesConnections);
+  const otherFeatures = features.filter(feature => !precedesConnections(feature));
+  const connectionsIndex = otherFeatures.findIndex(feature => normalizeLabel(getLabel(feature)) === `godaddy & hostinger connections`);
+  if (connectionsIndex < 0) return features;
+  const orderedFeatures = [...otherFeatures.slice(0, connectionsIndex), ...movedFeatures, ...otherFeatures.slice(connectionsIndex)];
+  const orderedConnectionsIndex = connectionsIndex + movedFeatures.length;
+  const searchIndex = orderedFeatures.findIndex(feature => normalizeLabel(getLabel(feature)) === `search, filters & flexible portfolio views`);
+  const searchFeature = orderedFeatures[searchIndex];
+  const connectionsFeature = orderedFeatures[orderedConnectionsIndex];
+  if (searchFeature === undefined || connectionsFeature === undefined) return orderedFeatures;
+  return orderedFeatures.map((feature, index) => index === searchIndex ? connectionsFeature : index === orderedConnectionsIndex ? searchFeature : feature);
+};
+
 const getPlanFeatureLabels = (plan: Pick<Plan, `slug` | `features`>): string[] => {
   if (plan.slug !== `free`) return plan.features;
   const features = plan.features.filter(feature => normalizeLabel(feature) !== `remove ads`);
@@ -114,7 +136,7 @@ const getPlanFeatureLabels = (plan: Pick<Plan, `slug` | `features`>): string[] =
 };
 
 export const getPricingFeatureLabels = (plan: Pick<Plan, `slug` | `features`>, formatLabel = (label: string) => label): string[] =>
-  orderPricingFeatures(getPlanFeatureLabels(plan), formatLabel);
+  positionFreeFeatures(plan.slug, orderPricingFeatures(getPlanFeatureLabels(plan), formatLabel), label => label);
 
 export const getPricingFeatures = (plan: Pick<Plan, `slug` | `features`>, formatLabel = (label: string) => label): PricingFeature[] => {
   const features = getPlanFeatureLabels(plan).map((savedLabel, index): PricingFeature => {
@@ -125,7 +147,8 @@ export const getPricingFeatures = (plan: Pick<Plan, `slug` | `features`>, format
   });
   const labels = new Set(features.map(feature => normalizeLabel(feature.label)));
   const additions = Object.prototype.hasOwnProperty.call(previewFeatures, plan.slug) ? previewFeatures[plan.slug] : [];
-  return orderPricingFeatures([...features, ...additions.filter(feature => !labels.has(normalizeLabel(feature.label)))], feature => formatLabel(feature.label));
+  const orderedFeatures = orderPricingFeatures([...features, ...additions.filter(feature => !labels.has(normalizeLabel(feature.label)))], feature => formatLabel(feature.label));
+  return positionFreeFeatures(plan.slug, orderedFeatures, feature => feature.label);
 };
 
 export const getPricingFeatureBadges = (feature: PricingFeature): PricingFeatureBadge[] => {

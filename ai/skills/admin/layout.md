@@ -8,19 +8,22 @@ Use this reference for account Profile, Admin, Dashboard, analytics, and chart w
 | --- | --- |
 | Desktop breakpoint | At least 651 px wide |
 | Mobile breakpoint | At most 650 px wide |
-| Account canvas | Width 100%, max-width none, no centered marketing-page container |
-| Header height | One shared measured height H, including enabled attached top bars |
-| Expanded sidebar | Match the shared header brand-width token; reference desktop width is 220 px |
+| Account canvas and header inner row | Width 100%, max-width none, no centered marketing-page container on all registered account/admin routes |
+| Header height | Compact reference default around 64 px desktop/56 px mobile before safe-area and attached bars, with proportionally smaller brand mark and 44 px interaction targets; compact sizing selectors must outrank generic theme height tokens regardless of stylesheet order; preserve destination branding and share actual measured height H |
+| Account header bottom edge | Always-visible 1 px themed border across the full header width, including the unscrolled state, separating header from sidebar and page; preserve public-route header behavior |
+| Expanded sidebar | Shared brand extent B: natural logo-plus-wordmark right edge relative to account-shell/viewport left, including the existing leading inset with no added trailing padding; no universal fixed width |
 | Collapsed sidebar | 56 px wide |
 | Sidebar placement | Fixed left 0, top H, bottom 0; height calc(100dvh - H); z-index 20 |
 | Sidebar edge | Flush against the viewport, square corners, right border only |
-| Sidebar padding | Expanded 9 px 8 px 5 px; collapsed 16 px 8 px 0 |
+| Sidebar padding | Expanded 9 px 8 px 5 px; collapsed 8 px 8 px 0; first collapsed icon follows top padding with no reserved hidden ACCOUNT-heading height; retain other group spacing |
 | Content columns | sidebar-width minmax(0, 1fr) |
 | Content gutter G | clamp(18px, 2.4vw, 40px) |
 | Column gap | max(28px, G) |
 | Main content padding | Top 32 px, right G, bottom clamp(32px, 4vw, 56px), left 0 |
 | Footer | Offset its left edge by the active sidebar width |
 | Width motion | 300 ms cubic-bezier(.22, 1, .36, 1) for sidebar, content columns, and footer offset |
+
+Account-route metadata expands both the header inner row and the page canvas, including Profile and available root-level admin aliases. Overriding the content wrapper alone leaves the brand and avatar boxed and does not meet this layout. Preserve the public header's usual maximum width on public pages. Keep the header brand's existing leading inset while the rail stays flush left. Measure B from the account-shell/viewport left edge to the natural logo-plus-wordmark right edge: include that leading inset and the actual logo, gap and wordmark, with no added trailing padding. Publish B through one shared CSS variable or native layout value used by the header brand slot, expanded sidebar, content columns and footer offset. Measure the natural brand content's right edge, not its already stretched slot, so observing it cannot grow the rail repeatedly. Remeasure on font/image readiness, resize or changed branding; use a theme-appropriate initial fallback until ready, without turning 220 px into a universal target.
 
 The desktop page starts immediately beneath the header at H. Measure the actual header, enabled attached bars, marquee rows, and safe-area insets together; use that same value for page top, sidebar top, and remaining viewport height. Observe size changes so hiding a feature-controlled marquee, wrapping navigation, or resizing the window recalculates the offset. A header's sticky variable defaults to true; keep attached bars within the same sticky surface and apply a semi-transparent background and blur on scroll, with -webkit-backdrop-filter before backdrop-filter. The sidebar stays visible through scrolling as a full-height fixed rail. Its body has min-height 0, flex 1, vertical scrolling, and hidden scrollbars; the bottom controls stay anchored with margin-top auto. Let main content scroll normally and keep min-width 0 on grids, panels, chart wrappers, and record values.
 
@@ -34,11 +37,11 @@ The shared account menu has this reusable arrangement. Map business-specific sec
 
 | Group | Parent/Links | Reference Children In Order |
 | --- | --- | --- |
-| ACCOUNT | Profile, Connections | Own account details and private connection settings |
-| ADMIN | Dashboard | Users, Events, Plans, Notifications, Reports, Analytics, Health, Features |
-| ADMIN | Feedback | Forms, Reviews, Chats, Messages |
+| ACCOUNT, all active signed-in roles | Profile | Supported private Connections, My Submissions and own-account tools remain within Profile |
+| ADMIN, active trusted Owner only by default | Dashboard | Users, Events, Plans, Notifications, Reports, Health, Analytics, Features |
+| ADMIN, active trusted Owner only by default | Feedback | Forms, Reviews, Chats, Messages |
 
-Filter every parent and child by the same current active-account capability as its direct route. Features is last in the Dashboard submenu and Owner-only. Preserve narrower review/user-management permissions and hide a parent that has no permitted purpose. Connections counts describe verified account connections; other badges describe their actual loaded scope, never guessed totals. The bottom Profile identity action is separate from this menu hierarchy.
+Only the active trusted Owner sees the ADMIN heading, Dashboard/Feedback parents and supported children by default. Admin, Developer, Subscriber, unknown and every other non-Owner role receive Profile only as top-level account navigation; a role name alone cannot enable reports or operations. An explicit user-selected destination policy can grant narrower capabilities to another role; document that exception outside ai/ and apply it consistently. Filter every parent and child by the same current active-account capability as its direct route, service, rules and server operation. Features is last in Dashboard and remains Owner-only. Preserve participant/ownership and narrower review/user-management restrictions; hide a parent with no permitted purpose. Supported Connections and My Submissions remain private tools within Profile rather than extra top-level rail links; do not create absent modules. Their badges describe actual verified/loaded scope, never guessed totals. The bottom Profile identity action is separate from this menu hierarchy.
 
 | Element | Size And Spacing |
 | --- | --- |
@@ -59,9 +62,11 @@ Separate parent navigation from expansion: selecting a parent link navigates, wh
 
 Use the same heading-gap token for header-to-ACCOUNT, ACCOUNT-to-first-link, and the gaps above and below ADMIN; reference expanded desktop spacing is 9 px. In light mode, inactive link labels use the theme's ink token, matching the header wordmark's primary ink. Active links and active submenu parents use accent/contrast colors; inactive icons use accent and selected icons follow contrast. Dark mode uses the existing themed surfaces and readable ink. Apply these same tokens and spacing to loading placeholders.
 
-Animate submenu grid rows from 0fr to 1fr over 320 ms cubic-bezier(.22, 1, .36, 1), opacity over 240 ms, and chevrons over 300 ms. Closed groups are inert or unfocusable and aria-hidden; toggles expose aria-expanded and aria-controls. Collapse chevrons rotate 180 degrees on desktop, and between 90 and -90 degrees on mobile. Show actual count loading/error states and use the same capability filter as protected routes.
+Animate submenu grid rows from 0fr to 1fr over 320 ms cubic-bezier(.22, 1, .36, 1), opacity over 240 ms, and chevrons over 300 ms. Closed groups are inert or unfocusable and aria-hidden; toggles expose aria-expanded and aria-controls. Expand/collapse controls use actual chevron or delta glyphs rather than shaft-arrow aliases: left/right on desktop and up/down on mobile; submenu toggles use up/down. Rotate direction changes smoothly over 300 ms. Show actual count loading/error states and use the same capability filter as protected routes.
 
-The bottom identity/Profile action and collapse control remain separate. When an account popup is requested, reuse the common account menu behavior: open by click/tap, dismiss on navigation, outside pointer, or Escape, restore trigger focus on Escape, and put Sign Out last. Reference popup sizing is width 260 px, max-width calc(100vw - 36px), radius 14 px, padding 9 px; menu rows have padding 12 px and icon gap 10 px. Anchor a bottom popup above its trigger and keep it within the viewport. The shared Profile action can remain a direct link where that is the chosen reference interaction.
+The header always exposes a circular signed-in avatar using the provider photo or themed capitalized initial. Its click/tap popup starts with two compact identity rows: name on the left and current-role pill on the right, then email on the left and, for non-Owners only, the trusted-plan pill on the right. Keep pills in their rows without wrapping into a separate badge block; truncate long names/emails visually while retaining their full accessible text. Show the theme-matched role pill for every signed-in role; hide only the popup plan pill when the actual account role is Owner, even if inactive, email-unverified or otherwise denied administrative access. Do not use the admin capability as the hiding condition. Other roles retain the plan pill. This popup display rule leaves Profile Account Details and plan-based authorization unchanged. Use the actual plan label from trusted account/catalog state, Free only when that baseline is authoritative, Loading while hydrating, and Plan Unavailable for missing/unresolved entitlement data. Role and plan are display metadata, never permission inputs written by the menu. Include Profile, only permitted Dashboard/Feedback destinations, supported theme controls and Sign Out last. Avoid separate top-level admin entries for non-Owners under the default policy.
+
+The bottom identity/Profile action and collapse control remain separate. Reuse the header's common account popup behavior where a bottom popup exists: open by click/tap, dismiss on navigation, sign-out, outside pointer or Escape, and restore trigger focus on Escape. Triggers have an accessible name, aria-expanded and aria-controls; visible menu rows follow DOM/Tab order. Reference popup sizing is width 260 px, max-width calc(100vw - 36px), radius 14 px, outer padding 6 px and identity padding 8 px; menu rows have padding 8 px 9 px and icon gap 8 px, while compact pills have padding 2 px 6 px. Preserve 44 px touch targets for coarse-pointer and native input. Anchor the header popup below the avatar, a bottom popup above its trigger, and keep both within the viewport. The bottom Profile action can remain a direct link where chosen; the header avatar still opens its account popup. Clear or close stale private menu content on account/permission changes.
 
 ## Profile And Dashboard Content
 
@@ -117,7 +122,7 @@ Runtime tabs cover Compute, Memory, Requests, Latency, Routes, Statuses, and Cac
 
 ## Full Reporting Controls And Responsive Grids
 
-Full Analytics uses a top Traffic/Health switch, fit-content width, wrapping gap 4 px, radius 9 px, padding 4 px, margin-bottom 18 px; each switch is minimum 34 px, padding 8 px 12 px. Put the active report's Refresh/Export JSON actions in the page heading rather than duplicating action rows.
+Health and Analytics use separate supported report pages by default, with Health immediately before Analytics in the Dashboard submenu; use shared route metadata and preserve Owner-only access. Keep both compact Traffic and Health panels in the Dashboard overview. Default report ranges to 7 Days while preserving deliberate user range changes. Put each report's Refresh/Export JSON actions in its page heading rather than adding a Traffic/Health page switch or duplicate action rows. Do not create unavailable modules solely to fill the submenu.
 
 Full traffic summary has filter and KPI columns in a 1:1.15 ratio, gap 18 px; stack at panel widths up to 840 px. The filter panel has radius 12 px, padding 16 px, gap 14 px. Date controls use 7/30/90 day presets and a separate From/To/Apply form; inputs are minimum 34 px, date width 128 px, and controls wrap with gaps 8-12 px. Four segment selects become two columns at viewport widths up to 620 px or summary widths up to 560 px. Show removable active filter chips and Clear Filters.
 

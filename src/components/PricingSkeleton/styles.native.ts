@@ -6,6 +6,7 @@ export const createStyles = (palette: ThemePalette) => ({
   ...createLandingStyles(palette),
   ...StyleSheet.create({
     root: { width: `100%` },
+    card: { flexGrow: 1 },
     fullCard: { width: `100%` },
     icon: { width: 12, height: 12, borderRadius: 3 },
     title: { width: `42%`, height: 22 },

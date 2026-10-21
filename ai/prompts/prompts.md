@@ -16,7 +16,7 @@
 
 > Set up the connected account system from ai/adoption.md in this project
 
-[Its scope and detailed prompt](../adoption.md#connected-account-system-prompt) include Profile/private Connections, Firebase/Firestore sync, the shared sidebar/submenus, Owner Features with role/minimum-plan controls, root admin routes, and Traffic/Health reports/charts. Preserve the destination's theme, framework, product data and narrower permissions. Real cloud/provider setup still uses that project's authorized resources.
+[Its scope and detailed prompt](../adoption.md#connected-account-system-prompt) include Profile/private Connections, Firebase/Firestore sync, the full-width account header/canvas, slim logo-plus-wordmark measured rail, shared sidebar/submenus and avatar role pills for every role and trusted-plan pills only for non-Owners. Only active trusted Owners receive ADMIN/Dashboard/Feedback by default; all other roles see Profile only at top level with supported private tools inside it. Include Owner Features, root admin routes and Traffic/Health reports/charts. Preserve the destination's palette/fonts, framework, product data and narrower permissions; broaden administrative roles only when explicitly requested. Real cloud/provider setup still uses that project's authorized resources.
 
 9. For the complete common-core starter, use [the full-system prompt](../skills/app-system/system.md#one-adoption-prompt) after copying the files. It extends the account scope with the complete public/chat/pricing/blog modules.
 
