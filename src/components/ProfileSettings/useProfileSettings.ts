@@ -21,6 +21,7 @@ export const useProfileSettings = () => {
   }, [user?.id, user?.updated]);
   const dismiss = () => { setError(``); setNotice(``); };
   const dirty = name.trim() !== user?.name || description !== (user?.description ?? ``) || privacy !== user?.profilePrivacy || publicDomains !== Boolean(user?.publicDomains);
+  const canPublish = privacy === `public`;
   const cancel = () => {
     dismiss();
     setName(user?.name ?? ``);
@@ -45,5 +46,5 @@ export const useProfileSettings = () => {
       setError(failure instanceof Error ? failure.message : `Could Not Save Profile`);
     } finally { setBusy(false); }
   };
-  return { name, busy, dirty, error, cancel, notice, privacy, description, publicDomains, save, dismiss, setName, setDescription, changePrivacy, setPublicDomains, email: user?.email ?? ``, isGoogle: user?.provider === Providers.Google || Boolean(user?.providerId?.includes(`google`)) };
+  return { name, busy, dirty, error, cancel, notice, privacy, canPublish, description, publicDomains, save, dismiss, setName, setDescription, changePrivacy, setPublicDomains, email: user?.email ?? ``, isGoogle: user?.provider === Providers.Google || Boolean(user?.providerId?.includes(`google`)) };
 };

@@ -45,12 +45,17 @@ export const usePortfolioToolbar = () => {
     setCopyMessage(``);
     setCopyState(`idle`);
   };
-  const copyDomains = async (text: string, count: number) => {
-    if (!text || pendingCopy.current) return;
+  const copyDomains = async (value: string | (() => string), count: number) => {
+    if (!value || pendingCopy.current) return;
     pendingCopy.current = true;
     setCopyMessage(``);
     setCopyState(`copying`);
     try {
+      const text = typeof value === `function` ? value() : value;
+      if (!text) {
+        setCopyState(`idle`);
+        return;
+      }
       await copyText(text);
       setCopyMessage(count ? `Copied ${count} Domain(s)` : `Copied Portfolio Structure`);
       setCopyState(`copied`);

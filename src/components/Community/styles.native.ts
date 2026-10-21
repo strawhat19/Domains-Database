@@ -4,6 +4,10 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   root: { gap: 28, width: `100%`, maxWidth: 1180, alignSelf: `center`, paddingHorizontal: 24, paddingVertical: 40 },
   header: { gap: 10 },
+  filterBanner: { gap: 12, padding: 16, borderRadius: 10, flexDirection: `row`, alignItems: `center`, backgroundColor: palette.subtle },
+  searchControls: { gap: 10, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
+  searchField: { gap: 8, flex: 1, minWidth: 160, paddingHorizontal: 12, borderRadius: 8, flexDirection: `row`, alignItems: `center`, backgroundColor: palette.input },
+  searchInput: { flex: 1, minWidth: 0, paddingVertical: 12, color: palette.ink, fontSize: 12, fontFamily: `DMSans_400Regular` },
   eyebrow: { fontSize: 10, letterSpacing: 1.7, color: palette.accent, fontFamily: `DMSans_700Bold` },
   title: { fontSize: 36, letterSpacing: -1.2, color: palette.ink, fontFamily: `DMSans_700Bold` },
   description: { fontSize: 13, lineHeight: 23, maxWidth: 660, color: palette.muted, fontFamily: `DMSans_400Regular` },

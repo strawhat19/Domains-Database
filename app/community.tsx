@@ -1,18 +1,22 @@
-import { routes } from '../src/shared/routes';
 import Community from '../src/components/Community';
+import { useLocalSearchParams } from 'expo-router';
 import PageMeta from '../src/components/PageMeta';
-import ProtectedRoute from '../src/components/ProtectedRoute';
+import { Types } from '../src/types/types';
+import { isAppCollectionID } from '../src/shared/common/ids';
 import { CommunityProvider } from '../src/shared/social/SocialContext';
 
-const CommunityRoute = () => (
+const CommunityRoute = () => {
+  const params = useLocalSearchParams<{ profile?: string | string[] }>();
+  const candidate = Array.isArray(params.profile) ? params.profile[0] : params.profile;
+  const profileId = isAppCollectionID(candidate, Types.User) ? candidate : undefined;
+  return (
   <>
-    <PageMeta title={`Community`} description={`Public profiles, shared domains, and updates from people you follow`} />
-    <ProtectedRoute minRole={routes.community.minRole}>
-      <CommunityProvider>
-        <Community />
-      </CommunityProvider>
-    </ProtectedRoute>
+    <PageMeta title={`Community`} description={`Discover public domain portfolios, follow builders, share updates, and grow your contribution level`} />
+    <CommunityProvider profileId={profileId}>
+      <Community />
+    </CommunityProvider>
   </>
-);
+  );
+};
 
 export default CommunityRoute;

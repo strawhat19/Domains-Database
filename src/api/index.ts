@@ -15,6 +15,10 @@ import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/typ
 import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../shared/config';
 import { firebaseEnabled } from '../shared/firebase/config';
 import { clearFirestoreStorageCache } from '../shared/firebase/storage';
+import { projectPublicDomain, readPublicDomainSummariesForIds, type PublicDomainSummary } from '../shared/publicDirectory/domains';
+
+export type { PublicDomainSummary } from '../shared/publicDirectory/domains';
+export { domainDataAPI } from './domainData';
 
 let userScope: string | null = null;
 const snapshots = new Map<string, PortfolioSnapshot>();
@@ -184,24 +188,8 @@ const adoptGuestPortfolio = async () => {
   snapshots.set(`guest`, cleared);
 };
 
-export interface PublicDomainSummary {
-  id: string;
-  name: string;
-  userId: string;
-  tld?: string;
-  mvp?: string;
-  future?: string;
-  created: string;
-  expiresAt: string;
-  createdAt?: string;
-  description: string;
-  difficulty?: DomainRecord[`difficulty`];
-  projectStatus: DomainRecord[`projectStatus`];
-  registrar: DomainRecord[`registrar`];
-}
-
 const getPublicDomainSummaries = async (userIds: string[]): Promise<PublicDomainSummary[]> => {
-  if (firebaseEnabled && !useLocalStorage) return [];
+  if (firebaseEnabled && !useLocalStorage) return readPublicDomainSummariesForIds(userIds);
   const requested = new Set(userIds);
   const profiles = await authAPI.getPublicProfiles();
   const eligible = profiles.filter(profile => requested.has(profile.id) && profile.publicDomains && profile.profilePrivacy === `public`);
@@ -214,21 +202,8 @@ const getPublicDomainSummaries = async (userIds: string[]): Promise<PublicDomain
       ? saved !== null ? restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot, profile.id) : undefined
       : snapshots.get(profile.id);
     for (const domain of portfolio?.domains ?? []) {
-      if (!domain.isSample) summaries.push({
-        id: domain.id,
-        tld: domain.tld,
-        mvp: domain.mvp,
-        name: domain.name,
-        userId: profile.id,
-        future: domain.future,
-        created: domain.created,
-        registrar: domain.registrar,
-        expiresAt: domain.expiresAt,
-        createdAt: domain.createdAt,
-        difficulty: domain.difficulty,
-        description: domain.description,
-        projectStatus: domain.projectStatus,
-      });
+      const projection = projectPublicDomain(domain, profile.id);
+      if (projection) summaries.push(projection);
     }
   }
   return summaries;
@@ -318,6 +293,7 @@ export const API_ROUTES = [
   `/api/auth/session`,
   `/api/auth/sign-in`,
   `/api/auth/sign-up`,
+  `/api/domain-market`,
   `/api/auth/sign-out`,
   `/api/domains/:id`,
   `/api/notifications`,
@@ -325,6 +301,8 @@ export const API_ROUTES = [
   `/api/domains/export`,
   `/api/registrars/sync`,
   `/api/website-insights`,
+  `/api/domain-analytics`,
+  `/api/auction-inventory`,
   `/api/registrars/search`,
   `/api/registrars/extensions`,
   `/api/connections/environment`,

@@ -12,6 +12,7 @@ import PortfolioCollapse from '../PortfolioCollapse/index.web';
 import DomainDescription from '../DomainDescription/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
+import DomainAnalyticsButton from '../DomainAnalyticsButton/index.web';
 import DomainVisibilityButton from '../DomainVisibilityButton/index.web';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
@@ -161,6 +162,7 @@ const DomainRow = ({
                   </span>
                 </a>
                 <DomainNewBadge domain={domain} id={`${scope}-new-badge`} />
+                <DomainAnalyticsButton compact domain={domain.name} suffix={`portfolio-${domain.id}`} />
                 {!hideProjectDetails && previewLink && (
                   <a
                     target={`_blank`}

@@ -117,9 +117,10 @@ export const subscribeAuctionListings = (
 
 export const getAuctionListings = (): Promise<AuctionRecord[]> => serialize(async () => (await readSnapshot()).records);
 
-export const importAuctionInventory = (text: string) => serialize(async () => {
+export const importAuctionInventory = (text: string, expectedUserId?: string | null) => serialize(async () => {
   const imported = parseAuctionInventory(text);
   const snapshot = await readSnapshot();
+  if (expectedUserId !== undefined && snapshot.userId !== expectedUserId) throw new Error(`Your Account Changed — Import Again`);
   const previous = new Map(snapshot.records.map(record => [record.domain, record]));
   const importedAt = new Date().toISOString();
   const records: StoredAuctionRecord[] = imported.records.map(input => {
@@ -132,8 +133,9 @@ export const importAuctionInventory = (text: string) => serialize(async () => {
   return { records, importedCount: records.length, skippedCount: imported.skippedCount, sourceCheckedAt: imported.sourceCheckedAt };
 });
 
-export const clearAuctionInventory = (): Promise<void> => serialize(async () => {
+export const clearAuctionInventory = (expectedUserId?: string | null): Promise<void> => serialize(async () => {
   const scope = await requireStorage();
+  if (expectedUserId !== undefined && scope.userId !== expectedUserId) throw new Error(`Your Account Changed — Try Again`);
   let nextNumber = 1;
   try {
     nextNumber = (await readSnapshot()).nextNumber;

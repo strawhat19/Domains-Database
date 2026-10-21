@@ -123,12 +123,15 @@ export const useCollectionStars = (collection: CustomPortfolioCollection, busy =
   };
   const copyStars = async (format: PortfolioCopyFormat) => {
     if (!open || !copyOpen || loading || !copySummary.count || pendingCopy.current) return;
-    const text = buildCollectionStarsCopyText(collection, copySummary, format);
-    if (!text) return;
     pendingCopy.current = true;
     setCopyMessage(``);
     setCopyState(`copying`);
     try {
+      const text = buildCollectionStarsCopyText(collection, copySummary, format);
+      if (!text) {
+        setCopyState(`idle`);
+        return;
+      }
       await copyText(text, `portfolio-collection-${collection.id}-stars-copy-buffer`);
       if (!mounted.current) return;
       setCopyMessage(`Copied ${copySummary.count} Starred Item(s)`);

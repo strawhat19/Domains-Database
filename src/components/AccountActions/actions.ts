@@ -22,7 +22,7 @@ const savedData = [
   `Collections and custom groups, including names, descriptions, properties, membership, tags, links, project details, visibility, stars, votes, sorting and saved ordering`,
   `Watching lists and their saved domain availability and registrar-price snapshots`,
   `Recent domain search history and saved account notifications`,
-  ...(cloudAccountActions ? [`Your private saved auction inventory`] : [`Your Community posts and follow relationships involving your account, including followers and following`]),
+  ...(cloudAccountActions ? [`Your private saved auction inventory`] : [`Your Community posts, comments, likes and follow relationships involving your account, including followers and following`]),
 ];
 const displaySettings = [
   `Portfolio view returns to Table. Grouping, hidden groups and saved ordering reset; visible columns, column widths and flexible columns return to defaults`,
@@ -35,6 +35,7 @@ const profileSettings = [
 ];
 const retainedAccount = `${cloudAccountActions ? `Your account and Google or email sign-in access` : `Your account and sign-in email/password`}. Display name, avatar/color, plan, role and other profile fields are kept, except the bio and privacy/sharing settings listed above`;
 const retainedData = [
+  ...(cloudAccountActions ? [`Community posts, comments, likes and follows are retained. Making your profile Private hides your public contributions; making it Public later can show them again. Delete individual posts and comments in Community`] : []),
   cloudAccountActions ? `Other accounts' saved data; guest data and local data on this device` : `Other local accounts' profiles, portfolios and posts; guest data and shared auction data`,
   `Previously exported/downloaded files and the app's built-in property fields and tag choices`,
 ];

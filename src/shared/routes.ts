@@ -7,7 +7,7 @@ export const routes = {
   auction: { beta: true, href: `/auction`, label: `Auction`, icon: `Gavel` },
   watching: { href: `/watching`, label: `Watching`, icon: `Eye`, minRole: Roles.Subscriber },
   notifications: { href: `/notifications`, label: `Notifications`, icon: `Bell`, redirects: [`alerts`, `updates`, `notification`, `announcement`, `announcements`] },
-  community: { beta: true, href: `/community`, label: `Community`, icon: `UsersRound`, minRole: Roles.Subscriber },
+  community: { beta: true, href: `/community`, label: `Community`, icon: `UsersRound`, redirects: [`discover`] },
   connections: { href: `/profile/connections`, label: `Connections`, icon: `PlugZap`, minRole: Roles.Subscriber },
   profile: { href: `/profile`, label: `Profile`, icon: `UserRound`, minRole: Roles.Subscriber, redirects: [`account`] },
   dashboard: { href: `/dashboard`, label: `Overview`, icon: `LayoutDashboard`, adminSection: `overview` },

@@ -39,8 +39,21 @@ export interface AuctionRecord {
   number?: number;
   importedAt?: string;
   sourceCheckedAt?: string;
-  dataSource?: `inventory` | `preview`;
+  dataSource?: `feed` | `inventory` | `preview`;
   inventoryMetrics?: AuctionInventoryMetrics;
+}
+
+export interface AuctionFeedSnapshot {
+  feed: `most-active`;
+  source: `godaddy`;
+  records: AuctionRecord[];
+  fetchedAt: string;
+  refreshAfter: string;
+  totalCount: number;
+  endedCount: number;
+  limitedCount: number;
+  skippedCount: number;
+  sourceCheckedAt: string | null;
 }
 
 export interface AuctionFilters {

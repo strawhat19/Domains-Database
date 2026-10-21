@@ -1,4 +1,5 @@
 import './styles.scss';
+import { useState } from 'react';
 import { Link } from 'expo-router';
 import Toast from '../Toast';
 import AuctionRow from '../AuctionRow/index.web';
@@ -11,13 +12,18 @@ import { auctionSelectFields, auctionTableHeadings, auctionInventoryHref, auctio
 
 const DomainAuction = () => {
   const state = useDomainAuction();
-  const disabled = state.loading || state.busy;
+  const [readingFile, setReadingFile] = useState(false);
+  const feedDisabled = state.busy || state.feedLoading || readingFile;
+  const disabled = state.loading || state.busy || state.feedLoading || readingFile;
+  const formatTimestamp = (value?: string | null) => value ? new Date(value).toLocaleString() : `Not Provided`;
   const importFile = async (file?: File) => {
     if (!file || disabled) return;
     if (!/\.json$/i.test(file.name)) { state.reportError(`Choose An Unzipped .json Inventory File`); return; }
     if (file.size > 8 * 1024 * 1024) { state.reportError(`Choose A JSON File Up To 8 MB`); return; }
+    setReadingFile(true);
     try { await state.importInventory(await file.text()); }
     catch (reason) { state.reportError(reason instanceof Error ? reason.message : `Inventory File Could Not Be Read`); }
+    finally { setReadingFile(false); }
   };
 
   return (
@@ -34,6 +40,30 @@ const DomainAuction = () => {
         <div id={`auction-heading-actions`} className={`auction-heading-actions`}>
           <button
             type={`button`}
+            id={`auction-load-free`}
+            disabled={feedDisabled}
+            className={`auction-button auction-button-primary`}
+            onClick={() => void state.loadFreeAuctions()}
+            aria-busy={state.feedLoading}
+          >
+            <span id={`auction-load-free-status`} className={`auction-button-status${state.feedLoading ? ` auction-loading-icon` : ``}`} aria-hidden={`true`}>
+              <RefreshCw size={15} id={`auction-load-free-icon`} className={`auction-button-icon`} />
+            </span>
+            <span id={`auction-load-free-text`} className={`auction-button-text`}>{state.feedLoading ? `Loading Free Auctions…` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</span>
+          </button>
+          <button
+            type={`button`}
+            id={`auction-saved-toggle`}
+            disabled={disabled}
+            aria-pressed={!state.preview && !state.feedMode}
+            className={`auction-button auction-button-secondary`}
+            onClick={state.showSavedInventory}
+          >
+            <Download size={15} aria-hidden={`true`} id={`auction-saved-icon`} className={`auction-button-icon`} />
+            <span id={`auction-saved-text`} className={`auction-button-text`}>{`Saved Inventory`}</span>
+          </button>
+          <button
+            type={`button`}
             id={`auction-preview-toggle`}
             aria-pressed={state.preview}
             disabled={disabled}
@@ -47,19 +77,41 @@ const DomainAuction = () => {
             <Upload size={15} aria-hidden={`true`} id={`auction-import-icon`} className={`auction-button-icon`} />
             <span id={`auction-import-text`} className={`auction-button-text`}>{`Import Inventory`}</span>
           </button>
-          <Link href={routes.connections.href} id={`auction-connections-link`} className={`auction-button auction-button-primary`}>
+          <Link href={routes.connections.href} id={`auction-connections-link`} className={`auction-button auction-button-secondary`}>
             <PlugZap size={15} aria-hidden={`true`} id={`auction-connections-icon`} className={`auction-button-icon`} />
             <span id={`auction-connections-text`} className={`auction-button-text`}>{`Connections`}</span>
           </Link>
         </div>
       </div>
       <div id={`auction-preview-notice`} className={`auction-notice`}>
-        <p id={`auction-preview-notice-title`} className={`auction-notice-title`}>{state.preview ? `Frontend Preview` : `Local Auction Inventory`}</p>
+        <p id={`auction-preview-notice-title`} className={`auction-notice-title`}>{state.preview ? `Frontend Preview` : state.feedMode ? `Free GoDaddy Most Active Feed` : `Saved Auction Inventory`}</p>
         <p id={`auction-preview-notice-copy`} className={`auction-description`}>
-          {`Import the free GoDaddy inventory JSON to browse a saved snapshot. Live syncing is not connected. Show Preview loads fictional domains, prices, bids, dates, and ages to try the filters; it is separate from your imported inventory and saved domains.`}
+          {state.preview ? `These fictional domains, prices, bids, dates, and ages let you try the filters. Preview is separate from the public feed, imported inventory, and saved domains.` : state.feedMode ? `Browse a cached snapshot from GoDaddy’s free Most Active auction inventory. Prices, bids, and closing times reflect the snapshot and do not update in real time. This public feed does not replace or save over your imported inventory.` : `Load Free Auctions to browse GoDaddy’s Most Active listings without an account or API key. You can also import inventory JSON to browse your own saved snapshot, or choose Show Preview to try the filters with fictional records.`}
         </p>
+        {state.feedMode && state.feed && (
+          <p id={`auction-feed-coverage`} className={`auction-description`}>
+            {`${state.records.length} current listing(s) shown · ${state.feed.endedCount} ended listing(s) omitted at fetch · ${state.feed.skippedCount} unsupported record(s) omitted${state.feed.limitedCount ? ` · ${state.feed.limitedCount} listing(s) omitted by the snapshot size limit` : ``}. Ended listings leave this view as the snapshot ages.`}
+          </p>
+        )}
+        {state.feedMode && state.feed && state.feedRefreshFailed && (
+          <p id={`auction-feed-refresh-error`} className={`auction-feed-refresh-error`} role={`status`}>{`Refresh failed; showing snapshot fetched ${formatTimestamp(state.feed.fetchedAt)}.`}</p>
+        )}
+        {state.feedMode && state.feed && (
+          <dl id={`auction-feed-details`} className={`auction-feed-details`}>
+            {[
+              { id: `source-built`, label: `Source Updated`, value: formatTimestamp(state.feed.sourceCheckedAt) },
+              { id: `fetched`, label: `Fetched`, value: formatTimestamp(state.feed.fetchedAt) },
+              { id: `refresh`, label: `Next Source Check After`, value: formatTimestamp(state.feed.refreshAfter) },
+            ].map(detail => (
+              <div key={detail.id} id={`auction-feed-detail-${detail.id}`} className={`auction-feed-detail`}>
+                <dt id={`auction-feed-label-${detail.id}`} className={`auction-feed-label`}>{detail.label}</dt>
+                <dd id={`auction-feed-value-${detail.id}`} className={`auction-feed-value`}>{detail.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
         <p id={`auction-connection-description`} className={`auction-description`}>
-          {`Browse provider auctions below or download free GoDaddy inventory. Account connection settings are available; live auction syncing needs a supported provider and backend connection. Bidding and purchases happen on the provider website.`}
+          {state.feedMode ? `Refresh checks the latest cached snapshot; the source is checked again after the time above. Bidding and purchases happen on the provider website. Verify the current listing there before acting.` : `Browse provider auctions below or download free GoDaddy inventory. Bidding and purchases happen on the provider website.`}
         </p>
       </div>
       {!!state.error && <Toast id={`auction-error`} message={state.error} onDismiss={state.clearError} />}
@@ -230,14 +282,14 @@ const DomainAuction = () => {
       </div>
       <div id={`auction-records-card`} className={`auction-records-card`}>
         <div id={`auction-results-heading`} className={`auction-results-heading`}>
-          <h2 id={`auction-results-title`} className={`auction-results-title`}>{state.preview ? `Preview Auction Inventory` : `Auction Inventory`}</h2>
+          <h2 id={`auction-results-title`} className={`auction-results-title`}>{state.preview ? `Preview Auction Inventory` : state.feedMode ? `GoDaddy Most Active Auctions` : `Saved Auction Inventory`}</h2>
           <div id={`auction-results-tools`} className={`auction-results-tools`}>
-            <span id={`auction-results-count`} className={`auction-results-count`} role={`status`}>{state.loading ? `Loading…` : `${state.matchingCount} of ${state.records.length} domain(s)`}</span>
+            <span id={`auction-results-count`} className={`auction-results-count`} role={`status`}>{state.feedLoading ? `Refreshing…` : state.loading ? `Loading…` : `${state.matchingCount} of ${state.records.length} domain(s)`}</span>
             <button type={`button`} id={`auction-reload-snapshot`} className={`auction-text-button`} disabled={disabled} onClick={state.reloadListings} title={`Reload Saved Inventory`}>
               <RefreshCw size={13} aria-hidden={`true`} id={`auction-reload-icon`} className={`auction-button-icon`} />
               <span id={`auction-reload-text`} className={`auction-button-text`}>{`Reload Saved`}</span>
             </button>
-            <button type={`button`} id={`auction-clear-inventory`} className={`auction-text-button auction-clear-inventory`} disabled={disabled || state.preview || (!state.records.length && !state.error)} onClick={() => void state.clearInventory()}>
+            <button type={`button`} id={`auction-clear-inventory`} className={`auction-text-button auction-clear-inventory`} disabled={disabled || state.preview || state.feedMode || (!state.records.length && !state.error)} onClick={() => void state.clearInventory()}>
               <Trash2 size={13} aria-hidden={`true`} id={`auction-clear-icon`} className={`auction-button-icon`} />
               <span id={`auction-clear-text`} className={`auction-button-text`}>{`Clear Imported`}</span>
             </button>
@@ -266,10 +318,10 @@ const DomainAuction = () => {
           <div id={`auction-empty`} className={`auction-empty`}>
             <Gavel size={25} aria-hidden={`true`} id={`auction-empty-icon`} className={`auction-empty-icon`} />
             <h3 id={`auction-empty-title`} className={`auction-empty-title`}>{state.error ? `Auction Data Could Not Be Loaded` : state.records.length ? `No Matching Domains` : `Choose An Auction Source`}</h3>
-            <p id={`auction-empty-copy`} className={`auction-description auction-empty-copy`}>{state.error ? `Review the error above before trying again.` : state.records.length ? `Try fewer filters or reset them to view the inventory.` : `Import free GoDaddy inventory to fill the table, browse provider listings using the links above, or show the frontend preview to try the filters.`}</p>
-            <button type={`button`} id={`auction-empty-action`} className={`auction-button auction-button-secondary`} onClick={state.records.length ? state.resetFilters : () => state.setPreview(!state.preview)}>
-              {state.records.length ? <RotateCcw size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} /> : <Eye size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} />}
-              <span id={`auction-empty-action-text`} className={`auction-button-text`}>{state.records.length ? `Reset Filters` : state.preview ? `Hide Preview` : `Show Preview`}</span>
+            <p id={`auction-empty-copy`} className={`auction-description auction-empty-copy`}>{state.error ? `Review the error above, then retry loading free auctions or choose saved inventory.` : state.records.length ? `Try fewer filters or reset them to view the inventory.` : state.feedMode ? `This snapshot has no current listings. Refresh later or browse the provider website.` : `Load free GoDaddy auctions, import your own inventory, or use Show Preview above to try the filters with fictional records.`}</p>
+            <button type={`button`} id={`auction-empty-action`} className={`auction-button auction-button-primary`} disabled={state.records.length ? disabled : feedDisabled} onClick={state.records.length ? state.resetFilters : () => void state.loadFreeAuctions()}>
+              {state.records.length ? <RotateCcw size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} /> : <RefreshCw size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} />}
+              <span id={`auction-empty-action-text`} className={`auction-button-text`}>{state.records.length ? `Reset Filters` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</span>
             </button>
           </div>
         )}
@@ -288,7 +340,7 @@ const DomainAuction = () => {
             </div>
           </nav>
         )}
-        <p id={`auction-data-footnote`} className={`auction-data-footnote`}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : `${state.storageMessage} Download and import a fresh file to update prices and metrics; Reload Saved opens the last imported snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</p>
+        <p id={`auction-data-footnote`} className={`auction-data-footnote`}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : state.feedMode ? `Free GoDaddy Most Active feed. Refresh checks the latest cached snapshot; listings are not a real-time bidding service.` : `${state.storageMessage} Import a fresh file to update prices and metrics; Reload Saved opens the last imported snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</p>
       </div>
     </section>
   );

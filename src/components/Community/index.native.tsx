@@ -3,13 +3,16 @@ import { useMemo } from 'react';
 import { Link } from 'expo-router';
 import { useCommunity } from './useCommunity';
 import RichTextEditor from '../RichTextEditor';
+import CommunityBoard from '../CommunityBoard';
+import CommunityProgress from '../CommunityProgress';
 import { createStyles } from './styles.native';
 import PostCard, { PostCardSkeleton } from './PostCard';
 import { elementProps } from '../../shared/elementProps';
 import ProfileCard, { ProfileCardSkeleton } from './ProfileCard';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { Text, View, Pressable, useWindowDimensions } from 'react-native';
-import { Globe2, UsersRound, PenLine, LockKeyhole, Send, ShieldCheck, LogIn, Settings2, RefreshCw, MessageSquare } from 'lucide-react-native';
+import PublicPortfolioDiscovery from '../DomainDiscovery/PublicPortfolioDiscovery';
+import { Text, View, TextInput, Pressable, useWindowDimensions } from 'react-native';
+import { X, Search, Globe2, Sparkles, UsersRound, PenLine, LockKeyhole, Send, ShieldCheck, LogIn, Settings2, RefreshCw, MessageSquare, ChevronDown } from 'lucide-react-native';
 
 const Community = () => {
   const state = useCommunity();
@@ -30,7 +33,7 @@ const Community = () => {
   const emptyCopy = {
     mine: { title: `A space for your first update.`, text: `Share a domain discovery, a project, or a small piece of what you are building.` },
     following: { title: `Your circle starts here.`, text: `Follow a public profile to see their public and followers-only updates here.` },
-    public: { title: `A quiet corner, for now.`, text: `Public posts from accounts on this device will appear here. Make your profile public when you are ready to join in.` },
+    public: { title: `Your community starts with a conversation.`, text: `Public updates appear here as builders join. Share a domain discovery, a launch, or something you are working on.` },
   }[state.view];
   return (
     <View {...elementProps(`community-page`)} style={styles.root}>
@@ -39,17 +42,19 @@ const Community = () => {
           {`GOOD NAMES. INTERESTING PEOPLE.`}
         </Text>
         <Text {...elementProps(`community-title`)} style={styles.title} accessibilityRole={`header`}>
-          {`A little community.`}
+          {`Good domains bring people together.`}
         </Text>
         <Text {...elementProps(`community-description`)} style={styles.description}>
-          {`Discover the people behind the domains. Share what you are building, follow a familiar name, and keep the conversation simple.`}
+          {`Discover public portfolios, follow builders, and share what you are making. Join the conversation and earn contribution levels as the community grows.`}
         </Text>
         <View {...elementProps(`community-local-note`)} style={styles.localNote}>
           <ShieldCheck {...elementProps(`community-local-note-icon`)} size={15} color={palette.accent} />
           <Text {...elementProps(`community-local-note-text`)} style={styles.noteText}>
-            {state.storageEnabled
+            {state.source === `local`
               ? `Local preview · Profiles and posts come from accounts on this device. They do not sync online. Profiles start private, and domain sharing is opt-in.`
-              : `Connect a backend to enable the community. Public profiles and posts will appear here when connected.`}
+              : state.loading ? `Connecting to the community…`
+                : state.error ? `Community is unavailable. Refresh to retry the connection.`
+                  : `Shared through Firebase · Profiles start private. Only public profiles and explicitly shared portfolios appear in Discover.`}
           </Text>
         </View>
       </View>
@@ -58,6 +63,14 @@ const Community = () => {
       )}
       {!!state.notice && (
         <Toast id={`community-notice`} message={state.notice} kind={`success`} onDismiss={state.clearNotice} />
+      )}
+      {state.view === `public` && !state.profileId && (
+        <PublicPortfolioDiscovery
+          error={state.error}
+          loading={state.loading}
+          profiles={state.profiles}
+          onRefresh={() => { void state.refresh(); }}
+        />
       )}
       <View {...elementProps(`community-columns`)} style={[styles.columns, compact && styles.compactColumns]}>
         <View {...elementProps(`community-feed`)} style={[styles.feed, compact && styles.compactFeed]}>
@@ -138,7 +151,7 @@ const Community = () => {
               <Text {...elementProps(`community-guest-description`)} style={styles.caption}>
                 {`Browse public updates below. Sign in to share your own and follow people you want to hear from.`}
               </Text>
-              <Link href={`/signin`} asChild>
+              <Link href={{ pathname: `/signin`, params: { returnTo: `/community` } }} asChild>
                 <Pressable {...elementProps(`community-guest-signin`)} style={styles.secondaryAction} accessibilityLabel={`Sign In To Post And Follow`}>
                   <LogIn {...elementProps(`community-guest-signin-icon`)} size={14} color={palette.accent} />
                   <Text {...elementProps(`community-guest-signin-label`)} style={styles.secondaryLabel}>
@@ -177,15 +190,72 @@ const Community = () => {
               <RefreshCw {...elementProps(`community-refresh-icon`)} size={15} color={palette.muted} />
             </Pressable>
           </View>
-          {state.loading ? [0, 1].map(index => (
+          {!!state.profileId && (
+            <View {...elementProps(`community-profile-filter`)} style={styles.filterBanner}>
+              <View {...elementProps(`community-profile-filter-details`)} style={styles.person}>
+                <Text {...elementProps(`community-profile-filter-name`)} style={styles.panelTitle}>
+                  {state.selectedProfile?.name ?? (state.loading ? `Loading profile…` : `Profile unavailable`)}
+                </Text>
+                <Text {...elementProps(`community-profile-filter-caption`)} style={styles.caption}>
+                  {state.selectedProfile?.description || `Showing eligible updates from this builder. Private profiles remain private.`}
+                </Text>
+              </View>
+              <Pressable
+                style={styles.refresh}
+                onPress={state.clearProfile}
+                accessibilityRole={`button`}
+                accessibilityLabel={`Show All Community Posts`}
+                {...elementProps(`community-profile-filter-clear`)}
+              >
+                <X {...elementProps(`community-profile-filter-clear-icon`)} size={16} color={palette.muted} />
+              </Pressable>
+            </View>
+          )}
+          <View {...elementProps(`community-search-controls`)} style={styles.searchControls}>
+            <View {...elementProps(`community-search-field`)} style={styles.searchField}>
+              <Search {...elementProps(`community-search-icon`)} size={15} color={palette.muted} />
+              <TextInput
+                value={state.search}
+                style={styles.searchInput}
+                onChangeText={state.setSearch}
+                placeholder={`Search posts and builders`}
+                accessibilityLabel={`Search Loaded Community Posts`}
+                placeholderTextColor={palette.muted}
+                {...elementProps(`community-search-input`)}
+              />
+            </View>
+            <View {...elementProps(`community-sort`)} style={styles.tabs} accessibilityRole={`tablist`}>
+              {([`newest`, `popular`] as const).map(sort => (
+                <Pressable
+                  key={sort}
+                  style={[styles.audience, state.sort === sort && styles.audienceActive]}
+                  accessibilityRole={`tab`}
+                  onPress={() => state.setSort(sort)}
+                  accessibilityState={{ selected: state.sort === sort }}
+                  {...elementProps(`community-sort-option`, sort)}
+                >
+                  <Sparkles {...elementProps(`community-sort-icon`, sort)} size={12} color={palette.accent} />
+                  <Text {...elementProps(`community-sort-label`, sort)} style={styles.audienceLabel}>
+                    {sort === `newest` ? `Newest` : `Most liked`}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+          {state.loading && !state.posts.length ? [0, 1].map(index => (
             <PostCardSkeleton key={index} scope={`post-${index}`} />
-          )) : state.posts.length ? state.posts.map(post => (
+          )) : state.visiblePosts.length ? state.visiblePosts.map(post => (
             <PostCard
               key={post.id}
               post={post}
+              publicProfiles={state.profiles}
               busy={state.busy}
               viewerId={state.viewerId}
               onUpdate={state.updatePost}
+              onLike={state.setLiked}
+              onComment={state.addComment}
+              onDeleteComment={state.deleteComment}
+              canComment={state.user?.profilePrivacy === `public`}
               confirming={state.deletingId === post.id}
               onCancel={() => state.setDeletingId(null)}
               onDelete={id => { void state.deletePost(id); }}
@@ -194,13 +264,13 @@ const Community = () => {
             <View {...elementProps(`community-feed-empty`)} style={styles.empty}>
               <MessageSquare {...elementProps(`community-feed-empty-icon`)} size={25} color={palette.accent} />
               <Text {...elementProps(`community-feed-empty-title`)} style={styles.emptyTitle}>
-                {emptyCopy.title}
+                {state.error ? `Community could not be loaded.` : state.search ? `No matching updates.` : state.profileId ? `No eligible updates from this builder.` : emptyCopy.title}
               </Text>
               <Text {...elementProps(`community-feed-empty-description`)} style={styles.emptyText}>
-                {emptyCopy.text}
+                {state.error ? `Your data has not been replaced with sample activity. Use Refresh to try again.` : state.search ? `Try a different search. Search covers the posts currently loaded.` : state.profileId ? `This profile may be private, unavailable, or have no updates in the current feed window.` : emptyCopy.text}
               </Text>
               {!state.user && state.view !== `public` && (
-                <Link href={`/signin`} asChild>
+                <Link href={{ pathname: `/signin`, params: { returnTo: `/community` } }} asChild>
                   <Pressable {...elementProps(`community-feed-empty-signin`)} style={styles.secondaryAction} accessibilityLabel={`Sign In To View Your Feed`}>
                     <LogIn {...elementProps(`community-feed-empty-signin-icon`)} size={14} color={palette.accent} />
                     <Text {...elementProps(`community-feed-empty-signin-label`)} style={styles.secondaryLabel}>
@@ -211,20 +281,49 @@ const Community = () => {
               )}
             </View>
           )}
+          {state.hasMorePosts && (
+            <Pressable
+              style={styles.secondaryAction}
+              accessibilityRole={`button`}
+              onPress={state.showMorePosts}
+              accessibilityLabel={`Show More Loaded Posts`}
+              {...elementProps(`community-show-more`)}
+            >
+              <ChevronDown {...elementProps(`community-show-more-icon`)} size={14} color={palette.accent} />
+              <Text {...elementProps(`community-show-more-label`)} style={styles.secondaryLabel}>
+                {`Show more · ${state.postCount} matching loaded post(s)`}
+              </Text>
+            </Pressable>
+          )}
+          {!!state.coverage && (
+            <Text {...elementProps(`community-feed-coverage`)} style={styles.caption}>
+              {state.coverage}
+            </Text>
+          )}
         </View>
         <View {...elementProps(`community-people`)} style={[styles.people, compact && styles.compactPeople]}>
+          {!!state.ownProfile && (
+            <View {...elementProps(`community-your-progress`)} style={styles.personCard}>
+              <Text {...elementProps(`community-your-progress-title`)} style={styles.panelTitle}>
+                {`Your contribution level`}
+              </Text>
+              <CommunityProgress profile={state.ownProfile} posts={state.progressPosts} scope={`your-level`} />
+            </View>
+          )}
+          <CommunityBoard profiles={state.profiles} posts={state.progressPosts} />
           <Text {...elementProps(`community-people-title`)} style={styles.panelTitle}>
             {`People & portfolios`}
           </Text>
           <Text {...elementProps(`community-people-description`)} style={styles.caption}>
             {`Public profiles and the domains they choose to share.`}
           </Text>
-          {state.loading ? [0, 1].map(index => (
+          {state.loading && !state.profiles.length ? [0, 1].map(index => (
             <ProfileCardSkeleton key={index} scope={`profile-${index}`} />
           )) : state.profiles.length ? state.profiles.map(profile => (
             <ProfileCard
               key={profile.id}
               profile={profile}
+              posts={state.progressPosts}
               busy={state.busy}
               viewerId={state.viewerId}
               onFollow={state.toggleFollow}
@@ -233,7 +332,7 @@ const Community = () => {
             <View {...elementProps(`community-people-empty`)} style={styles.personCard}>
               <UsersRound {...elementProps(`community-people-empty-icon`)} size={22} color={palette.accent} />
               <Text {...elementProps(`community-people-empty-text`)} style={styles.caption}>
-                {`No public profiles on this device yet. Profile privacy and shared domains can be changed in your profile settings.`}
+                {state.error ? `Profiles are unavailable while the community connection is interrupted.` : `Public profiles will appear as people join. Make your profile public and opt in to domain sharing in Profile to be discovered.`}
               </Text>
             </View>
           )}

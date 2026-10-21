@@ -1,0 +1,31 @@
+import { StyleSheet } from 'react-native';
+import type { ThemePalette } from '../../shared/themeContext/theme';
+
+export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  disabled: { opacity: .5 },
+  field: { gap: 7 },
+  dataScroll: { maxHeight: 190 },
+  dataToggle: { gap: 6, minHeight: 38, flexDirection: `row`, alignItems: `center` },
+  dataRow: { gap: 12, paddingVertical: 7, borderBottomWidth: 1, flexDirection: `row`, justifyContent: `space-between`, borderBottomColor: palette.line },
+  chartDates: { gap: 12, flexDirection: `row`, justifyContent: `space-between` },
+  actions: { gap: 8, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
+  row: { gap: 10, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
+  root: { gap: 12, paddingTop: 18, borderTopWidth: 1, borderTopColor: palette.line },
+  title: { fontSize: 14, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  label: { fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  score: { fontSize: 24, color: palette.ink, fontFamily: `DMSans_700Bold` },
+  subtitle: { fontSize: 12, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  selectedCountry: { borderColor: palette.accent, backgroundColor: palette.subtle },
+  selectedCountryText: { color: palette.accent },
+  countryText: { fontSize: 10, color: palette.muted, fontFamily: `DMSans_500Medium` },
+  buttonText: { flexShrink: 1, fontSize: 11, color: palette.accent, fontFamily: `DMSans_600SemiBold` },
+  note: { fontSize: 11, lineHeight: 18, color: palette.muted, fontFamily: `DMSans_400Regular` },
+  link: { paddingVertical: 8, fontSize: 11, color: palette.accent, textDecorationLine: `underline`, fontFamily: `DMSans_400Regular` },
+  error: { fontSize: 11, lineHeight: 18, color: palette.danger, fontFamily: `DMSans_400Regular` },
+  warning: { fontSize: 11, lineHeight: 18, color: palette.warning, fontFamily: `DMSans_400Regular` },
+  chart: { gap: 8, padding: 12, borderRadius: 7, backgroundColor: palette.paper },
+  panel: { gap: 12, padding: 16, borderWidth: 1, borderRadius: 9, borderColor: palette.line, backgroundColor: palette.input },
+  country: { padding: 8, minHeight: 38, borderWidth: 1, borderRadius: 7, justifyContent: `center`, borderColor: palette.line, backgroundColor: palette.paper },
+  input: { minHeight: 42, padding: 10, borderWidth: 1, borderRadius: 7, fontSize: 12, color: palette.ink, borderColor: palette.line, backgroundColor: palette.paper, fontFamily: `DMSans_400Regular` },
+  button: { gap: 6, minHeight: 42, maxWidth: `100%`, borderWidth: 1, borderRadius: 7, paddingVertical: 8, paddingHorizontal: 10, flexDirection: `row`, alignItems: `center`, borderColor: palette.line, backgroundColor: palette.paper },
+});

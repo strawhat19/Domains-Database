@@ -6,7 +6,7 @@ import { firebaseEnabled } from '../../shared/firebase/config';
 
 const ProfileSettings = () => {
   const state = useProfileSettings();
-  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `` : `Connect a backend to save your profile preferences.`;
+  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `Save your public profile to appear in Community. Sharing publishes domain names and project summaries from your portfolio; account details, notes, prices, and registrar credentials stay private. Save again to refresh shared domains.` : `Connect a backend to save your profile preferences.`;
   return (
     <form id={`profile-settings`} className={`profile-settings`} onSubmit={event => { event.preventDefault(); void state.save(); }}>
       <dl id={`profile-settings-record`} className={`profile-record profile-settings-record`}>
@@ -16,7 +16,7 @@ const ProfileSettings = () => {
             <div id={`profile-name-form`} className={`profile-name-form`}>
               <input required type={`text`} name={`name`} value={state.name} maxLength={100} disabled={state.busy} autoComplete={`name`} onChange={event => state.setName(event.target.value)} id={`profile-name-input`} className={`profile-input profile-name-input`} placeholder={`Your name or username`} />
               <div id={`profile-name-actions`} className={`profile-name-actions`}>
-                <button type={`submit`} aria-busy={state.busy} disabled={state.busy || !state.dirty} id={`profile-settings-save`} className={`profile-save-name`}><Save size={14} aria-hidden id={`profile-settings-save-icon`} className={`profile-settings-save-icon`} />{state.busy ? `Saving Profile` : `Save Profile`}</button>
+                <button type={`submit`} aria-busy={state.busy} disabled={state.busy || (!state.dirty && !state.canPublish)} id={`profile-settings-save`} className={`profile-save-name`}><Save size={14} aria-hidden id={`profile-settings-save-icon`} className={`profile-settings-save-icon`} />{state.busy ? `Saving Profile` : state.canPublish && !state.dirty ? `Refresh Public Profile` : `Save Profile`}</button>
                 <button type={`button`} onClick={state.cancel} disabled={state.busy || !state.dirty} id={`profile-settings-cancel`} className={`profile-cancel-name`}><RotateCcw size={14} aria-hidden id={`profile-settings-cancel-icon`} className={`profile-settings-cancel-icon`} />{`Cancel`}</button>
               </div>
               {(state.error || state.notice) && <p id={`profile-settings-feedback`} className={`profile-name-feedback${state.error ? ` is-error` : ` is-success`}`} role={state.error ? `alert` : `status`}>{state.error || state.notice}</p>}

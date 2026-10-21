@@ -7,9 +7,12 @@ import { genID, isAppCollectionID, getAppCollectionIDNumber } from '../common/id
 import { createFirestoreCollection } from '../firebase/collection';
 import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
 import type { ProfileInput, PublicProfile } from '../models/users/User';
+import { publishPublicDomains } from '../publicDirectory/domains';
+import { publishPublicPortfolio } from '../publicDirectory/portfolio.firebase';
 import type { SignInInput, SignUpInput, AuthenticationResult } from './types';
 import { AccountDeactivatedError, AccountDataCleanupError, type AccountAction } from './types';
-import { doc, Timestamp, collection, updateDoc, onSnapshot, runTransaction } from 'firebase/firestore';
+import { PUBLIC_PROFILE_LIMIT, readPublicProfile, projectPublicProfile, publicDirectoryError } from '../publicDirectory/profiles';
+import { doc, query, limit, where, orderBy, Timestamp, collection, updateDoc, onSnapshot, runTransaction, getDocsFromServer } from 'firebase/firestore';
 import { signOut as firebaseSignOut, onIdTokenChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile as updateFirebaseProfile, type User as FirebaseUser } from 'firebase/auth';
 
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
@@ -302,7 +305,19 @@ export const manageAccount = (action: AccountAction, expectedUserId: string): Pr
     await clearAccountData(expectedUserId, action === `delete-data-connections`);
     assertActor(uid);
     const now = new Date().toISOString();
-    await updateDoc(doc(getFirebaseDb(), `users`, expectedUserId), { description: ``, publicDomains: false, profilePrivacy: `private`, updated: now, lastUpdated: now });
+    await runTransaction(getFirebaseDb(), async transaction => {
+      const userRef = doc(getFirebaseDb(), `users`, expectedUserId);
+      const saved = await transaction.get(userRef);
+      assertActor(uid);
+      if (!saved.exists()) throw new Error(`Saved Firebase Account Could Not Be Found`);
+      const record = saved.data();
+      const current = readUser(record, getFirebaseAuth().currentUser!);
+      if (current.id !== expectedUserId || record.active !== true) throw new Error(`Sign In To Manage Your Account`);
+      const changes = { description: ``, publicDomains: false, profilePrivacy: `private` as const, updated: now, lastUpdated: now };
+      const projection = projectPublicProfile({ ...current, ...changes, photoURL: typeof record.photoURL === `string` ? record.photoURL : `` });
+      transaction.update(userRef, changes);
+      transaction.set(doc(getFirebaseDb(), `publicProfiles`, expectedUserId), projection);
+    });
     assertActor(uid);
     await firebaseSignOut(getFirebaseAuth());
     return null;
@@ -339,7 +354,13 @@ export const getUsers = (): Promise<User[]> => runOperation(usersCollection.get)
 export const subscribeUsers = usersCollection.subscribe;
 export const getUsersPage = (cursor: number | null = null) => runOperation(() => usersCollection.getPage(cursor));
 export const subscribeUsersPage = usersCollection.subscribePage;
-export const getPublicProfiles = async (): Promise<PublicProfile[]> => [];
+export const getPublicProfiles = async (): Promise<PublicProfile[]> => {
+  try {
+    const snapshots = await getDocsFromServer(query(collection(getFirebaseDb(), `publicProfiles`), where(`profilePrivacy`, `==`, `public`), orderBy(`__name__`), limit(PUBLIC_PROFILE_LIMIT)));
+    if (snapshots.metadata.fromCache || snapshots.metadata.hasPendingWrites) throw new Error(`Public Profiles Could Not Be Confirmed — Check Your Connection And Try Again`);
+    return snapshots.docs.map(snapshot => readPublicProfile(snapshot.data(), snapshot.id)).filter(profile => profile.profilePrivacy === `public`);
+  } catch (failure) { throw publicDirectoryError(failure); }
+};
 
 export const updateProfile = (input: ProfileInput, expectedUserId?: string): Promise<User> => runOperation(async () => {
   const session = await restoreSession();
@@ -347,22 +368,42 @@ export const updateProfile = (input: ProfileInput, expectedUserId?: string): Pro
   if (!user || (expectedUserId && user.id !== expectedUserId)) throw new Error(`Sign In To Update Your Profile`);
   if (!input || (input.name !== undefined && typeof input.name !== `string`)) throw new Error(`Enter A Valid Name`);
   if (input.description !== undefined && typeof input.description !== `string`) throw new Error(`Enter A Valid Bio`);
-  const name = input.name === undefined ? user.name : input.name.trim().replace(/\s+/g, ` `);
-  const description = input.description === undefined ? user.description : input.description.trim();
-  const profilePrivacy = input.profilePrivacy ?? user.profilePrivacy;
-  const publicDomains = input.publicDomains ?? user.publicDomains;
-  if (!name || name.length > 100) throw new Error(`Enter A Name Of 1 To 100 Characters`);
-  if (typeof description !== `string` || description.length > 2000) throw new Error(`Use A Bio Of Up To 2000 Characters`);
-  if (![`public`, `private`].includes(profilePrivacy)) throw new Error(`Choose Public Or Private`);
+  if (input.name !== undefined && (!input.name.trim() || input.name.trim().replace(/\s+/g, ` `).length > 100)) throw new Error(`Enter A Name Of 1 To 100 Characters`);
+  if (input.description !== undefined && input.description.trim().length > 2000) throw new Error(`Use A Bio Of Up To 2000 Characters`);
+  if (input.profilePrivacy !== undefined && ![`public`, `private`].includes(input.profilePrivacy)) throw new Error(`Choose Public Or Private`);
   if (input.publicDomains !== undefined && typeof input.publicDomains !== `boolean`) throw new Error(`Choose Whether To Share Domains`);
-  assertActor(user.firebase_uid ?? ``);
-  if (name === user.name && name === user.displayName && description === user.description
-    && profilePrivacy === user.profilePrivacy && publicDomains === user.publicDomains) return user;
+  const uid = user.firebase_uid ?? ``;
+  assertActor(uid);
+  const publishDomains = (input.profilePrivacy ?? user.profilePrivacy) === `public` && (input.publicDomains ?? user.publicDomains);
+  if (publishDomains) {
+    await publishPublicDomains(user.id);
+    await publishPublicPortfolio(user.id);
+  }
+  assertActor(uid);
   const now = new Date().toISOString();
-  const changes = { name, description, publicDomains, profilePrivacy, displayName: name, updated: now, lastUpdated: now };
-  await updateDoc(doc(getFirebaseDb(), `users`, user.id), changes);
-  assertActor(user.firebase_uid ?? ``);
-  const updated = new User({ ...user, ...changes, signedIn: true });
+  const updated = await runTransaction(getFirebaseDb(), async transaction => {
+    const userRef = doc(getFirebaseDb(), `users`, user.id);
+    const saved = await transaction.get(userRef);
+    assertActor(uid);
+    if (!saved.exists()) throw new Error(`Saved Firebase Account Could Not Be Found`);
+    const record = saved.data();
+    const current = readUser(record, getFirebaseAuth().currentUser!);
+    if (current.id !== user.id || current.number !== user.number || record.active !== true) throw new Error(`Sign In To Update Your Profile`);
+    const name = input.name === undefined ? current.name : input.name.trim().replace(/\s+/g, ` `);
+    const description = input.description === undefined ? current.description : input.description.trim();
+    const profilePrivacy = input.profilePrivacy ?? current.profilePrivacy;
+    const publicDomains = input.publicDomains ?? current.publicDomains;
+    if (profilePrivacy === `public` && publicDomains && !publishDomains) throw new Error(`Your Profile Sharing Changed — Save Again To Publish Your Portfolio`);
+    if (!name || name.length > 100) throw new Error(`Enter A Name Of 1 To 100 Characters`);
+    if (typeof description !== `string` || description.length > 2000) throw new Error(`Use A Bio Of Up To 2000 Characters`);
+    const changes = { name, description, publicDomains, profilePrivacy, displayName: name, updated: now, lastUpdated: now };
+    const result = new User({ ...current, ...changes, signedIn: true });
+    const projection = projectPublicProfile({ ...result, photoURL: typeof record.photoURL === `string` ? record.photoURL : `` });
+    transaction.update(userRef, changes);
+    transaction.set(doc(getFirebaseDb(), `publicProfiles`, user.id), projection);
+    return result;
+  });
+  assertActor(uid);
   if (cachedSession?.result.user.id === user.id) cachedSession = { ...cachedSession, result: { ...cachedSession.result, user: updated } };
   notifyAuthListeners();
   return updated;

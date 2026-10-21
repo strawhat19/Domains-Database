@@ -1,5 +1,6 @@
 import './styles.scss';
 import { createPortal } from 'react-dom';
+import DomainMarketInsights from '../DomainMarketInsights';
 import { useDomainAnalyticsDialog } from './useDomainAnalyticsDialog';
 import { X, Globe, Search, RefreshCw, ChartNoAxesCombined, ArrowUpRight } from 'lucide-react';
 import { useDomainAnalytics, formatAnalyticsDate, type DomainAnalyticsProps } from './useDomainAnalytics';
@@ -53,8 +54,9 @@ const DomainAnalytics = ({ domain, suffix, onClose }: DomainAnalyticsProps) => {
         </header>
         <div id={`${scope}-body`} className={`domain-analytics-body`}>
           <p id={`${scope}-description`} className={`domain-analytics-description`}>
-            {`Public registration and DNS checks, domain name statistics, and keyword research.`}
+            {`Free market research, public registration and DNS checks, and domain name statistics.`}
           </p>
+          <DomainMarketInsights key={domain} domain={domain} suffix={scope} />
           {state.loading && (
             <div id={`${scope}-loading`} role={`status`} aria-live={`polite`} className={`domain-analytics-loading`}>
               <RefreshCw id={`${scope}-loading-icon`} className={`domain-analytics-loading-icon`} size={18} aria-hidden={`true`} />
@@ -157,7 +159,7 @@ const DomainAnalytics = ({ domain, suffix, onClose }: DomainAnalyticsProps) => {
                     </a>
                   ))}
                 </div>
-                <p id={`${scope}-provider-note`} className={`domain-analytics-provider-note`}>{`Live search volume, CPC, authority, and valuation need a provider connection. Imported inventory metrics, when present, retain their source date.`}</p>
+                <p id={`${scope}-provider-note`} className={`domain-analytics-provider-note`}>{`Search interest and backlink strength are available through the free research tools above. Monthly search volume, CPC, and traffic estimates are shown only when supplied by imported inventory, with its source date.`}</p>
               </section>
               {!!state.snapshot.errors?.length && <p id={`${scope}-partial-errors`} role={`status`} className={`domain-analytics-warning`}>{state.snapshot.errors.join(` · `)}</p>}
             </>
@@ -165,7 +167,7 @@ const DomainAnalytics = ({ domain, suffix, onClose }: DomainAnalyticsProps) => {
         </div>
         <footer id={`${scope}-footer`} className={`domain-analytics-footer`}>
           <span id={`${scope}-checked-at`} className={`domain-analytics-note`}>
-            {state.snapshot ? `Public Check: ${formatAnalyticsDate(state.snapshot.checkedAt)}` : `Public data · No API key required`}
+            {state.snapshot ? `Public Check: ${formatAnalyticsDate(state.snapshot.checkedAt)}` : `Registration & DNS · No API Key Required`}
           </span>
           <button
             type={`button`}

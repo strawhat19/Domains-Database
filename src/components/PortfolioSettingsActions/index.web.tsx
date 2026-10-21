@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 import type { PortfolioSettingsActionsProps } from './types';
 import BooleanSetting from '../SegmentedControl/BooleanSetting.web';
 import { usePortfolioRowCopy } from '../PortfolioRowCopy/usePortfolioRowCopy';
-import { X, Eye, Copy, Check, EyeOff, FileText, FolderTree, ListOrdered } from 'lucide-react';
+import { X, Eye, Copy, Check, EyeOff, FileJson, FileText, FolderTree, ListOrdered } from 'lucide-react';
 
 const COPY_OPTIONS = [
   {
@@ -23,6 +23,12 @@ const COPY_OPTIONS = [
     format: `detail-tree`,
     label: `Detailed Tree`,
     description: `The same tree with collection and group descriptions`,
+  },
+  {
+    Icon: FileJson,
+    format: `json`,
+    label: `Copy JSON`,
+    description: `Domain records, collections and groups in the API response format`,
   },
 ] as const;
 
@@ -106,7 +112,8 @@ const PortfolioSettingsActions = ({ id, label, hidden, sections, onToggleVisibil
             </button>
           </div>
           <p id={`${id}-copy-description`} className={`portfolio-settings-copy-description`}>
-            {state.count ? `Choose a format for ${state.count} ${state.count === 1 ? `domain` : `domains`}.` : `No domains to copy with the current options.`}
+            {state.count ? `Choose a format for ${state.count} ${state.count === 1 ? `domain` : `domains`}.`
+              : state.allowEmptyJson ? `Copy collection and group details as JSON.` : `No domains to copy with the current options.`}
           </p>
           {state.showHiddenOptions && (
             <div id={`${id}-copy-hidden-field`} className={`portfolio-settings-copy-hidden-field`}>
@@ -122,7 +129,7 @@ const PortfolioSettingsActions = ({ id, label, hidden, sections, onToggleVisibil
             </div>
           )}
           <div id={`${id}-copy-formats`} className={`portfolio-settings-copy-formats`}>
-            {COPY_OPTIONS.filter(option => treeAvailable || option.format === `list`).map(({ Icon, label: formatLabel, format, description }) => {
+            {COPY_OPTIONS.filter(option => treeAvailable || option.format === `list` || option.format === `json`).map(({ Icon, label: formatLabel, format, description }) => {
               const optionId = `${id}-copy-${format}`;
               return (
                 <button
@@ -131,8 +138,8 @@ const PortfolioSettingsActions = ({ id, label, hidden, sections, onToggleVisibil
                   type={`button`}
                   onClick={() => state.copyDomains(format)}
                   aria-describedby={`${optionId}-description`}
-                  ref={format === `list` ? firstOptionRef : undefined}
-                  disabled={state.unavailable || state.copying || !state.count}
+                  ref={format === (state.count ? `list` : `json`) ? firstOptionRef : undefined}
+                  disabled={state.unavailable || state.copying || !state.count && (format !== `json` || !state.allowEmptyJson)}
                   className={`portfolio-button portfolio-button-secondary portfolio-settings-copy-format`}
                 >
                   <Icon size={17} aria-hidden={`true`} id={`${optionId}-icon`} className={`portfolio-button-icon`} />

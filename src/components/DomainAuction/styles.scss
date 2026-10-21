@@ -29,10 +29,18 @@
   &-primary { color: var(--contrast); background: var(--accent); border-color: var(--accent); }
   &-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
   &-secondary { color: var(--ink); background: var(--paper); border-color: var(--line); }
+  &-secondary[aria-pressed='true'] { background: var(--subtle); border-color: var(--accent); }
   &-secondary:hover:not(:disabled) { background: var(--subtle); border-color: var(--line-strong); }
 }
 .auction-notice { padding: 16px 20px; margin-bottom: 20px; border-radius: 6px; background: var(--input); border: 1px solid var(--line); }
 .auction-notice-title { margin: 0 0 6px; font-size: 12px; color: var(--warning); font-family: var(--font-bold); }
+.auction-feed-details { gap: 12px 28px; display: flex; margin: 14px 0; flex-wrap: wrap; }
+.auction-feed-detail { gap: 4px; display: flex; flex-direction: column; }
+.auction-feed-label { font-size: 10px; color: var(--ink); font-family: var(--font-bold); }
+.auction-feed-value { margin: 0; font-size: 10px; line-height: 1.7; color: var(--muted); }
+.auction-feed-refresh-error { margin: 10px 0 0; font-size: 12px; line-height: 1.7; color: var(--warning); }
+.auction-button-status { display: inline-flex; }
+.auction-loading-icon { animation: auction-feed-spin 1s linear infinite; }
 .auction-import-panel { gap: 12px; display: flex; padding: 20px; margin-bottom: 20px; border-radius: 6px; flex-direction: column; background: var(--paper); border: 1px solid var(--line); }
 .auction-import-heading { gap: 12px; display: flex; align-items: center; justify-content: space-between; }
 .auction-file-input { width: 100%; font-size: 12px; color: var(--ink); }
@@ -89,6 +97,7 @@
 .auction-data-footnote { margin: 0; font-size: 11px; line-height: 1.7; color: var(--muted); padding: 16px 20px; border-top: 1px solid var(--line); }
 .auction-sr-only { width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; position: absolute; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
 @keyframes auction-skeleton-pulse { to { opacity: .45; } }
+@keyframes auction-feed-spin { to { transform: rotate(360deg); } }
 @media (max-width: 800px) {
   .auction-heading { align-items: flex-start; flex-direction: column; }
   .auction-search-row { flex-wrap: wrap; }
@@ -106,5 +115,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .auction-button, .auction-query-wrap, .auction-field-input { transition: none; }
-  .auction-skeleton { animation: none; }
+  .auction-skeleton, .auction-loading-icon { animation: none; }
 }

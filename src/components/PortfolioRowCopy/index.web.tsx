@@ -60,6 +60,7 @@ const PortfolioRowCopy = (props: PortfolioRowCopyProps) => {
             onCopy={state.copyDomains}
             treeAvailable={treeAvailable}
             onClose={state.closeCopyOptions}
+            allowEmptyJson={state.allowEmptyJson}
             error={state.copyError ? state.copyMessage : undefined}
             hiddenOptions={state.showHiddenOptions ? { included: state.includeHidden, onChange: state.changeIncludeHidden } : undefined}
           />

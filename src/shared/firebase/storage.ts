@@ -1,7 +1,9 @@
 import { utf8ToBytes } from '@noble/hashes/utils.js';
 import { getFirebaseDb, getFirebaseAuth } from './client';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
+import { projectPublicDomain, PUBLIC_DOMAIN_WRITE_LIMIT } from '../publicDirectory/domains';
 import { doc, runTransaction, type Transaction, type DocumentData } from 'firebase/firestore';
+import { projectPublicPortfolio, PUBLIC_PORTFOLIO_DOCUMENT, PUBLIC_PORTFOLIO_PREFERENCES_KEY } from '../publicDirectory/portfolio';
 import { getRecordTimestamps, packRecordTimestamps, withoutRecordTimestamps, type RecordTimestamps } from './recordTimestamps';
 import { splitSnapshots, readCloudSnapshot, clearCloudSnapshots, publishCloudSnapshot, subscribeCloudSnapshot, storageWriteBaselines, storageSubscribedBaselines, type SavedValue, type StorageScope, type SplitSnapshot } from './snapshots';
 
@@ -127,18 +129,26 @@ const writeSplitChunk = async (transaction: Transaction, scope: StorageScope, sp
   for (const change of changes) {
     if (change.record) transaction.set(recordRef(scope, split, change.id), change.record);
     else transaction.delete(recordRef(scope, split, change.id));
+    if (split.type === `Domain`) {
+      const reference = doc(getFirebaseDb(), `publicProfiles`, scope.userId, `domains`, change.id);
+      if (!change.record) transaction.delete(reference);
+      else {
+        const projection = projectPublicDomain(change.record, scope.userId);
+        if (projection) transaction.set(reference, projection);
+      }
+    }
   }
   const timestamps = packRecordTimestamps(recordTimestamps);
   transaction.set(snapshotRef(scope, split.name), { snapshot, ids: [...records.keys()], revision: revision + 1, ...(timestamps.length ? { recordTimestamps: timestamps } : {}) });
   return revision + 1;
 };
-const splitWriteChunks = (changes: RecordChange[], oldRecords: Map<string, DocumentData>) => {
+const splitWriteChunks = (changes: RecordChange[], oldRecords: Map<string, DocumentData>, recordLimit = RECORDS_PER_TRANSACTION) => {
   const chunks: RecordChange[][] = [];
   let chunk: RecordChange[] = [];
   let bytes = 0;
   for (const change of changes) {
     const recordBytes = utf8ToBytes(JSON.stringify(change.record ?? oldRecords.get(change.id) ?? {})).byteLength + 500;
-    if (chunk.length && (chunk.length >= RECORDS_PER_TRANSACTION || bytes + recordBytes > MAX_TRANSACTION_RECORD_BYTES)) {
+    if (chunk.length && (chunk.length >= recordLimit || bytes + recordBytes > MAX_TRANSACTION_RECORD_BYTES)) {
       chunks.push(chunk); chunk = []; bytes = 0;
     }
     chunk.push(change);
@@ -149,7 +159,7 @@ const splitWriteChunks = (changes: RecordChange[], oldRecords: Map<string, Docum
 };
 const writeSplitSnapshot = async (key: string, scope: StorageScope, split: SplitSnapshot, value: string, previous: SavedValue, firebaseUid: string) => {
   const { ids, snapshot, oldRecords, changes, timestampRecords, recordTimestamps } = splitWritePlan(scope, split, value, previous);
-  const chunks = splitWriteChunks(changes, oldRecords);
+  const chunks = splitWriteChunks(changes, oldRecords, split.type === `Domain` ? PUBLIC_DOMAIN_WRITE_LIMIT : RECORDS_PER_TRANSACTION);
   const plannedIds = new Set(oldRecords.keys());
   const plannedTimestamps = { ...previous.recordTimestamps, ...recordTimestamps };
   for (const chunk of chunks) {
@@ -209,6 +219,12 @@ const writeValue = async (transaction: Transaction, scope: StorageScope, value: 
     if (!reference || !current || current.id !== index.id || current.key !== scope.key) throw new Error(`Saved Cloud Data Could Not Be Read`);
     assertActor(firebaseUid);
     const record = { ...current, value, revision: revision + 1, updated: new Date().toISOString() };
+    if (scope.key === PUBLIC_PORTFOLIO_PREFERENCES_KEY) {
+      const projection = projectPublicPortfolio(parseRecord(value), scope.userId, current.id, record.revision, record.updated);
+      const shared = doc(getFirebaseDb(), `publicProfiles`, scope.userId, `portfolio`, PUBLIC_PORTFOLIO_DOCUMENT);
+      if (projection) transaction.set(shared, projection);
+      else transaction.delete(shared);
+    }
     assertDocumentSize(record);
     transaction.set(reference, record);
   } else {
@@ -218,6 +234,12 @@ const writeValue = async (transaction: Transaction, scope: StorageScope, value: 
     if (!Number.isSafeInteger(number) || number < 1) throw new Error(`Saved Cloud Counter Could Not Be Read`);
     const identity = genID(`Data`, number, scope.key);
     assertActor(firebaseUid);
+    if (scope.key === PUBLIC_PORTFOLIO_PREFERENCES_KEY) {
+      const projection = projectPublicPortfolio(parseRecord(value), scope.userId, identity.id, 1, identity.date);
+      const shared = doc(getFirebaseDb(), `publicProfiles`, scope.userId, `portfolio`, PUBLIC_PORTFOLIO_DOCUMENT);
+      if (projection) transaction.set(shared, projection);
+      else transaction.delete(shared);
+    }
     transaction.set(dataRef(scope, identity.id), {
       value, number, id: identity.id, key: scope.key, uid: scope.userId,
       revision: 1, created: identity.date, updated: identity.date,
@@ -261,7 +283,7 @@ export const removeFirestoreStorage = async (key: string): Promise<void> => {
   if (previous?.value === null) {
     const latest = await readCloudSnapshot(scope);
     assertActor(firebaseUid);
-    if (latest.value === null) { savedValues.set(key, latest); return; }
+    if (latest.value === null && scope.key !== PUBLIC_PORTFOLIO_PREFERENCES_KEY) { savedValues.set(key, latest); return; }
   }
   savedValues.delete(key);
   await runTransaction(getFirebaseDb(), async transaction => {
@@ -272,6 +294,7 @@ export const removeFirestoreStorage = async (key: string): Promise<void> => {
     assertActor(firebaseUid);
     if (reference) transaction.delete(reference);
     if (index) transaction.delete(keyRef(scope));
+    if (scope.key === PUBLIC_PORTFOLIO_PREFERENCES_KEY) transaction.delete(doc(getFirebaseDb(), `publicProfiles`, scope.userId, `portfolio`, PUBLIC_PORTFOLIO_DOCUMENT));
   });
   assertActor(firebaseUid);
   publishCloudSnapshot(scope, { value: null, revision: 0, firebaseUid });

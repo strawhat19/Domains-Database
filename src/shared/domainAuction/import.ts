@@ -117,7 +117,7 @@ const assertImportSize = (text: string) => {
   }
 };
 
-export const parseAuctionInventory = (text: string): AuctionInventoryImport => {
+export const parseAuctionInventory = (text: string, options: { allowEmpty?: boolean } = {}): AuctionInventoryImport => {
   assertImportSize(text);
   let parsed: unknown;
   try {
@@ -161,6 +161,8 @@ export const parseAuctionInventory = (text: string): AuctionInventoryImport => {
       inventoryMetrics: inventoryMetrics(row),
     });
   }
-  if (!records.length) throw new Error(`Inventory Contains No Supported Listing(s) — Choose A GoDaddy JSON Auction Feed`);
+  if (!records.length && (!options.allowEmpty || root.data.length)) {
+    throw new Error(`Inventory Contains No Supported Listing(s) — Choose A GoDaddy JSON Auction Feed`);
+  }
   return { records, skippedCount, sourceCheckedAt };
 };

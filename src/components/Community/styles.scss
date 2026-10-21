@@ -11,6 +11,22 @@
 :is(.community-post-skeleton, [data-class='community-post-skeleton']), :is(.community-profile-skeleton, [data-class='community-profile-skeleton']) { animation: community-pulse 1.4s ease-in-out infinite; }
 :is(.community-post-card, [data-class='community-post-card']), :is(.community-profile-card, [data-class='community-profile-card']) { overflow-wrap: anywhere; }
 @keyframes community-pulse { 50% { opacity: .45; } }
+:is(.community-search-input, [data-class='community-search-input']):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+:is(.community-board-builder, [data-class='community-board-builder']), :is(.community-show-more, [data-class='community-show-more']) {
+  transition: opacity .2s ease, background-color .2s ease;
+  &:hover { opacity: .8; }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-class^='community-'], [class^='community-'], [data-class^='post-discussion-'], [class^='post-discussion-'] {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
 @media (max-width: 600px) {
   :is(.community-page, [data-class='community-page']) { padding: 28px 0 !important; }
   :is(.community-title, [data-class='community-title']) { font-size: 29px !important; }

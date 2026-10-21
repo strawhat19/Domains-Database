@@ -1,10 +1,22 @@
 {
   "indexes": [
+    { "collectionGroup": "communityPosts", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "authorId", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
+    { "collectionGroup": "communityPosts", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "authorId", "order": "ASCENDING" }, { "fieldPath": "audience", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
+    { "collectionGroup": "comments", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "authorId", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
     { "collectionGroup": "events", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "endsAt", "order": "ASCENDING" }, { "fieldPath": "startsAt", "order": "ASCENDING" }] },
     { "collectionGroup": "notifications", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "active", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
     { "collectionGroup": "plans", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "active", "order": "ASCENDING" }, { "fieldPath": "displayOrder", "order": "ASCENDING" }, { "fieldPath": "number", "order": "ASCENDING" }] }
   ],
   "fieldOverrides": [
+    { "collectionGroup": "publicProfiles", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "publicProfiles", "fieldPath": "profilePrivacy", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "communityPosts", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "communityFollows", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "socialFollowing", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "likeActors", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "likes", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "comments", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "socialFollowing", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "data", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "events", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "users", "fieldPath": "*", "indexes": [] },

@@ -26,12 +26,10 @@ export const useAppShell = () => {
   const searchViewport = pathname === routes.search.href && width >= 1000;
   const publicPages = [routes.signin.href, routes.signup.href, routes.terms.href, routes.contact.href, routes.privacy.href, `/api`] as string[];
   const fitViewport = pathname !== routes.about.href && (publicPages.includes(pathname)
-    || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href));
+    || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href && pathname !== routes.community.href && pathname !== `/discover`));
   const visibleNavigation = navigation.filter(item =>
     (item.href !== routes.contact.href || (featuresReady && flags.contact))
-    && (item.href !== routes.search.href || eligible || connectionsLoading)
-    && (item.href !== routes.auction.href || signedIn)
-    && (item.href !== routes.community.href || signedIn)).map(item => {
+    && (item.href !== routes.search.href || eligible || connectionsLoading)).map(item => {
       const count = item.href === routes.domains.href ? domainCount : item.href === routes.watching.href ? watchingCount : undefined;
       const countLoading = item.href === routes.domains.href ? domainsLoading : item.href === routes.watching.href && watchingLoading;
       const accessibilityLabel = count === undefined

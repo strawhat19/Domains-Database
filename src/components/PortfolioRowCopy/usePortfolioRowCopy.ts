@@ -15,9 +15,14 @@ export interface PortfolioRowCopyProps {
 }
 
 const getSectionDomainIds = (sections: PortfolioSections) => [...new Set([
+  ...sections.mainDomains.map(domain => domain.id),
   ...sections.mainGroups.flatMap(group => group.domains.map(domain => domain.id)),
+  ...sections.collections.flatMap(section => section.domains.map(domain => domain.id)),
   ...sections.collections.flatMap(section => section.groups.flatMap(group => group.domains.map(domain => domain.id))),
 ])];
+
+const hasSectionMetadata = (sections: PortfolioSections) => sections.collections.length > 0
+  || sections.mainGroups.some(group => Boolean(group.customGroupId));
 
 export const usePortfolioRowCopy = ({ id, label, sections, disabled = false, treeAvailable = true, focusFallbackId }: PortfolioRowCopyProps) => {
   const preferences = usePortfolioPreferences();
@@ -35,7 +40,8 @@ export const usePortfolioRowCopy = ({ id, label, sections, disabled = false, tre
     [sections, preferences, includeHidden, showHiddenOptions]);
   const domainIds = useMemo(() => getSectionDomainIds(copySections), [copySections]);
   const count = domainIds.length;
-  const unavailable = disabled || !originalCount;
+  const allowEmptyJson = hasSectionMetadata(copySections);
+  const unavailable = disabled || !originalCount && !hasSectionMetadata(sections);
 
   useEffect(() => {
     mounted.current = true;
@@ -95,16 +101,21 @@ export const usePortfolioRowCopy = ({ id, label, sections, disabled = false, tre
   };
 
   const copyDomains = async (format: PortfolioCopyFormat) => {
-    if (!open || unavailable || !count || pendingCopy.current || (format !== `list` && !treeAvailable)) return;
-    const text = buildPortfolioCopyText(copySections, domainIds, true, format);
-    if (!text) return;
+    const requiresTree = format === `tree` || format === `detail-tree`;
+    if (!open || unavailable || pendingCopy.current || requiresTree && !treeAvailable
+      || !count && (format !== `json` || !allowEmptyJson)) return;
     pendingCopy.current = true;
     setCopyMessage(``);
     setCopyState(`copying`);
     try {
+      const text = buildPortfolioCopyText(copySections, domainIds, true, format);
+      if (!text) {
+        setCopyState(`idle`);
+        return;
+      }
       await copyText(text, `${id}-buffer`);
       if (!mounted.current) return;
-      setCopyMessage(`Copied ${count} Domain(s) From ${label}`);
+      setCopyMessage(format === `json` ? `Copied JSON From ${label}` : `Copied ${count} Domain(s) From ${label}`);
       setCopyState(`copied`);
       setOpen(false);
       restoreFocus();
@@ -125,6 +136,7 @@ export const usePortfolioRowCopy = ({ id, label, sections, disabled = false, tre
     copyDomains,
     copyMessage,
     includeHidden,
+    allowEmptyJson,
     openCopyOptions,
     showHiddenOptions,
     closeCopyOptions,

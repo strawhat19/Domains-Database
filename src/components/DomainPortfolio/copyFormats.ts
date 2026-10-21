@@ -1,8 +1,9 @@
 import type { DomainRecord } from '../../shared/types';
 import { allowDomainsInCollections } from '../../shared/config';
+import { buildPortfolioJson } from '../../shared/domainData/portfolio';
 import type { PortfolioGroup, PortfolioSections, PortfolioPreferences } from '../../shared/portfolioPreferences/types';
 
-export type PortfolioCopyFormat = `list` | `tree` | `detail-tree`;
+export type PortfolioCopyFormat = `json` | `list` | `tree` | `detail-tree`;
 
 interface CopyTreeNode {
   label: string;
@@ -44,6 +45,7 @@ export const buildPortfolioCopyText = (
   grouped: boolean,
   format: PortfolioCopyFormat,
 ): string => {
+  if (format === `json`) return buildPortfolioJson(sections, visibleIds, grouped);
   const visible = new Set(visibleIds);
   const mainDomains = sections.mainGroups.flatMap(group => group.domains);
   const allDomains = sections.collections.flatMap(section => section.groups.flatMap(group => group.domains)).concat(mainDomains);

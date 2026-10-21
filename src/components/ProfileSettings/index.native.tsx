@@ -16,7 +16,7 @@ const ProfileSettings = () => {
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `` : `Connect a backend to save your profile preferences.`;
+  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `Save your public profile to appear in Community. Sharing publishes domain names and project summaries from your portfolio; account details, notes, prices, and registrar credentials stay private. Save again to refresh shared domains.` : `Connect a backend to save your profile preferences.`;
   const row = (id: string, label: string, value: ReactNode, input = false) => <View {...elementProps(`profile-record-row`, id)} style={[styles.row, id !== `name` && styles.separatedRow]}>
     <Text {...elementProps(`profile-label`, id)} style={[styles.label, width <= 480 && styles.compactLabel, input && styles.inputLabel]}>{label}</Text>
     <View {...elementProps(`profile-value`, id)} style={styles.value}>{value}</View>
@@ -25,9 +25,9 @@ const ProfileSettings = () => {
     {row(`name`, `Name`, <View {...elementProps(`profile-name-form`)} style={styles.nameForm}>
       <TextInput {...elementProps(`profile-name-input`)} maxLength={100} value={state.name} editable={!state.busy} autoComplete={`name`} style={[styles.input, styles.nameInput]} onChangeText={state.setName} accessibilityLabel={`Name`} placeholder={`Your name or username`} placeholderTextColor={palette.placeholder} />
       <View {...elementProps(`profile-name-actions`)} style={styles.actions}>
-        <Pressable {...elementProps(`profile-settings-save`)} style={[styles.button, (state.busy || !state.dirty) && styles.disabled]} disabled={state.busy || !state.dirty} onPress={() => void state.save()} accessibilityRole={`button`} accessibilityLabel={`Save Profile`}>
+        <Pressable {...elementProps(`profile-settings-save`)} style={[styles.button, (state.busy || (!state.dirty && !state.canPublish)) && styles.disabled]} disabled={state.busy || (!state.dirty && !state.canPublish)} onPress={() => void state.save()} accessibilityRole={`button`} accessibilityLabel={state.canPublish && !state.dirty ? `Refresh Public Profile` : `Save Profile`}>
           <Save {...elementProps(`profile-settings-save-icon`)} size={14} color={palette.contrast} />
-          <Text {...elementProps(`profile-settings-save-text`)} style={styles.buttonText}>{state.busy ? `Saving Profile` : `Save Profile`}</Text>
+          <Text {...elementProps(`profile-settings-save-text`)} style={styles.buttonText}>{state.busy ? `Saving Profile` : state.canPublish && !state.dirty ? `Refresh Public Profile` : `Save Profile`}</Text>
         </Pressable>
         <Pressable {...elementProps(`profile-settings-cancel`)} style={[styles.cancel, (state.busy || !state.dirty) && styles.disabled]} disabled={state.busy || !state.dirty} onPress={state.cancel} accessibilityRole={`button`} accessibilityLabel={`Cancel Profile Changes`}>
           <RotateCcw {...elementProps(`profile-settings-cancel-icon`)} size={14} color={palette.accent} />

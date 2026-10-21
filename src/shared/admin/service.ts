@@ -8,6 +8,7 @@ import type { AdminSnapshot, UserAccessInput } from './types';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { getFirebaseDb, getFirebaseAuth } from '../firebase/client';
 import { subscribeAdminNotifications } from '../notifications/service';
+import { projectPublicProfile } from '../publicDirectory/profiles';
 import { createFirestoreCollection, type CollectionPage } from '../firebase/collection';
 import { canAccessAdmin, canManageRoles, canInspectAccounts, canManageAccountStatus } from './permissions';
 import { getUsersPage as getLocalUsersPage, restoreSession, subscribeAuthState, subscribeUsersPage as subscribeLocalUsersPage } from '../authentication/service';
@@ -208,6 +209,7 @@ export const updateUserAccess = async (id: string, input: UserAccessInput): Prom
         created: serverTimestamp(),
       });
       transaction.update(targetRef, { role, active: activeStatus, roles: [role], adminLastAuditId: auditId, updated: serverTimestamp(), lastUpdated: serverTimestamp() });
+      if (activeStatus !== target.active) transaction.set(doc(database, `publicProfiles`, id), projectPublicProfile({ ...target, active: activeStatus, photoURL: typeof targetRecord.data().photoURL === `string` ? targetRecord.data().photoURL : `` }));
       return new User({ ...target, role, active: activeStatus, roles: [role], updated: now.toISOString(), lastUpdated: now.toISOString() });
     });
   } catch (failure) { throw errorFromFailure(failure); }

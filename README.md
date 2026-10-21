@@ -43,10 +43,35 @@ For mobile, run `npm start` and open the project with an Expo Go version support
 - Connected-registrar availability/price comparison with external registrar purchase links
 - Automatic Hostinger external-website discovery with RDAP registrar identification
 - Free PageSpeed mobile performance and Tranco rank columns, with source dates and missing-data states
+- On-demand free Ahrefs Domain Rating and SerpApi Google Trends research in domain Analytics
 - Automatic connection checks and domain imports after saving connections, signing in, and restoring a session
 - An Owner-only Dashboard showing paged accounts and your own portfolio statistics
 
 Registrar connections use the credentials saved in your account to read domains through the Expo server. Signed-in data is saved in Firestore and can be loaded on another device using the same Firebase account. Guest records remain separate on the current device. Auto-renew controls update inventory records only; change the actual setting in your registrar account. GoDaddy Auctions is a source label retained on existing records; GoDaddy's domain portfolio does not identify auction acquisitions separately. The documented public Auctions API cannot enumerate all account bids, wins, or purchase history, so this app has no automatic Auctions activity import. See the [GoDaddy Auctions operations](https://developer.godaddy.com/en/docs/api-users/auctions).
+
+## Free Auction Inventory
+
+Open `/auction` and choose **Load Free Auctions** to browse GoDaddy's public Most Active inventory without an account, API key or manual download. **Refresh Free Auctions** checks the cached feed; the source is fetched at most once per 15-minute cache window on each running server instance. The page shows the provider's build time, the server fetch time and the next eligible source-check time. Bidding and purchasing open the provider's own listing.
+
+`GET /api/auction-inventory` downloads the fixed official JSON ZIP on the existing Expo Node server, with bounded download/decompression, validation and request deduplication. Known expired listings are omitted; unsupported or size-limited records are reported. Public feed records stay in memory and do not overwrite imported inventory or create per-account Firestore copies. Saved JSON imports and the explicit fictional preview remain separate modes.
+
+The updated app/server must be deployed together for the hosted page to use this endpoint. No auction-provider credentials or new Firestore rules are required. See [the auction feed notes](docs/auction-feed.md) for limits, source details and deployment prerequisites. No tests, builds or UI checks were run for this change.
+
+## Free Domain Market Research
+
+Choose **Analytics** from a search result, auction listing, watching row, or domain card. Portfolio table rows also have an Analytics icon beside the domain name. The research panel offers separate **Load Domain Rating** and **Analyze Search Interest** actions, an editable phrase, country selection, and a 12-month relative-interest chart. Opening a dialog or changing a filter does not call either research provider.
+
+Configure the free account keys `AHREFS_FREE_API_KEY` and `SERPAPI_API_KEY` in ignored `.env.local` and the private hosting environment. `POST /api/domain-market` uses Ahrefs' free Domain Rating endpoint and checks SerpApi's zero-cost plan and remaining free allowance before each uncached Trends search. No paid data provider or paid fallback is included. Without keys, setup-needed states remain visible and the external Google Trends link still works.
+
+Domain Rating measures backlink strength; search interest is a normalized 0–100 series. Neither is a visitor count, monthly keyword volume, or domain valuation. Results retain their provider and fetch date. See [the market research notes](docs/domain-market.md) for setup, caching, quota limits, and deployment prerequisites. Source changes are uncommitted and undeployed; no tests, builds, or UI checks were run.
+
+## Domain Data API And Copy JSON
+
+`GET /api/domains` returns a versioned JSON response containing domains, their relevant saved data, collections, groups, access/source metadata, timestamps, and cursor pagination. `domainDataAPI.getDomains()` exposes this endpoint to app code. Authenticated callers default to their own inventory; visitors can request a public user's portfolio, and an active trusted Owner can read another user's permitted private domain data. Credentials and unrelated private account records are excluded.
+
+The existing web copy menus now include **Copy JSON**, using the same response structure for a domain, group, collection, or current portfolio selection. Clipboard snapshots identify their source as displayed records and respect the Include Hidden choice. No extra provider requests run during either API reads or copying.
+
+Public collection/group publication and narrow Owner reads require the updated `firestore.rules`; source changes alone do not deploy those permissions. See [the API guide](docs/domain-data-api.md) for query examples, field/access boundaries, pagination, sharing setup, and deployment prerequisites. No tests, builds, or UI checks were run.
 
 ## Firebase account data and API
 

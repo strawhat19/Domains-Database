@@ -1,3 +1,14 @@
-import { getCommunity, createPost, updatePost, deletePost, setFollowing } from '../shared/social/service';
+import {
+  setLiked,
+  createPost,
+  updatePost,
+  deletePost,
+  addComment,
+  getCommunity,
+  setFollowing,
+  deleteComment,
+  getPostComments,
+  subscribeCommunity,
+} from '../shared/social/service';
 
-export const socialAPI = { getCommunity, createPost, updatePost, deletePost, setFollowing };
+export const socialAPI = { setLiked, createPost, updatePost, deletePost, addComment, getCommunity, setFollowing, deleteComment, getPostComments, subscribeCommunity };

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import DomainMarketInsights from '../DomainMarketInsights';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -48,10 +49,17 @@ const DomainAnalytics = ({ domain, suffix, onClose }: DomainAnalyticsProps) => {
               <X {...elementProps(`domain-analytics-close-icon`, scope)} size={19} color={palette.muted} />
             </Pressable>
           </View>
-          <ScrollView {...elementProps(`domain-analytics-body`, scope)} style={styles.scroll} contentContainerStyle={styles.body}>
+          <ScrollView
+            style={styles.scroll}
+            keyboardDismissMode={`on-drag`}
+            keyboardShouldPersistTaps={`handled`}
+            contentContainerStyle={styles.body}
+            {...elementProps(`domain-analytics-body`, scope)}
+          >
             <Text {...elementProps(`domain-analytics-description`, scope)} style={styles.description}>
-              {`Public registration and DNS checks, domain name statistics, and keyword research.`}
+              {`Free market research, public registration and DNS checks, and domain name statistics.`}
             </Text>
+            <DomainMarketInsights key={domain} domain={domain} suffix={scope} />
             {state.loading && (
               <View {...elementProps(`domain-analytics-loading`, scope)} style={styles.loading} accessibilityLiveRegion={`polite`}>
                 <View {...elementProps(`domain-analytics-loading-heading`, scope)} style={styles.inline}>
@@ -154,7 +162,7 @@ const DomainAnalytics = ({ domain, suffix, onClose }: DomainAnalyticsProps) => {
                     ))}
                   </View>
                   {!!state.linkError && <Text {...elementProps(`domain-analytics-link-error`, scope)} style={styles.error} accessibilityRole={`alert`}>{state.linkError}</Text>}
-                  <Text {...elementProps(`domain-analytics-provider-note`, scope)} style={styles.providerNote}>{`Live search volume, CPC, authority, and valuation need a provider connection. Imported inventory metrics, when present, retain their source date.`}</Text>
+                  <Text {...elementProps(`domain-analytics-provider-note`, scope)} style={styles.providerNote}>{`Search interest and backlink strength are available through the free research tools above. Monthly search volume, CPC, and traffic estimates are shown only when supplied by imported inventory, with its source date.`}</Text>
                 </View>
                 {!!state.snapshot.errors?.length && <Text {...elementProps(`domain-analytics-partial-errors`, scope)} style={styles.warning}>{state.snapshot.errors.join(` · `)}</Text>}
               </>
@@ -162,7 +170,7 @@ const DomainAnalytics = ({ domain, suffix, onClose }: DomainAnalyticsProps) => {
           </ScrollView>
           <View {...elementProps(`domain-analytics-footer`, scope)} style={styles.footer}>
             <Text {...elementProps(`domain-analytics-checked-at`, scope)} style={[styles.note, styles.checkedAt]}>
-              {state.snapshot ? `Public Check: ${formatAnalyticsDate(state.snapshot.checkedAt)}` : `Public data · No API key required`}
+              {state.snapshot ? `Public Check: ${formatAnalyticsDate(state.snapshot.checkedAt)}` : `Registration & DNS · No API Key Required`}
             </Text>
             <Pressable
               onPress={state.refresh}

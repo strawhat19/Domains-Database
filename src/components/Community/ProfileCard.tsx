@@ -1,12 +1,13 @@
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useMemo, useState } from 'react';
+import CommunityProgress from '../CommunityProgress';
 import { createStyles } from './styles.native';
 import { elementProps } from '../../shared/elementProps';
 import { Text, View, Pressable, Linking } from 'react-native';
 import { publicHttpsUrl } from '../../shared/social/content';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import type { CommunityProfile } from '../../shared/social/types';
+import type { FeedPost, CommunityProfile } from '../../shared/social/types';
 import type { PublicProfile } from '../../shared/models/users/User';
 import { Globe2, LockKeyhole, UserCheck, UserPlus, LogIn, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react-native';
 
@@ -57,12 +58,13 @@ export const ProfileCardSkeleton = ({ scope }: { scope: string }) => {
 
 interface ProfileCardProps {
   busy: boolean;
+  posts?: FeedPost[];
   viewerId: string | null;
   profile: CommunityProfile;
   onFollow: (id: string, following: boolean) => void;
 }
 
-const ProfileCard = ({ profile, viewerId, busy, onFollow }: ProfileCardProps) => {
+const ProfileCard = ({ profile, viewerId, busy, onFollow, posts = [] }: ProfileCardProps) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const own = profile.id === viewerId;
@@ -76,9 +78,13 @@ const ProfileCard = ({ profile, viewerId, busy, onFollow }: ProfileCardProps) =>
       <View {...elementProps(`community-profile-top`, id)} style={styles.cardTop}>
         <ProfileAvatar profile={profile} scope={`profile-${id}`} />
         <View {...elementProps(`community-profile-person`, id)} style={styles.person}>
-          <Text {...elementProps(`community-profile-name`, id)} style={styles.name}>
-            {profile.name}
-          </Text>
+          <Link href={{ pathname: `/community`, params: { profile: id } }} asChild>
+            <Pressable {...elementProps(`community-profile-name-link`, id)} accessibilityRole={`link`} accessibilityLabel={`View ${profile.name}'s Community Activity`}>
+              <Text {...elementProps(`community-profile-name`, id)} style={styles.name}>
+                {profile.name}
+              </Text>
+            </Pressable>
+          </Link>
           <View {...elementProps(`community-profile-visibility`, id)} style={styles.metadata}>
             <VisibilityIcon
               size={11}
@@ -96,6 +102,9 @@ const ProfileCard = ({ profile, viewerId, busy, onFollow }: ProfileCardProps) =>
           {profile.description}
         </Text>
       )}
+      {profile.profilePrivacy === `public` && (
+        <CommunityProgress profile={profile} posts={posts} scope={`discovery`} />
+      )}
       {!own && (viewerId ? (
         <Pressable
           disabled={busy}
@@ -112,7 +121,7 @@ const ProfileCard = ({ profile, viewerId, busy, onFollow }: ProfileCardProps) =>
           </Text>
         </Pressable>
       ) : (
-        <Link href={`/signin`} asChild>
+        <Link href={{ pathname: `/signin`, params: { returnTo: `/community` } }} asChild>
           <Pressable {...elementProps(`community-follow-signin`, id)} style={styles.secondaryAction} accessibilityLabel={`Sign In To Follow ${profile.name}`}>
             <LogIn {...elementProps(`community-follow-signin-icon`, id)} size={14} color={palette.accent} />
             <Text {...elementProps(`community-follow-signin-label`, id)} style={styles.secondaryLabel}>

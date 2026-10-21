@@ -21,7 +21,9 @@ const DomainAuction = () => {
   const { width } = useWindowDimensions();
   const [readingFile, setReadingFile] = useState(false);
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const disabled = state.loading || state.busy || readingFile;
+  const disabled = state.loading || state.busy || state.feedLoading || readingFile;
+  const feedDisabled = state.busy || state.feedLoading || readingFile;
+  const formatTimestamp = (value?: string | null) => value ? new Date(value).toLocaleString() : `Not Provided`;
   const choices = (key: string, label: string, options: readonly { id: string; label: string }[], value: string, onChange: (value: string) => void) => (
     <View key={key} {...elementProps(`auction-filter-choice-field`, key)} style={styles.field}>
       <Text {...elementProps(`auction-filter-choice-label`, key)} style={styles.label}>{label}</Text>
@@ -70,7 +72,22 @@ const DomainAuction = () => {
         <Text {...elementProps(`auction-title`)} style={styles.title} accessibilityRole={`header`}>{`Domain Auction`}</Text>
         <Text {...elementProps(`auction-description`)} style={styles.description}>{`Explore auction sources, narrow your search, and research domains before buying.`}</Text>
         <View {...elementProps(`auction-heading-actions`)} style={styles.actions}>
-          <Pressable {...elementProps(`auction-preview-toggle`)} style={[styles.button, disabled && styles.disabled]} disabled={disabled} onPress={() => state.setPreview(!state.preview)} accessibilityRole={`button`} accessibilityState={{ selected: state.preview, disabled }}>
+          <Pressable
+            disabled={feedDisabled}
+            accessibilityRole={`button`}
+            onPress={() => void state.loadFreeAuctions()}
+            {...elementProps(`auction-load-free`)}
+            accessibilityState={{ busy: state.feedLoading, disabled: feedDisabled }}
+            style={[styles.button, styles.primaryButton, feedDisabled && styles.disabled]}
+          >
+            {state.feedLoading ? <ActivityIndicator {...elementProps(`auction-load-free-progress`)} size={`small`} color={palette.contrast} /> : <RefreshCw {...elementProps(`auction-load-free-icon`)} size={15} color={palette.contrast} />}
+            <Text {...elementProps(`auction-load-free-text`)} style={[styles.buttonText, styles.primaryButtonText]}>{state.feedLoading ? `Loading Free Auctions…` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</Text>
+          </Pressable>
+          <Pressable {...elementProps(`auction-saved-toggle`)} style={[styles.button, !state.preview && !state.feedMode && styles.selectedChoice, disabled && styles.disabled]} disabled={disabled} onPress={state.showSavedInventory} accessibilityRole={`button`} accessibilityState={{ selected: !state.preview && !state.feedMode, disabled }}>
+            <Download {...elementProps(`auction-saved-icon`)} size={15} color={palette.ink} />
+            <Text {...elementProps(`auction-saved-text`)} style={styles.buttonText}>{`Saved Inventory`}</Text>
+          </Pressable>
+          <Pressable {...elementProps(`auction-preview-toggle`)} style={[styles.button, state.preview && styles.selectedChoice, disabled && styles.disabled]} disabled={disabled} onPress={() => state.setPreview(!state.preview)} accessibilityRole={`button`} accessibilityState={{ selected: state.preview, disabled }}>
             <Eye {...elementProps(`auction-preview-icon`)} size={15} color={palette.ink} />
             <Text {...elementProps(`auction-preview-text`)} style={styles.buttonText}>{state.preview ? `Hide Preview` : `Show Preview`}</Text>
           </Pressable>
@@ -79,17 +96,37 @@ const DomainAuction = () => {
             <Text {...elementProps(`auction-import-text`)} style={styles.buttonText}>{`Import Inventory`}</Text>
           </Pressable>
           <Link href={routes.connections.href} asChild>
-            <Pressable {...elementProps(`auction-connections-link`)} style={[styles.button, styles.primaryButton]} accessibilityRole={`link`}>
-              <PlugZap {...elementProps(`auction-connections-icon`)} size={15} color={palette.contrast} />
-              <Text {...elementProps(`auction-connections-text`)} style={[styles.buttonText, styles.primaryButtonText]}>{`Connections`}</Text>
+            <Pressable {...elementProps(`auction-connections-link`)} style={styles.button} accessibilityRole={`link`}>
+              <PlugZap {...elementProps(`auction-connections-icon`)} size={15} color={palette.ink} />
+              <Text {...elementProps(`auction-connections-text`)} style={styles.buttonText}>{`Connections`}</Text>
             </Pressable>
           </Link>
         </View>
       </View>
       <View {...elementProps(`auction-preview-notice`)} style={styles.notice}>
-        <Text {...elementProps(`auction-preview-notice-title`)} style={styles.noticeTitle}>{state.preview ? `Frontend Preview` : `Local Auction Inventory`}</Text>
-        <Text {...elementProps(`auction-preview-notice-copy`)} style={styles.description}>{`Import free GoDaddy inventory JSON to browse a saved snapshot. Live syncing is not connected. Show Preview loads fictional domains, prices, bids, dates, and ages; it is separate from your imported inventory and saved domains.`}</Text>
-        <Text {...elementProps(`auction-connection-description`)} style={styles.description}>{`Browse provider auctions below or download free GoDaddy inventory. Live auction syncing needs a supported provider and backend connection. Bidding and purchases happen on the provider website.`}</Text>
+        <Text {...elementProps(`auction-preview-notice-title`)} style={styles.noticeTitle}>{state.preview ? `Frontend Preview` : state.feedMode ? `Free GoDaddy Most Active Feed` : `Saved Auction Inventory`}</Text>
+        <Text {...elementProps(`auction-preview-notice-copy`)} style={styles.description}>{state.preview ? `These fictional domains, prices, bids, dates, and ages let you try the filters. Preview is separate from the public feed, imported inventory, and saved domains.` : state.feedMode ? `Browse a cached snapshot from GoDaddy’s free Most Active auction inventory. Prices, bids, and closing times reflect the snapshot and do not update in real time. This public feed does not replace or save over your imported inventory.` : `Load Free Auctions to browse GoDaddy’s Most Active listings without an account or API key. You can also import inventory JSON to browse your own saved snapshot, or choose Show Preview to try the filters with fictional records.`}</Text>
+        {state.feedMode && state.feed && (
+          <Text {...elementProps(`auction-feed-coverage`)} style={styles.description}>{`${state.records.length} current listing(s) shown · ${state.feed.endedCount} ended listing(s) omitted at fetch · ${state.feed.skippedCount} unsupported record(s) omitted${state.feed.limitedCount ? ` · ${state.feed.limitedCount} listing(s) omitted by the snapshot size limit` : ``}. Ended listings leave this view as the snapshot ages.`}</Text>
+        )}
+        {state.feedMode && state.feed && state.feedRefreshFailed && (
+          <Text {...elementProps(`auction-feed-refresh-error`)} style={styles.feedRefreshError} accessibilityLiveRegion={`polite`}>{`Refresh failed; showing snapshot fetched ${formatTimestamp(state.feed.fetchedAt)}.`}</Text>
+        )}
+        {state.feedMode && state.feed && (
+          <View {...elementProps(`auction-feed-details`)} style={styles.feedDetails}>
+            {[
+              { id: `source-built`, label: `Source Updated`, value: formatTimestamp(state.feed.sourceCheckedAt) },
+              { id: `fetched`, label: `Fetched`, value: formatTimestamp(state.feed.fetchedAt) },
+              { id: `refresh`, label: `Next Source Check After`, value: formatTimestamp(state.feed.refreshAfter) },
+            ].map(detail => (
+              <View key={detail.id} {...elementProps(`auction-feed-detail`, detail.id)} style={styles.feedDetail}>
+                <Text {...elementProps(`auction-feed-label`, detail.id)} style={styles.label}>{detail.label}</Text>
+                <Text {...elementProps(`auction-feed-value`, detail.id)} style={styles.hint}>{detail.value}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+        <Text {...elementProps(`auction-connection-description`)} style={styles.description}>{state.feedMode ? `Refresh checks the latest cached snapshot; the source is checked again after the time above. Bidding and purchases happen on the provider website. Verify the current listing there before acting.` : `Browse provider auctions below or download free GoDaddy inventory. Bidding and purchases happen on the provider website.`}</Text>
       </View>
       {!!state.error && <Toast id={`auction-error`} message={state.error} onDismiss={state.clearError} />}
       {!!state.notice && <Toast kind={`success`} id={`auction-notice`} message={state.notice} onDismiss={state.clearNotice} />}
@@ -232,15 +269,15 @@ const DomainAuction = () => {
         </View>
       </View>
       <View {...elementProps(`auction-results-heading`)} style={styles.sectionHeading}>
-        <Text {...elementProps(`auction-results-title`)} style={styles.sectionTitle}>{state.preview ? `Preview Auction Inventory` : `Auction Inventory`}</Text>
-        <Text {...elementProps(`auction-results-count`)} style={styles.hint} accessibilityLiveRegion={`polite`}>{state.loading ? `Loading…` : `${state.matchingCount} of ${state.records.length} domain(s)`}</Text>
+        <Text {...elementProps(`auction-results-title`)} style={styles.sectionTitle}>{state.preview ? `Preview Auction Inventory` : state.feedMode ? `GoDaddy Most Active Auctions` : `Saved Auction Inventory`}</Text>
+        <Text {...elementProps(`auction-results-count`)} style={styles.hint} accessibilityLiveRegion={`polite`}>{state.feedLoading ? `Refreshing…` : state.loading ? `Loading…` : `${state.matchingCount} of ${state.records.length} domain(s)`}</Text>
       </View>
       <View {...elementProps(`auction-results-tools`)} style={styles.choices}>
         <Pressable {...elementProps(`auction-reload-snapshot`)} style={[styles.textButton, disabled && styles.disabled]} disabled={disabled} onPress={state.reloadListings} accessibilityRole={`button`} accessibilityLabel={`Reload Saved Inventory`}>
           <RefreshCw {...elementProps(`auction-reload-icon`)} size={13} color={palette.accent} />
           <Text {...elementProps(`auction-reload-text`)} style={styles.textButtonText}>{`Reload Saved`}</Text>
         </Pressable>
-        <Pressable {...elementProps(`auction-clear-inventory`)} style={[styles.textButton, (disabled || state.preview || (!state.records.length && !state.error)) && styles.disabled]} disabled={disabled || state.preview || (!state.records.length && !state.error)} onPress={() => void state.clearInventory()} accessibilityRole={`button`}>
+        <Pressable {...elementProps(`auction-clear-inventory`)} style={[styles.textButton, (disabled || state.preview || state.feedMode || (!state.records.length && !state.error)) && styles.disabled]} disabled={disabled || state.preview || state.feedMode || (!state.records.length && !state.error)} onPress={() => void state.clearInventory()} accessibilityRole={`button`}>
           <Trash2 {...elementProps(`auction-clear-icon`)} size={13} color={palette.danger} />
           <Text {...elementProps(`auction-clear-text`)} style={[styles.textButtonText, { color: palette.danger }]}>{`Clear Imported`}</Text>
         </Pressable>
@@ -257,10 +294,10 @@ const DomainAuction = () => {
           <View {...elementProps(`auction-empty`)} style={styles.empty}>
             <Gavel {...elementProps(`auction-empty-icon`)} size={25} color={palette.muted} />
             <Text {...elementProps(`auction-empty-title`)} style={styles.emptyTitle}>{state.error ? `Auction Data Could Not Be Loaded` : state.records.length ? `No Matching Domains` : `Choose An Auction Source`}</Text>
-            <Text {...elementProps(`auction-empty-copy`)} style={[styles.description, styles.emptyCopy]}>{state.error ? `Review the error above before trying again.` : state.records.length ? `Try fewer filters or reset them to view the inventory.` : `Import free GoDaddy inventory to fill the table, browse provider listings, or show the frontend preview to explore the filters.`}</Text>
-            <Pressable {...elementProps(`auction-empty-action`)} style={styles.button} onPress={state.records.length ? state.resetFilters : () => state.setPreview(!state.preview)} accessibilityRole={`button`}>
-              {state.records.length ? <RotateCcw {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.ink} /> : <Eye {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.ink} />}
-              <Text {...elementProps(`auction-empty-action-text`)} style={styles.buttonText}>{state.records.length ? `Reset Filters` : state.preview ? `Hide Preview` : `Show Preview`}</Text>
+            <Text {...elementProps(`auction-empty-copy`)} style={[styles.description, styles.emptyCopy]}>{state.error ? `Review the error above, then retry loading free auctions or choose saved inventory.` : state.records.length ? `Try fewer filters or reset them to view the inventory.` : state.feedMode ? `This snapshot has no current listings. Refresh later or browse the provider website.` : `Load free GoDaddy auctions, import your own inventory, or use Show Preview above to try the filters with fictional records.`}</Text>
+            <Pressable {...elementProps(`auction-empty-action`)} style={[styles.button, styles.primaryButton, (state.records.length ? disabled : feedDisabled) && styles.disabled]} disabled={state.records.length ? disabled : feedDisabled} onPress={state.records.length ? state.resetFilters : () => void state.loadFreeAuctions()} accessibilityRole={`button`}>
+              {state.records.length ? <RotateCcw {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.contrast} /> : <RefreshCw {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.contrast} />}
+              <Text {...elementProps(`auction-empty-action-text`)} style={[styles.buttonText, styles.primaryButtonText]}>{state.records.length ? `Reset Filters` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</Text>
             </Pressable>
           </View>
         )}
@@ -280,7 +317,7 @@ const DomainAuction = () => {
           </View>
         </View>
       )}
-      <Text {...elementProps(`auction-data-footnote`)} style={styles.hint}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : `${state.storageMessage} Import a fresh file to update prices and metrics; Reload Saved opens the last imported snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</Text>
+      <Text {...elementProps(`auction-data-footnote`)} style={styles.hint}>{state.preview ? `Preview values are fictional and do not represent domains offered for sale.` : state.feedMode ? `Free GoDaddy Most Active feed. Refresh checks the latest cached snapshot; listings are not a real-time bidding service.` : `${state.storageMessage} Import a fresh file to update prices and metrics; Reload Saved opens the last imported snapshot.`} {`Source valuations are estimates. Verify current listing details, bid, eligibility, fees, renewal cost, and closing time with the provider.`}</Text>
     </View>
   );
 };

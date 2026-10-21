@@ -113,6 +113,7 @@ service cloud.firestore {
         && data.role in ['Guest', 'Subscriber', 'Customer', 'Editor', 'Moderator', 'Admin', 'Administrator', 'Developer', 'Owner']
         && data.roles == [data.role] && data.active is bool
         && data.updated == request.time && data.lastUpdated == request.time
+        && (data.active == resource.data.active || syncedPublicProfile(userId))
         && data.adminLastAuditId is string && data.adminLastAuditId != resource.data.get('adminLastAuditId', '')
         && !exists(auditPath(data.adminLastAuditId)) && audit.targetId == userId && audit.actorId == actorId()
         && audit.actorFirebaseUid == request.auth.uid && audit.beforeRole == resource.data.role && audit.afterRole == data.role
@@ -380,6 +381,273 @@ service cloud.firestore {
         && !exists(eventPath(data.lastEventId)) && getAfter(eventPath(data.lastEventId)).data.id == data.lastEventId
         && getAfter(eventPath(data.lastEventId)).data.number == data.number;
     }
+    // Public projections contain display fields only; source mutations atomically mirror privacy.
+    function publicProfilePath(userId) { return /databases/$(database)/documents/publicProfiles/$(userId); }
+    function socialPostPath(postId) { return /databases/$(database)/documents/communityPosts/$(postId); }
+    function socialFollowPath(followId) { return /databases/$(database)/documents/communityFollows/$(followId); }
+    function socialFollowingPath(userId, targetId) { return /databases/$(database)/documents/users/$(userId)/socialFollowing/$(targetId); }
+    function socialCounterPath(kind) { return /databases/$(database)/documents/counters/$(kind); }
+    function socialLikePath(postId, likeId) { return /databases/$(database)/documents/communityPosts/$(postId)/likes/$(likeId); }
+    function socialLikeActorPath(postId, userId) { return /databases/$(database)/documents/communityPosts/$(postId)/likeActors/$(userId); }
+    function socialCommentPath(postId, commentId) { return /databases/$(database)/documents/communityPosts/$(postId)/comments/$(commentId); }
+    function socialRecordIdentity(recordId, recordType) {
+      return recordIdentity(recordId, recordType) && recordId.size() <= 240
+        && recordId.matches(recordType + '_' + string(request.resource.data.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+');
+    }
+    function socialActor() { return signedIn() && exists(identityPath()) && ownsAccount(actorId()); }
+    function socialPublicAuthor(userId) {
+      return exists(publicProfilePath(userId)) && get(publicProfilePath(userId)).data.profilePrivacy == 'public'
+        && get(userPath(userId)).data.active == true && get(userPath(userId)).data.profilePrivacy == 'public';
+    }
+    function socialReadablePost(data) {
+      return ownsAccount(data.authorId) || (socialPublicAuthor(data.authorId)
+        && (data.audience == 'public' || (data.audience == 'followers' && socialActor()
+          && exists(socialFollowingPath(actorId(), data.authorId)))));
+    }
+    function socialReadablePostId(postId) { return exists(socialPostPath(postId)) && socialReadablePost(get(socialPostPath(postId)).data); }
+    function syncedPublicProfile(userId) {
+      let profile = getAfter(publicProfilePath(userId)).data;
+      let source = getAfter(userPath(userId)).data;
+      return profile.id == userId && profile.name == source.name && profile.description == source.description
+        && profile.color == source.color && profile.publicDomains == source.publicDomains
+        && profile.profilePrivacy == (source.active == true ? source.profilePrivacy : 'private')
+        && (profile.photoURL == '' || profile.photoURL == source.get('photoURL', ''));
+    }
+    function publicProfileValues(userId) {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'name', 'color', 'photoURL', 'description', 'publicDomains', 'profilePrivacy'])
+        && data.keys().hasOnly(['id', 'name', 'color', 'photoURL', 'description', 'publicDomains', 'profilePrivacy'])
+        && data.id == userId && data.id is string && data.id.size() <= 240
+        && userId.matches('User_' + string(getAfter(userPath(userId)).data.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.description is string && data.description.size() <= 2000
+        && data.color is map && data.color.keys().hasAll(['name', 'type', 'color']) && data.color.keys().hasOnly(['name', 'type', 'color'])
+        && data.color.name is string && data.color.name.size() <= 100 && data.color.type in ['light', 'dark']
+        && data.color.color is string && data.color.color.matches('^#[a-fA-F0-9]{3}([a-fA-F0-9]{3})?$')
+        && data.photoURL is string && data.photoURL.size() <= 2048
+        && (data.photoURL == '' || data.photoURL.matches('^https://[^/@]+/.*'))
+        && data.publicDomains is bool && data.profilePrivacy in ['public', 'private'] && syncedPublicProfile(userId);
+    }
+    function publicDomainsReadable(userId) {
+      return socialPublicAuthor(userId) && get(userPath(userId)).data.publicDomains == true
+        && get(publicProfilePath(userId)).data.publicDomains == true;
+    }
+    function publicPortfolioPath(userId) {
+      return /databases/$(database)/documents/publicProfiles/$(userId)/portfolio/shared;
+    }
+    function portfolioPreferencesIndexPath(userId) {
+      let key = 'domains-database%3Apreferences%3Av1';
+      return /databases/$(database)/documents/users/$(userId)/storageKeys/$(key);
+    }
+    function portfolioPreferencesDataPath(userId, recordId) {
+      return /databases/$(database)/documents/users/$(userId)/data/$(recordId);
+    }
+    function publicPortfolioSourceIdentity(data) {
+      return data.sourceDataId is string && data.sourceDataId.size() <= 240
+        && data.sourceDataId.matches('Data_[1-9][0-9]*_.+')
+        && data.sourceRevision is int && data.sourceRevision > 0 && data.sourceRevision <= 9007199254740991;
+    }
+    function publicPortfolioSourceCurrent(data, userId) {
+      return publicPortfolioSourceIdentity(data) && exists(portfolioPreferencesDataPath(userId, data.sourceDataId))
+        && exists(portfolioPreferencesIndexPath(userId))
+        && get(portfolioPreferencesIndexPath(userId)).data.id == data.sourceDataId
+        && get(portfolioPreferencesIndexPath(userId)).data.key == 'domains-database:preferences:v1'
+        && get(portfolioPreferencesDataPath(userId, data.sourceDataId)).data.uid == userId
+        && get(portfolioPreferencesDataPath(userId, data.sourceDataId)).data.key == 'domains-database:preferences:v1'
+        && get(portfolioPreferencesDataPath(userId, data.sourceDataId)).data.revision == data.sourceRevision;
+    }
+    function publicPortfolioSourceAfter(data, userId) {
+      return existsAfter(portfolioPreferencesDataPath(userId, data.sourceDataId))
+        && existsAfter(portfolioPreferencesIndexPath(userId))
+        && getAfter(portfolioPreferencesIndexPath(userId)).data.id == data.sourceDataId
+        && getAfter(portfolioPreferencesIndexPath(userId)).data.key == 'domains-database:preferences:v1'
+        && getAfter(portfolioPreferencesDataPath(userId, data.sourceDataId)).data.uid == userId
+        && getAfter(portfolioPreferencesDataPath(userId, data.sourceDataId)).data.key == 'domains-database:preferences:v1'
+        && getAfter(portfolioPreferencesDataPath(userId, data.sourceDataId)).data.revision == data.sourceRevision;
+    }
+    function publicPortfolioValues(userId) {
+      let data = request.resource.data;
+      return data.keys().hasAll(['version', 'userId', 'updatedAt', 'sourceDataId', 'sourceRevision', 'collections', 'groups'])
+        && data.keys().hasOnly(['version', 'userId', 'updatedAt', 'sourceDataId', 'sourceRevision', 'collections', 'groups'])
+        && data.version == 1 && data.userId == userId && publicPortfolioSourceIdentity(data)
+        && data.updatedAt is string && data.updatedAt.size() > 0 && data.updatedAt.size() <= 100
+        && data.collections is list && data.collections.size() > 0 && data.collections.size() <= 200
+        && data.groups is list && data.groups.size() <= 500 && publicPortfolioSourceAfter(data, userId);
+    }
+    function publicDomainMatches(data, source, userId, recordId) {
+      return data.keys().hasAll(['id', 'name', 'userId', 'created', 'expiresAt', 'description', 'projectStatus', 'registrar'])
+        && data.keys().hasOnly(['id', 'name', 'userId', 'created', 'expiresAt', 'description', 'projectStatus', 'registrar', 'tld', 'mvp', 'future', 'createdAt', 'difficulty'])
+        && data.id == recordId && data.userId == userId && source.id == recordId && source.uid == userId
+        && source.get('isSample', false) != true
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 253
+        && data.created is string && data.created.size() <= 100 && data.expiresAt is string && data.expiresAt.size() <= 100
+        && data.description is string && data.description.size() <= 750000
+        && data.projectStatus is string && data.projectStatus.size() <= 100
+        && data.registrar is string && data.registrar.size() <= 100
+        && (!('tld' in data) || (data.tld is string && data.tld.size() <= 100))
+        && (!('mvp' in data) || (data.mvp is string && data.mvp.size() <= 750000))
+        && (!('future' in data) || (data.future is string && data.future.size() <= 750000))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 100))
+        && (!('difficulty' in data) || data.difficulty in ['Simple', 'Business', 'Professional', 'Enterprise'])
+        && data.name == source.name && data.created == source.created && data.expiresAt == source.expiresAt
+        && data.description == source.description && data.projectStatus == source.projectStatus && data.registrar == source.registrar
+        && data.get('tld', null) == source.get('tld', null) && data.get('mvp', null) == source.get('mvp', null)
+        && data.get('future', null) == source.get('future', null) && data.get('createdAt', null) == source.get('createdAt', null)
+        && data.get('difficulty', null) == source.get('difficulty', null);
+    }
+    function publicDomainValues(userId, recordId) {
+      return publicDomainMatches(request.resource.data, getAfter(/databases/$(database)/documents/users/$(userId)/domains/$(recordId)).data, userId, recordId);
+    }
+    function syncedPublicDomain(userId, recordId) {
+      return request.resource.data.get('isSample', false) == true
+        ? !existsAfter(/databases/$(database)/documents/publicProfiles/$(userId)/domains/$(recordId))
+        : publicDomainMatches(getAfter(/databases/$(database)/documents/publicProfiles/$(userId)/domains/$(recordId)).data, request.resource.data, userId, recordId);
+    }
+    function socialPostValues() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['id', 'type', 'number', 'body', 'authorId', 'audience', 'likeCount', 'commentCount', 'created', 'updated'])
+        && data.keys().hasOnly(['id', 'type', 'number', 'body', 'authorId', 'audience', 'likeCount', 'commentCount', 'created', 'updated', 'engagement'])
+        && data.type == 'Post' && data.id is string && data.id.size() <= 240
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991
+        && data.body is string && data.body.size() > 0 && data.body.size() <= 8000
+        && data.authorId is string && data.authorId.size() <= 240 && data.audience in ['public', 'followers', 'private']
+        && data.likeCount is int && data.likeCount >= 0 && data.likeCount <= 9007199254740991
+        && data.commentCount is int && data.commentCount >= 0 && data.commentCount <= 9007199254740991
+        && data.created is timestamp && data.updated is timestamp
+        && (!('engagement' in data) || (data.engagement is map && data.engagement.keys().hasAll(['kind', 'recordId'])
+          && data.engagement.keys().hasOnly(['kind', 'recordId'])
+          && data.engagement.kind in ['like-add', 'like-remove', 'comment-add', 'comment-remove']
+          && data.engagement.recordId is string && data.engagement.recordId.size() <= 240));
+    }
+    function newSocialNumber(kind, recordId, number) {
+      let counter = getAfter(socialCounterPath(kind)).data;
+      return counter.number == number && counter.lastRecordId == recordId
+        && (!(kind in ['communityLikes', 'communityComments']) || counter.postId == request.resource.data.postId)
+        && number == (exists(socialCounterPath(kind)) ? get(socialCounterPath(kind)).data.number + 1 : 1);
+    }
+    function newSocialCounter(kind) {
+      let data = request.resource.data;
+      let nested = kind in ['communityLikes', 'communityComments'];
+      return socialActor() && data.keys().hasAll(['number', 'lastRecordId'])
+        && data.keys().hasOnly(nested ? ['number', 'lastRecordId', 'postId'] : ['number', 'lastRecordId'])
+        && data.number is int && data.number > 0 && data.number <= 9007199254740991
+        && data.lastRecordId is string && data.lastRecordId.size() <= 240
+        && data.number == (exists(socialCounterPath(kind)) ? get(socialCounterPath(kind)).data.number + 1 : 1)
+        && (kind == 'communityPosts' ? (!exists(socialPostPath(data.lastRecordId))
+            && getAfter(socialPostPath(data.lastRecordId)).data.number == data.number && getAfter(socialPostPath(data.lastRecordId)).data.authorId == actorId())
+          : kind == 'communityFollows' ? (!exists(socialFollowPath(data.lastRecordId))
+            && getAfter(socialFollowPath(data.lastRecordId)).data.number == data.number && getAfter(socialFollowPath(data.lastRecordId)).data.followerId == actorId())
+          : kind == 'communityLikes' ? (!exists(socialLikePath(data.postId, data.lastRecordId))
+            && getAfter(socialLikePath(data.postId, data.lastRecordId)).data.number == data.number && getAfter(socialLikePath(data.postId, data.lastRecordId)).data.actorId == actorId())
+          : kind == 'communityComments' && !exists(socialCommentPath(data.postId, data.lastRecordId))
+            && getAfter(socialCommentPath(data.postId, data.lastRecordId)).data.number == data.number && getAfter(socialCommentPath(data.postId, data.lastRecordId)).data.authorId == actorId());
+    }
+    function postEngagement(postId, kind, recordId) {
+      let before = get(socialPostPath(postId)).data;
+      let after = getAfter(socialPostPath(postId)).data;
+      return after.engagement.kind == kind && after.engagement.recordId == recordId
+        && (kind == 'like-add' ? after.likeCount == before.likeCount + 1
+          : kind == 'like-remove' ? after.likeCount == before.likeCount - 1
+          : kind == 'comment-add' ? after.commentCount == before.commentCount + 1
+          : kind == 'comment-remove' && after.commentCount == before.commentCount - 1);
+    }
+    function socialEngagementUpdate(postId) {
+      let data = request.resource.data;
+      let change = data.engagement;
+      let likeMapping = socialLikeActorPath(postId, actorId());
+      let like = socialLikePath(postId, change.recordId);
+      let comment = socialCommentPath(postId, change.recordId);
+      return socialActor() && socialReadablePost(resource.data)
+        && data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'commentCount', 'engagement'])
+        && (change.kind == 'like-add' ? resource.data.authorId != actorId() && data.likeCount == resource.data.likeCount + 1 && data.commentCount == resource.data.commentCount
+            && !exists(likeMapping) && !exists(like) && getAfter(likeMapping).data.id == change.recordId
+            && getAfter(like).data.actorId == actorId() && getAfter(like).data.postId == postId
+          : change.kind == 'like-remove' ? data.likeCount == resource.data.likeCount - 1 && data.commentCount == resource.data.commentCount
+            && get(likeMapping).data.id == change.recordId && get(like).data.actorId == actorId()
+            && !existsAfter(likeMapping) && !existsAfter(like)
+          : change.kind == 'comment-add' ? data.commentCount == resource.data.commentCount + 1 && data.likeCount == resource.data.likeCount
+            && !exists(comment) && getAfter(comment).data.authorId == actorId() && getAfter(comment).data.postId == postId
+          : change.kind == 'comment-remove' && data.commentCount == resource.data.commentCount - 1 && data.likeCount == resource.data.likeCount
+            && get(comment).data.authorId == actorId() && !existsAfter(comment));
+    }
+    match /publicProfiles/{userId} {
+      allow get: if ownsAccount(userId) || socialPublicAuthor(userId);
+      allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 24 && resource.data.profilePrivacy == 'public';
+      allow create, update: if (ownsAccount(userId) || isAccountAdmin()) && publicProfileValues(userId);
+      match /domains/{recordId} {
+        allow get: if publicDomainsReadable(userId);
+        allow list: if publicDomainsReadable(userId) && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 101;
+        allow create, update: if ownsAccount(userId) && publicDomainValues(userId, recordId);
+        allow delete: if ownsAccount(userId) && (!existsAfter(/databases/$(database)/documents/users/$(userId)/domains/$(recordId))
+          || getAfter(/databases/$(database)/documents/users/$(userId)/domains/$(recordId)).data.get('isSample', false) == true);
+      }
+      match /portfolio/{snapshotId} {
+        allow get: if snapshotId == 'shared' && (ownsAccount(userId) || isOwner()
+          || (publicDomainsReadable(userId) && (!exists(publicPortfolioPath(userId)) || publicPortfolioSourceCurrent(resource.data, userId))));
+        allow create, update: if snapshotId == 'shared' && ownsAccount(userId) && publicPortfolioValues(userId);
+        allow delete: if snapshotId == 'shared' && ownsAccount(userId);
+      }
+    }
+    match /counters/{socialCounter} {
+      allow get: if socialCounter in ['communityPosts', 'communityFollows', 'communityLikes', 'communityComments'] && socialActor();
+      allow create, update: if socialCounter in ['communityPosts', 'communityFollows', 'communityLikes', 'communityComments'] && newSocialCounter(socialCounter);
+    }
+    match /communityPosts/{postId} {
+      allow get: if socialReadablePost(resource.data);
+      allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 8 && socialReadablePost(resource.data);
+      allow create: if socialActor() && socialPostValues() && socialRecordIdentity(postId, 'Post')
+        && request.resource.data.authorId == actorId() && request.resource.data.created == request.time && request.resource.data.updated == request.time
+        && request.resource.data.likeCount == 0 && request.resource.data.commentCount == 0 && !('engagement' in request.resource.data)
+        && newSocialNumber('communityPosts', postId, request.resource.data.number);
+      allow update: if socialPostValues() && (ownsAccount(resource.data.authorId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'audience', 'updated']) && request.resource.data.updated == request.time
+        || socialEngagementUpdate(postId));
+      allow delete: if ownsAccount(resource.data.authorId);
+      match /likeActors/{userId} {
+        allow get: if ownsAccount(userId) && socialReadablePostId(postId);
+        allow create: if ownsAccount(userId) && request.resource.data.keys().hasAll(['id', 'number', 'postId', 'actorId'])
+          && request.resource.data.keys().hasOnly(['id', 'number', 'postId', 'actorId']) && request.resource.data.actorId == userId && request.resource.data.postId == postId
+          && request.resource.data.number == getAfter(socialLikePath(postId, request.resource.data.id)).data.number
+          && getAfter(socialLikePath(postId, request.resource.data.id)).data.actorId == userId && postEngagement(postId, 'like-add', request.resource.data.id);
+        allow delete: if ownsAccount(userId) && !existsAfter(socialLikePath(postId, resource.data.id)) && postEngagement(postId, 'like-remove', resource.data.id);
+      }
+      match /likes/{likeId} {
+        allow get: if ownsAccount(resource.data.actorId) && socialReadablePostId(postId);
+        allow create: if socialActor() && socialReadablePostId(postId) && socialRecordIdentity(likeId, 'PostLike')
+          && get(socialPostPath(postId)).data.authorId != actorId()
+          && request.resource.data.keys().hasAll(['id', 'type', 'number', 'postId', 'actorId', 'created'])
+          && request.resource.data.keys().hasOnly(['id', 'type', 'number', 'postId', 'actorId', 'created'])
+          && request.resource.data.type == 'PostLike' && request.resource.data.actorId == actorId() && request.resource.data.postId == postId
+          && request.resource.data.created == request.time && getAfter(socialLikeActorPath(postId, actorId())).data.id == likeId
+          && newSocialNumber('communityLikes', likeId, request.resource.data.number) && postEngagement(postId, 'like-add', likeId);
+        allow delete: if ownsAccount(resource.data.actorId) && !existsAfter(socialLikeActorPath(postId, resource.data.actorId)) && postEngagement(postId, 'like-remove', likeId);
+      }
+      match /comments/{commentId} {
+        allow get: if socialReadablePostId(postId) && (ownsAccount(resource.data.authorId) || socialPublicAuthor(resource.data.authorId));
+        allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 11
+          && socialReadablePostId(postId) && (ownsAccount(resource.data.authorId) || socialPublicAuthor(resource.data.authorId));
+        allow create: if socialActor() && socialPublicAuthor(actorId()) && socialReadablePostId(postId) && socialRecordIdentity(commentId, 'PostComment')
+          && request.resource.data.keys().hasAll(['id', 'type', 'number', 'body', 'postId', 'authorId', 'created', 'updated'])
+          && request.resource.data.keys().hasOnly(['id', 'type', 'number', 'body', 'postId', 'authorId', 'created', 'updated'])
+          && request.resource.data.type == 'PostComment' && request.resource.data.authorId == actorId() && request.resource.data.postId == postId
+          && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
+          && request.resource.data.created == request.time && request.resource.data.updated == request.time
+          && newSocialNumber('communityComments', commentId, request.resource.data.number) && postEngagement(postId, 'comment-add', commentId);
+        allow delete: if ownsAccount(resource.data.authorId) && socialReadablePostId(postId) && postEngagement(postId, 'comment-remove', commentId);
+      }
+    }
+    match /communityFollows/{followId} {
+      allow get: if ownsAccount(resource.data.followerId);
+      allow create: if socialActor() && socialRecordIdentity(followId, 'Follow')
+        && request.resource.data.keys().hasAll(['id', 'type', 'number', 'followerId', 'followingId', 'created'])
+        && request.resource.data.keys().hasOnly(['id', 'type', 'number', 'followerId', 'followingId', 'created'])
+        && request.resource.data.type == 'Follow' && request.resource.data.followerId == actorId() && request.resource.data.followingId != actorId()
+        && socialPublicAuthor(request.resource.data.followingId) && request.resource.data.created == request.time
+        && !exists(socialFollowingPath(actorId(), request.resource.data.followingId))
+        && getAfter(socialFollowingPath(actorId(), request.resource.data.followingId)).data.id == followId
+        && newSocialNumber('communityFollows', followId, request.resource.data.number);
+      allow delete: if ownsAccount(resource.data.followerId) && !existsAfter(socialFollowingPath(resource.data.followerId, resource.data.followingId));
+    }
     match /identities/{firebaseUid} {
       allow get: if signedIn() && firebaseUid == request.auth.uid;
       allow create: if firebaseUid == request.auth.uid && newIdentity()
@@ -561,14 +829,29 @@ service cloud.firestore {
         && request.resource.data.plan == 'free' && request.resource.data.profilePrivacy == 'private'
         && request.resource.data.publicDomains == false && request.resource.data.email == request.auth.token.email;
       allow update: if ownsAccount(userId) && profileValues()
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['name', 'description', 'profilePrivacy', 'publicDomains']) || syncedPublicProfile(userId))
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'name', 'updated', 'verified', 'displayName', 'description', 'lastSignIn', 'lastUpdated',
           'publicDomains', 'emailVerified', 'profilePrivacy', 'lastSignInTime'
         ]);
       allow update: if safeAccessUpdate(userId);
+      match /socialFollowing/{targetId} {
+        allow get: if ownsAccount(userId);
+        allow list: if ownsAccount(userId) && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 200;
+        allow create: if ownsAccount(userId) && targetId != userId
+          && request.resource.data.keys().hasAll(['id', 'number', 'followerId', 'followingId'])
+          && request.resource.data.keys().hasOnly(['id', 'number', 'followerId', 'followingId'])
+          && request.resource.data.followerId == userId && request.resource.data.followingId == targetId
+          && getAfter(socialFollowPath(request.resource.data.id)).data.followerId == userId
+          && getAfter(socialFollowPath(request.resource.data.id)).data.followingId == targetId
+          && getAfter(socialFollowPath(request.resource.data.id)).data.number == request.resource.data.number;
+        allow delete: if ownsAccount(userId) && !existsAfter(socialFollowPath(resource.data.id));
+      }
       match /domains/{recordId} {
-        allow read, delete: if ownsAccount(userId);
-        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Domain') && request.resource.data.uid == userId;
+        allow read: if ownsAccount(userId);
+        allow delete: if ownsAccount(userId) && !existsAfter(/databases/$(database)/documents/publicProfiles/$(userId)/domains/$(recordId));
+        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Domain') && request.resource.data.uid == userId
+          && syncedPublicDomain(userId, recordId);
       }
       match /connections/{recordId} {
         allow read, delete: if ownsAccount(userId);
@@ -583,18 +866,22 @@ service cloud.firestore {
       }
       match /data/{recordId} {
         allow read, delete: if ownsAccount(userId);
+        allow get: if isOwner() && resource.data.id == recordId && resource.data.uid == userId
+          && resource.data.key == 'domains-database:preferences:v1';
         allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Data') && request.resource.data.uid == userId
           && request.resource.data.key is string && request.resource.data.value is string
           && request.resource.data.revision is int && request.resource.data.revision > 0;
       }
       match /storageKeys/{keyId} {
         allow read, delete: if ownsAccount(userId);
+        allow get: if isOwner() && keyId == 'domains-database%3Apreferences%3Av1';
         allow create, update: if ownsAccount(userId) && request.resource.data.keys().hasOnly(['id', 'key', 'number'])
           && request.resource.data.id is string && request.resource.data.key is string
           && request.resource.data.number is int && request.resource.data.number > 0;
       }
       match /snapshots/{snapshotId} {
         allow read, delete: if ownsAccount(userId);
+        allow get: if isOwner() && snapshotId == 'portfolio';
         allow create, update: if ownsAccount(userId) && snapshotId in ['storage', 'portfolio', 'connections', 'auctionInventory'];
       }
     }

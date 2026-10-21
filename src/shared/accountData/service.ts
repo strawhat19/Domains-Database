@@ -33,11 +33,16 @@ const clearedSocialSnapshot = (snapshot: StoredRecord | null, userId: string) =>
     || !Number.isSafeInteger(snapshot.nextPostNumber) || Number(snapshot.nextPostNumber) < 1
     || !Number.isSafeInteger(snapshot.nextFollowNumber) || Number(snapshot.nextFollowNumber) < 1
     || snapshot.posts.some(post => !isRecord(post) || typeof post.authorId !== `string`)
-    || snapshot.follows.some(follow => !isRecord(follow) || typeof follow.followerId !== `string` || typeof follow.followingId !== `string`)) {
+    || snapshot.follows.some(follow => !isRecord(follow) || typeof follow.followerId !== `string` || typeof follow.followingId !== `string`)
+    || snapshot.likes !== undefined && (!Array.isArray(snapshot.likes) || snapshot.likes.some(like => !isRecord(like) || typeof like.actorId !== `string` || typeof like.postId !== `string`))
+    || snapshot.comments !== undefined && (!Array.isArray(snapshot.comments) || snapshot.comments.some(comment => !isRecord(comment) || typeof comment.authorId !== `string` || typeof comment.postId !== `string`))) {
     throw new Error(`Saved Community Data Could Not Be Read — Nothing Was Deleted`);
   }
+  const removedPosts = new Set(snapshot.posts.filter(post => post.authorId === userId).map(post => post.id));
   return {
     ...snapshot,
+    ...(Array.isArray(snapshot.likes) ? { likes: snapshot.likes.filter(like => like.actorId !== userId && !removedPosts.has(like.postId)) } : {}),
+    ...(Array.isArray(snapshot.comments) ? { comments: snapshot.comments.filter(comment => comment.authorId !== userId && !removedPosts.has(comment.postId)) } : {}),
     posts: snapshot.posts.filter(post => post.authorId !== userId),
     follows: snapshot.follows.filter(follow => follow.followerId !== userId && follow.followingId !== userId),
     nextPostNumber: Math.max(Number(snapshot.nextPostNumber), ...recordNumbers(snapshot.posts).map(number => number + 1)),

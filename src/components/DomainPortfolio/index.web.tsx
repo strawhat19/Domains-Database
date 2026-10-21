@@ -113,9 +113,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const includedCopyTreeAvailable = copySections.collections.length > 0
     || copySections.mainGroups.some(group => group.key !== `all` && group.key !== `custom:ungrouped`);
   const copyDomains = (format: PortfolioCopyFormat) => {
-    if (format !== `list` && !includedCopyTreeAvailable) return;
-    const text = buildPortfolioCopyText(copySections, includedCopyIds, preferences.groupBy !== `none`, format);
-    void toolbar.copyDomains(text, includedCopyIds.length);
+    if ((format === `tree` || format === `detail-tree`) && !includedCopyTreeAvailable) return;
+    void toolbar.copyDomains(() => buildPortfolioCopyText(copySections, includedCopyIds, preferences.groupBy !== `none`, format), includedCopyIds.length);
   };
   const changeSort = (field: SortField) => {
     const current = portfolio.sortField === field;
@@ -771,6 +770,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           busy={toolbar.copying}
           onCopy={copyDomains}
           count={includedCopyIds.length}
+          allowEmptyJson={includedCopyTreeAvailable}
           treeAvailable={includedCopyTreeAvailable}
           onClose={toolbar.closeCopyOptions}
           error={toolbar.copyError ? toolbar.copyMessage : undefined}
