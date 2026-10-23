@@ -103,10 +103,11 @@ export const useNativePortfolio = (compact = false) => {
   }, [mainDomains, portfolioSections, preferences.collapsedGroupKeys, preferences.collapsedCollectionIds]);
   const dueSoon = context.domains.filter(domain => getDomainStatus(domain) !== `Active`).length;
   const openSetup = () => {
-    if (loading) return;
+    if (loading || mutationPending.current || deleteConfirmationOpen.current) return;
     context.clearNotice();
     setSearch(``);
     setRegistrar(`All`);
+    openEditor();
     setSetupOpen(true);
   };
   const closeSetup = () => setSetupOpen(false);
@@ -143,7 +144,9 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const closeEditor = () => {
-    if (!saving && !mutationPending.current) setEditorOpen(false);
+    if (saving || mutationPending.current) return;
+    setSetupOpen(false);
+    setEditorOpen(false);
   };
 
   const setRenewalPrice = (value: string) => {
@@ -190,6 +193,7 @@ export const useNativePortfolio = (compact = false) => {
       }
       else await context.addDomain(record);
       portfolioHaptic(`drop`);
+      setSetupOpen(false);
       setEditorOpen(false);
     } catch (error) {
       setFormError(errorMessage(error));

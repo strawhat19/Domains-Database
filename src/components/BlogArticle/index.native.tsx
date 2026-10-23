@@ -2,6 +2,7 @@ import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import BlogCard from '../BlogCard';
 import PageMeta from '../PageMeta';
+import StatePanel from '../StatePanel';
 import DomainEtymology from '../DomainEtymology';
 import { useMemo, useEffect, useContext } from 'react';
 import { createStyles } from './styles.native';
@@ -16,10 +17,10 @@ import { Alert, Linking, Pressable, Text, View, useWindowDimensions } from 'reac
 
 const BlogArticle = () => {
   const { width } = useWindowDimensions();
-  const { palette } = useTheme();
+  const { palette, isDark } = useTheme();
   const { article, appName, switched, relatedArticles } = useBlogArticle();
   const setHeroBottom = useContext(ScrollContext)?.setHeroBottom;
-  const styles = useMemo(() => createStyles(palette), [palette]);
+  const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
   const wide = width >= 700;
   const padding = wide ? 32 : 20;
   const cardWidth = (Math.min(width, 1120) - padding * 2 - (wide ? 20 : 0)) / (wide ? 2 : 1);
@@ -34,20 +35,22 @@ const BlogArticle = () => {
   useEffect(() => () => setHeroBottom?.(null), [setHeroBottom]);
 
   if (!article) return (
-    <View {...elementProps(`native-blog-article-missing`)} style={[styles.page, { paddingHorizontal: padding }]}>
+    <View {...elementProps(`native-blog-article-missing`)}>
       <PageMeta noIndex title={`Article Not Found`} description={`This article could not be found. Explore the domain guides on the Domains Database Blog.`} />
-      <Text {...elementProps(`native-blog-article-missing-title`)} style={styles.title} accessibilityRole={`header`}>
-        {`Article not found`}
-      </Text>
-      <Text {...elementProps(`native-blog-article-missing-text`)} style={styles.description}>
-        {`Explore our guides to choosing, managing, and protecting domain names.`}
-      </Text>
-      <Link href={`/blog`} asChild>
-        <Pressable {...elementProps(`native-blog-article-missing-back`)} style={styles.back} accessibilityRole={`link`} accessibilityLabel={`Back To Blog`}>
-          <ArrowLeft {...elementProps(`native-blog-article-missing-icon`)} size={15} color={palette.muted} accessible={false} />
-          <Text {...elementProps(`native-blog-article-missing-back-text`)} style={styles.backText}>{`Back to Blog`}</Text>
-        </Pressable>
-      </Link>
+      <StatePanel
+        icon={`search`}
+        eyebrow={`ARTICLE NOT FOUND`}
+        id={`native-blog-article-missing`}
+        title={`This article isn’t here`}
+        description={`The link may have changed. Browse the blog for guides to choosing, managing, and protecting domain names.`}
+      >
+        <Link href={`/blog`} asChild>
+          <Pressable {...elementProps(`native-blog-article-missing-back`)} style={styles.recovery} accessibilityRole={`link`} accessibilityLabel={`Back To Blog`}>
+            <ArrowLeft {...elementProps(`native-blog-article-missing-icon`)} size={15} color={palette.contrast} accessible={false} />
+            <Text {...elementProps(`native-blog-article-missing-back-text`)} style={styles.recoveryText}>{`Back to Blog`}</Text>
+          </Pressable>
+        </Link>
+      </StatePanel>
     </View>
   );
 

@@ -1,6 +1,7 @@
 import './styles.scss';
 import { Link } from 'expo-router';
 import Toast from '../Toast';
+import StatePanel from '../StatePanel';
 import WatchingRow from '../WatchingRow/index.web';
 import { useWatchingPage } from './useWatchingPage';
 import { routes } from '../../shared/routes';
@@ -113,24 +114,27 @@ const Watching = () => {
         )}
         {!state.loading && !state.filteredRecords.length && (
           <div id={`watching-empty`} className={`watching-empty`}>
-            <Eye size={24} aria-hidden={`true`} id={`watching-empty-icon`} className={`watching-empty-icon`} />
-            <h2 id={`watching-empty-title`} className={`watching-empty-title`}>
-              {state.records.length ? `No matching domains` : state.error ? `Watching could not be loaded` : `Your watch list is empty`}
-            </h2>
-            <p id={`watching-empty-description`} className={`watching-empty-description`}>
-              {state.records.length ? `Try another domain or registrar.` : state.error ? `Review the error above before trying again.` : `Search for a domain and select Watch to save it here.`}
-            </p>
-            {state.records.length ? (
-              <button type={`button`} id={`watching-clear-filter`} className={`watching-button watching-button-secondary`} onClick={() => state.setQuery(``)}>
-                <Search size={14} aria-hidden={`true`} id={`watching-clear-filter-icon`} className={`watching-button-icon`} />
-                <span id={`watching-clear-filter-text`} className={`watching-button-text`}>{`Clear Filter`}</span>
-              </button>
-            ) : !state.error && (
-              <Link href={routes.search.href} id={`watching-empty-search`} className={`watching-button watching-button-secondary`}>
-                <Search size={14} aria-hidden={`true`} id={`watching-empty-search-icon`} className={`watching-button-icon`} />
-                <span id={`watching-empty-search-text`} className={`watching-button-text`}>{`Search Domains`}</span>
-              </Link>
-            )}
+            <StatePanel
+              id={`watching-empty`}
+              variant={`inline`}
+              alert={!!state.error}
+              eyebrow={`YOUR WATCH LIST`}
+              icon={state.error ? `error` : state.records.length ? `search` : `watching`}
+              title={state.records.length ? `No domains match your search` : state.error ? `Your watch list couldn’t load` : `Watch your first domain`}
+              description={state.records.length ? `Try another domain or registrar, or clear your filter to see every saved name.` : state.error ? `Review the error above before trying again.` : `Search for a domain, then select Watch to keep it here for your next visit.`}
+            >
+              {state.records.length ? (
+                <button type={`button`} id={`watching-clear-filter`} className={`watching-button watching-button-secondary`} onClick={() => state.setQuery(``)}>
+                  <Search size={14} aria-hidden={`true`} id={`watching-clear-filter-icon`} className={`watching-button-icon`} />
+                  <span id={`watching-clear-filter-text`} className={`watching-button-text`}>{`Clear Filter`}</span>
+                </button>
+              ) : !state.error && (
+                <Link href={routes.search.href} id={`watching-empty-search`} className={`watching-button watching-button-secondary`}>
+                  <Search size={14} aria-hidden={`true`} id={`watching-empty-search-icon`} className={`watching-button-icon`} />
+                  <span id={`watching-empty-search-text`} className={`watching-button-text`}>{`Search Domains`}</span>
+                </Link>
+              )}
+            </StatePanel>
           </div>
         )}
         <p id={`watching-price-disclaimer`} className={`watching-price-disclaimer`}>

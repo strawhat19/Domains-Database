@@ -1,5 +1,6 @@
 import { Link, useRouter } from 'expo-router';
 import RegistrarSetup from '../RegistrarSetup';
+import StatePanel from '../StatePanel';
 import { createStyles } from './styles.native';
 import { REGISTRARS } from '../../shared/config';
 import TagPicker from '../TagPicker/index.native';
@@ -40,6 +41,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const { palette, isDark } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const state = useNativePortfolio(compact);
+  const emptyPortfolio = !state.loading && state.domains.length === 0;
+  const searchDisabled = state.loading || emptyPortfolio;
   const { customGroups } = usePortfolioPreferences();
   const appDomainIds = useMemo(() => new Set(customGroups
     .filter(group => group.isApp)
@@ -106,7 +109,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Text>
         </View>
         <View {...elementProps(`native-portfolio-heading-bottom`)} style={styles.headingBottom}>
-          <View {...elementProps(`native-portfolio-counts`)} style={styles.counts}>
+          {(state.loading || state.domains.length > 0) && <View {...elementProps(`native-portfolio-counts`)} style={styles.counts}>
             <View {...elementProps(`native-portfolio-count-summary`)} style={styles.countSummary}>
               {state.loading ? (
                 <View
@@ -157,7 +160,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 </Text>
               )}
             </View>
-          </View>
+          </View>}
           <View {...elementProps(`native-portfolio-primary-actions`)} style={styles.headingActions}>
             {user && state.canSyncManually && (
               <Pressable
@@ -249,18 +252,20 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       )}
       <View {...elementProps(`native-portfolio-tools`)} style={styles.tools}>
         <View {...elementProps(`native-portfolio-search-row`)} style={styles.searchRow}>
-          <View {...elementProps(`native-portfolio-search`)} style={styles.search}>
+          <View {...elementProps(`native-portfolio-search`)} style={[styles.search, searchDisabled && styles.disabled]}>
             <Search {...elementProps(`native-portfolio-search-icon`)} size={15} color={palette.placeholder} />
             <TextInput
               {...elementProps(`native-portfolio-search-input`)}
-              value={state.search}
+              value={emptyPortfolio ? `` : state.search}
               autoCorrect={false}
+              editable={!searchDisabled}
               autoCapitalize={`none`}
               style={styles.searchInput}
               onChangeText={state.setSearch}
-              placeholder={`Find a domain or owner…`}
+              placeholder={emptyPortfolio ? `Add domains to search` : `Find a domain or owner…`}
               placeholderTextColor={palette.placeholder}
-              accessibilityLabel={`Search Domains`}
+              accessibilityLabel={emptyPortfolio ? `Add Domains To Search` : `Search Domains`}
+              accessibilityState={{ disabled: searchDisabled }}
             />
           </View>
         </View>
@@ -379,29 +384,32 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           />
         )}
         {!state.loading && !state.visibleDomains.length && (
-          <View {...elementProps(`native-portfolio-empty`)} style={styles.empty}>
-            <Globe2 {...elementProps(`native-portfolio-empty-icon`)} size={26} color={palette.accent} />
-            <Text {...elementProps(`native-portfolio-empty-title`)} style={styles.emptyTitle}>
-              {state.domains.length ? `No matching domains` : `Add your first domain`}
-            </Text>
-            <Text {...elementProps(`native-portfolio-empty-description`)} style={styles.emptyDescription}>
-              {state.domains.length ? `Try a different search or choose another registrar.` : `Connect your registrar to sync domains automatically. Manual entry and CSV import are also available in Add Domain.`}
-            </Text>
-            <Pressable
-              {...elementProps(`native-portfolio-empty-action`)}
-              style={styles.secondaryButton}
-              accessibilityRole={`button`}
-              accessibilityLabel={state.domains.length ? `Clear Filters` : `Add Domain`}
-              onPress={() => {
-                if (!state.domains.length) state.openSetup();
-                else { state.setSearch(``); state.setRegistrar(`All`); }
-              }}
+          <View {...elementProps(`native-portfolio-empty`)}>
+            <StatePanel
+              variant={`inline`}
+              id={`native-portfolio-empty`}
+              icon={state.domains.length ? `search` : `domains`}
+              eyebrow={state.domains.length ? `SEARCH RESULTS` : `YOUR PORTFOLIO`}
+              title={state.domains.length ? `No matching domains` : `Add your first domain`}
+              description={state.domains.length ? `Try another name or clear your filters to see your domains.` : `Keep your domains, renewal dates, and project notes in one place.`}
+              detail={state.domains.length ? undefined : `Start with manual entry, a CSV import, or a registrar connection.`}
             >
-              {state.domains.length ? <X {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={palette.muted} /> : <Plus {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={palette.muted} />}
-              <Text {...elementProps(`native-portfolio-empty-action-text`)} style={styles.secondaryButtonText}>
-                {state.domains.length ? `Clear filters` : `Add Domain`}
-              </Text>
-            </Pressable>
+              <Pressable
+                {...elementProps(`native-portfolio-empty-action`)}
+                style={[styles.secondaryButton, !state.domains.length && styles.emptyAddButton]}
+                accessibilityRole={`button`}
+                accessibilityLabel={state.domains.length ? `Clear Filters` : `Add Domain`}
+                onPress={() => {
+                  if (!state.domains.length) state.openSetup();
+                  else { state.setSearch(``); state.setRegistrar(`All`); }
+                }}
+              >
+                {state.domains.length ? <X {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={palette.muted} /> : <Plus {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={`#ffffff`} />}
+                <Text {...elementProps(`native-portfolio-empty-action-text`)} style={[styles.secondaryButtonText, !state.domains.length && styles.emptyAddButtonText]}>
+                  {state.domains.length ? `Clear filters` : `Add Domain`}
+                </Text>
+              </Pressable>
+            </StatePanel>
           </View>
         )}
       </View>
@@ -435,7 +443,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </Pressable>
         )}
       </View>
-      {state.setupOpen && !state.loading && <RegistrarSetup onClose={state.closeSetup} onManual={() => state.openEditor()} />}
       {state.manualSyncChoices.length > 0 && !state.loading && (
         <PortfolioSyncOptions
           busy={state.syncing}
@@ -445,6 +452,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           onSync={connectionId => void state.syncManually(connectionId)}
         />
       )}
+      <RegistrarSetup
+        onClose={state.closeEditor}
+        active={state.setupOpen && !state.loading}
+        key={state.setupOpen ? `add-domain` : `edit-domain`}
+        renderManual={renderEntryTabs => (
       <NativePortfolioSheet
         disabled={state.saving}
         onClose={state.closeEditor}
@@ -514,6 +526,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 </View>
               </View>
               <ScrollView {...elementProps(`native-domain-editor-scroll`)} style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps={`handled`}>
+                {renderEntryTabs(state.saving)}
                 <View {...elementProps(`native-domain-editor-site-icon-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-site-icon-label`)} style={styles.fieldLabel}>
                     {`Site Icon URL`}
@@ -593,7 +606,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     {`Use a public HTTP or HTTPS image URL. Leave blank to use the domain's favicon.`}
                   </Text>
                 </View>
-                {!editingSyncedDomain && <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />}
+                {!state.setupOpen && !editingSyncedDomain && <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />}
                 {!!state.formError && (
                   <View {...elementProps(`native-domain-editor-error`)} style={styles.error} accessibilityRole={`alert`}>
                     <Text {...elementProps(`native-domain-editor-error-text`)} style={styles.errorText}>
@@ -963,6 +976,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </ScrollView>
             </View>
       </NativePortfolioSheet>
+        )}
+      />
     </View>
   );
 };

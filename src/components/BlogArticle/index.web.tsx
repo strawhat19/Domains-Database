@@ -2,6 +2,7 @@ import './styles.scss';
 import { Link } from 'expo-router';
 import BlogCard from '../BlogCard';
 import PageMeta from '../PageMeta';
+import StatePanel from '../StatePanel';
 import RouterAnchor from '../RouterAnchor';
 import DomainEtymology from '../DomainEtymology';
 import { useBlogArticle } from './useBlogArticle';
@@ -14,14 +15,20 @@ const BlogArticle = () => {
   if (!article) return (
     <div id={`blog-article-missing`} className={`blog-article-missing`}>
       <PageMeta noIndex title={`Article Not Found`} description={`This article could not be found. Explore the domain guides on the Domains Database Blog.`} />
-      <h1 id={`blog-article-missing-title`} className={`blog-article-title`}>{`Article not found`}</h1>
-      <p id={`blog-article-missing-text`} className={`blog-article-description`}>{`Explore our guides to choosing, managing, and protecting domain names.`}</p>
-      <Link href={`/blog`} asChild>
-        <RouterAnchor id={`blog-article-missing-back`} className={`blog-article-back`}>
-          <ArrowLeft size={15} aria-hidden id={`blog-article-missing-icon`} className={`blog-article-icon`} />
-          {`Back to Blog`}
-        </RouterAnchor>
-      </Link>
+      <StatePanel
+        icon={`search`}
+        eyebrow={`ARTICLE NOT FOUND`}
+        id={`blog-article-missing`}
+        title={`This article isn’t here`}
+        description={`The link may have changed. Browse the blog for guides to choosing, managing, and protecting domain names.`}
+      >
+        <Link href={`/blog`} asChild>
+          <RouterAnchor id={`blog-article-missing-back`} className={`blog-article-recovery`}>
+            <ArrowLeft size={15} aria-hidden id={`blog-article-missing-icon`} className={`blog-article-icon`} />
+            {`Back to Blog`}
+          </RouterAnchor>
+        </Link>
+      </StatePanel>
     </div>
   );
 

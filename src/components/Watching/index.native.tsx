@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
 import Toast from '../Toast';
+import StatePanel from '../StatePanel';
 import WatchingRow from '../WatchingRow';
 import { createStyles } from './styles.native';
 import { useWatchingPage } from './useWatchingPage';
@@ -87,26 +88,29 @@ const Watching = () => {
         ))}
         {!state.loading && !state.filteredRecords.length && (
           <View {...elementProps(`watching-empty`)} style={styles.empty}>
-            <Eye {...elementProps(`watching-empty-icon`)} size={24} color={palette.muted} />
-            <Text {...elementProps(`watching-empty-title`)} style={styles.emptyTitle} accessibilityRole={`header`}>
-              {state.records.length ? `No matching domains` : state.error ? `Watching could not be loaded` : `Your watch list is empty`}
-            </Text>
-            <Text {...elementProps(`watching-empty-description`)} style={[styles.description, styles.emptyDescription]}>
-              {state.records.length ? `Try another domain or registrar.` : state.error ? `Review the error above before trying again.` : `Search for a domain and select Watch to save it here.`}
-            </Text>
-            {state.records.length ? (
-              <Pressable {...elementProps(`watching-clear-filter`)} style={styles.button} onPress={() => state.setQuery(``)} accessibilityRole={`button`}>
-                <Search {...elementProps(`watching-clear-filter-icon`)} size={14} color={palette.ink} />
-                <Text {...elementProps(`watching-clear-filter-text`)} style={styles.buttonText}>{`Clear Filter`}</Text>
-              </Pressable>
-            ) : !state.error && (
-              <Link href={routes.search.href} asChild>
-                <Pressable {...elementProps(`watching-empty-search`)} style={styles.button} accessibilityRole={`link`}>
-                  <Search {...elementProps(`watching-empty-search-icon`)} size={14} color={palette.ink} />
-                  <Text {...elementProps(`watching-empty-search-text`)} style={styles.buttonText}>{`Search Domains`}</Text>
+            <StatePanel
+              id={`watching-empty`}
+              variant={`inline`}
+              alert={!!state.error}
+              eyebrow={`YOUR WATCH LIST`}
+              icon={state.error ? `error` : state.records.length ? `search` : `watching`}
+              title={state.records.length ? `No domains match your search` : state.error ? `Your watch list couldn’t load` : `Watch your first domain`}
+              description={state.records.length ? `Try another domain or registrar, or clear your filter to see every saved name.` : state.error ? `Review the error above before trying again.` : `Search for a domain, then select Watch to keep it here for your next visit.`}
+            >
+              {state.records.length ? (
+                <Pressable {...elementProps(`watching-clear-filter`)} style={styles.button} onPress={() => state.setQuery(``)} accessibilityRole={`button`}>
+                  <Search {...elementProps(`watching-clear-filter-icon`)} size={14} color={palette.ink} />
+                  <Text {...elementProps(`watching-clear-filter-text`)} style={styles.buttonText}>{`Clear Filter`}</Text>
                 </Pressable>
-              </Link>
-            )}
+              ) : !state.error && (
+                <Link href={routes.search.href} asChild>
+                  <Pressable {...elementProps(`watching-empty-search`)} style={styles.button} accessibilityRole={`link`}>
+                    <Search {...elementProps(`watching-empty-search-icon`)} size={14} color={palette.ink} />
+                    <Text {...elementProps(`watching-empty-search-text`)} style={styles.buttonText}>{`Search Domains`}</Text>
+                  </Pressable>
+                </Link>
+              )}
+            </StatePanel>
           </View>
         )}
       </View>

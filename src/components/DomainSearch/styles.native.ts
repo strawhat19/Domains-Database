@@ -3,7 +3,7 @@ import { Platform, StyleSheet } from 'react-native';
 import { discoveryCardGap } from '../DomainDiscovery/useDiscoveryShelf';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
-export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+export const createStyles = (palette: ThemePalette, isDark: boolean) => StyleSheet.create({
   page: { gap: 28, width: `100%`, position: `relative`, alignSelf: `center`, paddingTop: 52, paddingBottom: 44, paddingHorizontal: 24 },
   compactPage: { gap: 22, paddingTop: 30, paddingHorizontal: 20 },
   desktopPage: { gap: 16, paddingTop: 64, paddingBottom: 12 },
@@ -62,6 +62,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   promptDescription: { fontSize: 11, lineHeight: 19, color: palette.muted, fontFamily: `DMSans_400Regular` },
   secondaryButton: { gap: 7, paddingVertical: 11, paddingHorizontal: 14, borderWidth: 1, borderRadius: 7, flexDirection: `row`, alignItems: `center`, borderColor: palette.line },
   secondaryButtonText: { fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  accessButtonText: { color: palette.contrast },
+  accessButton: { minHeight: 44, borderColor: isDark ? palette.accent : palette.strong, backgroundColor: isDark ? palette.accent : palette.strong },
   resultsSection: { gap: 17 },
   resultsHeading: { gap: 10, flexDirection: `row`, flexWrap: `wrap`, alignItems: `center`, justifyContent: `space-between` },
   resultsTitle: { fontSize: 14, color: palette.ink, fontFamily: `DMSans_600SemiBold` },

@@ -199,6 +199,7 @@
 .portfolio-table-scroll[data-empty='true'], .portfolio-table-scroll[data-loading='true'] { overflow-x: hidden; }
 .portfolio-table-scroll[data-loading='true'] .portfolio-table-heading { min-width: 0; }
 .portfolio-records-empty { padding: 35px var(--portfolio-inline-padding, 16px); border-top: 1px solid var(--line); }
+.portfolio-records-empty:has(> .portfolio-empty-content) { padding: 0; }
 .portfolio-hidden-groups-notice { margin: 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
 .portfolio-sticky-head { z-index: 4; position: sticky; background: var(--input); box-shadow: 0 1px 0 var(--line); }
 .portfolio-sticky-group { top: 100%; left: 0; right: 0; height: 0; z-index: 3; position: absolute; pointer-events: none; }

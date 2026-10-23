@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
+import StatePanel from '../StatePanel';
 import { createStyles } from './styles.native';
 import { routes } from '../../shared/routes';
 import type { AdminFeedbackProps } from './types';
@@ -12,8 +13,8 @@ import { Bot, Star, ArrowLeft, ArrowUpRight, ClipboardList, MessageCircle, Messa
 const icons = { Bot, Star, ClipboardList, MessageCircle, MessagesSquare };
 
 const AdminFeedback = ({ section = `feedback` }: AdminFeedbackProps = {}) => {
-  const { palette } = useTheme();
-  const styles = useMemo(() => createStyles(palette), [palette]);
+  const { palette, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
   const detail = section === `feedback` ? null : feedbackComingSoon[section];
   const route = detail?.route ?? routes.adminFeedback;
   const Icon = icons[route.icon];
@@ -31,37 +32,35 @@ const AdminFeedback = ({ section = `feedback` }: AdminFeedbackProps = {}) => {
       </View>
 
       {detail ? (
-        <View {...elementProps(`admin-feedback-coming-soon`, section)} style={styles.comingSoon}>
-          <View {...elementProps(`admin-feedback-coming-soon-heading`, section)} style={styles.comingSoonHeading}>
-            <View {...elementProps(`admin-feedback-coming-soon-icon-wrap`, section)} style={styles.iconWrap}>
-              <Icon {...elementProps(`admin-feedback-coming-soon-icon`, section)} size={23} color={palette.accent} accessible={false} />
-            </View>
-            <Text {...elementProps(`admin-feedback-coming-soon-title`, section)} style={styles.comingSoonTitle} accessibilityRole={`header`}>{`Coming Soon`}</Text>
-          </View>
-          <Text {...elementProps(`admin-feedback-coming-soon-copy`, section)} style={styles.copy}>{detail.description}</Text>
-          <View {...elementProps(`admin-feedback-coming-soon-actions`, section)} style={styles.actions}>
-            <Link href={routes.adminFeedback.href} asChild>
-              <Pressable
-                accessibilityRole={`link`}
-                {...elementProps(`admin-feedback-back`, section)}
-                style={({ pressed }) => [styles.link, pressed && styles.pressed]}
-              >
-                <ArrowLeft {...elementProps(`admin-feedback-back-icon`, section)} size={14} color={palette.accent} accessible={false} />
-                <Text {...elementProps(`admin-feedback-back-label`, section)} style={styles.linkText}>{routes.adminFeedback.label}</Text>
-              </Pressable>
-            </Link>
-            <Link href={routes.adminFormSubmissions.href} asChild>
-              <Pressable
-                accessibilityRole={`link`}
-                {...elementProps(`admin-feedback-submissions`, section)}
-                style={({ pressed }) => [styles.link, pressed && styles.pressed]}
-              >
-                <ClipboardList {...elementProps(`admin-feedback-submissions-icon`, section)} size={14} color={palette.accent} accessible={false} />
-                <Text {...elementProps(`admin-feedback-submissions-label`, section)} style={styles.linkText}>{routes.adminFormSubmissions.label}</Text>
-              </Pressable>
-            </Link>
-          </View>
-        </View>
+        <StatePanel
+          icon={`planned`}
+          variant={`inline`}
+          eyebrow={`PLANNED FEATURE`}
+          description={detail.description}
+          title={`This channel is planned`}
+          id={`admin-feedback-coming-soon-${section}`}
+        >
+          <Link href={routes.adminFormSubmissions.href} asChild>
+            <Pressable
+              accessibilityRole={`link`}
+              {...elementProps(`admin-feedback-submissions`, section)}
+              style={({ pressed }) => [styles.link, styles.primaryLink, pressed && styles.pressed]}
+            >
+              <ClipboardList {...elementProps(`admin-feedback-submissions-icon`, section)} size={15} color={palette.contrast} accessible={false} />
+              <Text {...elementProps(`admin-feedback-submissions-label`, section)} style={[styles.linkText, styles.primaryLinkText]}>{`View Forms`}</Text>
+            </Pressable>
+          </Link>
+          <Link href={routes.adminFeedback.href} asChild>
+            <Pressable
+              accessibilityRole={`link`}
+              {...elementProps(`admin-feedback-back`, section)}
+              style={({ pressed }) => [styles.link, pressed && styles.pressed]}
+            >
+              <ArrowLeft {...elementProps(`admin-feedback-back-icon`, section)} size={15} color={palette.accent} accessible={false} />
+              <Text {...elementProps(`admin-feedback-back-label`, section)} style={styles.linkText}>{`Back to Feedback`}</Text>
+            </Pressable>
+          </Link>
+        </StatePanel>
       ) : (
         <View {...elementProps(`admin-feedback-cards`)} style={styles.cards}>
           {feedbackCards.map(card => {

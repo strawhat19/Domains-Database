@@ -63,7 +63,7 @@
 .watching-table-heading-checked, .watching-table-heading-added { min-width: 120px; }
 .watching-skeleton-cell { padding: 22px 16px; border-top: 1px solid var(--line); }
 .watching-skeleton { height: 14px; display: block; border-radius: 3px; background: var(--skeleton); animation: watching-skeleton-pulse 1.2s ease-in-out infinite alternate; }
-.watching-empty { gap: 12px; display: flex; padding: 44px 24px; align-items: center; flex-direction: column; border-top: 1px solid var(--line); }
+.watching-empty { border-top: 1px solid var(--line); }
 .watching-empty-icon { color: var(--muted); }
 .watching-empty-title { margin: 0; font-size: 19px; font-family: var(--font-bold); }
 .watching-empty-description { margin: 0; max-width: 400px; font-size: 12px; line-height: 1.7; text-align: center; color: var(--muted); }

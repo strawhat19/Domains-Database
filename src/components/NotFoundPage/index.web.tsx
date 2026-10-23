@@ -4,7 +4,7 @@ import { Link } from 'expo-router';
 import RouterAnchor from '../RouterAnchor';
 import { notFoundContent } from './content';
 import { routes } from '../../shared/routes';
-import { House, Link2, Globe2, ArrowRight } from 'lucide-react';
+import { House, Link2, Globe2, BookOpen, ArrowRight } from 'lucide-react';
 
 const NotFoundPage = () => (
   <>
@@ -43,6 +43,13 @@ const NotFoundPage = () => (
           </RouterAnchor>
         </Link>
       </nav>
+      <Link href={routes.blog.href} asChild>
+        <RouterAnchor id={`not-found-blog`} className={`not-found-blog`}>
+          <BookOpen id={`not-found-blog-icon`} className={`not-found-link-icon`} size={15} aria-hidden />
+          {notFoundContent.blogLabel}
+          <ArrowRight id={`not-found-blog-arrow`} className={`not-found-link-arrow`} size={14} aria-hidden />
+        </RouterAnchor>
+      </Link>
     </section>
   </>
 );

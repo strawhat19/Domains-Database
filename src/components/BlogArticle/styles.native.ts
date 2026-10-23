@@ -1,11 +1,13 @@
 import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
-export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+export const createStyles = (palette: ThemePalette, isDark: boolean) => StyleSheet.create({
   page: { gap: 28, width: `100%`, maxWidth: 1120, alignSelf: `center`, paddingTop: 28, paddingBottom: 48 },
   header: { gap: 16, width: `100%`, maxWidth: 820, alignSelf: `center` },
   back: { gap: 8, minHeight: 44, paddingHorizontal: 10, borderWidth: 1, borderRadius: 3, alignSelf: `flex-start`, flexDirection: `row`, alignItems: `center`, borderColor: palette.line, backgroundColor: palette.paper },
   backText: { fontSize: 12, color: palette.muted, fontFamily: `DMSans_500Medium` },
+  recoveryText: { fontSize: 12, color: palette.contrast, fontFamily: `DMSans_600SemiBold` },
+  recovery: { gap: 8, minHeight: 44, borderRadius: 6, paddingVertical: 12, paddingHorizontal: 17, flexDirection: `row`, alignItems: `center`, justifyContent: `center`, backgroundColor: isDark ? palette.accent : palette.strong },
   category: { fontSize: 10, letterSpacing: 1.2, color: palette.accent, textTransform: `uppercase`, fontFamily: `DMSans_700Bold` },
   title: { fontSize: 34, lineHeight: 41, letterSpacing: -1.1, color: palette.ink, fontFamily: `DMSans_700Bold` },
   wideTitle: { fontSize: 48, lineHeight: 56, letterSpacing: -1.5 },

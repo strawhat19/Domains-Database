@@ -64,7 +64,7 @@ const DOMAIN_EDITOR_LINK_FIELDS: { key: DomainLinkField; label: string; multiple
   { key: `socialMediaLinks`, label: `Social Media Links`, multiple: true },
 ];
 
-export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose: () => void) => {
+export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose: () => void, active = true) => {
   const preferences = usePortfolioPreferences();
   const { addDomain, deleteDomain, updateDomain } = useDomains();
   const groupEditor = useDomainGroupEditor(domain?.id);
@@ -85,7 +85,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const moveButtonRef = useRef<HTMLButtonElement>(null);
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const [input, setInput] = useState<DomainInput>(() => getInitialInput(domain));
-  const sheet = useMobileSheet(onClose, { disabled: saving || deleting });
+  const sheet = useMobileSheet(onClose, { open: active, disabled: saving || deleting });
   const close = () => { if (!pendingActionRef.current) sheet.close(); };
   const hidden = Boolean(domain?.id && preferences.hiddenDomainIds.includes(domain.id));
   const currentGroup = preferences.customGroups.find(group => domain?.id && group.domainIds.includes(domain.id));
@@ -119,20 +119,20 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     setMoving(false);
     setActiveTabValue(value);
   };
-  useModalFocus(modalRef, true, close);
+  useModalFocus(modalRef, active, close);
 
   useEffect(() => {
-    if (confirmingDelete) deleteCancelRef.current?.focus();
-  }, [confirmingDelete]);
+    if (active && confirmingDelete) deleteCancelRef.current?.focus();
+  }, [active, confirmingDelete]);
 
   useEffect(() => {
-    if (!invalidField || invalidField === `name` && domain?.id) return;
+    if (!active || !invalidField || invalidField === `name` && domain?.id) return;
     setActiveTabValue(DOMAIN_EDITOR_LINK_FIELDS.some(field => field.key === invalidField) ? `links`
       : [`tags`, `difficulty`, `startingBid`, `estimatedRevenue`, `mvp`, `future`, `description`].includes(invalidField) ? `project` : `general`);
-  }, [invalidField, validationFocusRequest, domain?.id]);
+  }, [active, invalidField, validationFocusRequest, domain?.id]);
 
   useEffect(() => {
-    if (!invalidField || invalidField === `name` && domain?.id) return;
+    if (!active || !invalidField || invalidField === `name` && domain?.id) return;
     const frame = window.requestAnimationFrame(() => {
       const fieldId = DOMAIN_EDITOR_LINK_FIELDS.some(field => field.key === invalidField)
         ? `domain-editor-links-${domain?.id}-${invalidField}-input`
@@ -146,7 +146,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
       document.getElementById(fieldId)?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeTab, invalidField, validationFocusRequest, domain?.id]);
+  }, [active, activeTab, invalidField, validationFocusRequest, domain?.id]);
 
   const requestDelete = () => {
     if (!domain?.id || moving || pendingActionRef.current || getDomainDeletionRestriction(domain)) return;

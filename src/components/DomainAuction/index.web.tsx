@@ -2,7 +2,9 @@ import './styles.scss';
 import { useState } from 'react';
 import { Link } from 'expo-router';
 import Toast from '../Toast';
+import StatePanel from '../StatePanel';
 import AuctionRow from '../AuctionRow/index.web';
+import FeatureLoadingSkeleton from '../FeatureLoadingSkeleton';
 import { useDomainAuction } from './useDomainAuction';
 import { routes } from '../../shared/routes';
 import type { AuctionFilters } from '../../shared/domainAuction/types';
@@ -13,6 +15,7 @@ import { auctionSelectFields, auctionTableHeadings, auctionInventoryHref, auctio
 const DomainAuction = () => {
   const state = useDomainAuction();
   const [readingFile, setReadingFile] = useState(false);
+  if (state.loading) return <FeatureLoadingSkeleton feature={`auction`} />;
   const feedDisabled = state.busy || state.feedLoading || readingFile;
   const disabled = state.loading || state.busy || state.feedLoading || readingFile;
   const formatTimestamp = (value?: string | null) => value ? new Date(value).toLocaleString() : `Not Provided`;
@@ -34,7 +37,10 @@ const DomainAuction = () => {
             <Gavel size={14} aria-hidden={`true`} id={`auction-eyebrow-icon`} className={`auction-eyebrow-icon`} />
             <span id={`auction-eyebrow-text`} className={`auction-eyebrow-text`}>{`DOMAIN MARKETPLACE`}</span>
           </span>
-          <h1 id={`auction-title`} className={`auction-title`}>{`Domain Auction`}</h1>
+          <div id={`auction-title-row`} className={`auction-title-row`}>
+            <h1 id={`auction-title`} className={`auction-title`}>{`Domain Auction`}</h1>
+            {routes.auction.beta && <span id={`auction-title-beta`} className={`auction-title-beta`}>{`Beta`}</span>}
+          </div>
           <p id={`auction-description`} className={`auction-description`}>{`Explore auction sources, narrow your search, and research domains before buying.`}</p>
         </div>
         <div id={`auction-heading-actions`} className={`auction-heading-actions`}>
@@ -316,13 +322,20 @@ const DomainAuction = () => {
         )}
         {!state.loading && !state.visibleRecords.length && (
           <div id={`auction-empty`} className={`auction-empty`}>
-            <Gavel size={25} aria-hidden={`true`} id={`auction-empty-icon`} className={`auction-empty-icon`} />
-            <h3 id={`auction-empty-title`} className={`auction-empty-title`}>{state.error ? `Auction Data Could Not Be Loaded` : state.records.length ? `No Matching Domains` : `Choose An Auction Source`}</h3>
-            <p id={`auction-empty-copy`} className={`auction-description auction-empty-copy`}>{state.error ? `Review the error above, then retry loading free auctions or choose saved inventory.` : state.records.length ? `Try fewer filters or reset them to view the inventory.` : state.feedMode ? `This snapshot has no current listings. Refresh later or browse the provider website.` : `Load free GoDaddy auctions, import your own inventory, or use Show Preview above to try the filters with fictional records.`}</p>
-            <button type={`button`} id={`auction-empty-action`} className={`auction-button auction-button-primary`} disabled={state.records.length ? disabled : feedDisabled} onClick={state.records.length ? state.resetFilters : () => void state.loadFreeAuctions()}>
-              {state.records.length ? <RotateCcw size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} /> : <RefreshCw size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} />}
-              <span id={`auction-empty-action-text`} className={`auction-button-text`}>{state.records.length ? `Reset Filters` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</span>
-            </button>
+            <StatePanel
+              id={`auction-empty`}
+              variant={`inline`}
+              alert={!!state.error}
+              eyebrow={`AUCTION INVENTORY`}
+              icon={state.error ? `error` : state.records.length ? `search` : `auction`}
+              title={state.error ? `Auction listings couldn’t load` : state.records.length ? `No domains match your filters` : state.feedMode ? `No listings in this snapshot` : `Choose an auction source`}
+              description={state.error ? `Review the error above, then retry loading free auctions or choose saved inventory.` : state.records.length ? `Reset your filters to see the full inventory, or try a broader search.` : state.feedMode ? `Refresh later or browse the provider website for current listings.` : `Load free GoDaddy auctions, import your inventory, or try Show Preview with fictional listings.`}
+            >
+              <button type={`button`} id={`auction-empty-action`} className={`auction-button auction-button-primary`} disabled={state.records.length ? disabled : feedDisabled} onClick={state.records.length ? state.resetFilters : () => void state.loadFreeAuctions()}>
+                {state.records.length ? <RotateCcw size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} /> : <RefreshCw size={14} aria-hidden={`true`} id={`auction-empty-action-icon`} className={`auction-button-icon`} />}
+                <span id={`auction-empty-action-text`} className={`auction-button-text`}>{state.records.length ? `Reset Filters` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</span>
+              </button>
+            </StatePanel>
           </div>
         )}
         {!!state.matchingCount && !state.loading && (

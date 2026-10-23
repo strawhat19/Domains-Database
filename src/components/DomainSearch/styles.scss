@@ -51,7 +51,8 @@
 :is(.domain-search-purchase-link, [data-class='domain-search-purchase-link']) { transition: opacity .22s ease; }
 :is(.domain-search-connections-link, [data-class='domain-search-connections-link']):hover { opacity: .75; }
 :is(.domain-search-access-link, .domain-search-load-more, [data-class='domain-search-access-link'], [data-class='domain-search-load-more']) { transition: background .22s ease, opacity .22s ease; }
-:is(.domain-search-access-link, .domain-search-load-more, [data-class='domain-search-access-link'], [data-class='domain-search-load-more']):hover { background: var(--subtle); }
+:is(.domain-search-load-more, [data-class='domain-search-load-more']):hover { background: var(--subtle); }
+:is(.domain-search-access-link, [data-class='domain-search-access-link']):hover { opacity: .85; }
 :is(.domain-search-result, [data-class='domain-search-result']) { transition: border-color .25s ease, box-shadow .25s ease; }
 :is(.domain-search-result, [data-class='domain-search-result']):hover { border-color: var(--line-strong) !important; box-shadow: 0 6px 22px var(--focus-ring); }
 :is(.domain-search-result-skeleton, [data-class='domain-search-result-skeleton']) { animation: domain-search-pulse 1.5s ease-in-out infinite; }

@@ -7,7 +7,9 @@
 }
 .auction-heading { gap: 24px; display: flex; align-items: center; margin-bottom: 20px; justify-content: space-between; }
 .auction-eyebrow { gap: 7px; display: inline-flex; font-size: 10px; color: var(--accent); align-items: center; letter-spacing: .15em; font-family: var(--font-mono); }
-.auction-title { margin: 8px 0 12px; font-size: 30px; line-height: 1.15; letter-spacing: -.045em; font-family: var(--font-display); }
+.auction-title-row { gap: 10px; display: flex; flex-wrap: wrap; margin: 8px 0 12px; align-items: center; }
+.auction-title { margin: 0; font-size: 30px; line-height: 1.15; letter-spacing: -.045em; font-family: var(--font-display); }
+.auction-title-beta { font-size: 9px; flex-shrink: 0; min-height: 19px; line-height: 13px; padding: 2px 6px; border-radius: 999px; letter-spacing: .3px; color: var(--accent); box-sizing: border-box; background: var(--subtle); font-family: var(--font-bold); border: 1px solid var(--accent); }
 .auction-description { margin: 4px 0 0; font-size: 12px; line-height: 1.7; color: var(--muted); }
 .auction-heading-actions { gap: 8px; display: flex; flex-wrap: wrap; align-items: center; }
 .auction-button {
@@ -90,7 +92,7 @@
 .auction-table-heading-actions { min-width: 210px; }
 .auction-skeleton-cell { padding: 22px 16px; border-top: 1px solid var(--line); }
 .auction-skeleton { height: 14px; display: block; border-radius: 3px; background: var(--skeleton); animation: auction-skeleton-pulse 1.2s ease-in-out infinite alternate; }
-.auction-empty { gap: 12px; display: flex; padding: 40px 24px; align-items: center; flex-direction: column; border-top: 1px solid var(--line); }
+.auction-empty { border-top: 1px solid var(--line); }
 .auction-empty-icon { color: var(--muted); }
 .auction-empty-title { margin: 0; font-size: 19px; text-align: center; font-family: var(--font-bold); }
 .auction-empty-copy { max-width: 480px; text-align: center; }

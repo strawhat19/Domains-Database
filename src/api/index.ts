@@ -213,6 +213,47 @@ const assertUnique = (name: string, domains: DomainRecord[], id?: string) => {
   if (domains.some(domain => domain.id !== id && domain.name.toLowerCase() === name)) throw new Error(`${name} Is Already In Your Portfolio`);
 };
 
+const registrarImportCustomFields = [
+  `mvp`,
+  `tags`,
+  `color`,
+  `title`,
+  `notes`,
+  `future`,
+  `childLinks`,
+  `parentLink`,
+  `difficulty`,
+  `startingBid`,
+  `description`,
+  `previewLinks`,
+  `relatedLinks`,
+  `projectStatus`,
+  `githubRepoLink`,
+  `productionLink`,
+  `socialMediaLinks`,
+  `estimatedRevenue`,
+  `developmentLinks`,
+] as const;
+const registrarSourceMetadata = new Set([
+  `source`, `domainSource`, `registrarSync`, `registrarName`, `hostingProvider`, `registrarSource`, `registrarProvider`,
+  `registrarIanaId`, `registrarCheckedAt`, `externalRegistration`, `ownershipConfirmed`, `automaticallyIncluded`, `registrarConnectionId`,
+]);
+const getRegistrarImportChanges = (input: DomainInput, validated: DomainInput, original: DomainRecord): Partial<DomainInput> => {
+  const changes = Object.fromEntries(registrarImportCustomFields.flatMap(field => {
+    const value = validated[field];
+    return input[field] !== undefined && value !== undefined && value !== `` && (!Array.isArray(value) || value.length)
+      ? [[field, value]] : [];
+  }));
+  const meta = { ...original.meta };
+  for (const [field, value] of Object.entries(validated.meta ?? {})) {
+    if (registrarSourceMetadata.has(field) || value == null || value === ``) continue;
+    const previous = meta[field];
+    meta[field] = value && typeof value === `object` && !Array.isArray(value)
+      && previous && typeof previous === `object` && !Array.isArray(previous) ? { ...previous, ...value } : value;
+  }
+  return { ...changes, meta };
+};
+
 type RegistrarPatch = Partial<DomainInput> & Pick<DomainInput, `name` | `registrar`> & Pick<RegistrarDomain, `renewalEstimate`>;
 const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): RegistrarPatch => {
   if (!input || typeof input !== `object` || Array.isArray(input)) throw new Error(`Registrar Domain Must Be An Object`);
@@ -481,22 +522,24 @@ export const api = {
         const existingIndex = domains.findIndex(domain => domain.name.toLowerCase() === validated.name);
         if (existingIndex >= 0) {
           const original = domains[existingIndex];
+          const registrarManaged = getDomainSource(original) === `registrar`;
+          const changes = registrarManaged ? getRegistrarImportChanges(input, validated, original) : validated;
           domains[existingIndex] = new Domain({
             ...original,
-            ...validated,
+            ...changes,
             isSample: false,
             updated: importedAt,
             id: original.id,
-            tags: input.tags !== undefined ? validated.tags : original.tags,
+            tags: changes.tags !== undefined ? changes.tags : original.tags,
             number: original.number,
-            notes: validated.notes || original.notes,
-            registrar: validated.registrar || original.registrar,
-            expiresAt: validated.expiresAt || original.expiresAt,
-            projectStatus: `projectStatus` in input ? validated.projectStatus : original.projectStatus,
-            owner: validated.owner === `My Portfolio` ? original.owner : validated.owner,
-            meta: { ...original.meta, ...validated.meta, domainSource: `csv` },
-            firstImportedAt: original.firstImportedAt ?? validated.firstImportedAt ?? importedAt,
-            firstExportedAt: original.firstExportedAt ?? validated.firstExportedAt,
+            notes: changes.notes || original.notes,
+            registrar: changes.registrar || original.registrar,
+            expiresAt: changes.expiresAt || original.expiresAt,
+            projectStatus: `projectStatus` in input ? changes.projectStatus ?? original.projectStatus : original.projectStatus,
+            owner: changes.owner && changes.owner !== `My Portfolio` ? changes.owner : original.owner,
+            meta: { ...original.meta, ...changes.meta, domainSource: registrarManaged ? `registrar` : `csv` },
+            firstImportedAt: original.firstImportedAt ?? changes.firstImportedAt ?? importedAt,
+            firstExportedAt: original.firstExportedAt ?? changes.firstExportedAt,
           });
         } else {
           domains.push(new Domain({
@@ -537,7 +580,7 @@ export const api = {
       const original = index !== undefined ? domains[index] : undefined;
       const previous = original?.meta?.registrarSync;
       const previousSync = previous && typeof previous === `object` && !Array.isArray(previous) ? previous : {};
-      const registrar = original?.registrar === `GoDaddy Auctions` && patch.registrar === `GoDaddy` ? original.registrar : patch.registrar || original?.registrar || ``;
+      const registrar = patch.registrar || original?.registrar || ``;
       const { meta, renewalEstimate, ...domainFields } = patch;
       const domain = new Domain({
         ...(original ?? { owner: domainOwner, notes: ``, renewalPrice: 0, autoRenew: false, expiresAt: `` }),

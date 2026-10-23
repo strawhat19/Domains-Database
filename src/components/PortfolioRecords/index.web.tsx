@@ -100,6 +100,7 @@ const PortfolioRecords = ({
   const [editingGroup, setEditingGroup] = useState<{ group: CustomPortfolioGroup } | null>(null);
   const preferences = usePortfolioPreferences();
   const menuDisabled = busy || loading || preferences.loading;
+  const emptyPortfolio = !loading && allDomains.length === 0;
   const availableDomainIds = useMemo(() => new Set(allDomains.map(domain => domain.id)), [allDomains]);
   const destinationTree = useMemo(() => buildPortfolioDestinationTree(allDomains, preferences.customGroups, preferences.collections),
     [allDomains, preferences.customGroups, preferences.collections]);
@@ -318,7 +319,7 @@ const PortfolioRecords = ({
     return `calc(${share * 100}% - ${share * fixedWidth}px)`;
   });
   const renderedWidths = loading ? [positionWidth, selectionWidth, ...loadingDataWidths, 0, actionsWidth] : widths;
-  const tableStyle: CSSProperties = loading
+  const tableStyle: CSSProperties = loading || emptyPortfolio
     ? { width: `100%`, minWidth: 0, tableLayout: `fixed` }
     : { width: `100%`, minWidth: tableWidth, tableLayout: `fixed` };
   const grouped = preferences.groupBy !== `none`;
@@ -328,10 +329,10 @@ const PortfolioRecords = ({
   const renderedMainGroups = mainGroups.filter(group => group.domains.length || hasGroupHeading(group));
   const hasCollapsedSection = collections.some(section => expansion.isCollectionCollapsed(section.collection.id))
     || groups.some(group => hasGroupHeading(group) && isGroupCollapsed(group));
-  const hideColumnNames = !loading && hasCollapsedSection
-    && !groups.some(group => group.domains.length > 0 && !isGroupCollapsed(group));
+  const hideColumnNames = emptyPortfolio || (!loading && hasCollapsedSection
+    && !groups.some(group => group.domains.length > 0 && !isGroupCollapsed(group)));
   const columnHeaderHeight = hideColumnNames ? 0 : sticky.header.headHeight;
-  const stickyHeaderReady = (hideColumnNames || columnHeaderHeight > 0) && sticky.header.columnWidths.length === columns.length + 4;
+  const stickyHeaderReady = !emptyPortfolio && (hideColumnNames || columnHeaderHeight > 0) && sticky.header.columnWidths.length === columns.length + 4;
   const empty = !loading && !groups.some(group => group.domains.length);
   const hasHiddenCollections = !preferences.showHiddenCollections
     && preferences.collections.some(collection => preferences.hiddenCollectionIds.includes(collection.id));
@@ -812,6 +813,7 @@ const PortfolioRecords = ({
     );
   };
   const addGroupContent = (collectionId: string | null = null, grid = false) => {
+    if (emptyPortfolio) return null;
     const scope = collectionId ? `portfolio-collection-${collectionId}` : idPrefix;
     return (
       <PortfolioCollapse id={`${scope}-${grid ? `grid` : `table`}-add-group-content`} collapsed={isAddGroupCollapsed(collectionId)}>
@@ -819,12 +821,13 @@ const PortfolioRecords = ({
       </PortfolioCollapse>
     );
   };
-  const addCollectionContent = (grid = false) => showAddCollection && (
+  const addCollectionContent = (grid = false) => showAddCollection && !emptyPortfolio && (
     <PortfolioCollapse id={`${idPrefix}-${grid ? `grid` : `table`}-add-collection-content`} collapsed={!preferences.showAddRows}>
       <PortfolioAddCollection idPrefix={idPrefix} disabled={loading || busy} />
     </PortfolioCollapse>
   );
   const addGroupRow = (collectionId: string | null = null) => {
+    if (emptyPortfolio) return null;
     const scope = collectionId ? `portfolio-collection-${collectionId}` : idPrefix;
     const collapsed = isAddGroupCollapsed(collectionId);
     return (
@@ -1149,7 +1152,7 @@ const PortfolioRecords = ({
           <caption id={`${idPrefix}-table-caption`} className={`portfolio-sr-only`}>
             {`Your saved domain records. Monthly costs are annual costs divided by twelve. Auto-renew settings are a record only.`}
           </caption>
-          <colgroup id={`${idPrefix}-table-columns`}>
+          {!emptyPortfolio && <colgroup id={`${idPrefix}-table-columns`}>
             <col id={`${idPrefix}-column-position`} style={{ width: renderedWidths[0] }} />
             <col id={`${idPrefix}-column-selection`} style={{ width: renderedWidths[1] }} />
             {columns.map((column, index) => (
@@ -1157,7 +1160,7 @@ const PortfolioRecords = ({
             ))}
             <col id={`${idPrefix}-column-space`} style={{ width: renderedWidths[columns.length + 2] }} />
             <col id={`${idPrefix}-column-actions`} style={{ width: renderedWidths[columns.length + 3] }} />
-          </colgroup>
+          </colgroup>}
           <PortfolioTableHead
             columns={columns}
             onSort={onSort}
@@ -1210,7 +1213,7 @@ const PortfolioRecords = ({
                   {addGroupRow(section.collection.id)}
                 </Fragment>
               ))}
-              {showAddCollection && <tbody id={`${idPrefix}-add-collection-body`} className={`portfolio-add-collection-body`}>
+              {showAddCollection && !emptyPortfolio && <tbody id={`${idPrefix}-add-collection-body`} className={`portfolio-add-collection-body`}>
                 <tr
                   inert={!preferences.showAddRows}
                   aria-hidden={!preferences.showAddRows || undefined}

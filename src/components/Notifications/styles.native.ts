@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
-export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+export const createStyles = (palette: ThemePalette, isDark: boolean) => StyleSheet.create({
   page: { gap: 20, width: `100%`, maxWidth: 960, paddingTop: 32, paddingBottom: 44, alignSelf: `center` },
   intro: { gap: 16, marginBottom: 8 },
   disabled: { opacity: .5 },
@@ -23,7 +23,17 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   eyebrowText: { fontSize: 10, letterSpacing: 1.5, color: palette.accent, fontFamily: `DMSans_700Bold` },
   count: { fontSize: 11, color: palette.muted, fontFamily: `DMSans_500Medium` },
   status: { fontSize: 14, lineHeight: 24, color: palette.muted, fontFamily: `DMSans_400Regular` },
-  empty: { padding: 24, borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.paper },
+  pressed: { opacity: .8 },
+  loadingPage: { paddingHorizontal: 20 },
+  loadingContent: { gap: 28 },
+  loadingIntro: { gap: 18 },
+  loadingSlot: { minWidth: 0, flexGrow: 1, flexShrink: 1, flexBasis: 280 },
+  skeletonTitle: { height: 42, maxWidth: 300 },
+  skeletonDescription: { maxWidth: 410 },
+  stateLink: { gap: 8, minHeight: 44, paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1, borderRadius: 8, alignItems: `center`, justifyContent: `center`, flexDirection: `row`, borderColor: palette.line, backgroundColor: palette.paper },
+  primaryStateLink: { borderColor: isDark ? palette.accent : palette.strong, backgroundColor: isDark ? palette.accent : palette.strong },
+  stateLinkText: { flexShrink: 1, color: palette.ink, fontSize: 12, fontFamily: `DMSans_600SemiBold` },
+  primaryStateLinkText: { color: palette.contrast },
   error: { padding: 16, fontSize: 14, lineHeight: 24, borderWidth: 1, borderRadius: 6, color: palette.danger, borderColor: palette.danger, backgroundColor: palette.paper, fontFamily: `DMSans_400Regular` },
   back: { gap: 8, minHeight: 44, alignSelf: `flex-start`, alignItems: `center`, flexDirection: `row` },
   backText: { fontSize: 12, color: palette.muted, fontFamily: `DMSans_500Medium` },

@@ -1,5 +1,5 @@
 import type { AuctionRecord, AuctionInventoryMetrics } from './types';
-import { authAPI } from '../../api/auth';
+import { requireStarterAccess } from '../planAccess/service';
 import { AUCTION_STORAGE_KEY } from '../accountData/keys';
 import { useLocalStorage, persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
@@ -19,7 +19,7 @@ interface AuctionSnapshot {
 
 const requireStorage = async () => {
   if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Auction Inventory`);
-  const userId = (await authAPI.restoreSession())?.user.id ?? null;
+  const userId = (await requireStarterAccess()).id;
   return { userId, storageKey: userId && !useLocalStorage ? accountStorageKey(AUCTION_STORAGE_KEY, userId) : AUCTION_STORAGE_KEY };
 };
 const saveSnapshot = async (snapshot: AuctionSnapshot, scope: { storageKey: string; userId: string | null }) => {

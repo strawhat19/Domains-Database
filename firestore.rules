@@ -99,6 +99,26 @@ service cloud.firestore {
         && get(userPath(get(identityPath()).data.id)).data.role == 'Owner';
     }
     function actorId() { return get(identityPath()).data.id; }
+    function starterPlanAllows(plan) {
+      return plan is string && plan != 'free' && plan.size() <= 100 && plan.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && exists(planSlugPath('starter')) && exists(planSlugPath(plan))
+        && planTierValues(get(planSlugPath('starter')).data, 'starter') && planTierValues(get(planSlugPath(plan)).data, plan)
+        && (get(planSlugPath(plan)).data.displayOrder > get(planSlugPath('starter')).data.displayOrder
+          || (get(planSlugPath(plan)).data.displayOrder == get(planSlugPath('starter')).data.displayOrder
+            && get(planSlugPath(plan)).data.number >= get(planSlugPath('starter')).data.number));
+    }
+    function starterPlanAccess() {
+      return signedIn() && exists(identityPath()) && ownsAccount(actorId())
+        && (isOwner() || starterPlanAllows(get(userPath(actorId())).data.get('plan', '').lower()));
+    }
+    function emptyAuctionSnapshotReset() {
+      return request.resource.data.keys().hasAll(['snapshot', 'ids', 'revision']) && request.resource.data.keys().hasOnly(['snapshot', 'ids', 'revision'])
+        && request.resource.data.ids is list && request.resource.data.ids.size() == 0
+        && request.resource.data.snapshot is map && request.resource.data.snapshot.keys().hasAll(['version', 'nextNumber'])
+        && request.resource.data.snapshot.keys().hasOnly(['version', 'nextNumber']) && request.resource.data.snapshot.version == 1
+        && request.resource.data.snapshot.nextNumber is int && request.resource.data.snapshot.nextNumber == resource.data.snapshot.nextNumber
+        && request.resource.data.revision is int && request.resource.data.revision == resource.data.revision + 1;
+    }
     function isAccountAdmin() {
       return signedIn() && exists(identityPath()) && ownsAccount(actorId())
         && get(userPath(actorId())).data.role in ['Owner', 'Admin', 'Administrator'];
@@ -394,16 +414,18 @@ service cloud.firestore {
       return recordIdentity(recordId, recordType) && recordId.size() <= 240
         && recordId.matches(recordType + '_' + string(request.resource.data.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+');
     }
-    function socialActor() { return signedIn() && exists(identityPath()) && ownsAccount(actorId()); }
+    function socialAccountActor() { return signedIn() && exists(identityPath()) && ownsAccount(actorId()); }
+    function socialActor() { return starterPlanAccess(); }
     function socialPublicAuthor(userId) {
       return exists(publicProfilePath(userId)) && get(publicProfilePath(userId)).data.profilePrivacy == 'public'
         && get(userPath(userId)).data.active == true && get(userPath(userId)).data.profilePrivacy == 'public';
     }
-    function socialReadablePost(data) {
+    function socialPostAudienceAllows(data) {
       return ownsAccount(data.authorId) || (socialPublicAuthor(data.authorId)
-        && (data.audience == 'public' || (data.audience == 'followers' && socialActor()
+        && (data.audience == 'public' || (data.audience == 'followers' && socialAccountActor()
           && exists(socialFollowingPath(actorId(), data.authorId)))));
     }
+    function socialReadablePost(data) { return socialActor() && socialPostAudienceAllows(data); }
     function socialReadablePostId(postId) { return exists(socialPostPath(postId)) && socialReadablePost(get(socialPostPath(postId)).data); }
     function syncedPublicProfile(userId) {
       let profile = getAfter(publicProfilePath(userId)).data;
@@ -557,7 +579,7 @@ service cloud.firestore {
       let likeMapping = socialLikeActorPath(postId, actorId());
       let like = socialLikePath(postId, change.recordId);
       let comment = socialCommentPath(postId, change.recordId);
-      return socialActor() && socialReadablePost(resource.data)
+      return socialAccountActor() && socialPostAudienceAllows(resource.data)
         && data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'commentCount', 'engagement'])
         && (change.kind == 'like-add' ? resource.data.authorId != actorId() && data.likeCount == resource.data.likeCount + 1 && data.commentCount == resource.data.commentCount
             && !exists(likeMapping) && !exists(like) && getAfter(likeMapping).data.id == change.recordId
@@ -599,45 +621,45 @@ service cloud.firestore {
         && request.resource.data.authorId == actorId() && request.resource.data.created == request.time && request.resource.data.updated == request.time
         && request.resource.data.likeCount == 0 && request.resource.data.commentCount == 0 && !('engagement' in request.resource.data)
         && newSocialNumber('communityPosts', postId, request.resource.data.number);
-      allow update: if socialPostValues() && (ownsAccount(resource.data.authorId)
+      allow update: if socialPostValues() && (socialActor() && ownsAccount(resource.data.authorId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'audience', 'updated']) && request.resource.data.updated == request.time
         || socialEngagementUpdate(postId));
       allow delete: if ownsAccount(resource.data.authorId);
       match /likeActors/{userId} {
         allow get: if ownsAccount(userId) && socialReadablePostId(postId);
-        allow create: if ownsAccount(userId) && request.resource.data.keys().hasAll(['id', 'number', 'postId', 'actorId'])
+        allow create: if socialActor() && ownsAccount(userId) && request.resource.data.keys().hasAll(['id', 'number', 'postId', 'actorId'])
           && request.resource.data.keys().hasOnly(['id', 'number', 'postId', 'actorId']) && request.resource.data.actorId == userId && request.resource.data.postId == postId
           && request.resource.data.number == getAfter(socialLikePath(postId, request.resource.data.id)).data.number
           && getAfter(socialLikePath(postId, request.resource.data.id)).data.actorId == userId && postEngagement(postId, 'like-add', request.resource.data.id);
-        allow delete: if ownsAccount(userId) && !existsAfter(socialLikePath(postId, resource.data.id)) && postEngagement(postId, 'like-remove', resource.data.id);
+        allow delete: if socialActor() && ownsAccount(userId) && !existsAfter(socialLikePath(postId, resource.data.id)) && postEngagement(postId, 'like-remove', resource.data.id);
       }
       match /likes/{likeId} {
         allow get: if ownsAccount(resource.data.actorId) && socialReadablePostId(postId);
-        allow create: if socialActor() && socialReadablePostId(postId) && socialRecordIdentity(likeId, 'PostLike')
+        allow create: if socialActor() && socialRecordIdentity(likeId, 'PostLike')
           && get(socialPostPath(postId)).data.authorId != actorId()
           && request.resource.data.keys().hasAll(['id', 'type', 'number', 'postId', 'actorId', 'created'])
           && request.resource.data.keys().hasOnly(['id', 'type', 'number', 'postId', 'actorId', 'created'])
           && request.resource.data.type == 'PostLike' && request.resource.data.actorId == actorId() && request.resource.data.postId == postId
           && request.resource.data.created == request.time && getAfter(socialLikeActorPath(postId, actorId())).data.id == likeId
           && newSocialNumber('communityLikes', likeId, request.resource.data.number) && postEngagement(postId, 'like-add', likeId);
-        allow delete: if ownsAccount(resource.data.actorId) && !existsAfter(socialLikeActorPath(postId, resource.data.actorId)) && postEngagement(postId, 'like-remove', likeId);
+        allow delete: if socialActor() && ownsAccount(resource.data.actorId) && !existsAfter(socialLikeActorPath(postId, resource.data.actorId)) && postEngagement(postId, 'like-remove', likeId);
       }
       match /comments/{commentId} {
         allow get: if socialReadablePostId(postId) && (ownsAccount(resource.data.authorId) || socialPublicAuthor(resource.data.authorId));
         allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 11
           && socialReadablePostId(postId) && (ownsAccount(resource.data.authorId) || socialPublicAuthor(resource.data.authorId));
-        allow create: if socialActor() && socialPublicAuthor(actorId()) && socialReadablePostId(postId) && socialRecordIdentity(commentId, 'PostComment')
+        allow create: if socialActor() && socialPublicAuthor(actorId()) && socialRecordIdentity(commentId, 'PostComment')
           && request.resource.data.keys().hasAll(['id', 'type', 'number', 'body', 'postId', 'authorId', 'created', 'updated'])
           && request.resource.data.keys().hasOnly(['id', 'type', 'number', 'body', 'postId', 'authorId', 'created', 'updated'])
           && request.resource.data.type == 'PostComment' && request.resource.data.authorId == actorId() && request.resource.data.postId == postId
           && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
           && request.resource.data.created == request.time && request.resource.data.updated == request.time
           && newSocialNumber('communityComments', commentId, request.resource.data.number) && postEngagement(postId, 'comment-add', commentId);
-        allow delete: if ownsAccount(resource.data.authorId) && socialReadablePostId(postId) && postEngagement(postId, 'comment-remove', commentId);
+        allow delete: if socialActor() && ownsAccount(resource.data.authorId) && socialReadablePostId(postId) && postEngagement(postId, 'comment-remove', commentId);
       }
     }
     match /communityFollows/{followId} {
-      allow get: if ownsAccount(resource.data.followerId);
+      allow get: if socialActor() && ownsAccount(resource.data.followerId);
       allow create: if socialActor() && socialRecordIdentity(followId, 'Follow')
         && request.resource.data.keys().hasAll(['id', 'type', 'number', 'followerId', 'followingId', 'created'])
         && request.resource.data.keys().hasOnly(['id', 'type', 'number', 'followerId', 'followingId', 'created'])
@@ -836,9 +858,9 @@ service cloud.firestore {
         ]);
       allow update: if safeAccessUpdate(userId);
       match /socialFollowing/{targetId} {
-        allow get: if ownsAccount(userId);
-        allow list: if ownsAccount(userId) && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 200;
-        allow create: if ownsAccount(userId) && targetId != userId
+        allow get: if socialActor() && ownsAccount(userId);
+        allow list: if socialActor() && ownsAccount(userId) && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 200;
+        allow create: if socialActor() && ownsAccount(userId) && targetId != userId
           && request.resource.data.keys().hasAll(['id', 'number', 'followerId', 'followingId'])
           && request.resource.data.keys().hasOnly(['id', 'number', 'followerId', 'followingId'])
           && request.resource.data.followerId == userId && request.resource.data.followingId == targetId
@@ -861,8 +883,9 @@ service cloud.firestore {
           && request.resource.data.provider in ['vercel', 'godaddy', 'hostinger', 'namecheap', 'porkbun', 'namesilo', 'squarespace'];
       }
       match /auctionInventory/{recordId} {
-        allow read, delete: if ownsAccount(userId);
-        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Auction');
+        allow read: if starterPlanAccess() && ownsAccount(userId);
+        allow delete: if ownsAccount(userId);
+        allow create, update: if starterPlanAccess() && ownsAccount(userId) && recordIdentity(recordId, 'Auction');
       }
       match /data/{recordId} {
         allow read, delete: if ownsAccount(userId);
@@ -882,7 +905,9 @@ service cloud.firestore {
       match /snapshots/{snapshotId} {
         allow read, delete: if ownsAccount(userId);
         allow get: if isOwner() && snapshotId == 'portfolio';
-        allow create, update: if ownsAccount(userId) && snapshotId in ['storage', 'portfolio', 'connections', 'auctionInventory'];
+        allow create, update: if ownsAccount(userId) && snapshotId in ['storage', 'portfolio', 'connections', 'auctionInventory']
+          && (snapshotId != 'auctionInventory' || starterPlanAccess());
+        allow update: if ownsAccount(userId) && snapshotId == 'auctionInventory' && emptyAuctionSnapshotReset();
       }
     }
     match /{path=**}/domains/{recordId} {

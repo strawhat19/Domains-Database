@@ -1,0 +1,11 @@
+.starter-plan-gate { box-sizing: border-box; }
+.starter-plan-gate-action { cursor: pointer; transition: opacity 180ms ease, transform 180ms ease; }
+.starter-plan-gate-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .starter-plan-gate-action:hover { opacity: .85; transform: translateY(-1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .starter-plan-gate-action { transition: none; }
+  .starter-plan-gate-action:hover { transform: none; }
+}

@@ -24,7 +24,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   headingActions: { gap: 8, marginTop: 7, flexWrap: `wrap`, flexDirection: `row` },
   searchInput: { flex: 1, fontSize: 12, color: palette.ink, paddingVertical: 12, fontFamily: `DMSans_400Regular` },
   button: { gap: 7, minHeight: 44, borderWidth: 1, borderRadius: 6, paddingVertical: 12, paddingHorizontal: 16, borderColor: palette.line, flexDirection: `row`, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.paper },
-  empty: { gap: 12, padding: 30, borderWidth: 1, borderRadius: 8, borderColor: palette.line, alignItems: `center`, backgroundColor: palette.paper },
+  empty: { borderWidth: 1, borderRadius: 8, borderColor: palette.line, backgroundColor: palette.paper },
   skeletonCard: { gap: 18, padding: 20, borderWidth: 1, borderRadius: 8, borderColor: palette.line, backgroundColor: palette.paper },
   searchWrap: { gap: 9, minHeight: 44, borderWidth: 1, borderRadius: 6, paddingHorizontal: 13, borderColor: palette.line, flexDirection: `row`, alignItems: `center`, backgroundColor: palette.input },
 });

@@ -15,10 +15,10 @@ import { usePricingInterest } from './usePricingInterest';
 import PricingInterestPrompt from '../PricingInterestPrompt';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
-import { getPricingFeatures, getPricingFeatureLabels } from '../../shared/plans/pricingFeatures';
 import { Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
-import { Gem, Zap, Check, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react-native';
+import { getPricingFeatures, getPricingFeatureLabels, getPricingFeaturePresentation } from '../../shared/plans/pricingFeatures';
+import { Gem, Zap, Check, Clock3, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react-native';
 
 const planIcons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
@@ -61,14 +61,19 @@ const Pricing = ({ landing = false }: { landing?: boolean }) => {
               key={feature.id}
               feature={feature}
               id={`${plan.id}-${feature.id}`}
-            />) : getPricingFeatureLabels(plan, brand.formatText).map((feature, index) => <View
-              key={`${plan.id}-${index}`}
-              style={styles.feature}
-              {...elementProps(`landing-pricing-feature`, `${plan.id}-${index}`)}
-            >
-              <Check size={14} color={palette.accent} {...elementProps(`landing-pricing-feature-icon`, `${plan.id}-${index}`)} />
-              <Text style={styles.featureText} {...elementProps(`landing-pricing-feature-text`, `${plan.id}-${index}`)}>{brand.formatText(feature)}</Text>
-            </View>)}
+            />) : getPricingFeatureLabels(plan, brand.formatText).map((feature, index) => {
+              const { label, planned } = getPricingFeaturePresentation(feature);
+              const FeatureIcon = planned ? Clock3 : Check;
+              return <View
+                accessible
+                key={`${plan.id}-${index}`}
+                style={styles.feature}
+                {...elementProps(`landing-pricing-feature`, `${plan.id}-${index}`)}
+                accessibilityLabel={brand.formatText(`${planned ? `Planned: ` : ``}${label}`)}
+              >
+                <FeatureIcon size={14} color={planned ? palette.warning : palette.accent} {...elementProps(`landing-pricing-feature-icon`, `${plan.id}-${index}`)} />
+                <Text style={styles.featureText} {...elementProps(`landing-pricing-feature-text`, `${plan.id}-${index}`)}>{brand.formatText(label)}</Text>
+              </View>; })}
           </View>
           {pricingEnabled && (contactEnabled || (plan.priceCents === 0 && plan.slug === `free`)) && <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><Pressable {...elementProps(`landing-pricing-plan-link`, plan.id)} accessibilityRole={`link`} style={[styles.button, !hovered && styles.secondaryButton]}><Text {...elementProps(`landing-pricing-plan-link-label`, plan.id)} style={[styles.buttonText, !hovered && styles.secondaryButtonText]}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${brand.formatText(plan.name)}`}</Text><ArrowUpRight {...elementProps(`landing-pricing-plan-link-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} /></Pressable></Link>}
           {interestEnabled ? <View {...elementProps(`landing-plan-interest`, plan.id)} style={styles.interest}>

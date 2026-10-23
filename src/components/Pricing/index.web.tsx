@@ -14,9 +14,9 @@ import { getPricingPlanVisual } from './planIcons';
 import { usePricingInterest } from './usePricingInterest';
 import PricingInterestPrompt from '../PricingInterestPrompt';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
-import { getPricingFeatures, getPricingFeatureLabels } from '../../shared/plans/pricingFeatures';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
-import { Gem, Zap, Check, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react';
+import { getPricingFeatures, getPricingFeatureLabels, getPricingFeaturePresentation } from '../../shared/plans/pricingFeatures';
+import { Gem, Zap, Check, Clock3, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react';
 
 const planIcons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
@@ -57,14 +57,25 @@ const Pricing = ({ landing = false }: { landing?: boolean }) => {
               key={feature.id}
               feature={feature}
               id={`landing-plan-feature-${plan.id}-${feature.id}`}
-            />) : getPricingFeatureLabels(plan, brand.formatText).map((feature, index) => <li
-              key={`${plan.id}-${index}`}
-              className={`landing-plan-feature`}
-              id={`landing-plan-feature-${plan.id}-${index}`}
-            >
-              <Check size={14} aria-hidden className={`landing-feature-icon`} id={`landing-plan-feature-icon-${plan.id}-${index}`} />
-              <span className={`landing-feature-label`} id={`landing-plan-feature-label-${plan.id}-${index}`}>{brand.formatText(feature)}</span>
-            </li>)}
+            />) : getPricingFeatureLabels(plan, brand.formatText).map((feature, index) => {
+              const { label, planned } = getPricingFeaturePresentation(feature);
+              const FeatureIcon = planned ? Clock3 : Check;
+              return <li
+                key={`${plan.id}-${index}`}
+                className={`landing-plan-feature`}
+                id={`landing-plan-feature-${plan.id}-${index}`}
+              >
+                <FeatureIcon
+                  size={14}
+                  aria-hidden={!planned || undefined}
+                  role={planned ? `img` : undefined}
+                  className={`landing-feature-icon`}
+                  aria-label={planned ? `Planned Feature` : undefined}
+                  id={`landing-plan-feature-icon-${plan.id}-${index}`}
+                  style={planned ? { color: `var(--warning)` } : undefined}
+                />
+                <span className={`landing-feature-label`} id={`landing-plan-feature-label-${plan.id}-${index}`}>{brand.formatText(label)}</span>
+              </li>; })}
           </ul>
           {pricingEnabled && (contactEnabled || (plan.priceCents === 0 && plan.slug === `free`)) && <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><RouterAnchor id={`landing-plan-action-${plan.id}`} className={`landing-button landing-plan-action`}><span id={`landing-plan-action-label-${plan.id}`} className={`landing-link-label`}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${brand.formatText(plan.name)}`}</span><ArrowUpRight size={15} aria-hidden id={`landing-plan-action-arrow-${plan.id}`} className={`landing-link-icon`} /></RouterAnchor></Link>}
           {interestEnabled ? <div id={`landing-plan-interest-${plan.id}`} className={`pricing-plan-interest`}>

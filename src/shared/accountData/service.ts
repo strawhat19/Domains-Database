@@ -1,11 +1,12 @@
 import { THEME_STORAGE_KEY } from '../themeContext/theme';
+import { clearFirestoreAuctionInventory } from '../firebase/storage';
 import { accountStorageKey } from '../authentication/userScope';
 import { beginAccountDataReset, finishAccountDataReset } from './state';
 import { PREFERENCES_STORAGE_KEY } from '../portfolioPreferences/storage';
 import { readStorage, writeAccountResetStorage } from '../common/storage';
 import { COLUMN_STORAGE_KEY, getDefaultPortfolioColumns } from '../portfolioColumns';
 import { PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../config';
-import { SOCIAL_STORAGE_KEY, AUCTION_STORAGE_KEY, WATCHING_STORAGE_KEY, CONNECTIONS_STORAGE_KEY, NOTIFICATIONS_STORAGE_KEY, SYNC_POLICY_STORAGE_KEY, RECENT_SEARCHES_STORAGE_KEY, NOTIFICATION_READS_STORAGE_KEY } from './keys';
+import { SOCIAL_STORAGE_KEY, WATCHING_STORAGE_KEY, CONNECTIONS_STORAGE_KEY, NOTIFICATIONS_STORAGE_KEY, SYNC_POLICY_STORAGE_KEY, RECENT_SEARCHES_STORAGE_KEY, NOTIFICATION_READS_STORAGE_KEY } from './keys';
 
 type StoredRecord = Record<string, unknown>;
 const isRecord = (value: unknown): value is StoredRecord => Boolean(value) && typeof value === `object` && !Array.isArray(value);
@@ -57,14 +58,13 @@ export const clearAccountData = async (userId: string, includeConnections: boole
   beginAccountDataReset(userId);
   try {
     const scopedKey = (key: string) => accountStorageKey(key, userId);
-    const [portfolio, notifications, watching, preferences, social, connections, auction] = await Promise.all([
+    const [portfolio, notifications, watching, preferences, social, connections] = await Promise.all([
       readSnapshot(scopedKey(PORTFOLIO_STORAGE_KEY)),
       readSnapshot(scopedKey(NOTIFICATIONS_STORAGE_KEY)),
       readSnapshot(scopedKey(WATCHING_STORAGE_KEY)),
       readSnapshot(scopedKey(PREFERENCES_STORAGE_KEY)),
       useLocalStorage ? readSnapshot(SOCIAL_STORAGE_KEY) : Promise.resolve(null),
       includeConnections ? readSnapshot(scopedKey(CONNECTIONS_STORAGE_KEY)) : Promise.resolve(null),
-      !useLocalStorage ? readSnapshot(scopedKey(AUCTION_STORAGE_KEY)) : Promise.resolve(null),
     ]);
     const socialSnapshot = clearedSocialSnapshot(social, userId);
     const collectionNumber = Math.max(
@@ -96,9 +96,9 @@ export const clearAccountData = async (userId: string, includeConnections: boole
     if (includeConnections) writes.push([scopedKey(CONNECTIONS_STORAGE_KEY), {
       userId, version: 2, accounts: [], nextNumber: nextNumber(connections, `accounts`), updated: new Date().toISOString(),
     }]);
-    if (!useLocalStorage) writes.push([scopedKey(AUCTION_STORAGE_KEY), { version: 1, records: [], nextNumber: nextNumber(auction) }]);
     if (socialSnapshot) writes.push([SOCIAL_STORAGE_KEY, socialSnapshot]);
     for (const [key, snapshot] of writes) await writeAccountResetStorage(key, JSON.stringify(snapshot));
+    if (!useLocalStorage) await clearFirestoreAuctionInventory(userId);
     await writeAccountResetStorage(scopedKey(THEME_STORAGE_KEY), `dark`);
   } finally { finishAccountDataReset(userId); }
 };

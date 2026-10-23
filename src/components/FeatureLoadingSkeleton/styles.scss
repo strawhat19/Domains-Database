@@ -1,0 +1,22 @@
+.feature-loading-skeleton { user-select: none; }
+.feature-loading-placeholder {
+  position: relative;
+  &::after {
+    inset: 0;
+    content: '';
+    position: absolute;
+    transform: translateX(-100%);
+    animation: feature-loading-shimmer 2.2s ease-in-out infinite;
+    background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--paper) 40%, transparent) 50%, transparent 80%);
+  }
+}
+#feature-loading-skeleton-auction { padding-top: clamp(32px, 4vw, 48px) !important; }
+@keyframes feature-loading-shimmer {
+  65%, 100% { transform: translateX(100%); }
+}
+@media (max-width: 600px) {
+  #feature-loading-skeleton-community { padding: 28px 0 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feature-loading-placeholder::after { animation: none; content: none; }
+}

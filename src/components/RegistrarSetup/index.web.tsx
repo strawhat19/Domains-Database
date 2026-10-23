@@ -1,8 +1,9 @@
 import './styles.scss';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import '../DomainEditor/styles.scss';
 import AccountConnections from '../AccountConnections';
 import CsvDropZone from '../CsvDropZone/index.web';
+import DomainEditor from '../DomainEditor/index.web';
 import { getCsvFile } from '../../shared/csvFiles.web';
 import { useRegistrarSetup } from './useRegistrarSetup';
 import { formatCurrency } from '../../shared/domainUtils';
@@ -12,13 +13,15 @@ import { useConnectRegistrar } from '../DomainEditor/ConnectRegistrar/useConnect
 import { X, Check, Cable, LogIn, FileUp, UserPlus, Download, PencilLine } from 'lucide-react';
 
 const entryTabs = [
-  { id: `connect`, label: `Connect Registrar`, Icon: Cable },
+  { id: `manual`, label: `Manual Entry`, Icon: PencilLine },
   { id: `csv`, label: `Import / Export CSV`, Icon: FileUp },
+  { id: `connect`, label: `Connect Registrar`, Icon: Cable },
 ] as const;
 
-const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?: () => void }) => {
+const RegistrarSetup = ({ onClose }: { onClose: () => void; onManual?: () => void }) => {
   const setup = useRegistrarSetup(onClose);
   const auth = useAuth();
+  const focusTabRef = useRef(false);
   const readingFileRef = useRef(false);
   const [readingFile, setReadingFile] = useState(false);
   const [connectionBusy, setConnectionBusy] = useState(false);
@@ -28,7 +31,13 @@ const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?:
   const close = () => { if (!busy && !readingFileRef.current) setup.close(); };
   const connect = useConnectRegistrar(close, busy);
   const connecting = setup.entryTab === `connect`;
-  useModalFocus(modalRef, true, close);
+  useModalFocus(modalRef, setup.entryTab !== `manual`, close);
+  useEffect(() => {
+    if (!focusTabRef.current) return;
+    focusTabRef.current = false;
+    const frame = window.requestAnimationFrame(() => document.getElementById(`registrar-setup-tab-${setup.entryTab}`)?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [setup.entryTab]);
 
   const readCsv = async (files: File[]) => {
     if (setup.saving || readingFileRef.current) return;
@@ -44,8 +53,46 @@ const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?:
       setReadingFile(false);
     }
   };
+  const renderEntryTabs = (manualBusy = false) => {
+    const tabsBusy = busy || manualBusy;
+    return (
+      <div role={`tablist`} id={`registrar-setup-tabs`} className={`registrar-setup-tabs`} aria-label={`Add Domain Method`}>
+        {entryTabs.map(({ id, label, Icon }, index) => (
+          <button
+            key={id}
+            role={`tab`}
+            type={`button`}
+            disabled={tabsBusy}
+            id={`registrar-setup-tab-${id}`}
+            tabIndex={setup.entryTab === id ? 0 : -1}
+            aria-selected={setup.entryTab === id}
+            onClick={() => { focusTabRef.current = true; setup.setEntryTab(id); }}
+            aria-controls={id === `manual` ? `domain-editor-form` : `registrar-setup-panel-${id}`}
+            className={`registrar-setup-tab${setup.entryTab === id ? ` registrar-setup-tab-active` : ``}`}
+            onKeyDown={event => {
+              if (![`ArrowLeft`, `ArrowRight`, `Home`, `End`].includes(event.key) || tabsBusy) return;
+              event.preventDefault();
+              const nextIndex = event.key === `Home` ? 0 : event.key === `End` ? entryTabs.length - 1
+                : (index + (event.key === `ArrowRight` ? 1 : -1) + entryTabs.length) % entryTabs.length;
+              const tab = entryTabs[nextIndex]?.id;
+              if (!tab) return;
+              focusTabRef.current = true;
+              setup.setEntryTab(tab);
+            }}
+          >
+            <Icon size={15} aria-hidden={`true`} id={`registrar-setup-tab-icon-${id}`} className={`registrar-setup-tab-icon`} />
+            <span id={`registrar-setup-tab-label-${id}`} className={`registrar-setup-tab-label`}>{label}</span>
+            {id === `connect` && <span id={`registrar-setup-recommended`} className={`registrar-setup-recommended`}>{`Recommended`}</span>}
+          </button>
+        ))}
+      </div>
+    );
+  };
 
   return (
+    <>
+      <DomainEditor onClose={close} entryTabs={renderEntryTabs} active={setup.entryTab === `manual`} />
+      {setup.entryTab !== `manual` && (
     <div
       role={`presentation`}
       id={`registrar-setup-backdrop`}
@@ -89,51 +136,9 @@ const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?:
         >
           <div id={`registrar-setup-body`} className={`domain-dialog-body`}>
             <p id={`registrar-setup-description`} className={`domain-dialog-description`}>
-              {`Connect your registrar accounts below to keep your domains synced. CSV import and export are available in the second tab.`}
+              {`Add a domain manually, import or export a CSV, or connect your registrar accounts to keep your domains synced.`}
             </p>
-            <div id={`registrar-setup-entry-actions`} className={`registrar-setup-entry-actions`}>
-              {onManual && (
-                <button
-                  type={`button`}
-                  disabled={busy}
-                  id={`registrar-setup-manual-button`}
-                  className={`portfolio-button portfolio-button-quiet registrar-setup-manual-button`}
-                  onClick={() => { if (!busy) { close(); onManual(); } }}
-                >
-                  <PencilLine size={14} aria-hidden={`true`} id={`registrar-setup-manual-icon`} className={`registrar-setup-manual-icon`} />
-                  <span id={`registrar-setup-manual-text`} className={`registrar-setup-manual-text`}>
-                    {`Enter Manually`}
-                  </span>
-                </button>
-              )}
-            </div>
-            <div role={`tablist`} id={`registrar-setup-tabs`} className={`registrar-setup-tabs`} aria-label={`Add Domain Method`}>
-              {entryTabs.map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  role={`tab`}
-                  type={`button`}
-                  disabled={busy}
-                  id={`registrar-setup-tab-${id}`}
-                  tabIndex={setup.entryTab === id ? 0 : -1}
-                  aria-selected={setup.entryTab === id}
-                  aria-controls={`registrar-setup-panel-${id}`}
-                  onClick={() => setup.setEntryTab(id)}
-                  className={`registrar-setup-tab${setup.entryTab === id ? ` registrar-setup-tab-active` : ``}`}
-                  onKeyDown={event => {
-                    if (![`ArrowLeft`, `ArrowRight`, `Home`, `End`].includes(event.key) || busy) return;
-                    event.preventDefault();
-                    const tab = event.key === `Home` ? `connect` : event.key === `End` ? `csv` : id === `connect` ? `csv` : `connect`;
-                    setup.setEntryTab(tab);
-                    document.getElementById(`registrar-setup-tab-${tab}`)?.focus();
-                  }}
-                >
-                  <Icon size={15} aria-hidden={`true`} id={`registrar-setup-tab-icon-${id}`} className={`registrar-setup-tab-icon`} />
-                  <span id={`registrar-setup-tab-label-${id}`} className={`registrar-setup-tab-label`}>{label}</span>
-                  {id === `connect` && <span id={`registrar-setup-recommended`} className={`registrar-setup-recommended`}>{`Recommended`}</span>}
-                </button>
-              ))}
-            </div>
+            {renderEntryTabs()}
             {connecting && (
               <div
                 role={`tabpanel`}
@@ -299,6 +304,8 @@ const RegistrarSetup = ({ onClose, onManual }: { onClose: () => void; onManual?:
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 };
 

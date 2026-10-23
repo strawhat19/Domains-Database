@@ -1,0 +1,10 @@
+.state-panel { box-sizing: border-box; }
+.state-panel-content { animation: state-panel-enter .35s ease both; }
+.state-panel-art { position: relative; flex-shrink: 0; }
+.state-panel-actions > :is(button, a, [role='button'], [role='link']) { max-width: 100%; }
+.state-panel-actions :is(button, a, [role='button'], [role='link']):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.state-panel-title, .state-panel-description, .state-panel-detail { overflow-wrap: anywhere; }
+@keyframes state-panel-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 560px) { .state-panel-actions > :is(button, a, [role='button'], [role='link']) { width: 100%; min-width: 0; } }
+@media (max-height: 560px) { .state-panel { padding-block: 24px !important; } .state-panel-art { height: 92px !important; margin-bottom: 0 !important; } }
+@media (prefers-reduced-motion: reduce) { .state-panel-content { animation: none; } }

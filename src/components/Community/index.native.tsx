@@ -1,4 +1,5 @@
 import Toast from '../Toast';
+import StatePanel from '../StatePanel';
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
 import { useCommunity } from './useCommunity';
@@ -6,13 +7,15 @@ import RichTextEditor from '../RichTextEditor';
 import CommunityBoard from '../CommunityBoard';
 import CommunityProgress from '../CommunityProgress';
 import { createStyles } from './styles.native';
+import { routes } from '../../shared/routes';
 import PostCard, { PostCardSkeleton } from './PostCard';
 import { elementProps } from '../../shared/elementProps';
+import FeatureLoadingSkeleton from '../FeatureLoadingSkeleton';
 import ProfileCard, { ProfileCardSkeleton } from './ProfileCard';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import PublicPortfolioDiscovery from '../DomainDiscovery/PublicPortfolioDiscovery';
 import { Text, View, TextInput, Pressable, useWindowDimensions } from 'react-native';
-import { X, Search, Globe2, Sparkles, UsersRound, PenLine, LockKeyhole, Send, ShieldCheck, LogIn, Settings2, RefreshCw, MessageSquare, ChevronDown } from 'lucide-react-native';
+import { X, Search, Globe2, Sparkles, UsersRound, PenLine, LockKeyhole, Send, ShieldCheck, LogIn, Settings2, RefreshCw, ChevronDown } from 'lucide-react-native';
 
 const Community = () => {
   const state = useCommunity();
@@ -20,6 +23,7 @@ const Community = () => {
   const { width } = useWindowDimensions();
   const compact = width < 1000;
   const styles = useMemo(() => createStyles(palette), [palette]);
+  if (state.loading && !state.posts.length && !state.profiles.length) return <FeatureLoadingSkeleton feature={`community`} />;
   const tabs = [
     { id: `public` as const, label: `Discover`, Icon: Globe2 },
     { id: `following` as const, label: `Following`, Icon: UsersRound },
@@ -31,9 +35,9 @@ const Community = () => {
     { id: `private` as const, label: `Only me`, Icon: LockKeyhole },
   ];
   const emptyCopy = {
-    mine: { title: `A space for your first update.`, text: `Share a domain discovery, a project, or a small piece of what you are building.` },
-    following: { title: `Your circle starts here.`, text: `Follow a public profile to see their public and followers-only updates here.` },
-    public: { title: `Your community starts with a conversation.`, text: `Public updates appear here as builders join. Share a domain discovery, a launch, or something you are working on.` },
+    mine: { title: `Share your first update`, text: `Share a domain discovery, a project, or a small piece of what you are building.` },
+    following: { title: `Follow a builder to get started`, text: `Follow a public profile to see their public and followers-only updates here.` },
+    public: { title: `No community updates yet`, text: `Public updates appear as builders join. Share a discovery, a launch, or something you are working on.` },
   }[state.view];
   return (
     <View {...elementProps(`community-page`)} style={styles.root}>
@@ -41,9 +45,12 @@ const Community = () => {
         <Text {...elementProps(`community-eyebrow`)} style={styles.eyebrow}>
           {`GOOD NAMES. INTERESTING PEOPLE.`}
         </Text>
-        <Text {...elementProps(`community-title`)} style={styles.title} accessibilityRole={`header`}>
-          {`Good domains bring people together.`}
-        </Text>
+        <View {...elementProps(`community-title-row`)} style={styles.titleRow}>
+          <Text {...elementProps(`community-title`)} style={styles.title} accessibilityRole={`header`}>
+            {`Good domains bring people together.`}
+          </Text>
+          {routes.community.beta && <Text {...elementProps(`community-title-beta`)} style={styles.titleBeta}>{`Beta`}</Text>}
+        </View>
         <Text {...elementProps(`community-description`)} style={styles.description}>
           {`Discover public portfolios, follow builders, and share what you are making. Join the conversation and earn contribution levels as the community grows.`}
         </Text>
@@ -261,24 +268,27 @@ const Community = () => {
               onDelete={id => { void state.deletePost(id); }}
             />
           )) : (
-            <View {...elementProps(`community-feed-empty`)} style={styles.empty}>
-              <MessageSquare {...elementProps(`community-feed-empty-icon`)} size={25} color={palette.accent} />
-              <Text {...elementProps(`community-feed-empty-title`)} style={styles.emptyTitle}>
-                {state.error ? `Community could not be loaded.` : state.search ? `No matching updates.` : state.profileId ? `No eligible updates from this builder.` : emptyCopy.title}
-              </Text>
-              <Text {...elementProps(`community-feed-empty-description`)} style={styles.emptyText}>
-                {state.error ? `Your data has not been replaced with sample activity. Use Refresh to try again.` : state.search ? `Try a different search. Search covers the posts currently loaded.` : state.profileId ? `This profile may be private, unavailable, or have no updates in the current feed window.` : emptyCopy.text}
-              </Text>
-              {!state.user && state.view !== `public` && (
-                <Link href={{ pathname: `/signin`, params: { returnTo: `/community` } }} asChild>
-                  <Pressable {...elementProps(`community-feed-empty-signin`)} style={styles.secondaryAction} accessibilityLabel={`Sign In To View Your Feed`}>
-                    <LogIn {...elementProps(`community-feed-empty-signin-icon`)} size={14} color={palette.accent} />
-                    <Text {...elementProps(`community-feed-empty-signin-label`)} style={styles.secondaryLabel}>
-                      {`Sign in`}
-                    </Text>
-                  </Pressable>
-                </Link>
-              )}
+            <View {...elementProps(`community-feed-empty`)}>
+              <StatePanel
+                id={`community-feed-empty`}
+                variant={`inline`}
+                alert={!!state.error}
+                eyebrow={`YOUR COMMUNITY`}
+                icon={state.error ? `error` : state.search ? `search` : `community`}
+                title={state.error ? `Community couldn’t load` : state.search ? `No updates match your search` : state.profileId ? `No updates to show` : emptyCopy.title}
+                description={state.error ? `Use Refresh to reconnect and load community updates.` : state.search ? `Try a different search. Search covers the posts currently loaded.` : state.profileId ? `This profile may be private, unavailable, or have no updates in the current feed window.` : emptyCopy.text}
+              >
+                {!state.user && state.view !== `public` && (
+                  <Link href={{ pathname: `/signin`, params: { returnTo: `/community` } }} asChild>
+                    <Pressable {...elementProps(`community-feed-empty-signin`)} style={styles.secondaryAction} accessibilityLabel={`Sign In To View Your Feed`}>
+                      <LogIn {...elementProps(`community-feed-empty-signin-icon`)} size={14} color={palette.accent} />
+                      <Text {...elementProps(`community-feed-empty-signin-label`)} style={styles.secondaryLabel}>
+                        {`Sign in`}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                )}
+              </StatePanel>
             </View>
           )}
           {state.hasMorePosts && (

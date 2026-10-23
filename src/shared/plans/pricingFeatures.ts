@@ -138,12 +138,16 @@ const getPlanFeatureLabels = (plan: Pick<Plan, `slug` | `features`>): string[] =
 export const getPricingFeatureLabels = (plan: Pick<Plan, `slug` | `features`>, formatLabel = (label: string) => label): string[] =>
   positionFreeFeatures(plan.slug, orderPricingFeatures(getPlanFeatureLabels(plan), formatLabel), label => label);
 
+export const getPricingFeaturePresentation = (savedLabel: string) => ({
+  planned: /^planned:\s*/i.test(savedLabel),
+  label: savedLabel.replace(/^planned:\s*/i, ``).trim(),
+});
+
 export const getPricingFeatures = (plan: Pick<Plan, `slug` | `features`>, formatLabel = (label: string) => label): PricingFeature[] => {
   const features = getPlanFeatureLabels(plan).map((savedLabel, index): PricingFeature => {
-    const proposed = /^planned:\s*/i.test(savedLabel);
-    const label = savedLabel.replace(/^planned:\s*/i, ``).trim();
+    const { label, planned } = getPricingFeaturePresentation(savedLabel);
     const details = catalogDetails[normalizeLabel(label)];
-    return { id: `catalog-${index}`, label, ...details, status: proposed ? `proposed` : details?.status ?? `catalog` };
+    return { id: `catalog-${index}`, label, ...details, status: planned ? `proposed` : details?.status ?? `catalog` };
   });
   const labels = new Set(features.map(feature => normalizeLabel(feature.label)));
   const additions = Object.prototype.hasOwnProperty.call(previewFeatures, plan.slug) ? previewFeatures[plan.slug] : [];

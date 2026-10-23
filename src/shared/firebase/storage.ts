@@ -2,7 +2,7 @@ import { utf8ToBytes } from '@noble/hashes/utils.js';
 import { getFirebaseDb, getFirebaseAuth } from './client';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { projectPublicDomain, PUBLIC_DOMAIN_WRITE_LIMIT } from '../publicDirectory/domains';
-import { doc, runTransaction, type Transaction, type DocumentData } from 'firebase/firestore';
+import { doc, getDocFromServer, runTransaction, type Transaction, type DocumentData } from 'firebase/firestore';
 import { projectPublicPortfolio, PUBLIC_PORTFOLIO_DOCUMENT, PUBLIC_PORTFOLIO_PREFERENCES_KEY } from '../publicDirectory/portfolio';
 import { getRecordTimestamps, packRecordTimestamps, withoutRecordTimestamps, type RecordTimestamps } from './recordTimestamps';
 import { splitSnapshots, readCloudSnapshot, clearCloudSnapshots, publishCloudSnapshot, subscribeCloudSnapshot, storageWriteBaselines, storageSubscribedBaselines, type SavedValue, type StorageScope, type SplitSnapshot } from './snapshots';
@@ -298,4 +298,31 @@ export const removeFirestoreStorage = async (key: string): Promise<void> => {
   });
   assertActor(firebaseUid);
   publishCloudSnapshot(scope, { value: null, revision: 0, firebaseUid });
+};
+
+export const clearFirestoreAuctionInventory = async (userId: string): Promise<void> => {
+  const scope = { userId, key: `domains-database:auction-inventory:v1` };
+  const firebaseUid = requireActor();
+  const reference = snapshotRef(scope, `auctionInventory`);
+  const saved = await getDocFromServer(reference);
+  assertActor(firebaseUid);
+  if (!saved.exists()) return;
+  const data = saved.data();
+  if (!Array.isArray(data.ids) || data.ids.length > 10_000 || data.ids.some(id => typeof id !== `string` || id.length > 240 || id.includes(`/`) || !getAppCollectionIDNumber(id, `Auction`))
+    || data.snapshot?.version !== 1 || !Number.isSafeInteger(data.snapshot.nextNumber) || data.snapshot.nextNumber < 1) throw new Error(`Saved Auction Metadata Could Not Be Read — Nothing Was Deleted`);
+  const revision = revisionOf(data);
+  for (let offset = 0; offset < data.ids.length || offset === 0; offset += RECORDS_PER_TRANSACTION) {
+    const ids = data.ids.slice(offset, offset + RECORDS_PER_TRANSACTION) as string[];
+    await runTransaction(getFirebaseDb(), async transaction => {
+      const current = (await transaction.get(reference)).data();
+      assertActor(firebaseUid);
+      if (revisionOf(current) !== revision) throw new Error(`Saved Auction Inventory Changed — Refresh And Try Again`);
+      for (const id of ids) transaction.delete(doc(getFirebaseDb(), `users`, userId, `auctionInventory`, id));
+      if (offset + RECORDS_PER_TRANSACTION >= data.ids.length) transaction.set(reference, {
+        ids: [], revision: revision + 1, snapshot: { version: 1, nextNumber: data.snapshot.nextNumber },
+      });
+    });
+  }
+  assertActor(firebaseUid);
+  publishCloudSnapshot(scope, { firebaseUid, revision: revision + 1, value: JSON.stringify({ version: 1, records: [], nextNumber: data.snapshot.nextNumber }) });
 };

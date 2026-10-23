@@ -1,6 +1,7 @@
 import { useMemo, useState, useContext } from 'react';
 import { Link } from 'expo-router';
 import Toast from '../Toast';
+import StatePanel from '../StatePanel';
 import MagicTyping from '../MagicTyping';
 import DomainDiscovery from '../DomainDiscovery';
 import DiscoveryBackdrop from '../DiscoveryBackdrop';
@@ -30,7 +31,7 @@ const DomainSearch = () => {
   const [introHeight, setIntroHeight] = useState<number | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const [workspaceWidth, setWorkspaceWidth] = useState(Math.max(0, width - 48));
-  const styles = useMemo(() => createStyles(palette), [palette]);
+  const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
   const sideBySide = workspaceWidth >= 940;
   const workspaceHeight = sideBySide && pageContentHeight !== undefined ? Math.max(0, pageContentHeight - 76) : undefined;
   const workspaceStyle = [styles.workspace, sideBySide && styles.wideWorkspace, workspaceHeight !== undefined && { minHeight: workspaceHeight }];
@@ -38,7 +39,6 @@ const DomainSearch = () => {
   const accessPageStyle = [...pageStyle, height <= 500 && styles.shortAccessPage];
   const signedIn = Boolean(state.user?.id);
   const busy = state.loading || state.loadingMore;
-  const hasSearchResults = Boolean(state.results) || busy;
   const disabled = busy || !state.query.trim();
   const pageLoading = state.accessLoading || state.recentSearchesLoading;
   const discovery = useDomainDiscovery(busy);
@@ -102,39 +102,40 @@ const DomainSearch = () => {
         onLayout={event => setWorkspaceWidth(event.nativeEvent.layout.width)}
       >
         <View {...elementProps(`domain-search-controls-column`)} style={[styles.searchColumn, sideBySide && styles.desktopSearchColumn, sideBySide && styles.wideSearchColumn]}>
-          <View {...elementProps(`domain-search-access-prompt`)} style={styles.prompt}>
-            <ShieldCheck {...elementProps(`domain-search-access-icon`)} size={22} color={palette.accent} />
-            <View {...elementProps(`domain-search-access-copy`)} style={styles.promptCopy}>
-              <Text {...elementProps(`domain-search-access-title`)} style={styles.promptTitle}>
-                {signedIn ? `Connect a registrar to search` : `Sign in to search domains`}
-              </Text>
-              <Text {...elementProps(`domain-search-access-description`)} style={[styles.promptDescription, !!state.accessError && { color: palette.danger }]}>
-                {state.accessError || (signedIn
-                  ? `Add a registrar connection in your profile to unlock domain search.`
-                  : `Domain search is available when you sign in and add a registrar connection.`)}
-              </Text>
-            </View>
-            <Link
-              asChild
-              href={signedIn ? routes.connections.href : {
-                pathname: routes.signin.href,
-                params: { returnTo: routes.search.href, ...(state.requestedQuery ? { q: state.requestedQuery } : {}) },
-              }}
+          <View {...elementProps(`domain-search-access-prompt`)}>
+            <StatePanel
+              icon={`search`}
+              variant={`inline`}
+              id={`domain-search-access`}
+              eyebrow={`DOMAIN SEARCH`}
+              alert={Boolean(state.accessError)}
+              title={signedIn ? `Connect your registrar` : `Sign in to search domains`}
+              description={state.accessError || (signedIn
+                ? `Connect a supported registrar account to compare domain availability and pricing.`
+                : `Sign in, then connect a registrar to check domain availability and compare prices.`)}
             >
-              <Pressable
-                {...elementProps(`domain-search-access-link`)}
-                style={styles.secondaryButton}
-                accessibilityRole={`link`}
-                accessibilityLabel={signedIn ? `Add Registrar Connections` : `Sign In To Search Domains`}
+              <Link
+                asChild
+                href={signedIn ? routes.connections.href : {
+                  pathname: routes.signin.href,
+                  params: { returnTo: routes.search.href, ...(state.requestedQuery ? { q: state.requestedQuery } : {}) },
+                }}
               >
-                {signedIn
-                  ? <PlugZap {...elementProps(`domain-search-access-link-icon`)} size={15} color={palette.ink} />
-                  : <LogIn {...elementProps(`domain-search-access-link-icon`)} size={15} color={palette.ink} />}
-                <Text {...elementProps(`domain-search-access-link-text`)} style={styles.secondaryButtonText}>
-                  {signedIn ? `Connections` : `Sign in`}
-                </Text>
-              </Pressable>
-            </Link>
+                <Pressable
+                  {...elementProps(`domain-search-access-link`)}
+                  style={[styles.secondaryButton, styles.accessButton]}
+                  accessibilityRole={`link`}
+                  accessibilityLabel={signedIn ? `Add Registrar Connections` : `Sign In To Search Domains`}
+                >
+                  {signedIn
+                    ? <PlugZap {...elementProps(`domain-search-access-link-icon`)} size={15} color={palette.contrast} />
+                    : <LogIn {...elementProps(`domain-search-access-link-icon`)} size={15} color={palette.contrast} />}
+                  <Text {...elementProps(`domain-search-access-link-text`)} style={[styles.secondaryButtonText, styles.accessButtonText]}>
+                    {signedIn ? `Connections` : `Sign in`}
+                  </Text>
+                </Pressable>
+              </Link>
+            </StatePanel>
           </View>
           {recentSearches}
         </View>
@@ -191,21 +192,16 @@ const DomainSearch = () => {
             ))}
           </View>
           {!!state.results && !busy && !state.availableResults.length && (
-            <View
-              {...elementProps(`domain-search-empty-results`)}
-              style={state.hasUnconfirmedResults ? styles.errorPanel : styles.readyNote}
-              accessibilityRole={state.hasUnconfirmedResults ? `alert` : undefined}
-              accessibilityLiveRegion={`polite`}
-            >
-              <Text
-                {...elementProps(`domain-search-empty-copy`)}
-                style={state.hasUnconfirmedResults ? styles.errorText : styles.readyCopy}
-              >
-                {state.hasUnconfirmedResults
-                  ? `No availability was confirmed. Some registrar checks failed or returned no availability status. Try searching again.`
-                  : `No available domains in the variants checked so far.`}
-              </Text>
-            </View>
+            <StatePanel
+              variant={`inline`}
+              id={`domain-search-empty-results`}
+              alert={state.hasUnconfirmedResults}
+              icon={state.hasUnconfirmedResults ? `error` : `search`}
+              title={state.hasUnconfirmedResults ? `Availability could not be confirmed` : `No available domains found`}
+              description={state.hasUnconfirmedResults
+                ? `Some registrar checks failed or returned no availability status. Try searching again.`
+                : `Try another name, or check more extensions to explore other options.`}
+            />
           )}
           {state.hasMore && (
             <Pressable
@@ -349,6 +345,7 @@ const DomainSearch = () => {
               )}
             </View>
           </View>
+          {feedbackAndResults}
           {sideBySide && (
             <View {...elementProps(`domain-search-marquees`)} style={styles.desktopCarousel}>
               <DomainDiscoveryCarousel
@@ -364,11 +361,9 @@ const DomainSearch = () => {
               />
             </View>
           )}
-          {sideBySide && !hasSearchResults && feedbackAndResults}
         </View>
         {discoveryPanel}
       </View>
-      {(!sideBySide || hasSearchResults) && feedbackAndResults}
       <Toast id={`search-watch-error`} message={watching.error} onDismiss={watching.clearError} />
       <Toast id={`search-watch-notice`} kind={`success`} message={watching.notice} onDismiss={watching.clearNotice} />
     </View>

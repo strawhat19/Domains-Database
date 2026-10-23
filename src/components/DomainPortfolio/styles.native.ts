@@ -31,6 +31,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   primaryButtonText: { color: `#ffffff`, fontSize: 12, fontFamily: `DMSans_600SemiBold` },
   secondaryButton: { gap: 7, paddingVertical: 11, paddingHorizontal: 13, borderWidth: 1, borderRadius: 6, borderColor: palette.line, flexDirection: `row`, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.paper },
   secondaryButtonText: { color: palette.ink, fontSize: 11, fontFamily: `DMSans_600SemiBold` },
+  emptyAddButtonText: { color: `#ffffff` },
+  emptyAddButton: { borderColor: palette.strong, backgroundColor: palette.strong },
   deleteButton: { borderColor: palette.danger },
   deleteButtonText: { color: palette.danger },
   disabled: { opacity: .45 },

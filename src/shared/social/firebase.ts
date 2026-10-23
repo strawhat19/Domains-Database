@@ -1,6 +1,6 @@
 import { api } from '../../api';
 import { FirebaseError } from 'firebase/app';
-import { authAPI } from '../../api/auth';
+import { requireStarterAccess } from '../planAccess/service';
 import { Types } from '../../types/types';
 import { Post } from '../models/posts/Post';
 import { projectPublicProfile, readPublicProfile } from '../publicDirectory/profiles';
@@ -44,7 +44,7 @@ const assertActor = (uid: string | null) => {
   if ((getFirebaseAuth().currentUser?.uid ?? null) !== uid) throw new Error(`Your Account Changed — Try Again`);
 };
 const requireActor = async (expectedViewerId?: string | null) => {
-  const user = (await authAPI.restoreSession())?.user;
+  const user = await requireStarterAccess(expectedViewerId);
   if (!user?.active || !user.firebase_uid) throw new Error(`Sign In To Use Community`);
   if (expectedViewerId !== undefined && user.id !== expectedViewerId) throw new Error(`Your Account Changed — Try Again`);
   assertActor(user.firebase_uid);
@@ -126,7 +126,7 @@ const requestedProfile = async (profileId: string | undefined, profiles: PublicP
     if (saved.docs[0]) profiles.push(readProfile(saved.docs[0].data(), saved.docs[0].id));
   }
 };
-const getViewer = async () => (await authAPI.restoreSession())?.user;
+const getViewer = () => requireStarterAccess();
 
 export const getCommunity = (view: FeedView = `public`, profileId?: string): Promise<CommunitySnapshot> => operation(async () => {
   if (![`public`, `following`, `mine`].includes(view)) throw new Error(`Choose A Community Feed`);

@@ -23,7 +23,7 @@ export const useRegistrarSetup = (onClose: () => void) => {
   const [exporting, setExporting] = useState(false);
   const [csvNotice, setCsvNotice] = useState(``);
   const [review, setReview] = useState<DomainInput[]>([]);
-  const [entryTab, setEntryTab] = useState<`connect` | `csv`>(`connect`);
+  const [entryTab, setEntryTab] = useState<`manual` | `csv` | `connect`>(`manual`);
   const canReview = !data.loading && Boolean(review.length && !error);
   const reportError = (message: string) => setError(message);
   const close = () => { if (!savingRef.current && !exportingRef.current) onClose(); };

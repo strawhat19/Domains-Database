@@ -1,13 +1,14 @@
 import './styles.scss';
 import { Link } from 'expo-router';
 import PageMeta from '../PageMeta';
+import StatePanel from '../StatePanel';
 import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
 import NotificationCard from '../NotificationCard';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { getNotificationSpacing } from '../NotificationCard/content';
 import { useNotificationsPage, type NotificationsProps } from './useNotificationsPage';
-import { Bell, Info, Heart, Sparkles, ArrowLeft, CheckCheck, RotateCcw, Construction } from 'lucide-react';
+import { Bell, Info, Heart, House, Globe2, BookOpen, Sparkles, ArrowLeft, CheckCheck, RotateCcw, Construction } from 'lucide-react';
 
 const NotificationsContent = ({ detail = false }: NotificationsProps) => {
   const state = useNotificationsPage(detail);
@@ -93,9 +94,21 @@ const NotificationsContent = ({ detail = false }: NotificationsProps) => {
               {!notification.isRead && <button type={`button`} disabled={state.busy || !state.readReady} onClick={() => { void state.markRead(notification.id); }} id={`${suffix}-mark-read`} className={`notifications-action`}><CheckCheck size={14} aria-hidden id={`${suffix}-mark-read-icon`} className={`notifications-action-icon`} />{`Mark Read`}</button>}
             </article>
           ) : state.missing ? (
-            <p role={`status`} id={`${suffix}-missing`} className={`notifications-status notifications-empty`}>
-              {`This notification could not be found. Browse the notifications list for available announcements.`}
-            </p>
+            <StatePanel
+              variant={`inline`}
+              icon={`notifications`}
+              id={`${suffix}-missing`}
+              eyebrow={`NOTIFICATIONS`}
+              title={`Announcement unavailable`}
+              description={`This notification could not be found. Browse the list for available announcements.`}
+            >
+              <Link href={routes.notifications.href} asChild>
+                <RouterAnchor id={`${suffix}-browse-notifications`} className={`notifications-state-link is-primary`}>
+                  <Bell size={16} aria-hidden id={`${suffix}-browse-notifications-icon`} className={`notifications-state-link-icon`} />
+                  {`View Notifications`}
+                </RouterAnchor>
+              </Link>
+            </StatePanel>
           ) : null
         ) : (
           <>
@@ -105,9 +118,21 @@ const NotificationsContent = ({ detail = false }: NotificationsProps) => {
                 : state.notifications.map(record => <NotificationCard key={record.id} prefix={`notifications`} readReady={state.readReady} onRead={state.readReady && !state.busy ? state.markRead : undefined} notification={record} />)}
             </ul>
             {!state.loading && !state.error && !state.notifications.length && (
-              <p role={`status`} id={`${suffix}-empty`} className={`notifications-status notifications-empty`}>
-                {`No notifications to show.`}
-              </p>
+              <StatePanel
+                variant={`inline`}
+                icon={`notifications`}
+                id={`${suffix}-empty`}
+                eyebrow={`YOU’RE UP TO DATE`}
+                title={`No notifications yet`}
+                description={`Announcements and updates will appear here when they’re available.`}
+              >
+                <Link href={routes.domains.href} asChild>
+                  <RouterAnchor id={`${suffix}-browse-domains`} className={`notifications-state-link is-primary`}>
+                    <Globe2 size={16} aria-hidden id={`${suffix}-browse-domains-icon`} className={`notifications-state-link-icon`} />
+                    {`Explore Domains`}
+                  </RouterAnchor>
+                </Link>
+              </StatePanel>
             )}
           </>
         )}
@@ -119,13 +144,44 @@ const NotificationsContent = ({ detail = false }: NotificationsProps) => {
 const Notifications = ({ detail = false }: NotificationsProps) => {
   const { error, flags, ready } = useFeatureFlags();
   if (ready && flags.notifications) return <NotificationsContent detail={detail} />;
-  const message = !ready && !error ? `Loading Notifications…` : `Notifications Are Currently Unavailable`;
+  const loading = !ready && !error;
+  const message = loading ? `Loading Notifications…` : `Notifications are currently unavailable. Explore domains or read the latest articles while you’re here.`;
   return <>
     <PageMeta noIndex title={`Notifications`} canonicalPath={routes.notifications.href} description={message} />
-    <div id={`notifications-page`} className={`notifications-page`} aria-busy={!ready && !error}>
-      <h1 id={`notifications-title`} className={`notifications-title`}>{`Notifications`}</h1>
-      <p role={`status`} id={`notifications-unavailable-message`} className={`notifications-status`}>{message}</p>
-    </div>
+    {loading ? (
+      <div role={`status`} aria-busy aria-label={`Loading Notifications`} id={`notifications-page`} className={`notifications-page`}>
+        <div aria-hidden id={`notifications-loading-content`} className={`notifications-loading-content`}>
+          <div id={`notifications-loading-intro`} className={`notifications-loading-intro`}>
+            <span id={`notifications-loading-title`} className={`notifications-skeleton-line notifications-skeleton-title`} />
+            <span id={`notifications-loading-description`} className={`notifications-skeleton-line notifications-skeleton-description`} />
+          </div>
+          <ul id={`notifications-loading-list`} className={`notifications-list`}>
+            {[0, 1].map(index => <NotificationCard key={index} index={index} prefix={`notifications-loading`} />)}
+          </ul>
+        </div>
+      </div>
+    ) : (
+      <StatePanel
+        icon={`notifications`}
+        id={`notifications-unavailable`}
+        title={`Notifications unavailable`}
+        eyebrow={`ANNOUNCEMENTS & UPDATES`}
+        description={message}
+      >
+        <Link href={routes.home.href} asChild>
+          <RouterAnchor id={`notifications-unavailable-home`} className={`notifications-state-link is-primary`}>
+            <House size={16} aria-hidden id={`notifications-unavailable-home-icon`} className={`notifications-state-link-icon`} />
+            {`Back to Home`}
+          </RouterAnchor>
+        </Link>
+        <Link href={routes.blog.href} asChild>
+          <RouterAnchor id={`notifications-unavailable-blog`} className={`notifications-state-link`}>
+            <BookOpen size={16} aria-hidden id={`notifications-unavailable-blog-icon`} className={`notifications-state-link-icon`} />
+            {`Read the Blog`}
+          </RouterAnchor>
+        </Link>
+      </StatePanel>
+    )}
   </>;
 };
 

@@ -2,7 +2,7 @@
 
 ## Source Behavior
 
-`/community` and `/discover` are public. Guests can browse eligible profiles, shared domains, posts and discussions. Publishing, following and liking require the current active account. Comments also require a published public profile. Posts retain Public, Followers and Only Me audiences; following never bypasses profile privacy.
+`/community` and `/discover` require an active signed-in account with a trusted Starter-or-higher plan, or an active Owner. Guests and accounts below Starter see a sign-in/plan CTA; Community is hidden from their header, and feed/discovery subscriptions and feature actions do not start. Other roles do not bypass the plan requirement. Comments also require a published public profile. Posts retain Public, Followers and Only Me audiences; Owner access and following never bypass profile privacy or ownership.
 
 Profile settings start Private with domain sharing off. An explicit Save publishes an allowlisted profile. Public accounts can use **Refresh Public Profile** without editing their preferences to publish an existing profile or refresh legacy portfolio projections. Initial domain publication finishes before sharing is enabled. Subsequent portfolio changes mirror safe domain fields atomically; no automatic sample activity is added.
 
@@ -24,6 +24,10 @@ Discover supports domain/project/builder search, TLD and project-stage filters, 
 | `counters/communityPosts`, `communityFollows`, `communityLikes`, `communityComments` | Atomic number allocation paired with actual record creation |
 
 App-owned post/follow/like/comment IDs retain matching monotonic numbers and the shared `Type_Number_Name_Date_UUID` identity format. Profile IDs remain the existing app-owned user IDs. Author/actor identity comes from the current session and authoritative ownership rules.
+
+The service boundary and Firestore social reads/writes apply the Starter/Owner requirement. Rank comparisons use canonical public-safe `planSlugs` entries ordered by `displayOrder`, then `number`; the existing bidirectional atomic rules keep those entries synchronized with catalog records. Missing/unknown tiers fail closed, and no catalog selection grants entitlement. Public profile/domain projections retain their existing safe public audiences for other portfolio/profile consumers. Owned post/follow deletion remains available for cleanup.
+
+To stay within Firestore's dependent-document budget, engagement parent updates retain active-account/audience checks while their required atomically created/deleted like/comment enforces the Starter/Owner threshold. Every delta must still couple to its exact child and unique mapping; a standalone parent counter update cannot pass. Child creation relies on that required parent update for post readability rather than repeating its author/follower lookups. These rule paths remain source-reviewed and unverified against an emulator.
 
 Profile visibility/activation changes synchronize the public projection in the same transaction. Source-domain writes and deletes synchronize their projections in chunks of eight to respect Firestore rule document-access limits. Public projection fields exclude email, credentials, connection data, registrant/contact information, private notes, prices and arbitrary metadata. Public engagement metadata contains the action kind and opaque action record ID, without the private actor ID.
 
@@ -50,7 +54,7 @@ Realtime listeners use confirmed server snapshots, clean up on scope/account cha
 
 The existing `useLocalStorage` configuration remains the single adapter switch. Local mode stays a clearly labelled device preview and supports compatible optional likes/comments in its version-one social store. It does not publish to Firebase or migrate device content automatically.
 
-Connected **Delete Data** retains community history and follow/like records, as explicitly stated in its confirmation. The profile becomes Private and sharing turns off; republishing may reveal retained contributions again. Individual post/comment deletion remains available in Community. Deleting a post removes the parent record and makes its nested reactions/comments unreadable; it does not recursively erase Firestore subcollections. Recursive cleanup and broader account-history erasure need a separately scoped trusted backend workflow.
+Connected **Delete Data** retains community history and follow/like records, as explicitly stated in its confirmation. The profile becomes Private and sharing turns off; republishing may reveal retained contributions again. Individual post/comment deletion remains available to eligible accounts in Community. Deleting a post removes the parent record and makes its nested reactions/comments unreadable; it does not recursively erase Firestore subcollections. Recursive cleanup and broader account-history erasure need a separately scoped trusted backend workflow.
 
 ## External Setup And Validation
 

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'expo-router';
 import Toast from '../Toast';
+import StatePanel from '../StatePanel';
 import AuctionRow from '../AuctionRow';
 import { File } from 'expo-file-system';
 import { createStyles } from './styles.native';
+import FeatureLoadingSkeleton from '../FeatureLoadingSkeleton';
 import { useDomainAuction } from './useDomainAuction';
 import { routes } from '../../shared/routes';
 import * as DocumentPicker from 'expo-document-picker';
@@ -21,6 +23,7 @@ const DomainAuction = () => {
   const { width } = useWindowDimensions();
   const [readingFile, setReadingFile] = useState(false);
   const styles = useMemo(() => createStyles(palette), [palette]);
+  if (state.loading) return <FeatureLoadingSkeleton feature={`auction`} />;
   const disabled = state.loading || state.busy || state.feedLoading || readingFile;
   const feedDisabled = state.busy || state.feedLoading || readingFile;
   const formatTimestamp = (value?: string | null) => value ? new Date(value).toLocaleString() : `Not Provided`;
@@ -69,7 +72,10 @@ const DomainAuction = () => {
           <Gavel {...elementProps(`auction-eyebrow-icon`)} size={14} color={palette.accent} />
           <Text {...elementProps(`auction-eyebrow-text`)} style={styles.eyebrowText}>{`DOMAIN MARKETPLACE`}</Text>
         </View>
-        <Text {...elementProps(`auction-title`)} style={styles.title} accessibilityRole={`header`}>{`Domain Auction`}</Text>
+        <View {...elementProps(`auction-title-row`)} style={styles.titleRow}>
+          <Text {...elementProps(`auction-title`)} style={styles.title} accessibilityRole={`header`}>{`Domain Auction`}</Text>
+          {routes.auction.beta && <Text {...elementProps(`auction-title-beta`)} style={styles.titleBeta}>{`Beta`}</Text>}
+        </View>
         <Text {...elementProps(`auction-description`)} style={styles.description}>{`Explore auction sources, narrow your search, and research domains before buying.`}</Text>
         <View {...elementProps(`auction-heading-actions`)} style={styles.actions}>
           <Pressable
@@ -292,13 +298,20 @@ const DomainAuction = () => {
         )) : state.visibleRecords.map(record => <AuctionRow key={record.id} record={record} />)}
         {!state.loading && !state.visibleRecords.length && (
           <View {...elementProps(`auction-empty`)} style={styles.empty}>
-            <Gavel {...elementProps(`auction-empty-icon`)} size={25} color={palette.muted} />
-            <Text {...elementProps(`auction-empty-title`)} style={styles.emptyTitle}>{state.error ? `Auction Data Could Not Be Loaded` : state.records.length ? `No Matching Domains` : `Choose An Auction Source`}</Text>
-            <Text {...elementProps(`auction-empty-copy`)} style={[styles.description, styles.emptyCopy]}>{state.error ? `Review the error above, then retry loading free auctions or choose saved inventory.` : state.records.length ? `Try fewer filters or reset them to view the inventory.` : state.feedMode ? `This snapshot has no current listings. Refresh later or browse the provider website.` : `Load free GoDaddy auctions, import your own inventory, or use Show Preview above to try the filters with fictional records.`}</Text>
-            <Pressable {...elementProps(`auction-empty-action`)} style={[styles.button, styles.primaryButton, (state.records.length ? disabled : feedDisabled) && styles.disabled]} disabled={state.records.length ? disabled : feedDisabled} onPress={state.records.length ? state.resetFilters : () => void state.loadFreeAuctions()} accessibilityRole={`button`}>
-              {state.records.length ? <RotateCcw {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.contrast} /> : <RefreshCw {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.contrast} />}
-              <Text {...elementProps(`auction-empty-action-text`)} style={[styles.buttonText, styles.primaryButtonText]}>{state.records.length ? `Reset Filters` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</Text>
-            </Pressable>
+            <StatePanel
+              id={`auction-empty`}
+              variant={`inline`}
+              alert={!!state.error}
+              eyebrow={`AUCTION INVENTORY`}
+              icon={state.error ? `error` : state.records.length ? `search` : `auction`}
+              title={state.error ? `Auction listings couldn’t load` : state.records.length ? `No domains match your filters` : state.feedMode ? `No listings in this snapshot` : `Choose an auction source`}
+              description={state.error ? `Review the error above, then retry loading free auctions or choose saved inventory.` : state.records.length ? `Reset your filters to see the full inventory, or try a broader search.` : state.feedMode ? `Refresh later or browse the provider website for current listings.` : `Load free GoDaddy auctions, import your inventory, or try Show Preview with fictional listings.`}
+            >
+              <Pressable {...elementProps(`auction-empty-action`)} style={[styles.button, styles.primaryButton, (state.records.length ? disabled : feedDisabled) && styles.disabled]} disabled={state.records.length ? disabled : feedDisabled} onPress={state.records.length ? state.resetFilters : () => void state.loadFreeAuctions()} accessibilityRole={`button`}>
+                {state.records.length ? <RotateCcw {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.contrast} /> : <RefreshCw {...elementProps(`auction-empty-action-icon`)} size={14} color={palette.contrast} />}
+                <Text {...elementProps(`auction-empty-action-text`)} style={[styles.buttonText, styles.primaryButtonText]}>{state.records.length ? `Reset Filters` : state.feed ? `Refresh Free Auctions` : `Load Free Auctions`}</Text>
+              </Pressable>
+            </StatePanel>
           </View>
         )}
       </View>

@@ -15,16 +15,15 @@
 .admin-feedback-badge { padding: 4px 7px; border-radius: 5px; color: var(--muted); background: var(--subtle); font-size: 9px; font-weight: 600; line-height: 1.5; }
 .admin-feedback-badge.is-available { color: var(--success); background: var(--success-bg); }
 .admin-feedback-card-open { gap: 6px; display: flex; margin-top: 2px; font-size: 11px; line-height: 1.5; color: var(--accent); align-items: center; }
-.admin-feedback-coming-soon { gap: 18px; display: grid; min-width: 0; padding: 22px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); }
-.admin-feedback-coming-soon-heading { gap: 12px; display: flex; align-items: center; }
-.admin-feedback-coming-soon-title { margin: 0; color: var(--ink); font-size: 20px; line-height: 1.4; }
-.admin-feedback-actions { gap: 10px; display: flex; flex-wrap: wrap; }
-.admin-feedback-link { gap: 7px; min-height: 36px; display: inline-flex; padding: 9px 12px; border-radius: 7px; color: var(--accent); font-size: 11px; line-height: 1.5; align-items: center; text-decoration: none; border: 1px solid var(--line); background: var(--paper); transition: border-color .2s ease, background-color .2s ease; }
+.admin-feedback-link { gap: 8px; min-height: 44px; display: inline-flex; padding: 11px 16px; box-sizing: border-box; border-radius: 8px; color: var(--ink); font-size: 12px; font-family: var(--font-bold); line-height: 1.5; align-items: center; justify-content: center; text-decoration: none; border: 1px solid var(--line); background: var(--paper); transition: border-color .2s ease, background-color .2s ease, opacity .2s ease; }
 .admin-feedback-link:hover { border-color: var(--accent); background: var(--subtle); }
+.admin-feedback-link.is-primary { color: var(--contrast); border-color: var(--strong); background: var(--strong); }
+.admin-feedback-link.is-primary:hover { opacity: .88; }
+:root[data-theme='dark'] .admin-feedback-link.is-primary { border-color: var(--accent); background: var(--accent); }
+.admin-feedback-link-icon { flex-shrink: 0; }
 
 @media (max-width: 650px) {
   .admin-feedback-card { padding: 15px; }
-  .admin-feedback-coming-soon { padding: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

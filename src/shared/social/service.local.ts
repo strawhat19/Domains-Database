@@ -2,6 +2,7 @@ import { api } from '../../api';
 import type { PublicDomainSummary } from '../../api';
 import { Types } from '../../types/types';
 import { authAPI } from '../../api/auth';
+import { requireStarterAccess } from '../planAccess/service';
 import { genID } from '../common/ids';
 import { useLocalStorage } from '../config';
 import { SOCIAL_STORAGE_KEY } from '../accountData/keys';
@@ -47,10 +48,7 @@ const publicDomain = (domain: PublicDomainSummary): PublicDomain => ({
 });
 const requireUser = async (expectedViewerId?: string | null) => {
   if (!useLocalStorage) throw new Error(`Connect A Backend To Use Community`);
-  const session = await authAPI.restoreSession();
-  if (!session?.user) throw new Error(`Sign In To Use Community`);
-  if (expectedViewerId !== undefined && session.user.id !== expectedViewerId) throw new Error(`Your Account Changed — Try Again`);
-  return session.user;
+  return requireStarterAccess(expectedViewerId);
 };
 const readStore = async (): Promise<SocialStore> => {
   if (!useLocalStorage) return emptyStore();
@@ -120,8 +118,7 @@ const saveStore = async (store: SocialStore, userId: string) => {
 
 export const getCommunity = (view: FeedView = `public`, profileId?: string): Promise<CommunitySnapshot> => serialize(async () => {
   if (![`public`, `following`, `mine`].includes(view)) throw new Error(`Choose A Community Feed`);
-  const session = await authAPI.restoreSession();
-  const viewerId = session?.user.id ?? null;
+  const viewerId = (await requireUser()).id;
   const [store, candidates] = await Promise.all([readStore(), authAPI.getPublicProfiles()]);
   const profiles = candidates.filter(profile => profile.profilePrivacy === `public` || profile.id === viewerId).map(publicProfile);
   const visibleIds = new Set(profiles.map(profile => profile.id));
@@ -207,7 +204,7 @@ export const setLiked = (postId: string, liked: boolean, expectedViewerId?: stri
 });
 
 export const getPostComments = (postId: string): Promise<{ comments: FeedComment[]; hasMore: boolean }> => serialize(async () => {
-  const viewer = (await authAPI.restoreSession())?.user;
+  const viewer = await requireUser();
   const store = await readStore();
   await readablePost(store, postId, viewer?.id ?? null);
   const profiles = (await authAPI.getPublicProfiles()).filter(profile => profile.profilePrivacy === `public`);

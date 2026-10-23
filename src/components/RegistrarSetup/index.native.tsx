@@ -1,4 +1,5 @@
 import { File } from 'expo-file-system';
+import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { createStyles } from './styles.native';
@@ -15,11 +16,12 @@ import { X, Check, Link2, LogIn, Pencil, Upload, Download, UserPlus, FileDown } 
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 
 interface RegistrarSetupProps {
+  active?: boolean;
   onClose: () => void;
-  onManual?: () => void;
+  renderManual: (renderTabs: (disabled?: boolean) => ReactNode) => ReactNode;
 }
 
-const RegistrarSetup = ({ onClose, onManual }: RegistrarSetupProps) => {
+const RegistrarSetup = ({ onClose, renderManual, active = true }: RegistrarSetupProps) => {
   const auth = useAuth();
   const router = useRouter();
   const state = useRegistrarSetup(onClose);
@@ -32,11 +34,6 @@ const RegistrarSetup = ({ onClose, onManual }: RegistrarSetupProps) => {
   const busy = state.saving || state.exporting || readingCsv || connectionBusy;
   const connecting = state.entryTab === `connect`;
   const close = () => { if (!busy) state.close(); };
-  const addManually = () => {
-    if (busy || !onManual) return;
-    state.close();
-    onManual();
-  };
   const authenticate = (pathname: `/signin` | `/signup`) => {
     if (busy || auth.busy || auth.loading) return;
     state.close();
@@ -63,6 +60,35 @@ const RegistrarSetup = ({ onClose, onManual }: RegistrarSetupProps) => {
   };
   const saveDisabled = busy || (!connecting && !state.canReview);
   const saveLabel = state.saving ? `Saving…` : connecting ? `Done` : `Save Domains`;
+  const renderEntryTabs = (manualBusy = false) => {
+    const tabsBusy = busy || manualBusy;
+    return (
+      <View {...elementProps(`native-registrar-entry-tabs`)} style={styles.tabs} accessibilityRole={`tablist`} accessibilityLabel={`Add Domains Method`}>
+        {([`manual`, `csv`, `connect`] as const).map(tab => {
+          const selected = state.entryTab === tab;
+          const TabIcon = tab === `manual` ? Pencil : tab === `connect` ? Link2 : Upload;
+          return (
+            <Pressable
+              key={tab}
+              disabled={tabsBusy}
+              accessibilityRole={`tab`}
+              onPress={() => state.setEntryTab(tab)}
+              accessibilityState={{ selected, disabled: tabsBusy }}
+              {...elementProps(`native-registrar-entry-tab`, tab)}
+              style={[styles.tab, selected && styles.activeTab, tabsBusy && styles.disabled]}
+            >
+              <TabIcon size={15} color={selected ? palette.accent : palette.muted} {...elementProps(`native-registrar-entry-tab-icon`, tab)} />
+              <Text {...elementProps(`native-registrar-entry-tab-text`, tab)} style={[styles.tabText, selected && styles.activeTabText]}>
+                {tab === `manual` ? `Manual Entry` : tab === `connect` ? `Connect Registrars` : `Import / Export CSV`}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    );
+  };
+
+  if (!active || state.entryTab === `manual`) return renderManual(active ? renderEntryTabs : () => null);
 
   return (
     <Modal visible transparent animationType={`fade`} onRequestClose={close}>
@@ -105,28 +131,7 @@ const RegistrarSetup = ({ onClose, onManual }: RegistrarSetupProps) => {
               {!!state.error && (
                 <Text style={styles.error} accessibilityRole={`alert`} {...elementProps(`native-registrar-setup-error`)}>{state.error}</Text>
               )}
-              <View {...elementProps(`native-registrar-entry-tabs`)} style={styles.tabs} accessibilityRole={`tablist`} accessibilityLabel={`Add Domains Method`}>
-                {([`connect`, `csv`] as const).map(tab => {
-                  const selected = state.entryTab === tab;
-                  const TabIcon = tab === `connect` ? Link2 : Upload;
-                  return (
-                    <Pressable
-                      key={tab}
-                      disabled={busy}
-                      accessibilityRole={`tab`}
-                      accessibilityState={{ selected, disabled: busy }}
-                      onPress={() => state.setEntryTab(tab)}
-                      {...elementProps(`native-registrar-entry-tab`, tab)}
-                      style={[styles.tab, selected && styles.activeTab, busy && styles.disabled]}
-                    >
-                      <TabIcon size={15} color={selected ? palette.accent : palette.muted} {...elementProps(`native-registrar-entry-tab-icon`, tab)} />
-                      <Text {...elementProps(`native-registrar-entry-tab-text`, tab)} style={[styles.tabText, selected && styles.activeTabText]}>
-                        {tab === `connect` ? `Connect Registrars` : `Import / Export CSV`}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+              {renderEntryTabs()}
               {connecting ? (
                 <View {...elementProps(`native-registrar-connect-panel`)} style={styles.group}>
                   <Text {...elementProps(`native-registrar-connect-recommended`)} style={styles.recommended}>{`RECOMMENDED`}</Text>
@@ -200,12 +205,6 @@ const RegistrarSetup = ({ onClose, onManual }: RegistrarSetupProps) => {
               )}
             </ScrollView>
             <View {...elementProps(`native-registrar-setup-footer`)} style={styles.footer}>
-              {onManual && (
-                <Pressable disabled={busy} onPress={addManually} style={[styles.textButton, busy && styles.disabled]} accessibilityRole={`button`} {...elementProps(`native-registrar-setup-manual`)}>
-                  <Pencil size={15} color={palette.accent} {...elementProps(`native-registrar-setup-manual-icon`)} />
-                  <Text {...elementProps(`native-registrar-setup-manual-text`)} style={styles.linkText}>{`Add Manually`}</Text>
-                </Pressable>
-              )}
               <Pressable
                 disabled={saveDisabled}
                 accessibilityRole={`button`}

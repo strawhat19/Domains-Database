@@ -53,6 +53,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     return { ...fullSections, mainGroups };
   }, [fullSections, portfolio.registrarDomains, portfolio.sortField, preferences]);
   const summaryFiltering = portfolio.activeFilterCount > 0;
+  const emptyPortfolio = !portfolio.loading && portfolio.domains.length === 0;
+  const showHeadingSummary = !emptyPortfolio;
   const facetSections = useMemo(() => summaryFiltering ? {
     ...orderedSections,
     mainGroups: orderedSections.mainGroups.filter(group => group.domains.length),
@@ -206,8 +208,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
       )}
       <div ref={mobileBoardRef} id={`portfolio-card`} className={`portfolio-card`}>
         <div ref={sticky.headingRef} id={`portfolio-heading-row`} className={`portfolio-heading-row`}>
-          <div id={`portfolio-heading`} className={`portfolio-heading`}>
-            <button
+          <div id={`portfolio-heading`} className={`portfolio-heading`} data-has-summary={showHeadingSummary}>
+            {showHeadingSummary && <button
               type={`button`}
               id={`portfolio-heading-eyebrow`}
               disabled={portfolio.loading}
@@ -220,11 +222,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <span id={`portfolio-heading-domain-count`} className={`portfolio-summary-value`}>
                 {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-heading-domain-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} /> : portfolio.summary.count}
               </span>
-            </button>
+            </button>}
             <h2 id={`portfolio-title`} className={`portfolio-title`}>
               {`Domains`}
             </h2>
-            <div id={`portfolio-heading-summary-stack`} className={`portfolio-summary-stack`}>
+            {showHeadingSummary && <div id={`portfolio-heading-summary-stack`} className={`portfolio-summary-stack`}>
               <div id={`portfolio-heading-extension-summary`} className={`portfolio-summary portfolio-extension-summary portfolio-heading-filters`}>
                 {!portfolio.loading && portfolio.summary.extensionCounts.map(({ extension, count }) => {
                   const extensionId = encodeURIComponent(extension);
@@ -335,7 +337,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   </>
                 )}
               </div>
-            </div>
+            </div>}
           </div>
           <div id={`portfolio-primary-actions`} className={`portfolio-primary-actions`}>
             {/* <button
@@ -472,6 +474,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             aria-label={`Search Domains`}
             onSubmit={event => {
               event.preventDefault();
+              if (portfolio.loading || emptyPortfolio) return;
               portfolio.setQuery(searchInputRef.current?.value ?? portfolio.query);
               searchInputRef.current?.focus({ preventScroll: true });
             }}
@@ -480,7 +483,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               <button
                 type={`button`}
                 id={`portfolio-eyebrow`}
-                disabled={portfolio.loading}
+                disabled={portfolio.loading || emptyPortfolio}
                 className={`portfolio-search-count`}
                 title={`Clear All Domain Filters`}
                 aria-pressed={activeFilterCount === 0}
@@ -492,9 +495,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 </span>
                 <span id={`portfolio-search-count-label`} className={`portfolio-search-count-label`}>{`Domains`}</span>
               </button>
-              <div id={`portfolio-search-wrap`} className={`portfolio-search-wrap`}>
+              <div id={`portfolio-search-wrap`} className={`portfolio-search-wrap`} data-disabled={portfolio.loading || emptyPortfolio}>
                 <label id={`portfolio-search-label`} className={`portfolio-sr-only`} htmlFor={`portfolio-search`}>
-                  {`Search Domain Names, Titles, Or Descriptions`}
+                  {emptyPortfolio ? `Add Domains To Search` : `Search Domain Names, Titles, Or Descriptions`}
                 </label>
                 <Search size={16} aria-hidden={`true`} id={`portfolio-search-icon`} className={`portfolio-search-icon`} />
                 <input
@@ -502,12 +505,13 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   id={`portfolio-search`}
                   ref={searchInputRef}
                   autoComplete={`off`}
-                  value={portfolio.query}
+                  value={emptyPortfolio ? `` : portfolio.query}
                   className={`portfolio-search`}
-                  placeholder={`Search`}
+                  disabled={portfolio.loading || emptyPortfolio}
+                  placeholder={emptyPortfolio ? `Add domains to search` : `Search`}
                   onChange={event => portfolio.setQuery(event.target.value)}
                 />
-                {Boolean(portfolio.query) && (
+                {!emptyPortfolio && Boolean(portfolio.query) && (
                   <button
                     type={`button`}
                     title={`Clear Search`}
@@ -521,7 +525,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 )}
               </div>
             </div>
-            <div id={`portfolio-toolbar-actions`} className={`portfolio-toolbar-actions`}>
+            {!emptyPortfolio && <div id={`portfolio-toolbar-actions`} className={`portfolio-toolbar-actions`}>
               <div
                 role={`group`}
                 aria-label={`Domain Actions`}
@@ -664,7 +668,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   />
                 </button>
               </div>
-            </div>
+            </div>}
           </form>
           <p
             aria-atomic={`true`}

@@ -1,8 +1,9 @@
 export const notFoundContent = {
   address: `page.not-found`,
   homeLabel: `Back to Home`,
-  eyebrow: `PAGE NOT FOUND`,
-  title: `A little off the map.`,
+  blogLabel: `Read the Blog`,
+  eyebrow: `ERROR 404`,
+  title: `We couldn’t find this page`,
   domainsLabel: `Explore Domains`,
-  description: `This address doesn’t lead to a page. Your next stop is just a click away.`,
+  description: `The link may have changed. Check the address or continue with one of the links below.`,
 };

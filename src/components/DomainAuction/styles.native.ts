@@ -26,6 +26,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   pasteInput: { minHeight: 140, textAlignVertical: `top`, fontSize: 11 },
   skeleton: { height: 14, borderRadius: 3, backgroundColor: palette.skeleton },
   title: { fontSize: 30, color: palette.ink, letterSpacing: -.8, fontFamily: `DMSans_700Bold` },
+  titleRow: { gap: 10, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
+  titleBeta: { fontSize: 9, flexShrink: 0, minHeight: 19, lineHeight: 13, borderWidth: 1, letterSpacing: .3, borderRadius: 999, paddingVertical: 2, paddingHorizontal: 6, color: palette.accent, borderColor: palette.accent, backgroundColor: palette.subtle, fontFamily: `DMSans_700Bold` },
   label: { fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
   sectionTitle: { fontSize: 13, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
   noticeTitle: { fontSize: 12, color: palette.warning, fontFamily: `DMSans_600SemiBold` },
@@ -52,5 +54,5 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   textButton: { gap: 6, minHeight: 40, flexDirection: `row`, alignItems: `center` },
   queryWrap: { gap: 9, minHeight: 44, paddingHorizontal: 12, borderWidth: 1, borderRadius: 5, borderColor: palette.line, flexDirection: `row`, alignItems: `center`, backgroundColor: palette.input },
   button: { gap: 7, minHeight: 44, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderRadius: 5, borderColor: palette.line, flexDirection: `row`, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.paper },
-  empty: { gap: 14, padding: 26, borderWidth: 1, borderRadius: 6, borderColor: palette.line, alignItems: `center`, backgroundColor: palette.paper },
+  empty: { borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.paper },
 });

@@ -1,4 +1,5 @@
 import './styles.scss';
+import type { ReactNode } from 'react';
 import TagPicker from '../TagPicker/index.web';
 import ModalTabs from '../ModalTabs/index.web';
 import MobileSheetHandle from '../MobileSheet/index.web';
@@ -27,11 +28,13 @@ import { X, Plus, Link, Info, Check, Trash2, Settings2, FolderTree, ChevronDown,
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 
 interface DomainEditorProps {
+  active?: boolean;
   onClose: () => void;
   domain?: DomainRecord | null;
+  entryTabs?: (busy: boolean) => ReactNode;
 }
 
-const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
+const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEditorProps) => {
   const {
     error,
     input,
@@ -64,7 +67,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
     destinationLabel,
     hideProjectDetails,
     toggleVisibility,
-  } = useDomainEditor(domain, onClose);
+  } = useDomainEditor(domain, onClose, active);
   const tabsId = `domain-editor-sections-${domain?.id ?? `new`}`;
   const deleteId = `domain-editor-delete-${domain?.id ?? `new`}`;
   const isEditing = Boolean(domain?.id);
@@ -92,12 +95,13 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
   return (
     <div
       role={`presentation`}
+      hidden={!active}
       id={`domain-editor-backdrop`}
-      {...sheet.pressProps}
-      style={sheet.style}
+      {...(active ? sheet.pressProps : {})}
+      style={{ ...sheet.style, display: active ? undefined : `none` }}
       className={`domain-dialog-backdrop${sheet.className}`}
-      onClick={event => { if (sheet.mobile && event.target === event.currentTarget) close(); }}
-      onMouseDown={event => { if (!sheet.mobile && event.target === event.currentTarget) close(); }}
+      onClick={event => { if (active && sheet.mobile && event.target === event.currentTarget) close(); }}
+      onMouseDown={event => { if (active && !sheet.mobile && event.target === event.currentTarget) close(); }}
     >
       <div
         tabIndex={-1}
@@ -175,7 +179,15 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
             </button>
           </div>
         </header>
-        <form noValidate id={`domain-editor-form`} className={`domain-dialog-form domain-editor-form`} onSubmit={handleSubmit}>
+        {active && entryTabs?.(saving)}
+        <form
+          noValidate
+          id={`domain-editor-form`}
+          onSubmit={handleSubmit}
+          role={entryTabs ? `tabpanel` : undefined}
+          className={`domain-dialog-form domain-editor-form`}
+          aria-labelledby={entryTabs ? `registrar-setup-tab-manual` : undefined}
+        >
           <ModalTabs
             id={tabsId}
             value={activeTab}
@@ -204,7 +216,7 @@ const DomainEditor = ({ domain, onClose }: DomainEditorProps) => {
               {activeTab === `general` && (
                 <>
                   {!isEditing && <p id={`domain-editor-description`} className={`domain-dialog-description`}>{`A little detail now. A lot less searching later.`}</p>}
-                  {!isEditing && !isSynced && <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />}
+                  {!entryTabs && !isEditing && !isSynced && <ConnectRegistrar onClose={close} disabled={saving} scope={`domain-editor`} />}
                   <div id={`domain-editor-fields`} className={`domain-editor-fields`}>
                     <div id={`domain-site-icon-field`} className={`domain-editor-field domain-editor-field-full`}>
                       <label id={`domain-site-icon-label`} className={`domain-editor-label`} htmlFor={`domain-site-icon-input`}>

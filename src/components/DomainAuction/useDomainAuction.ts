@@ -111,6 +111,7 @@ export const useDomainAuction = () => {
     if (pendingMutation.current !== null) return;
     feedRequest.current++;
     feedController.current?.abort(); feedController.current = null;
+    if (next !== mode) setPreviewLoading(next === `preview`);
     setFeedLoading(false); setActionError(``); setNotice(``); setMode(next);
   };
   const loadFreeAuctions = async () => {

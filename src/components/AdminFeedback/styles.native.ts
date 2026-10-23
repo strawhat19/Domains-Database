@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
-export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+export const createStyles = (palette: ThemePalette, isDark: boolean) => StyleSheet.create({
   pressed: { opacity: .8 },
   root: { gap: 18, minWidth: 0, width: `100%` },
   heading: { gap: 8, minWidth: 0 },
@@ -19,10 +19,8 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   availableBadge: { backgroundColor: palette.successBackground },
   availableBadgeText: { color: palette.success },
   cardOpen: { gap: 6, marginTop: 2, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
-  comingSoon: { gap: 18, padding: 22, borderWidth: 1, borderRadius: 12, borderColor: palette.line, backgroundColor: palette.paper },
-  comingSoonHeading: { gap: 12, flexDirection: `row`, alignItems: `center` },
-  comingSoonTitle: { flexShrink: 1, color: palette.ink, fontSize: 20, fontFamily: `DMSans_700Bold` },
-  actions: { gap: 10, flexWrap: `wrap`, flexDirection: `row` },
-  link: { gap: 7, minHeight: 36, paddingVertical: 9, paddingHorizontal: 12, borderWidth: 1, borderRadius: 7, borderColor: palette.line, backgroundColor: palette.paper, flexDirection: `row`, alignItems: `center` },
-  linkText: { color: palette.accent, fontSize: 11, lineHeight: 16, fontFamily: `DMSans_600SemiBold` },
+  link: { gap: 8, minHeight: 44, paddingVertical: 11, paddingHorizontal: 16, borderWidth: 1, borderRadius: 8, borderColor: palette.line, backgroundColor: palette.paper, flexDirection: `row`, alignItems: `center`, justifyContent: `center` },
+  linkText: { flexShrink: 1, color: palette.ink, fontSize: 12, lineHeight: 18, fontFamily: `DMSans_600SemiBold` },
+  primaryLinkText: { color: palette.contrast },
+  primaryLink: { borderColor: isDark ? palette.accent : palette.strong, backgroundColor: isDark ? palette.accent : palette.strong },
 });

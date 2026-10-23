@@ -2,6 +2,10 @@
 .blog-article-header { max-width: 820px; margin: 0 auto 32px; }
 .blog-article-back { gap: 8px; display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); font-size: 12px; margin-bottom: 20px; }
 .blog-article-back:hover { color: var(--accent); }
+.blog-article-recovery { gap: 8px; display: inline-flex; min-height: 44px; padding: 12px 17px; border-radius: 6px; align-items: center; justify-content: center; color: var(--paper); background: var(--ink); font-size: 12px; font-family: var(--font-bold); transition: opacity .2s ease; }
+.blog-article-recovery:hover { opacity: .85; }
+:root[data-theme='dark'] .blog-article-recovery { color: var(--contrast); background: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .blog-article-recovery { transition: none; } }
 .blog-article-category { margin: 0 0 14px; color: var(--accent); font-size: 10px; letter-spacing: 1.2px; font-family: var(--font-bold); text-transform: uppercase; }
 .blog-article-title { margin: 0; color: var(--ink); font-size: clamp(30px, 4.3vw, 48px); line-height: 1.18; letter-spacing: -.035em; font-family: var(--font-bold); }
 .blog-article-description { color: var(--muted); font-size: 16px; line-height: 1.8; margin: 20px 0; }

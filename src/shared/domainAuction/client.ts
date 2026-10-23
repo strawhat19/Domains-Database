@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 import { absoluteSiteUrl } from '../seo';
+import { getFirebaseAuth } from '../firebase/client';
+import { requireStarterAccess } from '../planAccess/service';
 import type { AuctionType, AuctionRecord, AuctionFeedSnapshot, AuctionInventoryMetrics } from './types';
 import { normalizeAuctionDomain, parseAuctionTimestamp, getInventoryListingHref, MAX_AUCTION_IMPORT_BYTES, MAX_AUCTION_IMPORT_RECORDS } from './import';
 
@@ -168,11 +170,16 @@ export const getFreeAuctionFeed = async (signal?: AbortSignal): Promise<AuctionF
   if (signal?.aborted) abort();
   const timeout = setTimeout(abort, 20_000);
   try {
+    const actor = await requireStarterAccess();
+    const identity = getFirebaseAuth().currentUser;
+    if (!identity || identity.uid !== actor.firebase_uid) throw new Error(`Sign In To Unlock Auctions`);
+    const token = await identity.getIdToken();
+    if (controller.signal.aborted) throw new Error(`Auction Feed Request Cancelled`);
     const response = await fetch(Platform.OS === `web` ? `/api/auction-inventory` : absoluteSiteUrl(`/api/auction-inventory`), {
       method: `GET`,
       credentials: `omit`,
       signal: controller.signal,
-      headers: { Accept: `application/json` },
+      headers: { Accept: `application/json`, Authorization: `Bearer ${token}` },
     });
     const text = await readResponseText(response);
     let input: unknown;
@@ -183,6 +190,7 @@ export const getFreeAuctionFeed = async (signal?: AbortSignal): Promise<AuctionF
         ? error : `Auction Feed Is Temporarily Unavailable`);
     }
     if (controller.signal.aborted) throw new Error(`Auction Feed Request Cancelled`);
+    if (getFirebaseAuth().currentUser?.uid !== actor.firebase_uid) throw new Error(`Your Account Changed — Try Again`);
     return readSnapshot(input);
   } catch (failure) {
     if (controller.signal.aborted) throw new Error(signal?.aborted ? `Auction Feed Request Cancelled` : `Auction Feed Timed Out`);

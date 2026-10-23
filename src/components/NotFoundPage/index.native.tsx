@@ -4,18 +4,19 @@ import { notFoundContent } from './content';
 import { createStyles } from './styles.native';
 import { useMemo, useContext } from 'react';
 import { routes } from '../../shared/routes';
-import { House, Link2, Globe2 } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { House, Link2, Globe2, BookOpen, ArrowRight } from 'lucide-react-native';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Text, View, Platform, Pressable, useWindowDimensions } from 'react-native';
 
 const NotFoundPage = () => {
-  const { palette } = useTheme();
+  const { palette, isDark } = useTheme();
   const { width, height } = useWindowDimensions();
   const pageContentHeight = useContext(ScrollContext)?.pageContentHeight;
-  const styles = useMemo(() => createStyles(palette), [palette]);
-  const compact = width < 600;
+  const styles = useMemo(() => createStyles(palette, isDark), [palette, isDark]);
+  const narrow = width < 600;
+  const compact = narrow || (pageContentHeight ?? height - 260) < 520;
   const iconProps = Platform.OS === `web` ? { 'aria-hidden': true as const } : { accessible: false };
 
   return (
@@ -54,7 +55,7 @@ const NotFoundPage = () => {
           <Text {...elementProps(`not-found-eyebrow`)} style={styles.eyebrow}>{notFoundContent.eyebrow}</Text>
           <Text {...elementProps(`not-found-title`)} style={[styles.title, compact && styles.compactTitle]} accessibilityRole={`header`}>{notFoundContent.title}</Text>
           <Text {...elementProps(`not-found-description`)} style={styles.description}>{notFoundContent.description}</Text>
-          <View {...elementProps(`not-found-actions`)} style={[styles.actions, compact && styles.compactActions]}>
+          <View {...elementProps(`not-found-actions`)} style={[styles.actions, narrow && styles.compactActions]}>
             <Link asChild href={routes.home.href}>
               <Pressable
                 accessibilityRole={`link`}
@@ -78,6 +79,18 @@ const NotFoundPage = () => {
               </Pressable>
             </Link>
           </View>
+          <Link asChild href={routes.blog.href}>
+            <Pressable
+              accessibilityRole={`link`}
+              accessibilityLabel={notFoundContent.blogLabel}
+              {...elementProps(`not-found-blog-link`)}
+              style={({ pressed }) => [styles.blogLink, pressed && styles.pressed]}
+            >
+              <BookOpen {...iconProps} size={15} color={palette.muted} {...elementProps(`not-found-blog-icon`)} />
+              <Text {...elementProps(`not-found-blog-label`)} style={styles.blogText}>{notFoundContent.blogLabel}</Text>
+              <ArrowRight {...iconProps} size={14} color={palette.muted} {...elementProps(`not-found-blog-arrow`)} />
+            </Pressable>
+          </Link>
         </View>
       </View>
     </>

@@ -14,6 +14,7 @@ import { ThemeProvider } from '../src/shared/themeContext/ThemeContext';
 import { WatchingProvider } from '../src/shared/watching/WatchingContext';
 import { ColumnProvider } from '../src/shared/columnContext/ColumnContext';
 import { DomainProvider } from '../src/shared/domainContext/DomainContext';
+import { StarterAccessProvider } from '../src/shared/plans/StarterAccessContext';
 import { FeatureFlagsProvider } from '../src/shared/featureFlags/FeatureFlagsContext';
 import { ConnectionAvailabilityProvider } from '../src/shared/connections/ConnectionAvailabilityContext';
 import { AccountNavigationProvider } from '../src/shared/accountNavigationContext/AccountNavigationContext';
@@ -37,11 +38,13 @@ const RootLayout = () => {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <FeatureFlagsProvider>
-          <ThemeProvider>
-            <AccountContent />
-          </ThemeProvider>
-        </FeatureFlagsProvider>
+        <StarterAccessProvider>
+          <FeatureFlagsProvider>
+            <ThemeProvider>
+              <AccountContent />
+            </ThemeProvider>
+          </FeatureFlagsProvider>
+        </StarterAccessProvider>
       </AuthProvider>
       <VercelAnalytics />
     </SafeAreaProvider>
