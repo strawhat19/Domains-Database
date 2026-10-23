@@ -3,6 +3,7 @@ import { useMemo, useContext } from 'react';
 import { createStyles } from './styles.native';
 import AuthOnboarding from '../AuthOnboarding';
 import GoogleAuthButton from '../GoogleAuthButton';
+import { getPricingPriceLabel } from '../Pricing/presentation';
 import { useLocalStorage } from '../../shared/config';
 import { elementProps } from '../../shared/elementProps';
 import { useAuthForm, type AuthMode } from './useAuthForm';
@@ -59,6 +60,11 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
             </Pressable>
           </View>
         )}
+        {state.enrollmentPlan ? <View {...elementProps(`auth-form-selected-plan`, mode)} style={styles.selectedPlan} accessibilityLiveRegion={`polite`}>
+          <Text {...elementProps(`auth-form-selected-plan-name`, mode)} style={styles.selectedPlanName}>{state.selectedOffer ? `Selected Plan · ${state.selectedOffer.name}` : state.offerError || `Loading Your Selected Plan…`}</Text>
+          {state.selectedOffer ? <Text {...elementProps(`auth-form-selected-plan-price`, mode)} style={styles.selectedPlanPrice}>{getPricingPriceLabel(state.selectedOffer)}</Text> : null}
+          <Text {...elementProps(`auth-form-selected-plan-copy`, mode)} style={styles.selectedPlanCopy}>{state.enrollmentPlan === `starter` ? `Create an account or sign in, then review your subscription. Payments are not available yet; no charge or paid access begins during signup.` : `Create an account or sign in to start your free portfolio.`}</Text>
+        </View> : null}
         {state.auth.loading ? (
           <View {...elementProps(`auth-form-loading`, mode)} style={styles.loading} accessibilityLabel={`Loading Your Account`} accessibilityState={{ busy: true }}>
             <View {...elementProps(`auth-form-skeleton-title`, mode)} style={styles.skeletonTitle} />
@@ -88,13 +94,13 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               style={[styles.submit, state.disabled && styles.disabled]}
               disabled={state.disabled}
               accessibilityRole={`link`}
-              accessibilityLabel={`View Your Profile`}
+              accessibilityLabel={state.enrollmentPlan ? state.enrollmentPlan === `free` ? `Open Portfolio` : `Review Selected Plan` : `View Your Profile`}
               {...elementProps(`auth-form-profile`, mode)}
-              onPress={() => state.navigate(`/profile`)}
+              onPress={() => state.enrollmentPlan ? state.continueEnrollment() : state.navigate(`/profile`)}
             >
               <UserRound {...elementProps(`auth-form-profile-icon`, mode)} size={18} color={palette.contrast} />
               <Text {...elementProps(`auth-form-profile-text`, mode)} style={styles.submitText}>
-                {`View Profile`}
+                {state.enrollmentPlan ? state.enrollmentPlan === `free` ? `Open Portfolio` : `Review Selected Plan` : `View Profile`}
               </Text>
             </Pressable>
           </View>

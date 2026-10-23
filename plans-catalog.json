@@ -24,6 +24,7 @@
     {
       "name": "Free",
       "slug": "free",
+      "icon": "Globe2",
       "active": true,
       "currency": "USD",
       "priceCents": 0,
@@ -35,17 +36,22 @@
         "Domain portfolio",
         "Domain Search with Trending Domains",
         "CSV import & export",
-        "Projects, groups & tags",
+        "Projects, groups, collections & tags",
         "Registrar & renewal dates",
-        "GoDaddy & Hostinger Connections"
+        "GoDaddy & Hostinger Connections",
+        "GitHub, preview & production links",
+        "Private portfolio across signed-in devices",
+        "Idea-to-launch stages & collection progress",
+        "Search, filters & flexible portfolio views"
       ]
     },
     {
       "name": "Starter",
       "slug": "starter",
+      "icon": "Gem",
       "active": true,
       "currency": "USD",
-      "priceCents": 333,
+      "priceCents": 133,
       "displayOrder": 1,
       "billingInterval": "month",
       "description": "A simple start for your growing portfolio. Introductory pricing; enquiries only.",
@@ -54,13 +60,13 @@
         "Everything in Free",
         "Remove Ads",
         "Annual/monthly costs",
-        "Porkbun & NameSilo imports",
+        "Porkbun & NameSilo Connections",
         "Research, performance & Tranco rank",
         "Hosted-domain discovery & registrar lookup",
         "Registrar availability & price comparison",
         "Squarespace, Namecheap & Vercel Connections",
         "Planned: Domain Auctions",
-        "Planned: Domains Community"
+        "Domains Community"
       ]
     },
     {

@@ -1,14 +1,18 @@
 import './styles.scss';
 import type { PlanRowProps } from './types';
 import { formatPlanDate, formatPlanPrice } from '../values';
-import { X, Layers3, Archive, Settings, ThumbsUp } from 'lucide-react';
+import { getPricingPlanVisual } from '../../Pricing/planIcons';
+import { X, Gem, Zap, Globe2, Puzzle, Compass, Layers3, Archive, Settings, ThumbsUp, Building2, UsersRound } from 'lucide-react';
+
+const icons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
 const PlanRow = ({ busy, score, saving, record, confirming, scoreLoading, onEdit, onArchive, onStatus, onRequestArchive, onCancelArchive }: PlanRowProps) => {
   const rowId = `admin-plan-${record.id}`;
+  const PlanIcon = icons[getPricingPlanVisual(record).icon];
   return <tr id={rowId} className={`admin-plan-row`} aria-busy={saving}>
     <td id={`${rowId}-number`} className={`admin-plan-number`}><span id={`${rowId}-number-badge`} className={`admin-record-number-badge`}>{record.number}</span></td>
     <td id={`${rowId}-name-cell`} className={`admin-plan-main`}><div id={`${rowId}-identity`} className={`admin-plan-identity`}>
-      <span id={`${rowId}-thumbnail`} className={`admin-plan-thumbnail`} aria-hidden><Layers3 size={18} strokeWidth={1.6} id={`${rowId}-icon`} className={`admin-plan-icon`} /></span>
+      <span id={`${rowId}-thumbnail`} className={`admin-plan-thumbnail`} aria-hidden><PlanIcon size={18} strokeWidth={1.6} id={`${rowId}-icon`} className={`admin-plan-icon`} /></span>
       <div id={`${rowId}-copy`} className={`admin-plan-copy`}>
         <strong id={`${rowId}-name`} className={`admin-plan-title`}>{record.name}</strong>
         <span id={`${rowId}-slug`} className={`admin-plan-slug`}>{record.slug}</span>

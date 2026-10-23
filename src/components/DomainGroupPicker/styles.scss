@@ -74,6 +74,8 @@
     .domain-group-picker-domain { font-size: 11px; }
     .domain-group-picker-fields { gap: 12px 20px; align-items: start; }
     .domain-group-picker-fields-creating { grid-template-columns: minmax(0, 1.7fr) minmax(360px, 1fr); }
+    .domain-group-picker-fields-creating .domain-group-picker-group-field { grid-area: 1 / 1; }
+    .domain-group-picker-fields-creating .domain-group-picker-controls { grid-area: 1 / 2; }
     .domain-group-picker-fields-creating .domain-group-picker-controls { padding: 2px; overflow-y: auto; max-height: min(56dvh, 500px); overscroll-behavior: contain; }
     .domain-group-picker-group-choices { gap: 8px; }
     .domain-group-picker-commands { gap: 8px; }

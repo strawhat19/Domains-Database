@@ -28,7 +28,7 @@ export const useAppShell = () => {
   const searchViewport = pathname === routes.search.href && width >= 1000;
   const publicPages = [routes.signin.href, routes.signup.href, routes.terms.href, routes.contact.href, routes.privacy.href, `/api`] as string[];
   const fitViewport = pathname !== routes.about.href && (publicPages.includes(pathname)
-    || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href && pathname !== routes.community.href && pathname !== `/discover`));
+    || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.subscription.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href && pathname !== routes.community.href && pathname !== `/discover`));
   const visibleNavigation = navigation.filter(item =>
     (item.href !== routes.contact.href || (featuresReady && flags.contact))
     && (!(`minPlan` in item) || starterAllowed)

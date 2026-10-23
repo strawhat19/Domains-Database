@@ -24,6 +24,10 @@
   background: linear-gradient(165deg, var(--paper) 65%, var(--subtle));
 }
 
+.auth-form-selected-plan { gap: 6px; width: 100%; display: grid; padding: 14px; max-width: 480px; margin: 16px 0; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); box-sizing: border-box; }
+.auth-form-selected-plan-name { margin: 0; font-size: 12px; color: var(--accent); font-family: var(--font-bold); }
+.auth-form-selected-plan-price { margin: 0; font-size: 18px; color: var(--ink); font-family: var(--font-bold); }
+.auth-form-selected-plan-copy { margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
 .auth-form-mode-navigation { gap: 28px; width: 100%; display: flex; max-width: 480px; border-bottom: 1px solid var(--line); }
 .auth-form-mode { gap: 8px; border: 0; display: inline-flex; min-height: 44px; padding: 0 0 12px; color: var(--muted); align-items: center; background: transparent; font-size: 13px; border-bottom: 2px solid transparent; font-family: var(--font-bold); transition: color .22s ease, border-color .22s ease; }
 .auth-form-mode-active { color: var(--accent); border-bottom-color: var(--accent); }

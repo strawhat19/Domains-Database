@@ -1,13 +1,17 @@
 import './styles.scss';
-import { X, Save } from 'lucide-react';
+import { iconLabels } from './values';
 import { billingLabels } from '../values';
 import type { PlanEditorProps } from './types';
 import { usePlanEditor } from './usePlanEditor';
-import { planLimits, planCurrencies, planBillingIntervals } from '../../../shared/plans/types';
+import { planIcons, planLimits, planCurrencies, planBillingIntervals } from '../../../shared/plans/types';
+import { X, Gem, Zap, Save, Plus, Check, Clock3, Trash2, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound } from 'lucide-react';
+
+const icons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
+const featureStatuses = [{ planned: false, label: `Included`, Icon: Check }, { planned: true, label: `Planned`, Icon: Clock3 }];
 
 const PlanEditor = (props: PlanEditorProps) => {
   const { busy, record, onClose } = props;
-  const { error, values, submit, setField } = usePlanEditor(props);
+  const { error, values, submit, setField, addFeature, updateFeature, removeFeature } = usePlanEditor(props);
   const editorId = `admin-plan-editor-${record?.id ?? `new`}`;
   return <form id={editorId} className={`admin-plan-editor`} aria-labelledby={`${editorId}-title`} onSubmit={event => { event.preventDefault(); if (!busy) void submit().then(saved => { if (saved) onClose(); }); }}>
     <div id={`${editorId}-heading`} className={`admin-plan-editor-heading`}>
@@ -24,7 +28,32 @@ const PlanEditor = (props: PlanEditorProps) => {
       <label id={`${editorId}-currency-label`} htmlFor={`${editorId}-currency`} className={`admin-plan-editor-field`}><span id={`${editorId}-currency-label-text`} className={`admin-plan-editor-field-label`}>{`Currency`}</span><select id={`${editorId}-currency`} value={values.currency} className={`admin-plan-editor-input`} onChange={event => setField(`currency`, event.currentTarget.value)}>{planCurrencies.map(currency => <option key={currency} id={`${editorId}-currency-${currency}`} className={`admin-plan-editor-option`} value={currency}>{currency}</option>)}</select></label>
       <label id={`${editorId}-interval-label`} htmlFor={`${editorId}-interval`} className={`admin-plan-editor-field`}><span id={`${editorId}-interval-label-text`} className={`admin-plan-editor-field-label`}>{`Billing Interval`}</span><select id={`${editorId}-interval`} value={values.billingInterval} className={`admin-plan-editor-input`} onChange={event => setField(`billingInterval`, event.currentTarget.value)}>{planBillingIntervals.map(interval => <option key={interval} id={`${editorId}-interval-${interval}`} className={`admin-plan-editor-option`} value={interval}>{billingLabels[interval]}</option>)}</select></label>
       <label id={`${editorId}-status-label`} htmlFor={`${editorId}-status`} className={`admin-plan-editor-field`}><span id={`${editorId}-status-label-text`} className={`admin-plan-editor-field-label`}>{`Status`}</span><select id={`${editorId}-status`} value={values.active ? `active` : `inactive`} className={`admin-plan-editor-input`} onChange={event => setField(`active`, event.currentTarget.value === `active`)}><option id={`${editorId}-status-inactive`} className={`admin-plan-editor-option`} value={`inactive`}>{`Inactive`}</option><option id={`${editorId}-status-active`} className={`admin-plan-editor-option`} value={`active`}>{`Active`}</option></select></label>
-      <label id={`${editorId}-features-label`} htmlFor={`${editorId}-features`} className={`admin-plan-editor-field is-wide`}><span id={`${editorId}-features-label-text`} className={`admin-plan-editor-field-label`}>{`Features · One Per Line`}</span><textarea id={`${editorId}-features`} value={values.features} maxLength={planLimits.features * (planLimits.feature + 1)} rows={6} className={`admin-plan-editor-input`} aria-describedby={`${editorId}-features-note`} onChange={event => setField(`features`, event.currentTarget.value)} /><small id={`${editorId}-features-note`} className={`admin-plan-editor-field-note`}>{`Up To ${planLimits.features} Features · ${planLimits.feature} Characters Each`}</small></label>
+      <div id={`${editorId}-icon-field`} className={`admin-plan-editor-field is-wide`}>
+        <span id={`${editorId}-icon-label`} className={`admin-plan-editor-field-label`}>{`Plan Icon`}</span>
+        <div id={`${editorId}-icon-choices`} className={`admin-plan-editor-icon-choices`} role={`group`} aria-labelledby={`${editorId}-icon-label`}>
+          {planIcons.map(icon => {
+            const Icon = icons[icon];
+            return <button key={icon} type={`button`} aria-pressed={values.icon === icon} onClick={() => setField(`icon`, icon)} id={`${editorId}-icon-${icon}`} className={`admin-plan-editor-icon-choice${values.icon === icon ? ` is-selected` : ``}`}><Icon size={17} aria-hidden id={`${editorId}-icon-${icon}-glyph`} className={`admin-plan-editor-choice-icon`} /><span id={`${editorId}-icon-${icon}-label`} className={`admin-plan-editor-choice-label`}>{iconLabels[icon]}</span></button>;
+          })}
+        </div>
+      </div>
+      <div id={`${editorId}-features-field`} className={`admin-plan-editor-field is-wide`}>
+        <div id={`${editorId}-features-heading`} className={`admin-plan-editor-features-heading`}>
+          <span id={`${editorId}-features-label`} className={`admin-plan-editor-field-label`}>{`Features`}</span>
+          <button type={`button`} onClick={addFeature} disabled={values.features.length >= planLimits.features} id={`${editorId}-feature-add`} className={`admin-plan-editor-feature-add`}><Plus size={14} aria-hidden id={`${editorId}-feature-add-icon`} className={`admin-plan-editor-action-icon`} />{`Add Feature`}</button>
+        </div>
+        <div id={`${editorId}-features`} className={`admin-plan-editor-features`} role={`group`} aria-labelledby={`${editorId}-features-label`} aria-describedby={`${editorId}-features-note`}>
+          {values.features.map((feature, index) => <div key={feature.id} id={`${editorId}-feature-${feature.id}`} className={`admin-plan-editor-feature-row`}>
+            <label htmlFor={`${editorId}-feature-${feature.id}-label`} id={`${editorId}-feature-${feature.id}-input-label`} className={`admin-plan-editor-feature-label`}><span id={`${editorId}-feature-${feature.id}-label-text`} className={`admin-records-table-caption`}>{`Feature ${index + 1}`}</span><input required value={feature.label} maxLength={planLimits.feature - (feature.planned ? `Planned: `.length : 0)} onChange={event => updateFeature(feature.id, { label: event.currentTarget.value })} id={`${editorId}-feature-${feature.id}-label`} className={`admin-plan-editor-input`} placeholder={`Feature Name`} /></label>
+            <div id={`${editorId}-feature-${feature.id}-status`} className={`admin-plan-editor-feature-status`} role={`group`} aria-label={`Feature ${index + 1} Status`}>
+              {featureStatuses.map(({ planned, label, Icon }) => <button key={label} type={`button`} aria-pressed={feature.planned === planned} onClick={() => updateFeature(feature.id, { planned })} id={`${editorId}-feature-${feature.id}-${label.toLowerCase()}`} className={`admin-plan-editor-feature-status-choice${feature.planned === planned ? ` is-selected` : ``}`}><Icon size={13} aria-hidden id={`${editorId}-feature-${feature.id}-${label.toLowerCase()}-icon`} className={`admin-plan-editor-choice-icon`} />{label}</button>)}
+            </div>
+            <button type={`button`} onClick={() => removeFeature(feature.id)} aria-label={`Remove Feature ${index + 1}`} id={`${editorId}-feature-${feature.id}-remove`} className={`admin-plan-editor-feature-remove`}><Trash2 size={15} aria-hidden id={`${editorId}-feature-${feature.id}-remove-icon`} className={`admin-plan-editor-action-icon`} /></button>
+          </div>)}
+        </div>
+        {!values.features.length && <p id={`${editorId}-features-empty`} className={`admin-plan-editor-features-empty`}>{`No Features Added`}</p>}
+        <small id={`${editorId}-features-note`} className={`admin-plan-editor-field-note`}>{`Up To ${planLimits.features} Features · Choose Included Or Planned For Each Feature`}</small>
+      </div>
     </fieldset>
     <p id={`${editorId}-visibility-note`} className={`admin-plan-editor-note`}>{`Active plans appear in Pricing. Inactive plans stay in Admin. Prices do not change account access.`}</p>
     {!!error && <p id={`${editorId}-error`} className={`admin-plan-editor-error`} role={`alert`}>{error}</p>}

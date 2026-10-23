@@ -5,18 +5,22 @@ import { planColumns } from '../styles.native';
 import { View, Text, Pressable } from 'react-native';
 import { formatPlanDate, formatPlanPrice } from '../values';
 import { elementProps } from '../../../shared/elementProps';
+import { getPricingPlanVisual } from '../../Pricing/planIcons';
 import { useTheme } from '../../../shared/themeContext/useTheme';
-import { X, Layers3, Archive, Settings, ThumbsUp } from 'lucide-react-native';
+import { X, Gem, Zap, Globe2, Puzzle, Compass, Layers3, Archive, Settings, ThumbsUp, Building2, UsersRound } from 'lucide-react-native';
+
+const icons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
 const PlanRow = ({ busy, score, saving, record, confirming, scoreLoading, onEdit, onArchive, onStatus, onRequestArchive, onCancelArchive }: PlanRowProps) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const rowId = `native-admin-plan-${record.id}`;
+  const PlanIcon = icons[getPricingPlanVisual(record).icon];
   const statusColor = record.active ? palette.success : palette.muted;
   return <View {...elementProps(rowId)} style={styles.row} accessibilityState={{ busy: saving }}>
     <View {...elementProps(`${rowId}-number`)} style={[styles.cell, { width: planColumns[0] }]}><Text {...elementProps(`${rowId}-number-badge`)} style={styles.numberBadge}>{record.number}</Text></View>
     <View {...elementProps(`${rowId}-name-cell`)} style={[styles.cell, styles.identity, { width: planColumns[1] }]}>
-      <View {...elementProps(`${rowId}-thumbnail`)} style={styles.thumbnail}><Layers3 size={18} strokeWidth={1.6} color={palette.accent} {...elementProps(`${rowId}-icon`)} /></View>
+      <View {...elementProps(`${rowId}-thumbnail`)} style={styles.thumbnail}><PlanIcon size={18} strokeWidth={1.6} color={palette.accent} accessible={false} {...elementProps(`${rowId}-icon`)} /></View>
       <View {...elementProps(`${rowId}-copy`)} style={styles.copy}>
         <Text {...elementProps(`${rowId}-name`)} style={styles.title}>{record.name}</Text>
         <Text {...elementProps(`${rowId}-slug`)} style={styles.slug}>{record.slug}</Text>

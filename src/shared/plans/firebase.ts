@@ -20,7 +20,7 @@ const assertAccount = (uid: string) => {
 };
 const requireManager = async (ownerOnly = false) => {
   const canManage = ownerOnly ? canManageFeatures : canManagePlans;
-  const accessError = ownerOnly ? `Owner Access Is Required` : `Admin Access Is Required`;
+  const accessError = `Owner Access Is Required`;
   const user = (await restoreSession())?.user;
   if (!canManage(user) || !user?.firebase_uid) throw new Error(accessError);
   const actor = { id: user.id, firebaseUid: user.firebase_uid };
@@ -36,7 +36,7 @@ const requireTransactionManager = async (transaction: Transaction, actor: Awaite
   assertAccount(actor.firebaseUid);
   const saved = await transaction.get(doc(getFirebaseDb(), `users`, actor.id));
   const data = saved.data();
-  if (data?.id !== actor.id || data?.firebase_uid !== actor.firebaseUid || data?.active !== true || !canManage({ id: data.id, role: data.role, active: data.active })) throw new Error(ownerOnly ? `Owner Access Is Required` : `Admin Access Is Required`);
+  if (data?.id !== actor.id || data?.firebase_uid !== actor.firebaseUid || data?.active !== true || !canManage({ id: data.id, role: data.role, active: data.active })) throw new Error(`Owner Access Is Required`);
   assertAccount(actor.firebaseUid);
 };
 const pageQuery = (cursor: number | null) => {

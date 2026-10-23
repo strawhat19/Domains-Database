@@ -9,6 +9,8 @@ export const createStyles = (palette: ThemePalette) => ({
     pricingDescription: { maxWidth: `100%` },
     pricingHeading: { width: `100%`, maxWidth: `100%` },
     interest: { gap: 12, zIndex: 1 },
+    enrollment: { gap: 10, zIndex: 1 },
+    signin: { gap: 7, alignSelf: `flex-start`, alignItems: `center`, flexDirection: `row` },
     planTitle: { gap: 12, flex: 1, minWidth: 0, zIndex: 1, flexDirection: `row`, alignItems: `center` },
     planName: { flexShrink: 1, fontSize: 22, lineHeight: 28, color: palette.ink, fontFamily: `DMSans_700Bold` },
     interestNote: { fontSize: 11, lineHeight: 18, color: palette.muted, fontFamily: `DMSans_400Regular` },

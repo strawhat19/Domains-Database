@@ -3,7 +3,7 @@ import AuthForm from '../src/components/AuthForm';
 
 const SignUpRoute = () => (
   <>
-    <PageMeta title={`Sign Up`} description={`Create your local account`} />
+    <PageMeta title={`Sign Up`} description={`Create your account and continue with your selected plan`} />
     <AuthForm mode={`signup`} />
   </>
 );

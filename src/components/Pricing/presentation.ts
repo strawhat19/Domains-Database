@@ -13,4 +13,4 @@ export const getPricingAmountParts = (plan: Plan): Intl.NumberFormatPart[] => {
 export const getPricingAmount = (plan: Plan) => getPricingAmountParts(plan).map(part => part.value).join(``);
 export const getPricingPeriod = (plan: Plan) => plan.priceCents === 0 ? `` : plan.billingInterval === `month` ? ` / Month` : plan.billingInterval === `year` ? ` / Year` : ` / One Time`;
 export const getPricingPriceLabel = (plan: Plan) => `${getPricingAmount(plan)} ${plan.currency}${getPricingPeriod(plan)}`;
-export const pricingDescription = `Explore the plans and features for your next idea. Contact us to discuss the option that fits your portfolio.`;
+export const pricingDescription = `Choose a plan for your portfolio. Create an account or sign in to review your next step.`;

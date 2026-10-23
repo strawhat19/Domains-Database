@@ -2,6 +2,10 @@ import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette, compact = false, condensed = false, height?: number, width = 1600) => StyleSheet.create({
+  selectedPlan: { gap: 6, padding: 14, marginVertical: 16, borderWidth: 1, borderRadius: 12, borderColor: palette.line, backgroundColor: palette.paper },
+  selectedPlanName: { fontSize: 12, color: palette.accent, fontFamily: `DMSans_600SemiBold` },
+  selectedPlanPrice: { fontSize: 18, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
+  selectedPlanCopy: { fontSize: 11, lineHeight: 17, color: palette.muted, fontFamily: `DMSans_400Regular` },
   page: {
     gap: compact ? 16 : 32,
     width: `100%`,

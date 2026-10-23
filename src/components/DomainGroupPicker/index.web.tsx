@@ -36,6 +36,124 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
   const actionLabel = picker.creatingNewCollection ? `Create & Move` : `Create & Group`;
   const destinationLabel = allowDomainsInCollections ? `a collection or group` : `a group or app`;
 
+  const controls = (
+    <div id={`domain-group-picker-controls`} className={`domain-group-picker-controls`}>
+      {selectedBranch && (selectedGroup || picker.selectingCollection) && (
+        <p id={`domain-group-picker-destination`} className={`domain-group-picker-destination`} aria-live={`polite`}>
+          <span id={`domain-group-picker-destination-label`} className={`domain-group-picker-destination-label`}>{`Destination:`}</span>
+          <span id={`domain-group-picker-destination-collection`} className={`domain-group-picker-destination-name`}>{selectedBranch.name}</span>
+          {selectedGroup && (
+            <>
+              <ChevronRight size={13} aria-hidden={`true`} id={`domain-group-picker-destination-arrow`} className={`domain-group-picker-destination-arrow`} />
+              <span id={`domain-group-picker-destination-group`} className={`domain-group-picker-destination-name`}>{selectedGroup.name}</span>
+            </>
+          )}
+        </p>
+      )}
+      <p id={`domain-group-picker-group-help`} className={`domain-group-picker-help`}>
+        {picker.selectingCollection
+          ? `Domains move directly into the collection or Database, without a group.`
+          : picker.groupId === UNGROUPED_GROUP_OPTION
+          ? `${UNGROUPED_GROUP_LABEL} removes these domains from their current groups or apps.`
+          : `Custom Groups`}
+      </p>
+      {(picker.creatingGroup || picker.creatingNewCollection) && (
+        <div id={`domain-group-picker-create-fields`} className={`domain-group-picker-create-fields`}>
+          {picker.creatingGroup && (
+            <label id={`domain-group-picker-name-label`} htmlFor={`domain-group-picker-name`} className={`domain-editor-field`}>
+              <span id={`domain-group-picker-name-text`} className={`domain-editor-label`}>
+                {`New Group`}
+              </span>
+              <input
+                required
+                maxLength={80}
+                value={picker.name}
+                disabled={picker.disabled}
+                autoComplete={`off`}
+                ref={picker.nameInputRef}
+                id={`domain-group-picker-name`}
+                aria-invalid={picker.invalidField === `name`}
+                data-autofocus={!picker.disabled || undefined}
+                placeholder={`e.g. Client sites`}
+                className={`domain-editor-input domain-group-picker-name-input`}
+                onChange={event => picker.setName(event.target.value)}
+                aria-describedby={picker.invalidField === `name` ? `domain-group-picker-error` : undefined}
+              />
+            </label>
+          )}
+          <div id={`domain-group-picker-collection-fields`} className={`domain-group-picker-collection-fields${picker.creatingNewCollection ? ` domain-group-picker-collection-destinations` : ``}`}>
+            <label
+              id={`domain-group-picker-collection-name-label`}
+              htmlFor={`domain-group-picker-collection-name`}
+              className={`domain-editor-field`}
+            >
+              <span id={`domain-group-picker-collection-name-text`} className={`domain-editor-label`}>
+                {`New Collection`}
+              </span>
+              <input
+                maxLength={80}
+                autoComplete={`off`}
+                disabled={picker.disabled}
+                value={picker.collectionName}
+                required={picker.creatingCollection}
+                ref={picker.collectionNameInputRef}
+                data-autofocus={picker.creatingNewCollection && !picker.disabled || undefined}
+                id={`domain-group-picker-collection-name`}
+                placeholder={`e.g. Client projects`}
+                aria-invalid={picker.invalidField === `collectionName`}
+                className={`domain-editor-input domain-group-picker-collection-name-input`}
+                onChange={event => picker.setCollectionName(event.target.value)}
+                aria-describedby={`domain-group-picker-collection-help${picker.invalidField === `collectionName` ? ` domain-group-picker-error` : ``}`}
+              />
+            </label>
+            {picker.creatingNewCollection && (
+              <p id={`domain-group-picker-collection-help`} className={`domain-group-picker-help`}>
+                {`Names must be unique across collections and groups, ignoring capitalization.`}
+              </p>
+            )}
+          </div>
+          {picker.creatingGroup && (
+            <div id={`domain-group-picker-collection-field`} className={`domain-editor-field domain-group-picker-collection-destinations`}>
+              <span id={`domain-group-picker-collection-text`} className={`domain-editor-label`}>
+                {`Collection`}
+              </span>
+              <DestinationChoices
+                mosaic
+                options={collectionChoices}
+                value={picker.collectionId}
+                disabled={picker.disabled}
+                onChange={picker.setCollectionId}
+                id={`domain-group-picker-collection`}
+                choicesRef={picker.collectionChoicesRef}
+                labelId={`domain-group-picker-collection-text`}
+                invalid={picker.missingCollection || picker.invalidField === `collection`}
+                describedBy={`domain-group-picker-collection-help${picker.missingCollection || picker.invalidField === `collection` ? ` domain-group-picker-error` : ``}`}
+              />
+              <p id={`domain-group-picker-collection-help`} className={`domain-group-picker-help`}>
+                {`With a group name filled in, click Database or a collection to create and group immediately. For a new collection, enter its name and click Create & Group.`}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      {!embedded && <div id={`domain-group-picker-scroll-field`} className={`domain-editor-field domain-group-picker-scroll-field`}>
+        <span id={`domain-group-picker-scroll-label`} className={`domain-editor-label domain-group-picker-scroll-label`}>
+          <span id={`domain-group-picker-scroll-text`} className={`domain-group-picker-scroll-text`}>
+            {`Scroll to Destination when Done`}
+          </span>
+        </span>
+        <BooleanSetting
+          value={picker.scrollToGroup}
+          disabled={picker.disabled}
+          onChange={picker.setScrollToGroup}
+          id={`domain-group-picker-scroll-input`}
+          className={`domain-group-picker-scroll-control`}
+          labelledBy={`domain-group-picker-scroll-label`}
+        />
+      </div>}
+    </div>
+  );
+
   const formContent = (
     <>
       <div id={`domain-group-picker-body`} className={`domain-dialog-body`}>
@@ -60,6 +178,7 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
           id={`domain-group-picker-fields`}
           className={`domain-group-picker-fields${picker.creatingGroup || picker.creatingNewCollection ? ` domain-group-picker-fields-creating` : ``}`}
         >
+          {(picker.creatingGroup || picker.creatingNewCollection) && controls}
           <div id={`domain-group-picker-group-field`} className={`domain-editor-field domain-group-picker-group-field`}>
             <span id={`domain-group-picker-group-text`} className={`domain-editor-label`}>
               {`Destination`}
@@ -142,121 +261,7 @@ const DomainGroupPicker = ({ domains, onClose, onGrouped, embedded = false, disa
               />
             </div>
           </div>
-          <div id={`domain-group-picker-controls`} className={`domain-group-picker-controls`}>
-            {selectedBranch && (selectedGroup || picker.selectingCollection) && (
-              <p id={`domain-group-picker-destination`} className={`domain-group-picker-destination`} aria-live={`polite`}>
-                <span id={`domain-group-picker-destination-label`} className={`domain-group-picker-destination-label`}>{`Destination:`}</span>
-                <span id={`domain-group-picker-destination-collection`} className={`domain-group-picker-destination-name`}>{selectedBranch.name}</span>
-                {selectedGroup && (
-                  <>
-                    <ChevronRight size={13} aria-hidden={`true`} id={`domain-group-picker-destination-arrow`} className={`domain-group-picker-destination-arrow`} />
-                    <span id={`domain-group-picker-destination-group`} className={`domain-group-picker-destination-name`}>{selectedGroup.name}</span>
-                  </>
-                )}
-              </p>
-            )}
-            <p id={`domain-group-picker-group-help`} className={`domain-group-picker-help`}>
-              {picker.selectingCollection
-                ? `Domains move directly into the collection or Database, without a group.`
-                : picker.groupId === UNGROUPED_GROUP_OPTION
-                ? `${UNGROUPED_GROUP_LABEL} removes these domains from their current groups or apps.`
-                : `Custom Groups`}
-            </p>
-            {(picker.creatingGroup || picker.creatingNewCollection) && (
-              <div id={`domain-group-picker-create-fields`} className={`domain-group-picker-create-fields`}>
-                {picker.creatingGroup && (
-                  <label id={`domain-group-picker-name-label`} htmlFor={`domain-group-picker-name`} className={`domain-editor-field`}>
-                    <span id={`domain-group-picker-name-text`} className={`domain-editor-label`}>
-                      {`New Group`}
-                    </span>
-                    <input
-                      required
-                      maxLength={80}
-                      value={picker.name}
-                      disabled={picker.disabled}
-                      autoComplete={`off`}
-                      ref={picker.nameInputRef}
-                      id={`domain-group-picker-name`}
-                      aria-invalid={picker.invalidField === `name`}
-                      data-autofocus={!picker.disabled || undefined}
-                      placeholder={`e.g. Client sites`}
-                      className={`domain-editor-input domain-group-picker-name-input`}
-                      onChange={event => picker.setName(event.target.value)}
-                      aria-describedby={picker.invalidField === `name` ? `domain-group-picker-error` : undefined}
-                    />
-                  </label>
-                )}
-                <div id={`domain-group-picker-collection-fields`} className={`domain-group-picker-collection-fields${picker.creatingNewCollection ? ` domain-group-picker-collection-destinations` : ``}`}>
-                  <label
-                    id={`domain-group-picker-collection-name-label`}
-                    htmlFor={`domain-group-picker-collection-name`}
-                    className={`domain-editor-field`}
-                  >
-                    <span id={`domain-group-picker-collection-name-text`} className={`domain-editor-label`}>
-                      {`New Collection`}
-                    </span>
-                    <input
-                      maxLength={80}
-                      autoComplete={`off`}
-                      disabled={picker.disabled}
-                      value={picker.collectionName}
-                      required={picker.creatingCollection}
-                      ref={picker.collectionNameInputRef}
-                      data-autofocus={picker.creatingNewCollection && !picker.disabled || undefined}
-                      id={`domain-group-picker-collection-name`}
-                      placeholder={`e.g. Client projects`}
-                      aria-invalid={picker.invalidField === `collectionName`}
-                      className={`domain-editor-input domain-group-picker-collection-name-input`}
-                      onChange={event => picker.setCollectionName(event.target.value)}
-                      aria-describedby={`domain-group-picker-collection-help${picker.invalidField === `collectionName` ? ` domain-group-picker-error` : ``}`}
-                    />
-                  </label>
-                  {picker.creatingNewCollection && (
-                    <p id={`domain-group-picker-collection-help`} className={`domain-group-picker-help`}>
-                      {`Names must be unique across collections and groups, ignoring capitalization.`}
-                    </p>
-                  )}
-                </div>
-                {picker.creatingGroup && (
-                  <div id={`domain-group-picker-collection-field`} className={`domain-editor-field domain-group-picker-collection-destinations`}>
-                    <span id={`domain-group-picker-collection-text`} className={`domain-editor-label`}>
-                      {`Collection`}
-                    </span>
-                    <DestinationChoices
-                      mosaic
-                      options={collectionChoices}
-                      value={picker.collectionId}
-                      disabled={picker.disabled}
-                      onChange={picker.setCollectionId}
-                      id={`domain-group-picker-collection`}
-                      choicesRef={picker.collectionChoicesRef}
-                      labelId={`domain-group-picker-collection-text`}
-                      invalid={picker.missingCollection || picker.invalidField === `collection`}
-                      describedBy={`domain-group-picker-collection-help${picker.missingCollection || picker.invalidField === `collection` ? ` domain-group-picker-error` : ``}`}
-                    />
-                    <p id={`domain-group-picker-collection-help`} className={`domain-group-picker-help`}>
-                      {`With a group name filled in, click Database or a collection to create and group immediately. For a new collection, enter its name and click Create & Group.`}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-            {!embedded && <div id={`domain-group-picker-scroll-field`} className={`domain-editor-field domain-group-picker-scroll-field`}>
-              <span id={`domain-group-picker-scroll-label`} className={`domain-editor-label domain-group-picker-scroll-label`}>
-                <span id={`domain-group-picker-scroll-text`} className={`domain-group-picker-scroll-text`}>
-                  {`Scroll to Destination when Done`}
-                </span>
-              </span>
-              <BooleanSetting
-                value={picker.scrollToGroup}
-                disabled={picker.disabled}
-                onChange={picker.setScrollToGroup}
-                id={`domain-group-picker-scroll-input`}
-                className={`domain-group-picker-scroll-control`}
-                labelledBy={`domain-group-picker-scroll-label`}
-              />
-            </div>}
-          </div>
+          {!(picker.creatingGroup || picker.creatingNewCollection) && controls}
         </div>
         {picker.error && (
           <p role={`alert`} id={`domain-group-picker-error`} className={`domain-dialog-error`}>

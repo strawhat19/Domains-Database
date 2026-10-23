@@ -31,6 +31,7 @@ export const routes = {
   about: { href: `/about`, label: `About`, icon: `Info`, redirects: [`about-us`] },
   blog: { href: `/blog`, label: `Blog`, icon: `BookOpen` },
   pricing: { href: `/pricing`, label: `Pricing`, icon: `Wallet` },
+  subscription: { href: `/subscription`, label: `Subscription`, icon: `Wallet`, minRole: Roles.Subscriber },
   terms: { href: `/terms`, label: `Terms`, icon: `FileText`, redirects: [`terms-of-service`] },
   contact: { href: `/contact`, label: `Contact`, icon: `Mail`, redirects: [`contact-us`] },
   privacy: { href: `/privacy`, label: `Privacy`, icon: `ShieldCheck`, redirects: [`privacy-policy`] },

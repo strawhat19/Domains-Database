@@ -13,18 +13,20 @@ import { getPricingPlanVisual } from './planIcons';
 import { elementProps } from '../../shared/elementProps';
 import { usePricingInterest } from './usePricingInterest';
 import PricingInterestPrompt from '../PricingInterestPrompt';
+import { usePricingEnrollment } from './usePricingEnrollment';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { getPricingFeatures, getPricingFeatureLabels, getPricingFeaturePresentation } from '../../shared/plans/pricingFeatures';
-import { Gem, Zap, Check, Clock3, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react-native';
+import { Gem, Zap, Check, LogIn, Clock3, Globe2, Puzzle, Compass, Layers3, ThumbsUp, RefreshCw, Building2, UsersRound, ArrowUpRight } from 'lucide-react-native';
 
 const planIcons = { Gem, Zap, Globe2, Puzzle, Compass, Layers3, Building2, UsersRound };
 
 const Pricing = ({ landing = false }: { landing?: boolean }) => {
   const state = usePricing(landing);
   const brand = useAppBrand();
+  const enrollment = usePricingEnrollment();
   const { flags, ready } = useFeatureFlags();
   const contactEnabled = ready && flags.contact;
   const pricingEnabled = ready && flags.pricingTable;
@@ -41,7 +43,7 @@ const Pricing = ({ landing = false }: { landing?: boolean }) => {
       <View {...elementProps(`landing-pricing-heading`)} style={[styles.heading, styles.pricingHeading]}>
         <Text {...elementProps(`landing-pricing-eyebrow`)} style={styles.eyebrow}>{`ROOM TO GROW`}</Text>
         <Text {...elementProps(`landing-pricing-title`)} style={styles.title} accessibilityRole={`header`}>{`Plans for your next idea.`}</Text>
-        <Text {...elementProps(`landing-pricing-description`)} style={[styles.description, styles.pricingDescription]}>{interestEnabled ? `Tell us which plans interest you. Sign in to share your interest or vote without creating an account.` : contactEnabled ? pricingDescription : `Explore the plans and features for your next idea.`}</Text>
+        <Text {...elementProps(`landing-pricing-description`)} style={[styles.description, styles.pricingDescription]}>{interestEnabled ? `Create an account to choose a plan, or upvote plans without signing up.` : contactEnabled ? pricingDescription : `Explore the plans and features for your next idea.`}</Text>
         {interestEnabled && interest.local ? <Text {...elementProps(`landing-pricing-interest-source`)} style={styles.interestNote}>{`Feedback Is Saved On This Device`}</Text> : null}
       </View>
       {state.loading ? <PricingSkeleton cardWidth={cardWidth} expanded={state.showFeaturePreview} /> : state.error ? <View {...elementProps(`pricing-error`)} style={styles.feedback}>
@@ -52,6 +54,7 @@ const Pricing = ({ landing = false }: { landing?: boolean }) => {
           const visual = getPricingPlanVisual(plan);
           const PlanIcon = planIcons[visual.icon];
           const planInterest = interest.getState(plan.id);
+          const enrollmentAction = enrollment.getAction(plan, brand.formatText);
           return <PricingPlanCard key={plan.id} id={`landing-pricing-plan-${plan.id}`} width={cardWidth}>{hovered => <>
           <View {...elementProps(`landing-pricing-plan-heading`, plan.id)} style={styles.cardTop}><View {...elementProps(`landing-pricing-plan-title`, plan.id)} style={styles.planTitle}><PlanIcon size={28} strokeWidth={1.8} color={palette[visual.tone]} accessible={false} {...elementProps(`landing-pricing-plan-name-icon`, plan.id)} /><Text {...elementProps(`landing-pricing-plan-name`, plan.id)} style={styles.planName} accessibilityRole={`header`}>{brand.formatText(plan.name)}</Text></View></View>
           <Text {...elementProps(`landing-pricing-plan-description`, plan.id)} style={styles.cardDescription}>{brand.formatText(plan.description)}</Text>
@@ -75,16 +78,21 @@ const Pricing = ({ landing = false }: { landing?: boolean }) => {
                 <Text style={styles.featureText} {...elementProps(`landing-pricing-feature-text`, `${plan.id}-${index}`)}>{brand.formatText(label)}</Text>
               </View>; })}
           </View>
-          {pricingEnabled && (contactEnabled || (plan.priceCents === 0 && plan.slug === `free`)) && <Link asChild href={plan.priceCents === 0 && plan.slug === `free` ? routes.domains.href : routes.contact.href}><Pressable {...elementProps(`landing-pricing-plan-link`, plan.id)} accessibilityRole={`link`} style={[styles.button, !hovered && styles.secondaryButton]}><Text {...elementProps(`landing-pricing-plan-link-label`, plan.id)} style={[styles.buttonText, !hovered && styles.secondaryButtonText]}>{plan.priceCents === 0 && plan.slug === `free` ? `Open Your Portfolio` : `Ask About ${brand.formatText(plan.name)}`}</Text><ArrowUpRight {...elementProps(`landing-pricing-plan-link-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} /></Pressable></Link>}
+          {enrollmentAction ? <View {...elementProps(`landing-plan-enrollment`, plan.id)} style={styles.enrollment}>
+            {enrollment.loading ? <Text {...elementProps(`landing-plan-enrollment-loading`, plan.id)} style={styles.interestNote} accessibilityLiveRegion={`polite`}>{`Loading Account…`}</Text> : <>
+              <Link asChild href={enrollmentAction.href}><Pressable {...elementProps(`landing-pricing-plan-link`, plan.id)} accessibilityRole={`link`} style={[styles.button, !hovered && styles.secondaryButton]}><Text {...elementProps(`landing-pricing-plan-link-label`, plan.id)} style={[styles.buttonText, !hovered && styles.secondaryButtonText]}>{enrollmentAction.label}</Text><ArrowUpRight {...elementProps(`landing-pricing-plan-link-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} /></Pressable></Link>
+              {!enrollment.signedIn ? <Link asChild href={enrollmentAction.signinHref}><Pressable {...elementProps(`landing-plan-signin`, plan.id)} accessibilityRole={`link`} style={styles.signin}><LogIn {...elementProps(`landing-plan-signin-icon`, plan.id)} size={14} color={palette.accent} /><Text {...elementProps(`landing-plan-signin-label`, plan.id)} style={[styles.buttonText, styles.secondaryButtonText]}>{`Sign In`}</Text></Pressable></Link> : null}
+            </>}
+          </View> : pricingEnabled && contactEnabled ? <Link asChild href={routes.contact.href}><Pressable {...elementProps(`landing-pricing-plan-link`, plan.id)} accessibilityRole={`link`} style={[styles.button, !hovered && styles.secondaryButton]}><Text {...elementProps(`landing-pricing-plan-link-label`, plan.id)} style={[styles.buttonText, !hovered && styles.secondaryButtonText]}>{`Ask About ${brand.formatText(plan.name)}`}</Text><ArrowUpRight {...elementProps(`landing-pricing-plan-link-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} /></Pressable></Link> : null}
           {interestEnabled ? <View {...elementProps(`landing-plan-interest`, plan.id)} style={styles.interest}>
-            <Pressable
+            {!enrollmentAction ? <Pressable
               accessibilityRole={`button`}
               {...elementProps(`landing-plan-interest-action`, plan.id)}
               onPress={() => { void interest.register(plan.id); }}
               disabled={planInterest.pending || planInterest.interested || (interest.signedIn && !planInterest.ready)}
               style={[styles.button, !hovered && styles.secondaryButton, (planInterest.pending || planInterest.interested || (interest.signedIn && !planInterest.ready)) && styles.disabled]}
               accessibilityState={{ busy: planInterest.pending, disabled: planInterest.pending || planInterest.interested || (interest.signedIn && !planInterest.ready) }}
-            >{planInterest.interested ? <Check {...elementProps(`landing-plan-interest-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} /> : <ThumbsUp {...elementProps(`landing-plan-interest-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} />}<Text {...elementProps(`landing-plan-interest-label`, plan.id)} style={[styles.buttonText, !hovered && styles.secondaryButtonText]}>{planInterest.pending ? `Saving…` : planInterest.interested ? `Interest Saved` : `I'm Interested`}</Text></Pressable>
+            >{planInterest.interested ? <Check {...elementProps(`landing-plan-interest-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} /> : <ThumbsUp {...elementProps(`landing-plan-interest-icon`, plan.id)} size={15} color={hovered ? palette.contrast : palette.accent} />}<Text {...elementProps(`landing-plan-interest-label`, plan.id)} style={[styles.buttonText, !hovered && styles.secondaryButtonText]}>{planInterest.pending ? `Saving…` : planInterest.interested ? `Interest Saved` : `I'm Interested`}</Text></Pressable> : null}
             <Text {...elementProps(`landing-plan-votes-label`, plan.id)} style={styles.interestNote}>{interest.signedIn ? `Upvote This Plan` : `Upvote Without Signup`}</Text>
             <PricingPlanVotes id={`landing-plan-votes-${plan.id}`} name={brand.formatText(plan.name)} state={planInterest} onVote={() => { void interest.vote(plan.id); }} />
             {planInterest.loading ? <Text {...elementProps(`landing-plan-interest-loading`, plan.id)} style={styles.interestNote} accessibilityLiveRegion={`polite`}>{`Loading Your Feedback…`}</Text> : null}

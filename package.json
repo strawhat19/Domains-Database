@@ -1,6 +1,6 @@
 {
   "name": "domains-database",
-  "version": "0.0.6.3",
+  "version": "0.0.6.4",
   "private": true,
   "license": "MIT",
   "main": "expo-router/entry",
@@ -20,7 +20,7 @@
     "@noble/hashes": "^2.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@vercel/analytics": "^2.0.1",
-    "expo": "~57.0.26",
+    "expo": "~57.0.31",
     "expo-blur": "~57.0.3",
     "expo-constants": "~57.0.0",
     "expo-crypto": "~57.0.3",

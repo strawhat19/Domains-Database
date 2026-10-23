@@ -12,7 +12,7 @@ import { Layers3, Plus, Search, CircleCheck, ArrowLeft, ArrowRight, RotateCcw } 
 const columns = [`No.`, `Plan`, `Price`, `Features`, `Status`, `Updated`, `Actions`, `Score`];
 const AdminPlans = ({ headingActionsTarget }: AdminPlansProps = {}) => {
   const state = useAdminPlans();
-  if (!state.allowed) return <p id={`admin-plans-access`} className={`admin-records-error`} role={`alert`}>{`Active Admin Or Owner Access Is Required`}</p>;
+  if (!state.allowed) return <p id={`admin-plans-access`} className={`admin-records-error`} role={`alert`}>{`Active Owner Access Is Required`}</p>;
   const record = state.editor && state.editor !== `new` ? state.editor : null;
   const editorId = record?.id ?? `new`;
   const addAction = <button type={`button`} disabled={state.busy || !!state.page.error} id={`admin-plans-add`} className={`admin-plans-add`} onClick={() => state.edit(`new`)}><Plus size={14} aria-hidden id={`admin-plans-add-icon`} className={`admin-plans-add-icon`} />{`Add Plan`}</button>;

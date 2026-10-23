@@ -255,11 +255,12 @@ service cloud.firestore {
     function planValues() {
       let data = request.resource.data;
       return data.keys().hasAll(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'displayOrder', 'created', 'updated'])
-        && data.keys().hasOnly(['id', 'type', 'number', 'name', 'slug', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'displayOrder', 'created', 'updated'])
+        && data.keys().hasOnly(['id', 'type', 'number', 'name', 'slug', 'icon', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'displayOrder', 'created', 'updated'])
         && data.type == 'Plan' && data.id is string && data.id.size() <= 240
         && data.name is string && data.name.size() > 0 && data.name.size() <= 100
         && data.slug is string && data.slug.size() > 0 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
         && data.description is string && data.description.size() <= 2000 && planFeatures(data.features)
+        && (!('icon' in data) || data.icon in ['Gem', 'Zap', 'Globe2', 'Puzzle', 'Compass', 'Layers3', 'Building2', 'UsersRound'])
         && data.currency in ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'BDT'] && data.billingInterval in ['month', 'year', 'one-time']
         && data.priceCents is int && data.priceCents >= 0 && data.priceCents <= 9007199254740991
         && data.displayOrder is int && data.displayOrder >= 0 && data.displayOrder <= 9007199254740991
@@ -271,7 +272,7 @@ service cloud.firestore {
     }
     function newPlanCounter() {
       let data = request.resource.data;
-      return isAccountAdmin() && data.keys().hasAll(['number', 'lastPlanId']) && data.keys().hasOnly(['number', 'lastPlanId'])
+      return isOwner() && data.keys().hasAll(['number', 'lastPlanId']) && data.keys().hasOnly(['number', 'lastPlanId'])
         && data.number is int && data.number > 0 && data.number <= 9007199254740991 && data.lastPlanId is string && data.lastPlanId.size() <= 240
         && data.number == (exists(planCounterPath()) ? get(planCounterPath()).data.number + 1 : 1)
         && !exists(planPath(data.lastPlanId)) && getAfter(planPath(data.lastPlanId)).data.id == data.lastPlanId
@@ -709,7 +710,7 @@ service cloud.firestore {
       allow create, update: if newNotificationCounter();
     }
     match /counters/plans {
-      allow get: if isAccountAdmin();
+      allow get: if isOwner();
       allow create, update: if newPlanCounter();
     }
     match /counters/planInterest {
@@ -765,29 +766,29 @@ service cloud.firestore {
       allow delete: if isAccountAdmin() && (!existsAfter(notificationPath(resource.data.id)) || getAfter(notificationPath(resource.data.id)).data.slug != slug);
     }
     match /plans/{planId} {
-      allow get: if resource.data.active == true || isAccountAdmin();
-      allow list: if request.query.limit != null && request.query.limit <= 101 && (resource.data.active == true || isAccountAdmin());
-      allow create: if isAccountAdmin() && planValues() && recordIdentity(planId, 'Plan')
+      allow get: if resource.data.active == true || isOwner();
+      allow list: if request.query.limit != null && request.query.limit <= 101 && (resource.data.active == true || isOwner());
+      allow create: if isOwner() && planValues() && recordIdentity(planId, 'Plan')
         && planId.matches('Plan_' + string(request.resource.data.number) + '_.+_[0-9]{1,2}_[0-9]{2}_(AM|PM)_[0-9]{2}_[0-9]{2}_[0-9]{2}_[A-Za-z0-9-]+')
         && request.resource.data.created == request.time && getAfter(planCounterPath()).data.lastPlanId == planId
         && getAfter(planCounterPath()).data.number == request.resource.data.number
         && request.resource.data.number == (exists(planCounterPath()) ? get(planCounterPath()).data.number + 1 : 1);
-      allow update: if isAccountAdmin() && planValues() && recordIdentity(planId, 'Plan')
+      allow update: if isOwner() && planValues() && recordIdentity(planId, 'Plan')
         && request.resource.data.id == resource.data.id && request.resource.data.type == resource.data.type
         && request.resource.data.slug == resource.data.slug && request.resource.data.number == resource.data.number
         && request.resource.data.created == resource.data.created
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'updated']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'icon', 'description', 'features', 'currency', 'priceCents', 'billingInterval', 'active', 'highlighted', 'displayOrder', 'updated']);
     }
     match /planSlugs/{slug} {
       allow get: if true;
       allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 201;
-      allow create: if isAccountAdmin() && planTierValues(request.resource.data, slug) && !exists(planPath(request.resource.data.id))
+      allow create: if isOwner() && planTierValues(request.resource.data, slug) && !exists(planPath(request.resource.data.id))
         && getAfter(planPath(request.resource.data.id)).data.id == request.resource.data.id
         && getAfter(planPath(request.resource.data.id)).data.type == 'Plan'
         && getAfter(planPath(request.resource.data.id)).data.slug == slug
         && getAfter(planPath(request.resource.data.id)).data.number == request.resource.data.number
         && getAfter(planPath(request.resource.data.id)).data.displayOrder == request.resource.data.displayOrder;
-      allow update: if isAccountAdmin() && planTierValues(request.resource.data, slug)
+      allow update: if isOwner() && planTierValues(request.resource.data, slug)
         && request.resource.data.id == resource.data.id && request.resource.data.slug == resource.data.slug
         && getAfter(planPath(request.resource.data.id)).data.id == request.resource.data.id
         && getAfter(planPath(request.resource.data.id)).data.type == 'Plan'

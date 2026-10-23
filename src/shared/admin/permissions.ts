@@ -8,7 +8,7 @@ const technicalRoles: string[] = [...operationalRoles, Roles.Developer];
 
 export const canInspectAccounts = (user: Account) => !!user?.active && operationalRoles.includes(user.role);
 export const canManageNotifications = canInspectAccounts;
-export const canManagePlans = canInspectAccounts;
+export const canManagePlans = (user: Account) => !!user?.active && user.role === Roles.Owner;
 export const canManageEvents = canInspectAccounts;
 export const canManageRoles = (user: Account) => !!user?.active && user.role === Roles.Owner;
 export const canManageFeatures = canManageRoles;

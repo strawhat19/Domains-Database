@@ -1,4 +1,5 @@
 import type { PlanInput } from '../../../api/plans';
+import type { PlanIcon } from '../../../shared/plans/types';
 import type { Plan } from '../../../shared/models/plans/Plan';
 
 export interface PlanEditorProps {
@@ -10,11 +11,13 @@ export interface PlanEditorProps {
 export interface PlanEditorValues {
   name: string;
   slug: string;
+  icon: PlanIcon;
   amount: string;
   active: boolean;
-  features: string;
   currency: string;
   description: string;
   displayOrder: string;
   billingInterval: string;
+  features: PlanEditorFeature[];
 }
+export interface PlanEditorFeature { id: number; label: string; planned: boolean }

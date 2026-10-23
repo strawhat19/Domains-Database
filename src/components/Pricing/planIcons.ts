@@ -12,7 +12,8 @@ const customVisuals = [
   { icon: `Layers3`, tone: `muted` },
   { icon: `Puzzle`, tone: `danger` },
 ] as const;
-export const getPricingPlanVisual = (plan: Pick<Plan, `slug` | `number`>) => {
+export const getPricingPlanVisual = (plan: Pick<Plan, `slug` | `number` | `icon`>) => {
   const visual = Object.prototype.hasOwnProperty.call(planVisuals, plan.slug) ? planVisuals[plan.slug as keyof typeof planVisuals] : undefined;
-  return visual ?? customVisuals[Math.max(0, plan.number - 1) % customVisuals.length] ?? planVisuals.free;
+  const fallback = visual ?? customVisuals[Math.max(0, plan.number - 1) % customVisuals.length] ?? planVisuals.free;
+  return { ...fallback, icon: plan.icon ?? fallback.icon };
 };

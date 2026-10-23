@@ -2,6 +2,7 @@ import './styles.scss';
 import Toast from '../Toast';
 import AuthOnboarding from '../AuthOnboarding';
 import GoogleAuthButton from '../GoogleAuthButton';
+import { getPricingPriceLabel } from '../Pricing/presentation';
 import { useLocalStorage } from '../../shared/config';
 import { useAuthForm, type AuthMode } from './useAuthForm';
 import { firebaseEnabled } from '../../shared/firebase/config';
@@ -45,6 +46,11 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
             );
           })}
         </nav>
+        {state.enrollmentPlan ? <aside id={`auth-form-selected-plan-${mode}`} className={`auth-form-selected-plan`} aria-live={`polite`}>
+          <p id={`auth-form-selected-plan-name-${mode}`} className={`auth-form-selected-plan-name`}>{state.selectedOffer ? `Selected Plan · ${state.selectedOffer.name}` : state.offerError || `Loading Your Selected Plan…`}</p>
+          {state.selectedOffer ? <p id={`auth-form-selected-plan-price-${mode}`} className={`auth-form-selected-plan-price`}>{getPricingPriceLabel(state.selectedOffer)}</p> : null}
+          <p id={`auth-form-selected-plan-copy-${mode}`} className={`auth-form-selected-plan-copy`}>{state.enrollmentPlan === `starter` ? `Create an account or sign in, then review your subscription. Payments are not available yet; no charge or paid access begins during signup.` : `Create an account or sign in to start your free portfolio.`}</p>
+        </aside> : null}
         {state.auth.loading ? (
           <div id={`auth-form-loading-${mode}`} className={`auth-form-panel auth-form-loading`} role={`status`} aria-busy aria-live={`polite`}>
             <h1 id={`auth-form-title-${mode}`} className={`auth-form-sr-only`}>
@@ -81,10 +87,10 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               disabled={state.disabled}
               className={`auth-form-submit`}
               id={`auth-form-profile-${mode}`}
-              onClick={() => state.navigate(`/profile`)}
+              onClick={() => state.enrollmentPlan ? state.continueEnrollment() : state.navigate(`/profile`)}
             >
               <UserRound id={`auth-form-profile-icon-${mode}`} className={`auth-form-button-icon`} size={17} aria-hidden />
-              {`View profile`}
+              {state.enrollmentPlan ? state.enrollmentPlan === `free` ? `Open Portfolio` : `Review Selected Plan` : `View profile`}
               <ArrowRight id={`auth-form-profile-arrow-${mode}`} className={`auth-form-button-arrow`} size={17} aria-hidden />
             </button>
           </div>

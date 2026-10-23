@@ -18,7 +18,7 @@ export const publishedPlanLimit = planLimits.published;
 const requireLocalManager = async () => {
   if (!useLocalStorage) throw new Error(`Connect Firebase To Manage Plans`);
   const user = (await restoreSession())?.user;
-  if (!canManagePlans(user)) throw new Error(`Admin Access Is Required`);
+  if (!canManagePlans(user)) throw new Error(`Owner Access Is Required`);
   return user!;
 };
 const readLocalSnapshot = (saved: string | null): PlanSnapshot => {

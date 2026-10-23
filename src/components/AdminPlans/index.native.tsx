@@ -19,7 +19,7 @@ const AdminPlans = (_props: AdminPlansProps = {}) => {
   const compact = width <= 480;
   const record = state.editor && state.editor !== `new` ? state.editor : null;
   const editorId = record?.id ?? `new`;
-  if (!state.allowed) return <Text {...elementProps(`native-admin-plans-access`)} accessibilityRole={`alert`} style={styles.error}>{`Active Admin Or Owner Access Is Required`}</Text>;
+  if (!state.allowed) return <Text {...elementProps(`native-admin-plans-access`)} accessibilityRole={`alert`} style={styles.error}>{`Active Owner Access Is Required`}</Text>;
   return <View {...elementProps(`native-admin-plans`)} style={styles.root} accessibilityState={{ busy: state.busy }}>
     <View {...elementProps(`native-admin-plans-heading`)} style={styles.heading}>
       <Layers3 size={20} color={palette.accent} {...elementProps(`native-admin-plans-title-icon`)} />
