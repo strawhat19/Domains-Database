@@ -31,3 +31,9 @@ For focused follow-ups, use concise requests such as:
 - "Use available root admin page URLs and preserve existing links through redirects"
 
 10. For detailed connected adoption, follow [adoption](../adoption.md) and the Admin [Firestore](../skills/admin/references/firestore.md), [workflow](../skills/admin/references/workflows.md), and [analytics](../skills/admin/references/analytics.md) contracts. Map the actual schema, permitted role operations, atomic identities, rules/indexes, environment boundaries and provider access outside ai/. Complete requested real actions and account-scoped subscriptions; report current local/reference gaps and external setup separately.
+
+11. For real payments, use [the Stripe adoption prompt](../adoption.md#stripe-payments-and-subscriptions-prompt) and [Payments](../skills/payments/SKILL.md). Reuse the actual catalog/auth/database; connect private billing records, trusted webhooks/entitlements and authoritative feature/limit enforcement. A pricing-only task does not enable billing, and source preparation does not authorize a live charge.
+
+12. For business payment charts, use [the Owner reports prompt](../adoption.md#owner-payment-reports-prompt). Include the requested Payments page and compact panels, private app-scoped aggregates, meaningful units/statuses and honest null/coverage/freshness. Reports do not require a new purchase flow or expanded payment write permissions.
+
+13. For production hosting, use [the custom-domain prompt](../adoption.md#custom-domain-and-detachable-redirects-prompt) and [Deployment](../skills/deployment/SKILL.md). Connect the intended Git branch and primary domain; make only the selected secondary hostnames independent redirects with a documented detach path. Preserve DNS/email, auth origins and provider return/webhook configuration, and distinguish source, push, deployment, DNS and observed HTTPS behavior.

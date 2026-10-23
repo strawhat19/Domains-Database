@@ -11,6 +11,8 @@ description: Build or update connected account/profile/admin workflows, roles, r
 
 Read [references/features.md](references/features.md) for requested Owner feature controls or the connected starter: global settings, role/minimum-tier targeting, public-safe catalog ranks, consumer/intake enforcement and the slim table/settings modal. Feature eligibility uses existing trusted entitlements; it does not assign paid access.
 
+For requested business payment/subscription charts, read [Payments](../payments/SKILL.md) and its [reporting contract](../payments/references/payment-reports.md). Keep active Owner authorization consistent across menus, direct routes and server reports; reuse compact Profile/Dashboard panels without exposing billing identities or treating public plan prices as revenue. Billing setup remains separate requested scope.
+
 4. Use [adoption](../../adoption.md) when connecting the system in another project. Keep actual project IDs, schemas, credentials, bootstrap identities and history outside ai/. Complete source and configuration examples within scope; describe external prerequisites accurately. Do not turn missing configuration into local authentication/data success.
 
 5. Use [the analytics assets](assets/analytics/) as a complete licensed source bundle, or reuse an equivalent catalog. Adapt served URLs, importable resolver metadata and supported native static asset mappings; the bundle does not install component code or cloud services. Recheck official provider contracts/entitlements when implementing reporting.

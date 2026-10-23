@@ -2,11 +2,12 @@ import './styles.scss';
 import { Roles } from '../../types/types';
 import AccountSidebar from '../AccountSidebar';
 import AccountActions from '../AccountActions';
+import AdminPayments from '../AdminPayments';
 import ProfileSettings from '../ProfileSettings';
 import { useAccountPage } from './useAccountPage';
 import AccountConnections from '../AccountConnections';
 import ProfileThemePreference from '../ProfileThemePreference';
-import { canAccessAdmin } from '../../shared/admin/permissions';
+import { canAccessAdmin, canViewPayments } from '../../shared/admin/permissions';
 import { getPlanDisplayName, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { Crown, Globe2, UserRound, BadgeCheck, LockKeyhole, ShieldCheck, CalendarDays } from 'lucide-react';
 
@@ -36,6 +37,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
               <dd id={`profile-account-value`} className={`profile-record-value`}><AccountActions stacked /></dd>
             </div>
           </dl>
+          {canViewPayments(user) ? <AdminPayments compact /> : null}
         </div>
         <aside id={`profile-sidebar`} className={`profile-sidebar`} aria-labelledby={`profile-sidebar-title`}>
           <h2 id={`profile-sidebar-title`} className={`profile-sidebar-title`}>{`Account Details`}</h2>

@@ -1,5 +1,6 @@
 import AdminUsers from '../AdminUsers';
 import AdminPlans from '../AdminPlans';
+import AdminPayments from '../AdminPayments';
 import AdminEvents from '../AdminEvents';
 import { useMemo, useState } from 'react';
 import AdminDomains from '../AdminDomains';
@@ -19,7 +20,7 @@ import { elementProps } from '../../shared/elementProps';
 import { AdminButton, AdminLoading } from '../AdminWidgets';
 import AdminDashboardSummary from '../AdminDashboardSummary';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import type { AdminSection } from '../../shared/admin/permissions';
+import { canViewPayments, type AdminSection } from '../../shared/admin/permissions';
 import { Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { Bot, Cpu, Bell, Star, Users, Wallet, Globe2, FileText, RotateCcw, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, SlidersHorizontal } from 'lucide-react-native';
 
@@ -28,6 +29,7 @@ const sections = {
   users: { title: `Users`, parent: `Dashboard`, Icon: Users },
   features: { title: `Features`, parent: `Dashboard`, Icon: SlidersHorizontal },
   plans: { title: `Plans`, parent: `Dashboard`, Icon: Wallet },
+  payments: { title: `Payments`, parent: `Dashboard`, Icon: Wallet },
   domains: { title: `Domains`, parent: `Dashboard`, Icon: Globe2 },
   events: { title: `Events`, parent: `Dashboard`, Icon: CalendarDays },
   notifications: { title: `Notifications`, parent: `Dashboard`, Icon: Bell },
@@ -50,7 +52,7 @@ const DashboardContent = ({ section }: { section: AdminSection }) => {
   const [analyticsPanel, setAnalyticsPanel] = useState<`traffic` | `runtime`>(section === `observability` ? `runtime` : `traffic`);
   const styles = useMemo(() => createStyles(palette), [palette]);
   const snapshot = state.snapshot;
-  const analytics = section === `analytics` || section === `observability`;
+  const analytics = section === `analytics` || section === `observability` || section === `payments`;
   const { title, parent, Icon: TitleIcon } = sections[section];
   return <View {...elementProps(`account-layout`, `admin-${section}`)} style={[styles.root, width <= 650 && styles.compact]}>
     <AccountSidebar section={section} counts={snapshot?.canInspectAccounts ? { users: snapshot.userCoverage.loaded, domains: snapshot.domainCoverage.loaded, notifications: snapshot.notificationCoverage?.loaded } : undefined} countsLoading={state.loading} />
@@ -74,9 +76,10 @@ const DashboardContent = ({ section }: { section: AdminSection }) => {
       {section === `overview` ? <>
         <AdminAnalytics compact />
         <AdminObservability compact />
+        {canViewPayments(state.user) ? <AdminPayments compact /> : null}
         {state.loading ? <View {...elementProps(`admin-dashboard-loading`)} style={styles.loading}><AdminLoading id={`database-overview`} label={`Loading Domain Activity And Account Records`} /></View> : null}
         {snapshot ? <AdminDashboardSummary snapshot={snapshot} onRefresh={state.refresh} /> : null}
-      </> : section === `feedback` || section === `reviews` || section === `aiChats` || section === `messages` ? <AdminFeedback section={section} /> : section === `events` ? <AdminEvents /> : section === `users` ? <AdminUsers /> : section === `features` ? <AdminFeatures /> : section === `plans` ? <AdminPlans headingActionsTarget={headingActionsTarget} /> : section === `domains` ? <AdminDomains snapshot={snapshot} loading={state.loading} /> : section === `requests` || section === `formSubmissions` ? <FormSubmissions /> : section === `reports` ? <>
+      </> : section === `feedback` || section === `reviews` || section === `aiChats` || section === `messages` ? <AdminFeedback section={section} /> : section === `events` ? <AdminEvents /> : section === `users` ? <AdminUsers /> : section === `features` ? <AdminFeatures /> : section === `payments` ? <AdminPayments headingActionsTarget={headingActionsTarget} /> : section === `plans` ? <AdminPlans headingActionsTarget={headingActionsTarget} /> : section === `domains` ? <AdminDomains snapshot={snapshot} loading={state.loading} /> : section === `requests` || section === `formSubmissions` ? <FormSubmissions /> : section === `reports` ? <>
         {state.loading ? <AdminLoading id={`reports`} label={`Loading Account And Domain Reports`} /> : snapshot ? <AdminRecordPreviews snapshot={snapshot} /> : null}
         <FormSubmissions />
       </> : section === `notifications` ? <AdminNotifications headingActionsTarget={headingActionsTarget} /> : <>

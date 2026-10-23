@@ -199,7 +199,7 @@ ai/
 
 6. src/styles/theme/theme.ts owns typed shared colors, ThemePalette, and themePalettes. The theme context owns selected theme state; platform rendering consumes those values rather than defining a second unrelated palette. Keep src/shared/themeContext/theme.ts as a compatibility export barrel when existing imports rely on it.
 
-7. shared/authentication owns auth operations/types and account scopes; shared/firebase owns connected SDK initialization and adapters. Firebase manages connected credentials; retain password helpers only for an explicit existing demo. AuthContext and useAuth expose the hydrated account and loading state through api/auth.ts or its equivalent. Forms, avatar menus, account pages, and gates consume services. Separate public profile projections, private accounts, and connection credentials.
+7. shared/authentication owns auth operations/types and account scopes; the existing provider module owns connected SDK initialization and adapters (`shared/firebase` for Firebase). Preserve an established auth/database provider unless migration is requested; Firebase is the new-app default. Let the configured provider manage connected credentials; retain password helpers only for an explicit existing demo. AuthContext and useAuth expose the hydrated account and loading state through api/auth.ts or its equivalent. Forms, avatar menus, account pages, and gates consume services. Separate public profile projections, private accounts, and connection credentials.
 
 8. src/api/index.ts is the app's internal asynchronous service or backend boundary. Use focused facades such as src/api/auth.ts for authentication and src/api/notifications.ts for shared notification CRUD. Reusable model operations may use the common collection factory while feature operations remain in the API layer. Components and contexts consume this boundary; do not imply that a local service directory is an HTTP server.
 
@@ -221,7 +221,7 @@ Use the existing framework's supported SCSS module loading. When its Sass compil
 
 16. Read [database guidance](../database/database.md) before persistence changes, [API guidance](../api/api.md) before service changes, [authentication guidance](../authentication/authentication.md) for sessions, [social guidance](../social/social.md) for profiles/privacy, [route guidance](../routes/routes.md) for access, then [Admin guidance](../admin/admin.md) for connected profiles, roles, sidebars, dashboards, and reports. Follow AGENTS.md and leave verification to the user unless requested.
 
-17. For the requested full core, map these additional modules to the existing architecture; names below are examples of reusable boundaries, not replacements for working folders. Read [the App System feature map](../app-system/system.md) and its focused contracts. Reuse Firebase, auth/capabilities, IDs, theme, and account shell while keeping private and public data separate.
+17. For the requested full core, map these additional modules to the existing architecture; names below are examples of reusable boundaries, not replacements for working folders. Read [the App System feature map](../app-system/system.md) and its focused contracts. Reuse the configured backend, auth/capabilities, IDs, theme, and account shell while keeping private and public data separate.
 
 | Module | Shared Models/Service Boundary | Components/Routes |
 | --- | --- | --- |

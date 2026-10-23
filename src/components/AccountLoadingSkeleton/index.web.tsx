@@ -5,7 +5,7 @@ import { routes, isAdminPath } from '../../shared/routes';
 import ProfileSkeleton from './ProfileSkeleton.web';
 import AdminSkeleton from '../AdminAnalytics/Skeleton';
 import DashboardSkeleton from './DashboardSkeleton.web';
-import { PlugZap, UserRound, ChevronLeft, LayoutDashboard, ChartNoAxesCombined } from 'lucide-react';
+import { Wallet, PlugZap, UserRound, ChevronLeft, LayoutDashboard, ChartNoAxesCombined } from 'lucide-react';
 import { useAccountNavigationState } from '../../shared/accountNavigationContext/useAccountNavigationState';
 
 const navigation = [
@@ -19,11 +19,11 @@ const AccountLoadingSkeleton = () => {
   const { collapsed } = useAccountNavigationState();
   const connections = pathname === routes.connections.href;
   const dashboard = pathname === routes.dashboard.href || pathname === `/admin`;
-  const analytics = [routes.adminAnalytics.href, routes.adminObservability.href].some(href => href === pathname);
+  const analytics = [routes.adminPayments.href, routes.adminAnalytics.href, routes.adminObservability.href].some(href => href === pathname);
   const admin = isAdminPath(pathname);
   const title = dashboard ? `Dashboard` : admin ? Object.values(routes).find(route => route.href === pathname)?.label ?? `Dashboard` : connections ? `Connections` : `Profile`;
   const selected = admin ? `dashboard` : connections ? `connections` : `profile`;
-  const TitleIcon = analytics ? ChartNoAxesCombined : LayoutDashboard;
+  const TitleIcon = pathname === routes.adminPayments.href ? Wallet : analytics ? ChartNoAxesCombined : LayoutDashboard;
 
   return <section id={`account-loading-skeleton`} role={`status`} aria-busy={`true`} aria-label={`Loading ${title}`} className={`account-layout account-loading-skeleton`}>
     <span id={`account-loading-status`} className={`account-loading-status`}>Loading Your {title}…</span>

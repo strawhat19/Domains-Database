@@ -1,5 +1,6 @@
 .account-page { color: var(--ink); overflow: visible; }
 .account-content, .profile-details { min-width: 0; }
+.profile-details > .admin-payments { margin-top: 24px; }
 .profile-content { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) 240px; align-items: start; gap: clamp(20px, 3vw, 36px); }
 .account-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; }
 .account-eyebrow::before { width: 28px; height: 1px; flex: none; content: ''; background: var(--accent); }

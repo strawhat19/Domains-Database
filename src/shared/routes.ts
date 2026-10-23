@@ -24,6 +24,7 @@ export const routes = {
   adminRequests: { href: `/requests`, label: `Forms`, icon: `ClipboardList`, adminSection: `formSubmissions`, redirects: [`admin/requests`] },
   adminFormSubmissions: { href: `/form-submissions`, label: `Forms`, icon: `ClipboardList`, adminSection: `formSubmissions`, redirects: [`admin/feedback/form-submissions`] },
   adminReports: { href: `/reports`, label: `Reports`, icon: `FileText`, adminSection: `reports`, redirects: [`admin/reports`] },
+  adminPayments: { href: `/payments`, label: `Payments`, icon: `Wallet`, adminSection: `payments`, redirects: [`admin/payments`] },
   adminAnalytics: { href: `/analytics`, label: `Analytics`, icon: `ChartNoAxesCombined`, adminSection: `analytics`, redirects: [`admin/analytics`] },
   adminObservability: { href: `/observability`, label: `Health`, icon: `Activity`, adminSection: `observability`, redirects: [`admin/observability`] },
   signin: { href: `/signin`, label: `Sign In`, icon: `LogIn`, redirects: [`login`, `log-in`, `sign-in`] },
@@ -51,4 +52,4 @@ const adminPaths: readonly string[] = Object.values(routes).filter(route => `adm
 export const isAdminPath = (pathname: string) => adminPaths.includes(pathname) || pathname === `/admin` || pathname.startsWith(`/admin/`);
 
 export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.search, routes.watching, routes.auction, routes.community, routes.contact];
-export const footerLinks = [routes.about, routes.contact, routes.blog, routes.terms, routes.privacy];
+export const footerLinks = [routes.terms, routes.privacy];

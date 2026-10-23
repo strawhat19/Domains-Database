@@ -2,12 +2,12 @@
 .dd-traffic-trend-reading-date { display: inline-flex; align-items: center; gap: 6px; color: var(--dd-panel-muted, var(--muted)); font-size: 11px; }
 .dd-traffic-trend-reading-count { display: inline-flex; align-items: baseline; gap: 7px; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 24px; font-weight: 500; }
 .dd-traffic-trend-chart { display: block; width: 100%; height: auto; overflow: visible; color: var(--dd-highlight, var(--accent)); }
-.dd-traffic-trend-grid line { stroke: color-mix(in srgb, var(--accent) 9%, transparent); stroke-dasharray: 3 4; }
+.dd-traffic-trend-grid line { stroke: color-mix(in srgb, var(--accent) 9%, transparent); stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
 .dd-traffic-trend-grid text, .dd-traffic-trend-label { fill: var(--dd-panel-muted, var(--muted)); font-family: var(--font-body); font-size: 11px; }
 .dd-traffic-trend-area { animation: dd-traffic-area-reveal .8s ease backwards; }
-.dd-traffic-trend-line { fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; animation: dd-traffic-line-draw 1.25s cubic-bezier(.22, 1, .36, 1) backwards; }
-.dd-traffic-trend-active line { stroke: currentColor; stroke-opacity: .18; stroke-dasharray: 4 4; }
-.dd-traffic-trend-active circle { fill: var(--dd-panel-surface, var(--paper)); stroke: currentColor; stroke-width: 2.5; }
+.dd-traffic-trend-line { fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; vector-effect: non-scaling-stroke; animation: dd-traffic-line-draw 1.25s cubic-bezier(.22, 1, .36, 1) backwards; }
+.dd-traffic-trend-active line { stroke: currentColor; stroke-opacity: .18; stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+.dd-traffic-trend-active circle { fill: var(--dd-panel-surface, var(--paper)); stroke: currentColor; stroke-width: 2.5; vector-effect: non-scaling-stroke; }
 .dd-traffic-trend-slider-label { display: flex; min-width: 0; align-items: center; gap: 12px; padding-left: 6%; }
 .dd-traffic-trend-slider-copy { display: flex; flex: none; flex-direction: column; }
 .dd-traffic-trend-slider-caption { display: inline-flex; align-items: center; gap: 5px; color: var(--dd-highlight, var(--accent)); }

@@ -2,12 +2,13 @@ import { Text, View } from 'react-native';
 import { Roles } from '../../types/types';
 import AccountSidebar from '../AccountSidebar';
 import AccountActions from '../AccountActions';
+import AdminPayments from '../AdminPayments';
 import ProfileSettings from '../ProfileSettings';
 import { useAccountPage } from './useAccountPage';
 import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
 import ProfileThemePreference from '../ProfileThemePreference';
-import { canAccessAdmin } from '../../shared/admin/permissions';
+import { canAccessAdmin, canViewPayments } from '../../shared/admin/permissions';
 import { getPlanDisplayName, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { Crown, Globe2, UserRound, BadgeCheck, LockKeyhole, ShieldCheck, CalendarDays } from 'lucide-react-native';
 
@@ -47,6 +48,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
               <Text {...elementProps(`profile-account-label`)} style={styles.accountLabel}>{`Account`}</Text>
               <View {...elementProps(`profile-account-value`)} style={styles.accountValue}><AccountActions stacked /></View>
             </View>
+            {canViewPayments(user) ? <View {...elementProps(`profile-payments`)} style={styles.payments}><AdminPayments compact /></View> : null}
           </> : <AccountConnections />}
         </View>
         {profile && <View {...elementProps(`profile-sidebar`)} style={[styles.panel, state.narrow && styles.fullDetails]}>

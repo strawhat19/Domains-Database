@@ -5,7 +5,7 @@ Prepared for the primary website, `https://domaindatabases.com`. Submit this con
 ## Prepared In Source
 
 - Eight existing first-party domain guides include full articles, sources, related reading, dates, illustrations, and article metadata. The Reddit/YouTube resource links remain supplementary, rather than being represented as original articles.
-- Privacy and Terms render their complete policies as readable sections on web and native. About, Blog, Contact, Terms, and Privacy are linked from the footer. Contact retains a readable public introduction while its form settings load or the intake form is unavailable.
+- Privacy and Terms render their complete policies as readable sections on web and native. About, Blog, and Contact are linked from the public header navigation; the footer links to Terms and Privacy. Contact retains a readable public introduction while its form settings load or the intake form is unavailable.
 - Privacy explains Google advertising cookies, partner data use, personalization choices, and consent requirements conditionally, with links to Google Privacy, My Ad Center, and industry opt-out information. It does not claim that a consent platform is already configured or that advertising is currently running.
 - Public pages receive canonical URLs using the primary domain. Account, administration, authentication, subscription, and other app-workflow pages receive `noindex, follow` when rendered through PageMeta. Error pages retain their explicit noindex setting.
 - `/robots.txt` allows public crawling, leaves rendering assets accessible, excludes API endpoints, and advertises `/sitemap.xml`. HTML pages remain crawlable so search engines can see their noindex metadata; robots.txt does not replace authentication.
@@ -17,19 +17,19 @@ Prepared for the primary website, `https://domaindatabases.com`. Submit this con
 Set the public variable in the ignored project `.env` and Vercel Production:
 
 ```dotenv
-EXPO_PUBLIC_ADSENSE_PUBLISHER_ID=
+EXPO_PUBLIC_ADSENSE_PUBLISHER_ID=pub-8379301195677583
 ```
 
-Use the real `pub-` ID or `ca-pub-` client ID followed by its sixteen digits. This identifier is public and is expected to appear in HTML and ads.txt. Rebuild and redeploy after changing it because Expo public variables are included at build time. No publisher ID has been invented or copied from another account.
+The account's public publisher ID, `pub-8379301195677583`, is configured in the ignored project `.env` and Vercel Production. The parser accepts a `pub-` ID or `ca-pub-` client ID followed by its sixteen digits. This identifier is public and is expected to appear in HTML and ads.txt. Rebuild and redeploy after changing it because Expo public variables are included at build time.
 
 Google supports meta-tag verification without loading the AdSense script. This preparation uses that method and does not make advertising requests, enable Auto ads, insert ad slots, or activate an advertising SDK in native apps.
 
 ## Before Requesting Review
 
 1. Finish the AdSense account setup using the actual account holder's details. Add `domaindatabases.com` in Sites.
-2. Add the real publisher ID, review the source diff, and deploy the prepared changes.
+2. Confirm the real publisher ID is configured for the production build and deploy the prepared changes. The source preparation was committed in `c473dd580968065e8ec5ba9bba85c1c3be150c7b`.
 3. Confirm the live homepage HTML contains the matching meta tag, `/ads.txt` returns the matching plain-text Google seller record, and `/robots.txt` and `/sitemap.xml` return their proper content types. Check that the complete public policies, contact introduction, and all guide URLs load without signing in.
-4. Select **Meta tag** as the verification method in AdSense, verify ownership, and request the site review. The app does not submit an application or accept Google's account terms on your behalf.
+4. Select **Meta tag** as the verification method in AdSense, verify ownership, and request the site review. These are account actions in AdSense; the app does not automatically submit itself or accept Google's account terms.
 5. Review the actual content for accuracy, originality, ownership, clear navigation, and working links. There is no guaranteed approval, fixed article count, traffic threshold, or approval date promised by this implementation. Google reviews the site and determines eligibility.
 
 ## Before Turning Ads On
@@ -38,11 +38,11 @@ Ad serving is a separate step after Google has approved the site and marked it R
 
 Use explicit placements on eligible public editorial content. Retain the app's trusted Starter and active Owner ad exclusion, wait for authentication/entitlement resolution, and respect actual consent decisions before issuing advertising requests. Exclude account/private data, authentication, payment/subscription screens, administration, empty/search-result/error screens, and unmoderated user-generated content. Keep ads separated from navigation and account actions; never ask users to click advertisements.
 
-No Google advertising loader or placement is added by this preparation. No ad-network or CMP configuration, AdSense account approval, ad delivery, native monetization, or submission is claimed.
+No Google advertising loader or placement is added to Domains-Database by this preparation. Publisher verification metadata and ads.txt identify the account; they do not start ad serving, configure a CMP, or establish Google approval. Actual submission and deployment results are recorded separately.
 
 ## Evidence And Remaining Work
 
-This preparation is source-reviewed and remains uncommitted for review. No separate AdSense build, UI/crawler check, application submission, or deployment has been performed. Publisher ID configuration, the production readback, actual consent setup, and Google's review remain external steps. The earlier billing release and its checks are recorded separately under `docs/deployments/`.
+The source preparation was committed in `c473dd580968065e8ec5ba9bba85c1c3be150c7b`, and the real publisher ID is configured locally and in Vercel Production. See [the dated submission record](deployments/adsense-submission-2026-10-23.md) for deployment IDs, live readback, Sites actions, and the last observed review status. A submitted review request is not Google approval or proof of ad delivery. Actual consent setup and enabling advertising remain separate work. The earlier billing release and its checks are recorded separately under `docs/deployments/`.
 
 ## Official References
 

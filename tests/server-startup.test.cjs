@@ -7,6 +7,7 @@ const { spawnSync } = require('node:child_process');
 const projectRoot = path.resolve(__dirname, `..`);
 const cases = [
   { route: `billing/status`, method: `GET`, status: 401 },
+  { route: `admin/payments`, method: `GET`, status: 401 },
   { route: `billing/portal`, method: `POST`, status: 401, body: {} },
   { route: `portfolio/commit`, method: `POST`, status: 401, body: {} },
   { route: `registrars/search`, method: `GET`, importOnly: true },

@@ -38,13 +38,13 @@ const TrendChart = ({ id, points, label = `Records`, secondaryLabel }: { id: str
             {...elementProps(`admin-chart-svg`, id)}
             accessibilityLabel={`${label}: ${chartPoints.map(item => `${item.label} ${formatNumber(item.value)}${secondaryLabel ? `, ${secondaryLabel} ${formatNumber(item.secondary ?? 0)}` : ``}`).join(`; `)}`}
           >
-            {[0, .5, 1].map((fraction, index) => <Line key={fraction} {...elementProps(`admin-chart-grid`, `${id}-${index}`)} x1={36} x2={612} y1={y(peak * fraction)} y2={y(peak * fraction)} stroke={palette.line} strokeDasharray={`4 5`} />)}
+            {[0, .5, 1].map((fraction, index) => <Line key={fraction} {...elementProps(`admin-chart-grid`, `${id}-${index}`)} x1={36} x2={612} y1={y(peak * fraction)} y2={y(peak * fraction)} stroke={palette.line} strokeDasharray={`4 5`} vectorEffect={`non-scaling-stroke`} />)}
             <Path {...elementProps(`admin-chart-area`, id)} d={`${line()} L${x(chartPoints.length - 1)},158 L36,158 Z`} fill={palette.accent} opacity={.09} />
-            <Path {...elementProps(`admin-chart-line`, `${id}-primary`)} d={line()} fill={`none`} strokeWidth={2.5} stroke={palette.accent} strokeLinejoin={`round`} />
-            {secondaryLabel ? <Path {...elementProps(`admin-chart-line`, `${id}-secondary`)} d={line(true)} fill={`none`} strokeWidth={2} stroke={palette.warning} strokeLinejoin={`round`} /> : null}
+            <Path {...elementProps(`admin-chart-line`, `${id}-primary`)} d={line()} fill={`none`} strokeWidth={2.5} stroke={palette.accent} strokeLinejoin={`round`} vectorEffect={`non-scaling-stroke`} />
+            {secondaryLabel ? <Path {...elementProps(`admin-chart-line`, `${id}-secondary`)} d={line(true)} fill={`none`} strokeWidth={2} stroke={palette.warning} strokeLinejoin={`round`} vectorEffect={`non-scaling-stroke`} /> : null}
             <SvgText {...elementProps(`admin-chart-axis`, `${id}-peak`)} x={30} y={24} fontSize={10} textAnchor={`end`} fill={palette.muted}>{formatNumber(peak)}</SvgText>
             <SvgText {...elementProps(`admin-chart-axis`, `${id}-zero`)} x={30} y={162} fontSize={10} textAnchor={`end`} fill={palette.muted}>{`0`}</SvgText>
-            <Line {...elementProps(`admin-chart-marker`, id)} x1={x(selected)} x2={x(selected)} y1={20} y2={158} stroke={palette.accent} strokeDasharray={`3 4`} opacity={.5} />
+            <Line {...elementProps(`admin-chart-marker`, id)} x1={x(selected)} x2={x(selected)} y1={20} y2={158} stroke={palette.accent} strokeDasharray={`3 4`} opacity={.5} vectorEffect={`non-scaling-stroke`} />
             {chartPoints.map((item, index) => <Circle key={`${item.label}-${index}`} {...elementProps(`admin-chart-point`, `${id}-${index}`)} cx={x(index)} cy={y(item.value)} r={index === selected ? 5 : 3} fill={palette.accent} onPress={() => setSelectedIndex(index)} />)}
             {[0, Math.floor((chartPoints.length - 1) / 2), chartPoints.length - 1].filter((index, position, indices) => indices.indexOf(index) === position).map(index => <SvgText key={index} {...elementProps(`admin-chart-date`, `${id}-${index}`)} x={x(index)} y={182} fontSize={10} fill={palette.muted} textAnchor={index === 0 ? `start` : index === chartPoints.length - 1 ? `end` : `middle`}>{chartPoints[index]?.label}</SvgText>)}
           </Svg>

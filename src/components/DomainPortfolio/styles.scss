@@ -208,7 +208,7 @@
     opacity: 0;
     content: '';
     position: absolute;
-    transform: scale(1.2);
+    transform: scaleY(1.2);
     pointer-events: none;
     background: var(--canvas);
     height: var(--portfolio-sticky-gap, 0px);

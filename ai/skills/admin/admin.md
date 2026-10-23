@@ -4,7 +4,7 @@ Use this portable connected-system contract for the requested account/admin/dash
 
 ## Shared Boundaries
 
-Keep one initialized Firebase boundary, one authoritative auth/account provider, focused capability helpers, a shared route registry and typed service facades. Map them to the destination's existing shared/ architecture. Services own persistence/subscriptions/serialization and privileged operations; component folders own logic, rendering and styles. Avoid second caches, routers, password stores or provider trackers.
+Keep one initialized boundary for the existing backend, one authoritative auth/account provider, focused capability helpers, a shared route registry and typed service facades. Preserve an established database/auth provider; apply Firebase-specific setup only to a Firebase destination or a requested migration. Translate private ownership, atomic identity and trusted-operation requirements to the configured provider's policies/constraints. Map them to the destination's existing shared/ architecture. Services own persistence/subscriptions/serialization and privileged operations; component folders own logic, rendering and styles. Avoid second caches, routers, password stores or provider trackers.
 
 Profile, AccountNavigation, AdminDashboard, AdminRecords, AnalyticsCharts and ObservabilityPanel reuse existing themed components. Web uses supported SCSS; native uses platform styles/renderers. Static web output needs a real hosted server boundary for private reporting and trusted intake; server secrets never enter client imports.
 
@@ -16,6 +16,7 @@ Profile, AccountNavigation, AdminDashboard, AdminRecords, AnalyticsCharts and Ob
 | Private account connection configuration and permitted typed provider sync | [Connections](references/connections.md) |
 | Owner global feature controls, role/minimum-plan targeting, public-safe tier ranks and gated consumers/intake | [Features](references/features.md) |
 | Traffic/runtime adapters, range semantics, source/units/cache, flags/device/source/page icons and exports | [Analytics](references/analytics.md) |
+| Requested Stripe subscriptions, trusted entitlements and aggregate Owner payment charts | [Payments](../payments/SKILL.md) |
 | Shell/sidebar/editor/chart sizing, controls, motion and platform rendering | [Layout](layout.md) |
 | Complete public/private common core | [App System](../app-system/SKILL.md) |
 

@@ -10,6 +10,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   stackedColumns: { flexDirection: `column` },
   main: { flex: 1, minWidth: 0, width: `100%` },
   stackedMain: { flex: 0 },
+  payments: { marginTop: 24 },
   heading: { gap: 12, marginVertical: 15, flexDirection: `row`, alignItems: `center` },
   eyebrowHeading: { gap: 8, flexDirection: `row`, alignItems: `center` },
   eyebrowLine: { width: 28, height: 1, backgroundColor: palette.accent },
