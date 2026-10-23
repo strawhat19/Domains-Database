@@ -119,11 +119,11 @@ const consentFixture = (publisherId = `ca-pub-1234567890123456`) => {
   const fire = name => { for (const callback of [...callbacks]) callback[name]?.(); };
   const mount = () => createAdSenseRuntime(window, document, publisherId);
   const runtime = mount();
-  const start = () => { runtime.update(runtimeState()); fire(`CONSENT_API_READY`); };
+  const start = (initialState = runtimeState()) => { runtime.update(initialState); fire(`CONSENT_API_READY`); };
   const tcf = (data = { gdprApplies: false }, success = true) => state.tcf({ listenerId: 11, ...data }, success);
   const gpp = (signalStatus = `ready`, eventName = `listenerRegistered`, success = true) => state.gpp({ listenerId: 22, eventName, pingData: { signalStatus } }, success);
   const us = (status = statuses.NOT_OPTED_OUT) => { state.usStatus = status; fire(`INITIAL_US_STATES_OPT_OUT_DATA_READY`); };
-  const allow = () => { start(); tcf(); gpp(); us(); };
+  const allow = (initialState = runtimeState()) => { start(initialState); tcf(); gpp(); us(); };
   return { state, statuses, window, runtime, dispatch, fire, mount, start, allow, tcf, gpp, us };
 };
 const europeanConsent = (personalized = true) => ({ gdprApplies: true, cmpStatus: `loaded`, eventStatus: `useractioncomplete`, vendor: { consents: { 755: true } }, purpose: { consents: { 1: true, 3: personalized, 4: personalized } } });
@@ -220,17 +220,108 @@ test(`Loaded Documents Reset On Account, Route Or Confirmed Eligibility Loss Aft
     assert.equal(value.window.adsbygoogle.pauseAdRequests, 1);
     assert.equal(value.state.reloads, 0);
     value.runtime.update({ ...runtimeState(), ...patch });
-    assert.equal(value.state.reloads, 1);
+    assert.equal(value.state.reloads, patch.path ? 0 : 1);
+    assert.deepEqual(value.state.assignments, patch.path ? [`https://domaindatabases.com${patch.path}`] : []);
+  }
+});
+test(`A Sign-Up Route Ahead Of Browser History Navigates To Its Exact Serialized Destination`, () => {
+  const value = consentFixture();
+  const path = `/signup?returnTo=%2Fdomains`;
+  value.allow();
+  assert.equal(value.window.location.href, `https://domaindatabases.com/`);
+  value.runtime.update({ ...runtimeState(), path, eligible: false, settling: true });
+  assert.equal(value.window.adsbygoogle.pauseAdRequests, 1);
+  assert.equal(value.state.reloads, 0);
+  assert.deepEqual(value.state.assignments, []);
+  value.runtime.update({ ...runtimeState(), path, eligible: false });
+  assert.equal(value.window.adsbygoogle.pauseAdRequests, 1);
+  assert.deepEqual(value.state.assignments, [`https://domaindatabases.com/signup?returnTo=%2Fdomains`]);
+  assert.equal(value.state.reloads, 0);
+});
+test(`Fragment-Only Router Destinations Assign And Hard Reload Including Hash Removal`, () => {
+  for (const [initialPath, path] of [[`/`, `/#section`], [`/#section`, `/`]]) {
+    const value = consentFixture();
+    value.window.location.href = `https://domaindatabases.com${initialPath}`;
+    value.allow({ ...runtimeState(), path: initialPath });
+    value.runtime.update({ ...runtimeState(), path, eligible: false });
+    assert.equal(value.window.adsbygoogle.pauseAdRequests, 1, path);
+    assert.deepEqual(value.state.assignments, [`https://domaindatabases.com${path}`], path);
+    assert.equal(value.state.reloads, 1, path);
+  }
+});
+test(`Popstate Reloads The Actual Browser Destination Even While Router State Is Stale`, () => {
+  const value = consentFixture();
+  value.allow();
+  value.window.location.href = `https://domaindatabases.com/signup?returnTo=%2Fdomains`;
+  value.dispatch(`popstate`);
+  assert.equal(value.window.adsbygoogle.pauseAdRequests, 1);
+  assert.equal(value.window.location.href, `https://domaindatabases.com/signup?returnTo=%2Fdomains`);
+  assert.deepEqual(value.state.assignments, []);
+  assert.equal(value.state.reloads, 1);
+});
+test(`Popstate Back To The Observed Home Wins Over A Deferred Stale Sign-Up Route`, () => {
+  const value = consentFixture();
+  const path = `/signup?returnTo=%2Fdomains`;
+  value.allow();
+  value.runtime.update({ ...runtimeState(), path, eligible: false, settling: true });
+  value.window.location.href = `https://domaindatabases.com${path}`;
+  value.window.location.href = `https://domaindatabases.com/`;
+  value.dispatch(`popstate`);
+  assert.equal(value.window.adsbygoogle.pauseAdRequests, 1);
+  assert.deepEqual(value.state.assignments, []);
+  assert.equal(value.state.reloads, 0);
+  value.runtime.update({ ...runtimeState(), path, eligible: false });
+  assert.equal(value.window.location.href, `https://domaindatabases.com/`);
+  assert.deepEqual(value.state.assignments, []);
+  assert.equal(value.state.reloads, 1);
+});
+test(`Persisted Page Restore Clears A Captured Navigation Latch And Respects Auth Settling`, () => {
+  const path = `/signup?returnTo=%2Fdomains`;
+  for (const settling of [false, true]) {
+    const value = consentFixture();
+    value.allow();
+    value.dispatch(`click`, clickEvent(`https://domaindatabases.com${path}`));
+    assert.deepEqual(value.state.assignments, [`https://domaindatabases.com${path}`]);
+    value.dispatch(`pagehide`);
+    value.runtime.update({ ...runtimeState(), path, eligible: false, settling });
+    value.window.location.href = `https://domaindatabases.com/`;
+    value.dispatch(`pageshow`, { persisted: true });
+    assert.equal(value.window.adsbygoogle.pauseAdRequests, 1, String(settling));
+    assert.equal(value.state.reloads, settling ? 0 : 1, String(settling));
+    if (settling) value.runtime.update({ ...runtimeState(), path, eligible: false });
+    assert.equal(value.window.location.href, `https://domaindatabases.com/`, String(settling));
+    assert.deepEqual(value.state.assignments, [`https://domaindatabases.com${path}`], String(settling));
+    assert.equal(value.state.reloads, 1, String(settling));
+  }
+});
+test(`An Already-Updated Browser Destination Reloads In Place Instead Of Reassigning`, () => {
+  const value = consentFixture();
+  const path = `/signup?returnTo=%2Fdomains`;
+  value.allow();
+  value.window.location.href = `https://domaindatabases.com${path}`;
+  value.runtime.update({ ...runtimeState(), path, eligible: false });
+  assert.equal(value.window.adsbygoogle.pauseAdRequests, 1);
+  assert.deepEqual(value.state.assignments, []);
+  assert.equal(value.state.reloads, 1);
+});
+test(`Unsafe Or Absolute Router Paths Cannot Become External Document Navigations`, () => {
+  for (const path of [`https://external.example.invalid/signup`, `https://domaindatabases.com/signup`, `http://domaindatabases.com/signup`, `//external.example.invalid/signup`, `/\\external.example.invalid/signup`, `\\external.example.invalid/signup`, `javascript:alert(1)`, `data:text/html,unsafe`]) {
+    const value = consentFixture();
+    value.allow();
+    value.runtime.update({ ...runtimeState(), path, eligible: false });
+    assert.equal(value.window.adsbygoogle.pauseAdRequests, 1, path);
+    assert.deepEqual(value.state.assignments, [], path);
+    assert.equal(value.window.location.href, `https://domaindatabases.com/`, path);
   }
 });
 test(`Loaded Same-Origin Navigation Gets A New Document And Settling Does Not Interrupt Auth`, () => {
   const value = consentFixture();
   value.allow();
-  const event = clickEvent(`https://domaindatabases.com/profile`);
+  const event = clickEvent(`https://domaindatabases.com/signup?returnTo=%2Fdomains`);
   value.dispatch(`click`, event);
   assert.equal(event.prevented, true);
   assert.equal(event.stopped, true);
-  assert.deepEqual(value.state.assignments, [`https://domaindatabases.com/profile`]);
+  assert.deepEqual(value.state.assignments, [`https://domaindatabases.com/signup?returnTo=%2Fdomains`]);
   assert.equal(value.window.adsbygoogle.pauseAdRequests, 1);
   for (const [href, target] of [[`https://external.example.invalid/`, ``], [`https://domaindatabases.com/profile`, `_blank`]]) {
     const untouched = consentFixture();

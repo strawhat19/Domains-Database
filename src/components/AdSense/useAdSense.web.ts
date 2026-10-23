@@ -1,6 +1,6 @@
 import { SITE_URL } from '../../shared/seo';
 import { onIdTokenChanged } from 'firebase/auth';
-import { usePathname, useGlobalSearchParams } from 'expo-router';
+import { useUnstableGlobalHref } from 'expo-router';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { getFirebaseAuth } from '../../shared/firebase/client';
 import { firebaseEnabled } from '../../shared/firebase/config';
@@ -27,8 +27,7 @@ const readServerIdentity = () => `pending`;
 
 export const useAdSense = () => {
   const auth = useAuth();
-  const pathname = usePathname();
-  const routeParameters = useGlobalSearchParams();
+  const routeHref = useUnstableGlobalHref();
   const access = useStarterAccess();
   const features = useFeatureFlags();
   const publisherId = getAdSensePublisherId();
@@ -39,10 +38,9 @@ export const useAdSense = () => {
   const canonicalHttpsOrigin = typeof window !== `undefined` && window.location.protocol === `https:`
     && window.location.origin === SITE_URL && !window.location.search && !window.location.hash;
   const identity = `${auth.user?.id ?? `guest`}:${firebaseIdentity}:${auth.user?.role ?? `guest`}:${auth.loginRevision}`;
-  const routeScope = JSON.stringify(routeParameters);
   const settling = auth.loading || auth.busy;
   const eligible = canLoadAdSense({
-    pathname,
+    pathname: routeHref,
     paid: access.allowed,
     owner: access.owner,
     identityConfirmed,
@@ -62,7 +60,7 @@ export const useAdSense = () => {
   });
   useLayoutEffect(() => {
     if (!runtime.current && eligible && publisherId) runtime.current = createAdSenseRuntime(window as AdSenseWindow, document, publisherId);
-    runtime.current?.update({ eligible, identity, settling, path: `${pathname}${window.location.search}${window.location.hash}` });
-  }, [eligible, identity, pathname, publisherId, routeScope, settling]);
+    runtime.current?.update({ eligible, identity, settling, path: routeHref });
+  }, [eligible, identity, publisherId, routeHref, settling]);
   useEffect(() => () => runtime.current?.dispose(), []);
 };

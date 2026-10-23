@@ -22,7 +22,12 @@ const UserMenu = () => {
   );
   if (!user) return (
     <Link href={state.guestAuth.href} asChild>
-      <Pressable {...elementProps(`user-menu-signin`)} style={styles.signin} accessibilityRole={`link`}>
+      <Pressable
+        style={styles.signin}
+        accessibilityRole={`link`}
+        {...elementProps(`user-menu-signin`)}
+        {...(Platform.OS === `web` ? { dataSet: { 'app-navigation': `true` } } : {})}
+      >
         <GuestIcon {...elementProps(`user-menu-signin-icon`)} size={16} color={palette.ink} />
         <Text {...elementProps(`user-menu-signin-text`)} style={styles.linkText}>{state.guestAuth.label}</Text>
       </Pressable>

@@ -88,6 +88,7 @@ export const createAdSenseRuntime = (window: AdSenseWindow, document: Document, 
   let resetting = false;
   let scriptFailed = false;
   let resetRequired = false;
+  let resetToCurrent = false;
   let tcfListenerId: number | undefined;
   let gppListenerId: number | undefined;
   let gppAvailable = false;
@@ -108,18 +109,28 @@ export const createAdSenseRuntime = (window: AdSenseWindow, document: Document, 
     window.adsbygoogle.pauseAdRequests = 1;
   };
 
-  const resetDocument = () => {
+  const resetDocument = (path?: string) => {
     pause();
     if (disposed || resetting || state.settling || pageHidden) return;
-    resetting = true;
-    try { window.location.reload(); } catch { /* Keep requests paused if navigation is unavailable */ }
+    try {
+      const current = new URL(window.location.href);
+      const destination = path === undefined ? current : new URL(path, current.origin);
+      if (path !== undefined && (!path.startsWith(`/`) || path.startsWith(`//`) || destination.origin !== current.origin)) return;
+      resetting = true;
+      if (destination.href === current.href) window.location.reload();
+      else {
+        window.location.assign(destination.href);
+        if (destination.pathname === current.pathname && destination.search === current.search) window.location.reload();
+      }
+    } catch { /* Keep requests paused if navigation is unavailable */ }
   };
 
   const evaluate = () => {
     if (disposed || !loadedDocument) return;
-    const scopeChanged = state.path !== loadedDocument.path || state.identity !== loadedDocument.identity;
+    const routeChanged = state.path !== loadedDocument.path;
+    const scopeChanged = routeChanged || state.identity !== loadedDocument.identity;
     if (resetting || pageHidden || state.settling) return pause();
-    if (resetRequired || scopeChanged || !state.eligible) return resetDocument();
+    if (resetRequired || scopeChanged || !state.eligible) return resetDocument(routeChanged && !resetToCurrent ? state.path : undefined);
     const gppPermits = gppAvailable ? gppReady : !usRegulated;
     if (!initialized || scriptFailed || !gppPermits || tcfConsent !== `allowed` || usConsent !== `allowed`) return pause();
     window.adsbygoogle ??= [] as unknown[];
@@ -228,8 +239,11 @@ export const createAdSenseRuntime = (window: AdSenseWindow, document: Document, 
 
   const onPageHide: EventListener = () => { pageHidden = true; if (loadedDocument) pause(); };
   const onUrlChange: EventListener = () => {
-    if (!loadedDocument || observedHref === window.location.href) return;
-    observedHref = window.location.href;
+    if (!loadedDocument) return;
+    const current = new URL(window.location.href);
+    if (observedHref === current.href && state.path === `${current.pathname}${current.search}${current.hash}`) return;
+    observedHref = current.href;
+    resetToCurrent = true;
     resetRequired = true;
     pause();
     evaluate();
@@ -260,7 +274,11 @@ export const createAdSenseRuntime = (window: AdSenseWindow, document: Document, 
   };
   const onPageShow: EventListener = event => {
     pageHidden = false;
-    if (loadedDocument && `persisted` in event && event.persisted === true) resetRequired = true;
+    if (loadedDocument && `persisted` in event && event.persisted === true) {
+      resetting = false;
+      resetRequired = true;
+      resetToCurrent = true;
+    }
     if (!loadedDocument) load();
     else evaluate();
   };
