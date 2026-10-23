@@ -111,3 +111,17 @@
 @media (prefers-reduced-motion: reduce) {
   .static-page-reader-button, .static-page-contact-link { transition: none; }
 }
+
+.static-page.static-page-policy { gap: 32px; display: flex; max-width: 900px; padding-block: 24px 48px; align-items: stretch; justify-content: flex-start; flex-direction: column; }
+.static-page-policy .static-page-back { display: inline-flex; min-height: 44px; }
+.static-page-policy .static-page-eyebrow, .static-page-policy .static-page-description { display: block; }
+.static-page-policy .static-page-description { max-width: 680px; font-size: 14px; line-height: 1.75; }
+.static-page-policy .static-page-policy-document { gap: 26px; display: flex; padding: clamp(16px, 3vw, 28px); }
+.static-page-policy-section { gap: 12px; display: flex; flex-direction: column; }
+.static-page-policy-section + .static-page-policy-section { padding-top: 26px; border-top: 1px solid var(--line); }
+.static-page-policy .static-page-section-title { margin: 0; display: block; font-size: clamp(19px, 2vw, 24px); }
+.static-page-policy .static-page-paragraph { font-size: 14px; line-height: 1.8; }
+.static-page-policy-links { gap: 4px 20px; margin: 0; padding: 0; display: flex; list-style: none; flex-wrap: wrap; }
+.static-page-policy-link { gap: 7px; min-height: 44px; display: inline-flex; color: var(--accent); font-size: 12px; line-height: 1.6; align-items: center; text-decoration: underline; text-underline-offset: 3px; }
+.static-page-policy-link-icon { flex-shrink: 0; }
+.static-page-policy-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

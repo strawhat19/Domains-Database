@@ -14,8 +14,12 @@ import { Mail, Send, Plug, Globe2, Lightbulb, ArrowRight, ArrowUpRight, MessageC
 
 const topicIcons = { ideas: Lightbulb, support: Plug };
 
-const ContactContent = () => {
+const ContactPage = () => {
   const state = useContactPage();
+  const { error, flags, ready } = useFeatureFlags();
+  const available = ready && flags.contact;
+  const loading = !ready && !error;
+  const message = loading ? `Loading Contact Form…` : `The contact form is currently unavailable. Please try again later.`;
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
   const scroll = useContext(ScrollContext);
@@ -87,8 +91,13 @@ const ContactContent = () => {
             </Link>
           </View>
         </View>
-        <View {...elementProps(`contact-form-panel`)} style={styles.panel}>
-          {state.submitted ? (
+        <View {...elementProps(`contact-form-panel`)} style={styles.panel} accessibilityState={{ busy: loading }}>
+          {!available ? (
+            <View {...elementProps(`contact-unavailable`)} style={styles.formHeading}>
+              <Text {...elementProps(`contact-unavailable-title`)} style={styles.formTitle} accessibilityRole={`header`}>{`Contact Form`}</Text>
+              <Text {...elementProps(`contact-unavailable-message`)} style={styles.formDescription} accessibilityLiveRegion={`polite`}>{message}</Text>
+            </View>
+          ) : state.submitted ? (
             <View {...elementProps(`contact-success`)} style={styles.success} accessibilityLiveRegion={`polite`}>
               <View {...elementProps(`contact-success-symbol`)} style={styles.successSymbol}><CheckCircle2 {...elementProps(`contact-success-icon`)} size={32} color={palette.success} /></View>
               <Text {...elementProps(`contact-success-eyebrow`)} style={styles.eyebrow}>{state.copy.eyebrow}</Text>
@@ -154,30 +163,9 @@ const ContactContent = () => {
           )}
         </View>
       </View>
-      <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />
+      {available && <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />}
     </>
   );
-};
-
-const ContactUnavailable = ({ message }: { message: string }) => {
-  const { palette } = useTheme();
-  const { width } = useWindowDimensions();
-  const styles = useMemo(() => createStyles(palette, true, width), [palette, width]);
-  return <>
-    <PageMeta noIndex title={`Contact`} canonicalPath={`/contact`} description={message} />
-    <View {...elementProps(`contact-page`)} style={styles.page}>
-      <View {...elementProps(`contact-unavailable`)} style={styles.intro}>
-        <Text {...elementProps(`contact-title`)} style={styles.title} accessibilityRole={`header`}>{`Contact`}</Text>
-        <Text {...elementProps(`contact-unavailable-message`)} style={styles.description} accessibilityLiveRegion={`polite`}>{message}</Text>
-      </View>
-    </View>
-  </>;
-};
-
-const ContactPage = () => {
-  const { error, flags, ready } = useFeatureFlags();
-  const message = !ready && !error ? `Loading Contact…` : `Contact Is Currently Unavailable`;
-  return ready && flags.contact ? <ContactContent /> : <ContactUnavailable message={message} />;
 };
 
 export default ContactPage;

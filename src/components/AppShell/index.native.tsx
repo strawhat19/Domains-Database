@@ -176,16 +176,16 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             <View
               {...elementProps(`native-app-footer`)}
               onLayout={({ nativeEvent }) => setFooterHeight(nativeEvent.layout.height)}
-              style={[styles.footer, { paddingBottom: insets.bottom + 8 }]}
+              style={[styles.footer, width < 760 && styles.compactFooter, { paddingBottom: insets.bottom + 8 }]}
             >
-              <View {...elementProps(`native-footer-copyright-column`)} style={styles.footerColumn}>
+              <View {...elementProps(`native-footer-copyright-column`)} style={[styles.footerColumn, width < 760 && styles.compactFooterColumn]}>
                 <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
                   {width >= 760 ? `© ${year} ${appName}.` : `© ${year}`}
                 </Text>
               </View>
-              <View {...elementProps(`native-footer-links`)} style={styles.footerLinks}>
+              <View {...elementProps(`native-footer-links`)} style={[styles.footerLinks, width < 760 && styles.compactFooterLinks]}>
                 {footerLinks.map(({ label, href, icon }) => {
-                  const Icon = { FileText, ShieldCheck }[icon];
+                  const Icon = { Info, Mail, BookOpen, FileText, ShieldCheck }[icon];
                   return (
                     <Link key={href} href={href} asChild>
                       <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
@@ -198,7 +198,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   );
                 })}
               </View>
-              <View {...elementProps(`native-footer-attribution`)} style={styles.footerAttribution}>
+              <View {...elementProps(`native-footer-attribution`)} style={[styles.footerAttribution, width < 760 && styles.compactFooterAttribution]}>
                 <Pressable
                   style={styles.footerLink}
                   accessibilityRole={`link`}

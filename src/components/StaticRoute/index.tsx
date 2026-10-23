@@ -5,7 +5,7 @@ import { pageContent, type PageName } from '../../shared/pages';
 
 const StaticRoute = ({ page }: { page: PageName }) => (
   <>
-    <PageMeta title={pageContent[page].eyebrow} description={pageContent[page].description} />
+    <PageMeta noIndex={page === `api`} canonicalPath={`/${page}`} title={pageContent[page].eyebrow} description={pageContent[page].description} />
     {page === `about` ? <About /> : <StaticPage page={page} />}
   </>
 );

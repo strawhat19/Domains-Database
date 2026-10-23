@@ -42,4 +42,13 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   detailCount: { color: palette.muted, fontSize: 11, fontFamily: `DMSans_400Regular` },
   contactLink: { gap: 10, minHeight: 36, paddingVertical: 9, paddingHorizontal: 14, borderRadius: 8, alignSelf: `flex-start`, flexDirection: `row`, alignItems: `center`, backgroundColor: palette.strong },
   contactText: { color: `#ffffff`, fontSize: 12, fontFamily: `DMSans_600SemiBold` },
+  policyBack: { minHeight: 44 },
+  policyPage: { width: `100%`, maxWidth: 900, alignSelf: `center`, justifyContent: `flex-start`, paddingBottom: 48 },
+  compactPolicyPage: { gap: 24, padding: 16, paddingBottom: 32 },
+  policyDocument: { gap: 24 },
+  policySection: { gap: 12 },
+  policySectionDivider: { paddingTop: 24, borderTopWidth: 1, borderTopColor: palette.line },
+  policyLinks: { gap: 4, alignItems: `flex-start` },
+  policyLink: { gap: 7, minHeight: 44, maxWidth: `100%`, alignItems: `center`, flexDirection: `row` },
+  policyLinkLabel: { flexShrink: 1, fontSize: 12, lineHeight: 20, color: palette.accent, textDecorationLine: `underline`, fontFamily: `DMSans_500Medium` },
 });

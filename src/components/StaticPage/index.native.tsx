@@ -23,12 +23,17 @@ const StaticPage = ({ page }: { page: PageName }) => {
   const tight = pageContentHeight < 400;
   const cramped = pageContentHeight < 280;
   const Icon = pageIcons[page];
+  const fullDocument = page === `privacy` || page === `terms`;
   const openPiratechs = async () => {
     try {
       await Linking.openURL(`https://piratechs.com/`);
     } catch {
       Alert.alert(`Unable To Open Link`, `Visit piratechs.com in your browser`);
     }
+  };
+  const openPolicyLink = async (url: `https://${string}`) => {
+    try { await Linking.openURL(url); }
+    catch { Alert.alert(`Unable To Open Link`, `Open ${url} in your browser`); }
   };
 
   const readerNavigation = (
@@ -70,6 +75,28 @@ const StaticPage = ({ page }: { page: PageName }) => {
       </Pressable>
     </View>
   );
+
+  if (fullDocument) return <View {...elementProps(`native-static-page`, page)} style={[styles.page, styles.policyPage, width < 700 && styles.compactPolicyPage]}>
+    <View {...elementProps(`native-static-intro`, page)} style={styles.intro}>
+      <Link href={`/`} asChild><Pressable {...elementProps(`native-static-back`, page)} style={[styles.backLink, styles.policyBack]} accessibilityRole={`link`} accessibilityLabel={`Back To Overview`}>
+        <ArrowLeft {...elementProps(`native-static-back-icon`, page)} size={15} color={palette.muted} accessible={false} /><Text {...elementProps(`native-static-back-text`, page)} style={styles.backText}>{`Back to overview`}</Text>
+      </Pressable></Link>
+      <Text {...elementProps(`native-static-eyebrow`, page)} style={styles.eyebrow}>{state.content.eyebrow}</Text>
+      <Text {...elementProps(`native-static-title`, page)} style={[styles.title, width < 700 && styles.compactTitle]} accessibilityRole={`header`}>{state.content.title}</Text>
+      <Text {...elementProps(`native-static-description`, page)} style={styles.description}>{state.content.description}</Text>
+    </View>
+    <View {...elementProps(`native-static-document`, page)} style={[styles.reader, styles.policyDocument, width < 700 && styles.compactReader]}>
+      {state.content.sections.map((section, sectionIndex) => <View key={section.title} {...elementProps(`native-static-policy-section`, `${page}-${sectionIndex}`)} style={[styles.policySection, sectionIndex > 0 && styles.policySectionDivider]}>
+        <Text {...elementProps(`native-static-section-title`, `${page}-${sectionIndex}`)} style={styles.sectionTitle} accessibilityRole={`header`}>{section.title}</Text>
+        {section.body.map((paragraph, paragraphIndex) => <Text key={paragraphIndex} selectable {...elementProps(`native-static-section-body`, `${page}-${sectionIndex}-${paragraphIndex}`)} style={styles.sectionBody}>{paragraph}</Text>)}
+        {section.links?.length ? <View {...elementProps(`native-static-policy-links`, `${page}-${sectionIndex}`)} style={styles.policyLinks}>
+          {section.links.map((link, linkIndex) => <Pressable key={link.url} {...elementProps(`native-static-policy-link`, `${page}-${sectionIndex}-${linkIndex}`)} style={styles.policyLink} accessibilityRole={`link`} accessibilityLabel={link.label} accessibilityHint={`Opens In Your Browser`} onPress={() => { void openPolicyLink(link.url); }}>
+            <Text {...elementProps(`native-static-policy-link-label`, `${page}-${sectionIndex}-${linkIndex}`)} style={styles.policyLinkLabel}>{link.label}</Text><ArrowUpRight {...elementProps(`native-static-policy-link-icon`, `${page}-${sectionIndex}-${linkIndex}`)} size={14} color={palette.accent} accessible={false} />
+          </Pressable>)}
+        </View> : null}
+      </View>)}
+    </View>
+  </View>;
 
   return (
     <View

@@ -10,8 +10,12 @@ import { Mail, Send, Plug, Globe2, Lightbulb, ArrowRight, ArrowUpRight, MessageC
 
 const topicIcons = { ideas: Lightbulb, support: Plug };
 
-const ContactContent = () => {
+const ContactPage = () => {
   const state = useContactPage();
+  const { error, flags, ready } = useFeatureFlags();
+  const available = ready && flags.contact;
+  const loading = !ready && !error;
+  const message = loading ? `Loading Contact Form…` : `The contact form is currently unavailable. Please try again later.`;
   return (
     <>
       <PageMeta title={`Contact`} canonicalPath={`/contact`} description={contactDescription} />
@@ -72,8 +76,13 @@ const ContactContent = () => {
             </Link>
           </nav>
         </section>
-        <section id={`contact-form-panel`} className={`contact-form-panel`} aria-labelledby={state.submitted ? `contact-success-title` : `contact-form-title`}>
-          {state.submitted ? (
+        <section id={`contact-form-panel`} className={`contact-form-panel`} aria-busy={loading} aria-labelledby={!available ? `contact-unavailable-title` : state.submitted ? `contact-success-title` : `contact-form-title`}>
+          {!available ? (
+            <div id={`contact-unavailable`} className={`contact-form-heading`}>
+              <h2 id={`contact-unavailable-title`} className={`contact-form-title`}>{`Contact Form`}</h2>
+              <p role={`status`} id={`contact-unavailable-message`} className={`contact-form-description`}>{message}</p>
+            </div>
+          ) : state.submitted ? (
             <div id={`contact-success`} className={`contact-success`} role={`status`} aria-live={`polite`}>
               <span id={`contact-success-symbol`} className={`contact-success-symbol`}><CheckCircle2 id={`contact-success-icon`} className={`contact-success-icon`} size={32} aria-hidden /></span>
               <p id={`contact-success-eyebrow`} className={`contact-eyebrow`}>{state.copy.eyebrow}</p>
@@ -157,24 +166,9 @@ const ContactContent = () => {
           )}
         </section>
       </article>
-      <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />
+      {available && <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />}
     </>
   );
-};
-
-const ContactPage = () => {
-  const { error, flags, ready } = useFeatureFlags();
-  if (ready && flags.contact) return <ContactContent />;
-  const message = !ready && !error ? `Loading Contact…` : `Contact Is Currently Unavailable`;
-  return <>
-    <PageMeta noIndex title={`Contact`} canonicalPath={`/contact`} description={message} />
-    <article id={`contact-page`} className={`contact-page`} aria-busy={!ready && !error} aria-labelledby={`contact-title`}>
-      <section id={`contact-unavailable`} className={`contact-intro`}>
-        <h1 id={`contact-title`} className={`contact-title`}>{`Contact`}</h1>
-        <p role={`status`} id={`contact-unavailable-message`} className={`contact-description`}>{message}</p>
-      </section>
-    </article>
-  </>;
 };
 
 export default ContactPage;

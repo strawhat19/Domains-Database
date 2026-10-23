@@ -14,10 +14,11 @@ const StaticPage = ({ page }: { page: PageName }) => {
   const detailLength = height < 500 ? 90 : width > 700 ? 310 : height < 620 ? 160 : 220;
   const state = useStaticPage(page, detailLength);
   const Icon = pageIcons[page];
+  const fullDocument = page === `privacy` || page === `terms`;
 
   return (
-    <article id={`${page}-page`} className={`static-page`}>
-      <div id={`${page}-intro`} className={`static-page-intro`}>
+    <article id={`${page}-page`} className={`static-page${fullDocument ? ` static-page-policy` : ``}`} aria-labelledby={`${page}-title`}>
+      <div id={`${page}-intro`} className={`static-page-intro`} data-scroll-hero={fullDocument || undefined}>
         <Link href={`/`} asChild>
           <RouterAnchor id={`${page}-back`} className={`static-page-back`}>
             <ArrowLeft id={`${page}-back-icon`} className={`static-page-back-icon`} size={15} aria-hidden />
@@ -54,7 +55,19 @@ const StaticPage = ({ page }: { page: PageName }) => {
           </a>
         )}
       </div>
-      <section id={`${page}-reader`} className={`static-page-reader`} aria-label={`${state.content.eyebrow} topics`}>
+      {fullDocument ? <div id={`${page}-document`} className={`static-page-reader static-page-policy-document`}>
+        {state.content.sections.map((section, sectionIndex) => <section key={section.title} id={`${page}-section-${sectionIndex}`} className={`static-page-section static-page-policy-section`} aria-labelledby={`${page}-section-title-${sectionIndex}`}>
+          <h2 id={`${page}-section-title-${sectionIndex}`} className={`static-page-section-title`}>{section.title}</h2>
+          {section.body.map((paragraph, paragraphIndex) => <p key={paragraphIndex} id={`${page}-paragraph-${sectionIndex}-${paragraphIndex}`} className={`static-page-paragraph`}>{paragraph}</p>)}
+          {section.links?.length ? <ul id={`${page}-section-links-${sectionIndex}`} className={`static-page-policy-links`}>
+            {section.links.map((link, linkIndex) => <li key={link.url} id={`${page}-section-link-item-${sectionIndex}-${linkIndex}`} className={`static-page-policy-link-item`}>
+              <a href={link.url} target={`_blank`} rel={`noopener noreferrer`} id={`${page}-section-link-${sectionIndex}-${linkIndex}`} className={`static-page-policy-link`} aria-label={`${link.label}, Opens In A New Tab`}>
+                {link.label}<ArrowUpRight size={14} aria-hidden id={`${page}-section-link-icon-${sectionIndex}-${linkIndex}`} className={`static-page-policy-link-icon`} />
+              </a>
+            </li>)}
+          </ul> : null}
+        </section>)}
+      </div> : <section id={`${page}-reader`} className={`static-page-reader`} aria-label={`${state.content.eyebrow} topics`}>
         <div id={`${page}-topic-field`} className={`static-page-topic-field`}>
           <label id={`${page}-topic-label`} className={`static-page-topic-label`} htmlFor={`${page}-topic-select`}>
             {`Explore a topic`}
@@ -116,7 +129,7 @@ const StaticPage = ({ page }: { page: PageName }) => {
             <ArrowRight id={`${page}-next-detail-icon`} className={`static-page-reader-icon`} size={16} aria-hidden />
           </button>
         </nav>
-      </section>
+      </section>}
     </article>
   );
 };

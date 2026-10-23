@@ -1,6 +1,6 @@
 # Billing Entitlement Enforcement
 
-Source implementation notes; rules, endpoints, provider configuration, and real payment behavior require separate deployment and verification.
+Implementation and release notes. Published server/rules evidence is recorded below; real paid subscription behavior remains separate validation.
 
 ## Authority And Capabilities
 
@@ -30,15 +30,21 @@ Existing over-limit portfolios remain readable and exportable. Updates/deletions
 
 ## Rollout And Validation
 
-The server needs the same server-only Firebase service-account configuration as billing. The single-field ascending collection index on `domains.name` is live and READY for duplicate-name queries, as recorded below; the existing wildcard index exemption otherwise disables it. Deploy compatible server/client code and restrictive rules as one coordinated cutover before exposing signup/payment; old clients cannot save domains after the restrictive rules activate. Do not reopen direct domain writes as a fallback when server credentials are absent. Failed provider or billing reads remain errors, rather than permission grants.
+The server uses the same server-only Firebase service-account configuration as billing. The single-field ascending collection index on `domains.name` is live and READY for duplicate-name queries, as recorded below; the existing wildcard index exemption otherwise disables it. Compatible billing source and restrictive rules are now published, with the server startup repair recorded below. Old clients cannot save domains through direct writes. Do not reopen direct domain writes as a fallback when server credentials are absent. Failed provider or billing reads remain errors, rather than permission grants.
 
 Any trusted maintenance outside this endpoint that changes portfolio membership must also reconcile `portfolioUsage` and snapshot state. Their mismatch fails closed with a reconciliation message.
 
-Initial implementation received source review. Later authorized focused rules checks and the separate live index setup are recorded below. No browser checks, rule deployment, payment, or webhook verification are claimed here; production build evidence is tracked separately.
+Initial implementation received source review, followed by authorized isolated tests, build/startup checks, live rules publication, and unauthenticated production HTTP checks. These do not establish real sign-in, a valid paid webhook, browser/device behavior, or an end-to-end payment. See [Live Billing Setup](live-billing-2026-10-23.md) for the complete release evidence and remaining checks.
+
+## Published Server And Rules
+
+Billing source `9ad3850a7f22a13e5fdd6d02bf8220e5fdd5b286` was committed and pushed to `main`. Its initial READY deployment exposed a Firebase Admin 14 ESM/CommonJS startup failure in actual API requests. The narrow Metro correction and real exported-handler startup tests were published in `32df233423c3727fd89b1d09a96904a269fa7bad`; deployment `dpl_9WAaDuaNEa3b2PZXmem83jU4vPsf` is READY and assigned to `domaindatabases.com`. At `2026-10-23T17:06:15.908Z`, production billing/portfolio endpoints returned their expected private/no-store JSON authentication rejections and the webhook rejected an invalid signature. No real account or payment was used.
+
+Only Firestore rules were deployed, to ruleset `334bd06d-4366-446c-864a-731578465d91` through the `cloud.firestore` release at `2026-10-23T16:53:24.058564Z`. Admin source readback at `2026-10-23T16:53:41.792Z` matched the tested SHA-256 `36826438700b82de68f605ecdc846beca12a6704ae10f4a45de5a03fb4ec9bdb`. The exact published source, release IDs, timestamp, and matching deployment gate are in `billing-firestore-rules-after-release.json` alongside the index artifacts below. No full index-file deployment occurred. This documentation update remains local and uncommitted; the separate AdSense source preparation is outside this billing release.
 
 ## Focused Rules Checks
 
-The Firebase rules compiler returned no errors or warnings after removing only the unused `starterPlanAllows` and `syncedPublicDomain` helpers. The dependency-free `tests/rules/billing-permissions.cjs` then submitted the exact local rules source to Firebase Rules `projects:test` with synthetic identities, accounts, billing mirrors, and explicit mocked `get`, `exists`, `getAfter`, and `existsAfter` functions. No rules deployment or production document write occurred.
+The Firebase rules compiler returned no errors or warnings after removing only the unused `starterPlanAllows` and `syncedPublicDomain` helpers. The dependency-free `tests/rules/billing-permissions.cjs` then submitted the exact local rules source to Firebase Rules `projects:test` with synthetic identities, accounts, billing mirrors, and explicit mocked `get`, `exists`, `getAfter`, and `existsAfter` functions. The suite itself does not deploy rules or write production documents.
 
 All 112 permission cases passed: 32 expected allows and 80 expected denials, with no compiler issues, evaluation error positions, or debug errors. Coverage includes own-only billing mirror reads; client mirror writes/lists; private billing accounts/customer mappings/events/usage; direct private domain and portfolio-snapshot writes including Owner; cross-account private data; Free versus paid registrar providers; active/trialing, expired, exact expiry, canceled, past-due, unpaid, free-mirror, and stale legacy-plan states; active Owner versus inactive Owner, Administrator, Developer, and forged token claims; Owner-only planned auction previews; disabled notification/audience override for active Owner; and downgrade reads/deletes.
 
@@ -46,7 +52,7 @@ The tested rules SHA-256 is `36826438700b82de68f605ecdc846beca12a6704ae10f4a45de
 
 ## Live Index Preparation
 
-On 2026-10-23, a precise Firestore Admin `PATCH` of `projects/domainsdatabase-e62a3/databases/(default)/collectionGroups/domains/fields/name?updateMask=indexConfig` added only `ASCENDING` / `COLLECTION` indexing for the `name` field. Before the change, `name` inherited the empty `domains/*` indexing configuration. No rules, full index file, or application deployment occurred.
+On 2026-10-23, a precise Firestore Admin `PATCH` of `projects/domainsdatabase-e62a3/databases/(default)/collectionGroups/domains/fields/name?updateMask=indexConfig` added only `ASCENDING` / `COLLECTION` indexing for the `name` field. Before the change, `name` inherited the empty `domains/*` indexing configuration. That index operation did not deploy rules, the full index file, or the application.
 
 Operation `projects/domainsdatabase-e62a3/databases/(default)/operations/AyA2MzMzYTBjNGU1ZTItZTY1OC0yNWQ0LTBhN2YtYzk5NGJkNTQkGnNlbmlsZXBpcAkKMxI` finished with `done=true`, state `SUCCESSFUL`, and 226/226 documents completed at `2026-10-23T16:31:12.014883Z`. Independent field readback at `2026-10-23T16:31:16.107Z` confirmed `domains.name` / `ASCENDING` / `COLLECTION` / `READY`. Exact before/after comparison confirmed both existing field overrides remained unchanged: the `domains/*` exemption and `domains.number` / `DESCENDING` / `COLLECTION_GROUP` / `READY`.
 

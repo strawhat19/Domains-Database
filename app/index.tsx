@@ -6,7 +6,7 @@ const HomePage = () => (
     <PageMeta
       exactTitle
       title={`Domains Database | Idea, Plan, Manage, Execute, Launch`}
-      description={`Keep track of every name, registrar, renewal, and yearly cost with Domain Manager.`}
+      description={`Organize your domain portfolio, track registrar and renewal details, and explore practical domain guides with Domains Database.`}
     />
     <Landing />
   </>

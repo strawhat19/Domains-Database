@@ -1,6 +1,7 @@
 import Head from 'expo-router/head';
-import { absoluteSiteUrl } from '../../shared/seo';
+import { usePathname } from 'expo-router';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
+import { absoluteSiteUrl, isIndexablePath, getCanonicalSeoPath } from '../../shared/seo';
 
 export type PageMetaProps = {
   title: string;
@@ -15,11 +16,14 @@ export type PageMetaProps = {
 };
 
 const PageMeta = ({ title, image, noIndex, exactTitle, description, publishedAt, canonicalPath, type = `website`, structuredData }: PageMetaProps) => {
+  const pathname = usePathname();
   const { name, blogImage, formatText, formatContent } = useAppBrand();
   const pageTitle = exactTitle ? formatText(title) : `${formatText(title)} | ${name}`;
   const pageDescription = formatText(description);
   const imageUrl = image ? absoluteSiteUrl(blogImage(image)) : undefined;
-  const canonicalUrl = canonicalPath ? absoluteSiteUrl(canonicalPath) : undefined;
+  const pagePath = canonicalPath ?? pathname;
+  const preventIndexing = noIndex || !isIndexablePath(pagePath);
+  const canonicalUrl = absoluteSiteUrl(getCanonicalSeoPath(pagePath));
 
   return (
     <Head>
@@ -34,7 +38,7 @@ const PageMeta = ({ title, image, noIndex, exactTitle, description, publishedAt,
       <meta id={`page-twitter-title`} className={`page-meta`} name={`twitter:title`} content={pageTitle} />
       <meta id={`page-twitter-description`} className={`page-meta`} name={`twitter:description`} content={pageDescription} />
       <meta id={`page-twitter-card`} className={`page-meta`} name={`twitter:card`} content={imageUrl ? `summary_large_image` : `summary`} />
-      {noIndex && <meta id={`page-robots`} className={`page-meta`} name={`robots`} content={`noindex, follow`} />}
+      {preventIndexing && <meta id={`page-robots`} className={`page-meta`} name={`robots`} content={`noindex, follow`} />}
       {canonicalUrl && <link id={`page-canonical`} className={`page-canonical`} rel={`canonical`} href={canonicalUrl} />}
       {canonicalUrl && <meta id={`page-og-url`} className={`page-meta`} property={`og:url`} content={canonicalUrl} />}
       {imageUrl && <meta id={`page-og-image`} className={`page-meta`} property={`og:image`} content={imageUrl} />}

@@ -51,4 +51,4 @@ const adminPaths: readonly string[] = Object.values(routes).filter(route => `adm
 export const isAdminPath = (pathname: string) => adminPaths.includes(pathname) || pathname === `/admin` || pathname.startsWith(`/admin/`);
 
 export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.search, routes.watching, routes.auction, routes.community, routes.contact];
-export const footerLinks = [routes.terms, routes.privacy];
+export const footerLinks = [routes.about, routes.contact, routes.blog, routes.terms, routes.privacy];

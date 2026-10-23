@@ -11,4 +11,4 @@ export const contactTopics = [
   { id: `ideas`, label: `Your next idea`, copy: `A feature you would love, a detail we could improve, or something worth building together.` },
 ] as const;
 
-export const contactDescription = `Need a hand with your domains, have an idea, or just want to say hello? We'd love to hear from you.`;
+export const contactDescription = `Questions about your domain portfolio, account, billing, or privacy? Contact the Domains Database team with the form when it is available.`;

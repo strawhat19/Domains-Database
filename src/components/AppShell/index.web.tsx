@@ -223,7 +223,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
           </p>
           <nav id={`footer-navigation`} className={`footer-navigation`} aria-label={`Footer Navigation`}>
             {footerLinks.map(item => {
-              const Icon = { FileText, ShieldCheck }[item.icon];
+              const Icon = { Info, Mail, BookOpen, FileText, ShieldCheck }[item.icon];
               return (
                 <Link key={item.label} href={item.href} asChild>
                   <RouterAnchor
