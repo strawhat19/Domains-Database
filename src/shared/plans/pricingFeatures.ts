@@ -35,7 +35,7 @@ const statusBadges: Record<FeatureStatus, PricingFeatureBadge> = {
 type FeatureDetails = Omit<PricingFeature, `id` | `label`> & { label?: string };
 
 const catalogDetails: Record<string, FeatureDetails> = {
-  'remove ads': { status: `proposed` },
+  'remove ads': { status: `current` },
   'domains market': { status: `proposed` },
   'domain auctions': { status: `proposed` },
   'domains community': { status: `proposed` },

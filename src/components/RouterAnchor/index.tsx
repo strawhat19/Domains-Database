@@ -10,6 +10,7 @@ const RouterAnchor = forwardRef<HTMLAnchorElement, RouterAnchorProps>(
     <a
       ref={ref}
       {...props}
+      data-app-navigation={true}
     />
   ),
 );

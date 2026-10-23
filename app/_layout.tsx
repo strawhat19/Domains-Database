@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { routes } from '../src/shared/routes';
 import { Slot, usePathname } from 'expo-router';
+import AdSense from '../src/components/AdSense';
 import AppShell from '../src/components/AppShell';
 import { useAppFonts } from '../src/shared/useAppFonts';
 import { useAuth } from '../src/shared/authContext/useAuth';
@@ -41,6 +42,7 @@ const RootLayout = () => {
         <StarterAccessProvider>
           <FeatureFlagsProvider>
             <ThemeProvider>
+              <AdSense />
               <AccountContent />
             </ThemeProvider>
           </FeatureFlagsProvider>

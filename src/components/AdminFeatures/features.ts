@@ -6,6 +6,6 @@ export const featureDefinitions = [
   { key: `notifications`, label: `Notifications`, description: `Show public notifications and the notification button` },
   { key: `contact`, label: `Contact`, description: `Show contact links and the public contact form` },
   { key: `pricingTable`, label: `Pricing Table`, description: `Enable plan actions. When disabled, collect signed-in interest and plan votes without requiring an account` },
-  { key: `ads`, label: `Ads`, description: `Configure future ads by role and minimum plan, or disable them for everyone. Ad placements are not connected yet` },
+  { key: `ads`, label: `Ads`, description: `Show Google Auto ads on eligible public web content after account and consent checks. Starter and active Owner accounts remain ad-free` },
   { key: `nameSwitch`, label: `Name Switch`, description: `Display Domain Databases instead of Domains Database across the app and browser title` },
 ] as const satisfies readonly { key: FeatureFlagKey; label: string; description: string }[];
