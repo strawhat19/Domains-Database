@@ -1,18 +1,17 @@
 import { Roles } from '../types/types';
 import type { PlanTier } from './plans/types';
-import { minRole, type User } from './models/users/User';
+import type { User } from './models/users/User';
 
+export interface BillingAccess { plan: `free` | `starter`; subscriptionStatus: string | null; accessUntil: number | null }
+type Account = Pick<User, `role`> & Partial<Pick<User, `id` | `active` | `plan`>>;
 export const getPlanDisplayName = (plan: string) => plan.trim().toLowerCase() === `team` ? `Dom` : plan;
-export const hasUnlimitedPlanAccess = (user?: Pick<User, `role`> | null) => Boolean(user && minRole(user.role, Roles.Administrator));
-export const hasProPlanAccess = (user?: Pick<User, `role` | `plan`> | null) => hasUnlimitedPlanAccess(user) || user?.plan?.trim().toLowerCase() === `pro`;
+export const hasUnlimitedPlanAccess = (user?: Account | null) => user?.active === true && user.role === Roles.Owner;
+export const hasPaidBillingAccess = (billing?: BillingAccess | null, now = Date.now()) => billing?.plan === `starter`
+  && [`active`, `trialing`].includes(billing.subscriptionStatus ?? ``) && typeof billing.accessUntil === `number` && billing.accessUntil > now;
+export const hasStarterPlanAccess = (user?: Account | null, _tiers: readonly PlanTier[] = [], billing?: BillingAccess | null) =>
+  !!user?.id && user.active === true && (hasUnlimitedPlanAccess(user) || hasPaidBillingAccess(billing));
+export const hasProPlanAccess = (user?: Account | null, billing?: BillingAccess | null) => hasStarterPlanAccess(user, [], billing);
+export const freeConnectionProviders = [`godaddy`, `hostinger`] as const;
+export const canUseConnectionProvider = (provider: string, paid: boolean) => paid || freeConnectionProviders.some(value => value === provider);
+export const getDomainLimit = (user?: Account | null, billing?: BillingAccess | null) => hasUnlimitedPlanAccess(user) ? null : hasStarterPlanAccess(user, [], billing) ? 333 : 33;
 
-export const hasStarterPlanAccess = (user?: Pick<User, `id` | `role` | `plan` | `active`> | null, tiers: readonly PlanTier[] = []) => {
-  if (!user?.id || user.active !== true) return false;
-  if (user.role === Roles.Owner) return true;
-  const plan = typeof user?.plan === `string` ? user.plan.trim().toLowerCase() : ``;
-  if (!plan || plan === `free`) return false;
-  const minimum = tiers.find(tier => tier.slug === `starter`);
-  const current = tiers.find(tier => tier.slug === plan);
-  return !!minimum && !!current && (current.displayOrder > minimum.displayOrder
-    || (current.displayOrder === minimum.displayOrder && current.number >= minimum.number));
-};

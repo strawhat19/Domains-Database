@@ -34,6 +34,7 @@
     { "collectionGroup": "auctionInventory", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "users", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "domains", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION_GROUP" }] },
+    { "collectionGroup": "domains", "fieldPath": "name", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "notifications", "fieldPath": "active", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "notifications", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }, { "order": "ASCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "notifications", "fieldPath": "slug", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },

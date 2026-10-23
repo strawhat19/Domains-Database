@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { absoluteSiteUrl } from '../seo';
 import { getFirebaseAuth } from '../firebase/client';
-import { requireStarterAccess } from '../planAccess/service';
+import { requireAuctionPreviewAccess } from '../planAccess/service';
 import type { AuctionType, AuctionRecord, AuctionFeedSnapshot, AuctionInventoryMetrics } from './types';
 import { normalizeAuctionDomain, parseAuctionTimestamp, getInventoryListingHref, MAX_AUCTION_IMPORT_BYTES, MAX_AUCTION_IMPORT_RECORDS } from './import';
 
@@ -170,7 +170,7 @@ export const getFreeAuctionFeed = async (signal?: AbortSignal): Promise<AuctionF
   if (signal?.aborted) abort();
   const timeout = setTimeout(abort, 20_000);
   try {
-    const actor = await requireStarterAccess();
+    const actor = await requireAuctionPreviewAccess();
     const identity = getFirebaseAuth().currentUser;
     if (!identity || identity.uid !== actor.firebase_uid) throw new Error(`Sign In To Unlock Auctions`);
     const token = await identity.getIdToken();

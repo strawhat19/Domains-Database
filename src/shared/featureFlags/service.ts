@@ -2,6 +2,7 @@ import { useLocalStorage } from '../config';
 import type { PlanTier } from '../plans/types';
 import type { Plan } from '../models/plans/Plan';
 import { firebaseEnabled } from '../firebase/config';
+import { getPlanAccess } from '../planAccess/service';
 import { canManageFeatures } from '../admin/permissions';
 import { restoreSession } from '../authentication/service';
 import { preparePlanTiers, subscribePlanTiers } from '../plans/service';
@@ -46,8 +47,9 @@ const getPlanTiers = (): Promise<PlanTier[]> => new Promise((resolve, reject) =>
 });
 export const getFeatureFlags = async (): Promise<FeatureFlags> => {
   const [settings, session] = await Promise.all([getFeatureSettings(), restoreSession()]);
+  const access = session?.user?.active && cloudEnabled ? await getPlanAccess(session.user.id) : null;
   const tiers = featureRequiresPlanTiers(settings) ? await getPlanTiers() : [];
-  return resolveFeatureFlags(settings, session?.user ?? null, tiers);
+  return resolveFeatureFlags(settings, session?.user ? { ...session.user, plan: access?.paid ? `starter` : `free` } : null, tiers);
 };
 export const subscribeFeatureSettings = (onValue: (settings: FeatureSettings) => void, onError: (failure: Error) => void) => {
   if (cloudEnabled) return subscribeCloudFeatureSettings(onValue, onError);

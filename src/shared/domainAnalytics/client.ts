@@ -1,6 +1,9 @@
+import { Platform } from 'react-native';
+import { absoluteSiteUrl } from '../seo';
 import { localDomainAnalytics } from './values';
-import { getImportedDomainAnalytics } from './inventory';
 import type { DomainAnalyticsSnapshot } from './types';
+import { getImportedDomainAnalytics } from './inventory';
+import { getFeatureAuthorization } from '../planAccess/service';
 
 const cancelled = () => new Error(`Domain Analytics Cancelled`);
 const textValue = (value: unknown, maximum = 1200) => typeof value === `string`
@@ -12,6 +15,7 @@ const dateValue = (value: unknown) => {
 
 export const getDomainAnalytics = async (domain: string, signal: AbortSignal): Promise<DomainAnalyticsSnapshot> => {
   if (signal.aborted) throw cancelled();
+  const authorization = await getFeatureAuthorization(true);
   const snapshot = localDomainAnalytics(domain);
   const inventory = getImportedDomainAnalytics(snapshot.domain).catch(() => undefined);
   const controller = new AbortController();
@@ -20,11 +24,11 @@ export const getDomainAnalytics = async (domain: string, signal: AbortSignal): P
   if (signal.aborted) abort();
   const timeout = setTimeout(abort, 25_000);
   try {
-    const response = await fetch(`/api/domain-analytics`, {
+    const response = await fetch(Platform.OS === `web` ? `/api/domain-analytics` : absoluteSiteUrl(`/api/domain-analytics`), {
       method: `POST`,
       credentials: `omit`,
       signal: controller.signal,
-      headers: { 'Content-Type': `application/json` },
+      headers: { ...authorization, 'Content-Type': `application/json` },
       body: JSON.stringify({ domain: snapshot.domain }),
     });
     const result = await response.json().catch(() => null);

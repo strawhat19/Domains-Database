@@ -1,10 +1,11 @@
 import { utf8ToBytes } from '@noble/hashes/utils.js';
 import { getFirebaseDb, getFirebaseAuth } from './client';
+import { commitCloudPortfolio } from '../planAccess/portfolio';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
 import { projectPublicDomain, PUBLIC_DOMAIN_WRITE_LIMIT } from '../publicDirectory/domains';
 import { doc, getDocFromServer, runTransaction, type Transaction, type DocumentData } from 'firebase/firestore';
-import { projectPublicPortfolio, PUBLIC_PORTFOLIO_DOCUMENT, PUBLIC_PORTFOLIO_PREFERENCES_KEY } from '../publicDirectory/portfolio';
 import { getRecordTimestamps, packRecordTimestamps, withoutRecordTimestamps, type RecordTimestamps } from './recordTimestamps';
+import { projectPublicPortfolio, PUBLIC_PORTFOLIO_DOCUMENT, PUBLIC_PORTFOLIO_PREFERENCES_KEY } from '../publicDirectory/portfolio';
 import { splitSnapshots, readCloudSnapshot, clearCloudSnapshots, publishCloudSnapshot, subscribeCloudSnapshot, storageWriteBaselines, storageSubscribedBaselines, type SavedValue, type StorageScope, type SplitSnapshot } from './snapshots';
 
 interface RecordChange { id: string; record?: DocumentData }
@@ -191,7 +192,9 @@ const writeSplitSnapshot = async (key: string, scope: StorageScope, split: Split
       }
       for (const [id, record] of changedRecords) if (!records.has(id)) records.set(id, record);
       const storedValue = JSON.stringify({ ...snapshot, [split.field]: [...records.values()] });
-      const revision = await runTransaction(getFirebaseDb(), transaction => {
+      const revision = split.type === `Domain` ? await commitCloudPortfolio({
+        snapshot, changes: chunk, ids: [...records.keys()], expectedRevision: baseline.revision, recordTimestamps: packRecordTimestamps(timestamps),
+      }, firebaseUid) : await runTransaction(getFirebaseDb(), transaction => {
         assertActor(firebaseUid);
         return writeSplitChunk(transaction, scope, split, snapshot, records, timestamps, chunk, baseline, firebaseUid);
       });

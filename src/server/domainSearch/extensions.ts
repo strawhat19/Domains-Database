@@ -2,10 +2,10 @@ import { XMLParser } from 'fast-xml-parser';
 import { listVercelExtensions } from './vercel';
 import { SyntaxValidator } from 'fast-xml-validator';
 import { readLimitedText } from '../registrars/request';
-import { readSearchCredentials, type SearchCredentials } from './environment';
 import type { DomainSearchProvider } from '../../shared/domainSearch/types';
-import { providerLabels, upstreamError, RegistrarRelayError } from '../registrars/errors';
+import { readSearchCredentials, type SearchCredentials } from './environment';
 import { checkRequest, responseHeaders, readRequestRecord } from '../registrars/http';
+import { providerLabels, upstreamError, RegistrarRelayError } from '../registrars/errors';
 
 interface ExtensionCatalog {
   note?: string;
@@ -179,6 +179,7 @@ export const handleDomainExtensions = async (request: Request): Promise<Response
     checkRequest(request);
     const input = await readRequestRecord(request);
     if (Object.keys(input).some(key => ![`values`, `provider`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
+    if (!(input.provider === `vercel` && !Object.prototype.hasOwnProperty.call(input, `values`))) await requireRegistrarAccess(request, String(input.provider), !Object.prototype.hasOwnProperty.call(input, `values`));
     const result = input.provider === `vercel` && !Object.prototype.hasOwnProperty.call(input, `values`)
       ? catalog(await listVercelExtensions(request.signal), `vercel`, `Vercel Supported Extensions — Availability And Checkout Pricing Are Checked Separately`)
       : await listRegistrarExtensions(readSearchCredentials(input), request.signal);
@@ -189,3 +190,4 @@ export const handleDomainExtensions = async (request: Request): Promise<Response
     return Response.json({ error: error.message }, { status: error.status, headers: responseHeaders });
   }
 };
+import { requireRegistrarAccess } from '../featureAccess/auth';

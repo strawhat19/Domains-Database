@@ -1,21 +1,55 @@
-# Account And Subscription Enrollment
+# Account And Stripe Subscription Flow
 
-Free and Starter cards offer account creation and a separate Sign In link for guests, even when pricing feedback/upvotes are displayed. Free returns to `/domains` after authentication. Starter preserves `plan=starter` through email signup/signin, Google authentication, and switching between the two account screens, then continues to `/subscription?plan=starter`. These selections are allowlisted internal navigation values; they never enter signup credentials or assign account access.
+Free and Starter cards provide account creation and a separate Sign In link for guests. Free returns to `/domains` after authentication. Starter preserves `plan=starter` through email signup/signin, Google authentication on the website, and switching account screens, then continues to `/subscription?plan=starter`. These allowlisted navigation values never assign a plan or enter signup credentials.
 
-The internal subscription page reads the active catalog through `plansAPI`. It shows the current plan name, description, price, interval, and saved Included/Planned features. Signed-out visitors can create an account or sign in; authenticated visitors review the offer before explicitly choosing Save Subscription Request. Existing trusted Starter-or-higher accounts and Owners receive a portfolio action instead of a redundant request. Loading, unavailable plans, account-access errors, failed saves, and retry remain distinct states.
+## Plans And Access
 
-`subscriptionAPI.getRequest(userId)` and `saveRequest(userId, plan)` use the existing private account storage adapter. The key is `domains-database:subscription-request:v1:user:{appUserId}`. Connected storage uses the existing `users/{appUserId}/data`, `storageKeys`, and `snapshots/storage` mechanism, including generated Data IDs and atomic numbering; no public User fields or new collections are required. Existing explicit local mode labels its request as saved on this device. Configured cloud failures do not fall back to local storage.
+Free includes up to 33 domains and GoDaddy/Hostinger connections. Starter is USD $1.33 per month for up to 333 domains, its additional supported registrar connections, annual/monthly costs, website research, hosted-domain discovery with registrar lookup, registrar price comparison, and Community. Provider credentials, supported provider capabilities, and applicable feature settings still apply. Domain Auctions remain Planned for subscribers; active Owners can use the existing preview. Other future catalog tiers remain enquiries or planned offers and cannot be purchased through this integration.
 
-The saved version-one request contains the account and plan references, catalog price/currency/interval, request timestamp, and the fixed `awaiting-payment-setup` state. The service checks the active nonanonymous account before and after storage operations, rereads the active Starter offer from the server in connected mode, rejects changed pricing, and confirms the saved record by rereading it. Repeating the same request preserves its original timestamp. The UI restores saved requests after refresh, and a changed catalog quote must be reviewed and saved again.
+Active Owner accounts bypass plan limits and feature eligibility without a paid subscription. Every other account uses the protected `billingUsers/{appUserId}` mirror: Starter requires an eligible Stripe subscription status and an unexpired server-confirmed access date. Client-selected plans, legacy subscription-request snapshots, `users.plan`, catalog publication, and a successful browser return cannot grant paid access. The server updates `users.plan` as display metadata; operational gates use the protected mirror.
 
-This completes account enrollment and a persisted subscription request. No payment method is collected, no Stripe object is created, and no charge or paid subscription is claimed. The request is client-writable intent and is never trusted as evidence of payment. `User.plan`, role, entitlements, and provider-access rules remain unchanged. The user can continue using the Free portfolio while payment setup is pending.
+Domain additions/imports are checked against the current 33/333 limit by the shared service and an authenticated server transaction. Feature services, applicable HTTP handlers, and Firestore rules enforce paid/provider eligibility independently of the visible controls. Existing records are not deleted automatically when access returns to Free; adding more records remains subject to the lower limit. Owner bypass does not remove private record audiences or ownership boundaries.
 
-## Future Stripe Connection
+## Checkout And Billing Management
 
-Connect a server-owned Billing/Checkout boundary after Stripe is configured. Authenticate each request, reread the authoritative catalog, and map stable app plan IDs to Stripe Products and recurring Prices using named external-ID fields or a private mapping. Each paid tier has its own Product; its currency and billing variants use Prices. Verify the current offer again before creating a Checkout Session and use retry-safe request identities. Keep provider credentials and webhook signing secrets server-only.
+The subscription page reads the published Starter offer through `plansAPI` and displays its current name, description, amount, interval, and Included/Planned features. After signing in, a user reviews the offer and explicitly chooses **Subscribe For $1.33/Month**. The browser opens hosted Stripe Checkout; native clients use the canonical `https://domaindatabases.com` API and open Checkout in the browser. Firebase email/password works on both targets; Google authentication remains web-only until native OAuth is configured.
 
-Subscription lifecycle webhooks are required for activation, renewals, failed payments, and cancellation. Verify signatures, handle duplicate/out-of-order events, bind provider records to the authenticated account, and update trusted entitlements only after confirmed provider state. A success-page URL, saved request, browser return parameter, or catalog publication cannot activate access.
+Checkout validates the selected app-owned plan ID, USD 133-cent monthly amount, active catalog record, and configured live Stripe Price before creating a subscription session. The account and Stripe customer are bound server-side. A per-account lease, persisted attempts, Stripe idempotency keys, and recovery of previous sessions prevent retries from intentionally starting a second concurrent subscription. An account with an existing continuing subscription is directed to Manage Billing instead.
 
-Tax configuration must be decided alongside Billing before accepting payments. Confirm applicable registrations and supported regions before enabling Stripe Tax; do not assume that enabling automatic tax alone establishes registrations or tax collection.
+Existing subscribers can choose **Manage Billing** from `/subscription?plan=starter`, reached through the Starter card's **Manage Subscription** action. The configured Stripe Portal supports payment management and cancellation at the end of the billing period. The page shows current subscription status and any scheduled cancellation date. Starter access continues through its confirmed paid period, then Free limits apply. Payment failures, paused/ended subscriptions, and expired access do not keep paid features unlocked.
 
-Source review covered shared navigation, authentication continuation, account-scoped request persistence, and web/native rendering. No tests, builds, browser/device checks, live signup, cloud request write, Stripe operation, or deployment was performed for this change.
+Billing management remains reachable when the public Starter catalog record is unavailable. Active Owners see Owner Access and do not need to buy Starter; an Owner with an existing Stripe customer can still open Manage Billing.
+
+## HTTP Contracts And Private Records
+
+`src/api/subscriptions.ts` exposes the shared `subscriptionAPI`. Account operations use a Firebase bearer token, validate the current Firebase UID/app account before and after requests, and reject stale-account results. The server independently verifies the token, linked app identity, active user, and request origin. Local demo mode cannot create real subscriptions. Returned navigation URLs are restricted to HTTPS Stripe Checkout or Billing Portal hosts.
+
+| Endpoint | Request | Result |
+| --- | --- | --- |
+| `GET /api/billing/status` | Authenticated account | Confirmed billing status |
+| `POST /api/billing/checkout` | `planId`, `priceCents`, `currency`, `billingInterval` | Hosted Checkout `url` |
+| `POST /api/billing/portal` | Empty JSON object | Hosted Portal `url` |
+| `POST /api/billing/reconcile` | `sessionId` | Confirmed billing status after account-bound session validation |
+| `POST /api/billing/webhook` | Raw signed Stripe event | Acknowledgement after supported event processing |
+
+Billing status contains `plan` (`free` or `starter`), `owner`, `checkoutAvailable`, `portalAvailable`, and a nullable `subscription` with `status`, `cancelAtPeriodEnd`, and `currentPeriodEnd`. Errors return `error` and `code` with an appropriate non-success HTTP status.
+
+Private `billingAccounts` documents use app-owned IDs and atomic numbering. Named Stripe reference fields identify customers, subscriptions, Checkout sessions, and events; private mappings and event-processing records support account binding and retries. `billingUsers` exposes only the current account's protected access projection to the client. Client writes to billing records are denied. Billing credentials and webhook signing secrets are server-only.
+
+Stripe hosts the payment form and handles entered payment information. The app supplies account references, name, email, and the selected offer, and stores private billing references/status/access dates. Card numbers and card security codes are not stored in the app's profile or portfolio records and do not enter exports.
+
+## Confirmation And Lifecycle
+
+Checkout returns to `/subscription?plan=starter&checkout=success&session_id=...`; cancellation returns with `checkout=cancelled`. Portal returns with `billing=updated`. These parameters select feedback and reconciliation only. The server verifies session ownership and rereads live subscription state; the return URL never writes access directly.
+
+Supported lifecycle webhooks cover subscription changes, Checkout completion/expiration, and invoice payment outcomes. The raw request is signature-verified and must be live mode. Event deduplication and retryable leases handle repeated deliveries. Under the account lease, synchronization reads current Stripe state rather than trusting event order. Access follows the configured single Starter price and a matching paid invoice line with a valid current period, or a genuine server-confirmed Stripe trial period; Checkout does not offer a trial.
+
+The UI distinguishes cancelled Checkout, unavailable configuration, failed requests, incomplete/payment-attention states, scheduled cancellation, ended subscriptions, and confirmed active access. After a successful Checkout return, bounded status polling allows confirmation to finish; otherwise the user can refresh billing status manually. Protected feature access waits for the confirmed Firestore mirror. Account switches abort or discard old requests and redirects, and confirmed mirror eligibility changes refresh the displayed billing state.
+
+## Data Reset And Release Evidence
+
+Deleting app data, deleting data plus registrar connections, signing out, clearing browser storage, or removing the app does not cancel a paid subscription. Both cloud data-reset confirmation dialogs direct the user to the Starter subscription page and **Manage Billing** before clearing data. Private billing records remain separate from portfolio cleanup. Cloud account deletion/deactivation remain unavailable.
+
+The server requires its live Stripe key, approved Starter Price, webhook signing secret, Firebase service account, and canonical site URL. A dedicated Portal configuration can be selected. Production environment configuration, the published catalog, webhook delivery, deployed rules, deployment, and a complete purchase/cancellation flow are separate evidence from these source changes; missing configuration is shown as unavailable rather than a saved or successful purchase.
+
+The approved focused billing and Firestore permission tests and production export passed. TypeScript reports 46 diagnostics identical to the committed-source baseline, with none added by this change. See [the billing release record](deployments/live-billing-2026-10-23.md) for commands, coverage, and limitations. Deployment, real webhook delivery, and a complete purchase/cancellation flow still require separate verification.

@@ -1,5 +1,6 @@
 import { Linking } from 'react-native';
 import { useId, useEffect, useState } from 'react';
+import { useStarterAccess } from '../../shared/plans/useStarterAccess';
 import { getDomainAnalytics } from '../../shared/domainAnalytics/client';
 import type { DomainAnalyticsSnapshot } from '../../shared/domainAnalytics/types';
 
@@ -16,6 +17,7 @@ export const formatAnalyticsDate = (value?: string) => {
 };
 
 export const useDomainAnalytics = (domain: string, suffix?: string) => {
+  const access = useStarterAccess();
   const instance = useId().replace(/[^a-z0-9_-]/gi, `-`);
   const [error, setError] = useState(``);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,7 @@ export const useDomainAnalytics = (domain: string, suffix?: string) => {
     setLinkError(``);
     setLoading(true);
     setSnapshot(null);
+    if (!access.allowed) { setLoading(access.loading); setError(access.loading ? `` : access.error || `Choose Starter To Unlock Domain Research`); return () => controller.abort(); }
     void getDomainAnalytics(domain, controller.signal).then(result => {
       if (!controller.signal.aborted) setSnapshot(result);
     }).catch(caught => {
@@ -37,7 +40,7 @@ export const useDomainAnalytics = (domain: string, suffix?: string) => {
       if (!controller.signal.aborted) setLoading(false);
     });
     return () => controller.abort();
-  }, [domain, request]);
+  }, [domain, request, access.allowed, access.loading, access.error]);
 
   const openLink = async (url: string) => {
     setLinkError(``);

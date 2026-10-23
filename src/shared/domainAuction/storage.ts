@@ -1,9 +1,9 @@
-import type { AuctionRecord, AuctionInventoryMetrics } from './types';
-import { requireStarterAccess } from '../planAccess/service';
 import { AUCTION_STORAGE_KEY } from '../accountData/keys';
 import { useLocalStorage, persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
+import { requireAuctionPreviewAccess } from '../planAccess/service';
+import type { AuctionRecord, AuctionInventoryMetrics } from './types';
 import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import { parseAuctionInventory, normalizeAuctionDomain, parseAuctionTimestamp, getInventoryListingHref, MAX_AUCTION_IMPORT_RECORDS } from './import';
 
@@ -19,7 +19,7 @@ interface AuctionSnapshot {
 
 const requireStorage = async () => {
   if (!persistenceEnabled) throw new Error(`Connect A Backend To Save Auction Inventory`);
-  const userId = (await requireStarterAccess()).id;
+  const userId = (await requireAuctionPreviewAccess()).id;
   return { userId, storageKey: userId && !useLocalStorage ? accountStorageKey(AUCTION_STORAGE_KEY, userId) : AUCTION_STORAGE_KEY };
 };
 const saveSnapshot = async (snapshot: AuctionSnapshot, scope: { storageKey: string; userId: string | null }) => {

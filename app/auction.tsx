@@ -4,7 +4,7 @@ import StarterPlanGate from '../src/components/StarterPlanGate';
 
 const AuctionPage = () => (
   <>
-    <PageMeta title={`Domain Auction`} description={`Unlock GoDaddy auction listings, inventory filters, and domain research with Starter or a higher plan before visiting the provider to bid.`} />
+    <PageMeta noIndex title={`Domain Auction Preview`} description={`Domain auctions are planned. The working preview is available to the Owner.`} />
     <StarterPlanGate feature={`auction`}>
       <DomainAuction />
     </StarterPlanGate>

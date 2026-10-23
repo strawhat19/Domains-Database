@@ -1,6 +1,7 @@
 import { Linking } from 'react-native';
-import { useId, useRef, useState, useEffect } from 'react';
 import { domainMarketAPI } from '../../api/domainMarket';
+import { useId, useRef, useState, useEffect } from 'react';
+import { useStarterAccess } from '../../shared/plans/useStarterAccess';
 import type { DomainRatingResult, SearchInterestInput, SearchInterestResult } from '../../shared/domainMarket/types';
 import { MARKET_RANGE, MARKET_COUNTRIES, defaultMarketKeyword, normalizeMarketKeyword } from '../../shared/domainMarket/values';
 
@@ -47,6 +48,7 @@ export const marketNotice = (result: DomainRatingResult | SearchInterestResult |
 };
 
 export const useDomainMarketInsights = (domain: string, suffix?: string) => {
+  const access = useStarterAccess();
   const instance = useId().replace(/[^a-z0-9_-]/gi, `-`);
   const domainKey = domain.trim().toLowerCase();
   const ratingRequest = useRef<AbortController | null>(null);
@@ -104,8 +106,8 @@ export const useDomainMarketInsights = (domain: string, suffix?: string) => {
     }
   };
 
-  const rating = ratingState.key === domainKey ? ratingState : lookup<DomainRatingResult>(domainKey, null);
-  const search = searchState.key === searchKey ? searchState : lookup<SearchInterestResult>(searchKey, null);
+  const rating = access.allowed && ratingState.key === domainKey ? ratingState : { ...lookup<DomainRatingResult>(domainKey, null), error: access.loading ? `` : access.error || `Choose Starter To Unlock Market Research` };
+  const search = access.allowed && searchState.key === searchKey ? searchState : { ...lookup<SearchInterestResult>(searchKey, null), error: access.loading ? `` : access.error || `Choose Starter To Unlock Market Research` };
   const points = search.result?.status === `ready` ? [...search.result.points].sort((a, b) => a.timestamp - b.timestamp) : [];
   const hasChart = points.length > 1 && points.some(point => point.value > 0);
   const first = points[0];

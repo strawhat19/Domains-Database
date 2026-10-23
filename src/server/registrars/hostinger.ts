@@ -24,7 +24,7 @@ const readHostingerPortfolio = (text: string): unknown[] => {
   throw new RegistrarRelayError(502, `Hostinger Returned ${shape} Instead Of A Domain Array`);
 };
 
-export const getHostingerDomains = async (authorization: string, context: RegistrarRequestContext, externalDomains?: string[]): Promise<RegistrarSyncResult> => {
+export const getHostingerDomains = async (authorization: string, context: RegistrarRequestContext, externalDomains?: string[], includeDiscovery = false): Promise<RegistrarSyncResult> => {
   const url = new URL(`https://developers.hostinger.com/api/domains/v1/portfolio`);
   const text = await requestRegistrar(url, {
     Accept: `application/json`,
@@ -80,6 +80,7 @@ export const getHostingerDomains = async (authorization: string, context: Regist
     warnings.push(`${repeated} Repeated Hostinger Record(s) Combined For ${listedNames}${remaining} — Active Records Preferred`);
   }
   if (pending) warnings.push(`Hostinger Includes Domain Records Pending Setup Or Transfer`);
+  if (!includeDiscovery) return { domains, warnings };
   try {
     const discovery = await discoverHostingerDomains(authorization, seen, context, externalDomains);
     const remaining = MAX_DOMAINS - domains.length;

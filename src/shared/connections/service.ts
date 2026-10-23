@@ -2,11 +2,12 @@ import { authAPI } from '../../api/auth';
 import { firebaseEnabled } from '../firebase/config';
 import { genID, isAppCollectionID } from '../common/ids';
 import { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
+import { requireConnectionAccess } from '../planAccess/service';
 import { useLocalStorage, persistenceEnabled } from '../config';
 import { accountStorageKey } from '../authentication/userScope';
 import { requestEnvironmentConnectionsImport } from './environment';
-import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import { connectionValues, normalizeConnections, normalizeConnectionAccounts } from './values';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../common/storage';
 import { EMPTY_CONNECTIONS, connectionFields, type ConnectionValues, type ConnectionAccount, type ConnectionSnapshot, type ConnectionProvider, type EnvironmentImportResult } from './types';
 
 export { CONNECTIONS_STORAGE_KEY } from '../accountData/keys';
@@ -80,6 +81,7 @@ export const importEnvironmentConnections = (providers?: readonly ConnectionProv
   const session = await authAPI.restoreSession();
   const user = session?.user;
   if (!user?.id || !user.active || !user.firebase_uid || (expectedUserId && user.id !== expectedUserId)) throw new Error(`Sign In To Import Connections`);
+  if (user.role !== `Owner`) throw new Error(`Owner Access Is Required To Import Server Connections`);
   const result = await requestEnvironmentConnectionsImport(user.id, user.firebase_uid, providers, signal);
   await sessionUser(user.id);
   return result;
@@ -100,6 +102,10 @@ export const saveConnections = (input: ConnectionValues | readonly ConnectionAcc
     const label = connectionFields.find(field => field.id === account.provider)?.label ?? account.provider;
     return { ...account, number, id: genID(`Connection`, number, label).id };
   });
+  for (const account of accounts) {
+    const original = previous.accounts.find(saved => saved.id === account.id);
+    if (!original || original.values !== account.values || original.provider !== account.provider) await requireConnectionAccess(account.provider, userId);
+  }
   await sessionUser(userId);
   if (nextNumber === previous.nextNumber && accounts.length === previous.accounts.length
     && accounts.every((account, index) => {

@@ -7,7 +7,7 @@ export interface ConnectionTab {
   available: boolean;
   id: ConnectionTabProvider;
 }
-export const proConnectionProviders: readonly ConnectionProvider[] = [`porkbun`, `namesilo`];
+export const proConnectionProviders: readonly ConnectionProvider[] = [`vercel`, `porkbun`, `namesilo`, `namecheap`, `squarespace`];
 const availableConnectionTabs: readonly ConnectionTab[] = connectionFields.map(field => ({
   id: field.id, available: true, label: field.label, pro: proConnectionProviders.includes(field.id),
 }));

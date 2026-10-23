@@ -1,18 +1,18 @@
 import { getVercelDomains } from './vercel';
 import { getGoDaddyDomains } from './godaddy';
 import { getPorkbunDomains } from './porkbun';
-import { getNameSiloDomains } from './namesilo';
 import { RegistrarRelayError } from './errors';
+import { getNameSiloDomains } from './namesilo';
 import { getHostingerDomains } from './hostinger';
 import { getNamecheapDomains } from './namecheap';
 import { getSquarespaceDomains } from './squarespace';
-import type { RegistrarCredentials } from './credentials';
 import type { RegistrarRequestContext } from './request';
+import type { RegistrarCredentials } from './credentials';
 import type { RegistrarSyncResult } from '../../shared/registrarSync/types';
 
 const SYNC_TIMEOUT = 180_000;
 
-export const syncRegistrar = async (credentials: RegistrarCredentials, signal: AbortSignal): Promise<RegistrarSyncResult> => {
+export const syncRegistrar = async (credentials: RegistrarCredentials, signal: AbortSignal, includeDiscovery = false): Promise<RegistrarSyncResult> => {
   const controller = new AbortController();
   const abort = () => controller.abort();
   signal.addEventListener(`abort`, abort, { once: true });
@@ -27,7 +27,7 @@ export const syncRegistrar = async (credentials: RegistrarCredentials, signal: A
     if (controller.signal.aborted) throw new RegistrarRelayError(408, `Registrar Sync Was Cancelled`);
     if (credentials.provider === `vercel`) return await getVercelDomains(credentials, context);
     if (credentials.provider === `godaddy`) return await getGoDaddyDomains(credentials.authorization, context, credentials.customerId, credentials.lookupAuthorization, credentials.shopperId);
-    if (credentials.provider === `hostinger`) return await getHostingerDomains(credentials.authorization, context, credentials.externalDomains);
+    if (credentials.provider === `hostinger`) return await getHostingerDomains(credentials.authorization, context, credentials.externalDomains, includeDiscovery);
     if (credentials.provider === `porkbun`) return await getPorkbunDomains(credentials, context);
     if (credentials.provider === `namesilo`) return await getNameSiloDomains(credentials, context);
     if (credentials.provider === `squarespace`) return await getSquarespaceDomains(credentials, context);

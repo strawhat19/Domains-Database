@@ -2,13 +2,15 @@ import { api } from '../../api';
 import { useLocalStorage } from '../config';
 import { formatSyncNotice } from './messages';
 import { getRegistrarDomains } from './client';
-import { firebaseEnabled } from '../firebase/config';
 import { useAuth } from '../authContext/useAuth';
+import { firebaseEnabled } from '../firebase/config';
+import { getPlanAccess } from '../planAccess/service';
 import { connectionsAPI } from '../../api/connections';
+import { canUseConnectionProvider } from '../accountPlans';
 import { supportsRegistrarSync } from '../connections/inputs';
+import { accountStorageKey } from '../authentication/userScope';
 import { CONNECTIONS_STORAGE_KEY } from '../connections/service';
 import { subscribeAccountDataReset } from '../accountData/state';
-import { accountStorageKey } from '../authentication/userScope';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { connectionFields, type ConnectionAccount, type ConnectionProvider, type ConnectionSnapshot } from '../connections/types';
 import type { AccountSyncStatuses, ConnectedSyncRegistrar, ConnectionSyncStatus, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
@@ -190,13 +192,15 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       ]);
       if (!current()) return empty;
       if (snapshot.userId !== userId) throw new Error(`Sign In To Sync Your Domains`);
+      const access = await getPlanAccess(userId);
+      if (!current()) return empty;
       applyPolicy(policy, snapshot, false, connectionRun);
       if (automatic && policy.automaticSyncPaused) {
         setConnectionStatuses(emptyStatuses());
         setAccountStatuses({});
         return empty;
       }
-      const syncAccounts = snapshot.accounts.filter(supportsRegistrarSync);
+      const syncAccounts = snapshot.accounts.filter(account => supportsRegistrarSync(account) && canUseConnectionProvider(account.provider, access.paid));
       const savedOnlyAccounts = snapshot.accounts.filter(account => !supportsRegistrarSync(account));
       const accountNext = snapshotAccountStatuses(snapshot, policy.accountStatuses);
       if (automatic && isSyncCacheFresh(policy, snapshot.updated)
@@ -208,7 +212,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
         for (const account of syncAccounts.filter(value => value.provider === `hostinger`)) {
           const status = accountNext[account.id];
           if (!status) continue;
-          const discovered = status.discoveredDomains ?? [];
+          const discovered = access.paid ? status.discoveredDomains ?? [] : [];
           const included = discovered.filter(domain => domain.meta?.externalRegistration === true
             && domain.meta?.hostingProvider === `Hostinger` && domain.meta?.source === `Hostinger Hosting API`);
           if (!included.length) continue;

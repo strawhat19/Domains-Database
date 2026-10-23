@@ -1,7 +1,8 @@
 import { fetchDomainAnalytics } from './sync';
+import { responseHeaders } from '../registrars/http';
 import { readLimitedText } from '../registrars/request';
 import { RegistrarRelayError } from '../registrars/errors';
-import { responseHeaders } from '../registrars/http';
+import { requirePaidFeatureAccess } from '../featureAccess/auth';
 
 let activeRequests = 0;
 
@@ -13,6 +14,7 @@ export const handleDomainAnalytics = async (request: Request): Promise<Response>
   if (request.signal.aborted) abort();
   const timeout = setTimeout(abort, 25_000);
   try {
+    await requirePaidFeatureAccess(request);
     const site = request.headers.get(`sec-fetch-site`);
     const origin = request.headers.get(`origin`);
     if (site && ![`same-origin`, `none`].includes(site) || origin && origin !== new URL(request.url).origin) {

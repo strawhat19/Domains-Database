@@ -1,9 +1,13 @@
+import { Platform } from 'react-native';
 import { authAPI } from '../../api/auth';
+import { absoluteSiteUrl } from '../seo';
 import { normalizeDomainName } from '../domainUtils';
 import { connectionsAPI } from '../../api/connections';
 import { getServerSearchProviders } from './availability';
+import { canUseConnectionProvider } from '../accountPlans';
 import type { ConnectionSnapshot } from '../connections/types';
 import { domainSearchFields, registrarPurchaseUrl } from './types';
+import { getPlanAccess, getFeatureAuthorization } from '../planAccess/service';
 import { popularExtensions, sortDomainExtensions, normalizeDomainSearchQuery } from './query';
 import type { DomainSearchResult, DomainSearchResults, DomainSearchVariants, DomainSearchProvider } from './types';
 
@@ -32,6 +36,7 @@ const getSearchConnections = async (signal: AbortSignal, expectedUserId?: string
   if (signal.aborted) throw cancelled();
   const session = expectedUserId === null ? null : await authAPI.restoreSession();
   const userId = session?.user.id ?? null;
+  const access = userId ? await getPlanAccess(userId) : null;
   if (signal.aborted || (expectedUserId !== undefined && expectedUserId !== userId)) throw cancelled();
   const [serverResult, privateResult] = await Promise.allSettled([
     getServerSearchProviders(signal),
@@ -42,7 +47,8 @@ const getSearchConnections = async (signal: AbortSignal, expectedUserId?: string
   const providers: DomainSearchProvider[] = serverResult.status === `fulfilled` ? serverResult.value : [];
   const privateSnapshot = privateResult.status === `fulfilled` ? privateResult.value : null;
   const sources = domainSearchFields.flatMap<SearchConnections['sources'][number]>(field => {
-    const values = privateSnapshot?.values[field.id]?.trim();
+    if (field.id !== `vercel` && !canUseConnectionProvider(field.id, access?.paid === true)) return [];
+    const values = canUseConnectionProvider(field.id, access?.paid === true) ? privateSnapshot?.values[field.id]?.trim() : undefined;
     return values ? [{ field, values }] : providers.includes(field.id) ? [{ field }] : [];
   });
   if (!sources.length) {
@@ -50,6 +56,7 @@ const getSearchConnections = async (signal: AbortSignal, expectedUserId?: string
     if (privateResult.status === `rejected`) throw privateResult.reason;
     throw new Error(userId ? `Connect A Registrar To Search Domains` : `Domain Search Is Not Configured`);
   }
+  if (!access?.paid) sources.splice(1);
   const snapshot = sources.some(source => source.values !== undefined) ? privateSnapshot : null;
   const connectionsUpdated = JSON.stringify({ providers, privateUpdated: snapshot?.updated ?? null });
   if (expectedUpdated !== undefined && expectedUpdated !== connectionsUpdated) throw new Error(`Connections Changed — Search Again`);
@@ -65,11 +72,12 @@ const requestRegistrarSearch = async (path: string, body: object, signal: AbortS
   if (signal.aborted) abort();
   const timeout = setTimeout(abort, 75_000);
   try {
-    const response = await fetch(path, {
+    const authorization = await getFeatureAuthorization();
+    const response = await fetch(Platform.OS === `web` ? path : absoluteSiteUrl(path), {
       method: `POST`,
       credentials: `omit`,
       signal: controller.signal,
-      headers: { 'Content-Type': `application/json` },
+      headers: { ...authorization, 'Content-Type': `application/json` },
       body: JSON.stringify(body),
     });
     const result: unknown = await response.json().catch(() => null);

@@ -1,7 +1,8 @@
 import { fetchDomainMarket } from './providers';
-import { readMarketText, DomainMarketError } from './request';
-import { normalizeMarketDomain, normalizeMarketCountry, normalizeMarketKeyword } from '../../shared/domainMarket/values';
 import type { DomainMarketInput } from './providers';
+import { readMarketText, DomainMarketError } from './request';
+import { FeatureAccessError, requirePaidFeatureAccess } from '../featureAccess/auth';
+import { normalizeMarketDomain, normalizeMarketCountry, normalizeMarketKeyword } from '../../shared/domainMarket/values';
 
 const headers = {
   Pragma: `no-cache`,
@@ -33,6 +34,7 @@ export const handleDomainMarket = async (request: Request): Promise<Response> =>
   if (request.signal.aborted) abort();
   const timeout = setTimeout(abort, 25_000);
   try {
+    await requirePaidFeatureAccess(request);
     const site = request.headers.get(`sec-fetch-site`);
     const origin = request.headers.get(`origin`);
     if (site && ![`same-origin`, `none`].includes(site) || origin && origin !== new URL(request.url).origin) throw new DomainMarketError(403, `Cross-Origin Market Requests Are Not Allowed`);
@@ -53,7 +55,7 @@ export const handleDomainMarket = async (request: Request): Promise<Response> =>
     if (controller.signal.aborted) throw new DomainMarketError(504, `Market Request Timed Out Or Was Cancelled`);
     return Response.json(result, { headers });
   } catch (failure) {
-    const error = failure instanceof DomainMarketError ? failure : new DomainMarketError(502, `Free Market Data Could Not Be Completed`);
+    const error = failure instanceof DomainMarketError || failure instanceof FeatureAccessError ? failure : new DomainMarketError(502, `Free Market Data Could Not Be Completed`);
     return Response.json({ error: error.message }, { headers, status: error.status });
   } finally {
     if (admitted) activeRequests -= 1;

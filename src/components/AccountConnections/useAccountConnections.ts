@@ -1,20 +1,20 @@
 import { useRouter } from 'expo-router';
 import { routes } from '../../shared/routes';
-import type { ToastStackNotice } from '../ToastStack/types';
-import { useLocalStorage } from '../../shared/config';
 import { useRef, useEffect, useState } from 'react';
+import { useLocalStorage } from '../../shared/config';
 import { connectionsAPI } from '../../api/connections';
 import { useAuth } from '../../shared/authContext/useAuth';
+import type { ToastStackNotice } from '../ToastStack/types';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { formatSyncNotice } from '../../shared/registrarSync/messages';
+import { useStarterAccess } from '../../shared/plans/useStarterAccess';
 import { resumeAutomaticSync } from '../../shared/registrarSync/policy';
-import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
 import { createConnectionDraft } from '../../shared/connections/values';
-import { hasProPlanAccess, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
+import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
 import { MAX_CONNECTION_ENV_SIZE, parseConnectionEnvironment } from '../../shared/connections/file';
 import { connectionTabs, proConnectionProviders, type ConnectionTabProvider } from '../../shared/connections/catalog';
-import { TOAST_ENTRY_DELAY, TOAST_EXIT_DELAY, TOAST_ENTER_DURATION, TOAST_VISIBLE_DURATION, TOAST_REMINDER_DURATION } from '../ToastStack/motion';
 import { connectionFields, type AccountConnectionsProps, type ConnectionAccount, type ConnectionProvider } from '../../shared/connections/types';
+import { TOAST_ENTRY_DELAY, TOAST_EXIT_DELAY, TOAST_ENTER_DURATION, TOAST_VISIBLE_DURATION, TOAST_REMINDER_DURATION } from '../ToastStack/motion';
 import { connectionInputFields, connectionInputValue, supportsRegistrarSync, withConnectionInputValue, type ConnectionInputKey } from '../../shared/connections/inputs';
 
 const withDrafts = (accounts: readonly ConnectionAccount[]) => [
@@ -55,8 +55,9 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   const [hasSyncedDomains, setHasSyncedDomains] = useState(false);
   const [accounts, setAccounts] = useState<ConnectionAccount[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<ConnectionProvider>(connectionFields[0].id);
-  const hasProAccess = hasProPlanAccess(user);
-  const unlimitedPlanAccess = hasUnlimitedPlanAccess(user);
+  const access = useStarterAccess();
+  const hasProAccess = access.allowed;
+  const unlimitedPlanAccess = access.owner;
   const canUseProvider = (provider: ConnectionProvider) => hasProAccess || !proConnectionProviders.includes(provider);
   const fields = connectionFields.filter(field => !providers || providers.includes(field.id));
   const allowedFields = fields.filter(field => canUseProvider(field.id));

@@ -33,6 +33,7 @@
 .subscription-payment-icon { color: var(--muted); margin-top: 4px; flex-shrink: 0; }
 .subscription-saved { gap: 12px; display: flex; flex-direction: column; }
 .subscription-saved-status { gap: 8px; margin: 0; color: var(--warning); display: flex; font-size: 13px; align-items: center; font-family: var(--font-bold); }
+.subscription-saved-status.is-active { color: var(--success); }
 .subscription-error { margin: 0; color: var(--danger); font-size: 12px; line-height: 1.7; }
 .subscription-request-feedback { gap: 8px; display: flex; align-items: flex-start; flex-direction: column; }
 .subscription-text-button { gap: 6px; color: var(--accent); border: 0; cursor: pointer; padding: 0; display: inline-flex; font-size: 12px; min-height: 32px; background: none; align-items: center; }

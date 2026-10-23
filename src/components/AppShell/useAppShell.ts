@@ -1,13 +1,13 @@
 import { usePathname } from 'expo-router';
 import { useWindowDimensions } from 'react-native';
-import { useAppBrand } from '../../shared/branding/useAppBrand';
 import { routes, navigation } from '../../shared/routes';
 import { useAuth } from '../../shared/authContext/useAuth';
+import { useAppBrand } from '../../shared/branding/useAppBrand';
+import { useWatching } from '../../shared/watching/useWatching';
+import { getAccountBadgeColors } from '../../shared/common/badges';
+import { useDomains } from '../../shared/domainContext/useDomains';
 import { useStarterAccess } from '../../shared/plans/useStarterAccess';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
-import { getAccountBadgeColors } from '../../shared/common/badges';
-import { useWatching } from '../../shared/watching/useWatching';
-import { useDomains } from '../../shared/domainContext/useDomains';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 
 export { footerLinks } from '../../shared/routes';
@@ -15,7 +15,7 @@ export const useAppShell = () => {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const { user, loading } = useAuth();
-  const { allowed: starterAllowed } = useStarterAccess();
+  const { allowed: starterAllowed, owner } = useStarterAccess();
   const { name: appName } = useAppBrand();
   const { flags, ready: featuresReady } = useFeatureFlags();
   const { eligible, loading: connectionsLoading } = useConnectionAvailability();
@@ -31,7 +31,7 @@ export const useAppShell = () => {
     || (!signedIn && !isBlogPage && pathname !== routes.pricing.href && pathname !== routes.subscription.href && pathname !== routes.home.href && pathname !== routes.domains.href && pathname !== routes.auction.href && pathname !== routes.community.href && pathname !== `/discover`));
   const visibleNavigation = navigation.filter(item =>
     (item.href !== routes.contact.href || (featuresReady && flags.contact))
-    && (!(`minPlan` in item) || starterAllowed)
+    && (!(`minPlan` in item) || (item.href === routes.auction.href ? owner : starterAllowed))
     && (item.href !== routes.watching.href || (signedIn && (watchingCount ?? 0) > 0))
     && (item.href !== routes.search.href || eligible || connectionsLoading)).map(item => {
       const count = item.href === routes.domains.href ? domainCount : item.href === routes.watching.href ? watchingCount : undefined;

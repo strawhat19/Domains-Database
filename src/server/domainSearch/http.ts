@@ -2,6 +2,7 @@ import { searchVercel } from './vercel';
 import { searchRegistrar } from './providers';
 import { RegistrarRelayError } from '../registrars/errors';
 import { normalizeDomainName } from '../../shared/domainUtils';
+import { getRequestPlanAccess, requireRegistrarAccess } from '../featureAccess/auth';
 import { readSearchCredentials, getEnvironmentSearchProviders } from './environment';
 import { checkRequest, responseHeaders, readRequestRecord } from '../registrars/http';
 
@@ -30,10 +31,13 @@ export const handleDomainSearch = async (request: Request) => {
     let domain: string;
     try { domain = normalizeDomainName(record.domain); }
     catch { throw new RegistrarRelayError(400, `Enter A Domain Name Without A Path Or Login`); }
+    const publicVercel = record.provider === `vercel` && !Object.prototype.hasOwnProperty.call(record, `values`);
+    const access = publicVercel ? await getRequestPlanAccess(request, true) : await requireRegistrarAccess(request, String(record.provider), !Object.prototype.hasOwnProperty.call(record, `values`));
     const result = record.provider === `vercel` && !Object.prototype.hasOwnProperty.call(record, `values`) ? await searchVercel(domain, controller.signal)
       : await searchRegistrar(readSearchCredentials(record), domain, controller.signal);
     if (controller.signal.aborted) throw new RegistrarRelayError(504, `Domain Search Timed Out Or Cancelled`);
-    return Response.json(result, { headers: responseHeaders });
+    const { registration, renewal, ...availability } = result;
+    return Response.json(access.paid ? result : availability, { headers: responseHeaders });
   } catch (failure) {
     const error = failure instanceof RegistrarRelayError ? failure
       : new RegistrarRelayError(502, controller.signal.aborted ? `Domain Search Timed Out Or Cancelled` : `Domain Search Could Not Be Completed`);

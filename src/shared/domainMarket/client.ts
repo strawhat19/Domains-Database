@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { absoluteSiteUrl } from '../seo';
+import { requireStarterAccess, getFeatureAuthorization } from '../planAccess/service';
 import type { MarketStatus, DomainRatingResult, SearchInterestInput, SearchInterestResult } from './types';
 import { MARKET_RANGE, normalizeMarketDomain, normalizeMarketKeyword, normalizeMarketCountry } from './values';
 
@@ -125,12 +126,13 @@ const requestMarket = async (body: Record<string, string>, signal?: AbortSignal)
   if (signal?.aborted) abort();
   const timeout = setTimeout(abort, 30_000);
   try {
+    const authorization = await getFeatureAuthorization(true);
     const response = await fetch(Platform.OS === `web` ? `/api/domain-market` : absoluteSiteUrl(`/api/domain-market`), {
       method: `POST`,
       credentials: `omit`,
       signal: controller.signal,
       body: JSON.stringify(body),
-      headers: { Accept: `application/json`, 'Content-Type': `application/json` },
+      headers: { ...authorization, Accept: `application/json`, 'Content-Type': `application/json` },
     });
     const text = await readResponseText(response);
     let input: unknown;
@@ -189,6 +191,7 @@ export const peekSearchInterest = (input: SearchInterestInput): SearchInterestRe
 };
 
 export const getDomainRating = async (value: string, signal?: AbortSignal): Promise<DomainRatingResult> => {
+  await requireStarterAccess();
   const domain = normalizeMarketDomain(value);
   if (signal?.aborted) throw cancelled();
   const cached = peekCached(ratings, domain);
@@ -199,6 +202,7 @@ export const getDomainRating = async (value: string, signal?: AbortSignal): Prom
 };
 
 export const getSearchInterest = async (input: SearchInterestInput, signal?: AbortSignal): Promise<SearchInterestResult> => {
+  await requireStarterAccess();
   const query = normalizeInterest(input);
   if (signal?.aborted) throw cancelled();
   const key = interestKey(query);

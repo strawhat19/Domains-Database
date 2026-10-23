@@ -37,6 +37,7 @@ const readAudiences = (value: unknown): FeatureAudiences => {
 export const featureRequiresPlanTiers = (settings: FeatureSettings) => featureFlagKeys.some(key => settings.flags[key]
   && settings.audiences[key].planMode === `minimum` && !!settings.audiences[key].plans?.length && settings.audiences[key].plans?.[0] !== `free`);
 export const resolveFeatureFlags = (settings: FeatureSettings, user: Pick<User, `role` | `plan` | `active`> | null, tiers: readonly PlanTier[] = []): FeatureFlags => {
+  if (user?.active === true && user.role === Roles.Owner) return { ...Object.fromEntries(featureFlagKeys.map(key => [key, true])), ads: false } as unknown as FeatureFlags;
   const role = user?.role ?? Roles.Guest;
   const plan = typeof user?.plan === `string` ? user.plan.toLowerCase() : user ? `` : `free`;
   const valid = !user || (user.active && roleValues.includes(role) && isFeaturePlan(plan));
@@ -51,6 +52,7 @@ export const resolveFeatureFlags = (settings: FeatureSettings, user: Pick<User, 
       : audience.plans === null || audience.plans.includes(plan);
     flags[key] = valid && settings.flags[key] && (audience.roles === null || audience.roles.includes(role)) && plansAllow;
   }
+  if (valid && user?.active && plan === `starter`) flags.ads = false;
   return flags;
 };
 export const migrateFeaturePlanTiers = (settings: FeatureSettings, tiers: readonly PlanTier[]): FeatureSettings => ({

@@ -45,6 +45,9 @@ const savedConnections = cloudAccountActions
 const signInAfterCleanup = cloudAccountActions
   ? `You are signed out and sent to Sign In. You can sign in again with the same Google account or email and password`
   : `You are signed out and sent to Sign In. You can sign in again with the same email and password`;
+const billingResetNotice = cloudAccountActions
+  ? `. Clearing data does not cancel a paid subscription or stop its billing. To cancel or manage a paid subscription, open your Starter subscription page and choose Manage Billing before clearing data`
+  : ``;
 
 export const accountActionScope = cloudAccountActions
   ? `This applies to this Firebase account's saved data across devices. Your domains remain registered at their registrars; registrar renewal/DNS settings, provider accounts, hosting and websites are unaffected. Provider API keys are not revoked. Previously cached or downloaded data on other devices may remain until those devices refresh`
@@ -75,7 +78,7 @@ const allAccountActions: AccountActionOption[] = [
   {
     id: `delete-data`,
     label: `Delete Data`,
-    copy: `Clear this account's saved app data while keeping its login and registrar connections`,
+    copy: `Clear this account's saved app data while keeping its login and registrar connections${billingResetNotice}`,
     outcome: `This action has no Undo. Registrar sync can fetch provider data again, but app-only notes, custom metadata, groups and collections are not restored by sync`,
     sections: [
       { id: `deleted`, title: `Deleted`, items: savedData },
@@ -90,7 +93,7 @@ const allAccountActions: AccountActionOption[] = [
   {
     id: `delete-data-connections`,
     label: `Delete Data + Connections`,
-    copy: `Clear this account's saved app data and registrar connections while keeping its login`,
+    copy: `Clear this account's saved app data and registrar connections while keeping its login${billingResetNotice}`,
     outcome: `This action has no Undo. Removed app-only notes, custom metadata, groups, collections and ${cloudAccountActions ? `saved` : `locally saved`} credentials are not restored automatically`,
     sections: [
       { id: `deleted`, title: `Deleted`, items: [...savedData, savedConnections] },

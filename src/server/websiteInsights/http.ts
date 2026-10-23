@@ -1,5 +1,6 @@
 import { fetchWebsiteInsights } from './sync';
 import { readInsightsText, WebsiteInsightsError } from './request';
+import { FeatureAccessError, requirePaidFeatureAccess } from '../featureAccess/auth';
 
 const headers = {
   Pragma: `no-cache`,
@@ -17,6 +18,7 @@ export const handleWebsiteInsights = async (request: Request): Promise<Response>
   if (request.signal.aborted) abort();
   const timeout = setTimeout(abort, 90_000);
   try {
+    await requirePaidFeatureAccess(request);
     const site = request.headers.get(`sec-fetch-site`);
     const origin = request.headers.get(`origin`);
     if (site && ![`same-origin`, `none`].includes(site) || origin && origin !== new URL(request.url).origin) throw new WebsiteInsightsError(403, `Cross-Origin Insights Requests Are Not Allowed`);
@@ -38,7 +40,7 @@ export const handleWebsiteInsights = async (request: Request): Promise<Response>
     if (controller.signal.aborted) throw new WebsiteInsightsError(504, `Website Insights Timed Out Or Were Cancelled`);
     return Response.json(result, { headers });
   } catch (failure) {
-    const error = failure instanceof WebsiteInsightsError ? failure : new WebsiteInsightsError(502, `Website Insights Could Not Be Completed`);
+    const error = failure instanceof WebsiteInsightsError || failure instanceof FeatureAccessError ? failure : new WebsiteInsightsError(502, `Website Insights Could Not Be Completed`);
     return Response.json({ error: error.message }, { headers, status: error.status });
   } finally {
     if (admitted) activeRequests -= 1;

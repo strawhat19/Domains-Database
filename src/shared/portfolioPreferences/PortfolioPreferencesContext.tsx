@@ -1,11 +1,12 @@
-import { GROUPABLE_COLUMNS } from './groups';
 import Toast from '../../components/Toast';
+import { GROUPABLE_COLUMNS } from './groups';
 import type { PropsWithChildren } from 'react';
-import { PORTFOLIO_FIELDS } from '../portfolioColumns';
 import { allowDomainsInCollections } from '../config';
+import { PORTFOLIO_FIELDS } from '../portfolioColumns';
 import { createOperationQueue } from '../common/storage';
-import { subscribeAccountDataReset } from '../accountData/state';
+import { useStarterAccess } from '../plans/useStarterAccess';
 import { genID, getAppCollectionIDNumber } from '../common/ids';
+import { subscribeAccountDataReset } from '../accountData/state';
 import { normalizeGroupDetails, restoreGroupDetails } from './details';
 import { getGroupOrderScope, initializePortfolioOrder } from './ordering';
 import { savePortfolioPreferences, subscribePortfolioPreferences } from './storage';
@@ -214,6 +215,7 @@ const assignCollectionDomains = (current: PortfolioPreferences, domainIds: strin
 export const PortfolioPreferencesContext = createContext<PortfolioPreferencesContextValue | undefined>(undefined);
 
 export const PortfolioPreferencesProvider = ({ children, enabled = true, userId = null }: PropsWithChildren<{ enabled?: boolean; userId?: string | null }>) => {
+  const access = useStarterAccess();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(``);
   const storageReady = useRef(false);
@@ -343,9 +345,10 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   }, [change]);
 
   const setShowCosts = useCallback<PortfolioPreferencesContextValue[`setShowCosts`]>(showCosts => {
+    if (showCosts && !access.allowed) return;
     if (!enabled || !active.current || !ready || loadedUserId.current !== userId) return;
     change(current => ({ ...current, showCosts }));
-  }, [ready, change, userId, enabled]);
+  }, [ready, change, userId, enabled, access.allowed]);
 
   const setShowAddRows = useCallback<PortfolioPreferencesContextValue[`setShowAddRows`]>(showAddRows => {
     if (!enabled || !active.current || !ready || !storageReady.current || loadedUserId.current !== userId) return;
@@ -760,6 +763,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
   const clearOrders = useCallback(() => change(current => ({ ...current, orders: {} })), [change]);
   const value = useMemo(() => ({
     ...(enabled && ready && loadedUserId.current === userId ? preferences : DEFAULT_PREFERENCES),
+    showCosts: access.allowed && enabled && ready && loadedUserId.current === userId && preferences.showCosts,
     loading: !enabled || !ready || loadedUserId.current !== userId,
     setView,
     moveGroup,
@@ -800,7 +804,7 @@ export const PortfolioPreferencesProvider = ({ children, enabled = true, userId 
     toggleCollectionCollapsed,
     updateGroupProjectStatus,
     toggleColumnCategoryCollapsed,
-  }), [ready, enabled, userId, preferences, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, starGroups, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, setShowAddRows, setDatabasePosition, voteCollection, createCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, renameCollection, saveGroupSettings, setCollectionSort, setGroupsCollapsed, setShowHiddenGroups, setShowHiddenDomains, setShowHiddenCollections, toggleGroupCollapsed, toggleDomainExpansion, toggleGroupVisibility, assignGroupCollection, assignDomainsToCollection, toggleDomainVisibility, setCollectionVisibility, toggleCollectionVisibility, toggleCollectionCollapsed, updateGroupProjectStatus, toggleColumnCategoryCollapsed]);
+  }), [ready, enabled, userId, preferences, access.allowed, setView, moveGroup, moveDomain, clearOrders, resetOrder, setGroupBy, starGroups, createGroup, renameGroup, deleteGroup, updateGroup, setShowCosts, setShowAddRows, setDatabasePosition, voteCollection, createCollection, assignDomain, assignDomains, toggleGroupStar, moveCollection, updateCollection, renameCollection, saveGroupSettings, setCollectionSort, setGroupsCollapsed, setShowHiddenGroups, setShowHiddenDomains, setShowHiddenCollections, toggleGroupCollapsed, toggleDomainExpansion, toggleGroupVisibility, assignGroupCollection, assignDomainsToCollection, toggleDomainVisibility, setCollectionVisibility, toggleCollectionVisibility, toggleCollectionCollapsed, updateGroupProjectStatus, toggleColumnCategoryCollapsed]);
 
   return (
     <PortfolioPreferencesContext.Provider value={value}>

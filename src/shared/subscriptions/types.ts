@@ -1,12 +1,13 @@
-import type { PlanCurrency, PlanBillingInterval } from '../plans/types';
-
-export interface SubscriptionRequest {
-  userId: string;
-  planId: string;
-  planSlug: string;
-  priceCents: number;
-  requestedAt: string;
-  currency: PlanCurrency;
-  status: `awaiting-payment-setup`;
-  billingInterval: PlanBillingInterval;
+export interface BillingActor { userId: string; firebaseUid: string }
+export interface BillingSubscription {
+  status: string;
+  cancelAtPeriodEnd: boolean;
+  currentPeriodEnd: string | null;
+}
+export interface BillingStatus {
+  owner: boolean;
+  plan: `free` | `starter`;
+  portalAvailable: boolean;
+  checkoutAvailable: boolean;
+  subscription: BillingSubscription | null;
 }

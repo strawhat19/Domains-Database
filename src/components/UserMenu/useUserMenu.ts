@@ -1,19 +1,20 @@
 import { Platform } from 'react-native';
 import { routes } from '../../shared/routes';
 import { createStyles } from './styles.native';
-import { capWords } from '../../shared/common/values';
 import { usePathname, useRouter } from 'expo-router';
+import { capWords } from '../../shared/common/values';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { getAccountBadgeColors } from '../../shared/common/badges';
-import { getPlanDisplayName, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
+import { useStarterAccess } from '../../shared/plans/useStarterAccess';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 
 export const useUserMenu = () => {
   const router = useRouter();
   const pathname = usePathname();
   const auth = useAuth();
+  const access = useStarterAccess();
   const { verifiedConnectionCount, connectionsCountLoading } = useConnectionAvailability();
   const { palette } = useTheme();
   const [open, setOpen] = useState(false);
@@ -72,7 +73,7 @@ export const useUserMenu = () => {
     guestAuth,
     photoLoaded,
     photoRequestKey,
-    planLabel: hasUnlimitedPlanAccess(auth.user) ? `Unlimited` : getPlanDisplayName(capWords(auth.user?.plan?.trim()?.toLowerCase() || `free`)),
+    planLabel: access.owner ? `Unlimited` : access.loading ? `Loading` : access.error ? `Plan Unavailable` : capWords(access.plan),
     connectionsCountLoading,
     verifiedConnectionCount,
     photoURL: photoFailed ? undefined : auth.user?.photoURL,

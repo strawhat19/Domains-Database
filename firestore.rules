@@ -71,10 +71,10 @@ service cloud.firestore {
         && (audience.get('planMode', '') == 'minimum' ? featureMinimumPlanAllows(audience.plans, plan) : audience.plans == null || plan in audience.plans);
     }
     function featureEnabled(key) {
-      return (!signedIn() || (exists(identityPath()) && ownsAccount(actorId())))
+      return isOwner() || (!signedIn() || (exists(identityPath()) && ownsAccount(actorId())))
         && (!exists(featureSettingsPath()) || (get(featureSettingsPath()).data.flags[key] == true
           && featureAudienceAllows(get(featureSettingsPath()).data, key, signedIn() ? get(userPath(actorId())).data.role : 'Guest',
-            signedIn() ? get(userPath(actorId())).data.get('plan', 'free').lower() : 'free')));
+            effectivePlan())));
     }
     function featureSettingsValues() {
       let data = request.resource.data;
@@ -99,17 +99,18 @@ service cloud.firestore {
         && get(userPath(get(identityPath()).data.id)).data.role == 'Owner';
     }
     function actorId() { return get(identityPath()).data.id; }
-    function starterPlanAllows(plan) {
-      return plan is string && plan != 'free' && plan.size() <= 100 && plan.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
-        && exists(planSlugPath('starter')) && exists(planSlugPath(plan))
-        && planTierValues(get(planSlugPath('starter')).data, 'starter') && planTierValues(get(planSlugPath(plan)).data, plan)
-        && (get(planSlugPath(plan)).data.displayOrder > get(planSlugPath('starter')).data.displayOrder
-          || (get(planSlugPath(plan)).data.displayOrder == get(planSlugPath('starter')).data.displayOrder
-            && get(planSlugPath(plan)).data.number >= get(planSlugPath('starter')).data.number));
+    function billingPath(userId) { return /databases/$(database)/documents/billingUsers/$(userId); }
+    function paidBillingAccess() {
+      return signedIn() && exists(identityPath()) && ownsAccount(actorId()) && exists(billingPath(actorId()))
+        && get(billingPath(actorId())).data.plan == 'starter'
+        && get(billingPath(actorId())).data.subscriptionStatus in ['active', 'trialing']
+        && get(billingPath(actorId())).data.accessUntil is timestamp
+        && get(billingPath(actorId())).data.accessUntil > request.time;
     }
+    function effectivePlan() { return paidBillingAccess() ? 'starter' : 'free'; }
     function starterPlanAccess() {
       return signedIn() && exists(identityPath()) && ownsAccount(actorId())
-        && (isOwner() || starterPlanAllows(get(userPath(actorId())).data.get('plan', '').lower()));
+        && (isOwner() || paidBillingAccess());
     }
     function emptyAuctionSnapshotReset() {
       return request.resource.data.keys().hasAll(['snapshot', 'ids', 'revision']) && request.resource.data.keys().hasOnly(['snapshot', 'ids', 'revision'])
@@ -292,7 +293,7 @@ service cloud.firestore {
     function planInterestPricingEnabled() {
       return !exists(featureSettingsPath()) || (get(featureSettingsPath()).data.flags.get('pricingTable', true) == true
         && featureAudienceAllows(get(featureSettingsPath()).data, 'pricingTable', anonymousPlanVoter() ? 'Guest' : get(userPath(actorId())).data.role,
-          anonymousPlanVoter() ? 'free' : get(userPath(actorId())).data.get('plan', 'free').lower()));
+          anonymousPlanVoter() ? 'free' : effectivePlan()));
     }
     function planInterestIdentity(data, interestId) {
       return data.id == interestId && data.type == 'PlanInterest'
@@ -520,11 +521,6 @@ service cloud.firestore {
     }
     function publicDomainValues(userId, recordId) {
       return publicDomainMatches(request.resource.data, getAfter(/databases/$(database)/documents/users/$(userId)/domains/$(recordId)).data, userId, recordId);
-    }
-    function syncedPublicDomain(userId, recordId) {
-      return request.resource.data.get('isSample', false) == true
-        ? !existsAfter(/databases/$(database)/documents/publicProfiles/$(userId)/domains/$(recordId))
-        : publicDomainMatches(getAfter(/databases/$(database)/documents/publicProfiles/$(userId)/domains/$(recordId)).data, request.resource.data, userId, recordId);
     }
     function socialPostValues() {
       let data = request.resource.data;
@@ -845,6 +841,7 @@ service cloud.firestore {
       allow get: if (signedIn() && resource.data.firebase_uid == request.auth.uid) || isAccountAdmin();
       allow list: if isAccountAdmin() && request.query.limit != null && request.query.limit <= 101;
       allow create: if newIdentity() && recordIdentity(userId, 'User') && profileValues()
+        && !request.resource.data.keys().hasAny(['billing', 'billingAccountId', 'subscriptionStatus', 'accessUntil', 'stripe_customer_id', 'stripe_subscription_id'])
         && request.resource.data.type == 'User' && request.resource.data.uid == request.auth.uid
         && request.resource.data.firebase_uid == request.auth.uid && request.resource.data.number == getAfter(counterPath()).data.number
         && getAfter(identityPath()).data.id == userId && request.resource.data.active == true
@@ -872,21 +869,20 @@ service cloud.firestore {
       }
       match /domains/{recordId} {
         allow read: if ownsAccount(userId);
-        allow delete: if ownsAccount(userId) && !existsAfter(/databases/$(database)/documents/publicProfiles/$(userId)/domains/$(recordId));
-        allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Domain') && request.resource.data.uid == userId
-          && syncedPublicDomain(userId, recordId);
+        allow write: if false;
       }
       match /connections/{recordId} {
         allow read, delete: if ownsAccount(userId);
         allow create, update: if ownsAccount(userId) && recordIdentity(recordId, 'Connection')
           && request.resource.data.keys().hasOnly(['id', 'number', 'provider', 'values'])
           && request.resource.data.values is string
-          && request.resource.data.provider in ['vercel', 'godaddy', 'hostinger', 'namecheap', 'porkbun', 'namesilo', 'squarespace'];
+          && request.resource.data.provider in ['vercel', 'godaddy', 'hostinger', 'namecheap', 'porkbun', 'namesilo', 'squarespace']
+          && (request.resource.data.provider in ['godaddy', 'hostinger'] || starterPlanAccess());
       }
       match /auctionInventory/{recordId} {
-        allow read: if starterPlanAccess() && ownsAccount(userId);
+        allow read: if isOwner() && ownsAccount(userId);
         allow delete: if ownsAccount(userId);
-        allow create, update: if starterPlanAccess() && ownsAccount(userId) && recordIdentity(recordId, 'Auction');
+        allow create, update: if isOwner() && ownsAccount(userId) && recordIdentity(recordId, 'Auction');
       }
       match /data/{recordId} {
         allow read, delete: if ownsAccount(userId);
@@ -904,12 +900,20 @@ service cloud.firestore {
           && request.resource.data.number is int && request.resource.data.number > 0;
       }
       match /snapshots/{snapshotId} {
-        allow read, delete: if ownsAccount(userId);
+        allow read: if ownsAccount(userId);
+        allow delete: if ownsAccount(userId) && snapshotId != 'portfolio';
         allow get: if isOwner() && snapshotId == 'portfolio';
-        allow create, update: if ownsAccount(userId) && snapshotId in ['storage', 'portfolio', 'connections', 'auctionInventory']
-          && (snapshotId != 'auctionInventory' || starterPlanAccess());
+        allow create, update: if ownsAccount(userId) && snapshotId in ['storage', 'connections', 'auctionInventory']
+          && (snapshotId != 'auctionInventory' || isOwner());
         allow update: if ownsAccount(userId) && snapshotId == 'auctionInventory' && emptyAuctionSnapshotReset();
       }
+    }
+    match /billingUsers/{userId} {
+      allow get: if ownsAccount(userId);
+      allow list, write: if false;
+    }
+    match /portfolioUsage/{userId} {
+      allow read, write: if false;
     }
     match /{path=**}/domains/{recordId} {
       allow get: if isAccountAdmin();

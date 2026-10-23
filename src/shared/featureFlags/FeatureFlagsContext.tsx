@@ -3,6 +3,7 @@ import type { PlanTier } from '../plans/types';
 import { useAuth } from '../authContext/useAuth';
 import { subscribePlanTiers } from '../plans/service';
 import { canManageFeatures } from '../admin/permissions';
+import { useStarterAccess } from '../plans/useStarterAccess';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createFeatureSettings, resolveFeatureFlags, featureRequiresPlanTiers } from './values';
 import type { FeatureFlags, FeatureFlagKey, FeatureSettings, FeatureAudienceDimension } from './types';
@@ -22,6 +23,7 @@ interface FeatureFlagsContextValue {
 export const FeatureFlagsContext = createContext<FeatureFlagsContextValue | undefined>(undefined);
 export const FeatureFlagsProvider = ({ children }: PropsWithChildren) => {
   const { user, loading: authLoading } = useAuth();
+  const access = useStarterAccess();
   const actor = useRef(user);
   actor.current = user;
   const [revision, setRevision] = useState(0);
@@ -62,8 +64,8 @@ export const FeatureFlagsProvider = ({ children }: PropsWithChildren) => {
     await saveFeatureAudience(key, dimension, value, enabled, allValues, current.id);
     if (actor.current?.id !== current.id || !canManageFeatures(actor.current)) throw new Error(`Your Account Changed — Try Again`);
   }, []);
-  const value = useMemo(() => ({ ...state, refresh, setFeatureFlag, setFeatureAudience, flags: resolveFeatureFlags(state.settings, user, needsPlanTiers ? planTiers.tiers : []), source: featureFlagsSource,
-    error: state.error || (needsPlanTiers ? planTiers.error : ``), ready: state.ready && !authLoading && (!needsPlanTiers || planTiers.ready),
-    loading: state.loading || authLoading || (needsPlanTiers && planTiers.loading) }), [state, user, planTiers, authLoading, needsPlanTiers, refresh, setFeatureFlag, setFeatureAudience]);
+  const value = useMemo(() => ({ ...state, refresh, setFeatureFlag, setFeatureAudience, flags: resolveFeatureFlags(state.settings, user ? { ...user, plan: access.plan } : null, needsPlanTiers ? planTiers.tiers : []), source: featureFlagsSource,
+    error: state.error || (needsPlanTiers ? planTiers.error : ``), ready: access.owner || (state.ready && !authLoading && !access.loading && (!needsPlanTiers || planTiers.ready)),
+    loading: !access.owner && (state.loading || authLoading || access.loading || (needsPlanTiers && planTiers.loading)) }), [state, user, planTiers, authLoading, access.plan, access.owner, access.loading, needsPlanTiers, refresh, setFeatureFlag, setFeatureAudience]);
   return <FeatureFlagsContext.Provider value={value}>{children}</FeatureFlagsContext.Provider>;
 };

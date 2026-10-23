@@ -1,20 +1,22 @@
 import { authAPI } from './auth';
-import { normalizeDomainTags } from '../shared/domainTags';
-import { restoreDomainPrice } from '../shared/domainPricing';
+import { getDomainLimit } from '../shared/accountPlans';
 import { Domain } from '../shared/models/domains/Domain';
-import type { WebsiteInsights } from '../shared/websiteInsights/types';
-import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
-import { createSampleDomains } from '../shared/sampleDomains';
-import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../shared/common/storage';
-import { subscribeAccountDataReset } from '../shared/accountData/state';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { accountStorageKey } from '../shared/authentication/userScope';
-import type { RegistrarDomain } from '../shared/registrarSync/types';
-import { normalizeWebsiteInsights } from '../shared/websiteInsights/values';
-import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
-import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../shared/config';
+import { normalizeDomainTags } from '../shared/domainTags';
 import { firebaseEnabled } from '../shared/firebase/config';
+import { restoreDomainPrice } from '../shared/domainPricing';
+import { createSampleDomains } from '../shared/sampleDomains';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { RegistrarDomain } from '../shared/registrarSync/types';
+import type { WebsiteInsights } from '../shared/websiteInsights/types';
+import { accountStorageKey } from '../shared/authentication/userScope';
+import { subscribeAccountDataReset } from '../shared/accountData/state';
 import { clearFirestoreStorageCache } from '../shared/firebase/storage';
+import { normalizeWebsiteInsights } from '../shared/websiteInsights/values';
+import { getPlanAccess, requireStarterAccess } from '../shared/planAccess/service';
+import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
+import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
+import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../shared/common/storage';
+import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../shared/config';
 import { projectPublicDomain, readPublicDomainSummariesForIds, type PublicDomainSummary } from '../shared/publicDirectory/domains';
 
 export type { PublicDomainSummary } from '../shared/publicDirectory/domains';
@@ -52,6 +54,12 @@ const requireScopeSession = async (userId: string) => {
 const saveSnapshot = async (next: PortfolioSnapshot) => {
   const scope = getScope();
   if (userScope) await requireScopeSession(userScope);
+  const previous = snapshots.get(scope);
+  const access = userScope ? await getPlanAccess(userScope) : null;
+  const domainLimit = access ? getDomainLimit(access.user, access.billing) : 33;
+  if (domainLimit !== null && next.domains.length > domainLimit && next.domains.some(domain => !previous?.domains.some(saved => saved.id === domain.id))) {
+    throw new Error(`Your Plan Includes Up To ${domainLimit} Domains — Remove Domain(s) Or Upgrade Before Adding More`);
+  }
   if (persistenceEnabled) {
     try {
       await writeStorage(getStorageKey(), JSON.stringify(next));
@@ -396,6 +404,7 @@ export const api = {
   getPublicDomainSummaries: (userIds: string[]) => serialize(() => getPublicDomainSummaries(userIds)),
   getSharedDomainSummaries: (userId: string) => serialize(() => getPublicDomainSummaries([userId])),
   saveWebsiteInsights: (id: string, name: string, insights: WebsiteInsights, expectedUserId: string): Promise<void> => serializePortfolioMutation(async () => {
+    await requireStarterAccess(expectedUserId);
     if (!userScope || expectedUserId !== userScope) throw new Error(`Sign In To Save Website Info`);
     await requireScopeSession(expectedUserId);
     const normalized = normalizeWebsiteInsights(insights, name);

@@ -14,9 +14,9 @@ export const useStarterPlanGate = (feature: StarterPlanGateProps[`feature`]) => 
   const signedIn = Boolean(auth.user);
   const title = feature === `auction` ? `Auction` : `Community`;
   const description = feature === `auction`
-    ? `Explore auction listings, filter inventory, and research domains with Starter or a higher plan.`
-    : `Explore domain portfolios, follow builders, and share updates with Starter or a higher plan.`;
+    ? `Domain Auctions Are Planned. The Working Preview Is Available To The Owner.`
+    : `Explore domain portfolios, follow builders, and share updates with Starter.`;
   const viewPlans = () => router.push(routes.pricing.href);
   const signIn = () => router.push({ params: { returnTo }, pathname: routes.signin.href });
-  return { ...access, title, signIn, signedIn, viewPlans, description };
+  return { ...access, allowed: feature === `auction` ? access.owner : access.allowed, title, signIn, signedIn, viewPlans, description };
 };

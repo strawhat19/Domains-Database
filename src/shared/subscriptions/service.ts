@@ -1,92 +1,100 @@
+import { useLocalStorage } from '../config';
 import type { Plan } from '../models/plans/Plan';
-import type { SubscriptionRequest } from './types';
-import { planId, readPlan } from '../plans/values';
+import { Platform, Linking } from 'react-native';
 import { firebaseEnabled } from '../firebase/config';
-import { doc, getDocFromServer } from 'firebase/firestore';
+import { getFirebaseAuth } from '../firebase/client';
+import type { BillingActor, BillingStatus } from './types';
 import { restoreSession } from '../authentication/service';
-import { subscribePublishedPlans } from '../plans/service';
-import { useLocalStorage, persistenceEnabled } from '../config';
-import { accountStorageKey } from '../authentication/userScope';
-import { getFirebaseDb, getFirebaseAuth } from '../firebase/client';
-import { planCurrencies, planBillingIntervals } from '../plans/types';
-import { readStorage, writeStorage, createOperationQueue } from '../common/storage';
 
-interface SubscriptionSnapshot { version: 1; request: SubscriptionRequest }
-const storageKey = `domains-database:subscription-request:v1`;
-const serialize = createOperationQueue(storageKey);
-const cloudEnabled = firebaseEnabled && !useLocalStorage;
-export const subscriptionStorageSource = cloudEnabled ? `firestore` : `local`;
-const unreadable = () => new Error(`Saved Subscription Request Could Not Be Read — Nothing Was Changed`);
-const requireActor = async (expectedUserId: string) => {
-  if (!persistenceEnabled) throw new Error(`Connect A Backend To Save A Subscription Request`);
-  const user = (await restoreSession())?.user;
-  if (!user?.id || !user.active || user.anonymous) throw new Error(`Sign In To Continue With Starter`);
-  if (!expectedUserId?.trim() || user.id !== expectedUserId) throw new Error(`Your Account Changed — Try Again`);
-  if (cloudEnabled && (!user.firebase_uid || getFirebaseAuth().currentUser?.uid !== user.firebase_uid
-    || getFirebaseAuth().currentUser?.isAnonymous)) throw new Error(`Your Account Changed — Sign In Again`);
+export class BillingRequestError extends Error {
+  constructor(public code: string, message: string) { super(message); }
+}
+const unavailable = () => new BillingRequestError(`billing_invalid_response`, `Billing Returned An Unexpected Response — Try Again`);
+const requireActor = async (actor: BillingActor) => {
+  if (useLocalStorage || !firebaseEnabled) throw new BillingRequestError(`billing_not_connected`, `Connect Firebase To Subscribe`);
+  const auth = getFirebaseAuth();
+  const user = auth.currentUser;
+  if (!actor.userId || !actor.firebaseUid || !user || user.isAnonymous || user.uid !== actor.firebaseUid) {
+    throw new BillingRequestError(`billing_session_changed`, `Sign In Again To Manage Your Subscription`);
+  }
+  const account = (await restoreSession())?.user;
+  if (!account?.active || account.anonymous || account.id !== actor.userId || account.firebase_uid !== actor.firebaseUid
+    || auth.currentUser?.uid !== actor.firebaseUid) throw new BillingRequestError(`billing_session_changed`, `Your Account Changed — Sign In Again`);
   return user;
 };
-const readRequest = (saved: string | null, userId: string): SubscriptionRequest | null => {
-  if (saved === null) return null;
+const requestBilling = async (path: string, actor: BillingActor, body?: object, signal?: AbortSignal): Promise<unknown> => {
+  const user = await requireActor(actor);
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener(`abort`, abort, { once: true });
+  if (signal?.aborted) abort();
+  const timeout = setTimeout(abort, 30_000);
   try {
-    const snapshot = JSON.parse(saved) as SubscriptionSnapshot;
-    const request = snapshot?.request;
-    if (!snapshot || snapshot.version !== 1 || Object.keys(snapshot).length !== 2 || !request || Array.isArray(request)
-      || Object.keys(request).some(key => ![`userId`, `planId`, `planSlug`, `status`, `priceCents`, `currency`, `billingInterval`, `requestedAt`].includes(key))
-      || request.userId !== userId || request.planSlug !== `starter` || request.status !== `awaiting-payment-setup`
-      || !Number.isSafeInteger(request.priceCents) || request.priceCents <= 0
-      || !planCurrencies.includes(request.currency) || !planBillingIntervals.includes(request.billingInterval)
-      || typeof request.requestedAt !== `string` || request.requestedAt.length > 100 || !Number.isFinite(Date.parse(request.requestedAt))) throw unreadable();
-    planId(request.planId);
-    return { ...request };
-  } catch { throw unreadable(); }
+    const token = await user.getIdToken();
+    if (getFirebaseAuth().currentUser?.uid !== actor.firebaseUid) throw new BillingRequestError(`billing_session_changed`, `Your Account Changed — Try Again`);
+    const base = Platform.OS === `web` ? `` : `https://domaindatabases.com`;
+    const response = await fetch(`${base}/api/billing/${path}`, {
+      cache: `no-store`,
+      credentials: `omit`,
+      signal: controller.signal,
+      method: body ? `POST` : `GET`,
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      headers: { Accept: `application/json`, 'Content-Type': `application/json`, Authorization: `Bearer ${token}` },
+    });
+    const result = await response.json().catch(() => null);
+    if (getFirebaseAuth().currentUser?.uid !== actor.firebaseUid) throw new BillingRequestError(`billing_session_changed`, `Your Account Changed — Try Again`);
+    if (!response.ok) throw new BillingRequestError(typeof result?.code === `string` ? result.code : `billing_unavailable`, typeof result?.error === `string` ? result.error : `Billing Is Unavailable — Try Again`);
+    return result;
+  } catch (failure) {
+    if (failure instanceof BillingRequestError) throw failure;
+    if (controller.signal.aborted) throw new BillingRequestError(`billing_timeout`, signal?.aborted ? `Billing Request Cancelled` : `Billing Took Too Long — Try Again`);
+    throw new BillingRequestError(`billing_unavailable`, `Could Not Reach Billing — Check Your Connection And Try Again`);
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener(`abort`, abort);
+  }
 };
-const loadLocalPlans = () => new Promise<Plan[]>((resolve, reject) => {
-  let stop: (() => void) | undefined;
-  let settled = false;
-  const finish = () => { settled = true; clearTimeout(timeout); stop?.(); };
-  const timeout = setTimeout(() => { finish(); reject(new Error(`Published Plans Could Not Be Confirmed`)); }, 20_000);
-  stop = subscribePublishedPlans(plans => { finish(); resolve(plans); }, error => { finish(); reject(error); });
-  if (settled) stop();
-});
-const currentStarter = async (selected: Plan): Promise<Plan> => {
-  const id = planId(selected?.id);
-  const plan = cloudEnabled
-    ? await getDocFromServer(doc(getFirebaseDb(), `plans`, id)).then(saved => saved.exists() ? readPlan(saved.data(), saved.id) : null)
-    : (await loadLocalPlans()).find(record => record.id === id);
-  if (!plan?.active || plan.slug !== `starter` || plan.priceCents <= 0) throw new Error(`Starter Is Not Available — Return To Pricing`);
-  if (selected.slug !== plan.slug || selected.priceCents !== plan.priceCents || selected.currency !== plan.currency
-    || selected.billingInterval !== plan.billingInterval) throw new Error(`Starter Pricing Changed — Review The Latest Plan And Try Again`);
-  return plan;
-};
-export const getRequest = (expectedUserId: string): Promise<SubscriptionRequest | null> => serialize(async () => {
-  await requireActor(expectedUserId);
-  const saved = await readStorage(accountStorageKey(storageKey, expectedUserId));
-  await requireActor(expectedUserId);
-  return readRequest(saved, expectedUserId);
-});
-export const saveRequest = (expectedUserId: string, selected: Plan): Promise<SubscriptionRequest> => serialize(async () => {
-  await requireActor(expectedUserId);
-  const key = accountStorageKey(storageKey, expectedUserId);
-  const previous = readRequest(await readStorage(key), expectedUserId);
-  await requireActor(expectedUserId);
-  const plan = await currentStarter(selected);
-  await requireActor(expectedUserId);
-  const request: SubscriptionRequest = {
-    planId: plan.id,
-    userId: expectedUserId,
-    planSlug: plan.slug,
-    currency: plan.currency,
-    priceCents: plan.priceCents,
-    status: `awaiting-payment-setup`,
-    billingInterval: plan.billingInterval,
-    requestedAt: previous?.planId === plan.id && previous.priceCents === plan.priceCents && previous.currency === plan.currency
-      && previous.billingInterval === plan.billingInterval ? previous.requestedAt : new Date().toISOString(),
+const readStatus = (value: unknown): BillingStatus => {
+  const status = value as BillingStatus | null;
+  const subscription = status?.subscription;
+  if (!status || ![`free`, `starter`].includes(status.plan) || typeof status.owner !== `boolean`
+    || typeof status.portalAvailable !== `boolean` || typeof status.checkoutAvailable !== `boolean`
+    || (subscription !== null && (!subscription || typeof subscription.status !== `string` || !/^[a-z_]{1,80}$/.test(subscription.status)
+      || typeof subscription.cancelAtPeriodEnd !== `boolean` || (subscription.currentPeriodEnd !== null
+        && (typeof subscription.currentPeriodEnd !== `string` || !Number.isFinite(Date.parse(subscription.currentPeriodEnd))))))) throw unavailable();
+  return {
+    plan: status.plan,
+    owner: status.owner,
+    portalAvailable: status.portalAvailable,
+    checkoutAvailable: status.checkoutAvailable,
+    subscription: subscription ? { status: subscription.status, cancelAtPeriodEnd: subscription.cancelAtPeriodEnd, currentPeriodEnd: subscription.currentPeriodEnd } : null,
   };
-  await writeStorage(key, JSON.stringify({ version: 1, request }));
-  await requireActor(expectedUserId);
-  const confirmed = readRequest(await readStorage(key), expectedUserId);
-  await requireActor(expectedUserId);
-  if (!confirmed || JSON.stringify(confirmed) !== JSON.stringify(request)) throw new Error(`Subscription Request Could Not Be Confirmed — Try Again`);
-  return confirmed;
-});
+};
+const hostedUrl = (value: unknown, host: `checkout.stripe.com` | `billing.stripe.com`) => {
+  try {
+    const url = new URL(typeof value === `string` ? value : ``);
+    if (url.protocol !== `https:` || url.hostname !== host || url.username || url.password || url.port) throw unavailable();
+    return url.href;
+  } catch { throw unavailable(); }
+};
+export const getStatus = async (actor: BillingActor, signal?: AbortSignal) => readStatus(await requestBilling(`status`, actor, undefined, signal));
+export const reconcile = async (actor: BillingActor, sessionId: string, signal?: AbortSignal) => {
+  if (!/^cs_live_[A-Za-z0-9_]{1,240}$/.test(sessionId)) throw new BillingRequestError(`billing_invalid_session`, `This Checkout Return Is Invalid — Reload Your Billing Status`);
+  return readStatus(await requestBilling(`reconcile`, actor, { sessionId }, signal));
+};
+export const createCheckout = async (actor: BillingActor, plan: Plan, signal?: AbortSignal) => {
+  if (!plan?.active || plan.slug !== `starter` || !Number.isSafeInteger(plan.priceCents) || plan.priceCents <= 0) {
+    throw new BillingRequestError(`billing_plan_unavailable`, `Choose An Available Starter Plan`);
+  }
+  const result = await requestBilling(`checkout`, actor, { planId: plan.id, currency: plan.currency, priceCents: plan.priceCents, billingInterval: plan.billingInterval }, signal) as { url?: unknown } | null;
+  return hostedUrl(result?.url, `checkout.stripe.com`);
+};
+export const createPortal = async (actor: BillingActor, signal?: AbortSignal) => {
+  const result = await requestBilling(`portal`, actor, {}, signal) as { url?: unknown } | null;
+  return hostedUrl(result?.url, `billing.stripe.com`);
+};
+export const openBillingUrl = async (value: string) => {
+  const url = hostedUrl(value, value.startsWith(`https://checkout.stripe.com/`) ? `checkout.stripe.com` : `billing.stripe.com`);
+  if (Platform.OS === `web` && typeof window !== `undefined`) window.location.assign(url);
+  else await Linking.openURL(url);
+};

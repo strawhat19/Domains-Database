@@ -1,4 +1,5 @@
 import { RegistrarRelayError } from '../registrars/errors';
+import { getRequestPlanAccess } from '../featureAccess/auth';
 import { importEnvironmentConnections } from './environment';
 import { checkRequest, readRequestRecord, responseHeaders } from '../registrars/http';
 import { connectionFields, type ConnectionProvider } from '../../shared/connections/types';
@@ -14,6 +15,8 @@ export const handleEnvironmentConnectionImport = async (request: Request): Promi
   try {
     checkRequest(request);
     if (!token) throw new RegistrarRelayError(401, `Sign In To Import Connections`);
+    const access = await getRequestPlanAccess(request);
+    if (!access.owner) throw new RegistrarRelayError(403, `Owner Access Is Required To Import Server Connections`);
     const record = await readRequestRecord(request);
     const selected = record.providers ?? connectionFields.map(field => field.id);
     if (Object.keys(record).some(key => key !== `providers`) || !Array.isArray(selected) || !selected.length

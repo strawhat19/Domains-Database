@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+import { absoluteSiteUrl } from '../seo';
 import { domainSearchFields, type DomainSearchProvider } from './types';
 
 const cancelled = () => {
@@ -13,7 +15,7 @@ export const getServerSearchProviders = async (signal?: AbortSignal): Promise<Do
   if (signal?.aborted) abort();
   const timeout = setTimeout(abort, 10_000);
   try {
-    const response = await fetch(`/api/registrars/search`, {
+    const response = await fetch(Platform.OS === `web` ? `/api/registrars/search` : absoluteSiteUrl(`/api/registrars/search`), {
       method: `GET`,
       cache: `no-store`,
       credentials: `omit`,

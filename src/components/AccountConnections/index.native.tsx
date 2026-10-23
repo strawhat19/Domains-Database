@@ -3,18 +3,18 @@ import { Link } from 'expo-router';
 import ToastStack from '../ToastStack';
 import { useMemo, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
-import { createStyles } from './styles.native';
 import { routes } from '../../shared/routes';
+import { createStyles } from './styles.native';
 import { useLocalStorage } from '../../shared/config';
-import ConnectionsInputGuide from '../ConnectionsInputGuide';
-import EnvironmentFileDropZone from '../EnvironmentFileDropZone';
-import ConnectionEnvironmentImport from '../ConnectionEnvironmentImport';
 import { elementProps } from '../../shared/elementProps';
+import ConnectionsInputGuide from '../ConnectionsInputGuide';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAccountConnections } from './useAccountConnections';
+import EnvironmentFileDropZone from '../EnvironmentFileDropZone';
 import type { ThemePalette } from '../../shared/themeContext/theme';
-import { Pressable, Text, TextInput, View, Platform, ActivityIndicator } from 'react-native';
+import ConnectionEnvironmentImport from '../ConnectionEnvironmentImport';
 import type { AccountConnectionsProps } from '../../shared/connections/types';
+import { Pressable, Text, TextInput, View, Platform, ActivityIndicator } from 'react-native';
 import {
   connectionEnvGuidance,
   connectionInputFields,
@@ -148,12 +148,12 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                   {...(Platform.OS === `web` ? {
                     tabIndex: selected ? 0 as const : -1 as const,
                     ...(field.available ? { 'aria-controls': `connection-provider-${providerScope}` } : {}),
-                    title: !field.available ? `${field.label} — Coming Soon${field.pro ? ` On Pro Plan` : ``}` : field.pro ? `On Pro Plan` : undefined,
+                    title: !field.available ? `${field.label} — Coming Soon${field.pro ? ` On Starter Plan` : ``}` : field.pro ? `On Starter Plan` : undefined,
                     onKeyDown: (event: KeyboardEvent<HTMLElement>) => handleTabKeyDown(event, field.id),
                   } : {})}
                   accessibilityRole={`tab`}
-                  accessibilityLabel={`${field.label}${field.pro ? `, On Pro Plan` : ``}`}
-                  accessibilityHint={!field.available ? `Connection Setup Coming Soon` : field.locked ? `Requires The Pro Plan` : undefined}
+                  accessibilityLabel={`${field.label}${field.pro ? `, On Starter Plan` : ``}`}
+                  accessibilityHint={!field.available ? `Connection Setup Coming Soon` : field.locked ? `Requires The Starter Plan` : undefined}
                   onPress={() => state.selectProvider(field.id)}
                   accessibilityState={{ selected, disabled: field.locked }}
                   style={[styles.tab, selected && styles.activeTab, field.locked && styles.lockedTab]}
@@ -165,7 +165,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                   {field.pro && (
                     <View {...elementProps(`connection-pro-badge`, providerScope)} style={styles.proBadge}>
                       <LockKeyhole {...elementProps(`connection-pro-badge-icon`, providerScope)} size={11} color={palette.accent} />
-                      <Text {...elementProps(`connection-pro-badge-text`, providerScope)} style={styles.proBadgeText}>{`On Pro Plan`}</Text>
+                      <Text {...elementProps(`connection-pro-badge-text`, providerScope)} style={styles.proBadgeText}>{`On Starter Plan`}</Text>
                     </View>
                   )}
                   {!field.pro && !field.available && (
@@ -180,7 +180,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
           <ConnectionsInputGuide scope={scope} />
         </View>
         <View {...elementProps(`connections-content`, scope)} style={styles.content}>
-          {!state.activeProvider && <Text {...elementProps(`connections-pro-required`, scope)} style={styles.copy}>{`These Registrar(s) Are Available On Pro Plan`}</Text>}
+          {!state.activeProvider && <Text {...elementProps(`connections-pro-required`, scope)} style={styles.copy}>{`These Registrar(s) Are Available On Starter Plan`}</Text>}
           {!embedded && (
             <View {...elementProps(`connections-environment-import`, scope)} style={styles.field}>
               <Text {...elementProps(`connections-import-env-copy`, scope)} style={styles.copy}>

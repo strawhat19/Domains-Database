@@ -12,7 +12,8 @@
 .landing-plan-name-icon { flex-shrink: 0; }
 .landing-plan-name-label { min-width: 0; overflow-wrap: anywhere; }
 .pricing-plan-enrollment { gap: 10px; z-index: 1; display: flex; margin-top: auto; align-items: flex-start; flex-direction: column; }
-.pricing-plan-signin { gap: 7px; display: inline-flex; align-items: center; }
+.pricing-plan-enrollment-guest { gap: 8px; width: 100%; align-items: stretch; flex-direction: row; }
+.pricing-plan-enrollment-guest .landing-button { gap: 6px; flex: 1; min-width: 0; margin-top: 0; padding-inline: 10px; }
 .pricing-plan-enrollment + .pricing-plan-interest { margin-top: 0; }
 .pricing-plan-interest { gap: 12px; display: flex; margin-top: auto; flex-direction: column; }
 .pricing-plan-interest-note, .pricing-plan-interest-notice, .pricing-plan-interest-error { margin: 0; font-size: 11px; line-height: 1.7; color: var(--muted); }

@@ -1,5 +1,8 @@
+import { Platform } from 'react-native';
+import { absoluteSiteUrl } from '../seo';
 import type { RegistrarSyncResult } from './types';
 import type { ConnectionProvider } from '../connections/types';
+import { getFeatureAuthorization, requireConnectionAccess } from '../planAccess/service';
 
 export const getRegistrarDomains = async (provider: ConnectionProvider, values: string, signal: AbortSignal): Promise<RegistrarSyncResult> => {
   const controller = new AbortController();
@@ -8,11 +11,13 @@ export const getRegistrarDomains = async (provider: ConnectionProvider, values: 
   if (signal.aborted) controller.abort();
   const timeout = setTimeout(abort, 240_000);
   try {
-    const response = await fetch(`/api/registrars/sync`, {
+    await requireConnectionAccess(provider);
+    const authorization = await getFeatureAuthorization();
+    const response = await fetch(Platform.OS === `web` ? `/api/registrars/sync` : absoluteSiteUrl(`/api/registrars/sync`), {
       method: `POST`,
       credentials: `omit`,
       signal: controller.signal,
-      headers: { 'Content-Type': `application/json` },
+      headers: { ...authorization, 'Content-Type': `application/json` },
       body: JSON.stringify({ provider, values }),
     });
     const result = await response.json().catch(() => null) as (RegistrarSyncResult & { error?: string }) | null;

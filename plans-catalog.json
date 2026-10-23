@@ -2,7 +2,7 @@
   "version": 1,
   "currency": "USD",
   "researchedOn": "2026-10-11",
-  "position": "Introductory monthly enquiry prices. Paid features marked Planned are not available yet; catalog publication does not change account entitlements.",
+  "position": "Free includes 33 domains. Starter includes 333 domains at USD $1.33 per month through Stripe Checkout. Other tiers remain enquiries or planned offers. Features marked Planned are not available yet; catalog publication does not grant account entitlements.",
   "sources": [
     {
       "name": "TryDomainio",
@@ -54,7 +54,7 @@
       "priceCents": 133,
       "displayOrder": 1,
       "billingInterval": "month",
-      "description": "A simple start for your growing portfolio. Introductory pricing; enquiries only.",
+      "description": "A simple start for your growing portfolio. Up to 333 domains for $1.33 per month.",
       "features": [
         "Up to 333 domains",
         "Everything in Free",

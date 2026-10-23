@@ -1,10 +1,11 @@
-import type { PropsWithChildren } from 'react';
 import Toast from '../../components/Toast';
+import type { PropsWithChildren } from 'react';
 import { useDomains } from '../domainContext/useDomains';
+import { useStarterAccess } from '../plans/useStarterAccess';
 import { subscribeAccountDataReset } from '../accountData/state';
 import { writeStorage, createOperationQueue } from '../common/storage';
-import { portfolioStorageKey, subscribePortfolioStorage } from '../portfolioPreferences/storage';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { portfolioStorageKey, subscribePortfolioStorage } from '../portfolioPreferences/storage';
 import { COLUMN_STORAGE_KEY, PORTFOLIO_COLUMNS, getDefaultPortfolioColumns, type PortfolioColumn } from '../portfolioColumns';
 
 interface ColumnContextValue {
@@ -21,6 +22,7 @@ interface ColumnContextValue {
 }
 
 const columnFields = new Set(PORTFOLIO_COLUMNS.map(column => column.field));
+const paidColumns = new Set<PortfolioColumn>([`renewalPrice`, `monthlyCost`, `estimatedValue`, `websitePerformance`, `trancoRank`, `websiteInsightsCheckedAt`]);
 const normalizeColumnFields = (columns: unknown[]): PortfolioColumn[] => [...new Set(columns
   .filter((field): field is PortfolioColumn => typeof field === `string` && columnFields.has(field as PortfolioColumn)))];
 const normalizeColumns = (columns: unknown[]): PortfolioColumn[] => {
@@ -49,6 +51,7 @@ const normalizeWidths = (widths: unknown): Partial<Record<PortfolioColumn, numbe
 export const ColumnContext = createContext<ColumnContextValue | undefined>(undefined);
 
 export const ColumnProvider = ({ children, enabled = true, userId = null }: PropsWithChildren<{ enabled?: boolean; userId?: string | null }>) => {
+  const access = useStarterAccess();
   const { domains, loading: domainsLoading } = useDomains();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(``);
@@ -186,6 +189,7 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
   }, [ready, userId, enabled, domainsLoading, defaultColumns]);
 
   const toggleColumn = useCallback((column: PortfolioColumn) => {
+    if (!access.allowed && paidColumns.has(column)) { setError(`Choose Starter To View Costs And Insights`); return; }
     if (!enabled || !active.current || !ready || !storageReady.current || domainsLoading || loadedUserId.current !== userId || column === `name` || !columnFields.has(column)) return;
     preferenceChanged.current = true;
     ++mutationRevision.current;
@@ -193,7 +197,7 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
       const columns = current.useDefaultColumns ? defaultColumns : current.columns;
       return { useDefaultColumns: false, columns: columns.includes(column) ? columns.filter(field => field !== column) : [...columns, column] };
     });
-  }, [ready, userId, enabled, domainsLoading, defaultColumns]);
+  }, [ready, userId, enabled, domainsLoading, defaultColumns, access.allowed]);
 
   const toggleColumnFlex = useCallback((column: PortfolioColumn) => {
     if (!enabled || !active.current || !ready || !storageReady.current || domainsLoading || loadedUserId.current !== userId || !columnFields.has(column)) return;
@@ -245,8 +249,8 @@ export const ColumnProvider = ({ children, enabled = true, userId = null }: Prop
     toggleColumnFlex,
     columnWidths: scopedReady ? columnWidths : {},
     flexibleColumns: scopedReady ? flexibleColumns : [],
-    visibleColumns: scopedReady ? visibleColumns : defaultColumns,
-  }), [scopedReady, defaultColumns, moveColumn, resetColumns, resizeColumn, toggleColumn, columnWidths, visibleColumns, flexibleColumns, setColumnWidths, toggleColumnFlex]);
+    visibleColumns: (scopedReady ? visibleColumns : defaultColumns).filter(field => access.allowed || !paidColumns.has(field)),
+  }), [scopedReady, defaultColumns, moveColumn, resetColumns, resizeColumn, toggleColumn, columnWidths, visibleColumns, flexibleColumns, setColumnWidths, toggleColumnFlex, access.allowed]);
 
   return (
     <ColumnContext.Provider value={value}>
