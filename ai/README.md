@@ -43,6 +43,12 @@ Existing projects keep their database and authentication provider; Firebase is t
 
 Use [Shop](skills/shop/SKILL.md) and [its adoption prompt](skills/shop/SKILL.md#adoption-prompt) for a themed Firestore store, cart/native Stripe checkout, permitted shop administration, sourced dropshipping Market, research and controlled fulfillment. It reuses the destination's existing account/store foundations and keeps project-specific pricing/setup outside this portable pack.
 
+## Google AdSense
+
+Use [AdSense](skills/adsense/SKILL.md) for submission readiness, original public content, truthful policies/contact, crawlable metadata, publisher verification and ads.txt. Start with [the submission prompt](adoption.md#google-adsense-submission-prompt); a missing publisher ID remains unconfigured and preparation does not enable ads.
+
+For explicitly requested advertising, use [the serving prompt](adoption.md#consented-ads-and-ad-free-plans-prompt) and [the serving contract](skills/adsense/references/serving.md). It covers consent, eligible public placements, trusted ad-free tiers, feature controls and navigation after advertising code has executed. Google approval, published consent, serving settings, the deployed loader and actual filled ads remain separate evidence. These workflows are optional additions to the app core and do not enable native advertising.
+
 ## Frontend Only, Before Connections
 
 For page buildouts without live services, use [Disconnected Account Frontend](skills/disconnected-account-frontend/SKILL.md). Simple prompt: "Prepare this app with the disconnected account frontend skill, keep its theme, and commit to my review branch; no backend connections." This mode does not enable the connected defaults above.

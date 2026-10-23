@@ -10,7 +10,7 @@ Use for real Stripe subscription work requested through [Payments](../SKILL.md).
 - Read the actual catalog, price objects, currency minor-unit rules, intervals, quantities, existing subscriptions, supported features and quotas. Discover all relevant bounded pages; a partial catalog is not all offers.
 - Maintain an explicit server-controlled offer-to-price mapping. Verify provider account/mode, product, currency, amount, recurring interval, permitted quantity and offer availability. A client-supplied price, public catalog edit, URL parameter or selected card cannot choose an arbitrary provider resource or grant access.
 - Reject stale price/interval submissions and ask the UI to reload the real offer. Introduce migrations or price replacements deliberately; preserve legitimate existing subscriptions. Do not silently rewrite commercial terms to match code.
-- Implement only supported products and features. Keep planned offers and unavailable actions truthful. Do not invent tax/refund policies, claim unsupported business workflows are complete, or advertise ad removal without an actual advertising consumer.
+- Implement only supported products and features. Keep planned offers and unavailable actions truthful. Do not invent tax/refund policies, claim unsupported business workflows are complete, or advertise ad removal without an actual advertising consumer. For requested website ad removal, use [the AdSense serving contract](../../adsense/references/serving.md); public catalog labels and a fallback Free plan are not positive advertising eligibility.
 
 ## Secrets And Hosting
 
