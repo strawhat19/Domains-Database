@@ -20,8 +20,8 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
-import { Eye, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck } from 'lucide-react-native';
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Eye, Info, Mail, Gavel, House, LogIn, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck, UserRoundPlus } from 'lucide-react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
   const { pathname, year, appName, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
@@ -144,8 +144,24 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             );
           })}
           {!signedIn && !authLoading && (
-            <View {...elementProps(`native-navigation-signin`)}>
-              <UserMenu />
+            <View {...elementProps(`native-navigation-signin`)} style={styles.navigationAuth}>
+              {[routes.signin, routes.signup].map(item => {
+                const signup = item.href === routes.signup.href;
+                const Icon = signup ? UserRoundPlus : LogIn;
+                const suffix = signup ? `signup` : `signin`;
+                return (
+                  <Link key={item.href} href={item.href} asChild>
+                    <Pressable
+                      accessibilityRole={`link`}
+                      {...elementProps(`native-navigation-auth-link`, suffix)}
+                      style={({ pressed }) => [styles.navigationAuthLink, signup && styles.navigationAuthPrimary, pressed && styles.navigationAuthPressed]}
+                    >
+                      <Icon accessible={false} size={14} color={signup ? palette.contrast : palette.accent} {...elementProps(`native-navigation-auth-icon`, suffix)} />
+                      <Text {...elementProps(`native-navigation-auth-text`, suffix)} style={[styles.navigationAuthText, signup && styles.navigationAuthPrimaryText]}>{item.label}</Text>
+                    </Pressable>
+                  </Link>
+                );
+              })}
             </View>
           )}
         </View>

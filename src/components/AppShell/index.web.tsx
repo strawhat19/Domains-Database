@@ -20,7 +20,7 @@ import { useMobileNavigation } from './useMobileNavigation';
 import type { CSSProperties, PropsWithChildren } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
-import { X, Eye, Menu, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck } from 'lucide-react';
+import { X, Eye, Menu, Info, Mail, Gavel, House, LogIn, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck, UserRoundPlus } from 'lucide-react';
 
 const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.auction.href, routes.community.href];
 
@@ -178,7 +178,21 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
               </div>
               {mobileSignIn && (
                 <div id={`header-mobile-signin`} className={`header-mobile-signin`}>
-                  <UserMenu />
+                  {[routes.signin, routes.signup].map(item => {
+                    const signup = item.href === routes.signup.href;
+                    const Icon = signup ? UserRoundPlus : LogIn;
+                    return (
+                      <Link key={item.href} href={item.href} asChild>
+                        <RouterAnchor
+                          id={`header-auth-link-${signup ? `signup` : `signin`}`}
+                          className={`header-auth-link${signup ? ` header-auth-link-primary` : ``}`}
+                        >
+                          <Icon size={14} aria-hidden className={`header-auth-icon`} id={`header-auth-icon-${signup ? `signup` : `signin`}`} />
+                          <span className={`header-auth-text`} id={`header-auth-text-${signup ? `signup` : `signin`}`}>{item.label}</span>
+                        </RouterAnchor>
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>

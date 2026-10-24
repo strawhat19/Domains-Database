@@ -256,8 +256,26 @@
   .header-navigation-open .header-navigation-content { transform: translateY(0); }
   .header-navigation-links { gap: 4px; display: flex; min-width: 0; flex-direction: column; border-top: 1px solid var(--line); }
   .header-navigation-links { margin-top: 6px; padding: 12px 6px 6px; }
-  .header-mobile-signin { display: flex; padding: 12px 0 6px; border-top: 1px solid var(--line); }
-  .header-mobile-signin :is(.user-menu-signin, [data-class='user-menu-signin']) { width: 100%; justify-content: center; }
+  .header-mobile-signin { gap: 4px; display: grid; padding: 12px 6px 6px; border-top: 1px solid var(--line); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .header-auth-link {
+    gap: 8px;
+    min-width: 0;
+    display: flex;
+    min-height: 44px;
+    font-size: 12px;
+    padding: 10px 11px;
+    border-radius: 6px;
+    color: var(--accent);
+    align-items: center;
+    border: 1px solid var(--accent);
+    font-family: 'DMSans_700Bold', sans-serif;
+    transition: color .18s ease, background .18s ease, filter .18s ease;
+    &:hover { background: var(--subtle); }
+    &:focus-visible { outline-offset: 3px; outline: 2px solid var(--accent); }
+  }
+  .header-auth-link-primary { color: var(--contrast); background: var(--accent); &:hover { filter: brightness(.94); background: var(--accent); } }
+  .header-auth-icon { flex-shrink: 0; }
+  .header-auth-text { white-space: nowrap; }
   .header-link { min-height: 44px; justify-content: flex-start; padding: 10px 12px; }
   .app-shell[data-fit-view='true'] .header-navigation { left: 0; top: 100%; position: absolute; padding-inline: var(--shell-gutter); background: var(--paper); border-bottom: 1px solid var(--line); }
 }
@@ -271,6 +289,7 @@
   .app-shell { --shell-gutter: 20px; --header-logo-width: 185px; }
   .header-logo { max-width: 185px; }
   .header-link { padding: 9px 11px; }
+  .header-auth-link { padding-inline: 10px; }
   .footer-inner { gap: 4px 12px; min-height: 64px; padding: 8px var(--shell-gutter); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .footer-copyright { grid-row: 2; grid-column: 1; }
   .footer-credit { grid-row: 2; grid-column: 2; }
@@ -283,6 +302,7 @@
 @media (max-width: 480px) {
   .app-shell { --header-action-gap: 6px; --header-logo-width: 180px; }
   .header-link { gap: 8px; font-size: 12px; padding: 11px 12px; }
+  .header-auth-link { padding-inline: 11px; }
   .header-logo { max-width: 180px; }
 }
 
@@ -304,6 +324,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .header-navigation,
+  .header-auth-link,
   .header-domains-parent,
   .header-domains-toggle,
   .header-domains-chevron,
