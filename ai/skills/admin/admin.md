@@ -64,7 +64,7 @@ Validate and persist intake independently of delivery, allocate identity atomica
 
 ## Dashboard And Animated Charts
 
-Use real application summaries with source/window coverage, [the report contract](references/analytics.md#typed-report-and-server-contract), and [layout geometry](layout.md). Keep business activity, website traffic and platform runtime separate. No seeded account history, random chart values, global counts from samples or fabricated conversions.
+Use real application summaries with source/window coverage, [the report contract](references/analytics.md#typed-report-and-server-contract), and [layout geometry](layout.md). Keep business activity, website traffic and platform runtime separate. Analytics contains traffic; Usage is its own Owner-only Dashboard child immediately before Analytics and hosts supported runtime, health and resource reports. Preserve old Health/Observability aliases where content moves, and do not append a duplicate unavailable runtime panel to the overview. Use the shared combined bar-and-trend Analytics icon and [chart presentation](references/analytics.md#usage-and-analytics-presentation), with the destination's theme. No seeded account history, random chart values, global counts from samples or fabricated conversions.
 
 Chart/List and pointer/touch/slider inspection share typed data, real units/time positions, missing-value gaps, and accessible descriptions. Compare only compatible real periods and denominators. Maintain the same safe identity resolver and flags/device/source/page icons across compact/full/platform presentations.
 

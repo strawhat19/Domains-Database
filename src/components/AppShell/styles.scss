@@ -267,13 +267,13 @@
     border-radius: 6px;
     color: var(--accent);
     align-items: center;
+    background: var(--paper);
     border: 1px solid var(--accent);
     font-family: 'DMSans_700Bold', sans-serif;
     transition: color .18s ease, background .18s ease, filter .18s ease;
     &:hover { background: var(--subtle); }
     &:focus-visible { outline-offset: 3px; outline: 2px solid var(--accent); }
   }
-  .header-auth-link-primary { color: var(--contrast); background: var(--accent); &:hover { filter: brightness(.94); background: var(--accent); } }
   .header-auth-icon { flex-shrink: 0; }
   .header-auth-text { white-space: nowrap; }
   .header-link { min-height: 44px; justify-content: flex-start; padding: 10px 12px; }

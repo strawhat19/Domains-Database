@@ -44,8 +44,8 @@ const UserMenu = () => {
         accessibilityLabel={`${user.name} Account Menu`}
         accessibilityState={{ expanded: state.open }}
       >
-        <View {...elementProps(`user-menu-avatar`)} style={[styles.avatar, { backgroundColor: user.color?.color || `#138b8b` }]}>
-          <Text {...elementProps(`user-menu-initial`)} style={[styles.initial, { color: user.color?.type === `light` ? `#133b50` : `#ffffff` }]}>
+        <View {...elementProps(`user-menu-avatar`)} style={styles.avatar}>
+          <Text {...elementProps(`user-menu-initial`)} style={styles.initial}>
             {(user.name?.trim()?.[0] || `U`).toUpperCase()}
           </Text>
           {!!state.photoURL && (
