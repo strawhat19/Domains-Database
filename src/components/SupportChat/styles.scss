@@ -1,0 +1,5 @@
+.support-chat { min-width: 0; max-width: 100%; }
+.support-chat-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.support-chat-send:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.support-chat-message-body { overflow-wrap: anywhere; white-space: pre-wrap; }
+@media (max-width: 560px) { .support-chat-input { font-size: 16px !important; } }

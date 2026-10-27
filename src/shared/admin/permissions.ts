@@ -1,7 +1,7 @@
 import { Roles } from '../../types/types';
 import type { User } from '../models/users/User';
 
-export type AdminSection = `overview` | `users` | `features` | `plans` | `events` | `domains` | `requests` | `reports` | `feedback` | `reviews` | `aiChats` | `messages` | `formSubmissions` | `notifications` | `payments` | `analytics` | `observability`;
+export type AdminSection = `overview` | `users` | `features` | `plans` | `events` | `domains` | `requests` | `reports` | `feedback` | `reviews` | `bugReports` | `aiChats` | `messages` | `formSubmissions` | `notifications` | `payments` | `analytics` | `observability`;
 type Account = Pick<User, `id` | `role` | `active`> | null | undefined;
 const operationalRoles: string[] = [Roles.Owner, `Admin`, Roles.Administrator];
 const technicalRoles: string[] = [...operationalRoles, Roles.Developer];
@@ -17,7 +17,7 @@ export const canViewPayments = canManageRoles;
 export const canAccessAdmin = (user: Account, section: AdminSection = `overview`) => {
   if (section === `payments`) return canViewPayments(user);
   if (section === `features`) return canManageFeatures(user);
-  if ([`reports`, `requests`, `feedback`, `reviews`, `aiChats`, `messages`, `formSubmissions`].includes(section)) return canManageRoles(user);
+  if ([`reports`, `requests`, `feedback`, `reviews`, `bugReports`, `aiChats`, `messages`, `formSubmissions`].includes(section)) return canManageRoles(user);
   if (section === `plans`) return canManagePlans(user);
   if (section === `events`) return canManageEvents(user);
   if (section === `users` || section === `domains` || section === `notifications`) return canInspectAccounts(user);

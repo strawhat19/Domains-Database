@@ -22,13 +22,14 @@ import PortfolioSyncOptions from '../PortfolioSyncOptions/index.web';
 import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion';
 import { useMobilePortfolio } from '../MobilePortfolioBoard/useMobilePortfolio.web';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
+import { countPortfolioStarMatches, filterPortfolioSectionsByStar } from '../../shared/portfolioPreferences/starFilters';
 import { useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { usePortfolioSearch } from '../../shared/portfolioPreferences/usePortfolioSearch';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { buildPortfolioCopyText, excludeHiddenPortfolioSections, type PortfolioCopyFormat } from './copyFormats';
 import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
-import { X, Eye, Copy, Plus, Check, Gauge, Search, Link2, Filter, EyeOff, Settings, RefreshCw, ArrowRight, FlaskConical, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
+import { X, Eye, Copy, Plus, Star, Check, Gauge, Search, Link2, Filter, EyeOff, Settings, RefreshCw, ArrowRight, TriangleAlert, FlaskConical, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolio = usePortfolio();
@@ -46,25 +47,34 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const GroupExpansionIcon = allGroupsCollapsed ? ChevronsUpDown : ChevronsDownUp;
   const groupExpansionLabel = `${allGroupsCollapsed ? `Expand` : `Collapse`} All Groups / Apps`;
   const mobile = useMobilePortfolio();
-  const fullSections = useMemo(() => buildPortfolioSections(portfolio.registrarDomains, preferences), [portfolio.registrarDomains, preferences]);
+  const starFilter = portfolio.facetFilters.starred?.[0];
+  const fullSections = useMemo(() => buildPortfolioSections(portfolio.sectionDomains, {
+    ...preferences,
+    groupBy: starFilter ? `custom` : preferences.groupBy,
+  }), [portfolio.sectionDomains, preferences, starFilter]);
   const orderedSections = useMemo(() => {
     if (!portfolio.sortField) return fullSections;
-    const mainGroups = buildPortfolioSections(portfolio.registrarDomains, { ...preferences, orders: {} }).mainGroups;
+    const mainGroups = buildPortfolioSections(portfolio.sectionDomains, { ...preferences, orders: {}, groupBy: starFilter ? `custom` : preferences.groupBy }).mainGroups;
     return { ...fullSections, mainGroups };
-  }, [fullSections, portfolio.registrarDomains, portfolio.sortField, preferences]);
+  }, [fullSections, portfolio.sectionDomains, portfolio.sortField, preferences, starFilter]);
   const summaryFiltering = portfolio.activeFilterCount > 0;
-  const emptyPortfolio = !portfolio.loading && portfolio.domains.length === 0;
+  const otherSummaryFiltering = portfolio.activeFilterCount > Number(Boolean(starFilter));
+  const emptyPortfolio = !portfolio.loading && !portfolio.domains.length && !preferences.customGroups.length && !preferences.collections.length;
   const showHeadingSummary = !emptyPortfolio;
-  const facetSections = useMemo(() => summaryFiltering ? {
+  const facetSections = useMemo(() => starFilter
+    ? filterPortfolioSectionsByStar(orderedSections, portfolio.starState, starFilter, !otherSummaryFiltering)
+    : summaryFiltering ? {
     ...orderedSections,
     mainGroups: orderedSections.mainGroups.filter(group => group.domains.length),
     collections: orderedSections.collections.map(section => ({
       ...section,
       groups: section.groups.filter(group => group.domains.length),
     })).filter(section => section.groups.length),
-  } : orderedSections, [orderedSections, summaryFiltering]);
+  } : orderedSections, [orderedSections, portfolio.starState, starFilter, summaryFiltering, otherSummaryFiltering]);
   const search = usePortfolioSearch(facetSections, portfolio.query, portfolio.filteredDomains);
   const sections = search.sections;
+  const matchingItemCount = useMemo(() => starFilter ? countPortfolioStarMatches(sections, portfolio.starState, starFilter) : undefined,
+    [sections, portfolio.starState, starFilter]);
   const showingFilteredRecords = search.searching || summaryFiltering;
   const mainGroups = sections.mainGroups;
   const showMainRecords = !showingFilteredRecords || mainGroups.length > 0 || !sections.collections.length;
@@ -95,7 +105,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     const { ungroupedCount } = buildPortfolioDestinationTree(portfolio.domains, preferences.customGroups, preferences.collections);
     return `Collections: ${preferences.collections.length} · Groups: ${preferences.customGroups.length - apps} · Apps: ${apps} · Ungrouped: ${ungroupedCount}`;
   }, [portfolio.domains, preferences.customGroups, preferences.collections]);
-  const footerSummary = `Showing ${visibleIds.length} Of ${search.searching ? portfolio.registrarDomains.length : portfolio.filteredDomains.length} · ${organizationSummary}`;
+  const footerTotal = search.searching ? portfolio.registrarDomains.length : portfolio.filteredDomains.length;
+  const footerSummary = `Showing ${visibleIds.length} Of ${footerTotal} · ${organizationSummary}`;
   const copyIds = useMemo(() => {
     const mainDomains = mainGroups.flatMap(group => group.domains);
     const collectionDomains = sections.collections.flatMap(section => compact ? section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : section.domains);
@@ -146,6 +157,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     void portfolio.refreshWebsiteInsights(records);
   };
   const hasFilters = summaryFiltering || (portfolio.domains.length > 0 && search.searching);
+  const starFilters = portfolio.filterSections.find(section => section.id === `starred`)?.options ?? [];
   const registrarTotals = useMemo(() => [
     ...portfolio.summary.registrarCounts,
     ...portfolio.connectedSyncRegistrars.filter(({ label }) => !portfolio.summary.registrarCounts.some(({ registrar }) => registrar === label))
@@ -249,6 +261,28 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 })}
               </div>
               <div id={`portfolio-heading-summary`} className={`portfolio-summary`}>
+                {!portfolio.loading && <div id={`portfolio-heading-star-filters`} role={`group`} aria-label={`Filter Portfolio Items By Star`} className={`portfolio-heading-filters portfolio-star-filters`}>
+                  {starFilters.map(option => {
+                    const filterId = `portfolio-heading-star-filter-${option.value}`;
+                    return (
+                      <button
+                        type={`button`}
+                        id={filterId}
+                        key={option.value}
+                        title={`${option.label}: ${option.count} Item(s)`}
+                        disabled={portfolio.loading}
+                        className={`portfolio-summary-item portfolio-summary-filter`}
+                        aria-pressed={portfolio.facetFilters.starred?.includes(option.value) ?? false}
+                        aria-label={`${option.label}, ${option.count} Item(s)`}
+                        onClick={() => portfolio.toggleFacetFilter(`starred`, option.value)}
+                      >
+                        <StackPillShape id={`${filterId}-shape`} />
+                        <Star size={13} aria-hidden={`true`} id={`${filterId}-icon`} fill={option.value === `true` ? `currentColor` : `none`} className={`portfolio-star-filter-icon`} />
+                        <span id={`${filterId}-count`} className={`portfolio-summary-value`}>{option.count}</span>
+                      </button>
+                    );
+                  })}
+                </div>}
                 {!portfolio.loading && registrarTotals.map(({ count, registrar }) => {
                   const registrarId = registrar.toLowerCase().replace(/\s+/g, `-`);
                   const connection = portfolio.connectedSyncRegistrars.find(({ label }) => label === registrar);
@@ -308,12 +342,14 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   id={`portfolio-heading-attention`}
                   aria-pressed={portfolio.attentionOnly}
                   onClick={portfolio.toggleAttentionFilter}
+                  title={portfolio.loading ? `Needs Attention` : `Needs Attention: ${portfolio.summary.attention} Domain(s)`}
+                  aria-label={portfolio.loading ? `Needs Attention, Loading Domain Count` : `Needs Attention, ${portfolio.summary.attention} Domain(s)`}
                   className={`portfolio-summary-item portfolio-summary-filter portfolio-heading-filter${portfolio.summary.attention ? ` portfolio-summary-attention` : ``}`}
                 >
                   <StackPillShape id={`portfolio-heading-attention-shape`} />
-                  <span id={`portfolio-heading-attention-dot`} className={`portfolio-attention-dot`} aria-hidden={`true`} />
-                  <span id={`portfolio-heading-attention-label`} className={`portfolio-attention-label`}>
-                    {portfolio.loading ? <><span aria-hidden={`true`} id={`portfolio-heading-attention-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} />{` need attention`}</> : `${portfolio.summary.attention} need attention`}
+                  <TriangleAlert size={13} aria-hidden={`true`} id={`portfolio-heading-attention-icon`} className={`portfolio-attention-icon`} />
+                  <span id={`portfolio-heading-attention-label`} className={`portfolio-summary-value portfolio-attention-label`}>
+                    {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-heading-attention-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-count`} /> : portfolio.summary.attention}
                   </span>
                 </button>
                 {showAnnualSpend && (
@@ -709,12 +745,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           onManualOrder={() => { if (portfolio.sortField) portfolio.toggleManualOrder(); }}
         />}
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
-          <span id={`portfolio-visible-count`} className={`portfolio-visible-count`} title={portfolio.loading ? undefined : footerSummary}>
-            {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-visible-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-footer`} /> : footerSummary}
+          <span id={`portfolio-visible-count`} className={`portfolio-visible-count`} title={portfolio.loading ? undefined : footerSummary} aria-label={portfolio.loading ? undefined : footerSummary}>
+            {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-visible-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-footer`} /> : mobile ? `${visibleIds.length} / ${footerTotal} Domains` : footerSummary}
           </span>
-          <button type={`button`} disabled={portfolio.loading} onClick={portfolio.openSetup} id={`portfolio-connect-registrar`} className={`portfolio-button portfolio-button-quiet`}>
+          <button type={`button`} disabled={portfolio.loading} onClick={portfolio.openSetup} aria-label={`Connect Registrar`} id={`portfolio-connect-registrar`} className={`portfolio-button portfolio-button-quiet`}>
             <Link2 size={13} aria-hidden={`true`} id={`portfolio-connect-registrar-icon`} className={`portfolio-button-icon`} />
-            <span id={`portfolio-connect-registrar-text`} className={`portfolio-button-text`}>{`Connect Registrar`}</span>
+            <span id={`portfolio-connect-registrar-text`} className={`portfolio-button-text`}>{mobile ? `Connect` : `Connect Registrar`}</span>
           </button>
         </div>
       </div>
@@ -766,7 +802,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         />
       )}
       {toolbar.filtersOpen && (
-        <PortfolioFilters portfolio={portfolio} onClose={toolbar.closeFilters} />
+        <PortfolioFilters portfolio={portfolio} onClose={toolbar.closeFilters} matchingItemCount={matchingItemCount} />
       )}
       {toolbar.copyOpen && (
         <PortfolioCopyOptions

@@ -31,6 +31,9 @@
 .portfolio-title { margin: 0; font-size: 30px; font-weight: 700; line-height: 1.15; letter-spacing: -.045em; font-family: var(--font-display); }
 .portfolio-summary { gap: 12px; display: flex; flex-wrap: wrap; color: var(--muted); align-items: center; }
 .portfolio-summary-item { gap: 4px; display: inline-flex; font-size: 12px; align-items: center; }
+.portfolio-star-filters { gap: 8px; align-items: center; }
+.portfolio-star-filter-icon { flex-shrink: 0; color: #fbbf24; }
+.portfolio-attention-icon { flex-shrink: 0; }
 .portfolio-registrar-total, .portfolio-extension-total { white-space: nowrap; }
 .portfolio-registrar-pill {
   gap: 0;
@@ -424,7 +427,9 @@
   }
   .portfolio-title { grid-row: 2; grid-column: 1; }
   .portfolio-summary-stack { display: contents; }
-  .portfolio-summary { grid-row: 2; min-width: 0; grid-column: 2; }
+  .portfolio-summary { grid-row: 2; min-width: 0; grid-column: 2; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .portfolio-summary > * { flex-shrink: 0; }
+  .portfolio-summary :is(button, a):focus-visible { outline-offset: -2px; }
   .portfolio-heading .portfolio-heading-filters { display: flex; }
   .portfolio-heading .portfolio-heading-filter { display: inline-flex; }
   .portfolio-extension-summary { grid-row: 1; }

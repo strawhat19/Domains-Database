@@ -99,6 +99,12 @@ service cloud.firestore {
         && get(userPath(get(identityPath()).data.id)).data.role == 'Owner';
     }
     function actorId() { return get(identityPath()).data.id; }
+    function feedbackActor() { return signedIn() && exists(identityPath()) && ownsAccount(actorId()); }
+    function supportThreadPath(threadId) { return /databases/$(database)/documents/supportThreads/$(threadId); }
+    function supportReader(data) { return feedbackActor() && (isOwner() || data.customerId == actorId()); }
+    function canReadSupportThread(threadId) {
+      return exists(supportThreadPath(threadId)) && supportReader(get(supportThreadPath(threadId)).data);
+    }
     function billingPath(userId) { return /databases/$(database)/documents/billingUsers/$(userId); }
     function paidBillingAccess() {
       return signedIn() && exists(identityPath()) && ownsAccount(actorId()) && exists(billingPath(actorId()))
@@ -826,6 +832,27 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'allDay', 'endsAt', 'updated', 'startsAt', 'location', 'description']);
       allow delete: if isAccountAdmin();
     }
+    match /supportThreads/{threadId} {
+      allow get: if supportReader(resource.data);
+      allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 41 && supportReader(resource.data);
+      allow create, update, delete: if false;
+      match /messages/{messageId} {
+        allow get: if canReadSupportThread(threadId);
+        allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 51 && canReadSupportThread(threadId);
+        allow create, update, delete: if false;
+      }
+      match /readStates/{userId} {
+        allow get: if feedbackActor() && userId == actorId() && canReadSupportThread(threadId);
+        allow list, create, update, delete: if false;
+      }
+    }
+    match /feedbackEntries/{entryId} {
+      allow get: if feedbackActor() && (isOwner() || resource.data.authorId == actorId());
+      allow list: if isOwner() && request.query.limit != null && request.query.limit > 0 && request.query.limit <= 51;
+      allow create, update, delete: if false;
+    }
+    match /supportThreadAccounts/{userId} { allow read, write: if false; }
+    match /feedbackAttempts/{attemptId} { allow read, write: if false; }
     match /formSubmissions/{submissionId} {
       allow read: if isOwner();
       allow create: if featureEnabled('contact') && submissionValues() && recordIdentity(submissionId, 'FormSubmission')

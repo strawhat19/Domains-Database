@@ -26,7 +26,7 @@ const filterIcons: Record<PortfolioFilterField, typeof Filter> = {
   providerStatus: CircleCheck,
 };
 
-const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
+const PortfolioFilters = ({ portfolio, onClose, matchingItemCount }: PortfolioFiltersProps) => {
   const filters = usePortfolioFilters({ portfolio, onClose });
   return (
     <div
@@ -105,8 +105,8 @@ const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
             <span id={`portfolio-filters-summary-text`} className={`portfolio-filters-summary-text`}>{`${filters.filterCount} Active Filter(s)`}</span>
           </p>
           <p id={`portfolio-filters-matches`} className={`portfolio-filters-results`} role={`status`}>
-            <span id={`portfolio-filters-matches-count`} className={`portfolio-filters-results-count`}>{portfolio.filteredDomains.length}</span>
-            <span id={`portfolio-filters-matches-label`} className={`portfolio-filters-results-label`}>{`Matching Domain(s)`}</span>
+            <span id={`portfolio-filters-matches-count`} className={`portfolio-filters-results-count`}>{matchingItemCount ?? portfolio.filteredDomains.length}</span>
+            <span id={`portfolio-filters-matches-label`} className={`portfolio-filters-results-label`}>{matchingItemCount === undefined ? `Matching Domain(s)` : `Matching Item(s)`}</span>
           </p>
         </div>
         <ModalTabs id={`portfolio-filters`} value={filters.tab} options={filters.tabs} onChange={filters.setTab} label={`Advanced Filter Sections`} />
@@ -115,6 +115,64 @@ const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
             <div key={tab.id} role={`tabpanel`} tabIndex={0} hidden={filters.tab !== tab.id} id={`portfolio-filters-panel-${tab.id}`} className={`portfolio-filters-panel`} aria-labelledby={`portfolio-filters-tab-${tab.id}`}>
               {filters.tab === tab.id && <div id={`portfolio-filters-content-${tab.id}`} className={`portfolio-filters-content`}>
             <div id={`portfolio-filters-fields`} className={`portfolio-filters-fields`}>
+              <div id={`portfolio-filters-facets`} className={`portfolio-filters-facets`}>
+                {filters.visibleSections.map(section => {
+                  const selected = portfolio.facetFilters[section.id] ?? [];
+                  const SectionIcon = filterIcons[section.id];
+                  const sectionId = `portfolio-filters-facet-${section.id}`;
+                  return (
+                    <section key={section.id} id={sectionId} className={`portfolio-filters-facet${[`tags`, `expiry`, `projectStatus`].includes(section.id) ? ` portfolio-filters-facet-wide` : ``}`} aria-labelledby={`${sectionId}-label`}>
+                      <div id={`${sectionId}-heading`} className={`portfolio-filters-facet-heading`}>
+                        <SectionIcon size={15} aria-hidden id={`${sectionId}-icon`} className={`portfolio-filters-section-icon`} />
+                        <h3 id={`${sectionId}-label`} className={`portfolio-filters-label`}>{section.label}</h3>
+                        <span id={`${sectionId}-selected`} className={`portfolio-filters-facet-count`}>
+                          {selected.length ? `${selected.length} Selected` : `${section.options.length + Number(section.id === `starred`)} Options`}
+                        </span>
+                      </div>
+                        <div id={`${sectionId}-options`} className={`portfolio-filters-facet-options`}>
+                          {section.id === `starred` && (
+                            <button
+                              type={`button`}
+                              id={`${sectionId}-all`}
+                              disabled={portfolio.loading}
+                              aria-pressed={!selected.length}
+                              aria-label={`All Portfolio Items`}
+                              className={`portfolio-filters-choice`}
+                              onClick={() => filters.applyFilter(filters.clearStarredFilter)}
+                            >
+                              <Check size={12} aria-hidden id={`${sectionId}-all-check`} className={`portfolio-filters-choice-check`} />
+                              <span id={`${sectionId}-all-label`} className={`portfolio-filters-choice-label`}>{`All`}</span>
+                              <span id={`${sectionId}-all-count`} className={`portfolio-filters-choice-count`}>{section.options.reduce((total, option) => total + option.count, 0)}</span>
+                            </button>
+                          )}
+                          {section.options.map(option => {
+                            const optionId = `${sectionId}-${encodeURIComponent(option.value)}`;
+                            const active = selected.includes(option.value);
+                            return (
+                              <button
+                                type={`button`}
+                                id={optionId}
+                                key={option.value}
+                                aria-pressed={active}
+                                disabled={portfolio.loading}
+                                className={`portfolio-filters-choice`}
+                                aria-label={`${option.label}, ${option.count} ${section.id === `starred` ? `Item(s)` : `Domain(s)`}`}
+                                onClick={() => filters.applyFilter(() => portfolio.toggleFacetFilter(section.id, option.value))}
+                              >
+                                <Check size={12} aria-hidden id={`${optionId}-check`} className={`portfolio-filters-choice-check`} />
+                                <span id={`${optionId}-label`} className={`portfolio-filters-choice-label`}>{option.label}</span>
+                                <span id={`${optionId}-count`} className={`portfolio-filters-choice-count`}>{option.count}</span>
+                              </button>
+                            );
+                          })}
+                          {!section.options.length && (
+                            <p id={`${sectionId}-empty`} className={`portfolio-filters-message`}>{`No Values Yet`}</p>
+                          )}
+                        </div>
+                    </section>
+                  );
+                })}
+              </div>
               <section
                 hidden={filters.tab !== `common`}
                 id={`portfolio-filters-extensions`}
@@ -262,49 +320,6 @@ const PortfolioFilters = ({ portfolio, onClose }: PortfolioFiltersProps) => {
                   <p id={`portfolio-filters-locations-empty`} className={`portfolio-filters-message`}>{`No Domains To Filter`}</p>
                 )}
               </section>
-              <div id={`portfolio-filters-facets`} className={`portfolio-filters-facets`}>
-                {filters.visibleSections.map(section => {
-                  const selected = portfolio.facetFilters[section.id] ?? [];
-                  const SectionIcon = filterIcons[section.id];
-                  const sectionId = `portfolio-filters-facet-${section.id}`;
-                  return (
-                    <section key={section.id} id={sectionId} className={`portfolio-filters-facet${[`tags`, `expiry`, `projectStatus`].includes(section.id) ? ` portfolio-filters-facet-wide` : ``}`} aria-labelledby={`${sectionId}-label`}>
-                      <div id={`${sectionId}-heading`} className={`portfolio-filters-facet-heading`}>
-                        <SectionIcon size={15} aria-hidden id={`${sectionId}-icon`} className={`portfolio-filters-section-icon`} />
-                        <h3 id={`${sectionId}-label`} className={`portfolio-filters-label`}>{section.label}</h3>
-                        <span id={`${sectionId}-selected`} className={`portfolio-filters-facet-count`}>
-                          {selected.length ? `${selected.length} Selected` : `${section.options.length} Options`}
-                        </span>
-                      </div>
-                        <div id={`${sectionId}-options`} className={`portfolio-filters-facet-options`}>
-                          {section.options.map(option => {
-                            const optionId = `${sectionId}-${encodeURIComponent(option.value)}`;
-                            const active = selected.includes(option.value);
-                            return (
-                              <button
-                                type={`button`}
-                                id={optionId}
-                                key={option.value}
-                                aria-pressed={active}
-                                disabled={portfolio.loading}
-                                className={`portfolio-filters-choice`}
-                                aria-label={`${option.label}, ${option.count} Domain(s)`}
-                                onClick={() => filters.applyFilter(() => portfolio.toggleFacetFilter(section.id, option.value))}
-                              >
-                                <Check size={12} aria-hidden id={`${optionId}-check`} className={`portfolio-filters-choice-check`} />
-                                <span id={`${optionId}-label`} className={`portfolio-filters-choice-label`}>{option.label}</span>
-                                <span id={`${optionId}-count`} className={`portfolio-filters-choice-count`}>{option.count}</span>
-                              </button>
-                            );
-                          })}
-                          {!section.options.length && (
-                            <p id={`${sectionId}-empty`} className={`portfolio-filters-message`}>{`No Values Yet`}</p>
-                          )}
-                        </div>
-                    </section>
-                  );
-                })}
-              </div>
             </div>
             {filters.tab === `selected` && (
               <section id={`portfolio-filters-active`} className={`portfolio-filters-section portfolio-filters-active`} aria-labelledby={`portfolio-filters-active-title`}>

@@ -10,7 +10,7 @@ import { normalizeGroupDetails } from '../../shared/portfolioPreferences/details
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { buildPortfolioSections, sortPortfolioDomains } from '../../shared/portfolioPreferences/groups';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../../shared/domainProject';
-import type { CustomPortfolioCollection, CustomPortfolioGroup, GroupSettingsInput } from '../../shared/portfolioPreferences/types';
+import type { PortfolioSections, CustomPortfolioCollection, CustomPortfolioGroup, GroupSettingsInput } from '../../shared/portfolioPreferences/types';
 
 export type BoardTarget = { kind: `domain` | `group` | `collection`; id: string };
 export type QuickField = `name` | `description` | `projectStatus` | `mvp` | `future`;
@@ -28,11 +28,11 @@ export interface BoardDraft extends GroupSettingsInput {
 }
 const newDraft = (): BoardDraft => ({ name: ``, description: ``, mvp: ``, future: ``, isApp: false, visibility: `private`, projectStatus: DEFAULT_DOMAIN_PROJECT_STATUS });
 
-export const useNativePortfolioBoard = (domains: DomainRecord[], onEditDomain: (domain: DomainRecord) => void, selectedIds: string[]) => {
+export const useNativePortfolioBoard = (domains: DomainRecord[], onEditDomain: (domain: DomainRecord) => void, selectedIds: string[], providedSections?: PortfolioSections) => {
   const preferences = usePortfolioPreferences();
   const context = useDomains();
   const orderedDomains = useMemo(() => [...domains].sort((left, right) => left.name.localeCompare(right.name, undefined, { numeric: true, sensitivity: `base` })), [domains]);
-  const sections = useMemo(() => buildPortfolioSections(orderedDomains, { ...preferences, groupBy: `custom` }), [orderedDomains, preferences]);
+  const sections = useMemo(() => providedSections ?? buildPortfolioSections(orderedDomains, { ...preferences, groupBy: `custom` }), [orderedDomains, preferences, providedSections]);
   const fullSections = useMemo(() => buildPortfolioSections(sortPortfolioDomains(context.domains, `name`), {
     ...preferences,
     groupBy: `custom`,

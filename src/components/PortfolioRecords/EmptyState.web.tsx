@@ -8,8 +8,8 @@ const PortfolioEmptyState = ({ hasFilters, onAction, idPrefix = `portfolio` }: {
       id={`${idPrefix}-empty`}
       icon={hasFilters ? `search` : `domains`}
       eyebrow={hasFilters ? `SEARCH RESULTS` : `YOUR PORTFOLIO`}
-      title={hasFilters ? `No matching domains` : `Add your first domain`}
-      description={hasFilters ? `Try another name or clear your filters to see your domains.` : `Keep your domains, renewal dates, and project notes in one place.`}
+      title={hasFilters ? `No matching items` : `Add your first domain`}
+      description={hasFilters ? `Try another name or clear your filters to see your portfolio.` : `Keep your domains, renewal dates, and project notes in one place.`}
       detail={hasFilters ? undefined : `Start with manual entry, a CSV import, or a registrar connection.`}
     >
       <button

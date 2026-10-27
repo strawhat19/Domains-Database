@@ -6,6 +6,7 @@ import type { usePortfolio } from '../DomainPortfolio/usePortfolio';
 
 export interface PortfolioFiltersProps {
   onClose: () => void;
+  matchingItemCount?: number;
   portfolio: ReturnType<typeof usePortfolio>;
 }
 
@@ -61,6 +62,7 @@ export const usePortfolioFilters = ({ portfolio, onClose: onDismiss }: Portfolio
     ...item,
     count: item.id === `selected` ? filterCount
       : item.id === `common` ? portfolio.extensionFilters.length + portfolio.registrarFilters.length + portfolio.collectionFilters.length + portfolio.groupFilters.length
+          + FILTER_TAB_FIELDS.common.reduce((total, field) => total + (portfolio.facetFilters[field]?.length ?? 0), 0)
         : FILTER_TAB_FIELDS[item.id].reduce((total, field) => total + (portfolio.facetFilters[field]?.length ?? 0), 0)
           + (item.id === `domains` ? Number(portfolio.attentionOnly) : 0),
   }));
@@ -68,11 +70,15 @@ export const usePortfolioFilters = ({ portfolio, onClose: onDismiss }: Portfolio
     portfolio.clearSummaryFilters();
     portfolio.setQuery(``);
   };
+  const clearStarredFilter = () => {
+    const selected = portfolio.facetFilters.starred?.[0];
+    if (selected) portfolio.toggleFacetFilter(`starred`, selected);
+  };
   const applyFilter = (updateFilter: () => void) => {
     if (portfolio.loading) return;
     updateFilter();
     onClose();
   };
   useModalFocus(modalRef, true, onClose, true);
-  return { sheet, close: onClose, tab, tabs, setTab, modalRef, applyFilter, filterCount, clearFilters, registrarTotals, activeSelections, visibleSections, destinationBranches, manualSyncBlocked };
+  return { sheet, close: onClose, tab, tabs, setTab, modalRef, applyFilter, filterCount, clearFilters, registrarTotals, clearStarredFilter, activeSelections, visibleSections, destinationBranches, manualSyncBlocked };
 };

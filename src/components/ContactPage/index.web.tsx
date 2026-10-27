@@ -3,6 +3,7 @@ import Toast from '../Toast';
 import PageMeta from '../PageMeta';
 import { Link } from 'expo-router';
 import RouterAnchor from '../RouterAnchor';
+import FeedbackForm from './FeedbackForm.web';
 import { useContactPage } from './useContactPage';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { contactFields, contactTopics, contactDescription } from './content';
@@ -13,9 +14,9 @@ const topicIcons = { ideas: Lightbulb, support: Plug };
 const ContactPage = () => {
   const state = useContactPage();
   const { error, flags, ready } = useFeatureFlags();
-  const available = ready && flags.contact;
-  const loading = !ready && !error;
-  const message = loading ? `Loading Contact Form…` : `The contact form is currently unavailable. Please try again later.`;
+  const available = ready && flags.contact && !state.authLoading && !state.accountUnavailable;
+  const loading = state.authLoading || (!ready && !error);
+  const message = loading ? `Loading Contact Form…` : state.accountUnavailable ? `Your account is currently unavailable for contact or feedback.` : `The contact form is currently unavailable. Please try again later.`;
   return (
     <>
       <PageMeta title={`Contact`} canonicalPath={`/contact`} description={contactDescription} />
@@ -76,13 +77,13 @@ const ContactPage = () => {
             </Link>
           </nav>
         </section>
-        <section id={`contact-form-panel`} className={`contact-form-panel`} aria-busy={loading} aria-labelledby={!available ? `contact-unavailable-title` : state.submitted ? `contact-success-title` : `contact-form-title`}>
+        <section id={`contact-form-panel`} className={`contact-form-panel`} aria-busy={loading} aria-label={available && state.signedIn ? `Contact And Feedback` : undefined} aria-labelledby={!available ? `contact-unavailable-title` : state.signedIn ? undefined : state.submitted ? `contact-success-title` : `contact-form-title`}>
           {!available ? (
             <div id={`contact-unavailable`} className={`contact-form-heading`}>
               <h2 id={`contact-unavailable-title`} className={`contact-form-title`}>{`Contact Form`}</h2>
               <p role={`status`} id={`contact-unavailable-message`} className={`contact-form-description`}>{message}</p>
             </div>
-          ) : state.submitted ? (
+          ) : state.signedIn ? <FeedbackForm state={state} /> : state.submitted ? (
             <div id={`contact-success`} className={`contact-success`} role={`status`} aria-live={`polite`}>
               <span id={`contact-success-symbol`} className={`contact-success-symbol`}><CheckCircle2 id={`contact-success-icon`} className={`contact-success-icon`} size={32} aria-hidden /></span>
               <p id={`contact-success-eyebrow`} className={`contact-eyebrow`}>{state.copy.eyebrow}</p>
@@ -166,7 +167,7 @@ const ContactPage = () => {
           )}
         </section>
       </article>
-      {available && <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />}
+      {available && <Toast id={`contact-feedback`} message={state.feedback} kind={state.feedbackKind} onDismiss={state.clearFeedback} />}
     </>
   );
 };

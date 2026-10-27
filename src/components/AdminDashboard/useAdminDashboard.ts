@@ -7,7 +7,7 @@ import { canAccessAdmin, type AdminSection } from '../../shared/admin/permission
 export const useAdminDashboard = (section: AdminSection) => {
   const { user } = useAuth();
   const [revision, setRevision] = useState(0);
-  const enabled = ![`users`, `features`, `plans`, `events`, `reviews`, `aiChats`, `messages`, `requests`, `feedback`, `notifications`, `formSubmissions`, `payments`].includes(section) && canAccessAdmin(user, section);
+  const enabled = ![`users`, `features`, `plans`, `events`, `reviews`, `bugReports`, `aiChats`, `messages`, `requests`, `feedback`, `notifications`, `formSubmissions`, `payments`].includes(section) && canAccessAdmin(user, section);
   const scope = JSON.stringify([user?.id, user?.role, user?.active, section, revision]);
   const [state, setState] = useState<{ scope: string; snapshot: AdminSnapshot | null; error: string }>({ scope, snapshot: null, error: `` });
   const current = state.scope === scope ? state : { scope, snapshot: null, error: `` };

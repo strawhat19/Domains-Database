@@ -230,7 +230,8 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       <footer id={`site-footer`} className={`site-footer`}>
         <div id={`footer-inner`} className={`footer-inner`}>
           <p id={`footer-copyright`} className={`footer-copyright`}>
-            {`© ${year}`}
+            <span id={`footer-copyright-symbol`} className={`footer-copyright-symbol`}>{`©`}</span>
+            {` ${year}`}
             <span id={`footer-copyright-name`} className={`footer-copyright-name`}>
               {` ${appName}.`}
             </span>

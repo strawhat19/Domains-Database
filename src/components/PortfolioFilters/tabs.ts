@@ -13,8 +13,8 @@ export type PortfolioFiltersTab = typeof FILTER_TABS[number][`id`];
 
 export const FILTER_TAB_FIELDS: Record<PortfolioFiltersTab, readonly PortfolioFilterField[]> = {
   selected: [],
-  common: [],
+  common: [`starred`],
   project: [`owner`, `tags`, `difficulty`, `projectStatus`],
   security: [`locked`, `dnssec`, `privacy`, `autoRenew`],
-  domains: [`status`, `expiry`, `source`, `starred`, `country`, `currency`, `providerStatus`],
+  domains: [`status`, `expiry`, `source`, `country`, `currency`, `providerStatus`],
 };

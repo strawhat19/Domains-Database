@@ -3,10 +3,10 @@
 import './overview.scss';
 import { Link } from 'expo-router';
 import AdminSkeleton from './Skeleton';
-import { useRef, type KeyboardEvent } from 'react';
 import TrafficTrend from './traffic-trend/traffic-trend';
 import { useTrafficOverview } from './useTrafficOverview';
 import { routes as siteRoutes } from '../../shared/routes';
+import { useRef, type ReactNode, type KeyboardEvent } from 'react';
 import { getTrafficSegmentIdentity } from './traffic-segment-icon/traffic-segment-identity';
 import TrafficOverviewCountries from './traffic-overview-countries/traffic-overview-countries';
 import TrafficOverviewBreakdown from './traffic-overview-breakdown/traffic-overview-breakdown';
@@ -28,7 +28,7 @@ const segments = [
   { key: `device`, label: `Device`, all: `All Devices`, icon: Monitor },
 ] as const;
 
-const TrafficOverview = () => {
+const TrafficOverview = ({ headingTabs }: { headingTabs?: ReactNode }) => {
   const { error, report, filters, loading, refresh, rows, today, oldest, metric, compare, showArea, isPreset, dateError, activeView, showShares, filterCount, filtersOpen, presentation, selectedDays, draftFilters, showDaySlider, setMetric, setCompare, selectView, openFilters, setPreset, setShowArea, exportReport, applyFilters, clearSegments, toggleFilters, selectSegment, setShowShares, setPresentation, setDraftFilters, setShowDaySlider, clearDraftSegments } = useTrafficOverview();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const filterButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -63,8 +63,9 @@ const TrafficOverview = () => {
   return (
     <section id={`dd-traffic-overview`} className={`dd-traffic-overview${!filtersOpen && !segment && presentation === `visual` ? ` is-chart` : ``}`} aria-labelledby={`dd-traffic-overview-title`} aria-busy={loading}>
       <div id={`dd-traffic-overview-heading`} className={`dd-traffic-overview-heading`}>
-        <div id={`dd-traffic-overview-copy`} className={`dd-traffic-overview-copy`}>
+        <div id={`dd-traffic-overview-copy`} className={`dd-traffic-overview-copy${headingTabs ? ` has-tabs` : ``}`}>
           <h2 id={`dd-traffic-overview-title`} className={`dd-traffic-overview-title`}><Globe className={`dd-report-icon`} size={19} aria-hidden={`true`} />Traffic</h2>
+          {headingTabs}
         </div>
         {report && activeView === `overview` && !filtersOpen && <TrafficOverviewCountries inline id={`dd-traffic-overview-heading-countries`} rows={rows.country} metric={metric} total={report.current[metric]} selected={filters.country} loading={loading} showShare={showShares} view={presentation === `visual` ? `bars` : `list`} onSelect={(value) => selectSegment(`country`, value)} onExplore={exploreCountries} />}
         <div id={`dd-traffic-overview-actions`} className={`dd-traffic-overview-actions`}>

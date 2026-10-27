@@ -4,7 +4,7 @@ import AdminDashboard from '../src/components/AdminDashboard';
 
 const AdminAIChatsRoute = () => (
   <>
-    <PageMeta title={`Admin · Chats`} description={`Future AI chatbot conversation history`} />
+    <PageMeta title={`Admin · Chats`} description={`Private support conversation history`} />
     <AdminDashboard section={routes.adminAIChats.adminSection} />
   </>
 );

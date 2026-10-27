@@ -14,7 +14,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getConvertedGroupName } from '../../shared/portfolioPreferences/names';
 import type { DomainRecord } from '../../shared/types';
-import type { PortfolioGroup, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
+import type { PortfolioGroup, PortfolioSections, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 import { NativePortfolioDrag, NativeDragSource, NativeDropZone, NativeDragScroll } from '../NativePortfolioDrag/index.native';
 import { Animated, ActivityIndicator, Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, CheckSquare, ChevronDown, Eye, EyeOff, AppWindow, Folder, Layers, MoreHorizontal, Plus, Save, Settings, Star, Trash2, MoveRight, Pencil, ExternalLink } from 'lucide-react-native';
@@ -24,6 +24,8 @@ type Styles = ReturnType<typeof createStyles>;
 interface Props {
   domains: DomainRecord[];
   selectedIds: string[];
+  showMainGroups?: boolean;
+  sections?: PortfolioSections;
   onSelect: (id: string) => void;
   onEdit: (domain: DomainRecord) => void;
   renderMain: (openActions: (domain: DomainRecord) => void) => ReactNode;
@@ -327,13 +329,13 @@ const BoardActions = ({ logic, styles, onSelect }: { logic: Logic; styles: Style
   </NativePortfolioSheet>;
 };
 
-const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMain }: Props) => {
+const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMain, sections, showMainGroups = false }: Props) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const { width, height } = useWindowDimensions();
   const [portfolioMenu, setPortfolioMenu] = useState(false);
   const pendingAction = useRef<(() => void) | null>(null);
-  const logic = useNativePortfolioBoard(domains, onEdit, selectedIds);
+  const logic = useNativePortfolioBoard(domains, onEdit, selectedIds, sections);
   const columnWidth = Math.max(240, Math.min(340, width - 62));
   const columnHeight = Math.max(300, Math.min(620, height * .64));
   const looseGroups = logic.preferences.customGroups.filter(group => !group.collectionId || !logic.preferences.collections.some(collection => collection.id === group.collectionId));
@@ -344,6 +346,25 @@ const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMa
     <NativePortfolioDrag onDrop={logic.drop}>
       <View nativeID={`native-portfolio-content`} style={styles.content}>
         {renderMain(domain => logic.openMenu({ kind: `domain`, id: domain.id }, true))}
+        {showMainGroups && logic.sections.mainGroups.filter(group => group.customGroupId).map(group => {
+          const GroupIcon = group.isApp ? AppWindow : Folder;
+          return (
+            <View key={group.key} nativeID={`native-board-main-group-${group.customGroupId}`} style={styles.card}>
+              <Pressable
+                style={styles.source}
+                accessibilityRole={`button`}
+                nativeID={`native-board-main-group-actions-${group.customGroupId}`}
+                accessibilityLabel={`${group.label} ${group.isApp ? `App` : `Group`} Actions`}
+                onPress={() => logic.openMenu({ kind: `group`, id: group.customGroupId! })}
+              >
+                <GroupIcon size={15} color={palette.accent} accessible={false} />
+                <Text nativeID={`native-board-main-group-name-${group.customGroupId}`} style={styles.cardTitle}>{group.label}</Text>
+                <Text nativeID={`native-board-main-group-count-${group.customGroupId}`} style={styles.count}>{group.domains.length}</Text>
+                <MoreHorizontal size={17} color={palette.muted} accessible={false} />
+              </Pressable>
+            </View>
+          );
+        })}
         <View nativeID={`native-portfolio-board`} style={styles.board}>
           <View nativeID={`native-portfolio-board-heading`} style={styles.heading}>
             <Text nativeID={`native-portfolio-board-title`} style={styles.headingTitle}>{`Collections`}</Text>

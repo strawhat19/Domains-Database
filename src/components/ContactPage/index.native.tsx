@@ -2,6 +2,7 @@ import Toast from '../Toast';
 import PageMeta from '../PageMeta';
 import { Link } from 'expo-router';
 import { createStyles } from './styles.native';
+import FeedbackForm from './FeedbackForm.native';
 import { useContactPage } from './useContactPage';
 import { useMemo, useEffect, useContext } from 'react';
 import { elementProps } from '../../shared/elementProps';
@@ -17,9 +18,9 @@ const topicIcons = { ideas: Lightbulb, support: Plug };
 const ContactPage = () => {
   const state = useContactPage();
   const { error, flags, ready } = useFeatureFlags();
-  const available = ready && flags.contact;
-  const loading = !ready && !error;
-  const message = loading ? `Loading Contact Form…` : `The contact form is currently unavailable. Please try again later.`;
+  const available = ready && flags.contact && !state.authLoading && !state.accountUnavailable;
+  const loading = state.authLoading || (!ready && !error);
+  const message = loading ? `Loading Contact Form…` : state.accountUnavailable ? `Your account is currently unavailable for contact or feedback.` : `The contact form is currently unavailable. Please try again later.`;
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
   const scroll = useContext(ScrollContext);
@@ -97,7 +98,7 @@ const ContactPage = () => {
               <Text {...elementProps(`contact-unavailable-title`)} style={styles.formTitle} accessibilityRole={`header`}>{`Contact Form`}</Text>
               <Text {...elementProps(`contact-unavailable-message`)} style={styles.formDescription} accessibilityLiveRegion={`polite`}>{message}</Text>
             </View>
-          ) : state.submitted ? (
+          ) : state.signedIn ? <FeedbackForm state={state} /> : state.submitted ? (
             <View {...elementProps(`contact-success`)} style={styles.success} accessibilityLiveRegion={`polite`}>
               <View {...elementProps(`contact-success-symbol`)} style={styles.successSymbol}><CheckCircle2 {...elementProps(`contact-success-icon`)} size={32} color={palette.success} /></View>
               <Text {...elementProps(`contact-success-eyebrow`)} style={styles.eyebrow}>{state.copy.eyebrow}</Text>
@@ -163,7 +164,7 @@ const ContactPage = () => {
           )}
         </View>
       </View>
-      {available && <Toast id={`contact-feedback`} message={state.feedback} kind={state.submitted ? `success` : `error`} onDismiss={state.clearFeedback} />}
+      {available && <Toast id={`contact-feedback`} message={state.feedback} kind={state.feedbackKind} onDismiss={state.clearFeedback} />}
     </>
   );
 };

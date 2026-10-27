@@ -1,0 +1,32 @@
+import { StyleSheet } from 'react-native';
+import type { ThemePalette } from '../../shared/themeContext/theme';
+
+export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  root: { gap: 14, width: `100%`, minWidth: 0 },
+  heading: { gap: 12, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
+  headingCopy: { gap: 5, minWidth: 0, flexGrow: 1, flexShrink: 1 },
+  title: { color: palette.ink, fontSize: 18, lineHeight: 25, fontFamily: `DMSans_700Bold` },
+  muted: { color: palette.muted, fontSize: 10, lineHeight: 17, fontFamily: `DMSans_400Regular` },
+  actions: { gap: 7, flexWrap: `wrap`, flexDirection: `row` },
+  messages: { height: 360, minHeight: 180, maxHeight: 440, borderWidth: 1, borderRadius: 10, borderColor: palette.line, backgroundColor: palette.input },
+  messageList: { gap: 12, padding: 12 },
+  message: { gap: 9, padding: 12, minWidth: 0, borderWidth: 1, borderRadius: 9, borderColor: palette.line, backgroundColor: palette.paper },
+  ownMessage: { borderColor: palette.accent, backgroundColor: palette.subtle },
+  messageHeading: { gap: 8, flexDirection: `row`, alignItems: `center` },
+  messageIdentity: { gap: 2, flex: 1, minWidth: 0 },
+  sender: { color: palette.ink, fontSize: 11, lineHeight: 17, fontFamily: `DMSans_600SemiBold` },
+  timestamp: { color: palette.muted, fontSize: 9, lineHeight: 15, fontFamily: `DMSans_400Regular` },
+  avatar: { width: 28, height: 28, borderRadius: 14, overflow: `hidden`, alignItems: `center`, justifyContent: `center`, backgroundColor: palette.subtle },
+  photo: { width: 28, height: 28, resizeMode: `cover` },
+  initial: { color: palette.accent, fontSize: 11, fontFamily: `DMSans_600SemiBold` },
+  body: { color: palette.ink, fontSize: 12, lineHeight: 21, fontFamily: `DMSans_400Regular` },
+  composer: { gap: 9 },
+  label: { color: palette.ink, fontSize: 11, fontFamily: `DMSans_600SemiBold` },
+  input: { minHeight: 92, maxHeight: 170, padding: 12, textAlignVertical: `top`, borderWidth: 1, borderRadius: 9, borderColor: palette.line, color: palette.ink, backgroundColor: palette.paper, fontSize: 13, lineHeight: 21, fontFamily: `DMSans_400Regular` },
+  composerActions: { gap: 12, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
+  send: { gap: 7, minHeight: 44, paddingHorizontal: 18, borderRadius: 7, backgroundColor: palette.accent, flexDirection: `row`, alignItems: `center`, justifyContent: `center` },
+  sendText: { color: palette.contrast, fontSize: 12, fontFamily: `DMSans_700Bold` },
+  disabled: { opacity: .5 },
+  error: { color: palette.danger, fontSize: 11, lineHeight: 18, fontFamily: `DMSans_400Regular` },
+  errorBox: { gap: 8, padding: 12, borderWidth: 1, borderRadius: 8, borderColor: palette.danger, backgroundColor: palette.dangerBackground },
+});

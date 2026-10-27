@@ -14,7 +14,7 @@
 .portfolio-filters-section { gap: 8px; padding: 10px; min-width: 0; display: grid; border-radius: 8px; align-content: start; background: var(--paper); border: 1px solid var(--line); }
 .portfolio-filters-section-heading { gap: 8px; width: 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; }
 .portfolio-filters-section-icon { flex-shrink: 0; color: var(--accent); }
-.portfolio-filters-locations, .portfolio-filters-active, #portfolio-filters-extensions, #portfolio-filters-registrars { grid-column: 1 / -1; }
+.portfolio-filters-locations, .portfolio-filters-active, #portfolio-filters-extensions, #portfolio-filters-registrars, #portfolio-filters-facet-starred { grid-column: 1 / -1; }
 .portfolio-filters .portfolio-filters-locations {
   .portfolio-destination-tree { gap: 12px; width: 100%; display: flex; flex-wrap: wrap; align-items: flex-start; }
   .portfolio-destination-tree-branch { flex: 1 1 auto; min-width: 0; max-width: 100%; width: max-content; border-radius: 8px; background: var(--input); border: 1px solid var(--line); }

@@ -3,6 +3,7 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   root: { gap: 18 },
+  heading: { gap: 12, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
   toolbar: { gap: 10, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center`, justifyContent: `space-between` },
   periods: { gap: 5, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
   period: { padding: 9, borderWidth: 1, borderRadius: 7, borderColor: palette.line, backgroundColor: palette.paper },

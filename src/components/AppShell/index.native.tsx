@@ -196,7 +196,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             >
               <View {...elementProps(`native-footer-copyright-column`)} style={[styles.footerColumn, width < 760 && styles.compactFooterColumn]}>
                 <Text {...elementProps(`native-copyright`)} style={styles.copyright}>
-                  {width >= 760 ? `© ${year} ${appName}.` : `© ${year}`}
+                  <Text {...elementProps(`native-copyright-symbol`)} style={styles.copyrightSymbol}>{`©`}</Text>
+                  {width >= 760 ? ` ${year} ${appName}.` : ` ${year}`}
                 </Text>
               </View>
               <View {...elementProps(`native-footer-links`)} style={[styles.footerLinks, width < 760 && styles.compactFooterLinks]}>
@@ -205,7 +206,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
                   return (
                     <Link key={href} href={href} asChild>
                       <Pressable {...elementProps(`native-footer-link`, label.toLowerCase())} style={styles.footerLink} accessibilityLabel={label}>
-                        <Icon {...elementProps(`native-footer-link-icon`, label.toLowerCase())} size={10} color={palette.muted} />
+                        <Icon {...elementProps(`native-footer-link-icon`, label.toLowerCase())} size={10} color={palette.success} />
                         <Text {...elementProps(`native-footer-link-text`, label.toLowerCase())} style={styles.footerLinkText}>
                           {label}
                         </Text>

@@ -17,6 +17,7 @@ import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomai
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import type { DomainInput, DomainRecord, Registrar } from '../../shared/types';
+import { buildPortfolioStarState, filterPortfolioSectionsByStar } from '../../shared/portfolioPreferences/starFilters';
 
 const errorMessage = (error: unknown) => error instanceof Error ? error.message : `Something Went Wrong`;
 const newDomain = (): DomainInput => {
@@ -62,6 +63,7 @@ export const useNativePortfolio = (compact = false) => {
   const [input, setInput] = useState<DomainInput>(newDomain);
   const [sortByName, setSortByName] = useState(true);
   const [registrar, setRegistrar] = useState<Registrar | `All`>(`All`);
+  const [starFilter, setStarFilter] = useState<`all` | `starred` | `not-starred`>(`all`);
   const mutationPending = useRef(false);
   const deleteConfirmationOpen = useRef(false);
   const currentEditor = useRef({ open: editorOpen, id: editingId });
@@ -75,8 +77,12 @@ export const useNativePortfolio = (compact = false) => {
     setEditingId(undefined);
     setEditingDomain(null);
   }, [loading]);
+  const stars = useMemo(() => buildPortfolioStarState(context.domains, preferences.customGroups, preferences.collections),
+    [context.domains, preferences.customGroups, preferences.collections]);
+  const starFilterCounts = { all: stars.total, starred: stars.counts.true, [`not-starred`]: stars.counts.false };
+  const starFilterValue = starFilter === `all` ? undefined : String(starFilter === `starred`);
   const editingSyncedDomain = Boolean(editingDomain && getDomainSource(editingDomain) === `registrar`);
-  const filteredDomains = useMemo(() => {
+  const searchDomains = useMemo(() => {
     const query = search.trim().toLowerCase();
     return context.domains
       .filter(domain => (registrar === `All` || domain.registrar === registrar) && [
@@ -86,8 +92,32 @@ export const useNativePortfolio = (compact = false) => {
       ].some(value => value?.toLowerCase().includes(query)))
       .sort((first, second) => sortByName ? first.name.localeCompare(second.name) : first.expiresAt.localeCompare(second.expiresAt));
   }, [context.domains, search, registrar, sortByName]);
+  const matchingSections = useMemo(() => filterPortfolioSectionsByStar(buildPortfolioSections(searchDomains, { ...preferences, groupBy: `custom` }),
+    stars, starFilterValue, registrar === `All` && !search.trim()), [search, stars, registrar, preferences, searchDomains, starFilterValue]);
+  const filteredDomains = useMemo(() => {
+    if (starFilterValue === undefined) return searchDomains;
+    const matchingIds = new Set(matchingSections.mainDomains.concat(matchingSections.collections.flatMap(section => section.domains)).map(domain => domain.id));
+    return searchDomains.filter(domain => matchingIds.has(domain.id));
+  }, [searchDomains, starFilterValue, matchingSections]);
   const visibleDomains = useMemo(() => compact ? filteredDomains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : filteredDomains, [compact, filteredDomains]);
-  const portfolioSections = useMemo(() => buildPortfolioSections(visibleDomains, { ...preferences, groupBy: `custom` }), [visibleDomains, preferences]);
+  const portfolioSections = useMemo(() => {
+    const sections = matchingSections;
+    if (!compact) return sections;
+    const visibleIds = new Set(visibleDomains.map(domain => domain.id));
+    const limitDomains = (domains: DomainRecord[]) => domains.filter(domain => visibleIds.has(domain.id));
+    return {
+      ...sections,
+      mainDomains: limitDomains(sections.mainDomains),
+      mainGroups: sections.mainGroups.map(group => ({ ...group, domains: limitDomains(group.domains) })),
+      collections: sections.collections.map(section => ({
+        ...section,
+        domains: limitDomains(section.domains),
+        groups: section.groups.map(group => ({ ...group, domains: limitDomains(group.domains) })),
+      })),
+    };
+  }, [compact, visibleDomains, matchingSections]);
+  const hasVisibleItems = portfolioSections.collections.length > 0
+    || portfolioSections.mainGroups.some(group => group.customGroupId || group.domains.length);
   const mainDomains = useMemo(() => [
     ...portfolioSections.mainGroups.filter(group => !group.customGroupId),
     ...portfolioSections.mainGroups.filter(group => Boolean(group.customGroupId)),
@@ -102,11 +132,15 @@ export const useNativePortfolio = (compact = false) => {
     ])];
   }, [mainDomains, portfolioSections, preferences.collapsedGroupKeys, preferences.collapsedCollectionIds]);
   const dueSoon = context.domains.filter(domain => getDomainStatus(domain) !== `Active`).length;
+  const clearFilters = () => {
+    setSearch(``);
+    setRegistrar(`All`);
+    setStarFilter(`all`);
+  };
   const openSetup = () => {
     if (loading || mutationPending.current || deleteConfirmationOpen.current) return;
     context.clearNotice();
-    setSearch(``);
-    setRegistrar(`All`);
+    clearFilters();
     openEditor();
     setSetupOpen(true);
   };
@@ -256,8 +290,7 @@ export const useNativePortfolio = (compact = false) => {
       const file = new File(document.uri);
       const records = parseDomainCsv(await file.text());
       await context.importDomains(records);
-      setSearch(``);
-      setRegistrar(`All`);
+      clearFilters();
     } catch (error) {
       Alert.alert(`Unable To Import CSV`, errorMessage(error));
     } finally {
@@ -308,6 +341,7 @@ export const useNativePortfolio = (compact = false) => {
     deleting,
     working,
     registrar,
+    starFilter,
     formError,
     editingId,
     editorOpen,
@@ -320,11 +354,16 @@ export const useNativePortfolio = (compact = false) => {
     visibleDomains,
     visibleDomainIds,
     registrarCounts,
+    starFilterCounts,
+    hasVisibleItems,
+    portfolioSections,
+    portfolioItemCount: stars.total,
     filteredDomains,
     openEditor,
     openSetup,
     closeSetup,
     closeEditor,
+    clearFilters,
     updateInput,
     saveDomain,
     requestDelete,
@@ -333,6 +372,7 @@ export const useNativePortfolio = (compact = false) => {
     resetSamples,
     setSearch,
     setRegistrar,
+    setStarFilter,
     setSortByName,
     setRenewalPrice,
   };

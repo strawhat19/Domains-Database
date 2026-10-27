@@ -1,5 +1,8 @@
 {
   "indexes": [
+    { "collectionGroup": "supportThreads", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "lastMessageAt", "order": "DESCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
+    { "collectionGroup": "supportThreads", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "customerId", "order": "ASCENDING" }, { "fieldPath": "lastMessageAt", "order": "DESCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
+    { "collectionGroup": "feedbackEntries", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "kind", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
     { "collectionGroup": "communityPosts", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "authorId", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
     { "collectionGroup": "communityPosts", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "authorId", "order": "ASCENDING" }, { "fieldPath": "audience", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
     { "collectionGroup": "comments", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "authorId", "order": "ASCENDING" }, { "fieldPath": "number", "order": "DESCENDING" }] },
@@ -8,6 +11,15 @@
     { "collectionGroup": "plans", "queryScope": "COLLECTION", "fields": [{ "fieldPath": "active", "order": "ASCENDING" }, { "fieldPath": "displayOrder", "order": "ASCENDING" }, { "fieldPath": "number", "order": "ASCENDING" }] }
   ],
   "fieldOverrides": [
+    { "collectionGroup": "supportThreads", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "feedbackEntries", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "feedbackAttempts", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "supportThreadAccounts", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "readStates", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "messages", "fieldPath": "*", "indexes": [] },
+    { "collectionGroup": "supportThreads", "fieldPath": "number", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "supportThreads", "fieldPath": "lastMessageAt", "indexes": [{ "order": "DESCENDING", "queryScope": "COLLECTION" }] },
+    { "collectionGroup": "messages", "fieldPath": "number", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }, { "order": "DESCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "publicProfiles", "fieldPath": "*", "indexes": [] },
     { "collectionGroup": "publicProfiles", "fieldPath": "profilePrivacy", "indexes": [{ "order": "ASCENDING", "queryScope": "COLLECTION" }] },
     { "collectionGroup": "communityPosts", "fieldPath": "*", "indexes": [] },

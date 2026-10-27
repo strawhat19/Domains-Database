@@ -1,10 +1,10 @@
 import { Link } from 'expo-router';
 import TrendChart from '../AdminCharts';
-import { useMemo, useState } from 'react';
 import { routes } from '../../shared/routes';
 import { exportReport } from './exportReport';
 import { createStyles } from './styles.native';
 import { Text, View, Pressable } from 'react-native';
+import { useMemo, useState, type ReactNode } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { useAuth } from '../../shared/authContext/useAuth';
 import type { TrafficOutcomes, TrafficSegment } from './data';
@@ -48,13 +48,14 @@ const TrafficBreakdown = ({ id, title, rows, segment }: { id: string; title: str
   </AdminPanel>;
 };
 
-const AdminAnalytics = ({ compact = false }: { compact?: boolean; outcomes?: TrafficOutcomes; outcomesLoading?: boolean; headingActionsTarget?: HTMLElement | null }) => {
+const AdminAnalytics = ({ headingTabs, compact = false }: { compact?: boolean; headingTabs?: ReactNode; outcomes?: TrafficOutcomes; outcomesLoading?: boolean; headingActionsTarget?: HTMLElement | null }) => {
   const { user } = useAuth();
   const state = useTrafficAnalytics(user);
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const [exportError, setExportError] = useState(``);
   const report = state.report;
+  const previewTitle = <Text {...elementProps(`admin-analytics-preview-title`)} style={styles.title} accessibilityRole={`header`}>{`Traffic`}</Text>;
   const points = useMemo(() => report?.trend.map(point => ({ label: dateLabel(point.date), value: point.visitors, secondary: point.pageviews })) ?? [], [report]);
   const saveReport = async () => {
     if (!report) return;
@@ -64,7 +65,7 @@ const AdminAnalytics = ({ compact = false }: { compact?: boolean; outcomes?: Tra
   };
   return <View {...elementProps(`admin-analytics`, compact ? `preview` : `full`)} style={styles.root}>
     <View {...elementProps(`admin-analytics-toolbar`)} style={styles.toolbar}>
-      {compact ? <Text {...elementProps(`admin-analytics-preview-title`)} style={styles.title} accessibilityRole={`header`}>{`Traffic`}</Text> : <View {...elementProps(`admin-analytics-periods`)} style={styles.periods}>
+      {compact ? headingTabs ? <View {...elementProps(`admin-analytics-preview-heading`)} style={styles.heading}>{previewTitle}{headingTabs}</View> : previewTitle : <View {...elementProps(`admin-analytics-periods`)} style={styles.periods}>
         {([7, 30, 90] as TrafficPeriod[]).map(period => <Pressable key={period} {...elementProps(`admin-analytics-period`, String(period))} style={[styles.period, state.period === period && styles.selected]} accessibilityRole={`button`} accessibilityState={{ selected: state.period === period }} onPress={() => { setExportError(``); state.setPeriod(period); }}><Text {...elementProps(`admin-analytics-period-label`, String(period))} style={styles.label}>{`${period} Days`}</Text></Pressable>)}
       </View>}
       <View {...elementProps(`admin-analytics-actions`)} style={styles.periods}>

@@ -100,7 +100,7 @@ const PortfolioRecords = ({
   const [editingGroup, setEditingGroup] = useState<{ group: CustomPortfolioGroup } | null>(null);
   const preferences = usePortfolioPreferences();
   const menuDisabled = busy || loading || preferences.loading;
-  const emptyPortfolio = !loading && allDomains.length === 0;
+  const emptyPortfolio = !loading && !allDomains.length && !preferences.customGroups.length && !preferences.collections.length;
   const availableDomainIds = useMemo(() => new Set(allDomains.map(domain => domain.id)), [allDomains]);
   const destinationTree = useMemo(() => buildPortfolioDestinationTree(allDomains, preferences.customGroups, preferences.collections),
     [allDomains, preferences.customGroups, preferences.collections]);
@@ -268,15 +268,15 @@ const PortfolioRecords = ({
     if (!compact) return items;
     const visibleIds = new Set(items.flatMap(group => group.domains).slice(0, PORTFOLIO_PREVIEW_LIMIT).map(domain => domain.id));
     return items.map(group => ({ ...group, domains: group.domains.filter(domain => visibleIds.has(domain.id)) }))
-      .filter((group, index) => group.domains.length || (searching && !items[index]?.domains.length));
-  }, [domains, orderingPreferences, compact, searching, searchGroups, showMainRecords, collectionSections.length]);
+      .filter((group, index) => group.domains.length || ((searching || hasFilters) && !items[index]?.domains.length));
+  }, [domains, orderingPreferences, compact, searching, hasFilters, searchGroups, showMainRecords, collectionSections.length]);
   const collections = useMemo(() => collectionSections.map(section => {
     if (!compact) return section;
     const visibleIds = new Set(section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT).map(domain => domain.id));
     const groups = section.groups.map(group => ({ ...group, domains: group.domains.filter(domain => visibleIds.has(domain.id)) }))
-      .filter((group, index) => group.domains.length || (searching && !section.groups[index]?.domains.length));
+      .filter((group, index) => group.domains.length || ((searching || hasFilters) && !section.groups[index]?.domains.length));
     return { ...section, groups };
-  }), [collectionSections, compact, searching]);
+  }), [collectionSections, compact, searching, hasFilters]);
   const databaseAboveCollections = preferences.databasePosition === `above`;
   const groups = useMemo(() => databaseAboveCollections
     ? mainGroups.concat(collections.flatMap(section => section.groups))
@@ -323,14 +323,11 @@ const PortfolioRecords = ({
     ? { width: `100%`, minWidth: 0, tableLayout: `fixed` }
     : { width: `100%`, minWidth: tableWidth, tableLayout: `fixed` };
   const grouped = preferences.groupBy !== `none`;
-  const hasGroupHeading = (group: PortfolioGroup) => group.key !== `custom:ungrouped` && !group.directCollectionId && (grouped || Boolean(groupCollections.get(group.key)));
+  const hasGroupHeading = (group: PortfolioGroup) => group.key !== `custom:ungrouped` && !group.directCollectionId && (grouped || Boolean(group.customGroupId) || Boolean(groupCollections.get(group.key)));
   const isGroupParentCollapsed = (group: PortfolioGroup) => expansion.isCollectionCollapsed(groupCollections.get(group.key)?.id);
   const isGroupCollapsed = (group: PortfolioGroup) => isGroupParentCollapsed(group) || expansion.isGroupCollapsed(group.key);
   const renderedMainGroups = mainGroups.filter(group => group.domains.length || hasGroupHeading(group));
-  const hasCollapsedSection = collections.some(section => expansion.isCollectionCollapsed(section.collection.id))
-    || groups.some(group => hasGroupHeading(group) && isGroupCollapsed(group));
-  const hideColumnNames = emptyPortfolio || (!loading && hasCollapsedSection
-    && !groups.some(group => group.domains.length > 0 && !isGroupCollapsed(group)));
+  const hideColumnNames = !loading && !groups.some(group => group.domains.length > 0 && !isGroupCollapsed(group));
   const columnHeaderHeight = hideColumnNames ? 0 : sticky.header.headHeight;
   const stickyHeaderReady = !emptyPortfolio && (hideColumnNames || columnHeaderHeight > 0) && sticky.header.columnWidths.length === columns.length + 4;
   const empty = !loading && !groups.some(group => group.domains.length);
@@ -342,7 +339,8 @@ const PortfolioRecords = ({
   const hasHiddenDomains = (items: DomainRecord[]) => !preferences.showHiddenDomains
     && items.some(domain => preferences.hiddenDomainIds.includes(domain.id));
   const hasHiddenMainDomains = fullGroups.some(group => !groupCollections.get(group.key) && hasHiddenDomains(group.domains));
-  const showMainContent = showMainRecords && (mainGroups.length > 0 || !collections.length || hasHiddenMainGroups || hasHiddenMainDomains);
+  const showMainContent = showMainRecords && (renderedMainGroups.length > 0 || emptyPortfolio || hasFilters
+    || hasHiddenMainGroups || hasHiddenMainDomains || hasHiddenCollections && !collections.length);
   const showGroupHeadings = groups.some(hasGroupHeading);
   const stickyGroup = useStickyPortfolioGroup(
     sticky,
@@ -704,7 +702,7 @@ const PortfolioRecords = ({
     </p>
   );
   const groupEmptyMessage = (group: PortfolioGroup) => hasHiddenDomains(fullGroups.find(item => item.key === group.key)?.domains ?? [])
-    ? hiddenDomainsMessage : searching ? `No matching domains in this group` : `No domains in this group`;
+    ? hiddenDomainsMessage : hasFilters ? `No matching domains in this group` : `No domains in this group`;
   const emptyCustomGroup = (group: PortfolioGroup) => {
     const customGroup = customGroupsById.get(group.customGroupId ?? ``);
     return customGroup && !customGroup.domainIds.some(id => availableDomainIds.has(id)) ? customGroup : undefined;
@@ -846,7 +844,7 @@ const PortfolioRecords = ({
       </tbody>
     );
   };
-  const mainEmptyContent = showMainRecords && (showMainContent || !allDomains.length) && !loading && !mainGroups.some(group => group.domains.length || hasGroupHeading(group)) && (
+  const mainEmptyContent = showMainContent && !loading && !mainGroups.some(group => group.domains.length || hasGroupHeading(group)) && (
     <div id={`${idPrefix}-records-empty`} className={`portfolio-records-empty`}>
       {hasHiddenMainGroups ? hiddenGroupsNotice : hasHiddenMainDomains ? hiddenDomainsNotice : hasHiddenCollections ? (
         <p id={`${idPrefix}-hidden-collections-notice`} className={`portfolio-hidden-groups-notice`}>
@@ -965,7 +963,7 @@ const PortfolioRecords = ({
     </section>
   );
 
-  const mainRecordsContent = (grid = false) => grid ? (
+  const mainRecordsContent = (grid = false) => !showMainContent ? null : grid ? (
     <Fragment key={`${idPrefix}-main-records`}>
       {mainHeading}
       {mainGroups.map(gridGroup)}
@@ -1035,6 +1033,7 @@ const PortfolioRecords = ({
     <div
       id={`${idPrefix}-records-table`}
       className={`portfolio-records-table`}
+      hidden={mobileBoard && !loading && !showMainContent}
       data-compact-actions={compactDomainActions || undefined}
       onKeyDown={openContextMenuFromKeyboard}
     >

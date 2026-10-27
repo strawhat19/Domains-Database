@@ -2,6 +2,7 @@
 .dd-traffic-overview.is-chart { height: auto; min-height: 470px; }
 .dd-traffic-overview-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .dd-traffic-overview-copy { display: grid; gap: 6px; }
+.dd-traffic-overview-copy.has-tabs { display: flex; min-width: 0; align-items: center; flex-wrap: wrap; gap: 12px; }
 .dd-traffic-overview-title { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 25px; font-weight: 500; line-height: 1.2; }
 .dd-traffic-overview-title > svg { flex: none; opacity: .8; }
 .dd-traffic-overview-caption { margin: 0; color: var(--dd-panel-muted, var(--muted)); font-size: 9px; line-height: 1.65; }

@@ -1,0 +1,7 @@
+.support-inbox, .support-inbox-thread { min-width: 0; }
+.support-inbox-thread { transition: border-color .2s ease, background-color .2s ease; }
+.support-inbox-thread:hover { border-color: var(--accent) !important; }
+.support-inbox-thread:focus-visible, .support-inbox-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.support-inbox-thread-preview { overflow-wrap: anywhere; }
+@media (max-width: 560px) { .support-inbox-search { font-size: 16px !important; } }
+@media (prefers-reduced-motion: reduce) { .support-inbox-thread { transition: none; } }

@@ -4,7 +4,7 @@ import AdminDashboard from '../src/components/AdminDashboard';
 
 const AdminReviewsRoute = () => (
   <>
-    <PageMeta title={`Admin · Reviews`} description={`Future review management`} />
+    <PageMeta title={`Admin · Reviews`} description={`Review private customer ratings and feedback`} />
     <AdminDashboard section={routes.adminReviews.adminSection} />
   </>
 );

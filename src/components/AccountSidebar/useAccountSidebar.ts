@@ -8,7 +8,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { canAccessAdmin, type AdminSection } from '../../shared/admin/permissions';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 import { useAccountNavigationState } from '../../shared/accountNavigationContext/useAccountNavigationState';
-import { Bot, Star, Bell, Wallet, PlugZap, Activity, FileText, UserRound, UsersRound, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, SlidersHorizontal, ChartNoAxesCombined } from 'lucide-react-native';
+import { Bug, Star, Bell, Wallet, PlugZap, Activity, FileText, UserRound, UsersRound, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, SlidersHorizontal, ChartNoAxesCombined } from 'lucide-react-native';
 
 type RouteHref = (typeof routes)[keyof typeof routes][`href`];
 export type AccountSidebarSection = `profile` | `connections` | AdminSection;
@@ -31,7 +31,8 @@ export const useAccountSidebar = ({ section, counts, countsLoading = false }: Ac
   const feedbackCandidates: SidebarLink[] = [
     { id: `formSubmissions`, Icon: ClipboardList, ...routes.adminFormSubmissions, section: `formSubmissions` },
     { id: `reviews`, Icon: Star, ...routes.adminReviews, section: `reviews` },
-    { id: `aiChats`, Icon: Bot, ...routes.adminAIChats, section: `aiChats` },
+    { id: `bugReports`, Icon: Bug, ...routes.adminBugReports, section: `bugReports` },
+    { id: `aiChats`, Icon: MessagesSquare, ...routes.adminAIChats, section: `aiChats` },
     { id: `messages`, Icon: MessagesSquare, ...routes.adminMessages, section: `messages` },
   ];
   const feedbackChildren = feedbackCandidates.filter(link => canAccessAdmin(user, link.section));

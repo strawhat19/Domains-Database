@@ -168,8 +168,11 @@
 }
 
 .footer-copyright { margin: 0; font-size: 11px; color: var(--muted); }
+.footer-copyright-symbol { color: var(--success); }
 .footer-credit { margin: 0; font-size: 11px; color: var(--muted); text-align: right; }
 .footer-piratechs { gap: 3px; min-height: 44px; display: inline-flex; align-items: center; color: var(--ink); }
+.footer-link-icon { flex-shrink: 0; color: var(--success); }
+.footer-piratechs-icon { flex-shrink: 0; color: var(--accent); }
 .footer-navigation { gap: 4px 20px; display: flex; min-width: 0; flex-wrap: wrap; align-items: center; justify-content: center; }
 .footer-link { gap: 6px; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); transition: color .22s ease; }
 .footer-link:hover { color: var(--accent); }
@@ -290,13 +293,12 @@
   .header-logo { max-width: 185px; }
   .header-link { padding: 9px 11px; }
   .header-auth-link { padding-inline: 10px; }
-  .footer-inner { gap: 4px 12px; min-height: 64px; padding: 8px var(--shell-gutter); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .footer-copyright { grid-row: 2; grid-column: 1; }
-  .footer-credit { grid-row: 2; grid-column: 2; }
+  .footer-inner { gap: 12px; min-height: 64px; padding: 8px var(--shell-gutter); grid-template-columns: auto minmax(0, 1fr) auto; }
+  .footer-copyright, .footer-credit { white-space: nowrap; }
   .footer-copyright-name { display: none; }
   .footer-credit-label { display: none; }
-  .footer-navigation { gap: 0 12px; grid-row: 1; grid-column: 1 / -1; }
-  .footer-link { min-height: 44px; }
+  .footer-navigation { gap: 12px; flex-wrap: nowrap; }
+  .footer-link { white-space: nowrap; }
 }
 
 @media (max-width: 480px) {

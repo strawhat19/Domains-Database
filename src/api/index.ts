@@ -338,6 +338,7 @@ export const API_ROUTES = [
   `/api/status`,
   `/api/users`,
   `/api/domains`,
+  `/api/feedback`,
   `/api/domains/public`,
   `/api/auth/session`,
   `/api/auth/sign-in`,

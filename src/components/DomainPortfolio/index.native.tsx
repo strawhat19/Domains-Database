@@ -27,8 +27,8 @@ import { NativeDragSource, NativeDropZone } from '../NativePortfolioDrag/index.n
 import ModalTitle, { type NativeModalTitleHandle } from '../ModalTitle/index.native';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { CheckSquare, Square, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Search, X, Gauge, Trash2, RefreshCw } from 'lucide-react-native';
+import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { CheckSquare, Square, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Star, Search, X, Gauge, Trash2, RefreshCw } from 'lucide-react-native';
 
 const textFields = [
   { key: `name`, label: `Domain name`, placeholder: `yourdomain.com`, hint: `Enter the address without https:// or a path` },
@@ -37,11 +37,18 @@ const textFields = [
   { key: `createdAt`, label: `Created`, placeholder: `YYYY-MM-DD`, hint: `` },
 ] as const;
 
+const starFilterOptions = [
+  { value: `all`, label: `All` },
+  { value: `starred`, label: `Starred` },
+  { value: `not-starred`, label: `Not Starred` },
+] as const;
+
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
+  const { width } = useWindowDimensions();
   const { palette, isDark } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const state = useNativePortfolio(compact);
-  const emptyPortfolio = !state.loading && state.domains.length === 0;
+  const emptyPortfolio = !state.loading && state.portfolioItemCount === 0;
   const searchDisabled = state.loading || emptyPortfolio;
   const { customGroups } = usePortfolioPreferences();
   const appDomainIds = useMemo(() => new Set(customGroups
@@ -287,6 +294,37 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           ))}
         </ScrollView>
         <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.registrarScroll}
+          contentContainerStyle={styles.registrarList}
+          {...elementProps(`native-portfolio-star-filters`)}
+        >
+          {starFilterOptions.map(({ value, label }) => (
+            <Pressable
+              key={value}
+              disabled={state.loading}
+              accessibilityRole={`button`}
+              {...elementProps(`native-portfolio-star-filter`, value)}
+              accessibilityLabel={`${label} Items, ${state.starFilterCounts[value]} Item(s)`}
+              accessibilityState={{ selected: state.starFilter === value, disabled: state.loading }}
+              onPress={() => state.setStarFilter(state.starFilter === value ? `all` : value)}
+              style={[styles.registrarButton, styles.starFilterButton, state.starFilter === value && styles.registrarButtonActive]}
+            >
+              <Star
+                size={12}
+                accessible={false}
+                fill={value === `starred` ? `#fbbf24` : `none`}
+                {...elementProps(`native-portfolio-star-filter-icon`, value)}
+                color={value === `starred` ? `#fbbf24` : state.starFilter === value ? palette.accent : palette.muted}
+              />
+              <Text {...elementProps(`native-portfolio-star-filter-text`, value)} style={[styles.registrarText, state.starFilter === value && styles.registrarTextActive]}>
+                {`${label} (${state.starFilterCounts[value]})`}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+        <ScrollView
           {...elementProps(`native-portfolio-selection-tools`)}
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -344,6 +382,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             onEdit={state.openEditor}
             domains={state.visibleDomains}
             selectedIds={selectedIds}
+            sections={state.portfolioSections}
+            showMainGroups={state.starFilter !== `all`}
             renderMain={openActions => state.mainDomains.length ? (
               <NativeDropZone
                 accepts={[`group`, `domain`]}
@@ -383,30 +423,30 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             ) : null}
           />
         )}
-        {!state.loading && !state.visibleDomains.length && (
+        {!state.loading && !state.hasVisibleItems && (
           <View {...elementProps(`native-portfolio-empty`)}>
             <StatePanel
               variant={`inline`}
               id={`native-portfolio-empty`}
-              icon={state.domains.length ? `search` : `domains`}
-              eyebrow={state.domains.length ? `SEARCH RESULTS` : `YOUR PORTFOLIO`}
-              title={state.domains.length ? `No matching domains` : `Add your first domain`}
-              description={state.domains.length ? `Try another name or clear your filters to see your domains.` : `Keep your domains, renewal dates, and project notes in one place.`}
-              detail={state.domains.length ? undefined : `Start with manual entry, a CSV import, or a registrar connection.`}
+              icon={state.portfolioItemCount ? `search` : `domains`}
+              eyebrow={state.portfolioItemCount ? `SEARCH RESULTS` : `YOUR PORTFOLIO`}
+              title={state.portfolioItemCount ? state.starFilter === `all` ? `No matching domains` : `No matching items` : `Add your first domain`}
+              description={state.portfolioItemCount ? `Try another name or clear your filters to see your portfolio.` : `Keep your domains, renewal dates, and project notes in one place.`}
+              detail={state.portfolioItemCount ? undefined : `Start with manual entry, a CSV import, or a registrar connection.`}
             >
               <Pressable
                 {...elementProps(`native-portfolio-empty-action`)}
-                style={[styles.secondaryButton, !state.domains.length && styles.emptyAddButton]}
+                style={[styles.secondaryButton, !state.portfolioItemCount && styles.emptyAddButton]}
                 accessibilityRole={`button`}
-                accessibilityLabel={state.domains.length ? `Clear Filters` : `Add Domain`}
+                accessibilityLabel={state.portfolioItemCount ? `Clear Filters` : `Add Domain`}
                 onPress={() => {
-                  if (!state.domains.length) state.openSetup();
-                  else { state.setSearch(``); state.setRegistrar(`All`); }
+                  if (!state.portfolioItemCount) state.openSetup();
+                  else state.clearFilters();
                 }}
               >
-                {state.domains.length ? <X {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={palette.muted} /> : <Plus {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={`#ffffff`} />}
-                <Text {...elementProps(`native-portfolio-empty-action-text`)} style={[styles.secondaryButtonText, !state.domains.length && styles.emptyAddButtonText]}>
-                  {state.domains.length ? `Clear filters` : `Add Domain`}
+                {state.portfolioItemCount ? <X {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={palette.muted} /> : <Plus {...elementProps(`native-portfolio-empty-action-icon`)} size={13} color={`#ffffff`} />}
+                <Text {...elementProps(`native-portfolio-empty-action-text`)} style={[styles.secondaryButtonText, !state.portfolioItemCount && styles.emptyAddButtonText]}>
+                  {state.portfolioItemCount ? `Clear Filters` : `Add Domain`}
                 </Text>
               </Pressable>
             </StatePanel>
@@ -423,8 +463,13 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             />
           </View>
         ) : (
-          <Text {...elementProps(`native-portfolio-showing`)} numberOfLines={1} style={styles.bottomText}>
-            {`Showing ${state.visibleDomainIds.length} Of ${state.filteredDomains.length}`}
+          <Text
+            numberOfLines={1}
+            style={styles.bottomText}
+            {...elementProps(`native-portfolio-showing`)}
+            accessibilityLabel={`Showing ${state.visibleDomainIds.length} Of ${state.filteredDomains.length} Domains`}
+          >
+            {width <= 900 ? `${state.visibleDomainIds.length} / ${state.filteredDomains.length} Domains` : `Showing ${state.visibleDomainIds.length} Of ${state.filteredDomains.length}`}
           </Text>
         )}
         {compact ? (
@@ -439,7 +484,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
         ) : (
           <Pressable {...elementProps(`native-portfolio-connect-registrar`)} style={[styles.secondaryButton, state.loading && styles.disabled]} disabled={state.loading} onPress={state.openSetup} accessibilityRole={`button`} accessibilityLabel={`Connect Registrar`}>
             <Link2 {...elementProps(`native-portfolio-connect-registrar-icon`)} size={13} color={palette.accent} />
-            <Text {...elementProps(`native-portfolio-connect-registrar-text`)} style={styles.secondaryButtonText}>{`Connect Registrar`}</Text>
+            <Text {...elementProps(`native-portfolio-connect-registrar-text`)} style={styles.secondaryButtonText}>{width <= 900 ? `Connect` : `Connect Registrar`}</Text>
           </Pressable>
         )}
       </View>

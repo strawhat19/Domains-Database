@@ -4,7 +4,7 @@ import AdminDashboard from '../src/components/AdminDashboard';
 
 const AdminMessagesRoute = () => (
   <>
-    <PageMeta title={`Admin · Messages`} description={`Future messages inbox`} />
+    <PageMeta title={`Admin · Messages`} description={`Private support conversations with signed-in users`} />
     <AdminDashboard section={routes.adminMessages.adminSection} />
   </>
 );

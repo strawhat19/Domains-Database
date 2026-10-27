@@ -1,6 +1,10 @@
 .dd-github { display: grid; gap: 18px; min-width: 0; color: var(--ink); container-type: inline-size; }
 .dd-github-actions, .dd-github-toolbar, .dd-github-controls, .dd-github-panel-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .dd-github-actions { justify-content: flex-end; }
+.dd-github-dashboard-heading, .dd-github-heading-copy { display: flex; min-width: 0; align-items: center; flex-wrap: wrap; gap: 12px; }
+.dd-github-dashboard-heading { justify-content: space-between; }
+.dd-github-dashboard-title { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--dd-highlight, var(--accent)); font-family: var(--font-display); font-size: 25px; font-weight: 500; line-height: 1.2; }
+.dd-github-dashboard-title > svg { flex: none; opacity: .8; }
 .dd-github-panel-heading { justify-content: space-between; margin-bottom: 12px; }
 .dd-github-panel { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--dd-panel-surface, var(--paper)); }
 .dd-github-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }

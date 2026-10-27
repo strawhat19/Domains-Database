@@ -72,7 +72,7 @@ const Choice = ({ id, label, selected, Icon, onPress }: { id: string; label: str
   </Pressable>;
 };
 
-const AdminGitHub = (_props: { headingActionsTarget?: HTMLElement | null }) => {
+const AdminGitHub = ({ headingTabs }: { headingTabs?: ReactNode; headingActionsTarget?: HTMLElement | null }) => {
   const { user } = useAuth();
   const { palette } = useTheme();
   const state = useGitHubAnalytics(user);
@@ -115,6 +115,7 @@ const AdminGitHub = (_props: { headingActionsTarget?: HTMLElement | null }) => {
       <View {...elementProps(`admin-github-heading`)} style={styles.heading}>
         <GitHubIdentity id={`github-heading`} kind={`github`} />
         <Text {...elementProps(`admin-github-title`)} style={styles.title} accessibilityRole={`header`}>{`GitHub`}</Text>
+        {headingTabs}
         {report ? <StatusCell id={`github-source`} label={`GitHub REST API`} /> : null}
       </View>
       <View {...elementProps(`admin-github-actions`)} style={styles.controls}>

@@ -1,17 +1,19 @@
 import './styles.scss';
 import { Link } from 'expo-router';
-import StatePanel from '../StatePanel';
+import SupportInbox from '../SupportInbox';
+import FeedbackEntries from '../FeedbackEntries';
 import RouterAnchor from '../RouterAnchor';
 import { routes } from '../../shared/routes';
 import type { AdminFeedbackProps } from './types';
-import { feedbackCards, feedbackComingSoon } from './data';
-import { Bot, Star, ArrowLeft, ArrowUpRight, ClipboardList, MessageCircle, MessagesSquare } from 'lucide-react';
+import { feedbackCards } from './data';
+import { Bug, Star, ArrowUpRight, ClipboardList, MessageCircle, MessagesSquare } from 'lucide-react';
 
-const icons = { Bot, Star, ClipboardList, MessageCircle, MessagesSquare };
+const icons = { Bug, Star, ClipboardList, MessageCircle, MessagesSquare };
 
 const AdminFeedback = ({ section = `feedback` }: AdminFeedbackProps = {}) => {
-  const detail = section === `feedback` ? null : feedbackComingSoon[section];
-  const route = detail?.route ?? routes.adminFeedback;
+  if (section === `reviews` || section === `bugReports`) return <FeedbackEntries kind={section === `reviews` ? `review` : `bug`} />;
+  if (section === `aiChats` || section === `messages`) return <SupportInbox />;
+  const route = routes.adminFeedback;
   const Icon = icons[route.icon];
 
   return (
@@ -26,29 +28,10 @@ const AdminFeedback = ({ section = `feedback` }: AdminFeedbackProps = {}) => {
           {route.label}
         </h2>
         <p id={`admin-feedback-intro-${section}`} className={`admin-feedback-copy`}>
-          {detail ? `A planned feedback channel` : `Browse feedback channels and saved submissions`}
+          {`Browse feedback channels and saved submissions`}
         </p>
       </div>
 
-      {detail ? (
-        <StatePanel
-          icon={`planned`}
-          variant={`inline`}
-          eyebrow={`PLANNED FEATURE`}
-          description={detail.description}
-          title={`This channel is planned`}
-          id={`admin-feedback-coming-soon-${section}`}
-        >
-          <Link asChild href={routes.adminFormSubmissions.href}><RouterAnchor id={`admin-feedback-submissions-${section}`} className={`admin-feedback-link is-primary`}>
-            <ClipboardList id={`admin-feedback-submissions-icon-${section}`} className={`admin-feedback-link-icon`} size={15} aria-hidden />
-            {`View Forms`}
-          </RouterAnchor></Link>
-          <Link asChild href={routes.adminFeedback.href}><RouterAnchor id={`admin-feedback-back-${section}`} className={`admin-feedback-link`}>
-            <ArrowLeft id={`admin-feedback-back-icon-${section}`} className={`admin-feedback-link-icon`} size={15} aria-hidden />
-            {`Back to Feedback`}
-          </RouterAnchor></Link>
-        </StatePanel>
-      ) : (
         <div id={`admin-feedback-cards`} className={`admin-feedback-cards`}>
           {feedbackCards.map(card => {
             const CardIcon = icons[card.route.icon];
@@ -79,7 +62,6 @@ const AdminFeedback = ({ section = `feedback` }: AdminFeedbackProps = {}) => {
             );
           })}
         </div>
-      )}
     </section>
   );
 };

@@ -50,6 +50,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   registrarList: { gap: 7, paddingVertical: 2 },
   registrarButton: { paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1, borderRadius: 6, borderColor: palette.line },
   registrarButtonActive: { borderColor: palette.accent, backgroundColor: palette.subtle },
+  starFilterButton: { gap: 5, minHeight: 44, flexDirection: `row`, alignItems: `center` },
   registrarText: { color: palette.muted, fontSize: 10, fontFamily: `DMSans_600SemiBold` },
   registrarTextActive: { color: palette.accent },
   records: { gap: 10 },

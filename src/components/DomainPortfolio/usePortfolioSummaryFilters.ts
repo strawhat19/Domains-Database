@@ -3,6 +3,7 @@ import type { PortfolioFilterField } from './filters';
 import type { DomainRecord } from '../../shared/types';
 import { getDomainStatus } from '../../shared/domainUtils';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
+import { buildPortfolioStarState } from '../../shared/portfolioPreferences/starFilters';
 import { getDomainFilterValues, buildPortfolioFilterSections, buildPortfolioFilterLocations } from './filters';
 import type { CustomPortfolioGroup, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 
@@ -39,8 +40,13 @@ export const usePortfolioSummaryFilters = (domains: DomainRecord[], loading: boo
   const [collectionFilters, setCollectionFilters] = useState<string[]>([]);
   const [facetFilters, setFacetFilters] = useState<Partial<Record<PortfolioFilterField, string[]>>>({});
   const starredIds = useMemo(() => options.starredDomainIds ? new Set(options.starredDomainIds) : undefined, [options.starredDomainIds]);
+  const starState = useMemo(() => buildPortfolioStarState(starredIds ? domains.map(domain => ({ ...domain, starred: starredIds.has(domain.id) })) : domains, customGroups, collections),
+    [domains, starredIds, customGroups, collections]);
   const locations = useMemo(() => buildPortfolioFilterLocations(domains, customGroups, collections), [domains, customGroups, collections]);
-  const filterSections = useMemo(() => buildPortfolioFilterSections(domains, starredIds), [domains, starredIds]);
+  const filterSections = useMemo(() => buildPortfolioFilterSections(domains, starredIds).map(section => section.id === `starred` ? {
+    ...section,
+    options: section.options.map(option => ({ ...option, count: option.value === `true` ? starState.counts.true : starState.counts.false })),
+  } : section), [domains, starredIds, starState]);
   const extensionCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const domain of domains) {
@@ -50,14 +56,14 @@ export const usePortfolioSummaryFilters = (domains: DomainRecord[], loading: boo
     return Array.from(counts, ([extension, count]) => ({ extension, count }))
       .sort((first, second) => second.count - first.count || first.extension.localeCompare(second.extension));
   }, [domains]);
-  const filteredDomains = useMemo(() => {
+  const sectionDomains = useMemo(() => {
     const registrars = new Set(registrarFilters);
     const extensions = new Set(extensionFilters);
     const selectedLocations = new Set([
       ...groupFilters.flatMap(id => [...(locations.groupDomains.get(id) ?? [])]),
       ...collectionFilters.flatMap(id => [...(locations.collectionDomains.get(id) ?? [])]),
     ]);
-    const activeFacets = Object.entries(facetFilters) as [PortfolioFilterField, string[]][];
+    const activeFacets = (Object.entries(facetFilters) as [PortfolioFilterField, string[]][]).filter(([field]) => field !== `starred`);
     return domains.filter(domain => (
       (!registrars.size || registrars.has(normalizeRegistrar(domain.registrar ?? ``)))
       && (!extensions.size || extensions.has(getDomainExtension(domain)))
@@ -66,6 +72,11 @@ export const usePortfolioSummaryFilters = (domains: DomainRecord[], loading: boo
       && activeFacets.every(([field, values]) => !values.length || getDomainFilterValues(domain, field, starredIds).some(value => values.includes(value)))
     ));
   }, [domains, locations, starredIds, facetFilters, groupFilters, attentionOnly, registrarFilters, extensionFilters, collectionFilters]);
+  const filteredDomains = useMemo(() => {
+    const value = facetFilters.starred?.[0];
+    const matchingIds = value === `true` ? starState.starredScopeDomainIds : starState.domainIds;
+    return value ? sectionDomains.filter(domain => matchingIds.has(domain.id) === (value === `true`)) : sectionDomains;
+  }, [sectionDomains, starState, facetFilters.starred]);
   const clearLocationFilters = () => {
     setGroupFilters([]);
     setCollectionFilters([]);
@@ -110,7 +121,8 @@ export const usePortfolioSummaryFilters = (domains: DomainRecord[], loading: boo
     setFacetFilters(current => {
       if (!current[field]?.includes(value) && !filterSections.find(section => section.id === field)?.options.some(option => option.value === value)) return current;
       const next = { ...current };
-      const values = toggleValue(current[field] ?? [], value);
+      const selected = current[field] ?? [];
+      const values = field === `starred` ? (selected.includes(value) ? [] : [value]) : toggleValue(selected, value);
       if (values.length) next[field] = values;
       else delete next[field];
       return next;
@@ -118,11 +130,13 @@ export const usePortfolioSummaryFilters = (domains: DomainRecord[], loading: boo
   };
 
   return {
+    starState,
     attentionOnly,
     facetFilters,
     groupFilters,
     filterSections,
     extensionCounts,
+    sectionDomains,
     registrarFilters,
     extensionFilters,
     collectionFilters,

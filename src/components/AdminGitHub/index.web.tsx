@@ -1,7 +1,7 @@
 import './styles.scss';
-import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import GitHubIdentity from './github-identity';
+import { useState, type ReactNode } from 'react';
 import { formatGitHubDate, formatGitHubCount } from './data';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { getGitHubLanguageIdentity } from './github-identity/data';
@@ -26,7 +26,7 @@ const releaseColumns = [
   { label: `Channel`, Icon: BadgeCheck },
   { label: `Asset Downloads`, Icon: Download },
 ];
-const AdminGitHub = ({ headingActionsTarget }: { headingActionsTarget?: HTMLElement | null }) => {
+const AdminGitHub = ({ headingTabs, headingActionsTarget }: { headingTabs?: ReactNode; headingActionsTarget?: HTMLElement | null }) => {
   const { period, report, error, loading, refresh, setPeriod } = useGitHubAnalytics(useAuth().user);
   const [metric, setMetric] = useState<GitHubMetric>(`commits`);
   const [presentation, setPresentation] = useState<`chart` | `list`>(`chart`);
@@ -61,7 +61,14 @@ const AdminGitHub = ({ headingActionsTarget }: { headingActionsTarget?: HTMLElem
   const authorMaximum = Math.max(1, ...(report?.contributors.map(author => author.commits) ?? []));
   const VisibilityIcon = report?.repository.private ? LockKeyhole : Globe;
   return <section id={`admin-github-analytics`} className={`dd-github`} aria-label={`GitHub Repository Analytics`} aria-busy={loading}>
-    {headingActionsTarget ? createPortal(actions, headingActionsTarget) : <div id={`github-heading-actions`} className={`dd-github-actions`}>{actions}</div>}
+    {headingTabs ? <div id={`github-dashboard-heading`} className={`dd-github-panel dd-github-dashboard-heading`}>
+      <div id={`github-heading-copy`} className={`dd-github-heading-copy`}>
+        <h2 id={`github-dashboard-title`} className={`dd-github-dashboard-title`}><GitBranch size={19} aria-hidden={`true`} />GitHub</h2>
+        {headingTabs}
+      </div>
+      {!headingActionsTarget && <div id={`github-heading-actions`} className={`dd-github-actions`}>{actions}</div>}
+    </div> : null}
+    {headingActionsTarget ? createPortal(actions, headingActionsTarget) : !headingTabs && <div id={`github-heading-actions`} className={`dd-github-actions`}>{actions}</div>}
     <div id={`github-range-controls`} className={`dd-github-toolbar`}>
       <div id={`github-periods`} className={`dd-github-toggle`} aria-label={`Repository Reporting Period`}>{periods.map(days => <button key={days} type={`button`} id={`github-period-${days}`} className={`dd-github-option${period === days ? ` is-active` : ``}`} aria-pressed={period === days} onClick={() => setPeriod(days)}><CalendarDays id={`github-period-icon-${days}`} size={13} aria-hidden={`true`} />{days} Days</button>)}</div>
       <span id={`github-requested-range`} className={`dd-github-caption`}><CalendarDays id={`github-requested-range-icon`} size={14} aria-hidden={`true`} />{report ? `${formatGitHubDate(report.range.from)} – ${formatGitHubDate(report.range.to)} · UTC` : `Default Branch Activity`}</span>

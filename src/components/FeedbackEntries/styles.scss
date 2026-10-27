@@ -1,0 +1,4 @@
+.feedback-entries, .feedback-entry { min-width: 0; }
+.feedback-entry-description { overflow-wrap: anywhere; white-space: pre-wrap; }
+.feedback-entries-search:focus-visible, .feedback-entries-status-filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 560px) { .feedback-entries-search { font-size: 16px !important; } }
