@@ -1,0 +1,190 @@
+[
+  {
+    "file": "c.svg",
+    "slug": "c",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/c.svg",
+    "title": "C",
+    "color": "A8B9CC",
+    "source": "https://commons.wikimedia.org/wiki/File:The_C_Programming_Language_logo.svg",
+    "license": null,
+    "guidelines": null
+  },
+  {
+    "file": "cplusplus.svg",
+    "slug": "cplusplus",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/cplusplus.svg",
+    "title": "C++",
+    "color": "00599C",
+    "source": "https://github.com/isocpp/logos/tree/64ef037049f87ac74875dbe72695e59118b52186",
+    "license": null,
+    "guidelines": null
+  },
+  {
+    "file": "css.svg",
+    "slug": "css",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/css.svg",
+    "title": "CSS",
+    "color": "663399",
+    "source": "https://github.com/CSS-Next/logo.css/blob/bacc20878227204b283c68a6b935f8279e06b0cd/css.svg",
+    "license": null,
+    "guidelines": "https://github.com/CSS-Next/logo.css"
+  },
+  {
+    "file": "gnubash.svg",
+    "slug": "gnubash",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/gnubash.svg",
+    "title": "GNU Bash",
+    "color": "4EAA25",
+    "source": "https://github.com/odb/official-bash-logo/tree/61eff022f2dad3c7468f5deb4f06652d15f2c143",
+    "license": {
+      "type": "MIT"
+    },
+    "guidelines": "https://github.com/odb/official-bash-logo"
+  },
+  {
+    "file": "go.svg",
+    "slug": "go",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/go.svg",
+    "title": "Go",
+    "color": "00ADD8",
+    "source": "https://blog.golang.org/go-brand",
+    "license": null,
+    "guidelines": "https://blog.golang.org/go-brand"
+  },
+  {
+    "file": "html5.svg",
+    "slug": "html5",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/html5.svg",
+    "title": "HTML5",
+    "color": "E34F26",
+    "source": "https://www.w3.org/html/logo/",
+    "license": null,
+    "guidelines": null
+  },
+  {
+    "file": "javascript.svg",
+    "slug": "javascript",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/javascript.svg",
+    "title": "JavaScript",
+    "color": "F7DF1E",
+    "source": "https://github.com/voodootikigod/logo.js/blob/1544bdeed6d618a6cfe4f0650d04ab8d9cfa76d9/js.svg",
+    "license": {
+      "type": "MIT"
+    },
+    "guidelines": null
+  },
+  {
+    "file": "json.svg",
+    "slug": "json",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/json.svg",
+    "title": "JSON",
+    "color": "000000",
+    "source": "https://commons.wikimedia.org/wiki/File:JSON_vector_logo.svg",
+    "license": null,
+    "guidelines": null
+  },
+  {
+    "file": "kotlin.svg",
+    "slug": "kotlin",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/kotlin.svg",
+    "title": "Kotlin",
+    "color": "7F52FF",
+    "source": "https://www.jetbrains.com/company/brand/logos/",
+    "license": null,
+    "guidelines": "https://www.jetbrains.com/company/brand/"
+  },
+  {
+    "file": "markdown.svg",
+    "slug": "markdown",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/markdown.svg",
+    "title": "Markdown",
+    "color": "000000",
+    "source": "https://github.com/dcurtis/markdown-mark/tree/360a3657fef7f6ad0b303296a95ad52985caa0d3",
+    "license": {
+      "type": "CC0-1.0"
+    },
+    "guidelines": "https://github.com/dcurtis/markdown-mark"
+  },
+  {
+    "file": "php.svg",
+    "slug": "php",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/php.svg",
+    "title": "PHP",
+    "color": "777BB4",
+    "source": "https://php.net/download-logos.php",
+    "license": {
+      "type": "CC-BY-SA-4.0"
+    },
+    "guidelines": null
+  },
+  {
+    "file": "python.svg",
+    "slug": "python",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/python.svg",
+    "title": "Python",
+    "color": "3776AB",
+    "source": "https://www.python.org/community/logos/",
+    "license": null,
+    "guidelines": "https://www.python.org/community/logos/"
+  },
+  {
+    "file": "ruby.svg",
+    "slug": "ruby",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/ruby.svg",
+    "title": "Ruby",
+    "color": "CC342D",
+    "source": "https://www.ruby-lang.org/en/about/logo/",
+    "license": {
+      "type": "CC-BY-SA-2.5"
+    },
+    "guidelines": null
+  },
+  {
+    "file": "rust.svg",
+    "slug": "rust",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/rust.svg",
+    "title": "Rust",
+    "color": "000000",
+    "source": "https://www.rust-lang.org",
+    "license": {
+      "type": "CC-BY-SA-4.0"
+    },
+    "guidelines": "https://www.rust-lang.org/policies/media-guide"
+  },
+  {
+    "file": "swift.svg",
+    "slug": "swift",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/swift.svg",
+    "title": "Swift",
+    "color": "F05138",
+    "source": "https://developer.apple.com/swift/resources/",
+    "license": null,
+    "guidelines": "https://developer.apple.com/swift/resources/"
+  },
+  {
+    "file": "typescript.svg",
+    "slug": "typescript",
+    "commit": "dc7b10662a0a2cfdfc9305e2a2b06c023c30724a",
+    "download": "https://raw.githubusercontent.com/simple-icons/simple-icons/dc7b10662a0a2cfdfc9305e2a2b06c023c30724a/icons/typescript.svg",
+    "title": "TypeScript",
+    "color": "3178C6",
+    "source": "https://www.typescriptlang.org/branding",
+    "license": null,
+    "guidelines": "https://www.typescriptlang.org/branding"
+  }
+]

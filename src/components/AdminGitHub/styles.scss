@@ -1,0 +1,76 @@
+.dd-github { display: grid; gap: 18px; min-width: 0; color: var(--ink); container-type: inline-size; }
+.dd-github-actions, .dd-github-toolbar, .dd-github-controls, .dd-github-panel-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.dd-github-actions { justify-content: flex-end; }
+.dd-github-panel-heading { justify-content: space-between; margin-bottom: 12px; }
+.dd-github-panel { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--dd-panel-surface, var(--paper)); }
+.dd-github-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+.dd-github-caption { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
+.dd-github-panel > .dd-github-caption { margin-top: 7px; }
+.dd-github-link { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+.dd-github-link:hover { color: var(--accent); }
+.dd-github-link svg { flex: none; }
+.dd-github-label { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.dd-github :is(.dd-github-label, .dd-github-title, .dd-github-caption, .dd-github-option, .dd-github-reading-value) > svg { flex: none; }
+.dd-github-label > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.dd-github-color-key { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--accent); }
+.dd-github-repository { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+.dd-github-repository-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
+.dd-github-repository-copy { flex: 1; min-width: 180px; display: grid; gap: 5px; }
+.dd-github-repository-stats { display: grid; grid-template-columns: repeat(2, auto); gap: 7px 18px; }
+.dd-github-accent { color: var(--accent); flex: none; }
+.dd-github-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.dd-github-metric { display: grid; align-content: start; gap: 9px; padding: 18px; }
+.dd-github-metric-visual { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 7px; background: var(--subtle); color: var(--accent); }
+.dd-github-value { font-size: 29px; font-weight: 600; line-height: 1.2; }
+.dd-github-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.dd-github-toggle { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; }
+.dd-github-button, .dd-github-option { display: inline-flex; justify-content: center; align-items: center; gap: 6px; min-height: 32px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--muted); font: inherit; font-size: 11px; cursor: pointer; transition: color .2s, background-color .2s, border-color .2s; }
+.dd-github-option { min-height: 27px; border: 0; padding: 5px 9px; border-radius: 5px; }
+.dd-github-option.is-active { background: var(--subtle); color: var(--accent); }
+.dd-github-button:hover, .dd-github-option:hover { color: var(--accent); background: var(--subtle); }
+.dd-github-button:disabled { opacity: .5; cursor: default; }
+.dd-github :is(a, button, input):focus-visible, .dd-github-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.dd-github-notices:empty { display: none; }
+.dd-github-notices { display: grid; gap: 8px; }
+.dd-github-notice { margin: 0; padding: 11px 14px; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); font-size: 12px; line-height: 1.7; background: var(--subtle); }
+.dd-github-notice.is-error { color: var(--danger); }
+.dd-github-ranking, .dd-github-commits { display: grid; gap: 14px; list-style: none; margin: 18px 0 0; padding: 0; }
+.dd-github-ranking-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 7px 10px; }
+.dd-github-row-label { min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
+.dd-github-bar-track { grid-column: 1 / -1; height: 4px; border-radius: 4px; background: var(--subtle); overflow: hidden; }
+.dd-github-bar { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .65s ease; }
+.dd-github-table-scroll { overflow: auto; max-height: 440px; margin-top: 14px; }
+.dd-github-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; white-space: nowrap; }
+.dd-github-table caption { text-align: left; padding-bottom: 12px; }
+.dd-github-table th, .dd-github-table td { padding: 10px 9px; border-bottom: 1px solid var(--line); }
+.dd-github-table th { font-weight: 500; }
+.dd-github-table thead { position: sticky; top: 0; background: var(--dd-panel-surface, var(--paper)); color: var(--muted); z-index: 1; }
+.dd-github-table td { color: var(--muted); }
+.dd-github-commit { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 18px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.dd-github-commit > a { min-width: 0; flex: 1 1 250px; }
+.dd-github-commit code { color: var(--accent); font-size: 11px; flex: none; }
+.dd-github-skeleton { width: 100%; height: 28px; margin-top: 14px; background: var(--subtle); border-radius: 7px; animation: github-loading 1.4s ease-in-out infinite alternate; }
+.dd-github-skeleton:last-child { width: 65%; }
+.dd-github-reading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; margin-top: 12px; }
+.dd-github-reading-value { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; }
+.dd-github-chart { display: block; width: 100%; height: auto; color: var(--accent); overflow: visible; }
+.dd-github-grid line { stroke: var(--line); stroke-dasharray: 3 5; }
+.dd-github-grid text, .dd-github-chart-label { fill: var(--muted); font-size: 10px; }
+.dd-github-chart-line { stroke: currentColor; stroke-width: 2.8px; stroke-linecap: round; stroke-linejoin: round; fill: none; stroke-dasharray: 1; animation: github-line 1.2s ease both; }
+.dd-github-chart-area { animation: github-area .8s ease both; }
+.dd-github-chart-point { fill: currentColor; }
+.dd-github-chart-active line { stroke: var(--muted); stroke-dasharray: 3 4; opacity: .5; }
+.dd-github-chart-active circle { fill: var(--dd-panel-surface, var(--paper)); stroke: currentColor; stroke-width: 2.5px; }
+.dd-github-timeline { display: grid; gap: 8px; padding-left: 6%; margin-top: 8px; }
+.dd-github-slider { width: 100%; margin: 0; height: 24px; appearance: none; background: transparent; cursor: pointer; }
+.dd-github-slider::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: var(--line); }
+.dd-github-slider::-moz-range-track { height: 2px; border-radius: 2px; background: var(--line); }
+.dd-github-slider::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; margin-top: -5px; border: 2px solid var(--accent); border-radius: 50%; background: var(--dd-panel-surface, var(--paper)); }
+.dd-github-slider::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid var(--accent); border-radius: 50%; background: var(--dd-panel-surface, var(--paper)); }
+@keyframes github-loading { to { opacity: .45; } }
+@keyframes github-line { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes github-area { from { opacity: 0; } to { opacity: 1; } }
+@container (max-width: 850px) { .dd-github-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (max-width: 620px) { .dd-github-columns { grid-template-columns: 1fr; } .dd-github-panel { padding: 16px; } .dd-github-repository-stats { width: 100%; } }
+@container (max-width: 400px) { .dd-github-metrics { grid-template-columns: 1fr; } .dd-github-metric { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; } .dd-github-metric > .dd-github-caption:last-child { grid-column: 1 / -1; } .dd-github-value { font-size: 23px; } }
+@media (prefers-reduced-motion: reduce) { .dd-github *, .dd-github *::before, .dd-github *::after, .dd-github-button { animation: none !important; transition: none !important; } }

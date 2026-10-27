@@ -4,6 +4,7 @@ import { absoluteSiteUrl } from '../seo';
 import { normalizeDomainName } from '../domainUtils';
 import { connectionsAPI } from '../../api/connections';
 import { getServerSearchProviders } from './availability';
+import { readDiscoveryCache, storeDiscoveryQuote } from './discoveryCache';
 import { canUseConnectionProvider } from '../accountPlans';
 import type { ConnectionSnapshot } from '../connections/types';
 import { domainSearchFields, registrarPurchaseUrl } from './types';
@@ -15,6 +16,7 @@ const cancelled = () => new Error(`Domain Search Cancelled`);
 const nextProviderSearch = new Map<string, number>();
 
 interface SearchConnections {
+  paid: boolean;
   userId: string | null;
   connectionsUpdated: string;
   snapshot: ConnectionSnapshot | null;
@@ -60,7 +62,7 @@ const getSearchConnections = async (signal: AbortSignal, expectedUserId?: string
   const snapshot = sources.some(source => source.values !== undefined) ? privateSnapshot : null;
   const connectionsUpdated = JSON.stringify({ providers, privateUpdated: snapshot?.updated ?? null });
   if (expectedUpdated !== undefined && expectedUpdated !== connectionsUpdated) throw new Error(`Connections Changed — Search Again`);
-  const connections = { userId, sources, snapshot, connectionsUpdated };
+  const connections = { userId, sources, snapshot, connectionsUpdated, paid: access?.paid === true };
   await checkSearchConnections(signal, connections);
   return connections;
 };
@@ -149,10 +151,16 @@ export const searchConnectedDomains = async (
   expectedUserId?: string | null,
   expectedUpdated?: string,
   onProgress?: (results: DomainSearchResults) => void,
+  options?: { discoveryCache?: boolean; refresh?: boolean },
 ): Promise<DomainSearchResults> => {
   const names = [...new Set(domains.map(normalizeDomainName))];
   const connections = await getSearchConnections(signal, expectedUserId, expectedUpdated);
   const { sources, userId, connectionsUpdated } = connections;
+  const cacheOwner = userId ?? `guest`;
+  const cacheScope = JSON.stringify([connectionsUpdated, connections.paid, sources.map(({ field, values }) => [field.id, values !== undefined])]);
+  const cached = options?.discoveryCache ? await readDiscoveryCache(cacheOwner, cacheScope) : null;
+  if (signal.aborted) throw cancelled();
+  let checkedAt: number | undefined;
   const results = names.map(domain => ({
     domain,
     connections: sources.map(({ field }) => ({
@@ -163,8 +171,14 @@ export const searchConnectedDomains = async (
       purchaseUrl: registrarPurchaseUrl(field.id, domain),
     } as DomainSearchResult)),
   }));
+  if (!options?.refresh) for (const domain of results) for (let index = 0; index < domain.connections.length; index++) {
+    const saved = cached?.get(`${domain.connections[index].provider}:${domain.domain}`);
+    if (!saved) continue;
+    domain.connections[index] = { ...saved.result };
+    checkedAt = Math.min(checkedAt ?? saved.checkedAt, saved.checkedAt);
+  }
   const snapshotResults = (): DomainSearchResults => ({
-    searchedAt: new Date().toISOString(),
+    searchedAt: new Date(checkedAt ?? Date.now()).toISOString(),
     connectionsUpdated,
     results: results.map(result => ({ ...result, connections: [...result.connections] })),
   });
@@ -175,6 +189,7 @@ export const searchConnectedDomains = async (
     let blockedError = ``;
     for (const [index, domain] of names.entries()) {
       if (signal.aborted) throw cancelled();
+      if (!results[index].connections[providerIndex].pending) continue;
       const base = { ...results[index].connections[providerIndex], pending: false };
       let requested = false;
       let retryAfterMs = pace;
@@ -218,6 +233,11 @@ export const searchConnectedDomains = async (
         if (requested) nextProviderSearch.set(providerKey, Date.now() + retryAfterMs);
       }
       results[index].connections[providerIndex] = result;
+      if (options?.discoveryCache && !signal.aborted) {
+        const resultCheckedAt = Date.now();
+        checkedAt = Math.min(checkedAt ?? resultCheckedAt, resultCheckedAt);
+        storeDiscoveryQuote(cacheOwner, cacheScope, result, resultCheckedAt);
+      }
       if (!signal.aborted) onProgress?.(snapshotResults());
     }
   }));

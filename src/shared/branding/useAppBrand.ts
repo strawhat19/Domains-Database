@@ -1,10 +1,11 @@
 import { useMemo, useCallback } from 'react';
+import { defaultFeatureFlags } from '../featureFlags/types';
 import { useFeatureFlags } from '../featureFlags/useFeatureFlags';
 import { getAppName, formatBrandText, formatBrandContent, getBrandedBlogImage } from './values';
 
 export const useAppBrand = () => {
   const { flags, ready } = useFeatureFlags();
-  const switched = ready && flags.nameSwitch;
+  const switched = ready ? flags.nameSwitch : defaultFeatureFlags.nameSwitch;
   const name = getAppName(switched);
   const formatText = useCallback((text: string) => formatBrandText(text, name), [name]);
   const formatContent = useCallback(<Value>(value: Value) => formatBrandContent(value, name), [name]);

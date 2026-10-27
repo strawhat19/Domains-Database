@@ -1,0 +1,2 @@
+export const formatGitHubCount = (value: number | null | undefined) => value == null ? `—` : new Intl.NumberFormat(`en-US`).format(value);
+export const formatGitHubDate = (value: string | null | undefined, time = false) => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat(`en-US`, { timeZone: `UTC`, day: `numeric`, month: `short`, ...(time ? { hour: `numeric`, minute: `2-digit` } : { year: `numeric` }) }).format(new Date(value)) : `Unavailable`;

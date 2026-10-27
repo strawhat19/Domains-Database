@@ -1,6 +1,8 @@
 import { RegistrarRelayError } from '../registrars/errors';
 import { AdminAuthError, requireAnalyticsAdmin } from './auth';
+import { getGitHubAnalytics, GitHubServiceError } from './github';
 import { getVercelAnalytics, AnalyticsServiceError } from './traffic';
+import type { GitHubPeriod } from '../../shared/analytics/github.types';
 import { getVercelObservability, ObservabilityServiceError } from './observability';
 import type { TrafficPeriod, ObservabilityPeriod, AnalyticsFilters } from '../../shared/analytics/types';
 
@@ -13,7 +15,7 @@ const getDateRange = (days: TrafficPeriod) => {
   start.setUTCDate(start.getUTCDate() - days + 1);
   return { to: end.toISOString().slice(0, 10), from: start.toISOString().slice(0, 10) };
 };
-export const handleAdminReport = async (request: Request, kind: `analytics` | `observability`): Promise<Response> => {
+export const handleAdminReport = async (request: Request, kind: `github` | `analytics` | `observability`): Promise<Response> => {
   const controller = new AbortController();
   const abort = () => controller.abort();
   request.signal.addEventListener(`abort`, abort, { once: true });
@@ -28,6 +30,13 @@ export const handleAdminReport = async (request: Request, kind: `analytics` | `o
     if (activeRequests >= 8) throw new AdminAuthError(429, `admin_reports_busy`, `Admin Reports Are Busy — Try Again Shortly`);
     admitted = true;
     activeRequests++;
+    if (kind === `github`) {
+      const value = url.searchParams.get(`days`) ?? `7`;
+      if ([...url.searchParams.keys()].some(key => ![`days`, `refresh`].includes(key) || url.searchParams.getAll(key).length > 1)
+        || ![`7`, `14`, `30`, `90`].includes(value) || url.searchParams.has(`refresh`) && url.searchParams.get(`refresh`) !== `1`) throw new AdminAuthError(400, `invalid_github_period`, `Choose A Supported GitHub Reporting Period`);
+      await requireAnalyticsAdmin(request, controller.signal, true);
+      return Response.json(await getGitHubAnalytics(Number(value) as GitHubPeriod, url.searchParams.get(`refresh`) === `1`), { headers });
+    }
     const parameter = kind === `analytics` ? `days` : `hours`;
     const value = url.searchParams.get(parameter) ?? (kind === `analytics` ? `7` : `24`);
     const allowedParameters = kind === `analytics` ? [`days`, `from`, `to`, `country`, `device`, `path`, `referrer`] : [`hours`];
@@ -46,7 +55,7 @@ export const handleAdminReport = async (request: Request, kind: `analytics` | `o
       : await getVercelObservability(period as ObservabilityPeriod);
     return Response.json(report, { headers });
   } catch (failure) {
-    if (failure instanceof AdminAuthError || failure instanceof AnalyticsServiceError || failure instanceof ObservabilityServiceError) {
+    if (failure instanceof AdminAuthError || failure instanceof GitHubServiceError || failure instanceof AnalyticsServiceError || failure instanceof ObservabilityServiceError) {
       return Response.json({ code: failure.code, message: failure.message }, { status: failure.status, headers });
     }
     if (failure instanceof RegistrarRelayError) {

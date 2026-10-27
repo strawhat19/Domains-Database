@@ -1,6 +1,6 @@
 {
   "name": "domains-database",
-  "version": "0.0.6.9",
+  "version": "0.0.7.0",
   "private": true,
   "license": "MIT",
   "main": "expo-router/entry",
@@ -8,10 +8,10 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "start": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start",
-    "web": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --web",
-    "ios": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --ios",
-    "android": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --android",
+    "start": "node --max-old-space-size=8192 --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start",
+    "web": "node --max-old-space-size=8192 --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --web",
+    "ios": "node --max-old-space-size=8192 --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --ios",
+    "android": "node --max-old-space-size=8192 --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli start --android",
     "export:web": "node --require ./scripts/metro-file-io.cjs ./node_modules/expo/bin/cli export --platform web"
   },
   "dependencies": {

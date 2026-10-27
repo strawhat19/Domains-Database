@@ -1,5 +1,6 @@
 import AdminUsers from '../AdminUsers';
 import AdminPlans from '../AdminPlans';
+import AdminGitHub from '../AdminGitHub';
 import AdminPayments from '../AdminPayments';
 import AdminEvents from '../AdminEvents';
 import { useMemo, useState } from 'react';
@@ -20,9 +21,9 @@ import { elementProps } from '../../shared/elementProps';
 import { AdminButton, AdminLoading } from '../AdminWidgets';
 import AdminDashboardSummary from '../AdminDashboardSummary';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { canViewPayments, type AdminSection } from '../../shared/admin/permissions';
-import { Text, View, Pressable, useWindowDimensions } from 'react-native';
-import { Bot, Cpu, Bell, Star, Users, Wallet, Globe2, FileText, RotateCcw, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, SlidersHorizontal } from 'lucide-react-native';
+import { canManageRoles, canViewPayments, type AdminSection } from '../../shared/admin/permissions';
+import { Text, View, Platform, Pressable, useWindowDimensions } from 'react-native';
+import { Bot, Cpu, Bell, Star, Users, Wallet, Globe2, FileText, GitBranch, RotateCcw, CalendarDays, ClipboardList, MessageCircle, MessagesSquare, LayoutDashboard, SlidersHorizontal } from 'lucide-react-native';
 
 const sections = {
   overview: { title: `Dashboard`, parent: `Dashboard`, Icon: LayoutDashboard },
@@ -41,7 +42,7 @@ const sections = {
   formSubmissions: { title: `Forms`, parent: `Feedback`, Icon: ClipboardList },
   reports: { title: `Reports`, parent: `Dashboard`, Icon: FileText },
   analytics: { title: `Analytics`, parent: `Dashboard`, Icon: LayoutDashboard },
-  observability: { title: `Analytics`, parent: `Dashboard`, Icon: LayoutDashboard },
+  observability: { title: `Health`, parent: `Dashboard`, Icon: Cpu },
 };
 
 const DashboardContent = ({ section }: { section: AdminSection }) => {
@@ -49,7 +50,9 @@ const DashboardContent = ({ section }: { section: AdminSection }) => {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const [headingActionsTarget, setHeadingActionsTarget] = useState<HTMLElement | null>(null);
-  const [analyticsPanel, setAnalyticsPanel] = useState<`traffic` | `runtime`>(section === `observability` ? `runtime` : `traffic`);
+  const [analyticsPanel, setAnalyticsPanel] = useState<`traffic` | `github`>(`traffic`);
+  const githubAllowed = canManageRoles(state.user);
+  const visibleAnalyticsPanel = githubAllowed ? analyticsPanel : `traffic`;
   const styles = useMemo(() => createStyles(palette), [palette]);
   const snapshot = state.snapshot;
   const analytics = section === `analytics` || section === `observability` || section === `payments`;
@@ -82,12 +85,29 @@ const DashboardContent = ({ section }: { section: AdminSection }) => {
       </> : section === `feedback` || section === `reviews` || section === `aiChats` || section === `messages` ? <AdminFeedback section={section} /> : section === `events` ? <AdminEvents /> : section === `users` ? <AdminUsers /> : section === `features` ? <AdminFeatures /> : section === `payments` ? <AdminPayments headingActionsTarget={headingActionsTarget} /> : section === `plans` ? <AdminPlans headingActionsTarget={headingActionsTarget} /> : section === `domains` ? <AdminDomains snapshot={snapshot} loading={state.loading} /> : section === `requests` || section === `formSubmissions` ? <FormSubmissions /> : section === `reports` ? <>
         {state.loading ? <AdminLoading id={`reports`} label={`Loading Account And Domain Reports`} /> : snapshot ? <AdminRecordPreviews snapshot={snapshot} /> : null}
         <FormSubmissions />
-      </> : section === `notifications` ? <AdminNotifications headingActionsTarget={headingActionsTarget} /> : <>
-        <View {...elementProps(`admin-analytics-views`)} style={styles.analyticsViews} accessibilityLabel={`Analytics View`}>
-          {([{ id: `traffic`, label: `Traffic`, Icon: Globe2 }, { id: `runtime`, label: `Health`, Icon: Cpu }] as const).map(({ id, label, Icon }) => <Pressable key={id} {...elementProps(`admin-analytics-view`, id)} accessibilityRole={`button`} accessibilityState={{ selected: analyticsPanel === id }} onPress={() => setAnalyticsPanel(id)} style={[styles.analyticsView, analyticsPanel === id && styles.analyticsViewActive]}><Icon {...elementProps(`admin-analytics-view-icon`, id)} size={15} color={analyticsPanel === id ? palette.accent : palette.muted} /><Text {...elementProps(`admin-analytics-view-label`, id)} style={[styles.analyticsViewText, analyticsPanel === id && { color: palette.accent }]}>{label}</Text></Pressable>)}
+      </> : section === `notifications` ? <AdminNotifications headingActionsTarget={headingActionsTarget} /> : section === `observability` ? <AdminObservability headingActionsTarget={headingActionsTarget} /> : <>
+        <View {...elementProps(`admin-analytics-views`)} style={styles.analyticsViews} accessibilityRole={`tablist`} accessibilityLabel={`Analytics View`}>
+          {([{ id: `traffic`, label: `Traffic`, Icon: Globe2 }, { id: `github`, label: `GitHub`, Icon: GitBranch }] as const).filter(({ id }) => id !== `github` || githubAllowed).map(({ id, label, Icon }) => <Pressable
+            key={id}
+            tabIndex={visibleAnalyticsPanel === id ? 0 : -1}
+            {...elementProps(`admin-analytics-view`, id)}
+            accessibilityRole={`tab`}
+            accessibilityState={{ selected: visibleAnalyticsPanel === id }}
+            onPress={() => setAnalyticsPanel(id)}
+            style={[styles.analyticsView, visibleAnalyticsPanel === id && styles.analyticsViewActive]}
+            {...(Platform.OS === `web` ? { 'aria-controls': `admin-analytics-content`, 'aria-selected': visibleAnalyticsPanel === id, onKeyDown: (event: { key: string; preventDefault: () => void }) => {
+              if (![`End`, `Home`, `ArrowLeft`, `ArrowRight`].includes(event.key) || !githubAllowed) return;
+              event.preventDefault();
+              const next = event.key === `Home` ? `traffic` : event.key === `End` ? `github` : id === `traffic` ? `github` : `traffic`;
+              setAnalyticsPanel(next);
+              document.getElementById(`admin-analytics-view-${next}`)?.focus();
+            } } : {})}
+          ><Icon {...elementProps(`admin-analytics-view-icon`, id)} size={15} color={visibleAnalyticsPanel === id ? palette.accent : palette.muted} /><Text {...elementProps(`admin-analytics-view-label`, id)} style={[styles.analyticsViewText, visibleAnalyticsPanel === id && { color: palette.accent }]}>{label}</Text></Pressable>)}
         </View>
-        {analyticsPanel === `traffic` ? <AdminAnalytics headingActionsTarget={headingActionsTarget} outcomesLoading={state.loading} outcomes={snapshot?.canInspectAccounts ? { accounts: snapshot.users.map(record => record.created), domains: snapshot.domains.map(record => record.created) } : undefined} /> : <AdminObservability headingActionsTarget={headingActionsTarget} />}
-        {snapshot ? <AdminDashboardSummary showSource snapshot={snapshot} onRefresh={state.refresh} /> : null}
+        <View {...elementProps(`admin-analytics-content`)} role={`tabpanel`} aria-labelledby={`admin-analytics-view-${visibleAnalyticsPanel}`}>
+          {visibleAnalyticsPanel === `traffic` ? <AdminAnalytics headingActionsTarget={headingActionsTarget} outcomesLoading={state.loading} outcomes={snapshot?.canInspectAccounts ? { accounts: snapshot.users.map(record => record.created), domains: snapshot.domains.map(record => record.created) } : undefined} /> : <AdminGitHub headingActionsTarget={headingActionsTarget} />}
+        </View>
+        {snapshot && visibleAnalyticsPanel === `traffic` ? <AdminDashboardSummary showSource snapshot={snapshot} onRefresh={state.refresh} /> : null}
       </>}
     </View>
   </View>;

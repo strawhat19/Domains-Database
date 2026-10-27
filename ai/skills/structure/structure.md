@@ -225,7 +225,7 @@ Use the existing framework's supported SCSS module loading. When its Sass compil
 
 | Module | Shared Models/Service Boundary | Components/Routes |
 | --- | --- | --- |
-| Admin/Reports | shared/admin, shared/analytics, shared/observability; focused API facades | AdminDashboard, AdminRecords, AnalyticsCharts, separate Usage/runtime page and ObservabilityPanel |
+| Admin/Reports | shared/admin, shared/analytics, shared/observability; focused API facades | AdminDashboard, AdminRecords, AnalyticsCharts with Traffic/GitHub datasets for an identified repository, separate existing Health/Usage runtime page and ObservabilityPanel |
 | Feature Flags | shared/featureFlags and current account/catalog tier services; feature settings facade | Owner AdminFeatures table/settings modal and shared public consumer gates |
 | Notifications/Contacts | shared/notifications and shared/formSubmissions; notification/contact facades | Public bell/cards/Contact, private notification manager/request viewer |
 | Private Chat | shared/models/chats and shared/chats; chat facade | ChatInbox/ChatThread/composer and participant-private account/admin routes |

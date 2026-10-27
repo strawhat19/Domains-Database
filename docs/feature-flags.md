@@ -1,6 +1,6 @@
 # Features
 
-`/features` appears after Plans in the Dashboard submenu, followed by Health and Analytics, and requires an active Owner at navigation, direct-route, service, and Firestore-rule boundaries. `/admin/features` redirects to it. The original four flags and Pricing Table default to true after a confirmed missing record; Ads and Name Switch default to false.
+`/features` appears after Plans in the Dashboard submenu, followed by Health and Analytics, and requires an active Owner at navigation, direct-route, service, and Firestore-rule boundaries. `/admin/features` redirects to it. The original four flags, Pricing Table and Name Switch default to true after a confirmed missing record; Ads defaults to false.
 
 | Flag | False Behavior |
 | --- | --- |
@@ -10,11 +10,13 @@
 | `contact` | Hide Contact navigation and contact actions, disable the public form, and reject new submissions |
 | `pricingTable` | Keep published plan previews; replace plan actions with signed-in interest and account-free upvotes |
 | `ads` | Disable future ad eligibility for everyone; no ad placements are connected yet |
-| `nameSwitch` | Display Domains Database; enabling it displays Domain Databases in UI, page copy, and browser titles |
+| `nameSwitch` | Display Domains Database; enabled by default to display Domain Databases in UI, page copy, and browser titles |
 
 Firebase mode subscribes to one public-safe `featureSettings/FeatureSettings_1_Global_12_00_AM_10_12_26_cb23b14255924fdd95957eac7ca7e35e` document. Its stable singleton identity is generated through `genID`, with number 1 allocated atomically alongside `counters/features` on the first Owner save. The counter cannot be changed afterward. Settings contain `id`, `number`, `type`, `name`, `version`, `created`, `updated`, the seven boolean `flags`, and optional `audiences`; only flags, audiences, and the updated timestamp may change. No extra index is needed.
 
 Existing four-flag documents remain readable. Missing new flags receive their release defaults, and missing new audiences use unrestricted minimum-plan targeting. Existing values and audiences remain intact; the next confirmed Owner save writes the compatible full configuration. Unknown keys and malformed saved values remain errors rather than being replaced with defaults.
+
+Domain Databases is the default display name for the canonical domaindatabases.com site, including initial branding while feature settings load, metadata fallbacks, native blog imagery and the Expo display name. Existing saved Name Switch values and audiences still apply after settings are ready; an explicit saved false continues to select Domains Database. This default change does not rewrite stored settings or change the app's slug, scheme, package identifiers, repository or deployment.
 
 Each feature audience has a `roles` allowlist and a minimum `plans` selection with `planMode: minimum`. For roles, `null` allows every role and an empty list allows none. For plans, no selection means Free and above; a single selected slug allows that tier and every higher tier. Free has no selector button, and clicking the selected plan clears the selection. Paid tiers follow the saved catalog's `displayOrder`, then `number`; Free remains below paid tiers. Unknown paid tiers do not qualify until their catalog metadata is available. A feature is effective only when globally enabled and both the role and minimum plan match. Signed-out visitors match Guest/Free; inactive accounts fail the audience check. Both Admin and legacy Administrator remain separately selectable. Plan selection does not grant or alter account entitlements.
 

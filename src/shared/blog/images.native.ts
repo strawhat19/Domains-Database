@@ -20,4 +20,4 @@ const switchedBlogImages: Record<string, number> = {
   'history-of-the-internet-and-domain-names': require('../../../assets/blog/name-switch/history-of-the-internet-and-domain-names.svg'),
 };
 
-export const getBlogImage = (slug: string, switched = false) => (switched ? switchedBlogImages : blogImages)[slug];
+export const getBlogImage = (slug: string, switched = true) => (switched ? switchedBlogImages : blogImages)[slug];

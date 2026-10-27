@@ -12,13 +12,17 @@ Third-party dependencies and assets retain their own licenses and notices, inclu
 
 Use Node.js 22.20.0 or another version supported by Expo SDK 57. Node 22.20.0 is already installed on this computer through nvm-windows.
 
-The npm scripts check the minimum Node version and preload a Windows limit of 32 concurrent file reads and writes to reduce Metro's EMFILE errors while retaining its disk cache.
+The npm scripts check the minimum Node version and preload a Windows limit of 32 concurrent file reads and writes to reduce Metro's EMFILE errors while retaining its disk cache. Local development commands allow up to 8 GiB of V8 old-space heap instead of the roughly 4 GiB limit reached in the reported crash; this is a ceiling, not reserved RAM. Use the npm commands below so this project-specific setting is applied. Other Node processes and production server memory limits are unchanged.
+
+Metro ignores this project's instruction/documentation, tests and generated output folders (`ai`, `docs`, `dist`, `tests`, `.git`, `.vercel`, `web-build`) while retaining the application source, public artwork and default Expo exclusions. Editing instructions or generating an export should not invalidate the running application/API bundles. The Babel configuration also resolves named Lucide icons to their installed individual modules, preserving aliases and type imports without loading the complete icon barrels during development.
 
 ```powershell
 nvm use 22.20.0
 npm install
 npm run web
 ```
+
+If a previous process exited with `FATAL ERROR: Reached heap limit`, start it again with `npm run web`. For the first restart after the Babel configuration change, use `npm run web -- --clear` once so existing transforms are rebuilt. Avoid clearing Metro's cache on every restart. These changes reduce known development memory pressure; the exact allocation source and long-running stability have not been measured. If the computer has little free RAM, close unused development servers/apps before restarting rather than assuming a larger heap adds physical memory. The Vercel Analytics development/debug messages are informational and do not indicate a failed session.
 
 For mobile, run `npm start` and open the project with an Expo Go version supporting SDK 57. `npm run android` opens an available Android emulator. iOS development requires a compatible device or a Mac for the simulator.
 

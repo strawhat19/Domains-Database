@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import type { GitHubPeriod, GitHubReport } from './github.types';
 import { getFirebaseAuth } from '../firebase/client';
 import { firebaseEnabled } from '../firebase/config';
 import type { TrafficPeriod, TrafficReport, AnalyticsFilters, ObservabilityPeriod, ObservabilityReport } from './types';
@@ -8,7 +9,7 @@ export class ReportRequestError extends Error {
 }
 const requestReport = async <T,>(path: string, firebaseUid: string, signal: AbortSignal): Promise<T> => {
   if (!firebaseEnabled) throw new ReportRequestError(`admin_auth_not_configured`, `Connect Firebase To View Admin Reports`);
-  if (Platform.OS !== `web`) throw new ReportRequestError(`admin_web_reporting_required`, `Open The Web Admin Dashboard To View Vercel Reports`);
+  if (Platform.OS !== `web`) throw new ReportRequestError(`admin_web_reporting_required`, `Open The Web Admin Dashboard To View Provider Reports`);
   const auth = getFirebaseAuth();
   const user = auth.currentUser;
   if (!user || user.uid !== firebaseUid) throw new ReportRequestError(`admin_session_changed`, `Sign In Again To View Admin Reports`);
@@ -40,3 +41,4 @@ export const getTrafficReport = (filters: TrafficPeriod | AnalyticsFilters, fire
   return requestReport<TrafficReport>(`/api/admin/analytics?${parameters}`, firebaseUid, signal);
 };
 export const getObservabilityReport = (period: ObservabilityPeriod, firebaseUid: string, signal: AbortSignal) => requestReport<ObservabilityReport>(`/api/admin/observability?hours=${period}`, firebaseUid, signal);
+export const getGitHubReport = (period: GitHubPeriod, firebaseUid: string, signal: AbortSignal, refresh = false) => requestReport<GitHubReport>(`/api/admin/github?days=${period}${refresh ? `&refresh=1` : ``}`, firebaseUid, signal);

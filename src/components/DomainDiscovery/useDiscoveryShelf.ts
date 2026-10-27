@@ -18,8 +18,9 @@ export const useDiscoveryShelf = ({ count, loading, sidebar, availableHeight }: 
   const [shelfHeight, setShelfHeight] = useState<number | null>(null);
   const panelHeight = Math.max(220, availableHeight ?? height - 300);
   const viewportHeight = shelfHeight ?? panelHeight - 150;
-  const buffering = sidebar && loading && count < 3;
-  const displayedCount = buffering ? 3 : count;
+  const buffering = sidebar && loading && count === 0;
+  const placeholderCount = loading ? Math.max(0, 3 - count) : 0;
+  const displayedCount = count + placeholderCount;
   const trackHeight = (cardCount: number, cardHeight: number) => (
     cardCount * cardHeight + Math.max(0, cardCount - 1) * discoveryCardGap + 4
   );
@@ -38,6 +39,6 @@ export const useDiscoveryShelf = ({ count, loading, sidebar, availableHeight }: 
     buffering,
     panelHeight,
     gap: discoveryCardGap,
-    placeholderCount: buffering || (loading && count === 0) ? 3 : 0,
+    placeholderCount,
   };
 };

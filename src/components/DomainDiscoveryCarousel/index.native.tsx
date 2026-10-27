@@ -16,10 +16,9 @@ const tldFilters = [`com`, `all`, ...discoveryExtensions.filter(extension => ext
 const DomainDiscoveryCarousel = ({ suffix, results, onSearch, tldFilter, tldResults, setTldFilter, loading = false, disabled = false, density = `compact` }: DomainDiscoveryCarouselProps) => {
   const { palette } = useTheme();
   const [watchPromptOpen, setWatchPromptOpen] = useState(false);
-  const buffering = loading;
-  const visibleResults = buffering ? [] : results;
-  const firstResults = visibleResults.filter((_, index) => index % 2 === 0);
-  const secondResults = visibleResults.filter((_, index) => index % 2 === 1);
+  const buffering = loading && !results.length;
+  const firstResults = results.filter((_, index) => index % 2 === 0);
+  const secondResults = results.filter((_, index) => index % 2 === 1);
   const firstState = useDiscoveryCarousel(firstResults.length, disabled || loading || watchPromptOpen, density, 1);
   const secondState = useDiscoveryCarousel(secondResults.length, disabled || loading || watchPromptOpen, density, -1);
   const styles = useMemo(() => createStyles(palette), [palette]);

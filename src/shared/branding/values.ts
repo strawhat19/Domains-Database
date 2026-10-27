@@ -1,4 +1,4 @@
-export const getAppName = (switched = false) => switched ? `Domain Databases` : `Domains Database`;
+export const getAppName = (switched = true) => switched ? `Domain Databases` : `Domains Database`;
 
 export const formatBrandText = (text: string, name: string) => text.replace(/\b(?:Domains Database|Domain Databases)\b/gi, match =>
   match === match.toUpperCase() ? name.toUpperCase() : match === match.toLowerCase() ? name.toLowerCase() : name);

@@ -109,10 +109,16 @@ export const getDomainDiscovery = async (
   signal: AbortSignal,
   expectedUserId: string | null,
   onProgress?: (results: DomainDiscoveryResults) => void,
+  options?: { refresh?: boolean; previous?: DomainDiscoveryResults | null },
 ): Promise<DomainDiscoveryResults> => {
+  const previous = new Map(options?.previous?.results.map(result => [result.domain, result]) ?? []);
   const result = await searchConnectedDomains(discoveryCandidates.map(candidate => candidate.domain), signal, expectedUserId, undefined, progress => {
-    if (!signal.aborted) onProgress?.(availableResults(progress));
-  });
+    if (signal.aborted) return;
+    const sameConnections = options?.previous?.connectionsUpdated === progress.connectionsUpdated;
+    const merged = progress.results.map(domain => ({ ...domain, connections: domain.connections.map(connection => connection.pending
+      && sameConnections ? previous.get(domain.domain)?.connections.find(saved => saved.provider === connection.provider) ?? connection : connection) }));
+    onProgress?.(availableResults({ ...progress, results: merged, searchedAt: sameConnections && previous.size ? options?.previous?.searchedAt ?? progress.searchedAt : progress.searchedAt }));
+  }, { discoveryCache: true, refresh: options?.refresh });
   const connections = result.results.flatMap(domain => domain.connections);
   if (connections.length && connections.every(connection => !!connection.error)) {
     throw new Error(connections[0].error || `Could Not Check Domain Availability`);

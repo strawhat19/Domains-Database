@@ -20,7 +20,7 @@ export const useDomainDiscovery = (paused = false) => {
   const [filter, setFilter] = useState<DomainDiscoveryFilter>(`all`);
   const [refreshRevision, setRefreshRevision] = useState(0);
   const userId = user?.id ?? null;
-  const scopeKey = `${userId ?? `guest`}:${loginRevision}:${availability.revision}`;
+  const scopeKey = JSON.stringify([userId, loginRevision, availability.revision, user?.plan, user?.active]);
   const viewKey = `${scopeKey}:${refreshRevision}`;
   const accessLoading = authLoading || availability.loading;
   const requestPaused = paused || !searchActive;
@@ -28,6 +28,8 @@ export const useDomainDiscovery = (paused = false) => {
   const currentRequest = useRef(requestKey);
   const cacheScope = useRef(scopeKey);
   const cache = useRef<DomainDiscoveryResults | null>(null);
+  const partial = useRef<DomainDiscoveryResults | null>(null);
+  const forceRefresh = useRef(false);
   const controller = useRef<AbortController | null>(null);
   const [state, setState] = useState<DiscoveryState>({ key: viewKey, error: ``, result: null, loading: false });
   currentRequest.current = requestKey;
@@ -35,6 +37,8 @@ export const useDomainDiscovery = (paused = false) => {
   useEffect(() => {
     if (cacheScope.current !== scopeKey) {
       cache.current = null;
+      partial.current = null;
+      forceRefresh.current = false;
       cacheScope.current = scopeKey;
     }
     if (accessLoading || !availability.eligible) {
@@ -48,27 +52,32 @@ export const useDomainDiscovery = (paused = false) => {
       return;
     }
     const cached = cache.current;
-    if (cached && Date.now() - Date.parse(cached.searchedAt) < 5 * 60_000) {
+    const refreshRequested = forceRefresh.current;
+    forceRefresh.current = false;
+    if (!refreshRequested && cached && Date.now() - Date.parse(cached.searchedAt) < 5 * 60_000) {
       setState({ key: viewKey, error: ``, result: cached, loading: false });
       return;
     }
-    cache.current = null;
+    const previous = partial.current ?? cached;
     let active = true;
     const request = new AbortController();
     controller.current = request;
     const isCurrent = () => active && !request.signal.aborted && currentRequest.current === requestKey;
-    setState({ key: viewKey, error: ``, result: null, loading: true });
+    setState({ key: viewKey, error: ``, result: previous, loading: true });
     void getDomainDiscovery(request.signal, userId, result => {
-      if (isCurrent()) setState({ key: viewKey, error: ``, result, loading: true });
-    }).then(result => {
+      if (!isCurrent()) return;
+      partial.current = result;
+      setState({ key: viewKey, error: ``, result, loading: true });
+    }, { previous, refresh: refreshRequested }).then(result => {
       if (!isCurrent()) return;
       cache.current = result;
+      partial.current = result;
       setState({ key: viewKey, error: ``, result, loading: false });
     }).catch(failure => {
       if (!isCurrent()) return;
       setState({
         key: viewKey,
-        result: null,
+        result: partial.current ?? previous,
         loading: false,
         error: failure instanceof Error ? failure.message : `Could Not Check Domain Availability`,
       });
@@ -82,7 +91,7 @@ export const useDomainDiscovery = (paused = false) => {
 
   const refresh = useCallback(() => {
     if (requestPaused || accessLoading || !availability.eligible || currentRequest.current !== requestKey) return;
-    cache.current = null;
+    forceRefresh.current = true;
     controller.current?.abort();
     setRefreshRevision(current => current + 1);
   }, [requestKey, requestPaused, accessLoading, availability.eligible]);

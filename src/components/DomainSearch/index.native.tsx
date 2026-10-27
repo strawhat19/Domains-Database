@@ -40,7 +40,7 @@ const DomainSearch = () => {
   const signedIn = Boolean(state.user?.id);
   const busy = state.loading || state.loadingMore;
   const disabled = busy || !state.query.trim();
-  const pageLoading = state.accessLoading || state.recentSearchesLoading;
+  const pageLoading = state.accessLoading;
   const discovery = useDomainDiscovery(busy);
   const discoveryShelf = useDiscoveryShelf({
     sidebar: sideBySide,

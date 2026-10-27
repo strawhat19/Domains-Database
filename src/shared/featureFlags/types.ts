@@ -26,7 +26,7 @@ export interface FeatureSettings {
 export const defaultFeatureFlags: FeatureFlags = {
   ads: false,
   contact: true,
-  nameSwitch: false,
+  nameSwitch: true,
   pricingTable: true,
   themeToggle: true,
   domainMarquee: true,
