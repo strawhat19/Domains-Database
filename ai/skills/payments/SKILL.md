@@ -16,6 +16,7 @@ Connect the requested billing or reporting behavior through the destination's ex
 | Public catalog editing and publication | [Plans](../app-system/references/plans.md) |
 | Feature audiences and minimum tier evaluation | [Features](../admin/references/features.md) |
 | Roles, current account authority, account shell and reporting geometry | [Admin](../admin/SKILL.md), [layout](../admin/layout.md), [analytics](../admin/references/analytics.md) |
+| Requested website ad removal or consent-aware AdSense serving | [AdSense serving](../adsense/references/serving.md) |
 
 Read only applicable references. Use the chosen provider's equivalent documented contracts when Stripe is not the destination's provider.
 

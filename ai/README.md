@@ -22,6 +22,8 @@ Read applicable guides in this order:
 6. [Routes](skills/routes/routes.md)
 7. [Admin](skills/admin/SKILL.md), then only the needed detailed contracts: [Firestore/accounts/rules](skills/admin/references/firestore.md), [private connections/sync](skills/admin/references/connections.md), [feature flags/roles/tiers](skills/admin/references/features.md), [notifications/forms/account actions](skills/admin/references/workflows.md), [analytics/runtime/icons](skills/admin/references/analytics.md), [shell/editor/chart layout](skills/admin/layout.md)
 8. [App System](skills/app-system/SKILL.md) for the complete starter; [chat](skills/app-system/references/chats.md), [plans](skills/app-system/references/plans.md), and [blog](skills/app-system/references/blog.md) for those modules
+9. [AdSense](skills/adsense/SKILL.md) when Google AdSense preparation, publisher verification, submission, consent or ad serving is requested; [submission](skills/adsense/references/submission.md) and [serving](skills/adsense/references/serving.md) stay separate
+10. [Chance-Based Tools](skills/chance-tools/SKILL.md) for randomizers and playful decision interfaces
 
 Apply [User Identity And Profile Photo Sync](skills/user-identity/SKILL.md) whenever building or changing user identity displays: each user's avatar accompanies their name/username in Users tables and other identity views. It includes shared authorized identity data, provider sign-in photo synchronization, best-effort restored-session checks, themed fallbacks and web/native behavior. Include it in connected-account and full-app adoption; provider freshness, custom overrides and privacy follow the skill rather than a header-only implementation.
 
@@ -52,6 +54,16 @@ These are focused workflows, separate from the default account starter. Copy the
 - **Production/custom domains:** [Deployment](skills/deployment/SKILL.md) connects the intended Git production branch and canonical domain, with each secondary hostname independently redirecting and detachable into a future site. Use [the domain prompt](adoption.md#custom-domain-and-detachable-redirects-prompt).
 
 Existing projects keep their database and authentication provider; Firebase is the new-app default, not a required migration. Actual account IDs, prices, currencies, quotas, domain inventories, environment names/status and release evidence belong in the destination's docs/configuration outside `ai/`. Private values belong only in ignored local configuration or hosted server secret storage, never ordinary docs or client code. Preparation, connection, deployment and a real financial transaction are distinct outcomes.
+
+## Google AdSense
+
+Use [AdSense](skills/adsense/SKILL.md) for submission readiness, original public content, truthful policies/contact, crawlable metadata, publisher verification and ads.txt. Start with [the submission prompt](adoption.md#google-adsense-submission-prompt); a missing publisher ID remains unconfigured and preparation does not enable ads.
+
+For explicitly requested advertising, use [the serving prompt](adoption.md#consented-ads-and-ad-free-plans-prompt) and [the serving contract](skills/adsense/references/serving.md). It covers consent, eligible public placements, trusted ad-free tiers, feature controls and navigation after advertising code has executed. Google approval, published consent, serving settings, the deployed loader and actual filled ads remain separate evidence. These workflows are optional additions to the app core and do not enable native advertising.
+
+## Chance-Based Tools
+
+For randomizers and playful decision interfaces, use [Chance-Based Tools](skills/chance-tools/SKILL.md) for shared options, secure sampling, weighted probabilities, immutable reveal outcomes, accessibility and honest local/cloud boundaries.
 
 [Goals](goals/goals.md) keeps requested scope clear. [Prompts](prompts/prompts.md) provides focused requests without app-specific history.
 

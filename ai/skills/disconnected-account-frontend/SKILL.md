@@ -46,7 +46,7 @@ Prepare useful original public content, About, Contact, Privacy, Terms and appli
 
 Use unique public-page titles/descriptions, semantic navigation, supported structured data and share metadata. Derive canonical origins and sitemap URLs from the destination's actual deployment/configuration; do not claim an unconnected owned domain is live. Exclude account/admin/preview/local-library routes from public sitemaps and mark them noindex where supported. Robots and noindex are not security controls.
 
-Document app-store and AdSense prerequisites separately from page completion. Native navigation, responsive layouts and placeholder account pages do not prove a native build, store eligibility, content rights, privacy disclosures, functional account deletion or ad approval. No store/ad submissions, ad scripts, analytics connections or signing credentials are part of frontend readiness.
+Document app-store and AdSense prerequisites separately from page completion. Native navigation, responsive layouts and placeholder account pages do not prove a native build, store eligibility, content rights, privacy disclosures, functional account deletion or ad approval. No store/ad submissions, ad scripts, analytics connections or signing credentials are part of frontend readiness. For explicitly requested AdSense preparation, use [its submission contract](../adsense/references/submission.md) without enabling the optional serving or connected-account scope.
 
 ## Handoff
 

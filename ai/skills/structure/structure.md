@@ -189,6 +189,13 @@ ai/
         chats.md
         plans.md
         blog.md
+    adsense/
+      SKILL.md
+      references/
+        submission.md
+        serving.md
+    chance-tools/
+      SKILL.md
 ```
 
 3. app/ is the framework's routing entrypoint. Its layout composes providers and the app shell; page files render component entrypoints or redirects. In another framework, use its existing router directory with the same separation.
@@ -209,7 +216,7 @@ Use the existing framework's supported SCSS module loading. When its Sass compil
 
 10. The shared route registry keeps canonical paths, aliases, labels, icons, and allowed roles/capabilities. Profile and Admin navigation consume that registry and the same capability helpers as direct routes. Prefer available top-level admin URLs; keep namespaced fallbacks for collisions and legacy redirects when a canonical path changes. Derive shell/loading detection and safe auth return destinations from metadata instead of an /admin prefix. The example root pages above are common-core boundaries, not a reason to add unrelated business modules.
 
-11. ai/ contains portable instructions and shared integration patterns. Keep app-specific schemas, branding, cloud IDs, credentials, owner bootstrap details, and historical plans in project configuration/documentation outside ai/. Each SKILL.md links to its focused reference. ai/README.md indexes adoption, ai/skills/admin/ describes the connected account/admin/reporting system, and [App System](../app-system/SKILL.md) orchestrates a requested complete starter with focused chat/plans/blog references.
+11. ai/ contains portable instructions and shared integration patterns. Keep app-specific schemas, branding, cloud IDs, credentials, owner bootstrap details, and historical plans in project configuration/documentation outside ai/. Each SKILL.md links to its focused reference. ai/README.md indexes adoption, ai/skills/admin/ describes the connected account/admin/reporting system, and [App System](../app-system/SKILL.md) orchestrates a requested complete starter with focused chat/plans/blog references. Optional indexed skills include [AdSense](../adsense/SKILL.md) and [Chance-Based Tools](../chance-tools/SKILL.md).
 
 12. Follow the complete data flow: shared enums and helpers support Data, reusable models extend Data, services import those models, contexts consume the service facades, component hooks consume context, and thin routes import component entrypoints. The model index.ts re-exports models; keep service operations in their focused API or service modules. Serialize with toRecord() at the persistence boundary and return public records without credential fields.
 
