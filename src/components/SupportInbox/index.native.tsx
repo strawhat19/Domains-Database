@@ -4,10 +4,10 @@ import FeedbackIdentity from '../FeedbackIdentity';
 import { useMemo } from 'react';
 import { createStyles } from './styles.native';
 import { useSupportInbox } from './useSupportInbox';
-import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { Text, View, TextInput, Pressable } from 'react-native';
 import { AdminButton, AdminLoading, StatusCell } from '../AdminWidgets';
+import { elementProps, decorativeIconProps } from '../../shared/elementProps';
 import { ArrowUpRight, RotateCcw } from 'lucide-react-native';
 
 const SupportInbox = () => {
@@ -26,7 +26,7 @@ const SupportInbox = () => {
         <View {...elementProps(`support-inbox-thread-heading`, thread.id)} style={styles.threadHeading}><FeedbackIdentity id={`thread-${thread.id}`} userId={thread.customerId} name={thread.customerName} caption={thread.customerEmail} /><StatusCell id={`support-thread-${thread.id}`} label={thread.status === `open` ? `Open` : `Closed`} tone={thread.status === `open` ? `green` : `gray`} /></View>
         <Text {...elementProps(`support-inbox-thread-subject`, thread.id)} style={styles.subject}>{thread.subject}</Text>
         <Text {...elementProps(`support-inbox-thread-preview`, thread.id)} numberOfLines={2} style={styles.copy}>{thread.lastMessageText}</Text>
-        <View {...elementProps(`support-inbox-thread-footer`, thread.id)} style={styles.threadFooter}><Text {...elementProps(`support-inbox-thread-date`, thread.id)} style={styles.small}>{`#${thread.number} · ${new Date(thread.lastMessageAt).toLocaleString()}`}</Text><ArrowUpRight {...elementProps(`support-inbox-thread-icon`, thread.id)} size={15} color={palette.accent} accessible={false} /></View>
+        <View {...elementProps(`support-inbox-thread-footer`, thread.id)} style={styles.threadFooter}><Text {...elementProps(`support-inbox-thread-date`, thread.id)} style={styles.small}>{`#${thread.number} · ${new Date(thread.lastMessageAt).toLocaleString()}`}</Text><ArrowUpRight {...elementProps(`support-inbox-thread-icon`, thread.id)} {...decorativeIconProps} size={15} color={palette.accent} /></View>
       </Pressable>)}</View>}
     </>}
   </View>;

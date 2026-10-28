@@ -7,9 +7,9 @@ import { canManageRoles } from '../admin/permissions';
 import { getAppCollectionIDNumber } from '../common/ids';
 import { getFirebaseAuth, getFirebaseDb } from '../firebase/client';
 import { restoreSession, subscribeAuthState } from '../authentication/service';
-import { readSupportThread, readSupportMessage, readFeedbackEntry, readSupportReadState } from './validation';
+import { readSupportThread, readSupportMessage, readFeedbackEntry, readFeedbackReceipt, readSupportReadState } from './validation';
 import { doc, query, limit, where, orderBy, startAfter, collection, onSnapshot, getDocsFromServer, type Query, type QuerySnapshot, type DocumentSnapshot, type DocumentData } from 'firebase/firestore';
-import { feedbackLimits, type FeedbackKind, type FeedbackEntry, type FeedbackStatus, type ReviewInput, type BugReportInput, type SupportThread, type SupportMessage, type SupportReadState, type SupportContactInput } from './types';
+import { feedbackLimits, type FeedbackKind, type FeedbackEntry, type FeedbackStatus, type ReviewInput, type BugReportInput, type SupportThread, type SupportMessage, type FeedbackReceipt, type GuestReviewInput, type GuestBugReportInput, type SupportReadState, type SupportContactInput } from './types';
 
 export interface SupportMessagesPage { records: SupportMessage[]; hasMore: boolean; cursor: number | null }
 type FeedbackActor = { id: string; firebaseUid: string; owner: boolean };
@@ -68,6 +68,32 @@ const requestFeedback = async <T,>(input: Record<string, unknown>, read: (value:
   } finally { clearTimeout(timeout); stopAuth(); }
 };
 
+const requestGuestFeedback = async (operation: `review` | `bug`, input: GuestReviewInput | GuestBugReportInput, attemptId: string): Promise<FeedbackReceipt> => {
+  if (useLocalStorage || !firebaseEnabled) throw new Error(`Connect Firebase To Save Feedback`);
+  const auth = getFirebaseAuth();
+  await auth.authStateReady();
+  if (auth.currentUser) throw new Error(`Use Your Signed In Feedback Form`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  const stopAuth = subscribeAuthState(() => { if (auth.currentUser) controller.abort(); });
+  try {
+    const response = await fetch(Platform.OS === `web` ? `/api/feedback` : absoluteSiteUrl(`/api/feedback`), {
+      method: `POST`, cache: `no-store`, credentials: `omit`, signal: controller.signal,
+      headers: { Accept: `application/json`, 'Content-Type': `application/json` }, body: JSON.stringify({ operation, input, attemptId }),
+    });
+    const result: unknown = await response.json().catch(() => null);
+    if (auth.currentUser) throw new Error(`Your Account Changed — Try Again`);
+    if (!response.ok) {
+      const message = (result as { error?: unknown })?.error;
+      throw new Error(typeof message === `string` ? message : `Feedback Could Not Be Saved — Try Again`);
+    }
+    return readFeedbackReceipt(result);
+  } catch (failure) {
+    if (controller.signal.aborted) throw new Error(`Feedback Request Was Interrupted — Retry To Confirm Whether It Was Saved`);
+    throw feedbackError(failure);
+  } finally { clearTimeout(timeout); stopAuth(); }
+};
+
 const watch = <T,>(owner: boolean, reference: (actor: FeedbackActor) => Query<DocumentData>, read: (snapshot: QuerySnapshot<DocumentData>) => T[],
   onValue: (value: T[]) => void, onError?: (error: Error) => void) => {
   let active = true;
@@ -97,6 +123,8 @@ const watch = <T,>(owner: boolean, reference: (actor: FeedbackActor) => Query<Do
 export const submitContact = (input: SupportContactInput, attemptId: string): Promise<SupportThread> => requestFeedback({ operation: `contact`, input, attemptId }, readSupportThread);
 export const submitReview = (input: ReviewInput, attemptId: string): Promise<FeedbackEntry> => requestFeedback({ operation: `review`, input, attemptId }, readFeedbackEntry);
 export const submitBug = (input: BugReportInput, attemptId: string): Promise<FeedbackEntry> => requestFeedback({ operation: `bug`, input, attemptId }, readFeedbackEntry);
+export const submitGuestReview = (input: GuestReviewInput, attemptId: string): Promise<FeedbackReceipt> => requestGuestFeedback(`review`, input, attemptId);
+export const submitGuestBug = (input: GuestBugReportInput, attemptId: string): Promise<FeedbackReceipt> => requestGuestFeedback(`bug`, input, attemptId);
 export const sendMessage = (threadId: string, body: string, attemptId: string): Promise<SupportMessage> => requestFeedback({ operation: `message`, threadId, body, attemptId }, readSupportMessage);
 export const updateFeedbackStatus = (id: string, status: FeedbackStatus): Promise<FeedbackEntry> => requestFeedback({ operation: `status`, id, status }, readFeedbackEntry);
 export const markThreadRead = (threadId: string, lastMessageNumber: number): Promise<SupportReadState> => requestFeedback({ operation: `read`, threadId, lastMessageNumber }, readSupportReadState);

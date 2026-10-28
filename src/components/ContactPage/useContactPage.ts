@@ -3,10 +3,10 @@ import { useRef, useState, useEffect } from 'react';
 import { generateID } from '../../shared/common/ids';
 import { useLocalStorage } from '../../shared/config';
 import { useAuth } from '../../shared/authContext/useAuth';
-import { contactFields, feedbackFormFields } from './content';
 import { formSubmissionsAPI } from '../../api/formSubmissions';
+import { contactFields, feedbackFormFields, guestFeedbackFields } from './content';
 import { normalizePublicMediaUrl } from '../../shared/feedback/validation';
-import { feedbackLimits, type FeedbackEntry, type SupportThread } from '../../shared/feedback/types';
+import { feedbackLimits, type FeedbackReceipt, type SupportThread } from '../../shared/feedback/types';
 
 export type ContactTab = `contact` | `review` | `bug`;
 type ContactField = typeof contactFields[number][`id`];
@@ -48,7 +48,7 @@ export const useContactPage = () => {
   const [review, setReview] = useState<FeedbackDraft>(emptyDraft);
   const [bug, setBug] = useState<FeedbackDraft>(emptyDraft);
   const [submitted, setSubmitted] = useState<SavedSubmission | null>(null);
-  const [feedbackSubmission, setFeedbackSubmission] = useState<FeedbackEntry | null>(null);
+  const [feedbackSubmission, setFeedbackSubmission] = useState<FeedbackReceipt | null>(null);
   const [supportThread, setSupportThread] = useState<SupportThread | null>(null);
   const [conversationRevision, setConversationRevision] = useState(0);
   const [conversation, setConversation] = useState<{ scope: string; loading: boolean; error: string; thread: SupportThread | null }>({ scope, loading: true, error: ``, thread: null });
@@ -109,23 +109,24 @@ export const useContactPage = () => {
   const accountUnavailable = !loading && Boolean(user?.id && !user.active);
   const scoped = savedScope === scope;
   const setTab = (value: ContactTab) => {
-    if (submitting.current || !signedIn) return;
+    if (submitting.current || loading || !scoped || accountUnavailable) return;
     setTabState(value);
     setFeedback(``);
     setErrors({});
     setDraftErrors({});
+    setSubmitted(null);
     setFeedbackSubmission(null);
   };
   const updateField = (field: ContactField | `website`, value: string) => {
     if (submitting.current) return;
     touched.current.add(field);
-    delete attempts.current.contact;
+    delete attempts.current[tab];
     setFeedback(``);
     setErrors(current => ({ ...current, [field]: undefined }));
     setFields(current => ({ ...current, [field]: value }));
   };
   const updateDraft = <Field extends keyof FeedbackDraft>(field: Field, value: FeedbackDraft[Field]) => {
-    if (submitting.current || !signedIn) return;
+    if (submitting.current || loading || !scoped || accountUnavailable) return;
     delete attempts.current[tab];
     setFeedback(``);
     setDraftErrors(current => ({ ...current, [field]: undefined }));
@@ -143,11 +144,13 @@ export const useContactPage = () => {
     if (!signedIn || tab === `contact`) {
       contactFields.forEach(field => {
         if (signedIn && (field.id === `name` || field.id === `email`)) return;
+        if (tab !== `contact` && ![`name`, `email`, `phone`].includes(field.id)) return;
         if (field.id !== `phone` && !input[field.id]) nextErrors[field.id] = `${field.label} Is Required`;
         else if (input[field.id].length > field.limit) nextErrors[field.id] = `${field.label} Must Be ${field.limit} Characters Or Fewer`;
       });
       if (!signedIn && input.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email)) nextErrors.email = `Enter A Valid Email Address`;
-    } else {
+    }
+    if (tab !== `contact`) {
       if (draft.title.trim().length > feedbackLimits.title) nextDraftErrors.title = `Title Must Be ${feedbackLimits.title} Characters Or Fewer`;
       if (draft.description.trim().length > feedbackLimits.description) nextDraftErrors.description = `Description Must Be ${feedbackLimits.description} Characters Or Fewer`;
       if (tab === `review`) {
@@ -162,7 +165,8 @@ export const useContactPage = () => {
     setErrors(nextErrors);
     setDraftErrors(nextDraftErrors);
     if (Object.keys(nextErrors).length || Object.keys(nextDraftErrors).length) { setFeedback(`Please Check The Highlighted Fields`); return; }
-    const payload = JSON.stringify([scope, tab, signedIn ? tab === `contact` ? [input.subject, input.message, input.phone] : draft : input]);
+    const guest = { name: input.name, email: input.email, phone: input.phone, website: input.website };
+    const payload = JSON.stringify([scope, tab, tab === `contact` ? signedIn ? [input.subject, input.message, input.phone] : input : [signedIn ? null : guest, draft]]);
     const previousAttempt = attempts.current[tab];
     const attempt = previousAttempt?.payload === payload ? previousAttempt : { payload, id: generateID() };
     attempts.current[tab] = attempt;
@@ -174,7 +178,7 @@ export const useContactPage = () => {
     setFeedback(``);
     setFeedbackKind(`error`);
     try {
-      if (!signedIn) {
+      if (!signedIn && tab === `contact`) {
         const submission = await formSubmissionsAPI.submitContact(input);
         if (!validRequest()) return;
         setSubmitted(submission);
@@ -187,9 +191,11 @@ export const useContactPage = () => {
         setFields(current => ({ ...current, subject: ``, message: ``, website: `` }));
         setFeedback(`Conversation Opened`);
       } else {
-        const entry = tab === `review`
-          ? await feedbackAPI.submitReview({ rating: draft.rating, title: draft.title.trim(), description: draft.description.trim() }, attemptId)
-          : await feedbackAPI.submitBug({ title: draft.title.trim(), description: draft.description.trim(), mediaUrl }, attemptId);
+        const reviewInput = { rating: draft.rating, title: draft.title.trim(), description: draft.description.trim() };
+        const bugInput = { title: draft.title.trim(), description: draft.description.trim(), mediaUrl };
+        const entry = signedIn
+          ? tab === `review` ? await feedbackAPI.submitReview(reviewInput, attemptId) : await feedbackAPI.submitBug(bugInput, attemptId)
+          : tab === `review` ? await feedbackAPI.submitGuestReview({ ...guest, ...reviewInput }, attemptId) : await feedbackAPI.submitGuestBug({ ...guest, ...bugInput }, attemptId);
         if (!validRequest()) return;
         setFeedbackSubmission(entry);
         (tab === `review` ? setReview : setBug)(emptyDraft());
@@ -213,14 +219,14 @@ export const useContactPage = () => {
   };
   const refreshConversation = () => setConversationRevision(value => value + 1);
   const clearFeedback = () => setFeedback(``);
-  const activeTab = scoped && signedIn ? tab : `contact`;
+  const activeTab = scoped ? tab : `contact`;
   const visibleFields = scoped ? fields : emptyFields();
   const visibleDraft = scoped ? tab === `review` ? review : bug : emptyDraft();
   const visibleErrors: FieldErrors = scoped ? errors : {};
   const visibleDraftErrors: DraftErrors = scoped ? draftErrors : {};
-  const inputFields = feedbackFormFields[activeTab].map(field => {
+  const inputFields = [...(!signedIn ? guestFeedbackFields : []), ...feedbackFormFields[activeTab].filter(field => signedIn || field.id !== `phone`)].map(field => {
     const id = field.id;
-    if (id === `subject` || id === `phone` || id === `message`) return {
+    if (id === `name` || id === `email` || id === `subject` || id === `phone` || id === `message`) return {
       ...field, value: visibleFields[id], error: visibleErrors[id], onChange: (value: string) => updateField(id, value),
     };
     return { ...field, value: visibleDraft[id], error: visibleDraftErrors[id], onChange: (value: string) => updateDraft(id, value) };

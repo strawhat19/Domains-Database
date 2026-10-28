@@ -5,6 +5,8 @@ export const feedbackAPI = {
   sendMessage: service.sendMessage,
   submitReview: service.submitReview,
   submitContact: service.submitContact,
+  submitGuestBug: service.submitGuestBug,
+  submitGuestReview: service.submitGuestReview,
   markThreadRead: service.markThreadRead,
   subscribeThreads: service.subscribeThreads,
   getMessagesPage: service.getMessagesPage,

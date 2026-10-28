@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { createHash, randomUUID } from 'node:crypto';
 import { hasPaidBillingAccess } from '../../shared/accountPlans';
 import { BillingError, type BillingActor } from '../billing/types';
@@ -5,8 +6,8 @@ import type { Transaction, Firestore } from 'firebase-admin/firestore';
 import { genID, getAppCollectionIDNumber } from '../../shared/common/ids';
 import { getBillingDatabase, requireBillingActor } from '../billing/firebase';
 import { featureSettingsId, readFeatureSettings, createFeatureSettings, resolveFeatureFlags } from '../../shared/featureFlags/values';
-import { feedbackLimits, type FeedbackEntry, type SupportThread, type SupportMessage, type SupportReadState } from '../../shared/feedback/types';
-import { feedbackText, normalizePublicMediaUrl, readFeedbackEntry, readSupportThread, readSupportMessage, readSupportReadState } from '../../shared/feedback/validation';
+import { feedbackLimits, type FeedbackEntry, type SupportThread, type SupportMessage, type FeedbackReceipt, type SupportReadState } from '../../shared/feedback/types';
+import { feedbackText, normalizePublicMediaUrl, readFeedbackEntry, readSupportThread, readSupportMessage, readFeedbackReceipt, readSupportReadState } from '../../shared/feedback/validation';
 
 export class FeedbackError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -57,10 +58,14 @@ const confirmActor = async (transaction: Transaction, database: Firestore, actor
     || (ownerOnly && user?.role !== `Owner`)) throw new FeedbackError(403, `feedback_account_changed`, `Your Feedback Access Changed — Sign In Again`);
 };
 
-const requireContactFeature = async (transaction: Transaction, database: Firestore, actor: BillingActor) => {
+const requireContactFeature = async (transaction: Transaction, database: Firestore, actor: BillingActor | null) => {
   const saved = (await transaction.get(database.doc(`featureSettings/${featureSettingsId}`))).data();
   const normalizeDate = (value: unknown) => (value as { toDate?: () => Date })?.toDate?.().toISOString() ?? value;
   const settings = saved ? readFeatureSettings({ ...saved, created: normalizeDate(saved.created), updated: normalizeDate(saved.updated) }) : createFeatureSettings();
+  if (!actor) {
+    if (!resolveFeatureFlags(settings, null).contact) throw new FeedbackError(403, `feedback_contact_disabled`, `Contact And Feedback Are Currently Unavailable`);
+    return;
+  }
   const billing = actor.owner ? undefined : (await transaction.get(database.doc(`billingUsers/${actor.id}`))).data();
   const accessUntil = billing?.accessUntil?.toMillis?.();
   const paid = hasPaidBillingAccess({ plan: billing?.plan === `starter` ? `starter` : `free`, subscriptionStatus: typeof billing?.subscriptionStatus === `string` ? billing.subscriptionStatus : null, accessUntil: typeof accessUntil === `number` ? accessUntil : null });
@@ -87,6 +92,86 @@ const readCounter = async (transaction: Transaction, database: Firestore, name: 
   return { reference, number: Number(data.number) + 1 };
 };
 const canUseThread = (thread: SupportThread, actor: BillingActor) => actor.owner || thread.customerId === actor.id;
+const feedbackInput = (kind: `review` | `bug`, data: Record<string, unknown>) => {
+  const title = feedbackText(data.title, `A Title`, feedbackLimits.title);
+  const description = feedbackText(data.description, kind === `review` ? `A Review` : `A Description`, feedbackLimits.description, kind === `review`);
+  const mediaUrl = kind === `bug` ? normalizePublicMediaUrl(data.mediaUrl) : ``;
+  if (kind === `review` && (!Number.isInteger(data.rating) || Number(data.rating) < 1 || Number(data.rating) > 5)) throw invalid(`Choose A Rating From 1 To 5`);
+  if (kind === `bug` && !description && !mediaUrl) throw invalid(`Add A Description Or A Public Screenshot Or Video URL`);
+  return { title, description, mediaUrl, rating: kind === `review` ? Number(data.rating) : null };
+};
+
+const guestSource = (request: Request) => {
+  if (process.env.VERCEL !== `1`) return `shared-host`;
+  const address = request.headers.get(`x-vercel-forwarded-for`)?.trim();
+  if (!address || !isIP(address)) throw unavailable();
+  return address;
+};
+const guestRateWrites = async (transaction: Transaction, database: Firestore, source: string, email: string) => {
+  const now = Date.now();
+  const buckets = [
+    { key: `global`, maximum: 100, window: 3_600_000 },
+    { key: `source_${inputFingerprint(source)}`, maximum: 5, window: 900_000 },
+    { key: `email_${inputFingerprint(email)}`, maximum: 5, window: 3_600_000 },
+  ];
+  return Promise.all(buckets.map(async bucket => {
+    const reference = database.doc(`feedbackGuestLimits/${bucket.key}`);
+    const snapshot = await transaction.get(reference);
+    const saved = snapshot.data();
+    if (snapshot.exists && (!Number.isSafeInteger(saved?.count) || saved?.count < 1 || saved?.count > bucket.maximum
+      || !Number.isSafeInteger(saved?.resetAt) || saved?.resetAt < 1 || Object.keys(saved ?? {}).some(key => ![`count`, `resetAt`].includes(key)))) throw unavailable();
+    const current = saved && saved.resetAt > now ? saved : { count: 0, resetAt: now + bucket.window };
+    if (current.count >= bucket.maximum) throw new FeedbackError(429, `feedback_rate_limited`, `Too Many Feedback Submissions — Try Again Later`);
+    return { reference, value: { count: Number(current.count) + 1, resetAt: Number(current.resetAt) } };
+  }));
+};
+
+export const submitGuestFeedbackEntry = async (request: Request, kind: `review` | `bug`, value: unknown, attempt: unknown): Promise<FeedbackReceipt> => {
+  const input = normalizeInput(() => {
+    const data = inputObject(value, [`name`, `email`, `phone`, `website`, `title`, `description`, ...(kind === `review` ? [`rating`] : [`mediaUrl`])]);
+    if (data.website !== undefined && (typeof data.website !== `string` || data.website.trim())) throw invalid(`Feedback Could Not Be Saved`);
+    const name = feedbackText(data.name, `A Name`, 100, true);
+    const email = feedbackText(data.email, `An Email`, 254, true).toLowerCase();
+    const phone = feedbackText(data.phone, `A Phone Number`, 40);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw invalid(`Enter A Valid Email Address`);
+    return { name, email, phone, ...feedbackInput(kind, data) };
+  });
+  const attemptId = attemptValue(attempt);
+  const fingerprint = inputFingerprint(input);
+  const operation = `guest:${kind}`;
+  const key = inputFingerprint([`guest`, operation, attemptId]);
+  const date = new Date();
+  const created = date.toISOString();
+  const uuid = randomUUID().replaceAll(`-`, ``);
+  const source = guestSource(request);
+  const database = getBillingDatabase();
+  return database.runTransaction(async transaction => {
+    const attemptRef = database.doc(`feedbackAttempts/${key}`);
+    const prior = (await transaction.get(attemptRef)).data();
+    if (prior) {
+      if (prior.fingerprint !== fingerprint || prior.actorId !== `` || prior.operation !== operation) throw new FeedbackError(409, `feedback_attempt_changed`, `This Submission Changed — Send It As New Feedback`);
+      const receipt = readFeedbackReceipt({ id: prior.recordId, number: prior.number, kind: prior.kind });
+      const [saved] = await transaction.getAll(database.doc(`feedbackEntries/${recordId(receipt.id, `Feedback`)}`), { fieldMask: [`id`, `number`, `kind`] });
+      if (!saved?.exists) throw new FeedbackError(409, `feedback_attempt_removed`, `This Submission Is No Longer Available — Send New Feedback`);
+      const confirmed = readFeedbackReceipt(saved.data());
+      if (confirmed.id !== receipt.id || confirmed.number !== receipt.number || confirmed.kind !== receipt.kind || receipt.kind !== kind) throw unavailable();
+      return receipt;
+    }
+    await requireContactFeature(transaction, database, null);
+    const rates = await guestRateWrites(transaction, database, source, input.email);
+    const counter = await readCounter(transaction, database, `feedbackEntries`, `Feedback`);
+    const id = freshIdentity(`Feedback`, counter.number, kind === `review` ? `Review` : `Bug`, date, uuid);
+    const receipt: FeedbackReceipt = { id, number: counter.number, kind };
+    const record: FeedbackEntry = { id, number: counter.number, type: `Feedback`, kind, status: `new`, created, updated: created,
+      authorId: ``, authorName: input.name, authorEmail: input.email, ...(input.phone ? { authorPhone: input.phone } : {}),
+      title: input.title, description: input.description, mediaUrl: input.mediaUrl, rating: input.rating };
+    transaction.create(database.doc(`feedbackEntries/${id}`), record);
+    transaction.set(counter.reference, { number: counter.number, lastId: id });
+    transaction.create(attemptRef, { actorId: ``, operation, recordId: id, number: receipt.number, kind, fingerprint, created });
+    for (const rate of rates) transaction.set(rate.reference, rate.value);
+    return receipt;
+  });
+};
 
 export const submitSupportContact = async (actor: BillingActor, value: unknown, attempt: unknown): Promise<SupportThread> => {
   const input = normalizeInput(() => {
@@ -137,12 +222,7 @@ export const submitSupportContact = async (actor: BillingActor, value: unknown, 
 export const submitFeedbackEntry = async (actor: BillingActor, kind: `review` | `bug`, value: unknown, attempt: unknown): Promise<FeedbackEntry> => {
   const input = normalizeInput(() => {
     const data = inputObject(value, kind === `review` ? [`rating`, `title`, `description`] : [`title`, `description`, `mediaUrl`]);
-    const title = feedbackText(data.title, `A Title`, feedbackLimits.title);
-    const description = feedbackText(data.description, kind === `review` ? `A Review` : `A Description`, feedbackLimits.description, kind === `review`);
-    const mediaUrl = kind === `bug` ? normalizePublicMediaUrl(data.mediaUrl) : ``;
-    if (kind === `review` && (!Number.isInteger(data.rating) || Number(data.rating) < 1 || Number(data.rating) > 5)) throw invalid(`Choose A Rating From 1 To 5`);
-    if (kind === `bug` && !description && !mediaUrl) throw invalid(`Add A Description Or A Public Screenshot Or Video URL`);
-    return { title, description, mediaUrl, rating: kind === `review` ? Number(data.rating) : null };
+    return feedbackInput(kind, data);
   });
   const attemptId = attemptValue(attempt);
   const fingerprint = inputFingerprint(input);

@@ -1,5 +1,5 @@
 import { getAppCollectionIDNumber } from '../common/ids';
-import { feedbackLimits, type SupportThread, type FeedbackEntry, type SupportMessage, type SupportReadState } from './types';
+import { feedbackLimits, type SupportThread, type FeedbackEntry, type SupportMessage, type FeedbackReceipt, type SupportReadState } from './types';
 
 export const feedbackText = (value: unknown, label: string, maximum: number, required = false) => {
   if (value === undefined && !required) return ``;
@@ -71,8 +71,17 @@ export const readFeedbackEntry = (value: unknown, expectedId?: string): Feedback
     || (data.kind === `review` ? !Number.isInteger(data.rating) || Number(data.rating) < 1 || Number(data.rating) > 5 : data.rating !== null)) throw new Error(`Saved Feedback Could Not Be Read`);
   return { ...record, type: `Feedback`, kind: data.kind as FeedbackEntry[`kind`], status: data.status as FeedbackEntry[`status`], rating: data.rating as number | null,
     authorId: stringValue(data, `authorId`, 250), authorName: stringValue(data, `authorName`, 100), authorEmail: stringValue(data, `authorEmail`, 254),
+    ...(data.authorPhone === undefined ? {} : { authorPhone: stringValue(data, `authorPhone`, 40) }),
     title: stringValue(data, `title`, feedbackLimits.title), description: stringValue(data, `description`, feedbackLimits.description),
     mediaUrl: normalizePublicMediaUrl(data.mediaUrl), created: dateValue(data, `created`), updated: dateValue(data, `updated`) };
+};
+
+export const readFeedbackReceipt = (value: unknown): FeedbackReceipt => {
+  const data = dataObject(value);
+  if (Object.keys(data).some(key => ![`id`, `number`, `kind`].includes(key)) || typeof data.id !== `string` || data.id.length > 250 || data.id.includes(`/`)
+    || !Number.isSafeInteger(data.number) || Number(data.number) < 1 || getAppCollectionIDNumber(data.id, `Feedback`) !== data.number
+    || typeof data.kind !== `string` || ![`review`, `bug`].includes(data.kind)) throw new Error(`Saved Feedback Receipt Could Not Be Read`);
+  return { id: data.id, number: Number(data.number), kind: data.kind as FeedbackReceipt[`kind`] };
 };
 
 export const readSupportReadState = (value: unknown): SupportReadState => {

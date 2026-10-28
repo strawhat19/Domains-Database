@@ -4,10 +4,10 @@ import { createStyles } from './styles.native';
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useSupportChat } from './useSupportChat';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { elementProps } from '../../shared/elementProps';
 import { useReducedMotion } from '../../shared/common/useReducedMotion';
 import type { SupportThread } from '../../shared/feedback/types';
 import { AdminButton, AdminLoading } from '../AdminWidgets';
+import { elementProps, decorativeIconProps } from '../../shared/elementProps';
 import { ArrowLeft, ChevronDown, RotateCcw, Send } from 'lucide-react-native';
 import { Text, View, TextInput, ScrollView, Pressable } from 'react-native';
 
@@ -73,7 +73,7 @@ const SupportChat = ({ thread, onBack }: { thread: SupportThread; onBack?: () =>
       {thread.status === `closed` ? <Text {...elementProps(`support-chat-closed`, thread.id)} style={styles.muted}>{`This conversation is closed`}</Text> : <View {...elementProps(`support-chat-composer`, thread.id)} style={styles.composer}>
         <Text {...elementProps(`support-chat-composer-label`, thread.id)} style={styles.label}>{`Your Message`}</Text>
         <TextInput multiline maxLength={5000} value={state.body} editable={!state.pending} style={styles.input} placeholder={`Write a reply…`} placeholderTextColor={palette.placeholder} accessibilityLabel={`Your Message`} {...elementProps(`support-chat-input`, thread.id)} onChangeText={state.updateBody} />
-        <View {...elementProps(`support-chat-composer-actions`, thread.id)} style={styles.composerActions}><Text {...elementProps(`support-chat-message-count`, thread.id)} style={styles.muted}>{`${state.body.length.toLocaleString()} / 5,000`}</Text><Pressable {...elementProps(`support-chat-send`, thread.id)} accessibilityRole={`button`} accessibilityState={{ busy: state.pending, disabled: state.pending || !state.body.trim() }} disabled={state.pending || !state.body.trim()} style={[styles.send, (state.pending || !state.body.trim()) && styles.disabled]} onPress={() => { void state.send(); }}><Send {...elementProps(`support-chat-send-icon`, thread.id)} size={15} color={palette.contrast} accessible={false} /><Text {...elementProps(`support-chat-send-label`, thread.id)} style={styles.sendText}>{state.pending ? `Sending…` : `Send`}</Text></Pressable></View>
+        <View {...elementProps(`support-chat-composer-actions`, thread.id)} style={styles.composerActions}><Text {...elementProps(`support-chat-message-count`, thread.id)} style={styles.muted}>{`${state.body.length.toLocaleString()} / 5,000`}</Text><Pressable {...elementProps(`support-chat-send`, thread.id)} accessibilityRole={`button`} accessibilityState={{ busy: state.pending, disabled: state.pending || !state.body.trim() }} disabled={state.pending || !state.body.trim()} style={[styles.send, (state.pending || !state.body.trim()) && styles.disabled]} onPress={() => { void state.send(); }}><Send {...elementProps(`support-chat-send-icon`, thread.id)} {...decorativeIconProps} size={15} color={palette.contrast} /><Text {...elementProps(`support-chat-send-label`, thread.id)} style={styles.sendText}>{state.pending ? `Sending…` : `Send`}</Text></Pressable></View>
         {state.sendError ? <Text {...elementProps(`support-chat-send-error`, thread.id)} style={styles.error} accessibilityRole={`alert`}>{state.sendError}</Text> : null}
       </View>}
     </>}

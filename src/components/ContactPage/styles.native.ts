@@ -49,6 +49,7 @@ export const createStyles = (palette: ThemePalette, compact: boolean, width: num
   formTitle: { color: palette.ink, fontSize: 30, lineHeight: 36, letterSpacing: -1.1, fontFamily: `DMSans_700Bold` },
   formDescription: { color: palette.muted, fontSize: 13, lineHeight: 21, fontFamily: `DMSans_400Regular` },
   form: { gap: condensed ? 12 : 15 },
+  honeypot: { width: 1, height: 1, opacity: 0, overflow: `hidden`, position: `absolute` },
   fields: { gap: condensed ? 12 : 16, flexWrap: `wrap`, flexDirection: `row` },
   field: { gap: condensed ? 5 : 7, minWidth: 0, width: `100%` },
   halfField: { width: undefined, flexGrow: 1, flexBasis: `45%` },

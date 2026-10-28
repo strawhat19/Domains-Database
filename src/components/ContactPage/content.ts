@@ -7,13 +7,18 @@ export const feedbackTabs = [
 ] as const;
 
 interface FeedbackFormField {
-  id: `subject` | `phone` | `message` | `title` | `description` | `mediaUrl`;
+  id: `name` | `email` | `phone` | `subject` | `message` | `title` | `description` | `mediaUrl`;
   label: string;
   placeholder: string;
   limit: number;
   required: boolean;
   multiline: boolean;
 }
+export const guestFeedbackFields: readonly FeedbackFormField[] = [
+  { id: `name`, label: `Name`, placeholder: `Your name`, limit: 100, required: true, multiline: false },
+  { id: `email`, label: `Email`, placeholder: `you@example.com`, limit: 254, required: true, multiline: false },
+  { id: `phone`, label: `Phone Number (Optional)`, placeholder: `Your phone number`, limit: 40, required: false, multiline: false },
+];
 export const feedbackFormFields: Record<typeof feedbackTabs[number][`id`], readonly FeedbackFormField[]> = {
   contact: [
     { id: `subject`, label: `Subject`, placeholder: `What can we help with?`, limit: feedbackLimits.title, required: true, multiline: false },

@@ -46,6 +46,7 @@ export interface FeedbackEntry {
   authorId: string;
   authorName: string;
   authorEmail: string;
+  authorPhone?: string;
   title: string;
   description: string;
   mediaUrl: string;
@@ -58,5 +59,9 @@ export interface FeedbackEntry {
 export interface SupportContactInput { subject: string; message: string; phone?: string }
 export interface ReviewInput { rating: number; title?: string; description: string }
 export interface BugReportInput { title?: string; description?: string; mediaUrl?: string }
+export interface GuestFeedbackIdentity { name: string; email: string; phone?: string; website?: string }
+export interface GuestReviewInput extends GuestFeedbackIdentity, ReviewInput {}
+export interface GuestBugReportInput extends GuestFeedbackIdentity, BugReportInput {}
+export type FeedbackReceipt = Pick<FeedbackEntry, `id` | `number` | `kind`>;
 
 export const feedbackLimits = { threads: 40, messages: 50, entries: 50, title: 200, description: 5000, mediaUrl: 2000 } as const;

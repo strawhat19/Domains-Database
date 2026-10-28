@@ -14,7 +14,7 @@ This includes private Profile/Connections, real auth/database boundaries (Fireba
 
 Read applicable guides in this order:
 
-1. [Structure](skills/structure/structure.md)
+1. [Structure](skills/structure/structure.md), with [hierarchical lists](skills/structure/references/hierarchical-lists.md) for grouped records, star containment and responsive summaries
 2. [Database](skills/database/database.md)
 3. [API](skills/api/api.md)
 4. [Authentication](skills/authentication/authentication.md) for users/sessions

@@ -1,5 +1,5 @@
 import { readLimitedText } from '../registrars/request';
-import { FeedbackError, requireFeedbackActor, submitSupportContact, submitFeedbackEntry, sendSupportMessage, updateFeedbackEntryStatus, markSupportThreadRead } from './service';
+import { FeedbackError, requireFeedbackActor, submitSupportContact, submitFeedbackEntry, sendSupportMessage, submitGuestFeedbackEntry, updateFeedbackEntryStatus, markSupportThreadRead } from './service';
 
 const headers = { Vary: `Authorization`, 'Cache-Control': `private, no-store`, 'X-Content-Type-Options': `nosniff` };
 export const handleFeedback = async (request: Request) => {
@@ -16,6 +16,10 @@ export const handleFeedback = async (request: Request) => {
       : input.operation === `message` ? [`operation`, `threadId`, `body`, `attemptId`]
         : input.operation === `status` ? [`operation`, `id`, `status`] : input.operation === `read` ? [`operation`, `threadId`, `lastMessageNumber`] : [];
     if (!operationFields.length || Object.keys(input).some(key => !operationFields.includes(key))) throw new FeedbackError(400, `feedback_input_invalid`, `Choose A Valid Feedback Action`);
+    if (!request.headers.has(`authorization`) && (input.operation === `review` || input.operation === `bug`)) {
+      const receipt = await submitGuestFeedbackEntry(request, input.operation, input.input, input.attemptId);
+      return Response.json(receipt, { headers });
+    }
     const actor = await requireFeedbackActor(request);
     let result: unknown;
     switch (input.operation) {
