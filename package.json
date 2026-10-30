@@ -1,6 +1,6 @@
 {
   "name": "domains-database",
-  "version": "0.0.7.2",
+  "version": "0.0.7.3",
   "private": true,
   "license": "MIT",
   "main": "expo-router/entry",
@@ -38,6 +38,7 @@
     "fast-xml-validator": "^1.4.2",
     "firebase": "12.10.0",
     "firebase-admin": "^14.5.0",
+    "gsap": "^3.15.0",
     "lucide-react": "^1.49.0",
     "lucide-react-native": "^1.49.0",
     "react": "19.2.3",

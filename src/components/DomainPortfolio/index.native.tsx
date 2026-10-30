@@ -5,6 +5,7 @@ import { createStyles } from './styles.native';
 import { REGISTRARS } from '../../shared/config';
 import TagPicker from '../TagPicker/index.native';
 import DomainCard from '../DomainCard/index.native';
+import PortfolioPagination from '../PortfolioPagination/index.native';
 import NativePortfolioBoard from '../NativePortfolioBoard/index.native';
 import NativePortfolioSheet from '../NativePortfolioSheet/index.native';
 import CurrencyField from '../CurrencyField/index.native';
@@ -16,6 +17,7 @@ import DomainProjectSelect from '../DomainProjectSelect/index.native';
 import { useRef, useEffect, useMemo, useState } from 'react';
 import { elementProps } from '../../shared/elementProps';
 import { useNativePortfolio } from './useNativePortfolio';
+import { usePortfolioPagination } from './usePortfolioPagination';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
@@ -64,7 +66,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const manualSyncBlocked = state.loading || state.syncing || state.manualSyncWaitSeconds > 0;
   const manualSyncLabel = state.syncing ? `Syncing…` : state.manualSyncWaitSeconds > 0
     ? `Wait ${Math.floor(state.manualSyncWaitSeconds / 60)}:${String(state.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
-  const visibleIds = state.visibleDomainIds;
+  const pagination = usePortfolioPagination(state.visibleDomainIds,
+    JSON.stringify([state.search.trim().toLowerCase(), state.registrar, state.starFilter, state.sortByName]), !compact);
+  const visibleIds = pagination.domainIds;
   const editorSiteIconUrl = getDomainSiteIconUrl(state.input);
   const editorHasCustomSiteIcon = Boolean(getCustomSiteIconUrl(state.input).trim());
   const developmentLinkActions = (state.input.developmentLinks ?? []).flatMap((value, index) => {
@@ -375,6 +379,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </View>
         </ScrollView>
       </View>
+      {!compact && !state.loading && pagination.total > 25 && <PortfolioPagination pagination={pagination} />}
       <View {...elementProps(`native-portfolio-records`)} style={styles.records} accessibilityState={{ busy: state.loading }}>
         {state.loading ? [0, 1, 2].map(index => <DomainCard key={index} index={index} loading />) : (
           <NativePortfolioBoard
@@ -383,6 +388,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             domains={state.visibleDomains}
             selectedIds={selectedIds}
             sections={state.portfolioSections}
+            visibleDomainIds={pagination.visibleDomainIds}
             showMainGroups={state.starFilter !== `all`}
             renderMain={openActions => state.mainDomains.length ? (
               <NativeDropZone
@@ -391,7 +397,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 id={`main-domains`}
                 target={{ collectionId: null }}
               >
-                {state.mainDomains.map((domain, index) => (
+                {state.mainDomains.map((domain, index) => pagination.visibleDomainIds.has(domain.id) ? (
                   <NativeDropZone
                     key={domain.id}
                     accepts={[`domain`]}
@@ -418,7 +424,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       </NativeDragSource>
                     </View>
                   </NativeDropZone>
-                ))}
+                ) : null)}
               </NativeDropZone>
             ) : null}
           />
@@ -467,9 +473,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             numberOfLines={1}
             style={styles.bottomText}
             {...elementProps(`native-portfolio-showing`)}
-            accessibilityLabel={`Showing ${state.visibleDomainIds.length} Of ${state.filteredDomains.length} Domains`}
+            accessibilityLabel={`Showing ${visibleIds.length} Of ${state.filteredDomains.length} Domains`}
           >
-            {width <= 900 ? `${state.visibleDomainIds.length} / ${state.filteredDomains.length} Domains` : `Showing ${state.visibleDomainIds.length} Of ${state.filteredDomains.length}`}
+            {width <= 900 ? `${visibleIds.length} / ${state.filteredDomains.length} Domains` : `Showing ${visibleIds.length} Of ${state.filteredDomains.length}`}
           </Text>
         )}
         {compact ? (

@@ -2,8 +2,9 @@ import './styles.scss';
 import Toast from '../Toast';
 import StarButton from '../StarButton/index.web';
 import PortfolioEmptyState from './EmptyState.web';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useRef, useMemo, useState } from 'react';
 import { useDomainReorder } from './useDomainReorder';
+import { useLoadingPortfolioRows } from './useLoadingPortfolioRows.web';
 import { boardEntityProps, type BoardEntity } from '../MobilePortfolioBoard/types';
 import type { DomainRecord } from '../../shared/types';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
@@ -65,6 +66,7 @@ export interface PortfolioRecordsProps {
   allSelected: boolean;
   someSelected: boolean;
   selectedIds: Set<string>;
+  visibleDomainIds?: Set<string>;
   sticky: ReturnType<typeof useStickyPortfolio>;
   expansion: ReturnType<typeof usePortfolioExpansion>;
   onGrouped: () => void;
@@ -86,7 +88,7 @@ const EMPTY_COLLECTIONS: PortfolioCollectionSection[] = [];
 
 const PortfolioRecords = ({
   busy, sticky, compact, loading, domains, expansion, allDomains, hasFilters,
-  selectedIds, allSelected, someSelected, onSelect, onGrouped, onSelectAll,
+  selectedIds, visibleDomainIds, allSelected, someSelected, onSelect, onGrouped, onSelectAll,
   sortField, sortDirection, visibleColumns, onEdit, onSort, onEmptyAction, onToggleAutoRenew,
   searchGroups, isGroupShowingAll, onToggleGroupSearch, onChangeDescription, onChangeProjectStatus,
   onToggleCollectionSearch, isCollectionShowingAll, collectionSections = EMPTY_COLLECTIONS,
@@ -94,11 +96,13 @@ const PortfolioRecords = ({
   showAddCollection = true, showDatabaseHeading = false,
   mobileBoard = false,
 }: PortfolioRecordsProps) => {
+  const recordsRef = useRef<HTMLDivElement>(null);
   const [menuError, setMenuError] = useState(``);
   const [editingGroupNameKey, setEditingGroupNameKey] = useState(``);
   const [groupingIds, setGroupingIds] = useState<Set<string> | null>(null);
   const [editingGroup, setEditingGroup] = useState<{ group: CustomPortfolioGroup } | null>(null);
   const preferences = usePortfolioPreferences();
+  const loadingRows = useLoadingPortfolioRows(loading && !compact && preferences.view !== `grid`, recordsRef);
   const menuDisabled = busy || loading || preferences.loading;
   const emptyPortfolio = !loading && !allDomains.length && !preferences.customGroups.length && !preferences.collections.length;
   const availableDomainIds = useMemo(() => new Set(allDomains.map(domain => domain.id)), [allDomains]);
@@ -281,6 +285,10 @@ const PortfolioRecords = ({
   const groups = useMemo(() => databaseAboveCollections
     ? mainGroups.concat(collections.flatMap(section => section.groups))
     : collections.flatMap(section => section.groups).concat(mainGroups), [collections, mainGroups, databaseAboveCollections]);
+  const groupDomainIds = useMemo(() => new Map(groups.map(group => [group.key, group.domains.map(domain => domain.id)])), [groups]);
+  const renderedGroupDomains = useMemo(() => new Map(groups.map(group => [group.key,
+    visibleDomainIds ? group.domains.filter(domain => visibleDomainIds.has(domain.id)) : group.domains,
+  ])), [groups, visibleDomainIds]);
   const groupCollections = useMemo(() => new Map(preferences.customGroups.map(group => [
     `custom:${group.id}`, preferences.collections.find(collection => collection.id === group.collectionId),
   ] as const).concat(preferences.collections.map(collection => [`collection:${collection.id}`, collection] as const))),
@@ -327,7 +335,7 @@ const PortfolioRecords = ({
   const isGroupParentCollapsed = (group: PortfolioGroup) => expansion.isCollectionCollapsed(groupCollections.get(group.key)?.id);
   const isGroupCollapsed = (group: PortfolioGroup) => isGroupParentCollapsed(group) || expansion.isGroupCollapsed(group.key);
   const renderedMainGroups = mainGroups.filter(group => group.domains.length || hasGroupHeading(group));
-  const hideColumnNames = !loading && !groups.some(group => group.domains.length > 0 && !isGroupCollapsed(group));
+  const hideColumnNames = !loading && !groups.some(group => renderedGroupDomains.get(group.key)?.length && !isGroupCollapsed(group));
   const columnHeaderHeight = hideColumnNames ? 0 : sticky.header.headHeight;
   const stickyHeaderReady = !emptyPortfolio && (hideColumnNames || columnHeaderHeight > 0) && sticky.header.columnWidths.length === columns.length + 4;
   const empty = !loading && !groups.some(group => group.domains.length);
@@ -422,8 +430,7 @@ const PortfolioRecords = ({
     const searchLabel = showingAll ? `Show only search matches in ${label}` : `Show all domains in ${label}`;
     const collapsed = expansion.isGroupCollapsed(key);
     const contentId = grid ? `${idPrefix}-grid-group-${encodeURIComponent(key)}-content`
-      : group.domains.length ? group.domains.map(domain => `domain-row-${domain.id}`).join(` `)
-        : `${idPrefix}-table-group-${encodeURIComponent(key)}-empty-row`;
+      : `${idPrefix}-table-group-${encodeURIComponent(key)}`;
     const projectStatusBadge = customGroup && !compactGroup ? (
       <DomainProjectBadge
         field={`projectStatus`}
@@ -880,7 +887,7 @@ const PortfolioRecords = ({
           </th>
         </tr>
       )}
-      {group.domains.map(domain => (
+      {renderedGroupDomains.get(group.key)?.map(domain => (
         <DomainRow
           busy={busy}
           key={domain.id}
@@ -901,7 +908,7 @@ const PortfolioRecords = ({
           onToggleAutoRenew={onToggleAutoRenew}
           onChangeDescription={onChangeDescription}
           onChangeProjectStatus={onChangeProjectStatus}
-          {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
+          {...reorder.handlers(group.key, domain.id, groupDomainIds.get(group.key) ?? [])}
           {...(mobileBoard ? { draggable: false, reorderable: false } : {})}
           boardEntity={domainBoardEntity(domain, group.key)}
         />
@@ -933,7 +940,7 @@ const PortfolioRecords = ({
       {hasGroupHeading(group) && groupHeading(group, true)}
       <PortfolioCollapse id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-content`} collapsed={expansion.isGroupCollapsed(group.key)}>
         <div id={`${idPrefix}-grid-group-${encodeURIComponent(group.key)}-domains`} className={`portfolio-domain-grid`}>
-          {group.domains.map(domain => (
+          {renderedGroupDomains.get(group.key)?.map(domain => (
             <DomainGridCard
               busy={busy}
               key={domain.id}
@@ -946,7 +953,7 @@ const PortfolioRecords = ({
               hideProjectDetails={appDomainIds.has(domain.id)}
               selectionDescriptionId={`portfolio-selection-help`}
               onToggleAutoRenew={onToggleAutoRenew}
-              {...reorder.handlers(group.key, domain.id, group.domains.map(item => item.id))}
+              {...reorder.handlers(group.key, domain.id, groupDomainIds.get(group.key) ?? [])}
               {...(mobileBoard ? { draggable: false } : {})}
               boardEntity={domainBoardEntity(domain, group.key)}
             />
@@ -1031,6 +1038,7 @@ const PortfolioRecords = ({
 
   return (
     <div
+      ref={recordsRef}
       id={`${idPrefix}-records-table`}
       className={`portfolio-records-table`}
       hidden={mobileBoard && !loading && !showMainContent}
@@ -1175,8 +1183,8 @@ const PortfolioRecords = ({
             columnWidths={loading ? [positionWidth, selectionWidth] : widths}
           />
           {loading ? (
-            <tbody id={`${idPrefix}-table-body`} className={`portfolio-table-body`}>
-              {[0, 1, 2, 3].map(index => <DomainRowSkeleton key={index} index={index} idPrefix={`${idPrefix}-domain`} visibleColumns={visibleColumns} />)}
+            <tbody id={`${idPrefix}-table-body`} className={`portfolio-table-body`} style={{ [`--portfolio-loading-row-height`]: `${loadingRows.height}px` } as CSSProperties}>
+              {Array.from({ length: loadingRows.count }, (_, index) => <DomainRowSkeleton key={index} index={index} idPrefix={`${idPrefix}-domain`} visibleColumns={visibleColumns} />)}
             </tbody>
           ) : (
             <>

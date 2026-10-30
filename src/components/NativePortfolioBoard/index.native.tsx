@@ -24,6 +24,7 @@ type Styles = ReturnType<typeof createStyles>;
 interface Props {
   domains: DomainRecord[];
   selectedIds: string[];
+  visibleDomainIds?: Set<string>;
   showMainGroups?: boolean;
   sections?: PortfolioSections;
   onSelect: (id: string) => void;
@@ -85,10 +86,14 @@ const BoardDomain = ({ domain, groupId, collectionId, logic, styles, selected, d
   );
 };
 
-const BoardGroup = ({ group, collectionId, logic, styles, selectedIds, stickyColumn }: { group: PortfolioGroup; collectionId: string; logic: Logic; styles: Styles; selectedIds: string[]; stickyColumn: NativeStickyColumn }) => {
+const BoardGroup = ({ group, collectionId, logic, styles, selectedIds, stickyColumn, visibleDomainIds }: { group: PortfolioGroup; collectionId: string; logic: Logic; styles: Styles; selectedIds: string[]; stickyColumn: NativeStickyColumn; visibleDomainIds?: Set<string> }) => {
   const { palette } = useTheme();
   const collapsed = logic.preferences.collapsedGroupKeys.includes(group.key);
   const [collapse, setCollapse] = useState({ closed: collapsed, interactive: !collapsed });
+  const retainedDomains = useRef<DomainRecord[]>([]);
+  const pageDomains = visibleDomainIds ? group.domains.filter(domain => visibleDomainIds.has(domain.id)) : group.domains;
+  if (!collapsed) retainedDomains.current = pageDomains;
+  const renderedDomains = visibleDomainIds && collapsed ? collapse.closed ? [] : retainedDomains.current : pageDomains;
   const sticky = useNativeStickyGroup(stickyColumn, !collapsed || !collapse.closed, group);
   if (!group.customGroupId) return null;
   const target: BoardTarget = { kind: `group`, id: group.customGroupId };
@@ -144,7 +149,7 @@ const BoardGroup = ({ group, collectionId, logic, styles, selectedIds, stickyCol
               </Pressable>
             )}
             <View nativeID={`native-board-group-domains-${target.id}`} style={styles.domainList}>
-              {group.domains.map(domain => (
+              {renderedDomains.map(domain => (
                 <BoardDomain
                   key={domain.id}
                   logic={logic}
@@ -164,11 +169,11 @@ const BoardGroup = ({ group, collectionId, logic, styles, selectedIds, stickyCol
   );
 };
 
-const BoardColumn = ({ collection, groups, directDomains, logic, styles, width, height, selectedIds }: { collection: CustomPortfolioCollection; groups: PortfolioGroup[]; directDomains: DomainRecord[]; logic: Logic; styles: Styles; width: number; height: number; selectedIds: string[] }) => {
+const BoardColumn = ({ collection, groups, directDomains, logic, styles, width, height, selectedIds, visibleDomainIds }: { collection: CustomPortfolioCollection; groups: PortfolioGroup[]; directDomains: DomainRecord[]; logic: Logic; styles: Styles; width: number; height: number; selectedIds: string[]; visibleDomainIds?: Set<string> }) => {
   const { palette } = useTheme();
   const id = collection.id;
   const collapsed = logic.preferences.collapsedCollectionIds.includes(id);
-  const layoutKey = JSON.stringify([id, collapsed, groups.map(group => [group.key, group.domains.map(domain => domain.id)]), directDomains.map(domain => domain.id)]);
+  const layoutKey = JSON.stringify([id, collapsed, groups.map(group => [group.key, group.domains.filter(domain => !visibleDomainIds || visibleDomainIds.has(domain.id)).map(domain => domain.id)]), directDomains.filter(domain => !visibleDomainIds || visibleDomainIds.has(domain.id)).map(domain => domain.id)]);
   const sticky = useNativeStickyColumn(layoutKey, width, height);
   return (
     <NativeDropZone id={`collection-${id}`} accepts={[`collection`]} target={{ targetId: id }} horizontal>
@@ -212,9 +217,9 @@ const BoardColumn = ({ collection, groups, directDomains, logic, styles, width, 
             target={{ collectionId: id }}
           >
             {!collapsed && groups.map(group => (
-              <BoardGroup key={group.key} group={group} collectionId={id} logic={logic} styles={styles} selectedIds={selectedIds} stickyColumn={sticky} />
+              <BoardGroup key={group.key} group={group} collectionId={id} logic={logic} styles={styles} selectedIds={selectedIds} stickyColumn={sticky} visibleDomainIds={visibleDomainIds} />
             ))}
-            {allowDomainsInCollections && !collapsed && directDomains.map(domain => (
+            {allowDomainsInCollections && !collapsed && directDomains.filter(domain => !visibleDomainIds || visibleDomainIds.has(domain.id)).map(domain => (
               <BoardDomain key={domain.id} domain={domain} collectionId={id} logic={logic} styles={styles} selected={selectedIds.includes(domain.id)} />
             ))}
           </NativeDropZone>
@@ -329,7 +334,7 @@ const BoardActions = ({ logic, styles, onSelect }: { logic: Logic; styles: Style
   </NativePortfolioSheet>;
 };
 
-const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMain, sections, showMainGroups = false }: Props) => {
+const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMain, sections, visibleDomainIds, showMainGroups = false }: Props) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const { width, height } = useWindowDimensions();
@@ -412,6 +417,7 @@ const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMa
                   width={columnWidth}
                   height={columnHeight}
                   selectedIds={selectedIds}
+                  visibleDomainIds={visibleDomainIds}
                   collection={section.collection}
                   groups={section.groups.filter(group => Boolean(group.customGroupId))}
                   directDomains={section.groups.filter(group => Boolean(group.directCollectionId)).flatMap(group => group.domains)}

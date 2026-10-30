@@ -12,7 +12,9 @@ import { useStickyPortfolio } from './useStickyPortfolio';
 import { formatCurrency } from '../../shared/domainUtils';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { usePortfolioToolbar } from './usePortfolioToolbar';
+import { usePortfolioPagination } from './usePortfolioPagination';
 import PortfolioRecords from '../PortfolioRecords/index.web';
+import PortfolioPagination from '../PortfolioPagination/index.web';
 import MobilePortfolioBoard from '../MobilePortfolioBoard/index.web';
 import { usePortfolio, type SortField } from './usePortfolio';
 import PortfolioSelection from '../PortfolioSelection/index.web';
@@ -21,6 +23,7 @@ import PortfolioCopyOptions from '../PortfolioCopyOptions/index.web';
 import PortfolioSyncOptions from '../PortfolioSyncOptions/index.web';
 import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion';
 import { useMobilePortfolio } from '../MobilePortfolioBoard/useMobilePortfolio.web';
+import { useCollapsingPortfolioRows } from './useCollapsingPortfolioRows.web';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { countPortfolioStarMatches, filterPortfolioSectionsByStar } from '../../shared/portfolioPreferences/starFilters';
 import { useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
@@ -85,21 +88,47 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const showAnnualSpend = visibleColumns.some(field => field === `renewalPrice` || field === `monthlyCost`)
     && (portfolio.loading || portfolio.summary.knownCostCount > 0);
   const showMonthlySpend = visibleColumns.includes(`monthlyCost`);
-  const mainVisibleIds = useMemo(() => {
+  const expandedMainIds = useMemo(() => {
     const domains = mainGroups.flatMap(group => group.domains);
     const expandedIds = new Set(mainGroups.filter(group => !expansion.collapsedGroups.has(group.key)).flatMap(group => group.domains.map(domain => domain.id)));
     return (compact ? domains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : domains).filter(domain => expandedIds.has(domain.id)).map(domain => domain.id);
   }, [mainGroups, compact, expansion.collapsedGroups]);
-  const collectionVisibleIds = useMemo(() => new Map(sections.collections.map(section => {
+  const expandedCollectionIds = useMemo(() => new Map(sections.collections.map(section => {
     const expandedIds = new Set(section.groups.filter(group => !expansion.collapsedGroups.has(group.key)).flatMap(group => group.domains.map(domain => domain.id)));
     const domains = compact ? section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT) : section.domains;
     return [section.collection.id, expansion.collapsedCollections.has(section.collection.id)
       ? [] : domains.filter(domain => expandedIds.has(domain.id)).map(domain => domain.id)] as const;
   })), [sections.collections, compact, expansion.collapsedGroups, expansion.collapsedCollections]);
-  const visibleIds = useMemo(() => {
-    const collectionIds = [...collectionVisibleIds.values()].flat();
-    return mobile ? mainVisibleIds.concat(collectionIds) : collectionIds.concat(mainVisibleIds);
-  }, [mobile, collectionVisibleIds, mainVisibleIds]);
+  const expandedIds = useMemo(() => {
+    const collectionIds = [...expandedCollectionIds.values()].flat();
+    return mobile || preferences.databasePosition === `above`
+      ? expandedMainIds.concat(collectionIds) : collectionIds.concat(expandedMainIds);
+  }, [mobile, expandedCollectionIds, expandedMainIds, preferences.databasePosition]);
+  const paginationKey = JSON.stringify([
+    portfolio.query, portfolio.sortField, portfolio.sortDirection, portfolio.facetFilters,
+    portfolio.registrarFilters, portfolio.extensionFilters, portfolio.collectionFilters,
+    portfolio.groupFilters, portfolio.attentionOnly, preferences.groupBy, preferences.view,
+  ]);
+  const pagination = usePortfolioPagination(expandedIds, paginationKey, !compact);
+  const visibleIds = pagination.domainIds;
+  const mainVisibleIds = useMemo(() => expandedMainIds.filter(id => pagination.visibleDomainIds.has(id)), [expandedMainIds, pagination.visibleDomainIds]);
+  const collapsedIds = useMemo(() => new Set([
+    ...mainGroups.filter(group => expansion.isGroupCollapsed(group.key)).flatMap(group => group.domains),
+    ...sections.collections.flatMap(section => expansion.isCollectionCollapsed(section.collection.id)
+      ? section.domains : section.groups.filter(group => expansion.isGroupCollapsed(group.key)).flatMap(group => group.domains)),
+  ].map(domain => domain.id)), [mainGroups, sections.collections, expansion.collapsedGroups, expansion.collapsedCollections]);
+  const renderedDomainIds = useCollapsingPortfolioRows(pagination.visibleDomainIds, collapsedIds);
+  const scrollToPage = () => window.requestAnimationFrame(() => {
+    const top = document.getElementById(`portfolio-pagination-top`);
+    if (!top) return;
+    const toolbar = sticky.toolbarRef.current;
+    const offset = toolbar ? (Number.parseFloat(window.getComputedStyle(toolbar).top) || 0) + toolbar.getBoundingClientRect().height : 0;
+    top.focus({ preventScroll: true });
+    window.scrollTo({
+      top: window.scrollY + top.getBoundingClientRect().top - offset,
+      behavior: window.matchMedia(`(prefers-reduced-motion: reduce)`).matches ? `auto` : `smooth`,
+    });
+  });
   const organizationSummary = useMemo(() => {
     const apps = preferences.customGroups.filter(group => group.isApp).length;
     const { ungroupedCount } = buildPortfolioDestinationTree(portfolio.domains, preferences.customGroups, preferences.collections);
@@ -185,6 +214,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     expansion,
     hasFilters,
     visibleColumns,
+    visibleDomainIds: renderedDomainIds,
     searching: search.searching,
     onSelect: selection.select,
     onEdit: portfolio.openEditor,
@@ -715,6 +745,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             {toolbar.copyOpen ? `` : toolbar.copyMessage}
           </p>
         </div>
+        {!compact && !portfolio.loading && <PortfolioPagination announce id={`portfolio-pagination-top`} pagination={pagination} disabled={Boolean(portfolio.pendingId)} />}
         {(!mobile || showMainRecords || portfolio.loading) && <PortfolioRecords
           {...recordProps}
           sticky={sticky}
@@ -735,7 +766,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           isGroupShowingAll={(key, collectionId) => search.isGroupShowingAll(collectionId, key)}
           onToggleGroupSearch={(key, collectionId) => search.toggleGroup(collectionId, key)}
         />}
-        {mobile && <MobilePortfolioBoard
+        {mobile && !portfolio.loading && <MobilePortfolioBoard
           {...recordProps}
           compact={compact}
           sections={sections}
@@ -744,6 +775,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           mainSortDirection={portfolio.sortDirection}
           onManualOrder={() => { if (portfolio.sortField) portfolio.toggleManualOrder(); }}
         />}
+        {!compact && !portfolio.loading && <PortfolioPagination id={`portfolio-pagination-bottom`} pagination={pagination} onNavigate={scrollToPage} disabled={Boolean(portfolio.pendingId)} />}
         <div id={`portfolio-card-footer`} className={`portfolio-card-footer`}>
           <span id={`portfolio-visible-count`} className={`portfolio-visible-count`} title={portfolio.loading ? undefined : footerSummary} aria-label={portfolio.loading ? undefined : footerSummary}>
             {portfolio.loading ? <span aria-hidden={`true`} id={`portfolio-visible-count-skeleton`} className={`portfolio-value-skeleton portfolio-value-skeleton-footer`} /> : mobile ? `${visibleIds.length} / ${footerTotal} Domains` : footerSummary}

@@ -111,7 +111,7 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
     ...props.sections.collections.flatMap(section => section.domains.slice(0, PORTFOLIO_PREVIEW_LIMIT)),
   ].map(domain => domain.id)) : null, [props.compact, props.sections]);
   const limit = (domains: MobilePortfolioBoardProps[`allDomains`]) => previewIds ? domains.filter(domain => previewIds.has(domain.id)) : domains;
-  const renderDomains = (group: PortfolioGroup, collectionId?: string) => limit(group.domains).map((domain, index) => (
+  const renderDomains = (group: PortfolioGroup, collectionId?: string) => limit(group.domains).map((domain, index) => !props.visibleDomainIds || props.visibleDomainIds.has(domain.id) ? (
     <MobilePortfolioDomain
       key={domain.id}
       domain={domain}
@@ -126,7 +126,7 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
       onChangeProjectStatus={props.onChangeProjectStatus}
       onActions={element => showActions({ id: domain.id, label: domain.name, kind: `domain` }, element)}
     />
-  ));
+  ) : null);
   const renderGroup = (group: PortfolioGroup, siblings: PortfolioGroup[], collectionId?: string) => {
     if (!group.customGroupId) return renderDomains(group, collectionId);
     const index = siblings.findIndex(item => item.customGroupId === group.customGroupId);

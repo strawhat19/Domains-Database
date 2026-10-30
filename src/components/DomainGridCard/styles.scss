@@ -86,8 +86,11 @@
 }
 .domain-grid-card-skeleton:hover { border-color: var(--line); }
 .domain-grid-card-skeleton-line {
+  width: 100%;
+  min-width: 0;
   height: 11px;
   display: block;
+  max-width: 100%;
   border-radius: 3px;
   background-size: 200% 100%;
   animation: domain-grid-card-shimmer 1.5s ease infinite;
@@ -95,10 +98,9 @@
 }
 .domain-grid-card-skeleton-icon { width: 32px; height: 32px; flex-shrink: 0; }
 .domain-grid-card-skeleton-selection { width: 14px; height: 14px; flex-shrink: 0; }
-.domain-grid-card-skeleton-name { width: 60%; height: 15px; }
-.domain-grid-card-skeleton-label { width: 45%; height: 8px; margin-bottom: 7px; }
-.domain-grid-card-skeleton-value { width: 70%; }
-.domain-grid-card-skeleton-actions { width: 52px; height: 24px; margin-left: auto; }
+.domain-grid-card-skeleton-name { flex: 1; width: auto; height: 15px; }
+.domain-grid-card-skeleton-label { height: 8px; margin-bottom: 7px; }
+.domain-grid-card-skeleton-actions { height: 24px; margin-left: auto; }
 @keyframes domain-grid-card-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 @media (max-width: 720px) {
   .domain-grid-card-actions > .domain-visibility-toggle { display: none; }

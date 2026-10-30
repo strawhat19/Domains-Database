@@ -24,6 +24,7 @@ export interface MobilePortfolioBoardProps {
   mainSortDirection: `asc` | `desc`;
   allDomains: DomainRecord[];
   selectedIds: Set<string>;
+  visibleDomainIds?: Set<string>;
   onGrouped: () => void;
   onManualOrder: () => void;
   onEmptyAction: () => void;
