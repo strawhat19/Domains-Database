@@ -20,16 +20,17 @@ import { useMobileNavigation } from './useMobileNavigation';
 import type { CSSProperties, PropsWithChildren } from 'react';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
-import { X, Eye, Menu, Info, Mail, Gavel, House, LogIn, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck, UserRoundPlus } from 'lucide-react';
+import { X, Eye, Menu, Info, Mail, Gavel, Store, House, LogIn, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck, UserRoundPlus } from 'lucide-react';
 
-const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.auction.href, routes.community.href];
+const domainSubmenuPaths: string[] = [routes.search.href, routes.watching.href, routes.community.href];
 
 const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: boolean }>) => {
-  const { pathname, year, appName, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
+  const { pathname, year, appName, signedIn, navigation, badgeColors, fitViewport, marketActive, searchViewport, authLoading, marketNavigation } = useAppShell();
   const { error: themeError, clearError: clearThemeError } = useTheme();
   const { flags, ready: featuresReady } = useFeatureFlags();
   const domainsMenu = useDomainsMenu(pathname);
   const mobileNavigation = useMobileNavigation(pathname);
+  const marketMenu = useDomainsMenu(pathname, mobileNavigation.compact);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn && !authLoading;
   const accountShell = isAdminPath(pathname) || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
@@ -37,14 +38,15 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
   const MenuIcon = mobileNavigation.open ? X : Menu;
   const domainSubmenuLinks = navigationLinks.filter(item => domainSubmenuPaths.includes(item.href));
   const headerLinks = navigationLinks.filter(item => !domainsMenu.grouped || !domainSubmenuPaths.includes(item.href));
-  const renderNavigationLink = (item: (typeof navigation)[number]) => {
-    const Icon = { Eye, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, UsersRound }[item.icon];
+  type NavigationItem = (typeof navigation | typeof marketNavigation)[number];
+  const renderNavigationLink = (item: NavigationItem) => {
+    const Icon = { Eye, Info, Mail, Gavel, Store, House, Wallet, Search, Globe2, BookOpen, UsersRound }[item.icon];
     const beta = `beta` in item && item.beta;
     const active = pathname === item.href || (item.href === routes.blog.href && pathname.startsWith(`${item.href}/`));
     return (
       <Link key={item.label} href={item.href} asChild>
         <RouterAnchor
-          onClick={domainsMenu.close}
+          onClick={() => { domainsMenu.close(); marketMenu.close(); }}
           id={`header-link-${item.label.toLowerCase()}`}
           aria-label={item.accessibilityLabel}
           aria-busy={item.countLoading || undefined}
@@ -83,6 +85,54 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
           )}
         </RouterAnchor>
       </Link>
+    );
+  };
+
+  const renderNavigationGroup = (item: NavigationItem, links: NavigationItem[], menu: typeof domainsMenu, active: boolean) => {
+    const isDomains = item.href === routes.domains.href;
+    const id = `header-${item.label.toLowerCase()}`;
+    const submenuId = `${id}-submenu`;
+    return (
+      <div
+        key={item.href}
+        ref={menu.rootRef}
+        id={`${id}-menu`}
+        className={`header-submenu-group`}
+        data-open={menu.open || undefined}
+        data-active={active || undefined}
+        onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) menu.close(); }}
+        onPointerEnter={isDomains ? event => { if (event.pointerType === `mouse`) menu.expand(); } : undefined}
+        onPointerLeave={isDomains ? event => { if (!document.getElementById(submenuId)?.contains(document.activeElement)) menu.close(); } : undefined}
+      >
+        <div id={`${id}-parent`} className={`header-submenu-parent`}>
+          {renderNavigationLink(item)}
+          <button
+            type={`button`}
+            ref={menu.toggleRef}
+            id={`${id}-toggle`}
+            aria-expanded={menu.open}
+            aria-controls={submenuId}
+            className={`header-submenu-toggle`}
+            aria-label={`${menu.open ? `Collapse` : `Expand`} ${item.label} Submenu`}
+            onClick={event => {
+              event.stopPropagation();
+              menu.toggle();
+            }}
+          >
+            <ChevronDown size={14} aria-hidden id={`${id}-chevron`} className={`header-submenu-chevron`} />
+          </button>
+        </div>
+        <div
+          role={`group`}
+          id={submenuId}
+          inert={!menu.open}
+          aria-hidden={!menu.open}
+          className={`header-submenu`}
+          aria-label={`${item.label} Submenu`}
+        >
+          {links.map(renderNavigationLink)}
+        </div>
+      </div>
     );
   };
 
@@ -134,46 +184,11 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
                 className={`header-navigation-links`}
               >
                 {headerLinks.map(item => {
-                  if (item.href !== routes.domains.href || !domainsMenu.grouped || !domainSubmenuLinks.length) return renderNavigationLink(item);
-                  return (
-                    <div
-                      key={item.label}
-                      ref={domainsMenu.rootRef}
-                      id={`header-domains-menu`}
-                      className={`header-domains-menu`}
-                      data-open={domainsMenu.open || undefined}
-                      data-active={pathname === item.href || domainSubmenuLinks.some(link => pathname === link.href) || undefined}
-                      onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) domainsMenu.close(); }}
-                      onPointerEnter={event => { if (event.pointerType === `mouse`) domainsMenu.expand(); }}
-                      onPointerLeave={event => { if (!event.currentTarget.querySelector(`#header-domains-submenu`)?.contains(document.activeElement)) domainsMenu.close(); }}
-                    >
-                      <div id={`header-domains-parent`} className={`header-domains-parent`}>
-                        {renderNavigationLink(item)}
-                        <button
-                          type={`button`}
-                          ref={domainsMenu.toggleRef}
-                          onClick={domainsMenu.toggle}
-                          id={`header-domains-toggle`}
-                          className={`header-domains-toggle`}
-                          aria-expanded={domainsMenu.open}
-                          aria-controls={`header-domains-submenu`}
-                          aria-label={domainsMenu.open ? `Collapse Domains Submenu` : `Expand Domains Submenu`}
-                        >
-                          <ChevronDown size={14} aria-hidden id={`header-domains-chevron`} className={`header-domains-chevron`} />
-                        </button>
-                      </div>
-                      <div
-                        role={`group`}
-                        inert={!domainsMenu.open}
-                        id={`header-domains-submenu`}
-                        className={`header-domains-submenu`}
-                        aria-hidden={!domainsMenu.open}
-                        aria-label={`Domains Submenu`}
-                      >
-                        {domainSubmenuLinks.map(renderNavigationLink)}
-                      </div>
-                    </div>
-                  );
+                  if (item.href === routes.market.href) return renderNavigationGroup(item, marketNavigation, marketMenu, marketActive);
+                  if (item.href === routes.domains.href && domainsMenu.grouped && domainSubmenuLinks.length) {
+                    return renderNavigationGroup(item, domainSubmenuLinks, domainsMenu, pathname === item.href || domainSubmenuLinks.some(link => pathname === link.href));
+                  }
+                  return renderNavigationLink(item);
                 })}
               </div>
               {mobileSignIn && (

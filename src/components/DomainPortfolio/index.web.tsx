@@ -30,6 +30,8 @@ import { useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { usePortfolioSearch } from '../../shared/portfolioPreferences/usePortfolioSearch';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
+import { useAfternicPortfolioSync } from '../../shared/marketplaceAfternic/PortfolioSyncContext';
+import { getAfternicSyncLabel } from '../PortfolioMarketplace/usePortfolioMarketplace';
 import { buildPortfolioCopyText, excludeHiddenPortfolioSections, type PortfolioCopyFormat } from './copyFormats';
 import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { X, Eye, Copy, Plus, Star, Check, Gauge, Search, Link2, Filter, EyeOff, Settings, RefreshCw, ArrowRight, TriangleAlert, FlaskConical, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
@@ -41,7 +43,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const mobileBoardRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const afternic = useAfternicPortfolioSync(!compact && !authLoading && Boolean(user?.active && !user.anonymous && user.role !== `Guest`));
+  const lastAfternicSync = getAfternicSyncLabel(afternic.syncedAt, afternic.skipped, Boolean(afternic.error));
   const { visibleColumns, columnWidths, toggleColumn, resetColumns, setColumnWidths } = useColumns();
   const preferences = usePortfolioPreferences();
   const expansion = usePortfolioExpansion();
@@ -435,6 +439,18 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               ref={toolbar.primaryActionsRef}
               className={`portfolio-domain-actions`}
             >
+              {(afternic.connected || afternic.error) && <button
+                type={`button`}
+                id={`portfolio-sync-afternic`}
+                disabled={afternic.syncing}
+                aria-busy={afternic.syncing}
+                onClick={() => void afternic.sync()}
+                className={`portfolio-button portfolio-button-secondary`}
+                aria-describedby={afternic.error ? `portfolio-afternic-sync-error` : lastAfternicSync ? `portfolio-afternic-last-sync` : undefined}
+              >
+                {afternic.syncing ? <span aria-hidden id={`portfolio-sync-afternic-spinner`} className={`portfolio-sync-spinner`} /> : <RefreshCw size={15} aria-hidden id={`portfolio-sync-afternic-icon`} className={`portfolio-button-icon`} />}
+                <span id={`portfolio-sync-afternic-text`} className={`portfolio-button-text`}>{afternic.syncing ? `Syncing Afternic…` : `Sync Afternic`}</span>
+              </button>}
               {user && portfolio.canSyncManually && (
                 <button
                   type={`button`}
@@ -472,6 +488,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             {portfolio.manualSyncMessage}
           </p>
         )}
+        {afternic.error && <p id={`portfolio-afternic-sync-error`} role={`status`} className={`portfolio-manual-sync-message portfolio-afternic-sync-error`}>{afternic.error}</p>}
+        {lastAfternicSync && <p id={`portfolio-afternic-last-sync`} className={`portfolio-manual-sync-message`}>{lastAfternicSync}</p>}
         {(portfolio.refreshing || portfolio.insightNotice) && (
           <div role={`status`} aria-live={`polite`} id={`portfolio-website-info-status`} className={`portfolio-message portfolio-message-success`}>
             <p id={`portfolio-website-info-status-text`} className={`portfolio-message-text`}>

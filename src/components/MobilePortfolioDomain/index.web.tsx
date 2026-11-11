@@ -5,6 +5,7 @@ import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import { getDomainStatus } from '../../shared/domainUtils';
 import { boardEntityProps } from '../MobilePortfolioBoard/types';
 import type { MobilePortfolioBoardProps } from '../MobilePortfolioBoard/types';
+import { PortfolioMarketplace, PortfolioSellLink } from '../PortfolioMarketplace/index.web';
 
 interface MobilePortfolioDomainProps extends Pick<MobilePortfolioBoardProps,
   `busy` | `onEdit` | `onSelect` | `onChangeDescription` | `onChangeProjectStatus`> {
@@ -114,6 +115,7 @@ const MobilePortfolioDomain = ({
             onChange={value => onChangeProjectStatus(domain, value)}
           />
         )}
+        <PortfolioSellLink id={`${id}-sell`} domain={domain} disabled={busy} className={`mobile-board-icon mobile-domain-actions`} />
         <button
           type={`button`}
           disabled={busy}
@@ -131,6 +133,7 @@ const MobilePortfolioDomain = ({
           />
         </button>
       </div>
+      <PortfolioMarketplace id={`${id}-marketplace`} domain={domain} disabled={busy} className={`mobile-portfolio-marketplace`} />
     </article>
   );
 };

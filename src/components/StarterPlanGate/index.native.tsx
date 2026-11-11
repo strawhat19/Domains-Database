@@ -25,7 +25,7 @@ const StarterPlanGate = ({ feature, children }: StarterPlanGateProps) => {
       icon={state.error ? `error` : feature}
       id={`starter-plan-gate-content-${feature}`}
       eyebrow={state.error ? `Account Access` : feature === `auction` ? `Planned Feature` : `Starter`}
-      badge={!state.error && routes[feature].beta ? `Beta` : undefined}
+      badge={!state.error && feature === `community` && routes.community.beta ? `Beta` : undefined}
       title={state.error ? `Plan Access Unavailable` : feature === `auction` ? `Auction Preview` : `Unlock ${state.title}`}
       detail={!state.error && !state.signedIn && feature !== `auction` ? `Already on Starter? Sign in to unlock access.` : undefined}
       description={state.error ? `We couldn’t confirm your access. Try again to check your account and plan.` : state.description}

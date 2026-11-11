@@ -2,17 +2,16 @@ import '../AdminUsers/records.scss';
 import './styles.scss';
 import { useState } from 'react';
 import { AdminLoading } from '../AdminWidgets';
-import { featureDefinitions } from './features';
+import { featureDefinitions, type AdminFeatureKey } from './features';
 import TableStatus from '../AdminUsers/TableStatus';
 import { useAdminFeatures } from './useAdminFeatures';
 import FeatureDetails from './FeatureDetails/index.web';
 import SegmentedControl from '../SegmentedControl/index.web';
 import { tableElementProps } from '../AdminUsers/tableElements';
-import type { FeatureFlagKey } from '../../shared/featureFlags/types';
-import { Coins, Megaphone, CaseSensitive, Bell, Mail, Check, Minus, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react';
+import { Coins, Megaphone, CaseSensitive, Bell, Mail, Check, Minus, Store, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react';
 
 const columns = [`No.`, `Feature`, `Description`, `Value`, `Plans`, `Actions`];
-const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
+const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal, marketplaceListings: Store };
 const featureOptions = [
   { value: `off`, label: `Disable`, Icon: Minus },
   { value: `on`, label: `Enable`, Icon: Check },
@@ -20,7 +19,7 @@ const featureOptions = [
 
 const AdminFeatures = () => {
   const state = useAdminFeatures();
-  const [detailsKey, setDetailsKey] = useState<FeatureFlagKey | null>(null);
+  const [detailsKey, setDetailsKey] = useState<AdminFeatureKey | null>(null);
   const details = featureDefinitions.find(feature => feature.key === detailsKey);
   return <section {...tableElementProps(`admin-features`)} className={`admin-features admin-records`} aria-label={`Feature Flags`} aria-busy={state.loading}>
     {state.error ? <div {...tableElementProps(`admin-records-heading`, `features`)}>
@@ -38,26 +37,29 @@ const AdminFeatures = () => {
             const Icon = featureIcons[key];
             const enabled = state.flags[key];
             const saving = !!state.pending[key];
+            const ready = state.featureReady(key);
+            const disabled = state.featureDisabled(key);
+            const policyLoading = key === `marketplaceListings` && state.policyLoading;
             return <tr key={key} {...tableElementProps(`admin-feature-row`, key)} aria-busy={saving}>
               <td {...tableElementProps(`admin-record-number`, key)}><span {...tableElementProps(`admin-record-number-badge`, key)}>{index + 1}</span></td>
               <td {...tableElementProps(`admin-feature-identity`, key)}>
                 <span {...tableElementProps(`admin-feature-name`, key)}><Icon {...tableElementProps(`admin-feature-icon`, key)} size={16} aria-hidden={`true`} /><strong {...tableElementProps(`admin-feature-label`, key)}>{label}</strong></span>
               </td>
               <td {...tableElementProps(`admin-feature-description`, key)}>{description}</td>
-              <td {...tableElementProps(`admin-feature-value`, key)}><TableStatus id={`features-${key}`} label={!state.ready ? `Unavailable` : enabled ? `True` : `False`} tone={!state.ready ? `red` : enabled ? `green` : `gray`} /></td>
+              <td {...tableElementProps(`admin-feature-value`, key)}><TableStatus id={`features-${key}`} label={policyLoading ? `Loading` : !ready ? `Unavailable` : enabled ? `True` : `False`} tone={policyLoading ? `gray` : !ready ? `red` : enabled ? `green` : `gray`} /></td>
               <td {...tableElementProps(`admin-feature-plans`, key)}>
                 {state.planLoading ? <span {...tableElementProps(`admin-feature-plans-loading`, key)} className={`admin-feature-plan-state`} role={`status`}>Loading Plans</span> : state.planError ? <div {...tableElementProps(`admin-feature-plans-state`, key)}>
                   <p {...tableElementProps(`admin-feature-plans-error`, key)} className={`admin-feature-error`} role={`alert`}>{state.planError}</p>
                   <button {...tableElementProps(`admin-feature-plans-retry`, key)} className={`admin-feature-toggle`} type={`button`} onClick={state.refreshPlans}><RotateCcw {...tableElementProps(`admin-feature-plans-retry-icon`, key)} size={11} aria-hidden={`true`} />Refresh Plans</button>
                 </div> : state.planOptions.length ? <div {...tableElementProps(`admin-feature-plan-segments`, key)} className={`admin-feature-plan-segments segmented-control admin-feature-segments admin-feature-audience-segments`} role={`group`} aria-label={`${label} Minimum Plan`} title={`No Selection: Free And Above · Select A Plan To Allow That Tier And Above`} aria-describedby={state.errors[key] ? `admin-feature-error-${key}` : undefined}>
                   {state.planOptions.map(({ value, label: planLabel }) => {
-                    const selected = state.ready && state.selectedPlan(key) === value;
+                    const selected = ready && state.selectedPlan(key) === value;
                     const unavailable = !state.isPlanAvailable(value);
-                    return <button key={value} {...tableElementProps(`admin-feature-plan-option`, `${key}-${value}`)} className={`admin-feature-plan-option segmented-control-option`} type={`button`} aria-pressed={selected} title={unavailable ? selected ? `Plan Unavailable · Select Again To Return To Free And Above` : `Plan Unavailable` : undefined} aria-label={`${planLabel} And Above Access To ${label}`} disabled={state.disabled || saving || (unavailable && !selected)} onClick={() => { void state.togglePlan(key, value); }}>
+                    return <button key={value} {...tableElementProps(`admin-feature-plan-option`, `${key}-${value}`)} className={`admin-feature-plan-option segmented-control-option`} type={`button`} aria-pressed={selected} title={unavailable ? selected ? `Plan Unavailable · Select Again To Return To Free And Above` : `Plan Unavailable` : undefined} aria-label={`${planLabel} And Above Access To ${label}`} disabled={disabled || saving || (unavailable && !selected)} onClick={() => { void state.togglePlan(key, value); }}>
                       <span {...tableElementProps(`admin-feature-plan-text`, `${key}-${value}`)} className={`admin-feature-plan-text segmented-control-text`}>{planLabel}</span>
                     </button>;
                   })}
-                </div> : <span {...tableElementProps(`admin-feature-plan-baseline`, key)} className={`admin-feature-plan-state`}>Free And Above</span>}
+                </div> : ready ? <span {...tableElementProps(`admin-feature-plan-baseline`, key)} className={`admin-feature-plan-state`}>Free And Above</span> : null}
               </td>
               <td {...tableElementProps(`admin-feature-actions`, key)}>
                 <div {...tableElementProps(`admin-feature-action-controls`, key)} className={`admin-feature-action-controls`}>
@@ -66,8 +68,8 @@ const AdminFeatures = () => {
                     options={featureOptions}
                     id={`admin-feature-toggle-${key}`}
                     className={`admin-feature-segments`}
-                    disabled={state.disabled || saving}
-                    value={!state.ready ? `unknown` : enabled ? `on` : `off`}
+                    disabled={disabled || saving}
+                    value={!ready ? `unknown` : enabled ? `on` : `off`}
                     onChange={value => { void state.save(key, value === `on`); }}
                     describedBy={state.errors[key] ? `admin-feature-error-${key}` : undefined}
                   />
@@ -75,6 +77,10 @@ const AdminFeatures = () => {
                 </div>
                 {saving ? <span {...tableElementProps(`admin-feature-saving`, key)} role={`status`}>Saving</span> : null}
                 {state.errors[key] ? <p {...tableElementProps(`admin-feature-error`, key)} role={`alert`}>{state.errors[key]}</p> : null}
+                {key === `marketplaceListings` && state.policyError ? <div {...tableElementProps(`admin-feature-policy-error`, key)}>
+                  <p role={`alert`}>{state.policyError}</p>
+                  {state.source === `firestore` ? <button {...tableElementProps(`admin-feature-toggle`, `marketplace-refresh`)} type={`button`} onClick={state.refreshPolicy}><RotateCcw size={12} aria-hidden={`true`} />Refresh Marketplace Policy</button> : null}
+                </div> : null}
               </td>
             </tr>;
           })}
@@ -85,12 +91,12 @@ const AdminFeatures = () => {
       feature={details}
       onClose={() => setDetailsKey(null)}
       roles={{
-        ready: state.ready,
-        disabled: state.disabled,
+        ready: state.featureReady(details.key),
+        disabled: state.featureDisabled(details.key),
         options: state.roleOptions,
         saving: !!state.pending[details.key],
         selected: state.audiences[details.key].roles,
-        error: state.errors[details.key] || state.error,
+        error: state.errors[details.key] || (details.key === `marketplaceListings` ? state.policyError : state.error),
         onToggle: value => { void state.toggleRole(details.key, value); },
       }}
     /> : null}

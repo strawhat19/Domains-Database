@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 
-export const useDomainsMenu = (pathname: string) => {
+export const useDomainsMenu = (pathname: string, compact = false) => {
   const [open, setOpen] = useState(false);
   const [grouped, setGrouped] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -28,7 +28,7 @@ export const useDomainsMenu = (pathname: string) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== `Escape`) return;
       setOpen(false);
-      if (rootRef.current?.contains(document.activeElement)) toggleRef.current?.focus();
+      if (!compact && rootRef.current?.contains(document.activeElement)) toggleRef.current?.focus();
     };
     document.addEventListener(`keydown`, handleKeyDown);
     document.addEventListener(`pointerdown`, handleOutsideClick);
@@ -36,7 +36,7 @@ export const useDomainsMenu = (pathname: string) => {
       document.removeEventListener(`keydown`, handleKeyDown);
       document.removeEventListener(`pointerdown`, handleOutsideClick);
     };
-  }, [open]);
+  }, [open, compact]);
 
   return { open, close, expand, toggle, grouped, rootRef, toggleRef };
 };

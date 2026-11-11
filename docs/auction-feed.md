@@ -2,7 +2,7 @@
 
 ## Using The Page
 
-`/auction` requires an active signed-in account with a trusted Starter-or-higher plan, or an active Owner. The header hides Auction from other visitors, and direct navigation shows a plan/sign-in CTA without loading auction data or controls. Other roles do not bypass the plan requirement. Choose **Load Free Auctions** for GoDaddy's public Most Active inventory, then use the existing name, extension, price, bids, age and closing-time filters. **Refresh Free Auctions** checks the current cached feed. The page displays the provider's build time separately from the server fetch time and the next eligible upstream check.
+**Market → Auctions** opens `/auction`. Active Owners can use the Beta preview. Other visitors see the preview notice, with a sign-in action for signed-out visitors. Choose **Load Free Auctions** for GoDaddy's public Most Active inventory, then use the existing name, extension, price, bids, age and closing-time filters. **Refresh Free Auctions** checks the current cached feed. The page displays the provider's build time separately from the server fetch time and the next eligible upstream check.
 
 **Saved Inventory** opens the current account/device's existing imports. **Reload Saved** reloads that snapshot. Importing still accepts an unzipped GoDaddy JSON file and replaces only saved inventory. **Show Preview** remains an explicit fictional demonstration. Public feed results never overwrite saved inventory, portfolio domains or account settings, and do not create per-user Firestore copies.
 

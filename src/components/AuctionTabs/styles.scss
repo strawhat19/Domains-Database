@@ -1,0 +1,3 @@
+.auction-tabs.segmented-control { gap: 4px; padding: 3px; margin-block: clamp(20px, 3vw, 32px); border-radius: 9px; }
+.auction-tabs-option.segmented-control-option { min-height: 44px; padding-inline: clamp(10px, 2vw, 15px); border-radius: 6px; text-decoration: none; }
+.auction-tabs-beta { flex-shrink: 0; padding: 2px 6px; border: 1px solid var(--line); border-radius: 999px; color: var(--accent); background: var(--subtle); font-size: 9px; }

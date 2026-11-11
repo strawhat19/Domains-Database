@@ -137,6 +137,7 @@
 .portfolio-attention-dot { width: 5px; height: 5px; margin-right: 3px; border-radius: 50%; background: currentColor; }
 .portfolio-primary-actions { gap: 8px; display: flex; flex-shrink: 0; align-items: center; }
 .portfolio-domain-actions { gap: 8px; display: flex; min-width: 0; align-items: stretch; }
+.portfolio-afternic-sync-error { color: var(--danger); }
 .portfolio-button {
   gap: 7px;
   display: inline-flex;

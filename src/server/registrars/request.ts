@@ -6,6 +6,7 @@ export interface RegistrarRequestContext {
   deadline: number;
   signal: AbortSignal;
   provider: ConnectionProvider;
+  operation?: `appraisal`;
 }
 
 interface RegistrarRequestOptions {
@@ -71,6 +72,10 @@ export const requestRegistrar = async (
   const target = `${url.origin}${url.pathname}`;
   const goDaddyRead = context.provider === `godaddy` && url.origin === `https://api.godaddy.com`
     && (goDaddyShopperPath.test(url.pathname) || goDaddyDetailPath.test(url.pathname));
+  const appraisal = context.operation === `appraisal`;
+  const appraisalDomain = url.searchParams.get(`domainName`) ?? ``;
+  const goDaddyAppraisal = context.provider === `godaddy` && target === `https://api.godaddy.com/v1/domains/govalues`
+    && /^[a-z0-9.-]{1,253}$/.test(appraisalDomain) && url.searchParams.toString() === `domainName=${appraisalDomain}`;
   const hostingerRead = context.provider === `hostinger` && target === `https://developers.hostinger.com/api/hosting/v1/websites`;
   const squarespaceToken = context.provider === `squarespace`
     && target === `https://login.squarespace.com/api/1/login/oauth/provider/tokens` && !url.search;
@@ -78,7 +83,7 @@ export const requestRegistrar = async (
     ? squarespaceToken && options.method === `POST` && typeof options.body === `string`
       && new TextEncoder().encode(options.body).byteLength <= MAX_REQUEST_BYTES
     : target === upstreamPaths[context.provider] || goDaddyRead || hostingerRead;
-  if (!permitted || url.username || url.password || url.hash) {
+  if (!(appraisal ? goDaddyAppraisal && !options : permitted) || url.username || url.password || url.hash) {
     throw new RegistrarRelayError(500, `Registrar Request Is Unavailable`);
   }
   const remaining = context.deadline - Date.now();
@@ -100,15 +105,17 @@ export const requestRegistrar = async (
     });
     if (!response.ok) {
       void response.body?.cancel().catch(() => undefined);
+      if (appraisal) throw new RegistrarRelayError(response.status, `GoDaddy GoValue Request Failed`);
       throw upstreamError(context.provider, response.status);
     }
     const contentLength = response.headers.get(`content-length`);
-    if (contentLength && (!/^\d+$/.test(contentLength) || Number(contentLength) > MAX_RESPONSE_BYTES)) {
+    const maximum = appraisal ? 64_000 : MAX_RESPONSE_BYTES;
+    const tooLarge = new RegistrarRelayError(502, appraisal ? `GoDaddy GoValue Response Exceeds The Size Limit` : `${providerLabels[context.provider]} Response Exceeds The Sync Size Limit`);
+    if (contentLength && (!/^\d+$/.test(contentLength) || Number(contentLength) > maximum)) {
       void response.body?.cancel().catch(() => undefined);
-      throw new RegistrarRelayError(502, `${providerLabels[context.provider]} Response Exceeds The Sync Size Limit`);
+      throw tooLarge;
     }
-    return await readLimitedText(response.body, MAX_RESPONSE_BYTES, controller.signal,
-      new RegistrarRelayError(502, `${providerLabels[context.provider]} Response Exceeds The Sync Size Limit`));
+    return await readLimitedText(response.body, maximum, controller.signal, tooLarge);
   } catch (failure) {
     if (failure instanceof RegistrarRelayError) throw failure;
     if (controller.signal.aborted) throw new RegistrarRelayError(504, `${providerLabels[context.provider]} Request Timed Out Or Was Cancelled`);

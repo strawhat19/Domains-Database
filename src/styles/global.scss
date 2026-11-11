@@ -11,6 +11,8 @@
   --table-search-bg: color-mix(in srgb, var(--paper) 80%, var(--accent));
   --table-search-focus-bg: color-mix(in srgb, var(--paper) 74%, var(--accent));
   --placeholder: #9ba4a2;
+  --select-chevron-inset: 12px;
+  --select-chevron-padding: 36px;
   --skeleton: #edf1f3;
   --skeleton-highlight: #f8fafa;
   --success: #187565;
@@ -103,6 +105,28 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 ::selection { color: var(--ink); background: var(--selection); }
+
+select :where(option, optgroup) { color: var(--ink); background-color: var(--paper); }
+
+select:not([multiple], [size]:not([size='1'])):not(:where(.domain-editor-select, .table-settings-select, .dd-observability-select, .domain-project-badge-select)) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: var(--select-chevron-padding);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  background-position: right calc(var(--select-chevron-inset) + 5px) center, right var(--select-chevron-inset) center;
+  background-image: linear-gradient(45deg, transparent 40%, var(--accent) 41% 59%, transparent 60%),
+    linear-gradient(-45deg, transparent 40%, var(--accent) 41% 59%, transparent 60%);
+
+  &:enabled { cursor: pointer; }
+
+  @media (forced-colors: active) {
+    appearance: auto;
+    -webkit-appearance: auto;
+    background-image: none;
+    padding-right: var(--select-chevron-inset);
+  }
+}
 
 input[type='checkbox']:not([role='switch']) {
   margin: 0;

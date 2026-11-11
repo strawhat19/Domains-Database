@@ -12,7 +12,7 @@ import { resumeAutomaticSync } from '../../shared/registrarSync/policy';
 import { createConnectionDraft } from '../../shared/connections/values';
 import type { ConnectionSyncResult } from '../../shared/registrarSync/types';
 import { MAX_CONNECTION_ENV_SIZE, parseConnectionEnvironment } from '../../shared/connections/file';
-import { connectionTabs, proConnectionProviders, type ConnectionTabProvider } from '../../shared/connections/catalog';
+import { connectionTabs, profileConnectionTabs, proConnectionProviders, type ConnectionTabProvider } from '../../shared/connections/catalog';
 import { connectionFields, type AccountConnectionsProps, type ConnectionAccount, type ConnectionProvider } from '../../shared/connections/types';
 import { TOAST_ENTRY_DELAY, TOAST_EXIT_DELAY, TOAST_ENTER_DURATION, TOAST_VISIBLE_DURATION, TOAST_REMINDER_DURATION } from '../ToastStack/motion';
 import { connectionInputFields, connectionInputValue, supportsRegistrarSync, withConnectionInputValue, type ConnectionInputKey } from '../../shared/connections/inputs';
@@ -24,7 +24,7 @@ const withDrafts = (accounts: readonly ConnectionAccount[]) => [
 const syncNotice = (label: string, result: ConnectionSyncResult) =>
   formatSyncNotice(result, `${label}${result.errors.length ? ` — Sync Finished With Errors` : ``}`);
 
-export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProps, `providers`> = {}) => {
+export const useAccountConnections = ({ providers, showAfternic = false }: Pick<AccountConnectionsProps, `providers`> & { showAfternic?: boolean } = {}) => {
   const router = useRouter();
   const { user, loginRevision } = useAuth();
   const { syncing, syncConnections, accountStatuses, canSyncConnections } = useDomains();
@@ -54,16 +54,19 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   const [viewActor, setViewActor] = useState(actorKey);
   const [hasSyncedDomains, setHasSyncedDomains] = useState(false);
   const [accounts, setAccounts] = useState<ConnectionAccount[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<ConnectionProvider>(connectionFields[0].id);
+  const [selectedProvider, setSelectedProvider] = useState<ConnectionTabProvider>(connectionFields[0].id);
   const access = useStarterAccess();
   const hasProAccess = access.allowed;
   const unlimitedPlanAccess = access.owner;
   const canUseProvider = (provider: ConnectionProvider) => hasProAccess || !proConnectionProviders.includes(provider);
-  const fields = connectionFields.filter(field => !providers || providers.includes(field.id));
+  const fields = connectionFields.filter(field => providers ? providers.includes(field.id) : !showAfternic || field.id !== `porkbun`);
+  const formProviders = fields.map(field => field.id);
   const allowedFields = fields.filter(field => canUseProvider(field.id));
-  const tabs = connectionTabs.filter(tab => !providers || providers.some(provider => provider === tab.id))
+  const canEditProvider = (provider: ConnectionProvider) => allowedFields.some(field => field.id === provider);
+  const tabs = (showAfternic ? profileConnectionTabs : connectionTabs).filter(tab => !providers || providers.some(provider => provider === tab.id))
     .map(tab => ({ ...tab, pro: tab.pro && !unlimitedPlanAccess, locked: !tab.available || (tab.pro && !hasProAccess) }));
-  const activeProvider = allowedFields.find(field => field.id === selectedProvider)?.id ?? allowedFields[0]?.id;
+  const activeProvider = showAfternic && selectedProvider === `afternic` ? selectedProvider
+    : allowedFields.find(field => field.id === selectedProvider)?.id ?? allowedFields[0]?.id;
   const isCurrent = (operation?: number) => mounted.current && currentActor.current === actorKey
     && (operation === undefined || operation === revision.current);
   useEffect(() => {
@@ -128,7 +131,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   };
   const editAccount = (id: string, change: (account: ConnectionAccount) => ConnectionAccount) => {
     if (!isCurrent() || operationBusy.current || loading || syncing) return;
-    if (!accounts.some(account => account.id === id && canUseProvider(account.provider))) return;
+    if (!accounts.some(account => account.id === id && canEditProvider(account.provider))) return;
     dirty.current = true;
     setError(``);
     setNotice(``);
@@ -141,7 +144,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     setVisibility(current => ({ ...current, [`${id}:${key}`]: true }));
     editAccount(id, account => ({ ...account, values: withConnectionInputValue(account, key, value) }));
   };
-  const canAddConnection = (provider: ConnectionProvider) => Boolean(user?.id) && viewActor === actorKey && canUseProvider(provider) && accounts.some(account => {
+  const canAddConnection = (provider: ConnectionProvider) => Boolean(user?.id) && viewActor === actorKey && canEditProvider(provider) && accounts.some(account => {
     if (account.provider !== provider || account.number < 1) return false;
     const saved = { ...account, values: savedValues.current.get(account.id) ?? `` };
     return connectionFields.find(field => field.id === provider)?.keys.some(key => Boolean(connectionInputValue(saved, key).trim())) ?? false;
@@ -159,8 +162,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   };
   const selectProvider = (provider: ConnectionTabProvider) => {
     if (!isCurrent()) return;
-    const field = allowedFields.find(field => field.id === provider);
-    if (field) setSelectedProvider(field.id);
+    if (tabs.some(tab => tab.id === provider && !tab.locked)) setSelectedProvider(provider);
   };
   const closeImport = () => {
     if (operationBusy.current) return;
@@ -224,7 +226,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
   };
   const loadEnvironment = (text: string, operation?: number, skipped = 0) => {
     if (!user?.id || !isCurrent(operation) || (operationBusy.current && operation === undefined) || loading || syncing) return false;
-    const parsed = parseConnectionEnvironment(text, providers);
+    const parsed = parseConnectionEnvironment(text, formProviders);
     if (!parsed.connections.length) throw new Error(`No Supported Registrar Keys Found In .env`);
     const next = [...accounts];
     const notices: string[] = [];
@@ -294,7 +296,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     if (!request) return;
     const { operation, userId } = request;
     try {
-      if (!allowedFields.length || (accountId && accounts.some(account => account.id === accountId && !canUseProvider(account.provider)))) {
+      if (!allowedFields.length || (accountId && accounts.some(account => account.id === accountId && !canEditProvider(account.provider)))) {
         throw new Error(`This Registrar Is Available On Pro Plan`);
       }
       const deferred = accounts.filter(account => !canUseProvider(account.provider) && (account.number
@@ -302,7 +304,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
       const deferredNotice = deferred.length ? ` — ${deferred.length} Pro Connection Edit(s) Kept Unsaved` : ``;
       const latest = await connectionsAPI.getConnections(userId);
       if (!isCurrent(operation)) return;
-      const selected = accounts.filter(account => canUseProvider(account.provider) && (accountId ? account.id === accountId : !providers || providers.includes(account.provider)));
+      const selected = accounts.filter(account => canEditProvider(account.provider) && (!accountId || account.id === accountId));
       if (accountId && !selected[0]?.values.trim()) throw new Error(`Enter Connection Values Before Saving`);
       const filled = selected.filter(account => account.values.trim());
       const payload = [...latest.accounts.filter(account => !filled.some(edit => edit.id === account.id)), ...filled];
@@ -324,7 +326,7 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
         dirty.current = deferred.length > 0;
       }
       setVisibility({});
-      const syncAccounts = savedAccount ? [savedAccount] : snapshot.accounts.filter(account => canUseProvider(account.provider));
+      const syncAccounts = savedAccount ? [savedAccount] : snapshot.accounts.filter(account => canEditProvider(account.provider));
       const syncable = syncAccounts.some(supportsRegistrarSync);
       if (!connectionSync.current.canSyncConnections) {
         if (syncable) await resumeAutomaticSync(userId, () => isCurrent(operation));
@@ -390,6 +392,6 @@ export const useAccountConnections = ({ providers }: Pick<AccountConnectionsProp
     busy: currentView && busy, loading: !currentView || loading,
     showDomainsLink: currentView && !busy && hasSyncedDomains,
     error: currentView ? error : ``, notice: currentView ? notice : ``,
-    accounts: currentView ? accounts.filter(account => !providers || providers.includes(account.provider)) : [],
+    accounts: currentView ? accounts.filter(account => formProviders.includes(account.provider)) : [],
   };
 };

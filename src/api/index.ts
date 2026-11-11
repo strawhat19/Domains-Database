@@ -14,6 +14,8 @@ import { clearFirestoreStorageCache } from '../shared/firebase/storage';
 import { normalizeWebsiteInsights } from '../shared/websiteInsights/values';
 import { getPlanAccess, requireStarterAccess } from '../shared/planAccess/service';
 import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
+import { getLocalPublicProfileRoles } from '../shared/authentication/service.local';
+import type { PublicProfileCardMetadata, PublicProfilePortfolio } from '../shared/publicDirectory/profilePortfolio';
 import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
 import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../shared/common/storage';
 import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../shared/config';
@@ -183,7 +185,9 @@ const adoptGuestPortfolio = async () => {
   let nextNumber = current.nextNumber;
   for (const record of guest.domains) {
     if (names.has(record.name)) continue;
-    domains.push(new Domain({ ...record, id: undefined, uuid: undefined, uid: userId, number: nextNumber }));
+    const domain = new Domain({ ...record, id: undefined, uuid: undefined, uid: userId, number: nextNumber });
+    delete domain.meta?.showOnPublicProfile;
+    domains.push(domain);
     names.add(record.name);
     nextNumber += 1;
   }
@@ -215,6 +219,36 @@ const getPublicDomainSummaries = async (userIds: string[]): Promise<PublicDomain
     }
   }
   return summaries;
+};
+
+const readLocalPublicPortfolioDomains = async (userId: string) => {
+  const saved = await AsyncStorage.getItem(accountStorageKey(PORTFOLIO_STORAGE_KEY, userId));
+  const domains = saved === null ? [] : restoreSnapshot(JSON.parse(saved) as PortfolioSnapshot, userId).domains;
+  return domains.filter(record => !record.isSample);
+};
+
+const getLocalPublicProfilePortfolio = async (userId: string): Promise<PublicProfilePortfolio | null> => {
+  if (!useLocalStorage) return null;
+  const profile = (await authAPI.getPublicProfiles()).find(record => record.id === userId && record.profilePrivacy === `public`);
+  if (!profile) return null;
+  const domains = await readLocalPublicPortfolioDomains(profile.id);
+  return {
+    totalDomains: domains.length,
+    domains: domains.filter(record => record.meta?.showOnPublicProfile === true).map(({ name }) => ({ id: name, name })),
+  };
+};
+
+const getLocalPublicProfileCardMetadata = async (userIds: string[]): Promise<PublicProfileCardMetadata[]> => {
+  if (!useLocalStorage || !userIds.length) return [];
+  const profiles = await getLocalPublicProfileRoles(userIds);
+  const counts = new Map<string, number | null>();
+  for (const { id } of profiles) {
+    const totalDomains = await readLocalPublicPortfolioDomains(id).then(domains => domains.length, () => null);
+    counts.set(id, totalDomains);
+  }
+  if (!counts.size) return [];
+  const currentProfiles = await getLocalPublicProfileRoles([...counts.keys()]);
+  return currentProfiles.map(({ id, role }) => ({ id, role, totalDomains: counts.get(id) ?? null }));
 };
 
 const assertUnique = (name: string, domains: DomainRecord[], id?: string) => {
@@ -352,7 +386,14 @@ export const API_ROUTES = [
   `/api/registrars/sync`,
   `/api/website-insights`,
   `/api/domain-analytics`,
+  `/api/domain-appraisal`,
   `/api/auction-inventory`,
+  `/api/marketplace`,
+  `/api/marketplace/seller`,
+  `/api/marketplace/checkout`,
+  `/api/marketplace/webhook`,
+  `/api/marketplace/afternic`,
+  `/api/marketplace/external`,
   `/api/registrars/search`,
   `/api/registrars/extensions`,
   `/api/connections/environment`,
@@ -404,6 +445,8 @@ export const api = {
   },
   getPublicDomainSummaries: (userIds: string[]) => serialize(() => getPublicDomainSummaries(userIds)),
   getSharedDomainSummaries: (userId: string) => serialize(() => getPublicDomainSummaries([userId])),
+  getLocalPublicProfilePortfolio: (userId: string) => serialize(() => getLocalPublicProfilePortfolio(userId)),
+  getLocalPublicProfileCardMetadata: (userIds: string[]) => serialize(() => getLocalPublicProfileCardMetadata(userIds)),
   saveWebsiteInsights: (id: string, name: string, insights: WebsiteInsights, expectedUserId: string): Promise<void> => serializePortfolioMutation(async () => {
     await requireStarterAccess(expectedUserId);
     if (!userScope || expectedUserId !== userScope) throw new Error(`Sign In To Save Website Info`);
@@ -432,6 +475,7 @@ export const api = {
   createDomain: (input: DomainInput) => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
     const validated = validateDomainInput(input);
+    if (!userScope) delete validated.meta?.showOnPublicProfile;
     assertUnique(validated.name, current.domains);
     const number = current.nextNumber;
     const domain = new Domain({ ...validated, number, uid: getScopeUid(), meta: { ...validated.meta, domainSource: `manual` } });
@@ -464,9 +508,11 @@ export const api = {
       meta: {
         ...original.meta,
         ...(input?.meta?.siteIconUrl !== undefined ? { siteIconUrl: input.meta.siteIconUrl } : {}),
+        ...(typeof input?.meta?.showOnPublicProfile === `boolean` ? { showOnPublicProfile: input.meta.showOnPublicProfile } : {}),
       },
     } : input;
     const validated = validateDomainInput({ ...original, ...changes, meta: { ...original.meta, ...changes.meta } });
+    if (!userScope || validated.name !== original.name) delete validated.meta?.showOnPublicProfile;
     assertUnique(validated.name, current.domains, id);
     const previous = original.meta?.registrarSync;
     const incoming = validated.meta?.registrarSync;
@@ -527,6 +573,7 @@ export const api = {
     inputs.forEach((input, index) => {
       try {
         const validated = validateDomainInput(input);
+        delete validated.meta?.showOnPublicProfile;
         if (importedNames.has(validated.name)) throw new Error(`${validated.name} Appears More Than Once In The Import`);
         importedNames.add(validated.name);
         const existingIndex = domains.findIndex(domain => domain.name.toLowerCase() === validated.name);

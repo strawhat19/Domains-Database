@@ -27,7 +27,6 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   skeleton: { height: 14, borderRadius: 3, backgroundColor: palette.skeleton },
   title: { fontSize: 30, color: palette.ink, letterSpacing: -.8, fontFamily: `DMSans_700Bold` },
   titleRow: { gap: 10, flexWrap: `wrap`, flexDirection: `row`, alignItems: `center` },
-  titleBeta: { fontSize: 9, flexShrink: 0, minHeight: 19, lineHeight: 13, borderWidth: 1, letterSpacing: .3, borderRadius: 999, paddingVertical: 2, paddingHorizontal: 6, color: palette.accent, borderColor: palette.accent, backgroundColor: palette.subtle, fontFamily: `DMSans_700Bold` },
   label: { fontSize: 11, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
   sectionTitle: { fontSize: 13, color: palette.ink, fontFamily: `DMSans_600SemiBold` },
   noticeTitle: { fontSize: 12, color: palette.warning, fontFamily: `DMSans_600SemiBold` },

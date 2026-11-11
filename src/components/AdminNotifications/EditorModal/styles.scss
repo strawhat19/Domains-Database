@@ -16,7 +16,7 @@
   .admin-notification-editor-input { border-color: color-mix(in srgb, var(--accent) 24%, var(--line)); background: var(--input); color: var(--ink); caret-color: var(--accent); box-shadow: inset 0 1px 3px var(--shadow); transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease; }
   .admin-notification-editor-input::placeholder { color: var(--muted); opacity: .8; }
   .admin-notification-editor-input:hover:not(:disabled):not(:focus) { border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
-  .admin-notification-editor-input:focus { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--input)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .admin-notification-editor-input:focus { border-color: var(--accent); background-color: color-mix(in srgb, var(--accent) 5%, var(--input)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
   .admin-notification-editor-input:disabled { cursor: not-allowed; opacity: .5; }
   .admin-notification-editor-input option { background: var(--input); color: var(--ink); }
   .admin-notification-editor-actions { border-top: 1px solid color-mix(in srgb, var(--accent) 14%, transparent); padding-top: 20px; }

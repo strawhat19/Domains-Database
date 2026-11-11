@@ -1,12 +1,14 @@
 import './styles.scss';
+import { Link } from 'expo-router';
+import RouterAnchor from '../RouterAnchor';
 import { useLocalStorage } from '../../shared/config';
 import { useProfileSettings } from './useProfileSettings';
-import { Save, Lock, Globe2, RotateCcw } from 'lucide-react';
 import { firebaseEnabled } from '../../shared/firebase/config';
+import { Save, Lock, Globe2, RotateCcw, ArrowUpRight } from 'lucide-react';
 
 const ProfileSettings = () => {
   const state = useProfileSettings();
-  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `Save your public profile to appear in Community. Sharing publishes domain names and project summaries from your portfolio; account details, notes, prices, and registrar credentials stay private. Save again to refresh shared domains.` : `Connect a backend to save your profile preferences.`;
+  const sharingNote = useLocalStorage ? `Community sharing is available to local accounts on this device. Choose which names appear on your public profile in each domain’s editor.` : firebaseEnabled ? `This setting shares domain names and project summaries in Community. Choose which names appear on your public profile in each domain’s editor.` : `Connect a backend to save your profile preferences.`;
   return (
     <form id={`profile-settings`} className={`profile-settings`} onSubmit={event => { event.preventDefault(); void state.save(); }}>
       <dl id={`profile-settings-record`} className={`profile-record profile-settings-record`}>
@@ -37,8 +39,13 @@ const ProfileSettings = () => {
         <div id={`profile-privacy-field`} className={`profile-record-row`}>
           <dt id={`profile-privacy-label`} className={`profile-record-label`}>{`Visibility`}</dt>
           <dd id={`profile-privacy-value`} className={`profile-record-value`}>
-            <div role={`radiogroup`} aria-labelledby={`profile-privacy-label`} id={`profile-privacy-options`} className={`profile-privacy-options`}>
-              {[{ value: `private`, label: `Private`, Icon: Lock }, { value: `public`, label: `Public`, Icon: Globe2 }].map(({ value, label, Icon }) => <button key={value} type={`button`} role={`radio`} aria-checked={state.privacy === value} disabled={state.busy} id={`profile-privacy-option-${value}`} className={`profile-privacy-option${state.privacy === value ? ` is-selected` : ``}`} onClick={() => state.changePrivacy(value as `private` | `public`)}><Icon size={16} aria-hidden id={`profile-privacy-icon-${value}`} className={`profile-privacy-icon`} />{label}</button>)}
+            <div id={`profile-visibility-actions`} className={`profile-visibility-actions`}>
+              <div role={`radiogroup`} aria-labelledby={`profile-privacy-label`} id={`profile-privacy-options`} className={`profile-privacy-options`}>
+                {[{ value: `private`, label: `Private`, Icon: Lock }, { value: `public`, label: `Public`, Icon: Globe2 }].map(({ value, label, Icon }) => <button key={value} type={`button`} role={`radio`} aria-checked={state.privacy === value} disabled={state.busy} id={`profile-privacy-option-${value}`} className={`profile-privacy-option${state.privacy === value ? ` is-selected` : ``}`} onClick={() => state.changePrivacy(value as `private` | `public`)}><Icon size={16} aria-hidden id={`profile-privacy-icon-${value}`} className={`profile-privacy-icon`} />{label}</button>)}
+              </div>
+              {state.publicProfileHref ? <Link href={state.publicProfileHref} asChild>
+                <RouterAnchor id={`profile-public-link`} className={`profile-public-link`}><ArrowUpRight size={15} aria-hidden id={`profile-public-link-icon`} className={`profile-public-link-icon`} />{`View Public Profile`}</RouterAnchor>
+              </Link> : null}
             </div>
           </dd>
         </div>

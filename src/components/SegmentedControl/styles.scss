@@ -31,7 +31,7 @@
   &:hover:not(:disabled) { color: var(--ink); background: var(--subtle); }
   &:disabled { cursor: default; }
   &:disabled:not([aria-pressed=true]) { opacity: .5; }
-  &[aria-pressed=true], &[aria-pressed=true]:hover:not(:disabled) {
+  &:is([aria-pressed=true], [aria-selected=true], [aria-current=page]), &:is([aria-pressed=true], [aria-selected=true], [aria-current=page]):hover:not(:disabled) {
     opacity: 1;
     color: var(--contrast);
     background: var(--accent);

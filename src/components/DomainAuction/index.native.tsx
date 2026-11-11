@@ -74,7 +74,6 @@ const DomainAuction = () => {
         </View>
         <View {...elementProps(`auction-title-row`)} style={styles.titleRow}>
           <Text {...elementProps(`auction-title`)} style={styles.title} accessibilityRole={`header`}>{`Domain Auction`}</Text>
-          {routes.auction.beta && <Text {...elementProps(`auction-title-beta`)} style={styles.titleBeta}>{`Beta`}</Text>}
         </View>
         <Text {...elementProps(`auction-description`)} style={styles.description}>{`Explore auction sources, narrow your search, and research domains before buying.`}</Text>
         <View {...elementProps(`auction-heading-actions`)} style={styles.actions}>

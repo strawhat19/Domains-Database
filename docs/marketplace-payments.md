@@ -1,0 +1,19 @@
+# Marketplace Payments
+
+Markets uses Stripe Connect for USD purchases at the listed price or an accepted offer. An eligible seller opens Stripe-hosted onboarding to connect an Express Dashboard account. Checkout uses Stripe’s current transfer capability, the listing’s verification TXT record, and the price saved by the server. Sellers keep the TXT record in DNS while the listing is active. A signed Stripe webhook and Stripe API readback confirm payment. A return URL alone leaves an order pending.
+
+For live payments, the listing becomes sold after confirmed payment and the order shows **Awaiting Domain Transfer**. The seller and buyer arrange the registrar transfer through their private marketplace conversation. Keep registrar account credentials and transfer codes out of listing descriptions and public profiles. The order records separately whether Stripe confirms the transfer to the seller’s Stripe balance. If Stripe skips the transfer after the seller account loses its capability, the order flags the funds for review. The platform handles refunds, disputes, transfer reversals, and skipped transfers in Stripe. [Stripe destination charges](https://docs.stripe.com/connect/destination-charges?platform=web&ui=stripe-hosted#skipped-transfers-due-to-account-status)
+
+The platform retains 3% of the purchase price, rounded to USD cents. Stripe deducts processing and applicable Connect fees from the platform. The 3% is gross commission and platform fees can exceed it. [Stripe Connect pricing](https://stripe.com/connect/pricing)
+
+## Setup
+
+1. Complete the Stripe platform’s Connect setup in the intended Stripe account. Enable its marketplace configuration and review the platform’s pricing, refund, dispute, and negative balance responsibilities. The code uses Accounts v2 recipient configuration and the Express Dashboard. [Stripe Connect setup](https://docs.stripe.com/connect/interactive-platform-guide)
+2. Set the existing `FIREBASE_SERVICE_ACCOUNT_JSON` and `EXPO_PUBLIC_SITE_URL` for the correct backend. Set `STRIPE_MARKETPLACE_SECRET_KEY` with access to Connect accounts, Account Links, Express login links, Checkout Sessions, and read access to PaymentIntents and Charges. Set `STRIPE_MARKETPLACE_COUNTRY` to the two-letter country used for seller onboarding in the supported market.
+3. Create a Stripe webhook event destination for **Your account** in the same Stripe mode, using `https://domaindatabases.com/api/marketplace/webhook` for production. Select `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired`, and `charge.updated`. Set the endpoint’s signing secret as `STRIPE_MARKETPLACE_WEBHOOK_SECRET` in the server environment. [Stripe webhook setup](https://docs.stripe.com/webhooks)
+4. Deploy the app server and the reviewed Firestore rules and indexes. The server-only `marketplaceOrders`, `marketplaceCheckoutLocks`, and `marketplaceSellerPayments` paths keep Stripe account and session identifiers private. The order lists need `marketplaceOrders` composites on `buyerId ASC, number DESC` and `sellerId ASC, number DESC`.
+5. Use a dedicated Stripe sandbox and a test listing for payment verification. Sandbox payments confirm sandbox orders. Live payments are required to mark a listing sold or an accepted offer paid. Finish or cancel outstanding checkouts before switching Stripe accounts or modes. Subscription billing uses its existing, separate Stripe configuration.
+
+## Verification Scope
+
+Source implementation covers seller onboarding and dashboard links, authorized fixed-price and accepted-offer checkout, private order readback, and signed payment reconciliation. Connect activation, credentials and permissions, hosted webhook delivery, Firestore deployment, payment settlement, and registrar transfer require verification in the intended environment.

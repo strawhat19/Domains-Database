@@ -94,13 +94,13 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               style={[styles.submit, state.disabled && styles.disabled]}
               disabled={state.disabled}
               accessibilityRole={`link`}
-              accessibilityLabel={state.enrollmentPlan ? state.enrollmentPlan === `free` ? `Open Portfolio` : `Review Selected Plan` : `View Your Profile`}
+              accessibilityLabel={state.continueLabel ?? `View Your Profile`}
               {...elementProps(`auth-form-profile`, mode)}
-              onPress={() => state.enrollmentPlan ? state.continueEnrollment() : state.navigate(`/profile`)}
+              onPress={() => state.continueLabel ? state.continueAuthentication() : state.navigate(`/profile`)}
             >
               <UserRound {...elementProps(`auth-form-profile-icon`, mode)} size={18} color={palette.contrast} />
               <Text {...elementProps(`auth-form-profile-text`, mode)} style={styles.submitText}>
-                {state.enrollmentPlan ? state.enrollmentPlan === `free` ? `Open Portfolio` : `Review Selected Plan` : `View Profile`}
+                {state.continueLabel ?? `View Profile`}
               </Text>
             </Pressable>
           </View>

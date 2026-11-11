@@ -10,7 +10,7 @@ import { useAuth } from '../../shared/authContext/useAuth';
 import { routes as siteRoutes } from '../../shared/routes';
 import TrafficBreakdown from './traffic-breakdown/traffic-breakdown';
 import { getAnalyticsDateRange, useTrafficAnalytics } from '../../shared/analytics/useTrafficAnalytics';
-import { Globe, Users, Gavel, Search, MapPin, Monitor, Link2, FileText, ArrowUp, ArrowDown, Minus, RefreshCw, Download, X, Filter, UserPlus, Globe2, ArrowUpRight, AlertCircle, BarChart3 } from 'lucide-react';
+import { Globe, Users, Store, Search, MapPin, Monitor, Link2, FileText, ArrowUp, ArrowDown, Minus, RefreshCw, Download, X, Filter, UserPlus, Globe2, ArrowUpRight, AlertCircle, BarChart3 } from 'lucide-react';
 import { getTrafficChange, getTrafficOptions, getTrafficDateError, countTrafficOutcomes, formatTrafficCount, formatTrafficSegment, type TrafficMetric, type TrafficOutcomes, type TrafficSegment } from './data';
 
 const segmentDefinitions = [
@@ -23,7 +23,7 @@ const journeys = [
   { path: `/signup`, label: `Signup Page`, icon: UserPlus },
   { path: `/domains`, label: `Domain Portfolio`, icon: Globe2 },
   { path: `/search`, label: `Domain Search`, icon: Search },
-  { path: `/auction`, label: `Auction Discovery`, icon: Gavel },
+  { path: siteRoutes.auction.href, label: siteRoutes.auction.label, icon: Store },
 ];
 type TrafficAnalyticsProps = { outcomes?: TrafficOutcomes; outcomesLoading?: boolean; headingActionsTarget?: HTMLElement | null };
 

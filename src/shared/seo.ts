@@ -8,7 +8,7 @@ const getSiteUrl = () => {
   } catch { return defaultSiteUrl; }
 };
 export const SITE_URL = getSiteUrl();
-export const publicSeoRoutes = [routes.home, routes.about, routes.blog, routes.contact, routes.terms, routes.privacy, routes.pricing];
+export const publicSeoRoutes = [routes.home, routes.about, routes.blog, routes.market, routes.domainers, routes.contact, routes.terms, routes.privacy, routes.pricing];
 export const getCanonicalSeoPath = (pathname: string) => {
   const path = pathname.split(/[?#]/)?.[0]?.replace(/\/+$/, ``) || `/`;
   return publicSeoRoutes.find(route => route.href === path || (`redirects` in route && route.redirects.some(alias => `/${alias}` === path)))?.href ?? path;

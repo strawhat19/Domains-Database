@@ -14,6 +14,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getConvertedGroupName } from '../../shared/portfolioPreferences/names';
 import type { DomainRecord } from '../../shared/types';
+import { PortfolioMarketplace, PortfolioSellLink } from '../PortfolioMarketplace/index.native';
 import type { PortfolioGroup, PortfolioSections, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 import { NativePortfolioDrag, NativeDragSource, NativeDropZone, NativeDragScroll } from '../NativePortfolioDrag/index.native';
 import { Animated, ActivityIndicator, Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
@@ -71,6 +72,7 @@ const BoardDomain = ({ domain, groupId, collectionId, logic, styles, selected, d
             {domain.name}
           </Text>
         </NativeDragSource>
+        <PortfolioSellLink id={`native-board-domain-sell-${domain.id}`} domain={domain} style={styles.iconButton} disabled={disabled} />
         <Pressable
           style={styles.iconButton}
           accessibilityRole={`button`}
@@ -82,6 +84,7 @@ const BoardDomain = ({ domain, groupId, collectionId, logic, styles, selected, d
           <MoreHorizontal size={17} color={palette.muted} />
         </Pressable>
       </View>
+      <PortfolioMarketplace id={`native-board-domain-marketplace-${domain.id}`} domain={domain} style={styles.domainMarketplace} disabled={disabled} />
     </NativeDropZone>
   );
 };

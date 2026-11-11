@@ -90,8 +90,8 @@
 }
 .table-settings :is(.table-settings-select, .group-controls-create > .portfolio-button, .table-settings-collection-add) { border-radius: 0 7px 7px 0; }
 .table-settings-select-wrap { min-width: 0; position: relative; height: calc(var(--table-settings-control-height) - 2px); }
-.table-settings .table-settings-select-wrap > .table-settings-select { appearance: none; padding-right: 34px; }
-.table-settings-select-chevron { top: 50%; right: 12px; position: absolute; color: var(--accent); pointer-events: none; transform: translateY(-50%); }
+.table-settings .table-settings-select-wrap > .table-settings-select { appearance: none; -webkit-appearance: none; padding-right: var(--select-chevron-padding); }
+.table-settings-select-chevron { top: 50%; right: var(--select-chevron-inset); position: absolute; color: var(--accent); pointer-events: none; transform: translateY(-50%); }
 .table-settings-collection-name-input { width: 100%; min-width: 0; font-size: 12px; color: var(--ink); font-family: var(--font-body); }
 .table-settings .group-controls-create .group-controls-error, .table-settings-collection-error { margin: 0; padding: 0 12px 6px 0; font-size: 12px; color: var(--danger); grid-column: 1 / -1; }
 .table-settings-label { gap: 6px; padding: 0; display: flex; font-size: 12px; line-height: 1.25; color: var(--ink); align-items: center; font-family: var(--font-bold); }

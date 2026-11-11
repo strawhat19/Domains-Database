@@ -7,6 +7,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { normalizeDomainTags } from '../../shared/domainTags';
 import { portfolioHaptic } from '../../shared/common/haptics.native';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
+import { domainEditorMetadata, setPublicDomain, updateDomainEditorName } from '../DomainEditor/publicProfileVisibility';
 import { DEFAULT_DOMAIN_PROJECT_STATUS, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getDomainSource, getDomainStatus, getRegistrarCounts, getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
@@ -191,11 +192,15 @@ export const useNativePortfolio = (compact = false) => {
   const updateInput = <K extends keyof DomainInput>(field: K, value: DomainInput[K]) => {
     if (editingSyncedDomain && ![`mvp`, `meta`, `tags`, `future`, `difficulty`, `startingBid`, `description`, `projectStatus`, `estimatedRevenue`, `developmentLinks`].includes(field)) return;
     setInput(current => {
+      if (field === `name` && typeof value === `string`) return updateDomainEditorName(current, value);
       if (editingSyncedDomain && field === `meta`) {
         return { ...current, meta: { ...current.meta, siteIconUrl: getCustomSiteIconUrl({ meta: value as DomainInput[`meta`] }) } };
       }
       return markDomainFieldsKnown({ ...current, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []);
     });
+  };
+  const setShowOnPublicProfile = (value: boolean) => {
+    if (!mutationPending.current) setInput(current => setPublicDomain(current, value));
   };
 
   const saveDomain = async (title?: string) => {
@@ -208,6 +213,8 @@ export const useNativePortfolio = (compact = false) => {
       if (editingId) groupEditor.validateGroup();
       const syncedDomain = editingSyncedDomain && editingDomain
         ? context.domains.find(domain => domain.id === editingDomain.id) ?? editingDomain : null;
+      const draft = title === undefined ? input : updateDomainEditorName(input, title);
+      const meta = domainEditorMetadata(draft.meta, editingDomain?.meta);
       const record: DomainInput = syncedDomain ? {
         ...syncedDomain,
         mvp: input.mvp,
@@ -219,8 +226,12 @@ export const useNativePortfolio = (compact = false) => {
         developmentLinks: input.developmentLinks,
         projectStatus: normalizeDomainProjectStatus(input.projectStatus),
         description: input.description ?? ``,
-        meta: { ...syncedDomain.meta, siteIconUrl: getCustomSiteIconUrl(input) },
-      } : { ...input, name: title ?? input.name, renewalPrice: Number(renewalPrice || 0) };
+        meta: {
+          ...domainEditorMetadata(syncedDomain.meta, syncedDomain.meta),
+          siteIconUrl: getCustomSiteIconUrl(input),
+          ...(typeof meta?.showOnPublicProfile === `boolean` ? { showOnPublicProfile: meta.showOnPublicProfile } : {}),
+        },
+      } : { ...draft, meta, renewalPrice: Number(renewalPrice || 0) };
       if (editingId) {
         await context.updateDomain(editingId, record);
         await groupEditor.saveGroup(editingId);
@@ -365,6 +376,7 @@ export const useNativePortfolio = (compact = false) => {
     closeEditor,
     clearFilters,
     updateInput,
+    setShowOnPublicProfile,
     saveDomain,
     requestDelete,
     importCsv,

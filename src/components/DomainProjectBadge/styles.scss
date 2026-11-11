@@ -47,7 +47,7 @@
 .domain-project-badge-pill.rowStatus {
   gap: 4px;
   font-size: 11px;
-  padding: 2px 7px;
+  padding: 2px 10px 2px 7px;
   line-height: 14px;
   position: relative;
   border-radius: 999px;
@@ -66,7 +66,7 @@
 .domain-project-badge-pill[data-status='Future'] { border-color: color-mix(in srgb, var(--success) 25%, var(--project-status-background)); }
 :is(.domain-row, .portfolio-group-heading, .portfolio-collection-titlebar) .domain-project-badge-pill.rowStatus {
   gap: 3px;
-  padding: 1px 6px;
+  padding: 1px 10px 1px 6px;
   line-height: 12px;
 }
 .domain-project-badge-chevron { display: block; flex-shrink: 0; }

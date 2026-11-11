@@ -15,6 +15,7 @@ import { Animated, Image, Linking, Pressable, Text, View } from 'react-native';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { formatDate, getDaysUntil, getDomainStatus } from '../../shared/domainUtils';
+import { PortfolioMarketplace, PortfolioSellLink } from '../PortfolioMarketplace/index.native';
 import { PORTFOLIO_COLUMNS, getWebsiteInsightsHint, getPortfolioColumnValue, getPortfolioColumnDisplay } from '../../shared/portfolioColumns';
 
 interface DomainCardProps {
@@ -208,6 +209,7 @@ const DomainCard = ({
             domainName={domain.name}
             id={`native-domain-star-${domain.id}`}
           />
+          <PortfolioSellLink id={`native-domain-sell-${domain.id}`} domain={domain} style={styles.actionButton} />
           <Pressable {...elementProps(`native-domain-edit`, domain.id)} style={styles.actionButton} onPress={() => onEdit?.(domain)} accessibilityRole={`button`} accessibilityLabel={`${domain.name} Settings`}>
             <Settings {...elementProps(`native-domain-edit-icon`, domain.id)} size={14} color={palette.muted} />
           </Pressable>
@@ -233,6 +235,7 @@ const DomainCard = ({
           </View>
         )}
       </View>
+      <PortfolioMarketplace id={`native-domain-marketplace-${domain.id}`} domain={domain} />
       <View {...elementProps(`native-domain-card-bottom`, domain.id)} style={styles.bottom}>
         <View {...elementProps(`native-domain-expiry`, domain.id)} style={styles.expiry}>
           <Text {...elementProps(`native-domain-expiry-date`, domain.id)} style={styles.expiryDate}>

@@ -1,6 +1,6 @@
 import { connectionFields, type ConnectionProvider } from './types';
 
-export type ConnectionTabProvider = ConnectionProvider | `cloudflare` | `dynadot` | `namecom`;
+export type ConnectionTabProvider = ConnectionProvider | `afternic` | `cloudflare` | `dynadot` | `namecom`;
 export interface ConnectionTab {
   pro: boolean;
   label: string;
@@ -18,3 +18,5 @@ export const connectionTabs: readonly ConnectionTab[] = [
   { pro: true, available: false, id: `cloudflare`, label: `Cloudflare` },
   { pro: true, available: false, id: `namecom`, label: `Name.com` },
 ];
+export const profileConnectionTabs: readonly ConnectionTab[] = connectionTabs.map(tab => tab.id === `porkbun`
+  ? { pro: false, available: true, id: `afternic`, label: `Afternic` } : tab);

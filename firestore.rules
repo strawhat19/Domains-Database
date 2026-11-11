@@ -100,6 +100,10 @@ service cloud.firestore {
     }
     function actorId() { return get(identityPath()).data.id; }
     function feedbackActor() { return signedIn() && exists(identityPath()) && ownsAccount(actorId()); }
+    function marketplaceParticipant(thread) {
+      return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous' && exists(identityPath())
+        && ownsAccount(actorId()) && get(userPath(actorId())).data.role != 'Guest' && actorId() in thread.participantIds;
+    }
     function supportThreadPath(threadId) { return /databases/$(database)/documents/supportThreads/$(threadId); }
     function supportReader(data) { return feedbackActor() && (isOwner() || data.customerId == actorId()); }
     function canReadSupportThread(threadId) {
@@ -831,6 +835,16 @@ service cloud.firestore {
         && request.resource.data.created == resource.data.created
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'allDay', 'endsAt', 'updated', 'startsAt', 'location', 'description']);
       allow delete: if isAccountAdmin();
+    }
+    match /marketplaceThreads/{threadId} {
+      allow get: if marketplaceParticipant(resource.data);
+      allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 30 && marketplaceParticipant(resource.data);
+      allow create, update, delete: if false;
+      match /messages/{messageId} {
+        allow list: if request.query.limit != null && request.query.limit > 0 && request.query.limit <= 50
+          && marketplaceParticipant(get(/databases/$(database)/documents/marketplaceThreads/$(threadId)).data);
+        allow get, create, update, delete: if false;
+      }
     }
     match /supportThreads/{threadId} {
       allow get: if supportReader(resource.data);

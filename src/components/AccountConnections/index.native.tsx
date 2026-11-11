@@ -3,6 +3,8 @@ import { Link } from 'expo-router';
 import ToastStack from '../ToastStack';
 import { useMemo, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
+import ConnectionInput from './ConnectionInput';
+import AfternicConnection from './AfternicConnection';
 import { routes } from '../../shared/routes';
 import { createStyles } from './styles.native';
 import { useLocalStorage } from '../../shared/config';
@@ -11,10 +13,9 @@ import ConnectionsInputGuide from '../ConnectionsInputGuide';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useAccountConnections } from './useAccountConnections';
 import EnvironmentFileDropZone from '../EnvironmentFileDropZone';
-import type { ThemePalette } from '../../shared/themeContext/theme';
 import ConnectionEnvironmentImport from '../ConnectionEnvironmentImport';
 import type { AccountConnectionsProps } from '../../shared/connections/types';
-import { Pressable, Text, TextInput, View, Platform, ActivityIndicator } from 'react-native';
+import { Pressable, Text, View, Platform, ActivityIndicator } from 'react-native';
 import {
   connectionEnvGuidance,
   connectionInputFields,
@@ -23,66 +24,12 @@ import {
   connectionEnvInstructions,
   connectionInputInstructions,
 } from '../../shared/connections/inputs';
-import { Eye, Plus, Save, EyeOff, Globe2, FileKey2, UserPlus, LogIn, RotateCcw, ShieldCheck, LockKeyhole } from 'lucide-react-native';
-
-interface ConnectionInputProps {
-  busy: boolean;
-  value: string;
-  label: string;
-  fieldId: string;
-  description: string;
-  descriptionIds: string;
-  loading: boolean;
-  revealed: boolean;
-  palette: ThemePalette;
-  placeholder: string;
-  onToggle: () => void;
-  onChange: (value: string) => void;
-  styles: ReturnType<typeof createStyles>;
-}
-
-const ConnectionInput = ({ busy, value, label, fieldId, styles, palette, loading, revealed, placeholder, description, descriptionIds, onChange, onToggle }: ConnectionInputProps) => {
-  const RevealIcon = revealed ? EyeOff : Eye;
-  const disabled = busy || loading || !value.trim();
-  return (
-    <View {...elementProps(`connection-input-wrap`, fieldId)} style={styles.inputWrap}>
-      {loading ? <View {...elementProps(`connection-skeleton`, fieldId)} style={styles.skeleton} /> : (
-        <TextInput
-          {...elementProps(`connection-input`, fieldId)}
-          {...(Platform.OS === `web` ? { 'aria-describedby': descriptionIds } : {})}
-          style={styles.input}
-          autoCorrect={false}
-          autoComplete={`off`}
-          autoCapitalize={`none`}
-          multiline={false}
-          editable={!busy && revealed}
-          value={value}
-          secureTextEntry={!revealed}
-          placeholder={placeholder}
-          accessibilityLabel={label}
-          accessibilityHint={description}
-          placeholderTextColor={palette.placeholder}
-          onChangeText={onChange}
-        />
-      )}
-      <Pressable
-        {...elementProps(`connection-reveal`, fieldId)}
-        {...(Platform.OS === `web` ? { 'aria-pressed': revealed } : {})}
-        disabled={disabled}
-        onPress={onToggle}
-        accessibilityRole={`button`}
-        style={[styles.revealButton, disabled && styles.disabled]}
-        accessibilityState={{ disabled }}
-        accessibilityLabel={`${revealed ? `Hide` : `Show`} ${label}`}
-      >
-        <RevealIcon {...elementProps(`connection-reveal-icon`, fieldId)} size={18} color={palette.muted} />
-      </Pressable>
-    </View>
-  );
-};
+import { Plus, Save, Store, Globe2, FileKey2, UserPlus, LogIn, RotateCcw, ShieldCheck, LockKeyhole } from 'lucide-react-native';
 
 const AccountConnections = ({ scope = `profile-connections`, embedded = false, providers, onBusyChange }: AccountConnectionsProps) => {
-  const state = useAccountConnections({ providers });
+  const showAfternic = !embedded && !providers;
+  const state = useAccountConnections({ providers, showAfternic });
+  const afternicSelected = state.activeProvider === `afternic`;
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const disabled = state.busy || state.loading || state.syncing;
@@ -135,10 +82,11 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
             {...elementProps(`connection-tabs`, scope)}
             style={styles.tabs}
             accessibilityRole={`tablist`}
-            accessibilityLabel={`Registrar Connectors`}
+            accessibilityLabel={showAfternic ? `Connectors` : `Registrar Connectors`}
           >
             {state.tabs.map(field => {
               const selected = state.activeProvider === field.id;
+              const Icon = field.id === `afternic` ? Store : Globe2;
               const providerScope = `${scope}-${field.id}`;
               return (
                 <Pressable
@@ -147,7 +95,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                   {...elementProps(`connection-tab`, providerScope)}
                   {...(Platform.OS === `web` ? {
                     tabIndex: selected ? 0 as const : -1 as const,
-                    ...(field.available ? { 'aria-controls': `connection-provider-${providerScope}` } : {}),
+                    ...(field.available && (field.id !== `afternic` || selected) ? { 'aria-controls': `connection-provider-${providerScope}` } : {}),
                     title: !field.available ? `${field.label} — Coming Soon${field.pro ? ` On Starter Plan` : ``}` : field.pro ? `On Starter Plan` : undefined,
                     onKeyDown: (event: KeyboardEvent<HTMLElement>) => handleTabKeyDown(event, field.id),
                   } : {})}
@@ -158,7 +106,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                   accessibilityState={{ selected, disabled: field.locked }}
                   style={[styles.tab, selected && styles.activeTab, field.locked && styles.lockedTab]}
                 >
-                  <Globe2 {...elementProps(`connection-tab-icon`, providerScope)} size={15} color={selected ? palette.accent : palette.muted} />
+                  <Icon {...elementProps(`connection-tab-icon`, providerScope)} size={15} color={selected ? palette.accent : palette.muted} />
                   <Text {...elementProps(`connection-tab-text`, providerScope)} style={[styles.tabText, selected && styles.activeTabText]}>
                     {field.label}
                   </Text>
@@ -177,17 +125,18 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
               );
             })}
           </View>
-          <ConnectionsInputGuide scope={scope} />
+          {!afternicSelected && <ConnectionsInputGuide scope={scope} />}
         </View>
         <View {...elementProps(`connections-content`, scope)} style={styles.content}>
           {!state.activeProvider && <Text {...elementProps(`connections-pro-required`, scope)} style={styles.copy}>{`These Registrar(s) Are Available On Starter Plan`}</Text>}
-          {!embedded && (
+          {!embedded && !afternicSelected && (
             <View {...elementProps(`connections-environment-import`, scope)} style={styles.field}>
               <Text {...elementProps(`connections-import-env-copy`, scope)} style={styles.copy}>
                 {`${Platform.OS === `web` ? `Drop or choose a .env file to fill the fields automatically. For pasted contents, use Load Keys` : `Paste your .env contents and use Load Keys`}. Review the fields, then choose Save All Connections or Save & Sync for one connection. Existing connections and edits are kept; duplicates are skipped.`}
               </Text>
             </View>
           )}
+          {afternicSelected && <AfternicConnection scope={`${scope}-afternic`} />}
           {state.fields.map(field => {
             const selected = state.activeProvider === field.id;
             const accounts = state.accounts.filter(account => account.provider === field.id);
@@ -467,7 +416,7 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
               </View>
             );
           })}
-          {(!embedded || state.accounts.length > 1) && (
+          {!afternicSelected && (!embedded || state.accounts.length > 1) && (
             <View {...elementProps(`connections-actions`, scope)} style={[styles.row, styles.actionRow]}>
               <Pressable
                 accessibilityRole={`button`}
@@ -488,10 +437,10 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
               </Pressable>
             </View>
           )}
-          <View {...elementProps(`connections-private-note`, scope)} style={styles.note}>
+          {!afternicSelected && <View {...elementProps(`connections-private-note`, scope)} style={styles.note}>
             <ShieldCheck {...elementProps(`connections-private-icon`, scope)} size={16} color={palette.accent} />
             <Text {...elementProps(`connections-private-copy`, scope)} style={styles.noteText}>{`Values stay in your private account settings and are sent through the app's server to the selected registrar for read-only domain checks. They never appear in public profiles, Community, or exports. ${useLocalStorage ? `Local storage is readable by someone with access to this device.` : `Firestore access is restricted to your account and trusted Owners.`}`}</Text>
-          </View>
+          </View>}
         </View>
       </View>
       <ToastStack scope={scope} notices={state.keyNotices} onDismiss={state.dismissKeyNotice}>

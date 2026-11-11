@@ -17,6 +17,8 @@ import { ColumnProvider } from '../src/shared/columnContext/ColumnContext';
 import { DomainProvider } from '../src/shared/domainContext/DomainContext';
 import { StarterAccessProvider } from '../src/shared/plans/StarterAccessContext';
 import { FeatureFlagsProvider } from '../src/shared/featureFlags/FeatureFlagsContext';
+import { DomainAppraisalProvider } from '../src/shared/marketplaceAfternic/useDomainAppraisal';
+import { AfternicPortfolioSyncProvider } from '../src/shared/marketplaceAfternic/PortfolioSyncContext';
 import { ConnectionAvailabilityProvider } from '../src/shared/connections/ConnectionAvailabilityContext';
 import { AccountNavigationProvider } from '../src/shared/accountNavigationContext/AccountNavigationContext';
 import { PortfolioPreferencesProvider } from '../src/shared/portfolioPreferences/PortfolioPreferencesContext';
@@ -56,7 +58,7 @@ const RootLayout = () => {
 const AccountContent = () => {
   const pathname = usePathname();
   const { ready: themeReady } = useTheme();
-  const { user, loading, dataRevision } = useAuth();
+  const { user, loading, dataRevision, loginRevision } = useAuth();
   const accountScope = loading ? null : user?.id ?? `guest`;
   const [accountState, setAccountState] = useState({ scope: accountScope, revision: 0 });
   const enabled = useAfterPaint(!loading && themeReady);
@@ -77,9 +79,13 @@ const AccountContent = () => {
         <ColumnProvider enabled={enabled} userId={user?.id ?? null}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>
             <WatchingProvider enabled={enabled}>
-              <AccountNavigationProvider key={user?.id ?? `guest`}>
-                <RootContent />
-              </AccountNavigationProvider>
+              <AfternicPortfolioSyncProvider key={loginRevision} requested={enabled && pathname === routes.domains.href}>
+                <DomainAppraisalProvider>
+                  <AccountNavigationProvider key={user?.id ?? `guest`}>
+                    <RootContent />
+                  </AccountNavigationProvider>
+                </DomainAppraisalProvider>
+              </AfternicPortfolioSyncProvider>
             </WatchingProvider>
           </PortfolioPreferencesProvider>
         </ColumnProvider>

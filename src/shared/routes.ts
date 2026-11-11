@@ -4,7 +4,9 @@ export const routes = {
   home: { href: `/`, label: `Home`, icon: `House` },
   search: { href: `/search`, label: `Search`, icon: `Search`, requiresConnection: true },
   domains: { href: `/domains`, label: `Domains`, icon: `Globe2` },
-  auction: { beta: true, href: `/auction`, label: `Auction`, icon: `Gavel`, minPlan: `starter` },
+  market: { href: `/market`, label: `Market`, icon: `Store` },
+  auction: { href: `/auction`, label: `Auctions`, icon: `Gavel` },
+  domainers: { href: `/domainers`, label: `Domainers`, icon: `UsersRound` },
   watching: { href: `/watching`, label: `Watching`, icon: `Eye`, minRole: Roles.Subscriber },
   notifications: { href: `/notifications`, label: `Notifications`, icon: `Bell`, redirects: [`alerts`, `updates`, `notification`, `announcement`, `announcements`] },
   community: { beta: true, href: `/community`, label: `Community`, icon: `UsersRound`, minPlan: `starter`, redirects: [`discover`] },
@@ -44,6 +46,11 @@ export const getNotificationHref = (id: string) => ({
   pathname: `/notifications/[id]` as const,
 });
 
+export const getPublicProfileHref = (id: string) => ({
+  params: { id },
+  pathname: `/domainers/[id]` as const,
+});
+
 type AuthReturnRoute = (typeof routes)[Exclude<keyof typeof routes, `signin` | `signup`>];
 export type AuthReturnPath = AuthReturnRoute[`href`];
 const authReturnRoutes = Object.values(routes).filter((route): route is AuthReturnRoute => route.href !== routes.signin.href && route.href !== routes.signup.href);
@@ -52,5 +59,5 @@ export const resolveAuthReturnTo = (value: unknown): AuthReturnPath => authRetur
 const adminPaths: readonly string[] = Object.values(routes).filter(route => `adminSection` in route).map(route => route.href);
 export const isAdminPath = (pathname: string) => adminPaths.includes(pathname) || pathname === `/admin` || pathname.startsWith(`/admin/`);
 
-export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.search, routes.watching, routes.auction, routes.community, routes.contact];
+export const navigation = [routes.home, routes.about, routes.blog, routes.domains, routes.search, routes.watching, routes.market, routes.auction, routes.domainers, routes.community, routes.contact];
 export const footerLinks = [routes.terms, routes.privacy];

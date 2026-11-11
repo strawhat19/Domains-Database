@@ -1,0 +1,32 @@
+.market-listing-suggestions { display: grid; gap: 10px; min-width: 0; }
+.market-listing-suggestions__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.market-listing-suggestions__controls { display: flex; flex: none; gap: 5px; }
+.market-listing-suggestions__heading { display: flex; align-items: center; gap: 7px; margin: 0; font-family: var(--font-bold); font-size: 15px; }
+.market-listing-suggestions__heading svg, .market-listing-suggestions__domain svg, .market-listing-suggestions__action svg { flex: none; color: var(--accent); }
+.market-listing-suggestions__list { display: grid; gap: 10px; grid-auto-flow: column; grid-auto-columns: clamp(186px, 27vw, 236px); margin: 0; padding: 3px 3px 10px; overflow-x: auto; list-style: none; scroll-snap-type: x proximity; }
+.market-listing-suggestions__card { display: grid; align-content: start; min-width: 0; gap: 8px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); scroll-snap-align: start; }
+.market-listing-suggestions__card:focus-within { border-color: var(--accent); }
+.market-listing-suggestions__domain { display: flex; align-items: center; gap: 7px; min-width: 0; color: var(--ink); font-family: var(--font-bold); font-size: 14px; overflow-wrap: anywhere; }
+.market-listing-suggestions__estimate { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.market-listing-suggestions__estimate strong { color: var(--ink); font-family: var(--font-bold); }
+.market-listing-suggestions__action { align-self: end; }
+.market-listing-suggestions__grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 164px), 1fr)); margin: 0; padding: 0; list-style: none; }
+.market-listing-suggestions__item { min-width: 0; position: relative; }
+.market-listing-suggestions__item .market-listing-suggestions__domain { padding-inline-end: 27px; }
+.market-listing-suggestions__dismiss {
+  top: 5px; inset-inline-end: 5px; width: 32px; height: 32px; display: grid; padding: 0; position: absolute; place-items: center;
+  color: var(--muted); border: 1px solid transparent; border-radius: 7px; background: transparent;
+  &:enabled:is(:hover, :focus-visible) { color: var(--ink); border-color: var(--line); background: var(--subtle); }
+}
+@media (pointer: coarse) {
+  .market-listing-suggestions__item .market-listing-suggestions__domain { padding-inline-end: 38px; }
+  .market-listing-suggestions__dismiss { width: 44px; height: 44px; }
+}
+.market-listing-suggestions__pick { width: 100%; height: 100%; color: var(--ink); text-align: left; transition: border-color .18s ease, background-color .18s ease; }
+.market-listing-suggestions__pick:not(:disabled):is(:hover, :focus-visible) { border-color: var(--accent); background-color: var(--subtle); }
+.market-listing-suggestions__pick-action { gap: 5px; display: flex; align-items: center; color: var(--accent); font-size: 11px; font-family: var(--font-bold); }
+.market-listing-suggestions__status { display: grid; gap: 8px; }
+.market-listing-suggestions__skeleton { min-height: 92px; align-content: center; }
+.market-listing-suggestions__skeleton span { width: 82%; height: 13px; border-radius: 4px; background: var(--skeleton); }
+.market-listing-suggestions__skeleton span + span { width: 56%; height: 10px; }
+@media (prefers-reduced-motion: reduce) { .market-listing-suggestions__pick { transition: none; } }

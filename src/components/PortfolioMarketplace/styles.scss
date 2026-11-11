@@ -1,0 +1,27 @@
+.portfolio-marketplace {
+  gap: 4px 9px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.portfolio-marketplace-price, .portfolio-marketplace-estimate { color: var(--ink); }
+.portfolio-marketplace-error { color: var(--danger); }
+.portfolio-marketplace-estimate-button {
+  gap: 4px;
+  border: 0;
+  padding: 0;
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  color: var(--accent);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  &:disabled { opacity: .6; cursor: default; }
+}
+.portfolio-sell-link { text-decoration: none; }
+.mobile-portfolio-marketplace { padding: 0 8px 6px 61px; }
+.domain-row-portfolio-marketplace { margin-top: 4px; }

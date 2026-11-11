@@ -28,7 +28,10 @@ import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePo
 import { NativeDragSource, NativeDropZone } from '../NativePortfolioDrag/index.native';
 import ModalTitle, { type NativeModalTitleHandle } from '../ModalTitle/index.native';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
+import { useAfternicPortfolioSync } from '../../shared/marketplaceAfternic/PortfolioSyncContext';
+import { getAfternicSyncLabel } from '../PortfolioMarketplace/usePortfolioMarketplace';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
+import { canSetPublicDomain, publicDomainHint, publicDomainLabel, publicDomainName, publicDomainRenameHint } from '../DomainEditor/publicProfileVisibility';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { CheckSquare, Square, ArrowRight, CheckCircle2, Globe2, Link2, Plus, Save, Star, Search, X, Gauge, Trash2, RefreshCw } from 'lucide-react-native';
 
@@ -58,7 +61,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     .flatMap(group => group.domainIds)), [customGroups]);
   const groupByDomainId = useMemo(() => new Map(customGroups.flatMap(group => group.domainIds.map(id => [id, group.id] as const))), [customGroups]);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const afternic = useAfternicPortfolioSync(!compact && !authLoading && Boolean(user?.active && !user.anonymous && user.role !== `Guest`));
+  const lastAfternicSync = getAfternicSyncLabel(afternic.syncedAt, afternic.skipped, Boolean(afternic.error));
   const [editorIconFailed, setEditorIconFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionToolsWidth, setSelectionToolsWidth] = useState(0);
@@ -78,6 +83,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
     } catch { return []; }
   });
   const editingSyncedDomain = state.editingSyncedDomain;
+  const renamingDomain = Boolean(state.editingDomain && publicDomainName(state.editingDomain.name) !== publicDomainName(state.input.name));
   const editingRecord = state.domains.find(domain => domain.id === state.editingId) ?? state.editingDomain;
   const deletionRestriction = editingRecord ? getDomainDeletionRestriction(editingRecord) : ``;
   const deleteDisabled = state.saving || Boolean(deletionRestriction);
@@ -173,6 +179,18 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </View>
           </View>}
           <View {...elementProps(`native-portfolio-primary-actions`)} style={styles.headingActions}>
+            {!!(afternic.connected || afternic.error) && <Pressable
+              {...elementProps(`native-portfolio-sync-afternic`)}
+              disabled={afternic.syncing}
+              accessibilityRole={`button`}
+              onPress={() => void afternic.sync()}
+              accessibilityHint={afternic.error || lastAfternicSync || undefined}
+              accessibilityState={{ disabled: afternic.syncing, busy: afternic.syncing }}
+              style={[styles.secondaryButton, styles.syncButton, afternic.syncing && styles.disabled]}
+            >
+              {afternic.syncing ? <ActivityIndicator {...elementProps(`native-portfolio-sync-afternic-progress`)} size={`small`} color={palette.accent} /> : <RefreshCw {...elementProps(`native-portfolio-sync-afternic-icon`)} size={15} color={palette.accent} />}
+              <Text {...elementProps(`native-portfolio-sync-afternic-label`)} style={styles.secondaryButtonText}>{afternic.syncing ? `Syncing Afternic…` : `Sync Afternic`}</Text>
+            </Pressable>}
             {user && state.canSyncManually && (
               <Pressable
                 {...elementProps(`native-portfolio-sync-domains`)}
@@ -204,6 +222,8 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           {state.manualSyncMessage}
         </Text>
       )}
+      {!!afternic.error && <Text {...elementProps(`native-portfolio-afternic-sync-error`)} style={[styles.manualSyncMessage, { color: palette.danger }]} accessibilityLiveRegion={`polite`}>{afternic.error}</Text>}
+      {!!lastAfternicSync && <Text {...elementProps(`native-portfolio-afternic-last-sync`)} style={styles.manualSyncMessage}>{lastAfternicSync}</Text>}
       <Pressable
         onPress={refreshWebsiteInfo}
         accessibilityRole={`button`}
@@ -779,6 +799,27 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   </View>
                   <Switch {...elementProps(`native-domain-editor-auto-renew-switch`)} disabled={state.saving} value={state.input.autoRenew} onValueChange={value => state.updateInput(`autoRenew`, value)} trackColor={{ false: palette.line, true: palette.accent }} thumbColor={isDark ? palette.ink : `#ffffff`} ios_backgroundColor={palette.line} accessibilityLabel={`Auto-Renew Enabled In Registrar Account`} />
                 </View>}
+                {canSetPublicDomain(user) && (
+                  <View {...elementProps(`native-domain-editor-public-profile`, state.editingId ?? `new`)} style={styles.toggle}>
+                    <View {...elementProps(`native-domain-editor-public-profile-copy`, state.editingId ?? `new`)} style={styles.toggleCopy}>
+                      <Text {...elementProps(`native-domain-editor-public-profile-label`, state.editingId ?? `new`)} style={styles.fieldLabel}>{publicDomainLabel}</Text>
+                      <Text {...elementProps(`native-domain-editor-public-profile-hint`, state.editingId ?? `new`)} style={styles.fieldHint}>
+                        {renamingDomain ? publicDomainRenameHint : publicDomainHint}
+                      </Text>
+                    </View>
+                    <Switch
+                      accessibilityLabel={publicDomainLabel}
+                      ios_backgroundColor={palette.line}
+                      onValueChange={state.setShowOnPublicProfile}
+                      disabled={state.saving || renamingDomain}
+                      value={state.input.meta?.showOnPublicProfile === true}
+                      thumbColor={isDark ? palette.ink : `#ffffff`}
+                      trackColor={{ false: palette.line, true: palette.accent }}
+                      accessibilityHint={renamingDomain ? publicDomainRenameHint : publicDomainHint}
+                      {...elementProps(`native-domain-editor-public-profile-switch`, state.editingId ?? `new`)}
+                    />
+                  </View>
+                )}
                 {state.editingDomain && (
                   <View {...elementProps(`native-domain-editor-group-field`)} style={styles.field}>
                     <Text {...elementProps(`native-domain-editor-group-label`)} style={styles.fieldLabel}>

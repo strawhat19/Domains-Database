@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { createStyles } from './styles.native';
 import { useMemo, type ReactNode } from 'react';
 import { useLocalStorage } from '../../shared/config';
@@ -5,7 +6,7 @@ import { elementProps } from '../../shared/elementProps';
 import { useProfileSettings } from './useProfileSettings';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { firebaseEnabled } from '../../shared/firebase/config';
-import { Save, Lock, Globe2, RotateCcw } from 'lucide-react-native';
+import { Save, Lock, Globe2, RotateCcw, ArrowUpRight } from 'lucide-react-native';
 import { Image, Pressable, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
 
 const googleLogo = require('../../../assets/icons/google-g.png');
@@ -16,7 +17,7 @@ const ProfileSettings = () => {
   const { width } = useWindowDimensions();
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const sharingNote = useLocalStorage ? `Community is shared between local accounts on this device; it does not publish to the internet.` : firebaseEnabled ? `Save your public profile to appear in Community. Sharing publishes domain names and project summaries from your portfolio; account details, notes, prices, and registrar credentials stay private. Save again to refresh shared domains.` : `Connect a backend to save your profile preferences.`;
+  const sharingNote = useLocalStorage ? `Community sharing is available to local accounts on this device. Choose which names appear on your public profile in each domain’s editor.` : firebaseEnabled ? `This setting shares domain names and project summaries in Community. Choose which names appear on your public profile in each domain’s editor.` : `Connect a backend to save your profile preferences.`;
   const row = (id: string, label: string, value: ReactNode, input = false) => <View {...elementProps(`profile-record-row`, id)} style={[styles.row, id !== `name` && styles.separatedRow]}>
     <Text {...elementProps(`profile-label`, id)} style={[styles.label, width <= 480 && styles.compactLabel, input && styles.inputLabel]}>{label}</Text>
     <View {...elementProps(`profile-value`, id)} style={styles.value}>{value}</View>
@@ -41,14 +42,27 @@ const ProfileSettings = () => {
       <TextInput {...elementProps(`profile-email-input`)} readOnly editable={false} value={state.email} autoComplete={`email`} autoCapitalize={`none`} keyboardType={`email-address`} accessibilityLabel={`Email Address`} style={[styles.input, styles.disabledInput, styles.emailInput]} />
     </View>, true)}
     {row(`bio`, `Bio`, <TextInput {...elementProps(`profile-bio-input`)} multiline maxLength={2000} editable={!state.busy} value={state.description} accessibilityLabel={`Profile Bio`} placeholder={`A little about you`} onChangeText={state.setDescription} style={[styles.input, styles.bio]} placeholderTextColor={palette.placeholder} />, true)}
-    {row(`privacy`, `Visibility`, <>
+    {row(`privacy`, `Visibility`, <View {...elementProps(`profile-visibility-controls`)} style={styles.visibility}>
       <View {...elementProps(`profile-privacy-options`)} style={styles.options} accessibilityRole={`radiogroup`} accessibilityLabel={`Profile Visibility`}>
         {options.map(({ value, label, Icon }) => <Pressable key={value} {...elementProps(`profile-privacy-option`, value)} disabled={state.busy} accessibilityRole={`radio`} accessibilityLabel={`${label} Profile`} onPress={() => state.changePrivacy(value)} accessibilityState={{ checked: state.privacy === value }} style={[styles.option, state.privacy === value && styles.selected]}>
           <Icon {...elementProps(`profile-privacy-icon`, value)} size={16} color={state.privacy === value ? palette.accent : palette.muted} />
           <Text {...elementProps(`profile-privacy-label`, value)} style={[styles.optionLabel, state.privacy === value && styles.selectedLabel]}>{label}</Text>
         </Pressable>)}
       </View>
-    </>)}
+      {state.publicProfileHref && (
+        <Link href={state.publicProfileHref} asChild>
+          <Pressable
+            accessibilityRole={`link`}
+            {...elementProps(`profile-public-link`)}
+            accessibilityLabel={`View Public Profile`}
+            style={({ pressed }) => [styles.option, styles.publicProfileLink, pressed && styles.publicProfileLinkPressed]}
+          >
+            <ArrowUpRight size={15} color={palette.accent} accessible={false} {...elementProps(`profile-public-link-icon`)} />
+            <Text {...elementProps(`profile-public-link-label`)} style={styles.publicProfileLinkLabel}>{`View Public Profile`}</Text>
+          </Pressable>
+        </Link>
+      )}
+    </View>)}
     {row(`sharing`, `Portfolio`, <>
       <View {...elementProps(`profile-domains-sharing`)} style={styles.sharing}>
         <Switch {...elementProps(`profile-domains-sharing-switch`)} accessibilityLabel={`Share Domain Names`} onValueChange={state.setPublicDomains} disabled={state.busy || state.privacy !== `public`} value={state.privacy === `public` && state.publicDomains} trackColor={{ false: palette.line, true: palette.accent }} />

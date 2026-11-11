@@ -33,6 +33,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   domain: { minHeight: 44, borderRadius: 6, flexDirection: `row`, alignItems: `center`, backgroundColor: palette.paper },
   domainSelected: { backgroundColor: palette.subtle },
   domainSource: { minHeight: 44, gap: 7, flex: 1, paddingHorizontal: 6, flexDirection: `row`, alignItems: `center` },
+  domainMarketplace: { paddingLeft: 29, paddingRight: 6, paddingBottom: 4 },
   domainName: { flexShrink: 1, color: palette.ink, fontSize: 12, fontFamily: `DMSans_500Medium` },
   form: { gap: 18, padding: 18, paddingBottom: 28 },
   field: { gap: 8 },

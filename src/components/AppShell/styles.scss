@@ -178,60 +178,63 @@
 .footer-link:hover { color: var(--accent); }
 .footer-link:focus-visible, .footer-piratechs:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
+.header-submenu-group { position: relative; }
+.header-submenu-parent { display: flex; border-radius: 5px; align-items: center; transition: background .22s ease; }
+.header-submenu-group:is(:hover, :focus-within, [data-open='true']) .header-submenu-parent { background: var(--canvas); }
+.header-submenu-group[data-active='true'] .header-submenu-parent { background: var(--strong); }
+.header-submenu-group[data-active='true'] .header-submenu-parent > .header-link { color: var(--strong-text); background: transparent; }
+.header-submenu-toggle {
+  width: 32px;
+  padding: 0;
+  border: none;
+  height: 36px;
+  display: grid;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 5px;
+  color: var(--muted);
+  place-items: center;
+  background: transparent;
+  transition: color .22s ease, background .22s ease;
+  &:hover { color: var(--ink); background: var(--subtle); }
+  &:focus-visible { outline-offset: -2px; outline: 2px solid var(--accent); }
+}
+.header-submenu-group[data-active='true'] .header-submenu-toggle { color: var(--strong-text); }
+.header-submenu-group[data-active='true'] .header-submenu-toggle:hover { background: color-mix(in srgb, var(--strong-text) 12%, transparent); }
+.header-submenu-chevron { transition: transform .22s ease; }
+.header-submenu-toggle[aria-expanded='true'] .header-submenu-chevron { transform: rotate(180deg); }
+.header-submenu {
+  left: 0;
+  gap: 4px;
+  top: 100%;
+  opacity: 0;
+  z-index: 1;
+  width: 220px;
+  padding: 8px;
+  display: flex;
+  margin-top: 8px;
+  border-radius: 8px;
+  position: absolute;
+  visibility: hidden;
+  flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--shadow) 35%, transparent);
+  transition: opacity .22s ease, transform .22s ease, visibility 0s linear .22s;
+  &::before { left: 0; right: 0; top: -9px; height: 9px; content: ''; position: absolute; }
+  .header-link { min-height: 40px; justify-content: flex-start; }
+  .header-link-beta,
+  .header-link-count { flex-shrink: 0; position: static; margin-left: auto; }
+}
+.header-submenu-group[data-open='true'] .header-submenu { opacity: 1; visibility: visible; transition-delay: 0s; transform: translateY(0); }
+
 @media (min-width: 1001px) and (max-width: 1480px) {
   .header-navigation { flex: 1; min-width: 0; }
   .header-navigation-links { gap: 4px; width: 100%; display: flex; min-width: 0; flex-wrap: nowrap; align-items: center; justify-content: flex-end; }
   .header-link { gap: 6px; padding: 10px 12px; justify-content: center; }
   .header-link-beta,
   .header-link-count { top: -4px; }
-  .header-domains-menu { position: relative; }
-  .header-domains-parent { display: flex; border-radius: 5px; align-items: center; transition: background .22s ease; }
-  .header-domains-menu:is(:hover, :focus-within, [data-open='true']) .header-domains-parent { background: var(--canvas); }
-  .header-domains-menu[data-active='true'] .header-domains-parent { background: var(--strong); }
-  .header-domains-menu[data-active='true'] .header-domains-parent > .header-link { color: var(--strong-text); background: transparent; }
-  .header-domains-toggle {
-    width: 28px;
-    padding: 0;
-    border: none;
-    height: 36px;
-    display: grid;
-    flex-shrink: 0;
-    border-radius: 5px;
-    color: var(--muted);
-    place-items: center;
-    background: transparent;
-    transition: color .22s ease, background .22s ease;
-    &:hover { color: var(--ink); background: var(--subtle); }
-  }
-  .header-domains-menu[data-active='true'] .header-domains-toggle { color: var(--strong-text); }
-  .header-domains-menu[data-active='true'] .header-domains-toggle:hover { background: color-mix(in srgb, var(--strong-text) 12%, transparent); }
-  .header-domains-chevron { transition: transform .22s ease; }
-  .header-domains-toggle[aria-expanded='true'] .header-domains-chevron { transform: rotate(180deg); }
-  .header-domains-submenu {
-    left: 0;
-    gap: 4px;
-    top: 100%;
-    opacity: 0;
-    z-index: 1;
-    width: 220px;
-    padding: 8px;
-    display: flex;
-    margin-top: 8px;
-    border-radius: 8px;
-    position: absolute;
-    visibility: hidden;
-    flex-direction: column;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    transform: translateY(-6px);
-    box-shadow: 0 12px 28px color-mix(in srgb, var(--shadow) 35%, transparent);
-    transition: opacity .22s ease, transform .22s ease, visibility 0s linear .22s;
-    &::before { left: 0; right: 0; top: -9px; height: 9px; content: ''; position: absolute; }
-    .header-link { min-height: 40px; justify-content: flex-start; }
-    .header-link-beta,
-    .header-link-count { flex-shrink: 0; position: static; margin-left: auto; }
-  }
-  .header-domains-menu[data-open='true'] .header-domains-submenu { opacity: 1; visibility: visible; transition-delay: 0s; transform: translateY(0); }
 }
 
 @media (max-width: 1000px) {
@@ -280,6 +283,21 @@
   .header-auth-icon { flex-shrink: 0; }
   .header-auth-text { white-space: nowrap; }
   .header-link { min-height: 44px; justify-content: flex-start; padding: 10px 12px; }
+  .header-submenu-parent > .header-link { flex: 1; }
+  .header-submenu-toggle { width: 44px; height: 44px; }
+  .header-submenu {
+    width: auto;
+    margin: 4px 0 0 12px;
+    padding: 0 0 0 8px;
+    position: static;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    border-inline-start: 1px solid var(--line);
+    &::before { display: none; }
+    .header-link { min-height: 44px; }
+  }
+  .header-submenu-group:not([data-open='true']) .header-submenu { display: none; }
   .app-shell[data-fit-view='true'] .header-navigation { left: 0; top: 100%; position: absolute; padding-inline: var(--shell-gutter); background: var(--paper); border-bottom: 1px solid var(--line); }
 }
 
@@ -327,9 +345,9 @@
 @media (prefers-reduced-motion: reduce) {
   .header-navigation,
   .header-auth-link,
-  .header-domains-parent,
-  .header-domains-toggle,
-  .header-domains-chevron,
-  .header-domains-submenu,
+  .header-submenu-parent,
+  .header-submenu-toggle,
+  .header-submenu-chevron,
+  .header-submenu,
   .header-navigation-content { transition: none; }
 }

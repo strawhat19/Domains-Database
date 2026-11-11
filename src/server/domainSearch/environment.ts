@@ -34,6 +34,11 @@ const environmentCredentials = (provider: DomainSearchProvider): SearchCredentia
   return undefined;
 };
 
+export const getEnvironmentGoDaddyV3Authorization = () => {
+  const credentials = environmentCredentials(`godaddy`);
+  return credentials?.provider === `godaddy` && credentials.authorization.startsWith(`Bearer `) ? credentials.authorization : undefined;
+};
+
 export const getEnvironmentSearchProviders = (): DomainSearchProvider[] => [
   `vercel`,
   ...domainSearchFields.filter(field => field.id !== `vercel` && environmentCredentials(field.id)).map(field => field.id),

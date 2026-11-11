@@ -12,6 +12,7 @@ import { normalizeDomainTags, validateDomainTags } from '../../shared/domainTags
 import { normalizeDomainLink, normalizeDomainLinks } from '../../shared/domainLinks';
 import { DOMAIN_PRICE_FIELDS, normalizeDomainPrice } from '../../shared/domainPricing';
 import { getCustomSiteIconUrl, normalizeSiteIconUrl } from '../../shared/domainSiteIcon';
+import { domainEditorMetadata, setPublicDomain, updateDomainEditorName } from './publicProfileVisibility';
 import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { getDomainSource, normalizeDomainName, getDomainDeletionRestriction } from '../../shared/domainUtils';
@@ -185,8 +186,15 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     if (isSynced && ![`mvp`, `meta`, `tags`, `future`, `childLinks`, `parentLink`, `difficulty`, `startingBid`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `estimatedRevenue`, `developmentLinks`, `socialMediaLinks`].includes(field)) return;
     setError(``);
     setInvalidField(null);
-    if (field === `name`) setNameInvalid(false);
+    if (field === `name` && typeof value === `string`) {
+      setNameInvalid(false);
+      setInput(previous => updateDomainEditorName(previous, value));
+      return;
+    }
     setInput(previous => markDomainFieldsKnown({ ...previous, [field]: value }, field === `autoRenew` || field === `renewalPrice` ? [field] : []));
+  };
+  const setShowOnPublicProfile = (value: boolean) => {
+    if (!pendingActionRef.current) setInput(previous => setPublicDomain(previous, value));
   };
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -234,6 +242,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
       owner: input.owner.trim(),
       name: input.name.trim().toLowerCase(),
       description: input.description?.trim() ?? ``,
+      meta: domainEditorMetadata(input.meta, domain?.meta),
     };
     try {
       if (domain?.id) {
@@ -263,6 +272,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     closeMove,
     deleting,
     setField,
+    setShowOnPublicProfile,
     modalRef,
     nameInvalid,
     groupEditor,

@@ -2,8 +2,8 @@ import { Link } from 'expo-router';
 import Toast from '../Toast';
 import BrandLogo from '../BrandLogo';
 import UserMenu from '../UserMenu';
-import { useRef, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import ThemeToggle from '../ThemeToggle';
 import ScrollToTop from '../ScrollToTop';
 import DomainMarquee from '../DomainMarquee';
@@ -21,13 +21,14 @@ import { useFeatureFlags } from '../../shared/featureFlags/useFeatureFlags';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollContext } from '../../shared/scrollContext/ScrollContext';
 import { Alert, Linking, Animated, Pressable, ScrollView, Text, View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Eye, Info, Mail, Gavel, House, LogIn, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ArrowUpRight, ShieldCheck, UserRoundPlus } from 'lucide-react-native';
+import { Eye, Info, Mail, Gavel, Store, House, LogIn, Wallet, Search, Globe2, BookOpen, FileText, UsersRound, ChevronDown, ArrowUpRight, ShieldCheck, UserRoundPlus } from 'lucide-react-native';
 
 const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) => {
-  const { pathname, year, appName, signedIn, navigation, badgeColors, fitViewport, searchViewport, authLoading } = useAppShell();
+  const { pathname, year, appName, signedIn, navigation, badgeColors, fitViewport, marketActive, searchViewport, authLoading, marketNavigation } = useAppShell();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [viewportHeight, setViewportHeight] = useState(height);
+  const [marketMenuOpen, setMarketMenuOpen] = useState(false);
   const [footerHeight, setFooterHeight] = useState(insets.bottom + 64);
   const { isDark, palette, error: themeError, clearError: clearThemeError } = useTheme();
   const { flags, ready: featuresReady } = useFeatureFlags();
@@ -43,12 +44,67 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
     ? Math.max(0, viewportHeight - scroll.headerHeight - footerHeight)
     : undefined;
   const heroContext = useMemo(() => ({ pageContentHeight, pageScroll: scroll.pageScroll, setHeroBottom: scroll.setHeroBottom }), [pageContentHeight, scroll.pageScroll, scroll.setHeroBottom]);
+  useEffect(() => setMarketMenuOpen(false), [pathname]);
   const openPiratechs = async () => {
     try {
       await Linking.openURL(`https://piratechs.com/`);
     } catch {
       Alert.alert(`Unable To Open Link`, `Visit piratechs.com in your browser`);
     }
+  };
+
+  type NavigationItem = (typeof navigation | typeof marketNavigation)[number];
+  const renderNavigationLink = (item: NavigationItem) => {
+    const { label, href, icon } = item;
+    const beta = `beta` in item && item.beta;
+    const market = href === routes.market.href;
+    const closeMarketMenu = market || marketNavigation.some(child => child.href === href);
+    const Icon = { Eye, Info, Mail, Gavel, Store, House, Wallet, Search, Globe2, BookOpen, UsersRound }[icon];
+    const current = pathname === href || (href === routes.blog.href && pathname.startsWith(`${href}/`));
+    const active = current || (market && marketActive);
+    return (
+      <Link key={href} href={href} asChild>
+        <Pressable
+          {...elementProps(`native-navigation-link`, label.toLowerCase())}
+          accessibilityRole={`link`}
+          accessibilityLabel={item.accessibilityLabel}
+          accessibilityState={{ busy: item.countLoading, selected: current }}
+          onPress={closeMarketMenu ? () => setMarketMenuOpen(false) : undefined}
+          style={StyleSheet.flatten([styles.navigationLink, market && styles.navigationMarketLink, active && styles.navigationLinkActive])}
+        >
+          <Icon {...elementProps(`native-navigation-icon`, label.toLowerCase())} size={14} color={active ? `#ffffff` : palette.muted} />
+          <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>
+            {label}
+          </Text>
+          {(item.countLoading || (item.count ?? 0) > 0) && (
+            <View
+              accessible={false}
+              accessibilityElementsHidden
+              style={[styles.navigationCount, { backgroundColor: item.countLoading ? palette.skeleton : badgeColors.backgroundColor }]}
+              importantForAccessibility={`no-hide-descendants`}
+              {...elementProps(`native-navigation-count`, label.toLowerCase())}
+            >
+              <Text {...elementProps(`native-navigation-count-text`, label.toLowerCase())} style={[styles.navigationCountText, { color: badgeColors.color }]}>
+                {item.countLoading ? `` : item.count}
+              </Text>
+            </View>
+          )}
+          {beta && (
+            <View
+              accessible={false}
+              accessibilityElementsHidden
+              style={[styles.navigationBeta, { borderColor: badgeColors.backgroundColor, backgroundColor: badgeColors.backgroundColor }]}
+              importantForAccessibility={`no-hide-descendants`}
+              {...elementProps(`native-navigation-beta`, label.toLowerCase())}
+            >
+              <Text {...elementProps(`native-navigation-beta-text`, label.toLowerCase())} style={[styles.navigationBetaText, { color: badgeColors.color }]}>
+                {`Beta`}
+              </Text>
+            </View>
+          )}
+        </Pressable>
+      </Link>
+    );
   };
 
   const header = (
@@ -96,51 +152,37 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
         </View>
         <View {...elementProps(`native-navigation`)} style={styles.navigation}>
           {navigation.filter(item => width > 1360 || item.href !== routes.watching.href).map(item => {
-            const { label, href, icon } = item;
-            const beta = `beta` in item && item.beta;
-            const Icon = { Eye, Info, Mail, Gavel, House, Wallet, Search, Globe2, BookOpen, UsersRound }[icon];
-            const active = pathname === href || (href === routes.blog.href && pathname.startsWith(`${href}/`));
+            if (item.href !== routes.market.href) return renderNavigationLink(item);
             return (
-              <Link key={href} href={href} asChild>
-                <Pressable
-                  {...elementProps(`native-navigation-link`, label.toLowerCase())}
-                  accessibilityRole={`link`}
-                  accessibilityLabel={item.accessibilityLabel}
-                  accessibilityState={{ busy: item.countLoading, selected: active }}
-                  style={StyleSheet.flatten([styles.navigationLink, active && styles.navigationLinkActive])}
+              <View key={item.href} {...elementProps(`native-market-menu`)}>
+                <View
+                  {...elementProps(`native-market-menu-parent`)}
+                  style={[styles.navigationMarketParent, marketActive && styles.navigationLinkActive]}
                 >
-                  <Icon {...elementProps(`native-navigation-icon`, label.toLowerCase())} size={14} color={active ? `#ffffff` : palette.muted} />
-                  <Text {...elementProps(`native-navigation-text`, label.toLowerCase())} style={[styles.navigationText, active && styles.navigationTextActive]}>
-                    {label}
-                  </Text>
-                  {(item.countLoading || (item.count ?? 0) > 0) && (
-                    <View
+                  {renderNavigationLink(item)}
+                  <Pressable
+                    accessibilityRole={`button`}
+                    style={styles.navigationMarketToggle}
+                    {...elementProps(`native-market-menu-toggle`)}
+                    accessibilityState={{ expanded: marketMenuOpen }}
+                    onPress={() => setMarketMenuOpen(open => !open)}
+                    accessibilityLabel={marketMenuOpen ? `Collapse Market Submenu` : `Expand Market Submenu`}
+                  >
+                    <ChevronDown
+                      size={14}
                       accessible={false}
-                      accessibilityElementsHidden
-                      style={[styles.navigationCount, { backgroundColor: item.countLoading ? palette.skeleton : badgeColors.backgroundColor }]}
-                      importantForAccessibility={`no-hide-descendants`}
-                      {...elementProps(`native-navigation-count`, label.toLowerCase())}
-                    >
-                      <Text {...elementProps(`native-navigation-count-text`, label.toLowerCase())} style={[styles.navigationCountText, { color: badgeColors.color }]}>
-                        {item.countLoading ? `` : item.count}
-                      </Text>
-                    </View>
-                  )}
-                  {beta && (
-                    <View
-                      accessible={false}
-                      accessibilityElementsHidden
-                      style={[styles.navigationBeta, { borderColor: badgeColors.backgroundColor, backgroundColor: badgeColors.backgroundColor }]}
-                      importantForAccessibility={`no-hide-descendants`}
-                      {...elementProps(`native-navigation-beta`, label.toLowerCase())}
-                    >
-                      <Text {...elementProps(`native-navigation-beta-text`, label.toLowerCase())} style={[styles.navigationBetaText, { color: badgeColors.color }]}>
-                        {`Beta`}
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
-              </Link>
+                      color={marketActive ? `#ffffff` : palette.muted}
+                      {...elementProps(`native-market-menu-chevron`)}
+                      style={{ transform: [{ rotate: marketMenuOpen ? `180deg` : `0deg` }] }}
+                    />
+                  </Pressable>
+                </View>
+                {marketMenuOpen && (
+                  <View {...elementProps(`native-market-submenu`)} style={styles.navigationMarketSubmenu}>
+                    {marketNavigation.map(renderNavigationLink)}
+                  </View>
+                )}
+              </View>
             );
           })}
           {!signedIn && !authLoading && (

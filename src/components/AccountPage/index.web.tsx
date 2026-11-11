@@ -57,7 +57,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
       </div> : <div id={`account-content`} className={`account-content connections-content`}>
         <span id={`account-eyebrow`} className={`account-eyebrow`}>{`Your Account`}</span>
         <h1 id={`account-title`} className={`account-title`}><ShieldCheck size={28} aria-hidden id={`account-title-icon`} className={`account-title-icon`} />{`Connections`}</h1>
-        <p id={`account-description`} className={`account-description`}>{`Manage registrar connections securely for your own account.`}</p>
+        <p id={`account-description`} className={`account-description`}>{`Manage registrar and marketplace connections for your account.`}</p>
         <AccountConnections />
       </div>}
     </section>

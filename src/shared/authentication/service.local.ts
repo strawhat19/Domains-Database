@@ -239,6 +239,15 @@ export const getPublicProfiles = (): Promise<PublicProfile[]> => runOperation(as
   }));
 });
 
+export const getLocalPublicProfileRoles = (userIds: readonly string[]): Promise<{ id: string; role: Roles | null }[]> => runOperation(async () => {
+  if (!useLocalStorage || !userIds.length) return [];
+  const requested = new Set(userIds);
+  const roles = Object.values(Roles);
+  const { accounts } = await readAccounts();
+  return accounts.filter(({ user }) => requested.has(user.id) && user.active && user.profilePrivacy === `public`)
+    .map(({ user }) => ({ id: user.id, role: roles.find(role => role === user.role) ?? null }));
+});
+
 export const updateProfile = (input: ProfileInput, expectedUserId?: string): Promise<User> => runOperation(async () => {
   requireLocalAuthentication();
   const snapshot = await readAccounts();

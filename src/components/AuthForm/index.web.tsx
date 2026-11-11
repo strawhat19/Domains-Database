@@ -87,10 +87,10 @@ const AuthForm = ({ mode }: { mode: AuthMode }) => {
               disabled={state.disabled}
               className={`auth-form-submit`}
               id={`auth-form-profile-${mode}`}
-              onClick={() => state.enrollmentPlan ? state.continueEnrollment() : state.navigate(`/profile`)}
+              onClick={() => state.continueLabel ? state.continueAuthentication() : state.navigate(`/profile`)}
             >
               <UserRound id={`auth-form-profile-icon-${mode}`} className={`auth-form-button-icon`} size={17} aria-hidden />
-              {state.enrollmentPlan ? state.enrollmentPlan === `free` ? `Open Portfolio` : `Review Selected Plan` : `View profile`}
+              {state.continueLabel ?? `View profile`}
               <ArrowRight id={`auth-form-profile-arrow-${mode}`} className={`auth-form-button-arrow`} size={17} aria-hidden />
             </button>
           </div>

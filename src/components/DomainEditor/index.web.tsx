@@ -1,4 +1,5 @@
 import './styles.scss';
+import { Link as RouterLink } from 'expo-router';
 import type { ReactNode } from 'react';
 import TagPicker from '../TagPicker/index.web';
 import ModalTabs from '../ModalTabs/index.web';
@@ -14,6 +15,7 @@ import SettingsField from '../SettingsField/index.web';
 import type { DomainRecord } from '../../shared/types';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import DomainMetadata from '../DomainMetadata/index.web';
+import { useAuth } from '../../shared/authContext/useAuth';
 import DomainStarButton from '../DomainStarButton/index.web';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
@@ -23,8 +25,10 @@ import BooleanSetting from '../SegmentedControl/BooleanSetting.web';
 import DomainAnalyticsButton from '../DomainAnalyticsButton/index.web';
 import PortfolioSettingsActions from '../PortfolioSettingsActions/index.web';
 import type { DomainLinkField, DomainLinkValues } from '../DomainLinks/index.web';
+import { getPortfolioSellHref, useOwnedMarketplaceDomain } from '../PortfolioMarketplace/usePortfolioMarketplace';
+import { canSetPublicDomain, publicDomainHint, publicDomainLabel, publicDomainName, publicDomainRenameHint } from './publicProfileVisibility';
 import { formatCurrency, getDomainSource, getDomainDeletionRestriction } from '../../shared/domainUtils';
-import { X, Plus, Link, Info, Check, Trash2, Settings2, FolderTree, ChevronDown, BriefcaseBusiness } from 'lucide-react';
+import { X, Plus, Link, Info, Check, Store, Trash2, Settings2, FolderTree, ChevronDown, BriefcaseBusiness } from 'lucide-react';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
 
 interface DomainEditorProps {
@@ -51,6 +55,7 @@ const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEdito
     saving,
     deleting,
     setField,
+    setShowOnPublicProfile,
     modalRef,
     nameInvalid,
     copySections,
@@ -68,9 +73,13 @@ const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEdito
     hideProjectDetails,
     toggleVisibility,
   } = useDomainEditor(domain, onClose, active);
+  const { user } = useAuth();
+  const ownsMarketplaceDomain = useOwnedMarketplaceDomain(domain);
   const tabsId = `domain-editor-sections-${domain?.id ?? `new`}`;
   const deleteId = `domain-editor-delete-${domain?.id ?? `new`}`;
+  const publicProfileId = `domain-public-profile-${domain?.id ?? `new`}`;
   const isEditing = Boolean(domain?.id);
+  const renamingDomain = Boolean(domain?.id && publicDomainName(domain.name) !== publicDomainName(input.name));
   const hasCustomIcon = Boolean(getCustomSiteIconUrl(input).trim());
   const deleteRestriction = domain ? getDomainDeletionRestriction(domain) : ``;
   const isSynced = Boolean(domain && getDomainSource(domain) === `registrar`);
@@ -455,6 +464,22 @@ const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEdito
                         </div>
                       </>
                     )}
+                    {canSetPublicDomain(user) && (
+                      <div id={`${publicProfileId}-field`} className={`domain-editor-field domain-editor-field-full`}>
+                        <span id={`${publicProfileId}-label`} className={`domain-editor-label`}>{publicDomainLabel}</span>
+                        <BooleanSetting
+                          id={publicProfileId}
+                          disabled={saving || renamingDomain}
+                          onChange={setShowOnPublicProfile}
+                          describedBy={`${publicProfileId}-help`}
+                          labelledBy={`${publicProfileId}-label`}
+                          value={input.meta?.showOnPublicProfile === true}
+                        />
+                        <span id={`${publicProfileId}-help`} className={`domain-editor-renew-help`}>
+                          {renamingDomain ? publicDomainRenameHint : publicDomainHint}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -658,6 +683,9 @@ const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEdito
                           id={`domain-editor-row-actions-${domain.id}`}
                           disabled={saving || confirmingDelete || actionsDisabled}
                         />
+                        {ownsMarketplaceDomain && !saving && !confirmingDelete && !actionsDisabled ? <RouterLink id={`domain-editor-marketplace-${domain.id}`} className={`domain-editor-input domain-editor-move-trigger`} href={getPortfolioSellHref(domain)} onPress={onClose}>
+                          <Store size={15} aria-hidden className={`domain-editor-move-icon`} />List For Sale
+                        </RouterLink> : null}
                       </div>
                     )}
                     {isEditing && (

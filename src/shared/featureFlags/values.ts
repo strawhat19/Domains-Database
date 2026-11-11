@@ -9,7 +9,8 @@ const identity = genID(`FeatureSettings`, 1, `Global`, new Date(`2026-10-12T04:0
 export const featureSettingsId = identity.id;
 const fields = [`id`, `name`, `type`, `flags`, `number`, `version`, `created`, `updated`];
 const legacyFeatureKeys = [`contact`, `themeToggle`, `domainMarquee`, `notifications`] as const;
-export const createFeatureAudiences = (): FeatureAudiences => Object.fromEntries(featureFlagKeys.map(key => [key, { roles: null, plans: null, planMode: `minimum` }])) as FeatureAudiences;
+const defaultAudience = () => ({ roles: null, plans: null, planMode: `minimum` as const });
+export const createFeatureAudiences = (): FeatureAudiences => Object.fromEntries(featureFlagKeys.map(key => [key, defaultAudience()])) as FeatureAudiences;
 const roleValues: string[] = Object.values(Roles);
 export const isFeaturePlan = (value: unknown): value is string => typeof value === `string` && value.length <= 100 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 const unreadable = () => new Error(`Saved Features Could Not Be Read — Nothing Was Changed`);
@@ -19,20 +20,20 @@ const readAudienceValues = (value: unknown, dimension: FeatureAudienceDimension)
     || new Set(value).size !== value.length || value.some(item => dimension === `roles` ? !roleValues.includes(item) : !isFeaturePlan(item))) throw unreadable();
   return [...value];
 };
+export const readFeatureAudience = (value: unknown) => {
+  const audience = value as Record<string, unknown> | undefined;
+  if (!audience || typeof audience !== `object` || Array.isArray(audience) || Object.keys(audience).some(field => ![`roles`, `plans`, `planMode`].includes(field))
+    || !(`roles` in audience) || !(`plans` in audience) || (`planMode` in audience && audience.planMode !== `minimum`)) throw unreadable();
+  const plans = readAudienceValues(audience.plans, `plans`);
+  if (audience.planMode === `minimum` && plans && plans.length > 1) throw unreadable();
+  return { roles: readAudienceValues(audience.roles, `roles`), plans, ...(audience.planMode === `minimum` ? { planMode: `minimum` as const } : {}) };
+};
 const readAudiences = (value: unknown): FeatureAudiences => {
   if (value === undefined) return createFeatureAudiences();
   if (!value || typeof value !== `object` || Array.isArray(value)) throw unreadable();
   const data = value as Record<string, unknown>;
-  if (Object.keys(data).some(key => !featureFlagKeys.includes(key as keyof FeatureFlags)) || legacyFeatureKeys.some(key => !(key in data))) throw unreadable();
-  return Object.fromEntries(featureFlagKeys.map(key => {
-    if (!(key in data)) return [key, { roles: null, plans: null, planMode: `minimum` }];
-    const audience = data[key] as Record<string, unknown> | undefined;
-    if (!audience || typeof audience !== `object` || Array.isArray(audience) || Object.keys(audience).some(field => ![`roles`, `plans`, `planMode`].includes(field))
-      || !(`roles` in audience) || !(`plans` in audience) || (`planMode` in audience && audience.planMode !== `minimum`)) throw unreadable();
-    const plans = readAudienceValues(audience.plans, `plans`);
-    if (audience.planMode === `minimum` && plans && plans.length > 1) throw unreadable();
-    return [key, { roles: readAudienceValues(audience.roles, `roles`), plans, ...(audience.planMode === `minimum` ? { planMode: `minimum` } : {}) }];
-  })) as FeatureAudiences;
+  if (Object.keys(data).some(key => key !== `marketplaceListings` && !featureFlagKeys.includes(key as keyof FeatureFlags)) || legacyFeatureKeys.some(key => !(key in data))) throw unreadable();
+  return Object.fromEntries(featureFlagKeys.map(key => [key, key in data ? readFeatureAudience(data[key]) : defaultAudience()])) as FeatureAudiences;
 };
 export const featureRequiresPlanTiers = (settings: FeatureSettings) => featureFlagKeys.some(key => settings.flags[key]
   && settings.audiences[key].planMode === `minimum` && !!settings.audiences[key].plans?.length && settings.audiences[key].plans?.[0] !== `free`);
@@ -90,7 +91,7 @@ export const readFeatureSettings = (value: unknown): FeatureSettings => {
     || data.id !== featureSettingsId || data.number !== 1 || data.version !== 1 || data.name !== `Global` || data.type !== `FeatureSettings`
     || !flags || typeof flags !== `object` || Array.isArray(flags)
     || legacyFeatureKeys.some(key => typeof flags[key] !== `boolean`)
-    || Object.keys(flags).some(key => !featureFlagKeys.includes(key as keyof FeatureFlags) || typeof flags[key] !== `boolean`)) throw unreadable();
+    || Object.keys(flags).some(key => key !== `marketplaceListings` && (!featureFlagKeys.includes(key as keyof FeatureFlags) || typeof flags[key] !== `boolean`))) throw unreadable();
   return {
     number: 1,
     version: 1,
@@ -100,7 +101,7 @@ export const readFeatureSettings = (value: unknown): FeatureSettings => {
     created: readDate(data.created),
     updated: readDate(data.updated),
     audiences: readAudiences(data.audiences),
-    flags: { ...defaultFeatureFlags, ...flags },
+    flags: Object.fromEntries(featureFlagKeys.map(key => [key, flags[key] ?? defaultFeatureFlags[key]])) as unknown as FeatureFlags,
   };
 };
 export const createFeatureSettings = (flags: FeatureFlags = defaultFeatureFlags): FeatureSettings => ({

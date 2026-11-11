@@ -39,7 +39,6 @@ const DomainAuction = () => {
           </span>
           <div id={`auction-title-row`} className={`auction-title-row`}>
             <h1 id={`auction-title`} className={`auction-title`}>{`Domain Auction`}</h1>
-            {routes.auction.beta && <span id={`auction-title-beta`} className={`auction-title-beta`}>{`Beta`}</span>}
           </div>
           <p id={`auction-description`} className={`auction-description`}>{`Explore auction sources, narrow your search, and research domains before buying.`}</p>
         </div>

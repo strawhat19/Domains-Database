@@ -18,11 +18,14 @@
 .profile-name-feedback { flex-basis: 100%; margin: 0; font-size: 11px; line-height: 1.6; }
 .profile-name-feedback.is-error { color: var(--danger); }
 .profile-name-feedback.is-success { color: var(--success); }
+.profile-visibility-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .profile-privacy-options { display: flex; flex-wrap: wrap; gap: 6px; }
 .profile-privacy-option { display: inline-flex; min-height: 36px; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--paper); color: var(--ink); font-size: 11px; transition: border-color .2s ease, color .2s ease; }
 .profile-privacy-option:hover, .profile-privacy-option.is-selected { border-color: var(--accent); color: var(--accent); }
 .profile-privacy-option.is-selected { box-shadow: inset 0 0 0 1px var(--accent); }
 .profile-privacy-option:disabled { opacity: .5; cursor: default; }
+.profile-public-link { display: inline-flex; min-height: 36px; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; color: var(--accent); background: var(--subtle); font-size: 11px; text-decoration: none; transition: border-color .2s ease, background-color .2s ease; }
+.profile-public-link:hover { border-color: var(--accent); background: var(--paper); }
 .profile-settings-copy { margin: 10px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .profile-sharing-control { display: flex; min-height: 32px; align-items: center; gap: 10px; font-size: 12px; }
 .profile-sharing-switch { position: relative; width: 34px; height: 20px; flex: none; appearance: none; margin: 0; border: 1px solid var(--line); border-radius: 999px; background: var(--input); cursor: pointer; transition: background-color .2s ease, border-color .2s ease; }
@@ -31,4 +34,4 @@
 .profile-sharing-switch:checked::before { transform: translateX(14px); background: var(--contrast); }
 .profile-sharing-switch:disabled { opacity: .5; cursor: default; }
 @media (max-width: 480px) { .profile-input { font-size: 16px; } }
-@media (prefers-reduced-motion: reduce) { .profile-input, .profile-save-name, .profile-privacy-option, .profile-sharing-switch, .profile-sharing-switch::before { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .profile-input, .profile-save-name, .profile-privacy-option, .profile-public-link, .profile-sharing-switch, .profile-sharing-switch::before { transition: none; } }

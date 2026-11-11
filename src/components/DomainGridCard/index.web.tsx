@@ -8,6 +8,7 @@ import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import DomainVisibilityButton from '../DomainVisibilityButton/index.web';
 import { getDomainSource } from '../../shared/domainUtils';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
+import { PortfolioMarketplace, PortfolioSellLink } from '../PortfolioMarketplace/index.web';
 import { getDomainRow, getDomainColumnKey, getDomainSelectionHandlers } from '../DomainRow/domainRow';
 import type { DomainItemProps, DomainDragProps } from '../DomainRow/domainRow';
 import { Check, Minus, ArrowUp, Settings, ArrowDown, GripVertical } from 'lucide-react';
@@ -137,6 +138,7 @@ const DomainGridCard = ({
           )}
         </div>
       </div>
+      <PortfolioMarketplace id={`${scope}-marketplace`} domain={domain} disabled={busy} />
       {!!columns.length && (
         <dl id={`${scope}-details`} className={`domain-grid-card-details`}>
           {columns.map(column => {
@@ -250,6 +252,7 @@ const DomainGridCard = ({
             domainId={domain.id}
             domainName={domain.name}
           />
+          <PortfolioSellLink id={`${scope}-sell`} domain={domain} disabled={busy} className={`domain-grid-card-action`} />
           <button
             type={`button`}
             disabled={busy}

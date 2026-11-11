@@ -1,22 +1,21 @@
 import { useMemo, useState } from 'react';
 import { createStyles } from './styles.native';
-import { featureDefinitions } from './features';
+import { featureDefinitions, type AdminFeatureKey } from './features';
 import { Text, View, Pressable } from 'react-native';
 import { useAdminFeatures } from './useAdminFeatures';
 import FeatureDetails from './FeatureDetails/index.native';
 import { elementProps } from '../../shared/elementProps';
-import type { FeatureFlagKey } from '../../shared/featureFlags/types';
 import { StatusCell, AdminButton, AdminLoading, useAdminWidgetStyles } from '../AdminWidgets';
-import { Coins, Megaphone, CaseSensitive, Bell, Mail, Check, Minus, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react-native';
+import { Coins, Megaphone, CaseSensitive, Bell, Mail, Check, Minus, Store, SunMoon, Settings, RotateCcw, MoveHorizontal } from 'lucide-react-native';
 
-const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal };
+const featureIcons = { contact: Mail, ads: Megaphone, pricingTable: Coins, nameSwitch: CaseSensitive, themeToggle: SunMoon, notifications: Bell, domainMarquee: MoveHorizontal, marketplaceListings: Store };
 const featureToggleOptions = [{ value: `off`, enabled: false, label: `Disable`, Icon: Minus }, { value: `on`, enabled: true, label: `Enable`, Icon: Check }];
 
 const AdminFeatures = () => {
   const state = useAdminFeatures();
   const { palette, styles: widgetStyles } = useAdminWidgetStyles();
   const styles = useMemo(() => createStyles(palette), [palette]);
-  const [detailsKey, setDetailsKey] = useState<FeatureFlagKey | null>(null);
+  const [detailsKey, setDetailsKey] = useState<AdminFeatureKey | null>(null);
   const details = featureDefinitions.find(feature => feature.key === detailsKey);
   return <View {...elementProps(`admin-panel`, `features`)} style={widgetStyles.panel}>
     <View {...elementProps(`admin-panel-body`, `features`)} style={widgetStyles.panelBody}>
@@ -27,7 +26,9 @@ const AdminFeatures = () => {
           const Icon = featureIcons[key];
           const enabled = state.flags[key];
           const saving = !!state.pending[key];
-          const toggleDisabled = state.disabled || saving;
+          const ready = state.featureReady(key);
+          const toggleDisabled = state.featureDisabled(key) || saving;
+          const policyLoading = key === `marketplaceListings` && state.policyLoading;
           const plansDisabled = toggleDisabled || state.planLoading || !!state.planError;
           return <View key={key} {...elementProps(`admin-feature-row`, key)} style={styles.row}>
             <View {...elementProps(`admin-feature-identity`, key)} style={styles.identity}>
@@ -38,10 +39,10 @@ const AdminFeatures = () => {
               <Text {...elementProps(`admin-feature-description`, key)} style={styles.description}>{description}</Text>
             </View>
             <View {...elementProps(`admin-feature-actions`, key)} style={styles.actions}>
-              <StatusCell id={`features-${key}`} label={!state.ready ? `Unavailable` : enabled ? `True` : `False`} tone={!state.ready ? `red` : enabled ? `green` : `gray`} />
+              <StatusCell id={`features-${key}`} label={policyLoading ? `Loading` : !ready ? `Unavailable` : enabled ? `True` : `False`} tone={policyLoading ? `gray` : !ready ? `red` : enabled ? `green` : `gray`} />
               <View {...elementProps(`admin-feature-toggle`, key)} style={styles.segments} accessibilityRole={`radiogroup`} accessibilityLabel={label} accessibilityState={{ busy: saving, disabled: toggleDisabled }}>
                 {featureToggleOptions.map(({ value, enabled: optionEnabled, label: optionLabel, Icon: OptionIcon }) => {
-                  const selected = state.ready && enabled === optionEnabled;
+                  const selected = ready && enabled === optionEnabled;
                   return <Pressable key={value} {...elementProps(`admin-feature-toggle-option`, `${key}-${value}`)} hitSlop={4} disabled={toggleDisabled} accessibilityRole={`radio`} accessibilityLabel={`${optionLabel} ${label}`} accessibilityState={{ checked: selected, disabled: toggleDisabled, busy: saving }} onPress={() => { if (!selected) void state.save(key, optionEnabled); }} style={[styles.segment, selected && styles.selectedSegment, toggleDisabled && !selected && styles.disabled]}>
                     <OptionIcon {...elementProps(`admin-feature-toggle-icon`, `${key}-${value}`)} size={12} color={selected ? palette.contrast : palette.muted} />
                     <Text {...elementProps(`admin-feature-toggle-label`, `${key}-${value}`)} style={[styles.segmentLabel, selected && styles.selectedSegmentLabel]}>{optionLabel}</Text>
@@ -59,13 +60,13 @@ const AdminFeatures = () => {
                 {!state.planLoading && !state.planError ? <View {...elementProps(`admin-feature-audience-options`, `${key}-plans`)} style={styles.audienceOptions} accessibilityLabel={`${label} Plans`}>
                   {state.planOptions.map(({ value, label: optionLabel }) => {
                     const selectedPlan = state.selectedPlan(key);
-                    const selected = state.ready && selectedPlan === value;
+                    const selected = ready && selectedPlan === value;
                     const optionDisabled = plansDisabled || (!state.isPlanAvailable(value) && selectedPlan !== value);
                     return <Pressable key={value} {...elementProps(`admin-feature-audience-option`, `${key}-plans-${value}`)} hitSlop={4} disabled={optionDisabled} accessibilityRole={`button`} accessibilityLabel={`${optionLabel} Plan Or Higher For ${label}`} accessibilityState={{ selected, disabled: optionDisabled, busy: saving }} onPress={() => { void state.togglePlan(key, value); }} style={[styles.audienceOption, selected && styles.selectedSegment, optionDisabled && !selected && styles.disabled]}>
                       <Text {...elementProps(`admin-feature-audience-option-label`, `${key}-plans-${value}`)} style={[styles.audienceOptionLabel, selected && styles.selectedSegmentLabel]}>{optionLabel}</Text>
                     </Pressable>;
                   })}
-                  {!state.planOptions.length ? <Text {...elementProps(`admin-feature-plans-baseline`, key)} style={styles.progress}>Free And Above</Text> : null}
+                  {ready && !state.planOptions.length ? <Text {...elementProps(`admin-feature-plans-baseline`, key)} style={styles.progress}>Free And Above</Text> : null}
                 </View> : null}
                 {state.planLoading ? <Text {...elementProps(`admin-feature-plans-loading`, key)} style={styles.progress}>Loading Plans</Text> : null}
                 {state.planError ? <View {...elementProps(`admin-feature-plans-error`, key)} style={styles.planError}>
@@ -75,6 +76,10 @@ const AdminFeatures = () => {
               </View>
             </View>
             {state.errors[key] ? <Text {...elementProps(`admin-feature-error`, key)} style={styles.error} accessibilityRole={`alert`}>{state.errors[key]}</Text> : null}
+            {key === `marketplaceListings` && state.policyError ? <View {...elementProps(`admin-feature-policy-error`, key)} style={styles.planError}>
+              <Text style={styles.error} accessibilityRole={`alert`}>{state.policyError}</Text>
+              {state.source === `firestore` ? <AdminButton id={`features-marketplace-refresh`} label={`Refresh Marketplace Policy`} Icon={RotateCcw} onPress={state.refreshPolicy} /> : null}
+            </View> : null}
           </View>;
         })}
       </View>}
@@ -83,12 +88,12 @@ const AdminFeatures = () => {
       feature={details}
       onClose={() => setDetailsKey(null)}
       roles={{
-        ready: state.ready,
+        ready: state.featureReady(details.key),
         options: state.roleOptions,
         saving: !!state.pending[details.key],
-        error: state.errors[details.key] ?? ``,
+        error: state.errors[details.key] || (details.key === `marketplaceListings` ? state.policyError : ``),
         selected: state.audiences[details.key].roles,
-        disabled: state.disabled || !!state.pending[details.key],
+        disabled: state.featureDisabled(details.key) || !!state.pending[details.key],
         onToggle: value => { void state.toggleRole(details.key, value); },
       }}
     /> : null}

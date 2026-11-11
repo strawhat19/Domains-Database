@@ -55,11 +55,17 @@ Registrar connections use the credentials saved in your account to read domains 
 
 ## Free Auction Inventory
 
-Open `/auction` and choose **Load Free Auctions** to browse GoDaddy's public Most Active inventory without an account, API key or manual download. **Refresh Free Auctions** checks the cached feed; the source is fetched at most once per 15-minute cache window on each running server instance. The page shows the provider's build time, the server fetch time and the next eligible source-check time. Bidding and purchasing open the provider's own listing.
+Open `/auction` in the Owner preview and choose **Load Free Auctions** to browse GoDaddy's public Most Active inventory. **Refresh Free Auctions** checks the cached feed. The source is fetched at most once per 15-minute cache window on each running server instance. The page shows the provider's build time, the server fetch time and the next eligible source-check time. Bidding and purchasing open the provider's own listing.
 
 `GET /api/auction-inventory` downloads the fixed official JSON ZIP on the existing Expo Node server, with bounded download/decompression, validation and request deduplication. Known expired listings are omitted; unsupported or size-limited records are reported. Public feed records stay in memory and do not overwrite imported inventory or create per-account Firestore copies. Saved JSON imports and the explicit fictional preview remain separate modes.
 
 The updated app/server must be deployed together for the hosted page to use this endpoint. No auction-provider credentials or new Firestore rules are required. See [the auction feed notes](docs/auction-feed.md) for limits, source details and deployment prerequisites. No tests, builds or UI checks were run for this change.
+
+## Domain Marketplace
+
+`/market` shows verified domains for sale and `/domainers/<username>` provides a seller's editable public URL. Existing `/profiles/<username>` and `/sellers/<username>` links still resolve. **Market** in the header includes **Auctions**, which opens the Beta preview at `/auction`. Both pages include the switcher below their content. Buyers can browse signed out and use a Free account to offer, message, or buy. The Owner can change the seller role and plan policy in **Features → Marketplace Listings**. The default seller tier is Starter and above, with an active Owner eligible when the global setting and role audience allow it.
+
+Sellers can create a draft directly or start from a domain in their portfolio. They publish after proving DNS control through the listing's TXT record. Stripe Connect handles checkout at the Buy Now price or the accepted offer and collects a 3% gross commission for the app. Sellers and buyers arrange the registrar transfer in their private conversation. The optional Afternic connection imports portfolio listings as drafts and submits reviewed, verified domains to Afternic from any supported registrar. [Marketplace operations](docs/marketplace.md) · [Stripe setup](docs/marketplace-payments.md) · [Afternic setup](docs/marketplace-afternic.md)
 
 ## Free Domain Market Research
 

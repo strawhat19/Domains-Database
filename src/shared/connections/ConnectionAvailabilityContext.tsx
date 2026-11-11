@@ -18,6 +18,7 @@ interface ConnectionAvailability {
   revision: number;
   eligible: boolean;
   hasConnections: boolean;
+  hasGoDaddyConnection: boolean;
   hasServerConnections: boolean;
   verifiedConnectionCount: number;
   connectionsCountLoading: boolean;
@@ -55,6 +56,7 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
     actorKey,
     loading: true,
     hasConnections: false,
+    hasGoDaddyConnection: false,
     verifiedConnectionCount: 0,
     connectionsCountLoading: true,
   });
@@ -120,7 +122,7 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
     const userId = user?.id;
     const isCurrent = (request: number) => active && request === operation && currentActor.current === actorKey;
     setState(current => ({
-      ...current, actorKey, error: ``, hasConnections: false, verifiedConnectionCount: 0,
+      ...current, actorKey, error: ``, hasConnections: false, hasGoDaddyConnection: false, verifiedConnectionCount: 0,
       loading: !!userId || authLoading, connectionsCountLoading: !!userId || authLoading,
     }));
     if (!enabled || !userId || authLoading) return () => { active = false; };
@@ -133,11 +135,15 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
       void snapshotRequest.then(snapshot => {
         if (!isCurrent(request) || snapshot.userId !== userId) return;
         const hasConnections = connectionFields.some(field => field.search && !!snapshot.values?.[field.id]?.trim());
-        const version = `${snapshot.updated}:${hasConnections}`;
+        const hasGoDaddyConnection = snapshot.accounts.some(account => account.provider === `godaddy` && Boolean(
+          connectionInputValue(account, `GODADDY_PAT`).trim()
+          || (connectionInputValue(account, `GODADDY_API_KEY`).trim() && connectionInputValue(account, `GODADDY_API_SECRET`).trim()),
+        ));
+        const version = `${snapshot.updated}:${hasConnections}:${hasGoDaddyConnection}`;
         const changed = version !== snapshotVersion;
         snapshotVersion = version;
         setState(current => ({
-          ...current, actorKey, hasConnections, error: ``, loading: false,
+          ...current, actorKey, hasConnections, hasGoDaddyConnection, error: ``, loading: false,
           revision: current.revision + Number(changed),
         }));
       }).catch(failure => {
@@ -146,7 +152,7 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
         const changed = snapshotVersion !== `error:${error}`;
         snapshotVersion = `error:${error}`;
         setState(current => ({
-          ...current, actorKey, error, loading: false, hasConnections: false, verifiedConnectionCount: 0,
+          ...current, actorKey, error, loading: false, hasConnections: false, hasGoDaddyConnection: false, verifiedConnectionCount: 0,
           connectionsCountLoading: false, revision: current.revision + Number(changed),
         }));
       });
@@ -163,7 +169,7 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
       if (!active || currentActor.current !== actorKey) return;
       setState(current => ({
         ...current, actorKey, error: failure.message, loading: false,
-        hasConnections: false, verifiedConnectionCount: 0, connectionsCountLoading: false,
+        hasConnections: false, hasGoDaddyConnection: false, verifiedConnectionCount: 0, connectionsCountLoading: false,
       }));
     };
     const unsubscribe = connectionsAPI.subscribeConnections(changedUserId => {
@@ -211,6 +217,7 @@ export const ConnectionAvailabilityProvider = ({ children, enabled = true }: { c
     loading,
     eligible,
     hasConnections,
+    hasGoDaddyConnection: !privateLoading && state.hasGoDaddyConnection,
     hasServerConnections,
     connectionsCountLoading: !enabled || authLoading || !currentView || state.connectionsCountLoading,
     verifiedConnectionCount: enabled && !authLoading && currentView && user?.id ? state.verifiedConnectionCount : 0,

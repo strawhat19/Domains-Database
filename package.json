@@ -1,6 +1,6 @@
 {
   "name": "domains-database",
-  "version": "0.0.7.3",
+  "version": "0.0.7.4",
   "private": true,
   "license": "MIT",
   "main": "expo-router/entry",
@@ -48,7 +48,8 @@
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
-    "stripe": "^23.0.1"
+    "stripe": "^23.0.1",
+    "tldts": "7.4.22"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

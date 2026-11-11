@@ -224,6 +224,7 @@
   &:disabled { opacity: .4; cursor: wait; }
 }
 .domain-row-skeleton { height: var(--portfolio-loading-row-height, 40px); transition: none; }
+.domain-row .domain-row-sell-link { width: 24px; height: 24px; flex: none; }
 .domain-row-skeleton:hover { background: transparent; }
 .domain-row-skeleton .domain-identity { min-width: 0; }
 .domain-skeleton-line {
