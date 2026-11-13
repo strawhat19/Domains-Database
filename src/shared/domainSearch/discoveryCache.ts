@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const DISCOVERY_CACHE_TTL = 60 * 60_000;
 const CACHE_VERSION = 1;
-const MAX_QUOTES = 256;
+const MAX_QUOTES = 768;
 const MAX_STORAGE_LENGTH = 512_000;
 const owners = new Map<string, OwnerCache>();
 const writes = new Map<string, Promise<void>>();
@@ -74,7 +74,17 @@ const persist = (owner: string, state: OwnerCache) => {
   const queued = (writes.get(owner) ?? Promise.resolve()).then(async () => {
     if (owners.get(owner) !== state) return;
     trimQuotes(state);
-    const value = JSON.stringify({ version: CACHE_VERSION, scope: state.scope, entries: [...state.quotes.values()] });
+    let entries = [...state.quotes.values()];
+    const serialize = () => JSON.stringify({ version: CACHE_VERSION, scope: state.scope, entries });
+    let value = serialize();
+    if (value.length > MAX_STORAGE_LENGTH) {
+      entries.sort((first, second) => second.checkedAt - first.checkedAt);
+      do {
+        entries = entries.slice(0, Math.floor(entries.length / 2));
+        value = serialize();
+      } while (entries.length && value.length > MAX_STORAGE_LENGTH);
+    }
+    if (value.length > MAX_STORAGE_LENGTH) return;
     try { await AsyncStorage.setItem(storageKey(owner), value); } catch { /* Quotes remain available in memory. */ }
   }).catch(() => {});
   writes.set(owner, queued);

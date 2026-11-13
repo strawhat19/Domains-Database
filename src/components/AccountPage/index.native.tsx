@@ -8,6 +8,7 @@ import { useAccountPage } from './useAccountPage';
 import AccountConnections from '../AccountConnections';
 import { elementProps } from '../../shared/elementProps';
 import ProfileThemePreference from '../ProfileThemePreference';
+import ToastPlacementPicker from '../ToastPlacementPicker';
 import { canAccessAdmin, canViewPayments } from '../../shared/admin/permissions';
 import { getPlanDisplayName, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { Crown, Globe2, UserRound, BadgeCheck, LockKeyhole, ShieldCheck, CalendarDays } from 'lucide-react-native';
@@ -63,6 +64,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
             </View>)}
           </View>
           <ProfileThemePreference />
+          <ToastPlacementPicker />
           <View {...elementProps(`profile-portfolio`)} style={styles.portfolio}>
             <Text {...elementProps(`profile-portfolio-title`)} style={styles.eyebrow}>{`YOUR PORTFOLIO`}</Text>
             {state.stats.map(({ id, Icon, label, value }, index) => <View key={id} {...elementProps(`profile-portfolio-row`, id)} style={[styles.field, index > 0 && styles.separatedField]}>

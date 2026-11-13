@@ -10,7 +10,7 @@ import type { ConnectionSnapshot } from '../connections/types';
 import { domainSearchFields, registrarPurchaseUrl } from './types';
 import { getPlanAccess, getFeatureAuthorization } from '../planAccess/service';
 import { popularExtensions, sortDomainExtensions, normalizeDomainSearchQuery } from './query';
-import type { DomainSearchResult, DomainSearchResults, DomainSearchVariants, DomainSearchProvider } from './types';
+import type { DomainSearchResult, DomainSearchResults, DomainSearchVariants, DomainSearchProvider, DomainSearchProgress } from './types';
 
 const cancelled = () => new Error(`Domain Search Cancelled`);
 const nextProviderSearch = new Map<string, number>();
@@ -150,7 +150,7 @@ export const searchConnectedDomains = async (
   signal: AbortSignal,
   expectedUserId?: string | null,
   expectedUpdated?: string,
-  onProgress?: (results: DomainSearchResults) => void,
+  onProgress?: (results: DomainSearchResults, progress: DomainSearchProgress) => void,
   options?: { discoveryCache?: boolean; refresh?: boolean },
 ): Promise<DomainSearchResults> => {
   const names = [...new Set(domains.map(normalizeDomainName))];
@@ -160,7 +160,9 @@ export const searchConnectedDomains = async (
   const cacheScope = JSON.stringify([connectionsUpdated, connections.paid, sources.map(({ field, values }) => [field.id, values !== undefined])]);
   const cached = options?.discoveryCache ? await readDiscoveryCache(cacheOwner, cacheScope) : null;
   if (signal.aborted) throw cancelled();
+  let completed = 0;
   let checkedAt: number | undefined;
+  const total = names.length * sources.length;
   const results = names.map(domain => ({
     domain,
     connections: sources.map(({ field }) => ({
@@ -174,6 +176,7 @@ export const searchConnectedDomains = async (
   if (!options?.refresh) for (const domain of results) for (let index = 0; index < domain.connections.length; index++) {
     const saved = cached?.get(`${domain.connections[index].provider}:${domain.domain}`);
     if (!saved) continue;
+    completed += 1;
     domain.connections[index] = { ...saved.result };
     checkedAt = Math.min(checkedAt ?? saved.checkedAt, saved.checkedAt);
   }
@@ -182,7 +185,7 @@ export const searchConnectedDomains = async (
     connectionsUpdated,
     results: results.map(result => ({ ...result, connections: [...result.connections] })),
   });
-  onProgress?.(snapshotResults());
+  onProgress?.(snapshotResults(), { total, completed });
   await Promise.all(sources.map(async ({ field, values }, providerIndex) => {
     const pace = field.id === `namecheap` ? 4000 : 1000;
     const providerKey = `${values === undefined ? `server` : userId}:${field.id}`;
@@ -233,12 +236,13 @@ export const searchConnectedDomains = async (
         if (requested) nextProviderSearch.set(providerKey, Date.now() + retryAfterMs);
       }
       results[index].connections[providerIndex] = result;
+      completed += 1;
       if (options?.discoveryCache && !signal.aborted) {
         const resultCheckedAt = Date.now();
         checkedAt = Math.min(checkedAt ?? resultCheckedAt, resultCheckedAt);
         storeDiscoveryQuote(cacheOwner, cacheScope, result, resultCheckedAt);
       }
-      if (!signal.aborted) onProgress?.(snapshotResults());
+      if (!signal.aborted) onProgress?.(snapshotResults(), { total, completed });
     }
   }));
   await checkSearchConnections(signal, connections);

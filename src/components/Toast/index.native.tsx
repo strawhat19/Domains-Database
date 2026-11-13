@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { createStyles } from './styles.native';
+import { useToastAnchor } from './useToastAnchor';
 import { elementProps } from '../../shared/elementProps';
 import { Pressable, Text, View, Platform } from 'react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
@@ -16,6 +17,7 @@ interface ToastProps {
 
 const Toast = ({ action, message, onDismiss, inline = false, kind = `error`, id = `toast` }: ToastProps) => {
   const { palette } = useTheme();
+  const anchor = useToastAnchor(460);
   const styles = useMemo(() => createStyles(palette), [palette]);
   if (!message) return null;
   const reminder = kind === `reminder`;
@@ -26,8 +28,8 @@ const Toast = ({ action, message, onDismiss, inline = false, kind = `error`, id 
       {...elementProps(`toast`, id)}
       accessibilityRole={`alert`}
       accessibilityLiveRegion={`polite`}
-      style={[styles.toast, inline && styles.inline, reminder && styles.reminder, !!action && styles.withAction]}
-      {...(Platform.OS === `web` && inline ? { dataSet: { class: `toast`, inline: `true` } } : {})}
+      style={[styles.toast, inline ? styles.inline : anchor.style, reminder && styles.reminder, !!action && styles.withAction]}
+      {...(Platform.OS === `web` ? { dataSet: { class: `toast`, ...(inline ? { inline: `true` } : { toastPlacement: anchor.placement }) } } : {})}
     >
       <Icon {...elementProps(`toast-icon`, id)} size={17} color={color} />
       <View {...elementProps(`toast-content`, id)} style={styles.content}>

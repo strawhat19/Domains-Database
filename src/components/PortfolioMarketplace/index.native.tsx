@@ -19,12 +19,12 @@ export const PortfolioSellLink = ({ id, domain, style, disabled }: { id: string;
   </Link>;
 };
 
-export const PortfolioMarketplace = ({ id, domain, style, disabled }: { id: string; domain: DomainRecord; style?: StyleProp<ViewStyle>; disabled?: boolean }) => {
+export const PortfolioMarketplace = ({ id, domain, disabled }: { id: string; domain: DomainRecord; disabled?: boolean }) => {
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const { status, appraisal, priceLabel, transferLabel, estimateLabel, suggestedPriceLabel, showEstimateAction } = usePortfolioMarketplace(domain);
   if (!status && !estimateLabel && !showEstimateAction) return null;
-  return <View {...elementProps(id)} style={[styles.metadata, style]}>
+  return <View {...elementProps(id)} style={styles.metadata}>
     {status ? <Text {...elementProps(`${id}-status`)} style={styles.status}>{status}</Text> : null}
     {priceLabel ? <Text {...elementProps(`${id}-price`)} style={styles.value}>{priceLabel}</Text> : null}
     {transferLabel ? <Text {...elementProps(`${id}-fast-transfer`)} style={styles.value}>{transferLabel}</Text> : null}

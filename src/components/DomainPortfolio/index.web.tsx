@@ -2,6 +2,7 @@ import './styles.scss';
 import { useMemo, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import DomainEditor from '../DomainEditor';
+import { usePortfolioSync } from './usePortfolioSync';
 import TableSettings from '../TableSettings/index.web';
 import StackPillShape from '../StackPillShape/index.web';
 import RegistrarSetup from '../RegistrarSetup/index.web';
@@ -29,9 +30,8 @@ import { countPortfolioStarMatches, filterPortfolioSectionsByStar } from '../../
 import { useSampleData, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { usePortfolioSearch } from '../../shared/portfolioPreferences/usePortfolioSearch';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
+import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
-import { useAfternicPortfolioSync } from '../../shared/marketplaceAfternic/PortfolioSyncContext';
-import { getAfternicSyncLabel } from '../PortfolioMarketplace/usePortfolioMarketplace';
 import { buildPortfolioCopyText, excludeHiddenPortfolioSections, type PortfolioCopyFormat } from './copyFormats';
 import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { X, Eye, Copy, Plus, Star, Check, Gauge, Search, Link2, Filter, EyeOff, Settings, RefreshCw, ArrowRight, TriangleAlert, FlaskConical, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
@@ -42,10 +42,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const portfolioRef = useRef<HTMLElement>(null);
   const mobileBoardRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const extensionSummaryRef = useHorizontalScrollFade<HTMLDivElement>();
+  const summaryRef = useHorizontalScrollFade<HTMLDivElement>();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const afternic = useAfternicPortfolioSync(!compact && !authLoading && Boolean(user?.active && !user.anonymous && user.role !== `Guest`));
-  const lastAfternicSync = getAfternicSyncLabel(afternic.syncedAt, afternic.skipped, Boolean(afternic.error));
+  const sync = usePortfolioSync(portfolio, !compact && !authLoading && Boolean(user?.active && !user.anonymous && user.role !== `Guest`));
   const { visibleColumns, columnWidths, toggleColumn, resetColumns, setColumnWidths } = useColumns();
   const preferences = usePortfolioPreferences();
   const expansion = usePortfolioExpansion();
@@ -178,8 +179,6 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const AddRowsIcon = preferences.showAddRows ? Eye : EyeOff;
   const addRowsLabel = `${preferences.showAddRows ? `Hide` : `Show`} Add Rows`;
   const fitColumns = () => setColumnWidths({ ...columnWidths, ...fitPortfolioColumns(portfolio.domains, columns, portfolioRef.current, preferences.showCosts) });
-  const manualSyncLabel = portfolio.syncing ? `Syncing…` : portfolio.manualSyncWaitSeconds > 0
-    ? `Wait ${Math.floor(portfolio.manualSyncWaitSeconds / 60)}:${String(portfolio.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const displayedError = portfolio.localError || portfolio.insightError || portfolio.error;
   const insightDomains = selection.selectedIds.size
     ? portfolio.domains.filter(domain => selection.selectedIds.has(domain.id)) : portfolio.filteredDomains;
@@ -273,7 +272,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               {`Domains`}
             </h2>
             {showHeadingSummary && <div id={`portfolio-heading-summary-stack`} className={`portfolio-summary-stack`}>
-              <div id={`portfolio-heading-extension-summary`} className={`portfolio-summary portfolio-extension-summary portfolio-heading-filters`}>
+              <div ref={extensionSummaryRef} id={`portfolio-heading-extension-summary`} className={`portfolio-summary portfolio-extension-summary portfolio-heading-filters horizontal-scroll-fade`}>
                 {!portfolio.loading && portfolio.summary.extensionCounts.map(({ extension, count }) => {
                   const extensionId = encodeURIComponent(extension);
                   return (
@@ -294,7 +293,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                   );
                 })}
               </div>
-              <div id={`portfolio-heading-summary`} className={`portfolio-summary`}>
+              <div ref={summaryRef} id={`portfolio-heading-summary`} className={`portfolio-summary horizontal-scroll-fade`}>
                 {!portfolio.loading && <div id={`portfolio-heading-star-filters`} role={`group`} aria-label={`Filter Portfolio Items By Star`} className={`portfolio-heading-filters portfolio-star-filters`}>
                   {starFilters.map(option => {
                     const filterId = `portfolio-heading-star-filter-${option.value}`;
@@ -439,32 +438,21 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               ref={toolbar.primaryActionsRef}
               className={`portfolio-domain-actions`}
             >
-              {(afternic.connected || afternic.error) && <button
-                type={`button`}
-                id={`portfolio-sync-afternic`}
-                disabled={afternic.syncing}
-                aria-busy={afternic.syncing}
-                onClick={() => void afternic.sync()}
-                className={`portfolio-button portfolio-button-secondary`}
-                aria-describedby={afternic.error ? `portfolio-afternic-sync-error` : lastAfternicSync ? `portfolio-afternic-last-sync` : undefined}
-              >
-                {afternic.syncing ? <span aria-hidden id={`portfolio-sync-afternic-spinner`} className={`portfolio-sync-spinner`} /> : <RefreshCw size={15} aria-hidden id={`portfolio-sync-afternic-icon`} className={`portfolio-button-icon`} />}
-                <span id={`portfolio-sync-afternic-text`} className={`portfolio-button-text`}>{afternic.syncing ? `Syncing Afternic…` : `Sync Afternic`}</span>
-              </button>}
-              {user && portfolio.canSyncManually && (
+              {user && sync.canSync && (
                 <button
                   type={`button`}
+                  aria-busy={sync.syncing}
                   id={`portfolio-sync-domains`}
-                  disabled={manualSyncBlocked}
-                  onClick={() => void portfolio.syncManually()}
+                  disabled={sync.blocked}
+                  onClick={() => void sync.syncManually()}
                   className={`portfolio-button portfolio-button-secondary`}
-                  aria-label={`Sync Domains From Connected Registrars, ${manualSyncLabel}`}
-                  aria-describedby={portfolio.manualSyncMessage ? `portfolio-manual-sync-message` : undefined}
-                  title={portfolio.manualSyncMessage || `Sync Domains From Connected Registrars`}
+                  aria-label={`Sync Domain Portfolio, ${sync.label}`}
+                  title={sync.message || `Sync Domain Portfolio`}
+                  aria-describedby={sync.message ? `portfolio-manual-sync-message` : undefined}
                 >
-                  {portfolio.syncing ? <span aria-hidden={`true`} id={`portfolio-sync-button-spinner`} className={`portfolio-sync-spinner`} /> : <RefreshCw size={15} aria-hidden={`true`} id={`portfolio-sync-domains-icon`} className={`portfolio-button-icon`} />}
+                  {sync.syncing ? <span aria-hidden={`true`} id={`portfolio-sync-button-spinner`} className={`portfolio-sync-spinner`} /> : <RefreshCw size={15} aria-hidden={`true`} id={`portfolio-sync-domains-icon`} className={`portfolio-button-icon`} />}
                   <span id={`portfolio-sync-domains-text`} className={`portfolio-button-text`}>
-                    {manualSyncLabel}
+                    {sync.label}
                   </span>
                 </button>
               )}
@@ -488,8 +476,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             {portfolio.manualSyncMessage}
           </p>
         )}
-        {afternic.error && <p id={`portfolio-afternic-sync-error`} role={`status`} className={`portfolio-manual-sync-message portfolio-afternic-sync-error`}>{afternic.error}</p>}
-        {lastAfternicSync && <p id={`portfolio-afternic-last-sync`} className={`portfolio-manual-sync-message`}>{lastAfternicSync}</p>}
+        {sync.afternicError && <p id={`portfolio-afternic-sync-error`} role={`status`} className={`portfolio-manual-sync-message portfolio-afternic-sync-error`}>{sync.afternicError}</p>}
         {(portfolio.refreshing || portfolio.insightNotice) && (
           <div role={`status`} aria-live={`polite`} id={`portfolio-website-info-status`} className={`portfolio-message portfolio-message-success`}>
             <p id={`portfolio-website-info-status-text`} className={`portfolio-message-text`}>
@@ -617,7 +604,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                 id={`portfolio-toolbar-domain-actions`}
                 data-visible={toolbar.showCompactActions}
                 className={`portfolio-toolbar-domain-actions`}
-                data-has-sync={Boolean(user && portfolio.canSyncManually)}
+                data-has-sync={Boolean(user && sync.canSync)}
               >
                 <button
                   type={`button`}
@@ -637,21 +624,21 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     className={`portfolio-button-icon`}
                   />
                 </button>
-                {user && portfolio.canSyncManually && (
+                {user && sync.canSync && (
                   <button
                     type={`button`}
-                    aria-busy={portfolio.syncing}
+                    aria-busy={sync.syncing}
                     tabIndex={toolbar.showCompactActions ? 0 : -1}
                     id={`portfolio-toolbar-sync-domains`}
-                    onClick={() => void portfolio.syncManually()}
+                    onClick={() => void sync.syncManually()}
                     data-focus-fallback={`portfolio-sync-domains`}
-                    disabled={!toolbar.showCompactActions || manualSyncBlocked}
-                    aria-label={`Sync Domains From Connected Registrars, ${manualSyncLabel}`}
-                    aria-describedby={portfolio.manualSyncMessage ? `portfolio-manual-sync-message` : undefined}
-                    title={portfolio.manualSyncMessage || `Sync Domains From Connected Registrars`}
+                    disabled={!toolbar.showCompactActions || sync.blocked}
+                    aria-label={`Sync Domain Portfolio, ${sync.label}`}
+                    title={sync.message || `Sync Domain Portfolio`}
+                    aria-describedby={sync.message ? `portfolio-manual-sync-message` : undefined}
                     className={`portfolio-button portfolio-button-secondary portfolio-toolbar-icon-button`}
                   >
-                    {portfolio.syncing ? (
+                    {sync.syncing ? (
                       <span
                         aria-hidden={`true`}
                         id={`portfolio-toolbar-sync-spinner`}

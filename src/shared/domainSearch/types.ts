@@ -43,6 +43,11 @@ export interface DomainSearchResults {
   results: DomainSearchDomainResult[];
 }
 
+export interface DomainSearchProgress {
+  total: number;
+  completed: number;
+}
+
 export const registrarPurchaseUrl = (provider: DomainSearchProvider, domain: string) => {
   const name = encodeURIComponent(domain);
   const links: Record<DomainSearchProvider, string> = {

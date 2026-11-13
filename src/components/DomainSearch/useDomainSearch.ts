@@ -6,6 +6,7 @@ import { getAvailableConnections } from './resultPresentation';
 import { useConnectionAvailability } from '../../shared/connections/useConnectionAvailability';
 import { DOMAIN_SEARCH_PAGE_SIZE, normalizeDomainSearchQuery } from '../../shared/domainSearch/query';
 import type { DomainSearchResults, DomainSearchVariants } from '../../shared/domainSearch/types';
+import { useDiscoveryForegroundSearch } from '../../shared/domainSearch/useDomainDiscovery';
 import { getConnectedDomainVariants, searchConnectedDomains } from '../../shared/domainSearch/client';
 
 interface SearchState {
@@ -27,6 +28,7 @@ export const useDomainSearch = () => {
   const params = useLocalSearchParams<{ q?: string | string[] }>();
   const availability = useConnectionAvailability();
   const recentSearches = useRecentSearches();
+  const beginForegroundSearch = useDiscoveryForegroundSearch();
   const { user, loading: authLoading, loginRevision } = useAuth();
   const actorKey = `${user?.id ?? `guest`}:${loginRevision}:${availability.revision}`;
   const currentActor = useRef(actorKey);
@@ -97,8 +99,10 @@ export const useDomainSearch = () => {
       setState(current => ({ ...current, actorKey, error: failure instanceof Error ? failure.message : `Enter A Valid Domain Name` }));
       return;
     }
-    controller.current?.abort();
     const request = new AbortController();
+    const releasePriority = beginForegroundSearch();
+    request.signal.addEventListener(`abort`, releasePriority, { once: true });
+    controller.current?.abort();
     const requestRevision = ++revision.current;
     controller.current = request;
     const previous = append ? results : null;
@@ -128,6 +132,8 @@ export const useDomainSearch = () => {
         error: failure instanceof Error ? failure.message : `Could Not Check Domain Availability`,
       } : current);
     } finally {
+      request.signal.removeEventListener(`abort`, releasePriority);
+      releasePriority();
       if (isCurrent()) setState(current => isCurrent() ? { ...current, loading: false, loadingMore: false } : current);
       if (controller.current === request) controller.current = null;
     }

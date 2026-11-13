@@ -1,0 +1,26 @@
+.header-count-badge,
+.header-link-beta {
+  top: -6px;
+  right: -4px;
+  height: 19px;
+  display: grid;
+  color: var(--account-badge-color, #fff);
+  padding: 0 6px;
+  min-width: 19px;
+  font-size: 9px;
+  line-height: 1;
+  position: absolute;
+  border-radius: 999px;
+  letter-spacing: .3px;
+  place-items: center;
+  background: var(--account-badge-background, #187565);
+  pointer-events: none;
+  border: 2px solid var(--paper);
+  font-family: 'DMSans_700Bold', sans-serif;
+}
+
+.header-count-badge-loading { background: var(--skeleton); }
+
+@media (min-width: 1001px) and (max-width: 1480px) {
+  .header-count-badge, .header-link-beta { top: -4px; }
+}

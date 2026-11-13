@@ -41,7 +41,7 @@ const DomainSearch = () => {
   const busy = state.loading || state.loadingMore;
   const disabled = busy || !state.query.trim();
   const pageLoading = state.accessLoading;
-  const discovery = useDomainDiscovery(busy);
+  const discovery = useDomainDiscovery();
   const discoveryShelf = useDiscoveryShelf({
     sidebar: sideBySide,
     availableHeight: workspaceHeight,
@@ -354,8 +354,9 @@ const DomainSearch = () => {
                 tldFilter={discovery.tldFilter}
                 results={discovery.filteredResults}
                 tldResults={discovery.statusResults}
-                setTldFilter={discovery.setTldFilter}
                 onSearch={state.searchRecent}
+                toggleTldFilter={discovery.toggleTldFilter}
+                error={discovery.error}
                 density={(pageContentHeight ?? height - 210) < 726 ? `pill` : `compact`}
                 loading={discovery.loading || discovery.accessLoading}
               />

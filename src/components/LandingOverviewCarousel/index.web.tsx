@@ -1,5 +1,5 @@
 import './styles.scss';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { Link } from 'expo-router';
 import RouterAnchor from '../RouterAnchor';
 import { getBlogHref } from '../../shared/blog/metadata';
@@ -7,6 +7,7 @@ import { overviewSlides, overviewCarouselSlides } from '../LandingOverview/conte
 import LandingOverviewPreview from '../LandingOverviewPreview';
 import { useOverviewCarousel } from './useOverviewCarousel.web';
 import { useAppBrand } from '../../shared/branding/useAppBrand';
+import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
 import { Search, Globe2, Layers3, BookOpen, CalendarDays, LayoutTemplate, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const slideIcons = { overview: LayoutTemplate, inventory: Globe2, renewals: CalendarDays, projects: Layers3, discovery: Search };
@@ -15,6 +16,15 @@ const LandingOverviewCarousel = () => {
   const { name, switched } = useAppBrand();
   const state = useOverviewCarousel(overviewSlides.length);
   const pagination = useRef<HTMLDivElement>(null);
+  const fadePagination = useHorizontalScrollFade<HTMLDivElement>();
+  const setPagination = useCallback((element: HTMLDivElement | null) => {
+    pagination.current = element;
+    const cleanup = fadePagination(element);
+    return () => {
+      cleanup?.();
+      pagination.current = null;
+    };
+  }, [fadePagination]);
   const selectedSlide = overviewSlides[state.index] ?? overviewSlides[0];
   useEffect(() => {
     const element = pagination.current;
@@ -101,7 +111,7 @@ const LandingOverviewCarousel = () => {
           className={`overview-carousel-arrow`}
           aria-controls={`overview-carousel-viewport`}
         ><ChevronLeft size={19} aria-hidden id={`overview-carousel-previous-icon`} className={`overview-carousel-control-icon`} /></button>
-        <div ref={pagination} id={`overview-carousel-pagination`} className={`overview-carousel-pagination`} role={`group`} aria-label={`Choose A Feature`}>
+        <div ref={setPagination} role={`group`} id={`overview-carousel-pagination`} aria-label={`Choose A Feature`} className={`overview-carousel-pagination horizontal-scroll-fade`}>
           {overviewSlides.map((slide, index) => {
             const Icon = slideIcons[slide.id];
             return <button

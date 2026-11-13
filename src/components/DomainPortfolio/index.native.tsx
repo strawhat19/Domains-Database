@@ -2,11 +2,13 @@ import { Link, useRouter } from 'expo-router';
 import RegistrarSetup from '../RegistrarSetup';
 import StatePanel from '../StatePanel';
 import { createStyles } from './styles.native';
+import { usePortfolioSync } from './usePortfolioSync';
 import { REGISTRARS } from '../../shared/config';
 import TagPicker from '../TagPicker/index.native';
 import DomainCard from '../DomainCard/index.native';
 import PortfolioPagination from '../PortfolioPagination/index.native';
 import NativePortfolioBoard from '../NativePortfolioBoard/index.native';
+import HorizontalScrollFade from '../HorizontalScrollFade/index.native';
 import NativePortfolioSheet from '../NativePortfolioSheet/index.native';
 import CurrencyField from '../CurrencyField/index.native';
 import DomainSiteIcon from '../DomainSiteIcon/index.native';
@@ -24,12 +26,11 @@ import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { normalizeDomainLink } from '../../shared/domainLinks';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
 import { getDomainDeletionRestriction } from '../../shared/domainUtils';
+import { PortfolioMarketplace } from '../PortfolioMarketplace/index.native';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import { NativeDragSource, NativeDropZone } from '../NativePortfolioDrag/index.native';
 import ModalTitle, { type NativeModalTitleHandle } from '../ModalTitle/index.native';
 import { normalizeDomainDifficulty, normalizeDomainProjectStatus } from '../../shared/domainProject';
-import { useAfternicPortfolioSync } from '../../shared/marketplaceAfternic/PortfolioSyncContext';
-import { getAfternicSyncLabel } from '../PortfolioMarketplace/usePortfolioMarketplace';
 import { getCustomSiteIconUrl, getDomainSiteIconUrl } from '../../shared/domainSiteIcon';
 import { canSetPublicDomain, publicDomainHint, publicDomainLabel, publicDomainName, publicDomainRenameHint } from '../DomainEditor/publicProfileVisibility';
 import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
@@ -62,15 +63,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
   const groupByDomainId = useMemo(() => new Map(customGroups.flatMap(group => group.domainIds.map(id => [id, group.id] as const))), [customGroups]);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const afternic = useAfternicPortfolioSync(!compact && !authLoading && Boolean(user?.active && !user.anonymous && user.role !== `Guest`));
-  const lastAfternicSync = getAfternicSyncLabel(afternic.syncedAt, afternic.skipped, Boolean(afternic.error));
+  const sync = usePortfolioSync(state, !compact && !authLoading && Boolean(user?.active && !user.anonymous && user.role !== `Guest`));
   const [editorIconFailed, setEditorIconFailed] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectionToolsWidth, setSelectionToolsWidth] = useState(0);
   const editorTitleRef = useRef<NativeModalTitleHandle>(null);
-  const manualSyncBlocked = state.loading || state.syncing || state.manualSyncWaitSeconds > 0;
-  const manualSyncLabel = state.syncing ? `Syncing…` : state.manualSyncWaitSeconds > 0
-    ? `Wait ${Math.floor(state.manualSyncWaitSeconds / 60)}:${String(state.manualSyncWaitSeconds % 60).padStart(2, `0`)}` : `Sync`;
   const pagination = usePortfolioPagination(state.visibleDomainIds,
     JSON.stringify([state.search.trim().toLowerCase(), state.registrar, state.starFilter, state.sortByName]), !compact);
   const visibleIds = pagination.domainIds;
@@ -179,32 +176,20 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             </View>
           </View>}
           <View {...elementProps(`native-portfolio-primary-actions`)} style={styles.headingActions}>
-            {!!(afternic.connected || afternic.error) && <Pressable
-              {...elementProps(`native-portfolio-sync-afternic`)}
-              disabled={afternic.syncing}
-              accessibilityRole={`button`}
-              onPress={() => void afternic.sync()}
-              accessibilityHint={afternic.error || lastAfternicSync || undefined}
-              accessibilityState={{ disabled: afternic.syncing, busy: afternic.syncing }}
-              style={[styles.secondaryButton, styles.syncButton, afternic.syncing && styles.disabled]}
-            >
-              {afternic.syncing ? <ActivityIndicator {...elementProps(`native-portfolio-sync-afternic-progress`)} size={`small`} color={palette.accent} /> : <RefreshCw {...elementProps(`native-portfolio-sync-afternic-icon`)} size={15} color={palette.accent} />}
-              <Text {...elementProps(`native-portfolio-sync-afternic-label`)} style={styles.secondaryButtonText}>{afternic.syncing ? `Syncing Afternic…` : `Sync Afternic`}</Text>
-            </Pressable>}
-            {user && state.canSyncManually && (
+            {user && sync.canSync && (
               <Pressable
                 {...elementProps(`native-portfolio-sync-domains`)}
-                disabled={manualSyncBlocked}
+                disabled={sync.blocked}
                 accessibilityRole={`button`}
-                onPress={() => void state.syncManually()}
-                accessibilityState={{ disabled: manualSyncBlocked, busy: state.syncing }}
-                accessibilityLabel={`Sync Domains From Connected Registrars, ${manualSyncLabel}`}
-                accessibilityHint={state.manualSyncMessage || `Refresh Your Domains From Connected Registrars`}
-                style={[styles.secondaryButton, styles.syncButton, manualSyncBlocked && styles.disabled]}
+                onPress={() => void sync.syncManually()}
+                accessibilityLabel={`Sync Domain Portfolio`}
+                accessibilityHint={sync.message || undefined}
+                accessibilityState={{ busy: sync.syncing, disabled: sync.blocked }}
+                style={[styles.secondaryButton, styles.syncButton, sync.blocked && styles.disabled]}
               >
-                {state.syncing ? <ActivityIndicator {...elementProps(`native-portfolio-sync-button-progress`)} size={`small`} color={palette.accent} /> : <RefreshCw {...elementProps(`native-portfolio-sync-domains-icon`)} size={15} color={palette.accent} />}
+                {sync.syncing ? <ActivityIndicator {...elementProps(`native-portfolio-sync-button-progress`)} size={`small`} color={palette.accent} /> : <RefreshCw {...elementProps(`native-portfolio-sync-domains-icon`)} size={15} color={palette.accent} />}
                 <Text {...elementProps(`native-portfolio-sync-domains-text`)} style={styles.secondaryButtonText}>
-                  {manualSyncLabel}
+                  {sync.label}
                 </Text>
               </Pressable>
             )}
@@ -217,13 +202,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
           </View>
         </View>
       </View>
-      {user && !!state.manualSyncMessage && (
+      {user && !!sync.message && (
         <Text {...elementProps(`native-portfolio-manual-sync-message`)} style={styles.manualSyncMessage} accessibilityLiveRegion={`polite`}>
-          {state.manualSyncMessage}
+          {sync.message}
         </Text>
       )}
-      {!!afternic.error && <Text {...elementProps(`native-portfolio-afternic-sync-error`)} style={[styles.manualSyncMessage, { color: palette.danger }]} accessibilityLiveRegion={`polite`}>{afternic.error}</Text>}
-      {!!lastAfternicSync && <Text {...elementProps(`native-portfolio-afternic-last-sync`)} style={styles.manualSyncMessage}>{lastAfternicSync}</Text>}
+      {!!sync.afternicError && <Text {...elementProps(`native-portfolio-afternic-sync-error`)} style={[styles.manualSyncMessage, { color: palette.danger }]} accessibilityLiveRegion={`polite`}>{sync.afternicError}</Text>}
       <Pressable
         onPress={refreshWebsiteInfo}
         accessibilityRole={`button`}
@@ -300,7 +284,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
             />
           </View>
         </View>
-        <ScrollView {...elementProps(`native-portfolio-registrars`)} horizontal showsHorizontalScrollIndicator={false} style={styles.registrarScroll} contentContainerStyle={styles.registrarList}>
+        <HorizontalScrollFade
+          fadeColor={palette.paper}
+          style={styles.registrarScroll}
+          contentContainerStyle={styles.registrarList}
+          {...elementProps(`native-portfolio-registrars`)}
+        >
           {([`All`, ...REGISTRARS] as const).map(registrar => (
             <Pressable
               {...elementProps(`native-portfolio-registrar-filter`, registrar.toLowerCase().replace(/\s/g, `-`))}
@@ -316,10 +305,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </Text>
             </Pressable>
           ))}
-        </ScrollView>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        </HorizontalScrollFade>
+        <HorizontalScrollFade
+          fadeColor={palette.paper}
           style={styles.registrarScroll}
           contentContainerStyle={styles.registrarList}
           {...elementProps(`native-portfolio-star-filters`)}
@@ -347,13 +335,12 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </Text>
             </Pressable>
           ))}
-        </ScrollView>
-        <ScrollView
-          {...elementProps(`native-portfolio-selection-tools`)}
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        </HorizontalScrollFade>
+        <HorizontalScrollFade
+          fadeColor={palette.paper}
           style={styles.registrarScroll}
           contentContainerStyle={styles.registrarList}
+          {...elementProps(`native-portfolio-selection-tools`)}
           onLayout={event => setSelectionToolsWidth(event.nativeEvent.layout.width)}
         >
           <Pressable
@@ -397,7 +384,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </Text>
             )}
           </View>
-        </ScrollView>
+        </HorizontalScrollFade>
       </View>
       {!compact && !state.loading && pagination.total > 25 && <PortfolioPagination pagination={pagination} />}
       <View {...elementProps(`native-portfolio-records`)} style={styles.records} accessibilityState={{ busy: state.loading }}>
@@ -598,6 +585,13 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
               </View>
               <ScrollView {...elementProps(`native-domain-editor-scroll`)} style={styles.formScroll} contentContainerStyle={styles.form} keyboardShouldPersistTaps={`handled`}>
                 {renderEntryTabs(state.saving)}
+                {editingRecord && state.editorOpen && (
+                  <PortfolioMarketplace
+                    domain={editingRecord}
+                    disabled={state.saving}
+                    id={`native-domain-editor-marketplace-${editingRecord.id}`}
+                  />
+                )}
                 <View {...elementProps(`native-domain-editor-site-icon-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-site-icon-label`)} style={styles.fieldLabel}>
                     {`Site Icon URL`}

@@ -6,6 +6,7 @@ import { useWebsiteInsights } from '../websiteInsights/useWebsiteInsights';
 import type { ConnectionProvider, ConnectionSnapshot } from '../connections/types';
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRegistrarSync, type ManualSyncChoice } from '../registrarSync/useRegistrarSync';
+import { useBackgroundProgressReporter, type BackgroundProgressUpdate } from '../backgroundProgress/BackgroundProgressContext';
 import type { AccountSyncStatuses, ConnectedSyncRegistrar, ConnectionSyncResult, ConnectionSyncStatuses } from '../registrarSync/types';
 
 export interface DomainContextValue {
@@ -21,8 +22,8 @@ export interface DomainContextValue {
   manualSyncChoices: ManualSyncChoice[];
   connectedSyncRegistrars: ConnectedSyncRegistrar[];
   closeManualSync: () => void;
+  syncManually: (connectionId?: string, syncRelated?: () => Promise<void>) => Promise<void>;
   syncAllManually: () => Promise<void>;
-  syncManually: (connectionId?: string) => Promise<void>;
   syncRegistrarDomains: (provider: ConnectionProvider) => Promise<void>;
   refreshing: boolean;
   insightError: string;
@@ -48,11 +49,15 @@ export interface DomainContextValue {
 
 export const DomainContext = createContext<DomainContextValue | undefined>(undefined);
 
-export const DomainProvider = ({ children, enabled = true, requested = false }: PropsWithChildren<{ enabled?: boolean; requested?: boolean }>) => {
+export const DomainProvider = ({ children, enabled = true, preload = false, requested = false }: PropsWithChildren<{ enabled?: boolean; preload?: boolean; requested?: boolean }>) => {
   const [requestedOnce, setRequestedOnce] = useState(false);
-  const domainEnabled = enabled && (requested || requestedOnce);
+  const domainEnabled = enabled && (preload || requested || requestedOnce);
   const active = useRef(false);
   const revision = useRef(0);
+  const readError = useRef(``);
+  const showProgress = useRef(enabled && preload);
+  const report = useBackgroundProgressReporter(`portfolio`, `Your Domains`);
+  showProgress.current = enabled && preload;
   if (!domainEnabled) active.current = false;
   const [error, setError] = useState(``);
   const [notice, setNotice] = useState(``);
@@ -60,8 +65,8 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
   const [domains, setDomains] = useState<DomainRecord[]>([]);
 
   useEffect(() => {
-    if (enabled && requested) setRequestedOnce(true);
-  }, [enabled, requested]);
+    if (enabled && (requested || preload)) setRequestedOnce(true);
+  }, [enabled, preload, requested]);
 
   useEffect(() => {
     let mounted = true;
@@ -71,7 +76,9 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
     setDomains([]);
     setError(``);
     setNotice(``);
-    if (!domainEnabled) return () => { active.current = false; ++revision.current; };
+    readError.current = ``;
+    if (!domainEnabled) { report(null); return; }
+    if (showProgress.current) report({});
     const isCurrent = () => mounted && active.current && run === revision.current;
     let snapshotRevision = 0;
     const receive = (records: DomainRecord[]) => {
@@ -79,10 +86,13 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
       setDomains(records);
       setLoading(false);
       setError(``);
+      readError.current = ``;
     };
     const fail = (reason: unknown) => {
       if (!isCurrent()) return;
-      setError(reason instanceof Error ? reason.message : `Could Not Load Portfolio`);
+      const message = reason instanceof Error ? reason.message : `Could Not Load Portfolio`;
+      readError.current = message;
+      setError(message);
       setLoading(false);
     };
     const unsubscribe = api.subscribeDomains(records => {
@@ -92,18 +102,27 @@ export const DomainProvider = ({ children, enabled = true, requested = false }: 
     const requestRevision = snapshotRevision;
     api.getDomains().then(records => {
       if (requestRevision === snapshotRevision) receive(records);
-    }).catch(fail);
-    return () => { mounted = false; active.current = false; ++revision.current; unsubscribe(); };
-  }, [domainEnabled]);
+    }).catch(reason => { if (requestRevision === snapshotRevision) fail(reason); });
+    return () => { mounted = false; active.current = false; ++revision.current; unsubscribe(); report(null); };
+  }, [domainEnabled, report]);
 
   const refreshDomains = useCallback(async () => {
     if (!domainEnabled || !active.current) return;
     const run = revision.current;
     const records = await api.getDomains();
-    if (active.current && run === revision.current) setDomains(records);
+    if (active.current && run === revision.current) {
+      const failedRead = readError.current;
+      if (failedRead) setError(current => current === failedRead ? `` : current);
+      readError.current = ``;
+      setDomains(records);
+    }
   }, [domainEnabled]);
+  const reportAutomaticSync = useCallback((update: BackgroundProgressUpdate | null) => {
+    if (!update || !showProgress.current) { report(null); return; }
+    report(update.done && readError.current ? { error: `Could Not Load Your Domains` } : update);
+  }, [report]);
   const syncReady = useAfterPaint(domainEnabled && !loading);
-  const sync = useRegistrarSync(refreshDomains, syncReady);
+  const sync = useRegistrarSync(refreshDomains, syncReady, reportAutomaticSync);
   const insights = useWebsiteInsights(refreshDomains, domainEnabled);
   const refreshWebsiteInsights = useCallback(async (records: DomainRecord[]) => {
     if (!domainEnabled || !active.current) return;

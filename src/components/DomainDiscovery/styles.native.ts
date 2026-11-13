@@ -4,6 +4,7 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   faded: { opacity: .55 },
+  progressRow: { gap: 6, flexDirection: `row`, alignItems: `center` },
   section: { gap: 12, minWidth: 0 },
   sidebarSection: { flex: 1, minHeight: 0 },
   shelf: { flex: 1, minHeight: 0 },
@@ -30,9 +31,9 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   pillWatchAction: { top: 6 },
   compareControl: { ...StyleSheet.absoluteFillObject, zIndex: 1, borderRadius: 10 },
   comparePressed: { backgroundColor: `${palette.accent}14` },
-  filterGroup: { gap: 5, flexShrink: 0, flexWrap: `nowrap`, flexDirection: `row`, alignItems: `center` },
+  filterGroup: { gap: 8, flexShrink: 0, flexWrap: `nowrap`, flexDirection: `row`, alignItems: `center` },
   filterDivider: { width: 1, height: 20, marginHorizontal: 3, backgroundColor: palette.line },
-  category: { gap: 6, flexShrink: 0, minHeight: 36, borderWidth: 1, borderRadius: 7, paddingHorizontal: 12, flexDirection: `row`, alignItems: `center`, borderColor: palette.line },
+  category: { gap: 6, flexShrink: 0, minHeight: 36, borderWidth: 1, borderRadius: 7, overflow: `visible`, position: `relative`, alignItems: `center`, flexDirection: `row`, paddingHorizontal: 12, borderColor: palette.line },
   selectedCategory: { borderColor: palette.accent, backgroundColor: palette.subtle },
   categoryLabel: { fontSize: 12, fontFamily: `DMSans_600SemiBold` },
   refresh: { gap: 5, padding: 6, flexShrink: 0, flexDirection: `row`, alignItems: `center` },

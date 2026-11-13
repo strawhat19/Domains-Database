@@ -656,6 +656,7 @@ const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEdito
                   <DomainMetadata
                     domain={domain}
                     idPrefix={`domain-editor-metadata`}
+                    disabled={saving || confirmingDelete || actionsDisabled}
                     hideProjectDetails={hideProjectDetails}
                   />
                 )}

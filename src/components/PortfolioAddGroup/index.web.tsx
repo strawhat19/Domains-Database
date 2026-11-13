@@ -4,9 +4,11 @@ import { createPortal } from 'react-dom';
 import { Plus, Database } from 'lucide-react';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import { usePortfolioAddGroup, type PortfolioAddGroupProps } from './usePortfolioAddGroup';
+import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
 
 const PortfolioAddGroup = (props: PortfolioAddGroupProps) => {
   const group = usePortfolioAddGroup(props);
+  const suggestionsRef = useHorizontalScrollFade<HTMLDivElement>();
   const scope = `${props.idPrefix}-add-group`;
 
   return (
@@ -74,7 +76,7 @@ const PortfolioAddGroup = (props: PortfolioAddGroupProps) => {
             onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}
           />
           {group.suggestions.length > 0 && (
-            <div id={`${scope}-quick-add-pills`} className={`portfolio-quick-add-pills`}>
+            <div ref={suggestionsRef} id={`${scope}-quick-add-pills`} className={`portfolio-quick-add-pills horizontal-scroll-fade`}>
               {group.suggestions.map(suggestion => {
                 const pillScope = `${scope}-quick-add-group-${suggestion.id}`;
                 const label = `Add ${suggestion.name} to ${group.destinationName}`;

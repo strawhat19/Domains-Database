@@ -1,12 +1,14 @@
 import './styles.scss';
 import type { ModalTabsProps } from './types';
 import { useModalTabs } from './useModalTabs';
+import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
 
 const ModalTabs = <Tab extends string,>({ id, value, label, options, onChange, disabled = false, autoFocus = false }: ModalTabsProps<Tab>) => {
   const tabs = useModalTabs({ id, value, label, options, onChange, disabled });
+  const scrollRef = useHorizontalScrollFade<HTMLDivElement>();
 
   return (
-    <div id={`${id}-tabs`} role={`tablist`} aria-label={label} className={`modal-tabs`}>
+    <div ref={scrollRef} role={`tablist`} id={`${id}-tabs`} aria-label={label} className={`modal-tabs horizontal-scroll-fade`}>
       {options.map(({ id: tab, label: tabLabel, Icon, count }) => (
         <button
           key={tab}

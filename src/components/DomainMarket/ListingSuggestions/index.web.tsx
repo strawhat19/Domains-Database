@@ -1,4 +1,5 @@
 import './styles.scss';
+import '../../HorizontalScrollFade/styles.scss';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Globe2, Plus, Tag } from 'lucide-react';
 import { useListingSuggestions, type ListingSuggestionsProps } from './useListingSuggestions';
@@ -99,7 +100,14 @@ const ListingSuggestions = ({ onSelect, onDismiss, dismissedIds, excludedDomains
         <button type={`button`} id={`market-listing-suggestions-next`} className={`market-button market-icon-button`} aria-label={`Next Domain Suggestions`} aria-controls={`market-listing-suggestions-list`} disabled={!edges.next} onClick={() => move(1)}><ChevronRight size={16} aria-hidden /></button>
       </div> : null}
     </div>
-    {suggestions.length ? <ul ref={list} id={`market-listing-suggestions-list`} className={`market-listing-suggestions__list`} onScroll={updateEdges}>
+    {suggestions.length ? <ul
+      ref={list}
+      onScroll={updateEdges}
+      id={`market-listing-suggestions-list`}
+      data-scroll-fade-left={edges.previous ? `` : undefined}
+      data-scroll-fade-right={edges.next ? `` : undefined}
+      className={`market-listing-suggestions__list horizontal-scroll-fade`}
+    >
       {suggestions.map(({ id, name, estimateLabel, fields }, index) => <li key={id} id={`market-listing-suggestion-${id}`} className={`market-listing-suggestions__card market-listing-suggestions__item`}>
         <div id={`market-listing-suggestion-domain-${id}`} className={`market-listing-suggestions__domain`}><Globe2 size={16} aria-hidden />{name}</div>
         <div id={`market-listing-suggestion-estimate-${id}`} className={`market-listing-suggestions__estimate`}>

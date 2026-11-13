@@ -6,9 +6,11 @@ import { X, Plus, Search } from 'lucide-react';
 import { allowDomainsInCollections } from '../../shared/config';
 import DomainSiteIcon from '../DomainSiteIcon/index.web';
 import { usePortfolioAddDomains, type PortfolioAddDomainsProps } from './usePortfolioAddDomains';
+import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
 
 const PortfolioAddDomains = (props: PortfolioAddDomainsProps) => {
   const picker = usePortfolioAddDomains(props);
+  const suggestionsRef = useHorizontalScrollFade<HTMLDivElement>();
   if (props.collection && !allowDomainsInCollections) return null;
   const scope = `${props.idPrefix}-add-domains`;
   const destinationName = picker.destinationName;
@@ -90,7 +92,7 @@ const PortfolioAddDomains = (props: PortfolioAddDomainsProps) => {
             <Search size={12} aria-hidden={`true`} id={`${scope}-picker-icon`} className={`portfolio-add-domains-icon`} />
           </button>
           {!!picker.quickSuggestions.length && (
-            <div id={`${scope}-quick-add-pills`} className={`portfolio-quick-add-pills`}>
+            <div ref={suggestionsRef} id={`${scope}-quick-add-pills`} className={`portfolio-quick-add-pills horizontal-scroll-fade`}>
               {picker.quickSuggestions.map(domain => {
                 const domainScope = `${scope}-quick-add-domain-${domain.id}`;
                 const label = `Add ${domain.name} to ${destinationName}`;

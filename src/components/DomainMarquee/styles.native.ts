@@ -19,6 +19,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   skeleton: { height: 28, flexGrow: 1, borderRadius: 14, backgroundColor: palette.skeleton },
   stackSkeleton: { borderRadius: 4, backgroundColor: `transparent` },
   stackPill: { borderRadius: 4, paddingRight: 16, borderColor: `transparent`, backgroundColor: `transparent` },
+  transparentBar: { borderBottomColor: `transparent`, backgroundColor: `transparent` },
   bar: { height: 42, alignSelf: `center`, alignItems: `center`, flexDirection: `row`, borderBottomWidth: 1, borderBottomColor: palette.line, backgroundColor: palette.canvas },
   pill: { gap: 7, minHeight: 28, borderWidth: 1, borderRadius: 14, paddingVertical: 4, paddingHorizontal: 12, alignItems: `center`, flexDirection: `row` },
 });

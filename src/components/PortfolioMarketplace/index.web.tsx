@@ -15,10 +15,10 @@ export const PortfolioSellLink = ({ id, domain, className, disabled }: { id: str
   </Link>;
 };
 
-export const PortfolioMarketplace = ({ id, domain, disabled, className = `` }: { id: string; domain: DomainRecord; disabled?: boolean; className?: string }) => {
+export const PortfolioMarketplace = ({ id, domain, disabled }: { id: string; domain: DomainRecord; disabled?: boolean }) => {
   const { status, appraisal, priceLabel, transferLabel, estimateLabel, suggestedPriceLabel, showEstimateAction } = usePortfolioMarketplace(domain);
   if (!status && !estimateLabel && !showEstimateAction) return null;
-  return <div id={id} className={`portfolio-marketplace ${className}`}>
+  return <div id={id} className={`portfolio-marketplace`}>
     {status && <span id={`${id}-status`} className={`portfolio-marketplace-status`}>{status}</span>}
     {priceLabel && <span id={`${id}-price`} className={`portfolio-marketplace-price`}>{priceLabel}</span>}
     {transferLabel && <span id={`${id}-fast-transfer`} className={`portfolio-marketplace-price`}>{transferLabel}</span>}

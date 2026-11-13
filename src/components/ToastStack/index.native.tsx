@@ -2,17 +2,22 @@ import { useRef } from 'react';
 import { styles } from './styles.native';
 import ToastStackItem from '../ToastStackItem';
 import type { ToastStackProps } from './types';
+import { useToastAnchor } from '../Toast/useToastAnchor';
 import { elementProps } from '../../shared/elementProps';
 import { View, Platform, ScrollView, useWindowDimensions } from 'react-native';
 
 const ToastStack = ({ scope, notices, onDismiss, children }: ToastStackProps) => {
   const entryTimeline = useRef({ nextAt: 0 }).current;
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const anchor = useToastAnchor(720);
   const maxHeight = Math.max(0, height - 48);
-  const toastWidth = Math.max(0, Math.min(720, width - 48));
   if (!notices.length && !children) return null;
   return (
-    <View {...elementProps(`toast-stack`, scope)} style={[styles.root, { maxHeight }, Platform.OS === `web` && { width: toastWidth }]}>
+    <View
+      {...elementProps(`toast-stack`, scope)}
+      style={[styles.root, { maxHeight }, anchor.style]}
+      {...(Platform.OS === `web` ? { dataSet: { class: `toast-stack`, toastPlacement: anchor.placement } } : {})}
+    >
       <ScrollView
         nestedScrollEnabled
         keyboardShouldPersistTaps={`handled`}

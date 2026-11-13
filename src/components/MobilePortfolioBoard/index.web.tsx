@@ -19,6 +19,7 @@ import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
 import { PORTFOLIO_PREVIEW_LIMIT, allowDomainsInCollections } from '../../shared/config';
 import { portfolioHaptic } from '../../shared/common/haptics.web';
+import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
 import { buildPortfolioDestinationTree } from '../../shared/portfolioPreferences/destinationTree';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
 import type { PortfolioGroup, PortfolioCollectionSection } from '../../shared/portfolioPreferences/types';
@@ -26,6 +27,7 @@ import { Plus, Folder, Ellipsis, GripVertical } from 'lucide-react';
 
 const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
   const boardRef = useRef<HTMLDivElement>(null);
+  const columnsRef = useHorizontalScrollFade<HTMLDivElement>();
   const preferences = usePortfolioPreferences();
   const expansion = usePortfolioExpansion();
   useStickyBoardHeaders(boardRef);
@@ -302,9 +304,10 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
       ) : (
         <>
           <div
+            ref={columnsRef}
             data-board-scroll={`horizontal`}
             id={`mobile-board-columns-list`}
-            className={`mobile-board-columns`}
+            className={`mobile-board-columns horizontal-scroll-fade`}
           >
             {props.sections.collections.map(renderColumn)}
             {preferences.showAddRows && (

@@ -9,8 +9,10 @@ import ThemeToggle from '../ThemeToggle';
 import ScrollToTop from '../ScrollToTop';
 import RouterAnchor from '../RouterAnchor';
 import AuthFeedback from '../AuthFeedback';
+import HeaderCountBadge from '../HeaderCountBadge';
 import DomainMarquee from '../DomainMarquee';
 import AccountBackdrop from '../AccountBackdrop';
+import BackgroundProgressOverlay from '../BackgroundProgressOverlay';
 import { routes, isAdminPath } from '../../shared/routes';
 import { useDomainsMenu } from './useDomainsMenu';
 import NotificationBell from '../NotificationBell';
@@ -66,13 +68,12 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
             {item.label}
           </span>
           {(item.countLoading || (item.count ?? 0) > 0) && (
-            <span
-              aria-hidden
-              className={`header-link-count${item.countLoading ? ` header-link-count-skeleton` : ``}`}
+            <HeaderCountBadge
+              count={item.count}
+              className={`header-link-count`}
+              loading={item.countLoading}
               id={`header-link-count-${item.label.toLowerCase()}`}
-            >
-              {item.countLoading ? null : item.count}
-            </span>
+            />
           )}
           {beta && (
             <span
@@ -145,6 +146,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       data-fit-view={fitViewport || undefined}
       data-auth-page={pathname === routes.signin.href || pathname === routes.signup.href || undefined}
       data-profile-page={pathname === routes.profile.href || undefined}
+      data-search-page={pathname === routes.search.href || undefined}
       data-connections-page={pathname === routes.connections.href || undefined}
       data-search-viewport={searchViewport || undefined}
       style={{
@@ -236,6 +238,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
       </main>
       <AuthFeedback />
       <Toast id={`theme-preference-error`} message={themeError} onDismiss={clearThemeError} />
+      <BackgroundProgressOverlay scrollToTopVisible={scroll.showScrollTop} />
       <ScrollToTop
         visible={scroll.showScrollTop}
         onPress={scroll.scrollToTop}

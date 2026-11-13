@@ -3,6 +3,7 @@ import type { DomainDiscoveryResult } from '../../shared/domainSearch/discovery'
 
 export interface DomainDiscoveryCarouselProps {
   suffix: string;
+  error?: string;
   loading?: boolean;
   disabled?: boolean;
   tldFilter: string;
@@ -10,5 +11,5 @@ export interface DomainDiscoveryCarouselProps {
   results: DomainDiscoveryResult[];
   tldResults: DomainDiscoveryResult[];
   onSearch: (domain: string) => void;
-  setTldFilter: (value: string) => void;
+  toggleTldFilter: (value: string) => void;
 }

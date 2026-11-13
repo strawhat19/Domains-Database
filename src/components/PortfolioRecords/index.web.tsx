@@ -335,9 +335,9 @@ const PortfolioRecords = ({
   const isGroupParentCollapsed = (group: PortfolioGroup) => expansion.isCollectionCollapsed(groupCollections.get(group.key)?.id);
   const isGroupCollapsed = (group: PortfolioGroup) => isGroupParentCollapsed(group) || expansion.isGroupCollapsed(group.key);
   const renderedMainGroups = mainGroups.filter(group => group.domains.length || hasGroupHeading(group));
-  const hideColumnNames = !loading && !groups.some(group => renderedGroupDomains.get(group.key)?.length && !isGroupCollapsed(group));
+  const hideColumnNames = loading || !groups.some(group => renderedGroupDomains.get(group.key)?.length && !isGroupCollapsed(group));
   const columnHeaderHeight = hideColumnNames ? 0 : sticky.header.headHeight;
-  const stickyHeaderReady = !emptyPortfolio && (hideColumnNames || columnHeaderHeight > 0) && sticky.header.columnWidths.length === columns.length + 4;
+  const stickyHeaderReady = !loading && !emptyPortfolio && (hideColumnNames || columnHeaderHeight > 0) && sticky.header.columnWidths.length === columns.length + 4;
   const empty = !loading && !groups.some(group => group.domains.length);
   const hasHiddenCollections = !preferences.showHiddenCollections
     && preferences.collections.some(collection => preferences.hiddenCollectionIds.includes(collection.id));

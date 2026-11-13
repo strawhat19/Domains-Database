@@ -3,6 +3,7 @@ import { Eye } from 'lucide-react';
 import { getPortfolioGroupLinks } from './groupLinks';
 import LinkSiteIcon from '../LinkSiteIcon/index.web';
 import type { CustomPortfolioGroup } from '../../shared/portfolioPreferences/types';
+import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
 
 interface PortfolioGroupLinksProps {
   id: string;
@@ -11,10 +12,11 @@ interface PortfolioGroupLinksProps {
 
 const PortfolioGroupLinks = ({ id, group }: PortfolioGroupLinksProps) => {
   const links = getPortfolioGroupLinks(group);
+  const scrollRef = useHorizontalScrollFade<HTMLDivElement>();
   if (!links.length) return null;
 
   return (
-    <div id={id} role={`group`} className={`portfolio-group-links`} aria-label={`Links For ${group.name}`}>
+    <div id={id} role={`group`} ref={scrollRef} aria-label={`Links For ${group.name}`} className={`portfolio-group-links horizontal-scroll-fade`}>
       {links.map(link => (
         <a
           key={link.key}

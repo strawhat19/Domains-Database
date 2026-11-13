@@ -12,12 +12,12 @@ import PortfolioCollapse from '../PortfolioCollapse/index.web';
 import DomainDescription from '../DomainDescription/index.web';
 import DomainSourceBadge from '../DomainSourceBadge/index.web';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
-import DomainAnalyticsButton from '../DomainAnalyticsButton/index.web';
-import DomainVisibilityButton from '../DomainVisibilityButton/index.web';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import type { DomainItemProps, DomainDragProps } from './domainRow';
+import { PortfolioSellLink } from '../PortfolioMarketplace/index.web';
+import DomainAnalyticsButton from '../DomainAnalyticsButton/index.web';
+import DomainVisibilityButton from '../DomainVisibilityButton/index.web';
 import { useDomainAttentionPosition } from './useDomainAttentionPosition.web';
-import { PortfolioMarketplace, PortfolioSellLink } from '../PortfolioMarketplace/index.web';
 import { Check, Minus, ArrowUp, Settings, ArrowDown, ChevronDown, GripVertical } from 'lucide-react';
 import { getDomainPreviewLink, getDomainGithubRepoLink } from '../../shared/domainLinks';
 import { getDomainRow, getDomainColumnKey, getDomainSkeletonKey, getDomainRenewalDetail, isDomainSelectionTarget, getDomainSelectionHandlers } from './domainRow';
@@ -378,7 +378,6 @@ const DomainRow = ({
             >
               <PortfolioCollapse collapsed={collapsed} id={`${scope}-${key}-cell-content`}>
                 {renderColumn(column.field)}
-                {column.field === `name` && <PortfolioMarketplace id={`${scope}-marketplace`} domain={domain} disabled={busy || collapsed} className={`domain-row-portfolio-marketplace`} />}
               </PortfolioCollapse>
             </td>
           );
@@ -458,7 +457,7 @@ const DomainRow = ({
         >
           <td colSpan={columns.length + 4} id={`${scope}-details-cell`} className={`domain-details-cell`}>
             <PortfolioCollapse collapsed={detailsCollapsed} id={`${scope}-details-panel`}>
-              <DomainMetadata domain={domain} hideProjectDetails={hideProjectDetails} />
+              <DomainMetadata domain={domain} disabled={busy || detailsCollapsed} hideProjectDetails={hideProjectDetails} />
             </PortfolioCollapse>
           </td>
         </tr>

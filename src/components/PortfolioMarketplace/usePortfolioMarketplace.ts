@@ -6,17 +6,8 @@ import { useDomainAppraisal } from '../../shared/marketplaceAfternic/useDomainAp
 import { useAfternicPortfolioSync } from '../../shared/marketplaceAfternic/PortfolioSyncContext';
 
 const usd = new Intl.NumberFormat(`en-US`, { style: `currency`, currency: `USD`, maximumFractionDigits: 2, minimumFractionDigits: 0 });
-const syncDate = new Intl.DateTimeFormat(undefined, { month: `short`, day: `numeric`, hour: `numeric`, minute: `2-digit` });
 const money = (cents: number) => usd.format(cents / 100);
 const statusLabel = (status: string) => status.toLowerCase().replace(/_/g, ` `).replace(/\b\w/g, letter => letter.toUpperCase());
-
-export const getAfternicSyncLabel = (syncedAt: string | null, skipped: number, stale: boolean) => {
-  const timestamp = Date.parse(syncedAt ?? ``);
-  if (!Number.isFinite(timestamp)) return ``;
-  const prefix = stale ? `Showing Last Afternic Sync` : `Last Afternic Sync`;
-  const skippedLabel = skipped > 0 ? ` · ${skipped.toLocaleString()} Record(s) Skipped` : ``;
-  return `${prefix} · ${syncDate.format(timestamp)}${skippedLabel}`;
-};
 
 export const getPortfolioSellHref = (domain: DomainRecord) => ({ pathname: routes.market.href, params: { sellDomain: domain.name } });
 

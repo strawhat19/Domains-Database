@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import FilterScroller from './FilterScroller';
 import DiscoveryCard from './DiscoveryCard';
+import HeaderCountBadge from '../HeaderCountBadge';
 import { discoveryIcons } from './presentation';
 import { Globe2, Compass, RotateCw } from 'lucide-react-native';
 import { createStyles } from './styles.native';
 import type { DomainDiscoveryProps } from './types';
-import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useReducedMotion } from '../../shared/common/useReducedMotion';
+import { ActivityIndicator, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { discoveryStatuses, discoveryExtensions, type DomainDiscoveryFilter } from '../../shared/domainSearch/discovery';
 
 const filters: { id: DomainDiscoveryFilter; label: string; description: string }[] = [
@@ -19,6 +21,7 @@ const tldFilters = [`all`, ...discoveryExtensions];
 
 const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disabled = false }: DomainDiscoveryProps) => {
   const { palette } = useTheme();
+  const reducedMotion = useReducedMotion();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const activeFilter = filters.find(value => value.id === state.filter);
   const filteredResults = state.filteredResults;
@@ -117,16 +120,17 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
                 key={value.id}
                 accessibilityRole={`button`}
                 accessibilityState={{ selected }}
-                accessibilityHint={value.description}
-                onPress={() => state.setFilter(value.id)}
+                accessibilityHint={selected && value.id !== `all` ? `Show All Statuses` : value.description}
+                onPress={() => state.toggleFilter(value.id)}
                 {...elementProps(`domain-discovery-filter`, filterSuffix)}
-                accessibilityLabel={`Show ${value.label}, ${count} Domain(s)`}
+                accessibilityLabel={`${selected && value.id !== `all` ? `Clear` : `Show`} ${value.label}, ${count} Domain(s)`}
                 style={({ pressed }) => [styles.category, selected && styles.selectedCategory, pressed && styles.faded]}
               >
                 <Icon {...elementProps(`domain-discovery-filter-icon`, filterSuffix)} size={14} color={color} />
                 <Text {...elementProps(`domain-discovery-filter-label`, filterSuffix)} style={[styles.categoryLabel, { color }]}>
-                  {`${value.label} ${count}`}
+                  {value.label}
                 </Text>
+                <HeaderCountBadge count={count} id={`domain-discovery-filter-count-${filterSuffix}`} />
               </Pressable>
             );
           })}
@@ -136,7 +140,7 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
           {tldFilters.map(extension => {
             const selected = extension === state.tldFilter;
             const color = selected ? palette.accent : palette.muted;
-            const label = extension === `all` ? `All TLDs` : `.${extension}`;
+            const label = extension === `all` ? `All Extensions` : `.${extension}`;
             const tldSuffix = `${suffix}-${extension}`;
             const count = extension === `all` ? state.statusResults.length
               : state.statusResults.filter(result => result.extension === extension).length;
@@ -145,24 +149,25 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
                 key={extension}
                 accessibilityRole={`button`}
                 accessibilityState={{ selected }}
-                onPress={() => state.setTldFilter(extension)}
+                onPress={() => state.toggleTldFilter(extension)}
                 {...elementProps(`domain-discovery-tld-filter`, tldSuffix)}
-                accessibilityLabel={`Show ${label}, ${count} Domain(s)`}
+                accessibilityLabel={`${selected && extension !== `all` ? `Clear` : `Show`} ${label}, ${count} Domain(s)`}
                 style={({ pressed }) => [styles.category, selected && styles.selectedCategory, pressed && styles.faded]}
               >
                 <Globe2 {...elementProps(`domain-discovery-tld-filter-icon`, tldSuffix)} size={14} color={color} />
                 <Text {...elementProps(`domain-discovery-tld-filter-label`, tldSuffix)} style={[styles.categoryLabel, { color }]}>
-                  {`${label} ${count}`}
+                  {label}
                 </Text>
+                <HeaderCountBadge count={count} id={`domain-discovery-tld-filter-count-${tldSuffix}`} />
               </Pressable>
             );
           })}
         </View>}
       </FilterScroller>
       <Text {...elementProps(`domain-discovery-description`, suffix)} style={styles.description}>
-        {`Curated ideas · ${activeFilter?.description ?? ``}${state.tldFilter === `all` ? `` : ` · .${state.tldFilter}`}`}
+        {`Weekly curated ideas · ${activeFilter?.description ?? ``}${state.tldFilter === `all` ? `` : ` · .${state.tldFilter}`}`}
       </Text>
-      {sidebar ? (
+      {sidebar && (filteredResults.length > 0 || loading) ? (
         <ScrollView
           style={styles.shelf}
           onLayout={shelf.onLayout}
@@ -177,15 +182,25 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
             {cardList}
           </View>
         </ScrollView>
-      ) : (
+      ) : !sidebar ? (
         <View {...elementProps(`domain-discovery-grid`, suffix)} style={styles.grid} accessibilityLiveRegion={`polite`}>
           {cardList}
         </View>
-      )}
+      ) : null}
       {loading && (
-        <Text {...elementProps(`domain-discovery-progress`, suffix)} style={styles.detail} accessibilityLiveRegion={`polite`}>
-          {state.accessLoading ? `Loading domain ideas…` : `Checking registrar availability…`}
-        </Text>
+        <View {...elementProps(`domain-discovery-progress-row`, suffix)} style={styles.progressRow}>
+          <ActivityIndicator
+            aria-hidden
+            color={palette.accent}
+            animating={!reducedMotion}
+            hidesWhenStopped={false}
+            size={Platform.OS === `ios` ? `small` : 12}
+            {...elementProps(`domain-discovery-progress-spinner`, suffix)}
+          />
+          <Text {...elementProps(`domain-discovery-progress`, suffix)} style={styles.detail} accessibilityLiveRegion={`polite`}>
+            {state.accessLoading ? `Loading domain ideas…` : `Checking registrar availability…`}
+          </Text>
+        </View>
       )}
       {!loading && !state.eligible && (
         <Text {...elementProps(`domain-discovery-access-copy`, suffix)} style={styles.detail}>
@@ -195,7 +210,7 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
       {!loading && state.eligible && !filteredResults.length && !state.error && (
         <Text {...elementProps(`domain-discovery-empty`, suffix)} style={styles.detail}>
           {disabled ? `Domain ideas will resume after your search.` : state.results.length
-            ? `No cards match these filters. Select All and All TLDs to see every available idea.`
+            ? `No cards match these filters. Select All and All Extensions to see every available idea.`
             : `No available ideas confirmed. Refresh to check again.`}
         </Text>
       )}

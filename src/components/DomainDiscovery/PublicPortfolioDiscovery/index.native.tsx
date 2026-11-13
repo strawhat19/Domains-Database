@@ -90,7 +90,7 @@ const PublicPortfolioDiscovery = ({ profiles, loading, error, onRefresh, scope =
         >
           {extensions.map(extension => {
             const selected = extension === state.extension;
-            const label = extension === `all` ? `All TLDs` : `.${extension}`;
+            const label = extension === `all` ? `All Extensions` : `.${extension}`;
             const id = `${scope}-${extension}`;
             return (
               <Pressable

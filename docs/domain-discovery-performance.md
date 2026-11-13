@@ -1,6 +1,6 @@
 # Domain Discovery Loading And Cache
 
-The `/search` discovery names are a curated list of 27 ideas, not a live popularity feed. Availability and quotes come from the eligible registrar connections. The names therefore stay fairly stable while registrar results can change.
+Domain Discovery on `/search` selects a weekly batch of up to 120 names from curated word lists each Monday at 00:00 UTC, with extra candidates for `.com`. The same week’s ideas appear in Explore Domains and Trending Domains on web and native. Ideas are interleaved by extension, with a mix of Hot, Trending and New categories and short, one-word and two-word names. Availability and prices come from eligible registrar connections, so the number of results varies by filter. Value requires a confirmed eligible registration price.
 
 ## Cause Of The Delay
 
@@ -8,13 +8,17 @@ The client checks names sequentially within each provider, retaining the existin
 
 ## Current Behavior
 
-The first confirmed available card now renders while the other checks continue. The sidebar fills its initial empty slots with skeletons without hiding received cards; carousel movement remains paused during loading. Recent-search records load within their own section instead of blocking the discovery page.
+The first confirmed available card renders while the other checks continue. The sidebar fills its initial empty slots with skeletons without hiding received cards. The carousel can move as soon as it has enough confirmed cards to loop. Recent-search records load within their own section.
 
-Confirmed registrar results have a one-hour memory/device cache in `src/shared/domainSearch/discoveryCache.ts`. It uses AsyncStorage directly, with at most 256 quotes per owner, schema validation, canonical registrar links and incremental saves. It stores availability/quote data only, with no credentials and no new cloud collection. Fresh confirmed true/false results are reusable; errors, pending checks and unconfirmed availability are not cached. Storage failure falls back to the in-memory cache and does not fail the search.
+After the first paint and account and connection readiness, Discovery starts loading for eligible signed-in accounts. Explore Domains and Trending Domains read the same in-flight or cached result across navigation. A domain search takes priority over the background queue, which resumes using completed quotes after the search settles. Visitors can load Discovery when opening `/search` if the app has a public search provider. The progress toast counts settled provider checks, including cached results, and completes after the connection checks finish.
+
+For eligible signed-in accounts, the app starts discovery after the first paint and reuses the results when you open `/search`. An explicit domain search takes priority. **Profile → Toast Position** controls where floating progress updates appear on this device.
+
+Confirmed registrar results have a one-hour memory/device cache in `src/shared/domainSearch/discoveryCache.ts`. It uses AsyncStorage directly, with at most 768 quotes per owner, schema validation, canonical registrar links and incremental saves. When the serialized snapshot exceeds the device storage size limit, the app keeps the newest quotes that fit. It stores confirmed availability and quote data. Storage failure falls back to the in-memory cache.
 
 The cache is selected only after resolving current search connections and plan access. Its scope includes the account, paid/free access, actual provider modes and connection fingerprint. Connection or plan changes select another scope; stale requests cannot populate the current scope. New mounts/reloads restore confirmed cards before requesting uncached names. Ordinary submitted domain searches remain fresh because only discovery opts into the cache.
 
-Refresh explicitly bypasses cached quotes. Previously displayed cards remain during refresh/pause while their pending checks are replaced by actual results. The Checked time preserves the age of reused quotes rather than implying they were just fetched. A paused or failed request retains useful received results, and account/connection/plan changes hide the previous scope. The existing five-minute mounted-view snapshot remains an additional short reuse layer.
+Refresh rechecks the current week’s ideas and bypasses cached quotes. Previously displayed cards from the same week remain while pending checks are replaced by actual results. The Checked time preserves the age of reused quotes. A paused or failed request retains available results within the same scope. A new week or account, connection, or plan change clears the previous view and partial results. The five-minute mounted-view snapshot remains an additional short reuse layer.
 
 ## Verification
 

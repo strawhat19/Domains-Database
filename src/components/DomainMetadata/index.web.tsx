@@ -1,7 +1,8 @@
 import './styles.scss';
+import { PortfolioMarketplace } from '../PortfolioMarketplace/index.web';
 import { useDomainMetadata, type DomainMetadataProps } from './useDomainMetadata';
 
-const DomainMetadata = ({ domain, idPrefix, hideProjectDetails = false }: DomainMetadataProps) => {
+const DomainMetadata = ({ domain, disabled, idPrefix, hideProjectDetails = false }: DomainMetadataProps & { disabled?: boolean }) => {
   const { scope, items } = useDomainMetadata({ domain, idPrefix, hideProjectDetails });
 
   return (
@@ -26,6 +27,7 @@ const DomainMetadata = ({ domain, idPrefix, hideProjectDetails = false }: Domain
       ) : (
         <p id={`${scope}-empty`} className={`domain-metadata-empty`}>{`No Saved Metadata`}</p>
       )}
+      <PortfolioMarketplace domain={domain} disabled={disabled} id={`${scope}-marketplace`} />
     </div>
   );
 };

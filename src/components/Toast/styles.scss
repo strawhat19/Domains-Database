@@ -1,9 +1,9 @@
-:is(.toast, [data-class='toast']) { left: auto !important; position: fixed !important; width: min(460px, calc(100vw - 48px)); animation: toast-enter .22s ease; }
+:is(.toast, [data-class='toast']) { position: fixed !important; width: min(460px, calc(100% - var(--toast-inset, 24px) * 2)); animation: toast-enter .22s ease; }
 :is(.toast, [data-class='toast'])[data-inline='true'] { left: auto !important; right: auto !important; bottom: auto !important; width: 100% !important; max-width: none !important; position: relative !important; }
 :is(.toast-message, [data-class='toast-message']) { min-width: 0; white-space: pre-line; overflow-wrap: anywhere; }
 :is(.toast-icon, [data-class='toast-icon']), :is(.toast-dismiss, [data-class='toast-dismiss']) { flex-shrink: 0; }
 @keyframes toast-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 600px) {
-  :is(.toast, [data-class='toast']) { right: 16px !important; bottom: max(16px, env(safe-area-inset-bottom)) !important; width: calc(100vw - 32px); }
   :is(.toast-dismiss, [data-class='toast-dismiss']) { width: 44px; min-height: 44px; align-items: center; justify-content: center; }
 }
+@media (prefers-reduced-motion: reduce) { :is(.toast, [data-class='toast']) { animation: none; } }

@@ -22,7 +22,7 @@ Keep the credential pair in server-only environment variables. Keep the configur
 
 ## Sync your Domains portfolio
 
-After a successful connection, the app starts a read-only sync. Opening **Domains** loads the last private snapshot and refreshes it when it is more than an hour old. Select **Sync Afternic** to refresh on demand. Matching portfolio entries show their Afternic status, Buy Now price, and any estimate Afternic supplies. A completed sync with readable rows can confirm that a domain has no Afternic listing. A refresh that fails leaves the last saved snapshot available. [Afternic portfolio API](https://api.afternic.com/docs/portfolio-api/api/domains/getDomains/)
+After startup, eligible accounts load their last private Afternic snapshot in the background and refresh it when it is more than an hour old. The main **Sync** action refreshes Afternic alongside any registrar sync you select. Open a domain’s details or settings to see its Afternic status, Buy Now price, and any estimate Afternic supplies. A completed sync with readable rows can confirm that a domain has no Afternic listing. A refresh that fails leaves the last saved snapshot available. [Afternic portfolio API](https://api.afternic.com/docs/portfolio-api/api/domains/getDomains/)
 
 Use **Get GoValue Estimate** for an owned domain without an Afternic estimate when you have a saved GoDaddy connection. GoValue can return an estimate and a separate suggested Afternic list price. It requires an active GoDaddy subscription and domain read access. Estimates depend on TLD and model coverage. [GoDaddy Domain Valuation](https://developer.godaddy.com/en/docs/api-users/domains/valuation)
 

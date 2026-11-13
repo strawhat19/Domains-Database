@@ -1,29 +1,33 @@
 import { useMemo, useState } from 'react';
 import CarouselRow from './CarouselRow';
 import { createStyles } from './styles.native';
+import HeaderCountBadge from '../HeaderCountBadge';
 import FilterScroller from '../DomainDiscovery/FilterScroller';
 import type { DomainDiscoveryCarouselProps } from './types';
 import { useDiscoveryCarousel } from './useDiscoveryCarousel';
 import { Globe2, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
 import { useTheme } from '../../shared/themeContext/useTheme';
+import { useReducedMotion } from '../../shared/common/useReducedMotion';
 import { discoveryExtensions } from '../../shared/domainSearch/discovery';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native';
 import { createStyles as createCardStyles } from '../DomainDiscovery/styles.native';
 
-const tldFilters = [`com`, `all`, ...discoveryExtensions.filter(extension => extension !== `com`)];
+const tldFilters = [`all`, ...discoveryExtensions];
 
-const DomainDiscoveryCarousel = ({ suffix, results, onSearch, tldFilter, tldResults, setTldFilter, loading = false, disabled = false, density = `compact` }: DomainDiscoveryCarouselProps) => {
+const DomainDiscoveryCarousel = ({ error, suffix, results, onSearch, tldFilter, tldResults, toggleTldFilter, loading = false, disabled = false, density = `compact` }: DomainDiscoveryCarouselProps) => {
   const { palette } = useTheme();
+  const reducedMotion = useReducedMotion();
   const [watchPromptOpen, setWatchPromptOpen] = useState(false);
   const buffering = loading && !results.length;
+  const carouselDisabled = disabled || buffering || watchPromptOpen;
   const firstResults = results.filter((_, index) => index % 2 === 0);
   const secondResults = results.filter((_, index) => index % 2 === 1);
-  const firstState = useDiscoveryCarousel(firstResults.length, disabled || loading || watchPromptOpen, density, 1);
-  const secondState = useDiscoveryCarousel(secondResults.length, disabled || loading || watchPromptOpen, density, -1);
+  const firstState = useDiscoveryCarousel(firstResults.length, carouselDisabled, density, 1);
+  const secondState = useDiscoveryCarousel(secondResults.length, carouselDisabled, density, -1);
   const styles = useMemo(() => createStyles(palette), [palette]);
   const cardStyles = useMemo(() => createCardStyles(palette), [palette]);
-  const navigationDisabled = disabled || loading || watchPromptOpen || (!firstState.looping && !secondState.looping);
+  const navigationDisabled = carouselDisabled || (!firstState.looping && !secondState.looping);
   const selectedTld = tldFilter === `all` ? `` : ` .${tldFilter}`;
   const rows = [
     { id: `first`, state: firstState, results: firstResults },
@@ -70,7 +74,7 @@ const DomainDiscoveryCarousel = ({ suffix, results, onSearch, tldFilter, tldResu
           {tldFilters.map(extension => {
             const selected = extension === tldFilter;
             const color = selected ? palette.accent : palette.muted;
-            const label = extension === `all` ? `All TLDs` : `.${extension}`;
+            const label = extension === `all` ? `All Extensions` : `.${extension}`;
             const filterSuffix = `${suffix}-${extension}`;
             const count = extension === `all` ? tldResults.length : tldResults.filter(result => result.extension === extension).length;
             return (
@@ -78,24 +82,35 @@ const DomainDiscoveryCarousel = ({ suffix, results, onSearch, tldFilter, tldResu
                 key={extension}
                 accessibilityRole={`button`}
                 accessibilityState={{ selected }}
-                onPress={() => setTldFilter(extension)}
-                accessibilityLabel={`Show ${label}, ${count} Domain(s)`}
+                onPress={() => toggleTldFilter(extension)}
+                accessibilityLabel={`${selected && extension !== `all` ? `Clear` : `Show`} ${label}, ${count} Domain(s)`}
                 {...elementProps(`domain-discovery-carousel-tld-filter`, filterSuffix)}
                 style={({ pressed }) => [styles.filter, selected && styles.selectedFilter, pressed && styles.faded]}
               >
                 <Globe2 {...elementProps(`domain-discovery-carousel-tld-filter-icon`, filterSuffix)} size={14} color={color} />
                 <Text {...elementProps(`domain-discovery-carousel-tld-filter-label`, filterSuffix)} style={[styles.filterLabel, { color }]}>
-                  {`${label} ${count}`}
+                  {label}
                 </Text>
+                <HeaderCountBadge count={count} id={`domain-discovery-carousel-tld-count-${filterSuffix}`} />
               </Pressable>
             );
           })}
         </View>
       </FilterScroller>
       {loading && (
-        <Text {...elementProps(`domain-discovery-carousel-loading`, suffix)} style={styles.note} accessibilityLiveRegion={`polite`}>
-          {`Checking registrar availability${selectedTld ? ` for${selectedTld} domains` : ``}…`}
-        </Text>
+        <View {...elementProps(`domain-discovery-carousel-loading-row`, suffix)} style={cardStyles.progressRow}>
+          <ActivityIndicator
+            aria-hidden
+            color={palette.accent}
+            animating={!reducedMotion}
+            hidesWhenStopped={false}
+            size={Platform.OS === `ios` ? `small` : 12}
+            {...elementProps(`domain-discovery-carousel-loading-spinner`, suffix)}
+          />
+          <Text {...elementProps(`domain-discovery-carousel-loading`, suffix)} style={styles.note} accessibilityLiveRegion={`polite`}>
+            {`Checking registrar availability${selectedTld ? ` for${selectedTld} domains` : ``}…`}
+          </Text>
+        </View>
       )}
       <View {...elementProps(`domain-discovery-carousel-rows`, suffix)} style={styles.rows}>
         {rows.map(row => (buffering || !!row.results.length) && (
@@ -114,7 +129,7 @@ const DomainDiscoveryCarousel = ({ suffix, results, onSearch, tldFilter, tldResu
             suffix={`${suffix}-${row.id}`}
           />
         ))}
-        {!loading && !results.length && (
+        {!loading && !results.length && !error && (
           <View {...elementProps(`domain-discovery-carousel-empty`, suffix)} style={styles.empty}>
             <Text {...elementProps(`domain-discovery-carousel-empty-text`, suffix)} style={styles.note} accessibilityLiveRegion={`polite`}>
               {`No${selectedTld} domains confirmed available for these filters.`}

@@ -7,6 +7,7 @@ import ProfileSettings from '../ProfileSettings';
 import { useAccountPage } from './useAccountPage';
 import AccountConnections from '../AccountConnections';
 import ProfileThemePreference from '../ProfileThemePreference';
+import ToastPlacementPicker from '../ToastPlacementPicker';
 import { canAccessAdmin, canViewPayments } from '../../shared/admin/permissions';
 import { getPlanDisplayName, hasUnlimitedPlanAccess } from '../../shared/accountPlans';
 import { Crown, Globe2, UserRound, BadgeCheck, LockKeyhole, ShieldCheck, CalendarDays } from 'lucide-react';
@@ -45,6 +46,7 @@ const AccountPage = ({ page = `profile` }: { page?: `profile` | `connections` })
             {fields.map(({ id, label, Icon, value }) => <div key={id} id={`profile-row-${id}`} className={`profile-record-row`}><dt id={`profile-label-${id}`} className={`profile-record-label`}>{label}</dt><dd id={`profile-value-${id}`} className={`profile-record-value profile-metadata`}><Icon size={18} aria-hidden id={`profile-${id}-icon`} className={`profile-metadata-icon`} /><span id={`profile-${id}-label`} className={`profile-metadata-label`}>{value}</span></dd></div>)}
           </dl>
           <ProfileThemePreference />
+          <ToastPlacementPicker />
           <section id={`profile-portfolio`} className={`profile-portfolio`} aria-labelledby={`profile-portfolio-title`}>
             <h3 id={`profile-portfolio-title`} className={`profile-portfolio-title`}>{`Your Portfolio`}</h3>
             <dl id={`profile-portfolio-record`} className={`profile-record profile-sidebar-record`}>

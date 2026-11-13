@@ -14,7 +14,8 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import { normalizeDomainProjectStatus } from '../../shared/domainProject';
 import { getConvertedGroupName } from '../../shared/portfolioPreferences/names';
 import type { DomainRecord } from '../../shared/types';
-import { PortfolioMarketplace, PortfolioSellLink } from '../PortfolioMarketplace/index.native';
+import HorizontalScrollFade from '../HorizontalScrollFade/index.native';
+import { PortfolioSellLink } from '../PortfolioMarketplace/index.native';
 import type { PortfolioGroup, PortfolioSections, CustomPortfolioCollection } from '../../shared/portfolioPreferences/types';
 import { NativePortfolioDrag, NativeDragSource, NativeDropZone, NativeDragScroll } from '../NativePortfolioDrag/index.native';
 import { Animated, ActivityIndicator, Linking, Pressable, ScrollView, Switch, Text, TextInput, View, useWindowDimensions } from 'react-native';
@@ -84,7 +85,6 @@ const BoardDomain = ({ domain, groupId, collectionId, logic, styles, selected, d
           <MoreHorizontal size={17} color={palette.muted} />
         </Pressable>
       </View>
-      <PortfolioMarketplace id={`native-board-domain-marketplace-${domain.id}`} domain={domain} style={styles.domainMarketplace} disabled={disabled} />
     </NativeDropZone>
   );
 };
@@ -402,13 +402,13 @@ const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMa
             </View>
           )}
           {logic.sections.collections.length > 0 && (
-            <NativeDragScroll
-              horizontal
+            <HorizontalScrollFade
+              fadeColor={palette.canvas}
               removeClippedSubviews={false}
               decelerationRate={`fast`}
+              scrollComponent={NativeDragScroll}
               snapToInterval={columnWidth + 12}
               style={{ height: columnHeight + 8 }}
-              showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.lanes}
               nativeID={`native-board-column-scroll`}
             >
@@ -426,7 +426,7 @@ const NativePortfolioBoard = ({ domains, selectedIds, onSelect, onEdit, renderMa
                   directDomains={section.groups.filter(group => Boolean(group.directCollectionId)).flatMap(group => group.domains)}
                 />
               ))}
-            </NativeDragScroll>
+            </HorizontalScrollFade>
           )}
         </View>
       </View>

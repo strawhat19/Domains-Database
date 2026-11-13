@@ -1,4 +1,19 @@
-:is(.domain-search-page, .domain-search-access-page, .domain-search-access-loading, [data-class='domain-search-page'], [data-class='domain-search-access-page'], [data-class='domain-search-access-loading']) { isolation: isolate; position: relative; padding-inline: 0 !important; }
+:root:has(.app-shell[data-search-page='true']) { scrollbar-gutter: auto; }
+
+:is(.domain-search-page, .domain-search-access-page, .domain-search-access-loading, [data-class='domain-search-page'], [data-class='domain-search-access-page'], [data-class='domain-search-access-loading']) {
+  isolation: isolate;
+  position: relative;
+  padding-inline: 0 !important;
+
+  > :is(.discovery-backdrop, [data-class='discovery-backdrop']) {
+    top: calc(-1 * var(--shell-header-height, 0px));
+    left: calc(-1 * var(--shell-gutter));
+    right: calc(-1 * var(--shell-gutter));
+    container-type: inline-size;
+
+    > :is(.discovery-backdrop-art, [data-class='discovery-backdrop-art']) { min-height: 75cqw; }
+  }
+}
 
 :root[data-theme='dark'] {
   :is(.domain-search-form, [data-class='domain-search-form']) {

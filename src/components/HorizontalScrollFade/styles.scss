@@ -1,0 +1,11 @@
+.horizontal-scroll-fade {
+  --scroll-fade-left: 0px;
+  --scroll-fade-right: 0px;
+  &[data-scroll-fade-left] { --scroll-fade-left: var(--scroll-fade-width, 24px); }
+  &[data-scroll-fade-right] { --scroll-fade-right: var(--scroll-fade-width, 24px); }
+  &:is([data-scroll-fade-left], [data-scroll-fade-right]):not(:focus-visible, :has(:focus-visible)) {
+    --scroll-fade-mask: linear-gradient(to right, transparent, #000 var(--scroll-fade-left), #000 calc(100% - var(--scroll-fade-right)), transparent);
+    -webkit-mask-image: var(--scroll-fade-mask);
+    mask-image: var(--scroll-fade-mask);
+  }
+}

@@ -8,8 +8,10 @@ import ThemeToggle from '../ThemeToggle';
 import ScrollToTop from '../ScrollToTop';
 import DomainMarquee from '../DomainMarquee';
 import AuthFeedback from '../AuthFeedback';
+import HeaderCountBadge from '../HeaderCountBadge';
 import NotificationBell from '../NotificationBell';
 import AccountBackdrop from '../AccountBackdrop';
+import BackgroundProgressOverlay from '../BackgroundProgressOverlay';
 import { routes, isAdminPath } from '../../shared/routes';
 import { createStyles } from './styles.native';
 import { BlurView, BlurTargetView } from 'expo-blur';
@@ -36,10 +38,12 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
   const styles = useMemo(() => createStyles(palette), [palette]);
   const scroll = useShellScroll(pathname, sticky, blurTargetRef, insets.bottom);
   const accountShell = isAdminPath(pathname) || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
+  const searchPage = pathname === routes.search.href;
   const blurOpacity = useMemo(() => scroll.headerOpacity.interpolate({
     inputRange: [.86, 1],
     outputRange: [1, 0],
   }), [scroll.headerOpacity]);
+  const searchHeaderOpacity = useMemo(() => Animated.multiply(blurOpacity, .86), [blurOpacity]);
   const pageContentHeight = fitViewport || searchViewport
     ? Math.max(0, viewportHeight - scroll.headerHeight - footerHeight)
     : undefined;
@@ -77,17 +81,12 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             {label}
           </Text>
           {(item.countLoading || (item.count ?? 0) > 0) && (
-            <View
-              accessible={false}
-              accessibilityElementsHidden
-              style={[styles.navigationCount, { backgroundColor: item.countLoading ? palette.skeleton : badgeColors.backgroundColor }]}
-              importantForAccessibility={`no-hide-descendants`}
-              {...elementProps(`native-navigation-count`, label.toLowerCase())}
-            >
-              <Text {...elementProps(`native-navigation-count-text`, label.toLowerCase())} style={[styles.navigationCountText, { color: badgeColors.color }]}>
-                {item.countLoading ? `` : item.count}
-              </Text>
-            </View>
+            <HeaderCountBadge
+              count={item.count}
+              loading={item.countLoading}
+              id={`native-navigation-count-${label.toLowerCase()}`}
+              textId={`native-navigation-count-text-${label.toLowerCase()}`}
+            />
           )}
           {beta && (
             <View
@@ -111,7 +110,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
       <View
         onLayout={scroll.onHeaderLayout}
         {...elementProps(`native-app-header`)}
-        style={[styles.header, sticky && styles.stickyHeader, { paddingTop: insets.top + 12 }]}
+        style={[styles.header, sticky && styles.stickyHeader, searchPage && styles.transparentHeaderBorder, { paddingTop: insets.top + 12 }]}
       >
         {sticky && (
           <Animated.View
@@ -128,8 +127,8 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
             />
           </Animated.View>
         )}
-        <Animated.View {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, { pointerEvents: `none`, opacity: scroll.headerOpacity, backgroundColor: accountShell ? palette.subtle : palette.paper }]} />
-        {featuresReady && flags.domainMarquee && <DomainMarquee translucent={scroll.scrolled} backgroundColor={accountShell ? palette.subtle : undefined} />}
+        <Animated.View {...elementProps(`native-header-background`)} style={[StyleSheet.absoluteFill, searchPage && styles.scrolledHeaderBorder, { pointerEvents: `none`, opacity: searchPage ? searchHeaderOpacity : scroll.headerOpacity, backgroundColor: accountShell ? palette.subtle : palette.paper }]} />
+        {featuresReady && flags.domainMarquee && <DomainMarquee translucent={scroll.scrolled} transparentBackground={searchPage} backgroundColor={accountShell ? palette.subtle : undefined} />}
         <View {...elementProps(`native-header-row`)} style={styles.headerRow}>
           <Link href={`/`} asChild>
             <Pressable {...elementProps(`native-brand-link`)} accessibilityLabel={`${appName} Home`}>
@@ -277,6 +276,7 @@ const AppShell = ({ children, sticky = true }: { children: ReactNode; sticky?: b
         {sticky && header}
         <AuthFeedback />
         <Toast id={`theme-preference-error`} message={themeError} onDismiss={clearThemeError} />
+        <BackgroundProgressOverlay headerHeight={scroll.headerHeight} scrollToTopVisible={scroll.showScrollTop} />
         <ScrollToTop visible={scroll.showScrollTop} onPress={scroll.scrollToTop} bottomInset={insets.bottom} />
       </View>
     </ScrollContext.Provider>

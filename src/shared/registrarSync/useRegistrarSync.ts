@@ -12,6 +12,7 @@ import { accountStorageKey } from '../authentication/userScope';
 import { CONNECTIONS_STORAGE_KEY } from '../connections/service';
 import { subscribeAccountDataReset } from '../accountData/state';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { BackgroundProgressUpdate } from '../backgroundProgress/BackgroundProgressContext';
 import { connectionFields, type ConnectionAccount, type ConnectionProvider, type ConnectionSnapshot } from '../connections/types';
 import type { AccountSyncStatuses, ConnectedSyncRegistrar, ConnectionSyncStatus, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
 import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, subscribeSyncPolicy, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
@@ -65,7 +66,7 @@ const aggregateStatuses = (accounts: readonly ConnectionAccount[], statuses: Acc
   return result;
 };
 
-export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = true) => {
+export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = true, reportProgress?: (update: BackgroundProgressUpdate | null) => void) => {
   const { user, loginRevision } = useAuth();
   const userId = user?.id;
   const actorKey = `${userId ?? ``}:${loginRevision}`;
@@ -77,12 +78,14 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
   const owner = useRef(user?.name ?? ``);
   const controllers = useRef<AbortController[]>([]);
   const syncingRef = useRef(false);
+  const automaticProgressRun = useRef<number | null>(null);
   const manualRequest = useRef<symbol | null>(null);
   const manualSyncActor = useRef(``);
   const connectionRevision = useRef(0);
   const connectedSyncActor = useRef(``);
   const connectedSyncUpdated = useRef<string | null>(null);
   const manualSyncProvider = useRef<ConnectionProvider | undefined>(undefined);
+  const manualSyncRelated = useRef<(() => Promise<void>) | undefined>(undefined);
   const [syncing, setSyncing] = useState(false);
   const [clock, setClock] = useState(Date.now);
   const [cooldownUntil, setCooldownUntil] = useState(0);
@@ -100,6 +103,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
   const closeManualSync = useCallback(() => {
     manualSyncActor.current = ``;
     manualSyncProvider.current = undefined;
+    manualSyncRelated.current = undefined;
     setManualSyncChoices([]);
   }, []);
 
@@ -111,10 +115,14 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
   }, []);
 
   const cancelRequests = useCallback(() => {
+    if (automaticProgressRun.current !== null) {
+      automaticProgressRun.current = null;
+      reportProgress?.(null);
+    }
     revision.current += 1;
     controllers.current.forEach(controller => controller.abort());
     controllers.current = [];
-  }, []);
+  }, [reportProgress]);
 
   const resetSyncState = useCallback(() => {
     cancelRequests();
@@ -182,6 +190,14 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (active.current) setSyncing(false);
       return empty;
     }
+    const progress = (update: BackgroundProgressUpdate) => {
+      if (automatic && current()) reportProgress?.(update);
+    };
+    const finishProgress = (failed: number, total: number) => progress(failed === 0
+      ? { done: true }
+      : { error: failed < total ? `Some Registrar Connections Could Not Be Synced` : `Your Registrar Connections Could Not Be Synced` });
+    if (automatic) automaticProgressRun.current = run;
+    progress({});
     syncingRef.current = true;
     setSyncError(``);
     setSyncNotice(``);
@@ -198,6 +214,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (automatic && policy.automaticSyncPaused) {
         setConnectionStatuses(emptyStatuses());
         setAccountStatuses({});
+        progress({ done: true });
         return empty;
       }
       const syncAccounts = snapshot.accounts.filter(account => supportsRegistrarSync(account) && canUseConnectionProvider(account.provider, access.paid));
@@ -250,9 +267,13 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
         }
         setConnectionStatuses(statuses);
         setAccountStatuses(accountNext);
+        const failed = syncAccounts.filter(account => accountNext[account.id]?.state === `error`).length;
+        finishProgress(failed, syncAccounts.length);
         return { ...empty, count: includedCount };
       }
       const accounts = syncAccounts.filter(account => !connectionIds || connectionIds.includes(account.id));
+      const total = accounts.length + 2;
+      progress({ completed: 1, total });
       setSyncing(Boolean(accounts.length));
       accounts.forEach(account => { accountNext[account.id] = { count: 0, message: `Checking Connection…`, checkedAt: ``, state: `checking` }; });
       const updateStatuses = () => {
@@ -296,6 +317,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
           updateStatuses();
           results.push({ count: 0, warnings: [], errors: [`${label}: ${message}`] });
         }
+        progress({ completed: results.length + 1, total });
       }
       const next = aggregateStatuses(snapshot.accounts, accountNext);
       if (!current()) return empty;
@@ -310,21 +332,24 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       }
       setSyncError(errors.join(`\n`));
       if (accounts.length && successful) setSyncNotice(formatSyncNotice({ count, warnings }, errors.length ? `Partial Sync` : ``));
+      finishProgress(errors.length, accounts.length);
       return { count, errors, warnings };
     } catch (failure) {
       if (!current()) return empty;
       const message = failure instanceof Error ? failure.message : `Could Not Load Connections`;
       setSyncError(message);
+      progress({ error: `Could Not Finish Syncing Your Domains` });
       return { count: 0, warnings: [], errors: [message] };
     } finally {
       if (current()) {
+        if (automaticProgressRun.current === run) automaticProgressRun.current = null;
         syncingRef.current = false;
         setSyncing(false);
       }
     }
-  }, [enabled, userId, actorKey, applyPolicy, cancelRequests, refreshDomains]);
+  }, [enabled, userId, actorKey, applyPolicy, cancelRequests, refreshDomains, reportProgress]);
 
-  const requestManualSync = useCallback(async (connectionId?: string, provider?: ConnectionProvider, allAccounts = false) => {
+  const requestManualSync = useCallback(async (connectionId?: string, provider?: ConnectionProvider, allAccounts = false, syncRelated?: () => Promise<void>) => {
     if (currentActor.current !== actorKey) return;
     if (!enabled || !userId || !active.current || !canSyncManually) { closeManualSync(); return; }
     if (syncingRef.current || manualRequest.current) return;
@@ -355,6 +380,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (!allAccounts && connectionId === undefined && accounts.length > 1) {
         manualSyncActor.current = actorKey;
         manualSyncProvider.current = provider;
+        manualSyncRelated.current = syncRelated;
         setManualSyncChoices(accounts.map(account => {
           const providerLabel = connectionFields.find(field => field.id === account.provider)?.label ?? account.provider;
           const duplicate = accounts.some(value => value.provider === account.provider && value.id !== account.id);
@@ -368,7 +394,10 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       if (!current()) return;
       applyPolicy(reservation.policy, snapshot);
       if (!reservation.allowed) return;
-      await runSync(snapshot, false, allAccounts ? accounts.map(account => account.id) : [selected.id]);
+      await Promise.all([
+        syncRelated?.(),
+        runSync(snapshot, false, allAccounts ? accounts.map(account => account.id) : [selected.id]),
+      ]);
     } catch (failure) {
       if (current()) {
         closeManualSync();
@@ -382,10 +411,16 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
     }
   }, [enabled, userId, actorKey, canSyncManually, applyPolicy, closeManualSync, runSync]);
 
-  const syncManually = useCallback((connectionId?: string) => requestManualSync(connectionId,
-    connectionId !== undefined && manualSyncActor.current === actorKey ? manualSyncProvider.current : undefined), [actorKey, requestManualSync]);
-  const syncAllManually = useCallback(() => requestManualSync(undefined,
-    manualSyncActor.current === actorKey ? manualSyncProvider.current : undefined, true), [actorKey, requestManualSync]);
+  const syncManually = useCallback((connectionId?: string, syncRelated?: () => Promise<void>) => {
+    const fromPicker = connectionId !== undefined && manualSyncActor.current === actorKey;
+    return requestManualSync(connectionId, fromPicker ? manualSyncProvider.current : undefined, false,
+      fromPicker ? manualSyncRelated.current : syncRelated);
+  }, [actorKey, requestManualSync]);
+  const syncAllManually = useCallback(() => {
+    const fromPicker = manualSyncActor.current === actorKey;
+    return requestManualSync(undefined, fromPicker ? manualSyncProvider.current : undefined, true,
+      fromPicker ? manualSyncRelated.current : undefined);
+  }, [actorKey, requestManualSync]);
   const syncRegistrarDomains = useCallback((provider: ConnectionProvider) => requestManualSync(undefined, provider), [requestManualSync]);
 
   useEffect(() => {
@@ -484,7 +519,8 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
     if (changedUserId !== userId) return;
     active.current = false;
     resetSyncState();
-  }), [userId, resetSyncState]);
+    reportProgress?.(null);
+  }), [userId, reportProgress, resetSyncState]);
 
   const syncConnections = useCallback((snapshot?: ConnectionSnapshot, connectionIds?: readonly string[]) => runSync(snapshot, false, connectionIds), [runSync]);
   const manualSyncWaitSeconds = enabled && canSyncManually ? Math.max(0, Math.ceil((cooldownUntil - clock) / 1000)) : 0;

@@ -149,7 +149,7 @@ const MarqueeTrack = ({ items, scope }: { items: DomainMarqueeItem[]; scope: str
   );
 };
 
-const DomainMarquee = ({ scope = `header`, translucent = false, backgroundColor }: { scope?: string; translucent?: boolean; backgroundColor?: string }) => {
+const DomainMarquee = ({ scope = `header`, translucent = false, transparentBackground = false, backgroundColor }: { scope?: string; translucent?: boolean; transparentBackground?: boolean; backgroundColor?: string }) => {
   const { palette } = useTheme();
   const { width } = useWindowDimensions();
   const { items, loading, visible, showDomains } = useDomainMarquee();
@@ -160,7 +160,7 @@ const DomainMarquee = ({ scope = `header`, translucent = false, backgroundColor 
 
   return (
     <View
-      style={[styles.bar, { width, backgroundColor: translucent ? `${surface}e6` : surface }]}
+      style={[styles.bar, { width }, transparentBackground ? styles.transparentBar : { backgroundColor: translucent ? `${surface}e6` : surface }]}
       {...elementProps(`native-domain-marquee`, scope)}
       accessibilityLabel={showDomains ? `Your domains` : `Notifications`}
     >

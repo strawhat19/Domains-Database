@@ -3,15 +3,15 @@ import { useRouter } from 'expo-router';
 import { routes } from '../../shared/routes';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { useDomains } from '../../shared/domainContext/useDomains';
-import { useDomainDiscovery } from '../../shared/domainSearch/useDomainDiscovery';
 import { useRecentSearches } from '../../shared/domainSearch/useRecentSearches';
+import { useTrendingDomainCount } from '../../shared/domainSearch/useDomainDiscovery';
 
 export const useHeroSearch = () => {
   const router = useRouter();
   const { ready: themeReady } = useTheme();
   const recent = useRecentSearches();
   const { domains, loading: domainsLoading } = useDomains();
-  const discovery = useDomainDiscovery(true);
+  const trending = useTrendingDomainCount();
   const [query, setQuery] = useState(``);
   const searchDomain = (value: string) => {
     const name = value.trim();
@@ -25,16 +25,15 @@ export const useHeroSearch = () => {
   return {
     query,
     submit,
-    discovery,
     setQuery,
     searchDomain,
     domainCount: domainsLoading ? 0 : domains.length,
-    trendingCount: discovery.results.length,
+    trendingCount: trending.count,
     recentSearches: recent.records,
     domainCountLoading: themeReady && domainsLoading,
     recentSearchesError: recent.error,
     recentSearchesLoading: themeReady && recent.loading,
-    trendingCountLoading: themeReady && !discovery.paused && (discovery.accessLoading || discovery.loading),
-    loading: !themeReady || !recent.ready || domainsLoading || recent.loading || (!discovery.paused && (discovery.accessLoading || discovery.loading)),
+    trendingCountLoading: themeReady && trending.loading,
+    loading: !themeReady,
   };
 };
