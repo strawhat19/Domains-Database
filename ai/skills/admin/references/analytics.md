@@ -56,6 +56,8 @@ Give runtime its own Owner-only route and navigation item, preserving an existin
 
 Use one combined bar-and-trend Analytics icon (`ChartNoAxesCombined` or the installed library's equivalent) across shared route metadata, navigation, headings and shortcuts. Apply the same responsive line/optional-area trend, current-bucket readout, dashed grid/inspection guide, outlined selection point, thin labelled timeline, proportional ranking bars and device donut/legend described in [layout](../layout.md#chart-inspection-missing-data-and-motion). Preserve the app's palette, typography, surfaces and radius tokens. Available controls operate on actual typed data; a presentation change does not create unsupported provider metrics, filters or comparisons.
 
+Follow [Icon Color And Contrast](../layout.md#icon-color-and-contrast) across dataset/dimension tabs, Chart/List choices, filters/search, metric headings/readouts, timelines, rankings and action controls.
+
 ## Shared Country, Source, Device, And Page Identities
 
 Use one safe resolver for every segment in compact/full reports, Overview/rankings, Chart/Bars/List, filter chips, and native views. Its result identifies the stable key, readable label, raw caption, allowed local asset/icon, and applicable filter action. Keep metric calculations independent of label/asset resolution.

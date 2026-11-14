@@ -50,7 +50,7 @@ Schedule discovery two–four times/day as a configurable starting point. Stock/
 
 ## Native Payment And Procurement
 
-Use one merchant payment account for a single-merchant store; Stripe Connect is needed only for a separately requested multi-seller payout model. Preserve public browsing and the destination's guest/account checkout policy. Customer authentication and merchant secret ownership are distinct.
+Use one merchant payment account for a single-merchant store; Stripe Connect is needed only for a separately requested multi-seller payout model. Preserve public browsing and the destination's guest/account checkout policy. Customer authentication and merchant secret ownership are distinct. For that model, read [Marketplace Connect](../../payments/references/marketplace-connect.md).
 
 The server owns the authoritative quote: published eligible product, exact variant/quantity, integer amount/currency, destination-specific freight/tax/discount, freshness, stock/reservation, expiry, and financial policy. Browser amounts are display data. Customer reviews/assent to changed quotes precede payment; never charge extra silently. Reserve owned inventory atomically; supplier stock isn't reserved unless the API guarantees it. TTL cleanup alone cannot release reservations reliably.
 

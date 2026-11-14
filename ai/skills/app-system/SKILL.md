@@ -7,7 +7,11 @@ description: Implement the complete reusable app core when the user requests a f
 
 2. Read the shared guides in AGENTS.md order, then [system.md](system.md) for the common-core feature map, adoption prompt, and completion matrix, and [adoption](../../adoption.md) for environment/connection mapping. Reuse [Admin](../admin/admin.md) and its focused [Firestore](../admin/references/firestore.md), [workflow](../admin/references/workflows.md), [analytics](../admin/references/analytics.md), and [feature flags](../admin/references/features.md) contracts for connected accounts, permitted actions, reports, and Owner configuration. Use [the account layout](../admin/layout.md) for shell geometry, menu hierarchy, loading states, charts, icons, tables, and motion. Keep detailed contracts in their existing guides.
 
+Apply [Responsive Data Tables](../responsive-data-tables/SKILL.md) to the starter's tables, record lists and long data rows, including Profile/Admin/Dashboard. Share column/record definitions and scoped preferences across wide rows and mobile cards; reuse the destination's theme, services, actual controls and permitted actions.
+
 3. For the full starter, read [private chat](references/chats.md), [plans and pricing](references/plans.md), and [sourced blog](references/blog.md). Implement the actual permitted services, subscriptions, and actions behind each view. Focused account setup does not automatically add chat, a blog CMS, payments, or new paid offers; feature thresholds reuse the configured plan hierarchy. A reference's Coming Soon review/chat/message entry or static gallery is not proof of functioning persistence.
+
+For explicitly requested structured rich text, bot participants, typing or presence, follow [the server-owned chat extension](references/chats.md#server-owned-rich-text-and-bot-participants). These additions are opt-in and preserve the destination's participant/privacy boundaries and authorized validation scope.
 
 4. Complete every requested common-core module through frontend, typed service/model, database rules/indexes, and honest pending/empty/error states. Keep private conversations participant-scoped, pricing separate from entitlements/payments, and contact storage separate from optional email delivery. Preserve narrower existing role policies.
 

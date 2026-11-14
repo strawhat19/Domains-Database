@@ -204,7 +204,7 @@ ai/
 
 5. src/shared/common/ids.ts owns app-owned IDs, values.ts owns general value helpers, and storage.ts owns browser or device persistence and operation queues. collection.ts is the reusable collection factory for repeated typed CRUD, preserving per-account storage and monotonic numbers; use it when several models need the same operations. Keep scripts/globals.ts as a compatibility export barrel while callers migrate; new callers should import the focused module they need. Do not copy legacy helper implementations into several files.
 
-6. src/styles/theme/theme.ts owns typed shared colors, ThemePalette, and themePalettes. The theme context owns selected theme state; platform rendering consumes those values rather than defining a second unrelated palette. Keep src/shared/themeContext/theme.ts as a compatibility export barrel when existing imports rely on it.
+6. src/styles/theme/theme.ts owns typed shared colors, ThemePalette, and themePalettes. The theme context owns selected theme state; platform rendering consumes those values rather than defining a second unrelated palette. Keep src/shared/themeContext/theme.ts as a compatibility export barrel when existing imports rely on it. Shared icon/control renderers follow [Icon Color And Contrast](../admin/layout.md#icon-color-and-contrast) in each supported theme and actual web/native renderer.
 
 7. shared/authentication owns auth operations/types and account scopes; the existing provider module owns connected SDK initialization and adapters (`shared/firebase` for Firebase). Preserve an established auth/database provider unless migration is requested; Firebase is the new-app default. Let the configured provider manage connected credentials; retain password helpers only for an explicit existing demo. AuthContext and useAuth expose the hydrated account and loading state through api/auth.ts or its equivalent. Forms, avatar menus, account pages, and gates consume services. Separate public profile projections, private accounts, and connection credentials.
 
@@ -212,7 +212,38 @@ ai/
 
 9. Give each component its own folder. Use a shared hook or logic module, an index.tsx entrypoint, index.web.tsx with styles.scss for web, and index.native.tsx with styles.native.ts for native when the platforms need distinct views. Shared components can use one rendering file when splitting it would only duplicate code. Toast owns feedback rendering; AuthFeedback and useAuthFeedback bind shared authentication notices and errors to that view.
 
+Apply [element identifiers and collection parents](references/element-identifiers.md) to actual app-owned rendered nodes: stable semantic classes shared by purpose, unique instance/record/role IDs and native platform equivalents. Preserve existing behavior selectors and public anchors. Reuse logical collection parents before adding wrappers, respecting table/inline/SVG semantics, drag/drop measurements, virtualization and positioned geometry; data/style transforms are not rendered collections. Keep this shared helper behavior separate from persistent model IDs in common/ids.ts.
+
 Use the existing framework's supported SCSS module loading. When its Sass compileString pipeline lacks a source URL, importer, or load path for relative resolution, load shared global SCSS through web component side-effect imports rather than a relative Sass @use used only to emit CSS. Load shared base styles before component overrides, preserving that semantic order when arranging imports. Sass @use remains appropriate for Sass modules or shared CSS emission when the installed pipeline supports the required resolution; do not change bundler configuration merely to copy another framework's style-loading pattern.
+
+### Stylesheet Formatting
+
+Write hand-authored CSS and SCSS in expanded form. Place opening braces on the selector or at-rule line, put each declaration on its own indented line, and align closing braces with their opening rule. Use exactly one empty line between adjacent rule blocks, including sibling nested selectors, media queries, and keyframe steps. This stylesheet rule takes precedence over the general preference for compact code. Apply it to rules you add or change, and preserve cascade order and generated or vendored styles.
+
+```scss
+.site-nav {
+  display: flex;
+  gap: var(--navigation-gap);
+}
+
+.site-nav__icon {
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav__icon {
+    transition: none;
+  }
+
+  .site-nav__badge {
+    animation: none;
+  }
+}
+```
+
+For public headers and shared controls, follow [Navigation Icons and Badges](references/navigation-icons-and-badges.md).
+
+For table/record-list components and long data rows, apply [Responsive Data Tables](../responsive-data-tables/SKILL.md). Keep one reusable column/record model and normalized, project/account/table-scoped presentation preferences shared by the wide and mobile renderers; component hooks derive geometry and transient interactions while the existing adapter owns saved preferences. Use actual container width, progressive compression and labelled cards without copying a destination's columns or cloud schema into the reusable pack.
 
 10. The shared route registry keeps canonical paths, aliases, labels, icons, and allowed roles/capabilities. Profile and Admin navigation consume that registry and the same capability helpers as direct routes. Prefer available top-level admin URLs; keep namespaced fallbacks for collisions and legacy redirects when a canonical path changes. Derive shell/loading detection and safe auth return destinations from metadata instead of an /admin prefix. The example root pages above are common-core boundaries, not a reason to add unrelated business modules.
 

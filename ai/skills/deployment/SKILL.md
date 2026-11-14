@@ -1,13 +1,23 @@
 ---
 name: deployment
-description: Prepare or release an existing app to its intended host, connect a primary custom domain with independently detachable redirects, and handle scoped verification or rollback. Use for publishing, domain cutovers, and release readiness; copying this skill does not authorize a release.
+description: Prepare or release an existing app to its intended host and document a primary custom domain with independently detachable redirects. Rakib points domains and changes DNS himself. Use for publishing, domain-cutover preparation, and release readiness; copying this skill does not authorize a release or a DNS change.
 ---
 
 # Application And Domain Releases
 
+**Domains are Rakib's.** Agents never point, connect, redirect or reassign his domains, and never change DNS records or nameservers. They don't ask to, either. He does all of that himself during app launch (AGENTS.md rule 45). In this skill and its domain reference, agents do the preparation and documentation steps only. Those steps are: recording the intended hostnames, the canonical origin, the auth/Stripe return URLs to update, and a redirect/detach map he can follow. Every DNS, registrar, nameserver and project-domain step in this skill is his to perform.
+
 Use the destination's framework, repository, auth/database resources, and host unless the user chooses a replacement; preserve existing work. Read its AGENTS.md and applicable [structure](../structure/structure.md), [API](../api/api.md), [authentication](../authentication/authentication.md), and [routes](../routes/routes.md) guidance. For protected reports or billing, retain the destination's [Admin](../admin/SKILL.md) and billing contracts.
 
-Read [Domain And Release Reference](references/domain-release.md) when preparing a production release, connecting hostnames, or detaching redirects. Put secret-free resource IDs, environment names/status, public configuration, DNS snapshots, and release evidence in destination configuration or docs outside ai/. Store private values only in ignored local environment files or hosted server secret configuration; never in ordinary docs or code.
+Read [Domain And Release Reference](references/domain-release.md) when preparing a production release or writing the hostname and redirect map Rakib applies. Put secret-free resource IDs, environment names/status, public configuration, DNS snapshots, and release evidence in destination configuration or docs outside ai/. Store private values only in ignored local environment files or hosted server secret configuration; never in ordinary docs or code.
+
+For Expo apps that should run on an iPhone from main without App Store review, read [Expo iPhone Releases](references/expo-iphone-releases.md).
+
+For an Expo web export hosted on Vercel from GitHub, Rakib's project overrides are in [CODE.md](../../../CODE.md): Build Command `npm run export:web`, Output Directory `dist`, Install Command `npm ci`, Root Directory `./`, then redeploy. The app needs an `export:web` script (`expo export --platform web`), as in Hasanabi and Unity-Web-Games.
+
+For local environment pulls or dependency upgrades, use [Local Development](../local-development/SKILL.md) and only its relevant reference. For a requested named Firestore database change, follow [resource selection and cutovers](../database/references/firestore-operations.md); a host release cannot select or migrate database resources by itself.
+
+Agent commits, pull requests, and merges follow [Git Workflow](../git-workflow/SKILL.md). Preparing a release does not merge to the production branch or delete a feature branch. After Rakib approves that merge, read the resulting production deployment here and report its status with the merge commit.
 
 ## Scope And Preparation
 

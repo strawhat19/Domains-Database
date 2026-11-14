@@ -19,6 +19,7 @@ Profile, AccountNavigation, AdminDashboard, AdminRecords, AnalyticsCharts and Ob
 | Analytics Traffic/GitHub dashboard composition, repository data, classic-token reuse and per-project server setup | [GitHub](references/github.md) |
 | Requested Stripe subscriptions, trusted entitlements and aggregate Owner payment charts | [Payments](../payments/SKILL.md) |
 | Shell/sidebar/editor/chart sizing, controls, motion and platform rendering | [Layout](layout.md) |
+| Wide data rows, progressive compression, mobile cards, table settings and column sizing across account/admin reports | [Responsive Data Tables](../responsive-data-tables/SKILL.md) |
 | Complete public/private common core | [App System](../app-system/SKILL.md) |
 
 ## Firebase Configuration And Accounts

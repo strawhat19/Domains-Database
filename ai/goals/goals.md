@@ -6,4 +6,4 @@
 
 4. Carry useful independent work forward while a clarification is pending. Request missing information only when it materially affects the requested result, and distinguish a required answer from an optional preference.
 
-5. Complete the authorized implementation and make it reviewable. Respect AGENTS.md on validation; do not run builds, tests, or UI checks unless requested. Report the result, any unfinished requirement, and any material limitation without claiming checks that were not performed.
+5. Complete the authorized implementation and make it reviewable through [Git Workflow](../skills/git-workflow/SKILL.md). Respect AGENTS.md on validation; do not run builds, tests, or UI checks unless requested. Report the result, any unfinished requirement, and any material limitation without claiming checks that were not performed.

@@ -2,6 +2,10 @@
 
 Copy the complete ai/ folder, including skills and analytics assets/licenses, plus AGENTS.md into the destination repository. Skills live under ai/skills/; do not create a second divergent skills/ tree. Preserve existing unrelated guidance and implementation. This pack supplies the build contract; Firebase/Vercel resources, secrets, provider access and deployed source remain project-specific.
 
+Use [maintenance](maintenance.md) when merging or copying pack versions. Responsive rows/cards and table preferences follow [Responsive Data Tables](skills/responsive-data-tables/SKILL.md); all included controls use [Icon Color And Contrast](skills/admin/layout.md#icon-color-and-contrast). Local environment/dependency work follows [Local Development](skills/local-development/SKILL.md), and requested Firestore resource changes follow [selection and cutovers](skills/database/references/firestore-operations.md). Agent branch, review, and merge behavior follows [Git Workflow](skills/git-workflow/SKILL.md). These focused workflows retain the requested scope.
+
+Apply [element identifiers and collection parents](skills/structure/references/element-identifiers.md) throughout the included frontend: actual semantic web classes, unique instance/record/role IDs and supported native equivalents, with logical repeated groups that preserve the destination's table, scroll, drag/drop and layout contracts. Keep existing selectors/anchors and report adapter or server-rendering limits honestly; adoption does not require replacing the destination's framework.
+
 Use [the connected-account prompt](#connected-account-system-prompt) for Profile, Dashboard, Admin, private connections, feature controls and reporting, or [the full-system prompt](skills/app-system/system.md#one-adoption-prompt) for the broader starter. A narrow task loads only its relevant guides and does not authorize adding every module. Requested Google AdSense preparation or serving uses [the submission prompt](#google-adsense-submission-prompt) or [the optional serving prompt](#consented-ads-and-ad-free-plans-prompt). Randomizers use [Chance-Based Tools](skills/chance-tools/SKILL.md).
 
 ## Connected Account System Prompt
@@ -16,6 +20,7 @@ The shorter request "Set up the connected account system from ai/adoption.md" se
 | --- | --- |
 | Authentication/accounts | Real Google/email flows, UID-to-app-account mapping, private Subscriber defaults, current role/status hydration and trusted Owner bootstrap |
 | User identity | [Shared avatar/name display](skills/user-identity/SKILL.md) in Users tables and identity surfaces; freshest provider-supplied photo on sign-in, best-effort restore/refresh sync and bounded authorized propagation |
+| Responsive tables | Included tables share their record/column/settings/query state across wide rows and compact cards, with real Fit/Resize/Stretch, accessible actions and [review-matrix coverage](skills/responsive-data-tables/references/implementation.md#review-matrix) |
 | Profile/Connections | Saved editable account details/preferences; private account-scoped connection load/save/validate/clear and permitted provider synchronization |
 | Account shell/navigation | Full-width account header inner row/canvas beyond public box, shared measured logo-plus-wordmark rail, persisted collapse/single-column submenus, bottom identity controls and themed skeletons; avatar popup with role pills for all roles and trusted-plan pills only for non-Owners |
 | Dashboard/Admin | Owner-only ADMIN/Dashboard/Feedback and supported children by default, Features last; other roles see Profile only at top level with supported private tools inside it; matching direct-route/service/rules/server gates, real bounded data and scoped CRUD |
@@ -59,9 +64,9 @@ Reports may reuse an existing billing system without adding Checkout, new offers
 
 ## Custom Domain And Detachable Redirects Prompt
 
-> Deploy this project using ai/skills/deployment/SKILL.md to my chosen primary custom domain, with the other explicitly selected domains as independently detachable redirects. Reuse the intended hosting project and Git repository, connect the approved production branch (main when that is the intended branch), preserve existing DNS/email services, and align canonical URLs, authentication origins, Stripe return/webhook URLs and production environment variables. Document how each redirect can become its own site later. Prepare a concrete release, use existing authorization for live changes, and report the pushed commit, hosting deployment, HTTPS/redirect behavior and remaining propagation or setup accurately.
+> Deploy this project using ai/skills/deployment/SKILL.md to my chosen primary custom domain, with the other explicitly selected domains as independently detachable redirects. Reuse the intended hosting project and Git repository, connect the approved production branch (main when that is the intended branch), preserve existing DNS/email services, and align canonical URLs, authentication origins, Stripe return/webhook URLs and production environment variables. Document how each redirect can become its own site later. Prepare a concrete release, use existing authorization for live changes, and report the pushed commit, hosting deployment, HTTPS/redirect behavior and remaining propagation or setup accurately. Prepare the release and a domain/redirect map for me; do not point domains, change DNS or nameservers, or assign hostnames. I do that myself at launch.
 
-Identify the exact primary and secondary hostnames from the user's request or existing configuration. Ask for only genuinely missing choices; do not infer that all domains in an open registrar account should redirect, purchase domains, move nameservers or detach another site's active domain without intended scope. Copying guidance does not grant cloud access, authorize a production release or cause the next local commit to deploy.
+Rakib points every domain and changes DNS himself (AGENTS.md rule 45). Identify the exact primary and secondary hostnames from the user's request or existing configuration. Ask for only genuinely missing choices; do not infer that all domains in an open registrar account should redirect, purchase domains, move nameservers or detach another site's active domain without intended scope. Copying guidance does not grant cloud access, authorize a production release or cause the next local commit to deploy.
 
 ## Google AdSense Submission Prompt
 
@@ -130,3 +135,15 @@ When advertising is requested, review content/policy readiness, publisher metada
 ## Disconnected Frontend Preparation
 
 When the request excludes backend connections, use [Disconnected Account Frontend](skills/disconnected-account-frontend/SKILL.md) and its adoption prompt instead of the connected-account prompt. Deliver reviewable pages and explicit unavailable states; record live-service prerequisites separately.
+
+## Local Environment And Dependency Prompts
+
+> Pull this app's Vercel Development variables using ai/skills/local-development/SKILL.md. Confirm the existing hosting project/team and the file its local scripts actually load, preserve local/private values and use its supported dotenv boundary. Follow AGENTS.md for execution scope; do not deploy or alter hosted variables.
+
+> Repair this app's interrupted Expo upgrade using ai/skills/local-development/references/expo-upgrades.md. Inspect the actual manifest, lockfile, installed versions and peer report; align the intended SDK and runtime, preserve existing overrides/native work, and resolve the stale tree without masking incompatible peers. Keep backups and report dependency resolution separately from unperformed app checks.
+
+These focused prompts do not request the full account starter, a database migration, new provider credentials or a release. Specify another environment or SDK target explicitly when that is the intended scope.
+
+## Portable Guidance Consolidation Prompt
+
+> Consolidate this repository's AGENTS.md and ai/ using ai/maintenance.md. Compare the intended reference revisions and local unpushed copies, preserve newer useful policies and older omissions, retain all licensed assets/references, and update discovery/adoption links. Keep app-specific history outside ai/, preserve application edits, and run only the requested documentation integrity checks. Do not synchronize other repositories or publish unless requested.

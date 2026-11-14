@@ -11,7 +11,7 @@ Use this workflow when the user asks for page buildouts before backend access is
 
 > Use ai/skills/disconnected-account-frontend/SKILL.md to prepare this app's profile, account and internal dashboard pages for future Firebase integration. Keep its existing theme and public functionality. Add the requested saved-item/list pages, honest disconnected states and public launch-readiness pages. No backend connections. Commit only to my requested review branch and report what still needs setup.
 
-Use a narrower request when only one module needs work. Branch permission does not authorize production deployment or merging.
+Use a narrower request when only one module needs work. Branch permission does not authorize production deployment or merging. That review branch is the feature branch in [Git Workflow](../git-workflow/SKILL.md). Merging it waits for Rakib's chat approval.
 
 ## Read And Adapt
 

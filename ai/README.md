@@ -1,6 +1,10 @@
 # Reusable Connected App Guidance
 
+The canonical copy of this pack is the private repository [strawhat19/AI](https://github.com/strawhat19/AI). Update `AGENTS.md` and `ai/` there. Other projects follow that repository and keep project-specific name, domain, colors, and features outside this folder.
+
 Copy this complete ai/ directory and AGENTS.md to adopt the generic app system. Skills live in ai/skills/ and travel with their focused references and licensed analytics assets. Each destination keeps its framework, product data, branding and stricter access policies; root admin URLs use available names, with collision fallbacks and old-route redirects. Actual project/configuration/schema/setup notes stay outside ai/.
+
+For pack updates and copies, follow [maintenance](maintenance.md): compare contents rather than dates, preserve useful older guidance and newer policies, and keep the complete licensed bundle. From the repository root, `node ai/scripts/validate-pack.mjs` performs a read-only documentation integrity check; it does not run or validate the application.
 
 The original reusable guides and accompanying AGENTS.md are [MIT licensed](LICENSE), copyright 2026 strawhat19. Keep ai/LICENSE and the copyright/license notices when copying or distributing them. Dependencies and vendored assets retain their own licenses, provenance and disclaimers; preserve their complete notices, including individual brand-icon terms. Adopting this pack does not relicense the destination project's unrelated code or grant trademark rights.
 
@@ -14,7 +18,7 @@ This includes private Profile/Connections, real auth/database boundaries (Fireba
 
 Read applicable guides in this order:
 
-1. [Structure](skills/structure/structure.md), with [hierarchical lists](skills/structure/references/hierarchical-lists.md) for grouped records, star containment and responsive summaries
+1. [Structure](skills/structure/structure.md), with [element identifiers and collection parents](skills/structure/references/element-identifiers.md) for semantic classes, unique IDs and safe repeated groups, [hierarchical lists](skills/structure/references/hierarchical-lists.md) for grouped records/star containment and [Responsive Data Tables](skills/responsive-data-tables/SKILL.md) for container-filling rows, compact cards, shared column settings and real Fit/Resize/Stretch behavior
 2. [Database](skills/database/database.md)
 3. [API](skills/api/api.md)
 4. [Authentication](skills/authentication/authentication.md) for users/sessions
@@ -24,6 +28,13 @@ Read applicable guides in this order:
 8. [App System](skills/app-system/SKILL.md) for the complete starter; [chat](skills/app-system/references/chats.md), [plans](skills/app-system/references/plans.md), and [blog](skills/app-system/references/blog.md) for those modules
 9. [AdSense](skills/adsense/SKILL.md) when Google AdSense preparation, publisher verification, submission, consent or ad serving is requested; [submission](skills/adsense/references/submission.md) and [serving](skills/adsense/references/serving.md) stay separate
 10. [Chance-Based Tools](skills/chance-tools/SKILL.md) for randomizers and playful decision interfaces
+11. [Local Development](skills/local-development/SKILL.md) for requested [environment pulls](skills/local-development/references/environment.md), [Expo upgrades and dependency recovery](skills/local-development/references/expo-upgrades.md)
+
+Use [Scroll Reveals](skills/scroll-reveals/SKILL.md) for quiet scroll-in motion across sections, cards and split headlines on web and native. The shorthand “give me page transition loader into home page” uses the [loader and homepage handoff guide](skills/scroll-reveals/references/page-transition-loader.md) to coordinate a branded first paint, exit, and content reveal.
+
+Use [Navigation Icons and Badges](skills/structure/references/navigation-icons-and-badges.md) for optical icon sizing, compact header spacing, cut corners, and themed Beta badges. Use [stylesheet formatting](skills/structure/structure.md#stylesheet-formatting) for hand-written SCSS and CSS.
+
+Use the shared [Icon Color And Contrast](skills/admin/layout.md#icon-color-and-contrast) contract across account/table/chart controls. For database creation or consolidation, read [Firestore resource selection and cutovers](skills/database/references/firestore-operations.md), alongside the existing account/rules contract.
 
 Apply [User Identity And Profile Photo Sync](skills/user-identity/SKILL.md) whenever building or changing user identity displays: each user's avatar accompanies their name/username in Users tables and other identity views. It includes shared authorized identity data, provider sign-in photo synchronization, best-effort restored-session checks, themed fallbacks and web/native behavior. Include it in connected-account and full-app adoption; provider freshness, custom overrides and privacy follow the skill rather than a header-only implementation.
 
@@ -51,7 +62,9 @@ These are focused workflows, separate from the default account starter. Copy the
 
 - **Payments/subscriptions:** [Payments](skills/payments/SKILL.md) connects the destination's plan catalog, private database billing records, verified Stripe operations, trusted entitlements and actual feature/limit enforcement. Use [the Stripe prompt](adoption.md#stripe-payments-and-subscriptions-prompt).
 - **Owner payment charts:** the [reporting contract](skills/payments/references/payment-reports.md) adds private aggregate reports and compact Profile/Dashboard panels with source, coverage, freshness and meaningful money/status definitions. Use [the reports prompt](adoption.md#owner-payment-reports-prompt).
-- **Production/custom domains:** [Deployment](skills/deployment/SKILL.md) connects the intended Git production branch and canonical domain, with each secondary hostname independently redirecting and detachable into a future site. Use [the domain prompt](adoption.md#custom-domain-and-detachable-redirects-prompt).
+- **Production/custom domains:** [Deployment](skills/deployment/SKILL.md) prepares the intended Git production branch and a canonical-domain and redirect map for Rakib to apply himself (AGENTS.md rule 45). Each secondary hostname stays independently detachable into a future site. Agents do not point domains, change DNS, or assign hostnames. Use [the domain prompt](adoption.md#custom-domain-and-detachable-redirects-prompt).
+
+Use [Social Previews](skills/social-previews/SKILL.md) for a branded 1200 × 630 Open Graph/X link-preview card with versioned artwork, a generator script and static-HTML metadata.
 
 Existing projects keep their database and authentication provider; Firebase is the new-app default, not a required migration. Actual account IDs, prices, currencies, quotas, domain inventories, environment names/status and release evidence belong in the destination's docs/configuration outside `ai/`. Private values belong only in ignored local configuration or hosted server secret storage, never ordinary docs or client code. Preparation, connection, deployment and a real financial transaction are distinct outcomes.
 
@@ -69,6 +82,10 @@ For randomizers and playful decision interfaces, use [Chance-Based Tools](skills
 
 Use [Shop](skills/shop/SKILL.md) and [its adoption prompt](skills/shop/SKILL.md#adoption-prompt) for a themed Firestore store, cart/native Stripe checkout, permitted shop administration, sourced dropshipping Market, research and controlled fulfillment. It reuses the destination's existing account/store foundations and keeps project-specific pricing/setup outside this portable pack.
 
+## Git Workflow
+
+Agents in Rakib's repositories follow [Git Workflow](skills/git-workflow/SKILL.md). Commit on a feature branch, send the pull request link and the Vercel preview link when the work is ready for review, and merge to main and delete the branch only after he says yes in chat. Pull latest main before that merge and keep his manual commits. A pack update he asks for in this repository is committed directly to main and pushed, with no pull request.
+
 ## Frontend Only, Before Connections
 
-For page buildouts without live services, use [Disconnected Account Frontend](skills/disconnected-account-frontend/SKILL.md). Simple prompt: "Prepare this app with the disconnected account frontend skill, keep its theme, and commit to my review branch; no backend connections." This mode does not enable the connected defaults above.
+For page buildouts without live services, use [Disconnected Account Frontend](skills/disconnected-account-frontend/SKILL.md). Simple prompt: "Prepare this app with the disconnected account frontend skill, keep its theme, and commit to my review branch; no backend connections." This mode does not enable the connected defaults above. That review branch stays unmerged until [Git Workflow](skills/git-workflow/SKILL.md) approval.

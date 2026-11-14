@@ -12,6 +12,7 @@ Connect the requested billing or reporting behavior through the destination's ex
 | Work | Reference |
 | --- | --- |
 | Stripe Checkout, Portal, webhook reconciliation, private billing records, paid features and quotas | [Stripe billing](references/stripe-billing.md) |
+| Multi-seller marketplace checkout, seller onboarding/payouts and platform commission | [Marketplace Connect](references/marketplace-connect.md) |
 | Owner aggregate payment/subscription reports and charts | [Payment reports](references/payment-reports.md) |
 | Public catalog editing and publication | [Plans](../app-system/references/plans.md) |
 | Feature audiences and minimum tier evaluation | [Features](../admin/references/features.md) |

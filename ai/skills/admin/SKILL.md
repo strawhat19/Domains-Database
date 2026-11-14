@@ -11,6 +11,10 @@ For dashboard/account-system adoption with an identified GitHub repository, or r
 
 3. Read [layout.md](layout.md) for the full-width account header/canvas, measured logo-plus-wordmark sidebar width, persistent navigation, profile/table/editor controls, chart geometry/inspection and platform icons. Default ADMIN and Dashboard/Feedback access to active trusted Owner; all other roles get Profile only as top-level account navigation, with supported private tools inside Profile. The signed-in avatar popup shows role pills for every role and trusted-plan pills only for non-Owners, based on the actual account role rather than its administrative capability. Other administrative grants require an explicit user-selected policy. Layout parity includes relevant working persisted actions; retain the destination's colors/fonts and business labels.
 
+Apply [Icon Color And Contrast](layout.md#icon-color-and-contrast) to shared navigation, controls, chart glyphs and identities through the actual web/native renderer.
+
+Apply [Responsive Data Tables](../responsive-data-tables/SKILL.md) to record tables, report rows and long data groups throughout Profile/Admin/Dashboard. Use available horizontal space, progressive compression and labelled mobile cards with shared settings/search/filter/sort and real Resize/Fit/Stretch behavior where applicable. Retain this layout's shell, action/status cells, editor/paging semantics, theme and existing service/permission boundaries.
+
 Apply [User Identity And Profile Photo Sync](../user-identity/SKILL.md) to Users tables, account controls and other displayed user names/usernames. Reuse each person's authorized current avatar and shared identity data, including provider photo sync and themed fallbacks.
 
 Read [references/features.md](references/features.md) for requested Owner feature controls or the connected starter: global settings, role/minimum-tier targeting, public-safe catalog ranks, consumer/intake enforcement and the slim table/settings modal. Feature eligibility uses existing trusted entitlements; it does not assign paid access.

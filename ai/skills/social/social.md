@@ -8,7 +8,7 @@
 
 5. Enforce audiences in service reads for individual records, profile lists, feed queries, counts, and search. Public feeds expose only public profiles and posts to other viewers; owners may see their own private records. Followed feeds include only records the current viewer is allowed to read. Following someone does not bypass a private profile or post audience. Apply requested follower approval rules consistently, and refresh visible state when privacy or relationships change.
 
-6. Store follows as explicit relationships between app-owned user IDs. Prevent duplicate and self-follow records, and derive follower and following counts from eligible relationships. Use pending and accepted states only when the requested private-account behavior requires approval; do not invent acceptance on the client.
+6. Store follows as explicit relationships between app-owned user IDs. Prevent duplicate and self-follow records, and derive follower and following counts from eligible relationships. Use pending and accepted states only when the requested private-account behavior requires approval; do not invent acceptance on the client. With non-deterministic app-owned IDs, enforce uniqueness in one transaction through a deterministic key document (for example followerId:targetId) that points to the follow record, and update the follower/following counts in that same transaction (Science-Histories b3f6db8, server/account/profileFollows.ts).
 
 7. Require a current authenticated session for creating, editing, deleting, following, and sending messages. Derive the actor from that session rather than accepting a caller-supplied author or sender ID. Enforce ownership and requested roles in the service, including direct calls; hidden buttons are only a view concern.
 
