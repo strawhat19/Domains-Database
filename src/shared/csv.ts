@@ -162,6 +162,7 @@ export const parseDomainCsv = (text: string, defaults: CsvDefaults = {}): Domain
         },
         meta: {
           ...savedMeta,
+          ...(!metaText ? { csvRenewalCostProvided: price !== `` } : {}),
           ...(!metaText || Object.keys(commonInfo).length ? { csv: { ...savedCsv, ...csvInfo, ...commonInfo } } : {}),
           normalized: {
             ...normalizedMeta,

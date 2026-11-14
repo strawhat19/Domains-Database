@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
+  liveDetails: { gap: 4 },
   metric: { gap: 4, width: `46%` },
   statusDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: palette.muted },
   metrics: { gap: 16, flexWrap: `wrap`, flexDirection: `row` },

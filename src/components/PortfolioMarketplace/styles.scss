@@ -23,3 +23,9 @@
   &:disabled { opacity: .6; cursor: default; }
 }
 .portfolio-sell-link { text-decoration: none; }
+.portfolio-marketplace-parking { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; }
+.portfolio-marketplace-dns, .portfolio-marketplace-dns-results { display: grid; justify-items: start; gap: 3px; width: 100%; overflow-wrap: anywhere; }
+.portfolio-marketplace-parking-account { margin-inline-start: 5px; color: var(--ink); background: var(--input); }
+.portfolio-marketplace-parking-spinner { animation: portfolio-parking-spin .85s linear infinite; }
+@keyframes portfolio-parking-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .portfolio-marketplace-parking-spinner { animation: none; } }

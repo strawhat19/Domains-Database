@@ -26,6 +26,8 @@ const upstreamPaths = {
 
 const goDaddyDetailPath = /^\/v2\/customers\/[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\/domains\/[a-z0-9.-]+$/i;
 const goDaddyShopperPath = /^\/v1\/shoppers\/(?:MY|\d{1,10})$/;
+const hostingerDetailPath = /^\/api\/domains\/v1\/portfolio\/(?=[a-z0-9.-]{1,253}$)[a-z0-9-]+(?:\.[a-z0-9-]+)+$/;
+const squarespaceDetailPath = /^\/reseller\/v1\/domains\/(?=[a-z0-9.-]{1,253}$)[a-z0-9-]+(?:\.[a-z0-9-]+)+$/;
 
 export const readLimitedText = async (
   body: ReadableStream<Uint8Array> | null,
@@ -76,13 +78,28 @@ export const requestRegistrar = async (
   const appraisalDomain = url.searchParams.get(`domainName`) ?? ``;
   const goDaddyAppraisal = context.provider === `godaddy` && target === `https://api.godaddy.com/v1/domains/govalues`
     && /^[a-z0-9.-]{1,253}$/.test(appraisalDomain) && url.searchParams.toString() === `domainName=${appraisalDomain}`;
-  const hostingerRead = context.provider === `hostinger` && target === `https://developers.hostinger.com/api/hosting/v1/websites`;
+  const hostingerRead = context.provider === `hostinger` && url.origin === `https://developers.hostinger.com`
+    && (url.pathname === `/api/hosting/v1/websites`
+      || (!url.search && hostingerDetailPath.test(url.pathname)));
+  const nameSiloRead = context.provider === `namesilo` && target === `https://www.namesilo.com/apibatch/getDomainInfo`;
+  const squarespaceRead = context.provider === `squarespace` && url.origin === `https://api.squarespace.com`
+    && !url.search && squarespaceDetailPath.test(url.pathname);
   const squarespaceToken = context.provider === `squarespace`
     && target === `https://login.squarespace.com/api/1/login/oauth/provider/tokens` && !url.search;
+  const porkbunPriceCheck = context.provider === `porkbun`
+    && target === `https://api.porkbun.com/api/json/v3/domain/checkDomain` && !url.search;
+  const porkbunInvoiceRead = context.provider === `porkbun` && url.origin === `https://api.porkbun.com`
+    && ((url.pathname === `/api/json/v3/account/invoices` && /^start=(?:0|[1-9]\d{0,3})&limit=(?:[1-9]\d?|100)$/.test(url.searchParams.toString()))
+      || (!url.search && /^\/api\/json\/v3\/account\/invoice\/[1-9]\d{0,15}$/.test(url.pathname)));
+  const vercelPriceCheck = context.provider === `vercel`
+    && target === `https://api.vercel.com/v1/registrar/domains/price`
+    && (!url.search || /^teamId=team_[a-z0-9]+$/i.test(url.searchParams.toString()));
+  const inventoryRead = target === upstreamPaths[context.provider] && (context.provider !== `namecheap`
+    || [`namecheap.domains.getList`, `namecheap.users.getPricing`, `namecheap.domains.dns.getList`, `namecheap.domains.getContacts`].includes(url.searchParams.get(`Command`) ?? ``));
   const permitted = options
-    ? squarespaceToken && options.method === `POST` && typeof options.body === `string`
+    ? (squarespaceToken || porkbunPriceCheck || vercelPriceCheck) && options.method === `POST` && typeof options.body === `string`
       && new TextEncoder().encode(options.body).byteLength <= MAX_REQUEST_BYTES
-    : target === upstreamPaths[context.provider] || goDaddyRead || hostingerRead;
+    : inventoryRead || goDaddyRead || hostingerRead || nameSiloRead || squarespaceRead || porkbunInvoiceRead;
   if (!(appraisal ? goDaddyAppraisal && !options : permitted) || url.username || url.password || url.hash) {
     throw new RegistrarRelayError(500, `Registrar Request Is Unavailable`);
   }

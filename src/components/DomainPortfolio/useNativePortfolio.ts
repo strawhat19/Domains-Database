@@ -5,6 +5,7 @@ import { REGISTRARS, PORTFOLIO_PREVIEW_LIMIT } from '../../shared/config';
 import { File, Paths } from 'expo-file-system';
 import * as DocumentPicker from 'expo-document-picker';
 import { normalizeDomainTags } from '../../shared/domainTags';
+import { normalizeDomainPrice } from '../../shared/domainPricing';
 import { portfolioHaptic } from '../../shared/common/haptics.native';
 import { getCustomSiteIconUrl } from '../../shared/domainSiteIcon';
 import { domainEditorMetadata, setPublicDomain, updateDomainEditorName } from '../DomainEditor/publicProfileVisibility';
@@ -13,6 +14,7 @@ import { getDomainSource, getDomainStatus, getRegistrarCounts, getDomainDeletion
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { useColumns } from '../../shared/columnContext/useColumns';
+import { usePortfolioAfternicEstimates } from './usePortfolioAfternicEstimates';
 import { markDomainFieldsKnown } from '../../shared/registrarSync/metadata';
 import { useDomainGroupEditor } from '../../shared/portfolioPreferences/useDomainGroupEditor';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
@@ -46,6 +48,7 @@ const newDomain = (): DomainInput => {
 
 export const useNativePortfolio = (compact = false) => {
   const context = useDomains();
+  const domains = usePortfolioAfternicEstimates(context.domains, compact);
   const { loading: columnsLoading } = useColumns();
   const preferences = usePortfolioPreferences();
   const preferencesLoading = preferences.loading;
@@ -59,6 +62,7 @@ export const useNativePortfolio = (compact = false) => {
   const [editorOpen, setEditorOpen] = useState(false);
   const [setupOpen, setSetupOpen] = useState(false);
   const [renewalPrice, updateRenewalPrice] = useState(``);
+  const renewalCostEdited = useRef(false);
   const [editingId, setEditingId] = useState<string>();
   const [editingDomain, setEditingDomain] = useState<DomainRecord | null>(null);
   const [input, setInput] = useState<DomainInput>(newDomain);
@@ -85,14 +89,14 @@ export const useNativePortfolio = (compact = false) => {
   const editingSyncedDomain = Boolean(editingDomain && getDomainSource(editingDomain) === `registrar`);
   const searchDomains = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return context.domains
+    return domains
       .filter(domain => (registrar === `All` || domain.registrar === registrar) && [
         domain.name,
         domain.title,
         domain.description,
       ].some(value => value?.toLowerCase().includes(query)))
       .sort((first, second) => sortByName ? first.name.localeCompare(second.name) : first.expiresAt.localeCompare(second.expiresAt));
-  }, [context.domains, search, registrar, sortByName]);
+  }, [domains, search, registrar, sortByName]);
   const matchingSections = useMemo(() => filterPortfolioSectionsByStar(buildPortfolioSections(searchDomains, { ...preferences, groupBy: `custom` }),
     stars, starFilterValue, registrar === `All` && !search.trim()), [search, stars, registrar, preferences, searchDomains, starFilterValue]);
   const filteredDomains = useMemo(() => {
@@ -147,13 +151,15 @@ export const useNativePortfolio = (compact = false) => {
   };
   const closeSetup = () => setSetupOpen(false);
 
-  const openEditor = (domain?: DomainRecord) => {
+  const openEditor = (selected?: DomainRecord) => {
     if (loading || mutationPending.current || deleteConfirmationOpen.current) return;
+    const domain = selected ? context.domains.find(record => record.id === selected.id) ?? selected : undefined;
     context.clearNotice();
     setFormError(``);
     setEditingId(domain?.id);
     setEditingDomain(domain ?? null);
     groupEditor.resetGroup(domain?.id);
+    renewalCostEdited.current = false;
     updateRenewalPrice(domain ? String(domain.renewalPrice) : ``);
     setInput(domain ? {
       ...domain,
@@ -185,7 +191,7 @@ export const useNativePortfolio = (compact = false) => {
   };
 
   const setRenewalPrice = (value: string) => {
-    if (editingSyncedDomain) return;
+    renewalCostEdited.current = true;
     updateRenewalPrice(value);
     setInput(current => markDomainFieldsKnown(current, [`renewalPrice`]));
   };
@@ -215,6 +221,8 @@ export const useNativePortfolio = (compact = false) => {
         ? context.domains.find(domain => domain.id === editingDomain.id) ?? editingDomain : null;
       const draft = title === undefined ? input : updateDomainEditorName(input, title);
       const meta = domainEditorMetadata(draft.meta, editingDomain?.meta);
+      const price = syncedDomain && !renewalCostEdited.current ? syncedDomain.renewalPrice : Number(renewalPrice || 0);
+      normalizeDomainPrice(price, `Renewal Price`);
       const record: DomainInput = syncedDomain ? {
         ...syncedDomain,
         mvp: input.mvp,
@@ -224,14 +232,16 @@ export const useNativePortfolio = (compact = false) => {
         startingBid: input.startingBid,
         estimatedRevenue: input.estimatedRevenue,
         developmentLinks: input.developmentLinks,
+        renewalPrice: price,
         projectStatus: normalizeDomainProjectStatus(input.projectStatus),
         description: input.description ?? ``,
         meta: {
-          ...domainEditorMetadata(syncedDomain.meta, syncedDomain.meta),
+          ...syncedDomain.meta,
+          ...(renewalCostEdited.current && meta?.registrarSync !== undefined ? { registrarSync: meta.registrarSync } : {}),
           siteIconUrl: getCustomSiteIconUrl(input),
           ...(typeof meta?.showOnPublicProfile === `boolean` ? { showOnPublicProfile: meta.showOnPublicProfile } : {}),
         },
-      } : { ...draft, meta, renewalPrice: Number(renewalPrice || 0) };
+      } : { ...draft, meta, renewalPrice: price };
       if (editingId) {
         await context.updateDomain(editingId, record);
         await groupEditor.saveGroup(editingId);
@@ -344,6 +354,7 @@ export const useNativePortfolio = (compact = false) => {
   return {
     ...context,
     input,
+    domains,
     loading,
     groupEditor,
     search,

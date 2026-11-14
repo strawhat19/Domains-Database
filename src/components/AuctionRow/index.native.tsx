@@ -1,16 +1,18 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
 import { createStyles } from './styles.native';
-import { Text, View, Pressable } from 'react-native';
+import { useLiveAuction } from './useLiveAuction';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
-import { Globe2, ArrowUpRight } from 'lucide-react-native';
 import { elementProps } from '../../shared/elementProps';
+import { Globe2, ArrowUpRight, Radio } from 'lucide-react-native';
 import { useTheme } from '../../shared/themeContext/useTheme';
-import { getAuctionRow, type AuctionRowProps } from './presentation';
+import { Text, View, Pressable, ActivityIndicator } from 'react-native';
+import { getAuctionRow, getLiveAuctionLabels, type AuctionRowProps } from './presentation';
 
 const AuctionRow = ({ record }: AuctionRowProps) => {
   const suffix = record.id;
   const view = getAuctionRow(record);
+  const live = useLiveAuction(record.domain, record.source === `godaddy` && !record.preview);
   const { palette } = useTheme();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const statusColor = view.statusState === `ended` ? palette.danger : palette.muted;
@@ -62,7 +64,33 @@ const AuctionRow = ({ record }: AuctionRowProps) => {
           </Link>
         )}
         <DomainAnalyticsButton domain={record.domain} suffix={`auction-${suffix}`} compact />
+        {live.available && <Pressable
+          style={styles.link}
+          disabled={live.busy}
+          accessibilityRole={`button`}
+          onPress={() => void live.lookup()}
+          {...elementProps(`auction-live-check`, suffix)}
+          accessibilityState={{ busy: live.busy, disabled: live.busy }}
+        >
+          {live.busy ? <ActivityIndicator {...elementProps(`auction-live-spinner`, suffix)} size={`small`} color={palette.accent} /> : <Radio size={13} color={palette.accent} accessible={false} />}
+          <Text {...elementProps(`auction-live-check-label`, suffix)} style={styles.linkText}>{live.busy ? `Checking…` : `Check Live`}</Text>
+        </Pressable>}
       </View>
+      {live.accounts.length > 0 && <View {...elementProps(`auction-live-accounts`, suffix)} style={styles.actionsCell}>
+        <Text {...elementProps(`auction-live-account-label`, suffix)} style={styles.source}>{`GoDaddy Connection`}</Text>
+        {live.accounts.map(account => <Pressable
+          key={account.id}
+          style={styles.link}
+          accessibilityRole={`button`}
+          onPress={() => void live.lookup(account.id)}
+          {...elementProps(`auction-live-account`, `${suffix}-${account.number}`)}
+        ><Text {...elementProps(`auction-live-account-number`, `${suffix}-${account.number}`)} style={styles.linkText}>{`Account ${account.number}`}</Text></Pressable>)}
+      </View>}
+      {!!live.error && <Text {...elementProps(`auction-live-error`, suffix)} style={[styles.source, { color: palette.danger }]} accessibilityLiveRegion={`polite`}>{live.error}</Text>}
+      {live.result && <View {...elementProps(`auction-live-details`, suffix)} style={styles.liveDetails} accessibilityLiveRegion={`polite`}>
+        <Text {...elementProps(`auction-live-summary`, suffix)} style={styles.value}>{`Live GoDaddy Details`}</Text>
+        {getLiveAuctionLabels(live.result).map((label, index) => <Text key={`${index}-${label}`} {...elementProps(`auction-live-metric`, `${suffix}-${index}`)} style={styles.source}>{label}</Text>)}
+      </View>}
     </View>
   );
 };

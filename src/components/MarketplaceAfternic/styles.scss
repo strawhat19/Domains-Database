@@ -13,6 +13,7 @@
 .marketplace-afternic-card-domain { display: flex; align-items: flex-start; gap: 7px; }
 .marketplace-afternic-card-price { color: var(--ink); font-family: var(--font-bold); }
 .marketplace-afternic-card-action { margin-top: auto; }
+.marketplace-afternic-details-label { color: var(--accent); cursor: pointer; }
 .marketplace-afternic-review { padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--input); }
 .marketplace-afternic-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
 .marketplace-afternic-copy { display: grid; gap: 3px; min-width: 0; }
@@ -28,5 +29,17 @@
 .marketplace-afternic-button:hover:not(:disabled), .marketplace-afternic-toggle:hover { background: var(--subtle); }
 .marketplace-afternic-primary, .marketplace-afternic-primary:hover:not(:disabled) { color: var(--contrast); border-color: var(--accent); background: var(--accent); }
 .marketplace-afternic-primary svg { color: currentColor; }
+.afternic-activity { display: grid; gap: 8px; min-width: 0; padding-block: 10px; border-block: 1px solid var(--line); }
+.afternic-activity button[aria-pressed='true'] { border-color: var(--accent); }
+.afternic-activity-domain-input { padding: 6px 10px; width: min(100%, 16rem); border: 1px solid var(--line); border-radius: 6px; background: var(--input); color: var(--ink); font: inherit; }
+.afternic-activity-days-scroll { max-height: 17rem; margin-top: 5px; overflow: auto; }
+.afternic-activity-days-table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.afternic-activity-days-table th, .afternic-activity-days-table td { padding: 4px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+.afternic-activity-days-table thead { position: sticky; top: 0; background: var(--paper); }
+.afternic-activity-spinner { animation: afternic-activity-spin .85s linear infinite; }
+@keyframes afternic-activity-spin { to { transform: rotate(360deg); } }
 @media (pointer: coarse) { .marketplace-afternic-button { min-height: 44px; } }
-@media (prefers-reduced-motion: reduce) { .marketplace-afternic-chevron { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-afternic-chevron { transition: none; }
+  .afternic-activity-spinner { animation: none; }
+}

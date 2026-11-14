@@ -136,7 +136,7 @@ export const DomainDiscoveryProvider = ({ children, enabled = true }: PropsWithC
       cache.current = result;
       partial.current = result;
       setState({ key: viewKey, error: ``, result, loading: false });
-      report(result.incomplete ? { error: `Some Registrar Checks Could Not Be Confirmed` } : { done: true });
+      report(result.incomplete ? null : { done: true });
     }).catch(failure => {
       if (!isCurrent()) return;
       const error = failure instanceof Error ? failure.message : `Could Not Check Domain Availability`;
@@ -146,7 +146,7 @@ export const DomainDiscoveryProvider = ({ children, enabled = true }: PropsWithC
         loading: false,
         error,
       });
-      report({ error });
+      report(null);
     }).finally(() => { if (controller.current === request) controller.current = null; });
     return () => {
       active = false;

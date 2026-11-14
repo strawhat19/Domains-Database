@@ -1,10 +1,12 @@
 import { Platform } from 'react-native';
 import { absoluteSiteUrl } from '../seo';
-import type { RegistrarSyncResult } from './types';
 import type { ConnectionProvider } from '../connections/types';
+import type { RegistrarDetailSelection, RegistrarSyncResult } from './types';
 import { getFeatureAuthorization, requireConnectionAccess } from '../planAccess/service';
 
-export const getRegistrarDomains = async (provider: ConnectionProvider, values: string, signal: AbortSignal): Promise<RegistrarSyncResult> => {
+export const getRegistrarDomains = async (
+  provider: ConnectionProvider, values: string, signal: AbortSignal, detailSelection?: RegistrarDetailSelection,
+): Promise<RegistrarSyncResult> => {
   const controller = new AbortController();
   const abort = () => controller.abort();
   signal.addEventListener(`abort`, abort, { once: true });
@@ -18,13 +20,18 @@ export const getRegistrarDomains = async (provider: ConnectionProvider, values: 
       credentials: `omit`,
       signal: controller.signal,
       headers: { ...authorization, 'Content-Type': `application/json` },
-      body: JSON.stringify({ provider, values }),
+      body: JSON.stringify({ provider, values, detailSelection }),
     });
     const result = await response.json().catch(() => null) as (RegistrarSyncResult & { error?: string }) | null;
     if (!response.ok) throw new Error(result?.error || `Registrar Sync Is Unavailable — Restart Expo And Try Again`);
     if (!Array.isArray(result?.domains) || result.domains.length > 10000) throw new Error(`Registrar Returned An Invalid Domain List`);
     if (result.discoveredDomains !== undefined && (!Array.isArray(result.discoveredDomains) || result.discoveredDomains.length > 10000)) throw new Error(`Registrar Returned Invalid Discovered Domains`);
+    const vercelConfigurations = result.vercelConfigurations;
+    if (vercelConfigurations !== undefined && (provider !== `vercel` || !Array.isArray(vercelConfigurations) || vercelConfigurations.length > 10000)) {
+      throw new Error(`Registrar Returned Invalid Vercel Domain Configuration`);
+    }
     return { domains: result.domains, discoveredDomains: result.discoveredDomains,
+      vercelConfigurations,
       warnings: Array.isArray(result?.warnings) ? result.warnings.filter(message => typeof message === `string`) : [] };
   } catch (failure) {
     if (controller.signal.aborted) throw new Error(signal.aborted ? `Registrar Sync Cancelled` : `Registrar Request Timed Out`);

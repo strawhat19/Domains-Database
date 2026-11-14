@@ -3,6 +3,7 @@ import { readLimitedText } from './request';
 import { RegistrarRelayError } from './errors';
 import { MAX_REQUEST_BYTES } from './validation';
 import { parseCredentials } from './credentials';
+import { readRegistrarDetailSelection } from './detailSelection';
 import { requireRegistrarAccess } from '../featureAccess/auth';
 import { connectionFields, type ConnectionProvider } from '../../shared/connections/types';
 
@@ -66,11 +67,12 @@ export const handleRegistrarSync = async (request: Request): Promise<Response> =
   try {
     checkRequest(request);
     const record = await readRequestRecord(request);
-    if (Object.keys(record).some(key => ![`provider`, `values`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
+    if (Object.keys(record).some(key => ![`provider`, `values`, `detailSelection`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Registrar Request Values`);
     const input = readConnectionInput(record);
     const access = await requireRegistrarAccess(request, input.provider);
     const credentials = parseCredentials(input.provider, input.values);
-    const result = await syncRegistrar(credentials, request.signal, access.paid);
+    const detailSelection = readRegistrarDetailSelection(record.detailSelection, input.provider);
+    const result = await syncRegistrar(credentials, request.signal, access.paid, detailSelection);
     return Response.json(result, { headers: responseHeaders });
   } catch (failure) {
     const error = failure instanceof RegistrarRelayError

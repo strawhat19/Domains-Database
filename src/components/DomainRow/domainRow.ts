@@ -1,7 +1,7 @@
 import type { DomainRecord } from '../../shared/types';
 import { getDomainStatus } from '../../shared/domainUtils';
 import type { MouseEvent, ChangeEvent, KeyboardEvent, DragEventHandler } from 'react';
-import { getRenewalEstimateHint, getRenewalEstimateDisplay, type PortfolioColumn } from '../../shared/portfolioColumns';
+import { getPortfolioColumnValue, getPortfolioColumnDisplay, getRenewalEstimateHint, getRenewalEstimateDisplay, type PortfolioColumn } from '../../shared/portfolioColumns';
 
 export interface DomainItemProps {
   busy?: boolean;
@@ -70,10 +70,11 @@ export const getDomainRenewalDetail = (domain: DomainRecord, showCosts = false) 
   const status = getDomainStatus(domain);
   const isCost = showCosts && status === `Active`;
   const estimate = isCost ? getRenewalEstimateDisplay(domain) : `—`;
+  const saved = isCost && typeof getPortfolioColumnValue(domain, `renewalPrice`) === `number`;
   return {
     isCost,
-    text: isCost ? estimate === `—` ? `Cost Unavailable` : estimate : status,
-    hint: isCost ? getRenewalEstimateHint(domain) || `Renewal Estimate Not Provided By Registrar` : undefined,
+    text: !isCost ? status : saved ? getPortfolioColumnDisplay(domain, `renewalPrice`) : estimate === `—` ? `Cost Unavailable` : estimate,
+    hint: !isCost ? undefined : saved ? `Saved Annual Cost` : getRenewalEstimateHint(domain) || `Renewal Estimate Not Provided By Registrar`,
   };
 };
 

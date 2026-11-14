@@ -7,6 +7,7 @@ import ConnectionInput from './ConnectionInput';
 import AfternicConnection from './AfternicConnection';
 import { routes } from '../../shared/routes';
 import { createStyles } from './styles.native';
+import { formatSyncNotice } from '../../shared/registrarSync/messages';
 import { useLocalStorage } from '../../shared/config';
 import { elementProps } from '../../shared/elementProps';
 import ConnectionsInputGuide from '../ConnectionsInputGuide';
@@ -25,6 +26,8 @@ import {
   connectionInputInstructions,
 } from '../../shared/connections/inputs';
 import { Plus, Save, Store, Globe2, FileKey2, UserPlus, LogIn, RotateCcw, ShieldCheck, LockKeyhole } from 'lucide-react-native';
+
+const syncTime = new Intl.DateTimeFormat(`en-US`, { dateStyle: `medium`, timeStyle: `short` });
 
 const AccountConnections = ({ scope = `profile-connections`, embedded = false, providers, onBusyChange }: AccountConnectionsProps) => {
   const showAfternic = !embedded && !providers;
@@ -375,13 +378,19 @@ const AccountConnections = ({ scope = `profile-connections`, embedded = false, p
                               <View
                                 {...elementProps(`statusDot`, accountScope)}
                                 style={[styles.statusDot, { backgroundColor: status?.state === `connected`
-                                  ? palette.success : status?.state === `error` ? palette.danger : palette.muted }]}
+                                  ? status.warnings?.length ? palette.warning : palette.success : status?.state === `error` ? palette.danger : palette.muted }]}
                               />
                             </View>
                             <Text {...elementProps(`statusText`, accountScope)} style={styles.statusText} accessibilityLiveRegion={`polite`}>
-                              {status?.message ?? `Not Connected`}
+                              {status?.warnings?.length ? formatSyncNotice({ count: status.count }) : status?.message ?? `Not Connected`}
                             </Text>
                           </View>
+                          {status?.warnings?.length ? status.warnings.map((warning, warningIndex) => (
+                            <Text key={warningIndex} {...elementProps(`connection-sync-warning`, `${accountScope}-${warningIndex + 1}`)} style={styles.warningText}>{warning}</Text>
+                          )) : null}
+                          {status?.checkedAt && Number.isFinite(Date.parse(status.checkedAt)) ? (
+                            <Text {...elementProps(`connection-checked-at`, accountScope)} style={styles.copy}>{`Checked ${syncTime.format(new Date(status.checkedAt))}`}</Text>
+                          ) : null}
                         </View>
                         <View {...elementProps(`connection-account-actions`, accountScope)} style={[styles.row, styles.actionRow]}>
                           <Pressable

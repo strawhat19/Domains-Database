@@ -25,6 +25,7 @@ import { useTheme } from '../../shared/themeContext/useTheme';
 import ConnectRegistrar from '../DomainEditor/ConnectRegistrar';
 import { normalizeDomainLink } from '../../shared/domainLinks';
 import { getPortfolioColumnValue } from '../../shared/portfolioColumns';
+import { useDomainMetadata } from '../DomainMetadata/useDomainMetadata';
 import { getDomainDeletionRestriction } from '../../shared/domainUtils';
 import { PortfolioMarketplace } from '../PortfolioMarketplace/index.native';
 import { usePortfolioPreferences } from '../../shared/portfolioPreferences/usePortfolioPreferences';
@@ -42,6 +43,16 @@ const textFields = [
   { key: `expiresAt`, label: `Renewal Date`, placeholder: `YYYY-MM-DD`, hint: `Check this date in your registrar account` },
   { key: `createdAt`, label: `Created`, placeholder: `YYYY-MM-DD`, hint: `` },
 ] as const;
+
+const RegistrarMetadata = ({ domain, styles }: { domain: Parameters<typeof useDomainMetadata>[0][`domain`]; styles: ReturnType<typeof createStyles> }) => {
+  const { items, scope } = useDomainMetadata({ domain, hideProjectDetails: true, idPrefix: `native-registrar-metadata` });
+  return items.filter(item => item.key !== `registrar`).map(item => (
+    <View key={item.key} style={styles.field} {...elementProps(scope, item.key)}>
+      <Text style={styles.fieldLabel} {...elementProps(`${scope}-label`, item.key)}>{item.label}</Text>
+      <Text style={styles.fieldHint} selectable {...elementProps(`${scope}-value`, item.key)}>{item.value}</Text>
+    </View>
+  ));
+};
 
 const starFilterOptions = [
   { value: `all`, label: `All` },
@@ -671,6 +682,7 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     {`Use a public HTTP or HTTPS image URL. Leave blank to use the domain's favicon.`}
                   </Text>
                 </View>
+                {editingSyncedDomain && editingRecord && <RegistrarMetadata domain={editingRecord} styles={styles} />}
                 {!state.setupOpen && !editingSyncedDomain && <ConnectRegistrar onClose={state.closeEditor} disabled={state.saving} scope={`native-domain-editor`} />}
                 {!!state.formError && (
                   <View {...elementProps(`native-domain-editor-error`)} style={styles.error} accessibilityRole={`alert`}>
@@ -736,9 +748,9 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                     </View>
                   )}
                 </View>}
-                {!editingSyncedDomain && <View {...elementProps(`native-domain-editor-price-field`)} style={styles.field}>
+                <View {...elementProps(`native-domain-editor-price-field`)} style={styles.field}>
                   <Text {...elementProps(`native-domain-editor-price-label`)} style={styles.fieldLabel}>
-                    {`Annual renewal price (USD)`}
+                    {`Saved Annual Cost · ${state.input.currency || `USD`}`}
                   </Text>
                   <View {...elementProps(`native-domain-editor-price-control`, state.editingId ?? `new`)} style={styles.priceControl}>
                     <View
@@ -748,11 +760,11 @@ const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
                       importantForAccessibility={`no-hide-descendants`}
                       {...elementProps(`native-domain-editor-price-prefix`, state.editingId ?? `new`)}
                     >
-                      <Text {...elementProps(`native-domain-editor-price-currency`, state.editingId ?? `new`)} style={styles.priceCurrency}>{`$`}</Text>
+                      <Text {...elementProps(`native-domain-editor-price-currency`, state.editingId ?? `new`)} style={styles.priceCurrency}>{state.input.currency && state.input.currency !== `USD` ? state.input.currency : `$`}</Text>
                     </View>
-                    <TextInput {...elementProps(`native-domain-editor-price-input`)} style={[styles.fieldInput, styles.priceInput]} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={palette.placeholder} keyboardType={`decimal-pad`} accessibilityLabel={`Annual Renewal Price In USD`} />
+                    <TextInput {...elementProps(`native-domain-editor-price-input`)} style={[styles.fieldInput, styles.priceInput]} editable={!state.saving} value={state.renewalPrice} onChangeText={state.setRenewalPrice} placeholder={`0.00`} placeholderTextColor={palette.placeholder} keyboardType={`decimal-pad`} accessibilityLabel={`Saved Annual Cost In ${state.input.currency || `USD`}`} />
                   </View>
-                </View>}
+                </View>
                 <View
                   style={styles.fieldPair}
                   {...elementProps(`native-domain-editor-price-fields`, state.editingId ?? `new`)}

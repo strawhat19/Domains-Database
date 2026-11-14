@@ -3,7 +3,7 @@ import { UNGROUPED_GROUP_LABEL } from './names';
 import { allowDomainsInCollections } from '../config';
 import type { PortfolioColumn } from '../portfolioColumns';
 import type { PortfolioPreferences, PortfolioGroup, PortfolioSections } from './types';
-import { getPortfolioColumnDisplay, getPortfolioColumnValue, hasPortfolioColumnValue, PORTFOLIO_FIELDS } from '../portfolioColumns';
+import { PORTFOLIO_FIELDS, getPortfolioColumnCurrency, getPortfolioColumnDisplay, getPortfolioColumnValue, hasPortfolioColumnValue, isAfternicPortfolioEstimate } from '../portfolioColumns';
 
 export type { PortfolioGroup } from './types';
 
@@ -70,7 +70,9 @@ export const buildPortfolioGroups = (domains: DomainRecord[], preferences: Portf
   domains.forEach(domain => {
     const value = getPortfolioColumnValue(domain, groupBy);
     const missing = !hasPortfolioColumnValue(value, groupBy);
-    const identity = missing ? `unknown` : JSON.stringify([value, PORTFOLIO_FIELDS.find(column => column.field === groupBy)?.price ? domain.currency?.trim().toUpperCase() || `USD` : ``]);
+    const afternic = groupBy === `estimatedValue` && isAfternicPortfolioEstimate(domain);
+    const currency = PORTFOLIO_FIELDS.find(column => column.field === groupBy)?.price ? getPortfolioColumnCurrency(domain, groupBy) : ``;
+    const identity = missing ? `unknown` : JSON.stringify(afternic ? [value, currency, `Afternic`] : [value, currency]);
     const key = `field:${groupBy}:${encodeURIComponent(identity)}`;
     const group = groups.get(key) ?? { key, label: missing ? `Unknown` : getPortfolioColumnDisplay(domain, groupBy), domains: [] };
     group.domains.push(domain);

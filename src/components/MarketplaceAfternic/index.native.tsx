@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'expo-router';
+import AfternicActivity from './Activity';
 import { Roles } from '../../types/types';
 import { createStyles } from './styles.native';
 import { useLocalStorage } from '../../shared/config';
@@ -9,8 +10,9 @@ import { useAuth } from '../../shared/authContext/useAuth';
 import { useTheme } from '../../shared/themeContext/useTheme';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { afternicPortalUrl } from '../../shared/marketplaceAfternic/client';
+import { afternicListingDetails, afternicStatusLabel } from '../../shared/marketplaceAfternic/display';
 import { ChevronDown, Download, ExternalLink, RefreshCw, Store, Upload, type LucideIcon } from 'lucide-react-native';
-import { afternicMoney, afternicStatusLabel, isAfternicCandidate, useMarketplaceAfternic, type MarketplaceAfternicProps } from './useMarketplaceAfternic';
+import { afternicMoney, isAfternicCandidate, useMarketplaceAfternic, type MarketplaceAfternicProps } from './useMarketplaceAfternic';
 
 const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
   const { palette } = useTheme();
@@ -65,6 +67,9 @@ const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
                             <Text {...elementProps(`marketplace-afternic-remote-status`, listing.domain)} style={[styles.status, listing.status === `ACTIVE` && styles.activeStatus]}>{afternicStatusLabel(listing.status)}</Text>
                           </View>
                         </View>
+                        {listing.fastTransferStatus && note(`transfer-${listing.domain}`, `Fast Transfer · ${afternicStatusLabel(listing.fastTransferStatus)}`)}
+                        {listing.estimatedValueCents != null && note(`estimate-${listing.domain}`, `Afternic Estimate ${afternicMoney(listing.estimatedValueCents)}`)}
+                        {afternicListingDetails(listing).map(detail => <Text key={detail.id} {...elementProps(`marketplace-afternic-${detail.id}`, listing.domain)} style={styles.note}>{detail.label}</Text>)}
                         {canManage && listing.canImport && action(`import-${listing.domain}`, state.imported[listing.domain] ? `Imported` : `Import Draft`, () => void state.importDraft(listing.domain), Download, disabled || !!state.imported[listing.domain])}
                       </View>
                     ))}
@@ -111,6 +116,7 @@ const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
               </View>}
             </>
           ) : !!state.error && action(`retry`, `Retry Afternic Connection`, () => void state.refresh(), RefreshCw, disabled)}
+          {state.status?.configured && <AfternicActivity />}
           {!loading && <Link href={afternicPortalUrl} asChild>
             <Pressable {...elementProps(`marketplace-afternic-link`)} style={styles.button} accessibilityRole={`link`}>
               <ExternalLink {...elementProps(`marketplace-afternic-link-icon`)} size={15} color={palette.accent} accessible={false} />

@@ -10,7 +10,6 @@ export interface MarketplaceAfternicProps {
 
 const usd = new Intl.NumberFormat(`en-US`, { currency: `USD`, style: `currency`, maximumFractionDigits: 2 });
 export const afternicMoney = (cents: number | null) => cents === null ? `Price On Request` : usd.format(cents / 100);
-export const afternicStatusLabel = (status: string) => status.toLowerCase().replaceAll(`_`, ` `).replace(/\b\w/g, letter => letter.toUpperCase());
 export const isAfternicCandidate = (listing: SellerListing) => listing.status === `draft` || listing.status === `paused`;
 const activeFirst = (page: AfternicPortfolioPage): AfternicPortfolioPage => ({
   ...page, listings: [...page.listings].sort((a, b) => Number(b.status === `ACTIVE`) - Number(a.status === `ACTIVE`) || a.domain.localeCompare(b.domain)),

@@ -1,5 +1,8 @@
 export const WEBSITE_INSIGHTS_SOURCE = `Google PageSpeed Insights / Tranco`;
 export const MAX_INSIGHT_DOMAINS = 10;
+export const MAX_TRANCO_HISTORY = 30;
+
+export type TrancoRank = { date: string; rank: number | null };
 
 export interface WebsiteInsights {
   domain: string;
@@ -11,6 +14,7 @@ export interface WebsiteInsights {
   trancoDate?: string;
   trancoListed?: boolean;
   trancoCheckedAt?: string;
+  trancoHistory?: TrancoRank[];
   performance?: {
     score: number;
     checkedAt: string;

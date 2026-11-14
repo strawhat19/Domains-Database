@@ -1,10 +1,12 @@
 import './styles.scss';
+import AfternicActivity from './Activity.web';
 import { useLocalStorage } from '../../shared/config';
 import MarketSkeleton from '../DomainMarket/MarketSkeleton';
 import { useAuth } from '../../shared/authContext/useAuth';
 import { afternicPortalUrl } from '../../shared/marketplaceAfternic/client';
+import { afternicListingDetails, afternicStatusLabel } from '../../shared/marketplaceAfternic/display';
 import { ChevronDown, Download, ExternalLink, Globe2, RefreshCw, Store, Upload } from 'lucide-react';
-import { afternicMoney, afternicStatusLabel, isAfternicCandidate, useMarketplaceAfternic, type MarketplaceAfternicProps } from './useMarketplaceAfternic';
+import { afternicMoney, isAfternicCandidate, useMarketplaceAfternic, type MarketplaceAfternicProps } from './useMarketplaceAfternic';
 
 const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
   const state = useMarketplaceAfternic(onImport);
@@ -46,8 +48,9 @@ const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
               <div id={`marketplace-afternic-portfolio`} className={`marketplace-afternic-list`}>
                 {state.portfolio.listings.length > 0 && (
                   <ul id={`marketplace-afternic-grid`} className={`marketplace-afternic-grid`} aria-label={`Afternic Listings`}>
-                    {state.portfolio.listings.map(listing => (
-                      <li key={listing.domain} id={`marketplace-afternic-remote-${listing.domain}`} className={`marketplace-afternic-card`}>
+                    {state.portfolio.listings.map(listing => {
+                      const details = afternicListingDetails(listing);
+                      return <li key={listing.domain} id={`marketplace-afternic-remote-${listing.domain}`} className={`marketplace-afternic-card`}>
                         <strong id={`marketplace-afternic-remote-domain-${listing.domain}`} className={`marketplace-afternic-domain marketplace-afternic-card-domain`}>
                           <Globe2 size={15} aria-hidden className={`marketplace-afternic-icon`} />{listing.domain}
                         </strong>
@@ -55,6 +58,12 @@ const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
                           <strong className={`marketplace-afternic-card-price`}>{afternicMoney(listing.priceCents)}</strong>
                           <span id={`marketplace-afternic-remote-status-${listing.domain}`} className={`marketplace-afternic-status`} data-active={listing.status === `ACTIVE`}>{afternicStatusLabel(listing.status)}</span>
                         </span>
+                        {(!!details.length || !!listing.fastTransferStatus || listing.estimatedValueCents != null) && <details id={`marketplace-afternic-details-${listing.domain}`} className={`marketplace-afternic-note`}>
+                          <summary id={`marketplace-afternic-summary-${listing.domain}`} className={`marketplace-afternic-details-label`}>{`Listing Details`}</summary>
+                          {listing.fastTransferStatus && <div id={`marketplace-afternic-transfer-${listing.domain}`}>{`Fast Transfer · ${afternicStatusLabel(listing.fastTransferStatus)}`}</div>}
+                          {listing.estimatedValueCents != null && <div id={`marketplace-afternic-estimate-${listing.domain}`}>{`Afternic Estimate ${afternicMoney(listing.estimatedValueCents)}`}</div>}
+                          {details.map(detail => <div key={detail.id} id={`marketplace-afternic-${listing.domain}-${detail.id}`}>{detail.label}</div>)}
+                        </details>}
                         {listing.canImport && canManage && (
                           <button
                             type={`button`}
@@ -65,8 +74,8 @@ const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
                             className={`marketplace-afternic-button marketplace-afternic-card-action`}
                           ><Download size={14} aria-hidden id={`marketplace-afternic-import-icon-${listing.domain}`} className={`marketplace-afternic-icon`} />{state.imported[listing.domain] ? `Imported` : `Import Draft`}</button>
                         )}
-                      </li>
-                    ))}
+                      </li>;
+                    })}
                   </ul>
                 )}
                 {!state.portfolio.listings.length && !state.portfolio.skipped && state.portfolio.nextOffset === null && <p id={`marketplace-afternic-portfolio-empty`} className={`marketplace-afternic-note`}>{`No Listings In Your Afternic Portfolio`}</p>}
@@ -134,6 +143,7 @@ const AfternicPanel = ({ seller, onImport }: MarketplaceAfternicProps) => {
         ) : state.error && (
           <button type={`button`} id={`marketplace-afternic-retry`} className={`marketplace-afternic-button`} disabled={disabled} onClick={() => void state.refresh()}><RefreshCw size={14} aria-hidden id={`marketplace-afternic-retry-icon`} className={`marketplace-afternic-icon`} />{`Retry Connection`}</button>
         )}
+        {state.status?.configured && <AfternicActivity />}
         <a id={`marketplace-afternic-link`} className={`marketplace-afternic-button`} href={afternicPortalUrl} target={`_blank`} rel={`noreferrer`}>
           <ExternalLink size={15} aria-hidden id={`marketplace-afternic-link-icon`} className={`marketplace-afternic-icon`} />{`Open Afternic`}
         </a>

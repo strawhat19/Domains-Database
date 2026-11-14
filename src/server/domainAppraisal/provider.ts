@@ -10,6 +10,8 @@ const amountInDollars = (value: unknown) => {
   if (money.currencyCode !== `USD` || typeof amount !== `number` || !Number.isSafeInteger(amount) || amount < 0) throw new Error();
   return amount / 100;
 };
+const probability = (value: unknown) => typeof value === `number` && value >= 0 && value <= 1 ? value : undefined;
+const usage = (value: unknown) => typeof value === `number` && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
 
 const nextUtcDay = () => {
   const now = new Date();
@@ -33,7 +35,11 @@ export const requestGoValue = async (domain: string, authorization: string, sign
     return {
       status: `available`, appraisal: {
         amount, minPrice, maxPrice, currency: `USD`, source: `GoDaddy GoValue`, checkedAt: new Date().toISOString(),
+        dailyUsage: usage(value.dailyUsage), maxDailyUsage: usage(value.maxDailyUsage),
         listPrice: amountInDollars(value.listPrice), wholesalePrice: amountInDollars(value.goValueWholesale),
+        salesProbability: probability(value.salesProbability),
+        salesProbability500: probability(value.salesProbability500),
+        salesProbabilityWholesale: probability(value.salesProbabilityWholesale),
       },
     };
   } catch (failure) {

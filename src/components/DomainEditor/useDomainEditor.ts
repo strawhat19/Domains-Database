@@ -45,6 +45,7 @@ const getInitialInput = (domain?: DomainRecord | null): DomainInput => {
     projectStatus: normalizeDomainProjectStatus(domain?.projectStatus),
     description: domain?.description ?? ``,
     autoRenew: domain?.autoRenew ?? true,
+    currency: domain?.currency,
     renewalPrice: domain?.renewalPrice ?? 0,
     createdAt: domain?.createdAt,
     expiresAt: domain?.expiresAt ?? expiresAt,
@@ -86,6 +87,7 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   const moveButtonRef = useRef<HTMLButtonElement>(null);
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const [input, setInput] = useState<DomainInput>(() => getInitialInput(domain));
+  const renewalCostEdited = useRef(false);
   const sheet = useMobileSheet(onClose, { open: active, disabled: saving || deleting });
   const close = () => { if (!pendingActionRef.current) sheet.close(); };
   const hidden = Boolean(domain?.id && preferences.hiddenDomainIds.includes(domain.id));
@@ -183,9 +185,10 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
   };
   const setField = <Key extends keyof DomainInput>(field: Key, value: DomainInput[Key]) => {
     if (pendingActionRef.current) return;
-    if (isSynced && ![`mvp`, `meta`, `tags`, `future`, `childLinks`, `parentLink`, `difficulty`, `startingBid`, `description`, `previewLinks`, `relatedLinks`, `projectStatus`, `githubRepoLink`, `productionLink`, `estimatedRevenue`, `developmentLinks`, `socialMediaLinks`].includes(field)) return;
+    if (isSynced && ![`mvp`, `meta`, `tags`, `future`, `childLinks`, `parentLink`, `difficulty`, `startingBid`, `description`, `previewLinks`, `relatedLinks`, `renewalPrice`, `projectStatus`, `githubRepoLink`, `productionLink`, `estimatedRevenue`, `developmentLinks`, `socialMediaLinks`].includes(field)) return;
     setError(``);
     setInvalidField(null);
+    if (field === `renewalPrice`) renewalCostEdited.current = true;
     if (field === `name` && typeof value === `string`) {
       setNameInvalid(false);
       setInput(previous => updateDomainEditorName(previous, value));
@@ -205,10 +208,9 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
         normalizeDomainName(input.name);
         field = `owner`;
         if (!input.owner?.trim()) throw new Error(`Enter The Domain Owner`);
-        field = `renewalPrice`;
-        if (!Number.isFinite(input.renewalPrice) || input.renewalPrice < 0) throw new Error(`Enter A Renewal Price Of Zero Or More`);
-        normalizeDomainPrice(input.renewalPrice, `Renewal Price`);
       }
+      field = `renewalPrice`;
+      normalizeDomainPrice(input.renewalPrice, `Renewal Price`);
       field = `siteIconUrl`;
       normalizeSiteIconUrl(getCustomSiteIconUrl(input));
       for (const link of DOMAIN_EDITOR_LINK_FIELDS) {
@@ -235,14 +237,16 @@ export const useDomainEditor = (domain: DomainRecord | null | undefined, onClose
     pendingActionRef.current = true;
     setError(``);
     setSaving(true);
+    const latestCostSource = isSynced && domain && !renewalCostEdited.current ? domain : input;
     const domainInput = {
       ...input,
+      renewalPrice: latestCostSource.renewalPrice,
       mvp: input.mvp?.trim() ?? ``,
       future: input.future?.trim() ?? ``,
       owner: input.owner.trim(),
       name: input.name.trim().toLowerCase(),
       description: input.description?.trim() ?? ``,
-      meta: domainEditorMetadata(input.meta, domain?.meta),
+      meta: domainEditorMetadata({ ...input.meta, ...(latestCostSource.meta?.registrarSync !== undefined ? { registrarSync: latestCostSource.meta.registrarSync } : {}) }, domain?.meta),
     };
     try {
       if (domain?.id) {

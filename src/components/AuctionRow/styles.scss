@@ -19,4 +19,16 @@
 .auction-page .statusDot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .auction-action-list { gap: 9px; display: flex; align-items: center; flex-wrap: wrap; }
 .auction-source-link { gap: 4px; display: inline-flex; color: var(--accent); font-size: 11px; white-space: nowrap; align-items: center; text-decoration: none; font-family: var(--font-bold); text-underline-offset: 3px; &:hover { text-decoration: underline; } }
-@media (prefers-reduced-motion: reduce) { .auction-row { transition: none; } }
+.auction-live-check { min-height: 32px; padding: 0; border: 0; background: none; cursor: pointer; }
+.auction-live-check:disabled { cursor: wait; opacity: .65; }
+.auction-live-account { display: block; max-width: 100%; margin-top: 5px; color: var(--ink); background: var(--input); }
+.auction-live-details { margin-top: 7px; }
+.auction-live-details summary { display: list-item; cursor: pointer; color: var(--accent); }
+.auction-live-error { color: var(--danger); }
+.auction-live-spinner { animation: auction-live-spin .85s linear infinite; }
+@keyframes auction-live-spin { to { transform: rotate(360deg); } }
+@media (pointer: coarse) { .auction-live-check { min-height: 44px; } }
+@media (prefers-reduced-motion: reduce) {
+  .auction-row { transition: none; }
+  .auction-live-spinner { animation: none; }
+}

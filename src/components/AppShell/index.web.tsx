@@ -32,7 +32,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
   const { flags, ready: featuresReady } = useFeatureFlags();
   const domainsMenu = useDomainsMenu(pathname);
   const mobileNavigation = useMobileNavigation(pathname);
-  const marketMenu = useDomainsMenu(pathname, mobileNavigation.compact);
+  const marketMenu = useDomainsMenu(pathname);
   const scroll = useShellScroll(mobileNavigation.headerRef, pathname, sticky);
   const mobileSignIn = mobileNavigation.compact && !signedIn && !authLoading;
   const accountShell = isAdminPath(pathname) || pathname === routes.profile.href || pathname.startsWith(`${routes.profile.href}/`);
@@ -103,7 +103,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
         data-active={active || undefined}
         onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) menu.close(); }}
         onPointerEnter={isDomains ? event => { if (event.pointerType === `mouse`) menu.expand(); } : undefined}
-        onPointerLeave={isDomains ? event => { if (!document.getElementById(submenuId)?.contains(document.activeElement)) menu.close(); } : undefined}
+        onPointerLeave={isDomains ? () => { if (!menu.submenuRef.current?.contains(document.activeElement)) menu.close(); } : undefined}
       >
         <div id={`${id}-parent`} className={`header-submenu-parent`}>
           {renderNavigationLink(item)}
@@ -127,7 +127,7 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
           role={`group`}
           id={submenuId}
           inert={!menu.open}
-          aria-hidden={!menu.open}
+          ref={menu.submenuRef}
           className={`header-submenu`}
           aria-label={`${item.label} Submenu`}
         >
@@ -174,10 +174,9 @@ const AppShell = ({ children, sticky = true }: PropsWithChildren<{ sticky?: bool
           <nav
             id={`header-navigation`}
             aria-label={`Main Navigation`}
-            onClick={mobileNavigation.close}
             ref={mobileNavigation.navigationRef}
             inert={mobileNavigation.compact && !mobileNavigation.open}
-            aria-hidden={mobileNavigation.compact && !mobileNavigation.open ? true : undefined}
+            onClick={mobileNavigation.compact ? mobileNavigation.close : undefined}
             className={`header-navigation${mobileNavigation.open ? ` header-navigation-open` : ``}`}
           >
             <div id={`header-navigation-content`} className={`header-navigation-content`}>

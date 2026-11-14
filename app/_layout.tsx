@@ -81,7 +81,7 @@ const AccountContent = () => {
         enabled={enabled}
         preload={preloadDomains}
         key={`${accountState.revision}-${dataRevision}`}
-        requested={[routes.profile.href, routes.domains.href, routes.dashboard.href, routes.adminDomains.href].includes(pathname)}
+        requested={[routes.profile.href, routes.domains.href, routes.dashboard.href, routes.adminDomains.href].some(route => route === pathname)}
       >
         <ColumnProvider enabled={enabled} userId={user?.id ?? null}>
           <PortfolioPreferencesProvider enabled={enabled} userId={user?.id ?? null}>

@@ -37,6 +37,12 @@ const loadSource = (relative, stubs = {}) => {
   return loaded.exports;
 };
 const { Domain } = loadSource(`src/shared/models/domains/Domain.ts`);
+const { WEBSITE_INSIGHTS_SOURCE } = loadSource(`src/shared/websiteInsights/types.ts`);
+const { mergeWebsiteInsights, normalizeWebsiteInsights } = loadSource(`src/shared/websiteInsights/values.ts`);
+const { mergeVercelConfigurations } = loadSource(`src/shared/registrarSync/vercelConfiguration.ts`);
+const { parseDomainCsv } = loadSource(`src/shared/csv.ts`);
+const { markDomainFieldsKnown } = loadSource(`src/shared/registrarSync/metadata.ts`);
+const { readDomainParkingMetrics } = loadSource(`src/shared/domainParking/values.ts`);
 const userId = `User_1_Fixture_1_00_PM_10_23_26_userfixture`;
 const actor = { id: userId, userId, number: 1, firebaseUid: `fixtureUid`, active: true, role: `Subscriber`, owner: false };
 const domain = number => new Domain({ id: `Domain_${number}_Fixture_1_00_PM_10_23_26_domain${number}`, number, uid: userId, name: `fixture-${number}.example`, owner: `Fixture`, notes: `Private Notes`, created: `2026-10-23T17:00:00.000Z`, updated: `2026-10-23T17:00:00.000Z`, expiresAt: ``, registrar: ``, renewalPrice: 0, autoRenew: false, projectStatus: `Idea` }).toRecord();
@@ -46,8 +52,8 @@ const memoryDatabase = initial => {
   const documents = new Map(initial);
   let queue = Promise.resolve();
   const reference = value => ({ kind: `document`, path: value, id: value.split(`/`).at(-1), collection: name => collection(`${value}/${name}`) });
-  const collection = (value, filters = [], maximum = Infinity) => ({ kind: `query`, path: value, filters, maximum, doc: name => reference(`${value}/${name}`), limit: limit => collection(value, filters, limit), where: (field, operator, expected) => collection(value, [...filters, { field, operator, expected }], maximum) });
-  const snapshot = item => ({ id: item.id, exists: documents.has(item.path), data: () => documents.get(item.path) });
+  const collection = (value, filters = [], maximum = Infinity) => ({ kind: `query`, path: value, filters, maximum, doc: name => reference(`${value}/${name}`), select: () => collection(value, filters, maximum), limit: limit => collection(value, filters, limit), where: (field, operator, expected) => collection(value, [...filters, { field, operator, expected }], maximum) });
+  const snapshot = item => ({ id: item.id, exists: documents.has(item.path), data: () => documents.get(item.path), get: field => documents.get(item.path)?.[field] });
   const read = item => {
     if (item.kind !== `query`) return snapshot(item);
     const rows = [...documents.entries()].filter(([key, data]) => key.startsWith(`${item.path}/`) && !key.slice(item.path.length + 1).includes(`/`) && item.filters.every(filter => filter.operator === `==` && data[filter.field] === filter.expected)).slice(0, item.maximum).map(([key]) => snapshot(reference(key)));
@@ -158,15 +164,79 @@ for (const field of [`id`, `number`, `firebase_uid`]) test(`Fresh Identity ${fie
 });
 test(`Public Projections Contain Only The Public Allowlist`, async () => {
   const current = fixture();
-  const record = { ...domain(1), notes: `Private Notes`, meta: { privateCredential: `synthetic_private_fixture` }, registrant: { email: `private@example.invalid` } };
+  const goValue = { amount: 123, currency: `USD`, source: `GoDaddy GoValue`, checkedAt: `2026-11-13T14:00:00Z` };
+  const registrarDetails = { transferProtected: true };
+  const goDaddyParking = { checkedAt: `2026-11-13T14:00:00Z`, report: { visits: 1 } };
+  const record = { ...domain(1), notes: `Private Notes`, meta: { goValue, registrarDetails, goDaddyParking, privateCredential: `synthetic_private_fixture` }, registrant: { email: `private@example.invalid` } };
   const result = await current.commit(current.add(1, record));
   assert.equal(result.status, 200);
   const privateRecord = current.database.documents.get(`users/${userId}/domains/${record.id}`);
   const projection = current.database.documents.get(`publicProfiles/${userId}/domains/${record.id}`);
   assert.equal(privateRecord.meta.privateCredential, `synthetic_private_fixture`);
+  assert.deepEqual(privateRecord.meta.goValue, goValue);
+  assert.deepEqual(privateRecord.meta.registrarDetails, registrarDetails);
+  assert.deepEqual(privateRecord.meta.goDaddyParking, goDaddyParking);
   assert.equal(privateRecord.registrant.email, `private@example.invalid`);
   assert.deepEqual(Object.keys(projection).sort(), [`created`, `description`, `expiresAt`, `id`, `name`, `projectStatus`, `registrar`, `userId`]);
   for (const key of [`notes`, `owner`, `meta`, `registrant`, `email`, `uid`]) assert.equal(Object.hasOwn(projection, key), false);
+});
+test(`Rank Refresh Preserves PageSpeed And Replaces An Explicitly Unlisted Rank`, () => {
+  const checkedAt = `2026-11-13T14:00:00Z`;
+  const nextCheckedAt = `2026-11-14T14:00:00Z`;
+  const previous = { domain: `fixture.example`, checkedAt, source: WEBSITE_INSIGHTS_SOURCE, errors: [], warnings: [],
+    performance: { checkedAt, score: 84, strategy: `mobile`, source: `Google PageSpeed Insights` },
+    trancoListed: true, trancoRank: 50, trancoDate: `2026-11-13`, trancoCheckedAt: checkedAt };
+  const incoming = { domain: previous.domain, checkedAt: nextCheckedAt, source: WEBSITE_INSIGHTS_SOURCE, errors: [], warnings: [], trancoListed: false, trancoCheckedAt: nextCheckedAt };
+  const result = mergeWebsiteInsights(incoming, previous);
+  assert.deepEqual(result.performance, previous.performance);
+  assert.equal(result.trancoRank, undefined);
+  assert.equal(result.trancoListed, false);
+  assert.equal(result.trancoCheckedAt, nextCheckedAt);
+  assert.equal(mergeWebsiteInsights({ ...incoming, trancoListed: undefined, trancoCheckedAt: undefined }, previous).trancoRank, 50);
+});
+test(`Tranco History Survives A Rank Failure And Rejects Conflicting Days`, () => {
+  const checkedAt = `2026-11-14T14:00:00Z`;
+  const history = [{ date: `2026-11-14`, rank: null }, { date: `2026-11-13`, rank: 25 }];
+  const base = { domain: `fixture.example`, checkedAt, source: WEBSITE_INSIGHTS_SOURCE, errors: [], warnings: [] };
+  const ranked = { ...base, trancoListed: false, trancoCheckedAt: checkedAt, trancoHistory: [...history].reverse() };
+  const normalized = normalizeWebsiteInsights(ranked);
+  assert.deepEqual(normalized.trancoHistory, history);
+  assert.deepEqual(mergeWebsiteInsights({ ...base, checkedAt: `2026-11-15T04:00:00Z`, errors: [`Tranco: Source Is Unavailable`] }, normalized).trancoHistory, history);
+  assert.throws(() => normalizeWebsiteInsights({ ...ranked, trancoHistory: [history[0], { ...history[0], rank: 88 }] }), /Inconsistent Rank History/);
+});
+test(`Vercel DNS Configuration Can Only Change A Matching Private Portfolio Row`, () => {
+  const existing = new Domain({ ...domain(1), name: `example.com`, registrar: `GoDaddy`, providerId: `40`, nameservers: [`ns1.example.net`] });
+  const domains = [existing];
+  const checkedAt = `2026-11-13T14:00:00Z`;
+  const records = [
+    { name: `example.com`, verified: true, dnsService: `zeit.world`, observedNameservers: [`ns1.vercel-dns.com`], privateKey: `ignored` },
+    { name: `untracked.com`, verified: true, dnsService: `external` },
+  ];
+  assert.ok(mergeVercelConfigurations(domains, { connectionId: `vercel-1`, records }, userId, checkedAt));
+  assert.equal(domains.length, 1);
+  assert.equal(domains[0].registrar, `GoDaddy`);
+  assert.equal(domains[0].providerId, `40`);
+  assert.deepEqual(domains[0].nameservers, [`ns1.example.net`]);
+  assert.deepEqual(domains[0].meta.vercelDomainConfiguration, { verified: true, dnsService: `zeit.world`, connectionId: `vercel-1`, observedNameservers: [`ns1.vercel-dns.com`], checkedAt });
+  assert.equal(mergeVercelConfigurations(domains, { connectionId: `vercel-1`, records }, userId, checkedAt), false);
+  assert.equal(mergeVercelConfigurations(domains, { connectionId: `vercel-2`, records: [] }, userId, checkedAt), false);
+  assert.ok(mergeVercelConfigurations(domains, { connectionId: `vercel-1`, records: [] }, userId, checkedAt));
+  assert.equal(domains[0].meta.vercelDomainConfiguration, undefined);
+});
+test(`Annual Cost Import Distinguishes An Omitted Value From Explicit Zero`, () => {
+  const rows = parseDomainCsv(`domain,registrar,expiry,renewal_price,currency\na.example,GoDaddy,,,USD\nb.example,GoDaddy,,0,USD\nc.example,GoDaddy,,18.50,EUR`);
+  assert.deepEqual(rows.map(row => row.meta.csvRenewalCostProvided), [false, true, true]);
+  assert.equal(rows[2].renewalPrice, 18.5);
+  assert.equal(rows[2].currency, `EUR`);
+  const saved = markDomainFieldsKnown({ ...rows[1], meta: { domainSource: `registrar` } }, [`renewalPrice`]);
+  assert.equal(saved.meta.registrarSync.renewalPriceKnown, true);
+});
+test(`Private Parking Reports Require Matching Domains And Currency For Revenue`, () => {
+  const parking = { domain: `example.com`, startDate: `2026-10-11`, endDate: `2026-11-09`, checkedAt: `2026-11-13T14:00:00Z`,
+    report: { visits: 0, pageViews: 0, adClicks: 0, currency: `USD`, revenueMicrounits: 0, internalReference: `ignored` } };
+  assert.equal(readDomainParkingMetrics(parking, `other.example`), undefined);
+  assert.equal(readDomainParkingMetrics({ ...parking, report: { ...parking.report, currency: null } }, parking.domain), undefined);
+  assert.deepEqual(readDomainParkingMetrics(parking, parking.domain).report, { visits: 0, pageViews: 0, adClicks: 0, currency: `USD`, revenueMicrounits: 0 });
 });
 test(`Sample Records Do Not Bypass The Quota Or Publish Private Fields`, async () => {
   const current = fixture({ count: 33 });

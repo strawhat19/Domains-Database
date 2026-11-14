@@ -8,13 +8,15 @@ import { asRecord, parseJson, MAX_PAGES, MAX_DOMAINS, providerName, optionalText
 const PAGE_SIZE = 100;
 const MAX_DISCOVERIES = 200;
 const temporaryDomains = [`hostingersite.com`, `builder-preview.com`];
+const vhostTypes = [`main`, `addon`, `parked`];
+const websiteTypes = [`wordpress`, `builder`, `horizons`, `nodejs`, `other`];
 
-const listHostedNames = async (authorization: string, context: RegistrarRequestContext) => {
+const listHostedWebsites = async (authorization: string, context: RegistrarRequestContext) => {
   let received = 0;
   let skipped = 0;
   let expectedTotal: number | undefined;
   let expectedSize: number | undefined;
-  const names = new Set<string>();
+  const sites = new Map<string, Record<string, JSONValue>>();
   const headers = { Accept: `application/json`, Authorization: authorization, 'Content-Type': `application/json` };
   for (let page = 1; page <= MAX_PAGES; page++) {
     if (page > 1) await pauseRequests(1250, context);
@@ -40,10 +42,18 @@ const listHostedNames = async (authorization: string, context: RegistrarRequestC
       if (temporaryDomains.some(suffix => name === suffix || name.endsWith(`.${suffix}`))) { skipped++; continue; }
       const parent = optionalText(record.parent_domain, `hostinger`, 253)?.toLowerCase();
       if (parent && name.endsWith(`.${parent}`)) { skipped++; continue; }
-      names.add(name);
+      if (sites.has(name)) continue;
+      const hostingVhostType = vhostTypes.find(type => type === record.vhost_type);
+      const hostingWebsiteType = websiteTypes.find(type => type === record.website_type);
+      sites.set(name, {
+        hostingProvider: `Hostinger`,
+        ...(hostingVhostType ? { hostingVhostType } : {}),
+        ...(hostingWebsiteType ? { hostingWebsiteType } : {}),
+        ...(typeof record.is_enabled === `boolean` ? { hostingEnabled: record.is_enabled } : {}),
+      });
     }
     if (received > total) throw invalidResponse(`hostinger`);
-    if (received === total) return { names: [...names], skipped };
+    if (received === total) return { sites, skipped };
     if (response.data.length !== size) throw invalidResponse(`hostinger`);
   }
   throw new RegistrarRelayError(422, `Hostinger Website Pagination Exceeds The Discovery Limit`);
@@ -51,13 +61,14 @@ const listHostedNames = async (authorization: string, context: RegistrarRequestC
 
 export const discoverHostingerDomains = async (
   authorization: string,
-  registeredNames: Set<string>,
+  registeredDomains: RegistrarDomain[],
   context: RegistrarRequestContext,
   confirmedNames: string[] = [],
 ): Promise<RegistrarSyncResult> => {
-  const hosted = await listHostedNames(authorization, context);
+  const hosted = await listHostedWebsites(authorization, context);
   const confirmed = new Set(confirmedNames);
-  const availableNames = hosted.names.filter(name => !registeredNames.has(name));
+  const registeredNames = new Set(registeredDomains.map(domain => domain.name));
+  const availableNames = [...hosted.sites.keys()].filter(name => !registeredNames.has(name));
   availableNames.sort((left, right) => Number(confirmed.has(right)) - Number(confirmed.has(left)));
   const names = availableNames.slice(0, MAX_DISCOVERIES);
   let unregistered = 0;
@@ -77,8 +88,8 @@ export const discoverHostingerDomains = async (
       }
       if (registration.registered === false) { unregistered++; return undefined; }
       const meta: Record<string, JSONValue> = {
+        ...hosted.sites.get(name),
         externalRegistration: true,
-        hostingProvider: `Hostinger`,
         automaticallyIncluded: true,
         source: `Hostinger Hosting API`,
         ownershipConfirmed: confirmed.has(name),
@@ -96,7 +107,11 @@ export const discoverHostingerDomains = async (
       domains.push(record);
     }
   }
-  const missing = confirmedNames.filter(name => !hosted.names.includes(name) && !registeredNames.has(name)).length;
+  for (const domain of registeredDomains) {
+    const website = hosted.sites.get(domain.name);
+    if (website) domain.meta = { ...domain.meta, ...website };
+  }
+  const missing = confirmedNames.filter(name => !hosted.sites.has(name) && !registeredNames.has(name)).length;
   if (missing) warnings.push(`${missing} Confirmed External Domain(s) Not Found In Accessible Hostinger Websites`);
   if (hosted.skipped) warnings.push(`${hosted.skipped} Temporary, Unnamed, Or Subdomain Hosting Record(s) Excluded`);
   if (unregistered) warnings.push(`${unregistered} Hosting Name(s) Have No Matching Registry Registration`);

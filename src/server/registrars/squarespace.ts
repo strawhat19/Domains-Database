@@ -1,11 +1,15 @@
 import { Buffer } from 'node:buffer';
+import { selectRegistrarDetails } from './detailSelection';
 import type { RegistrarCredentials } from './credentials';
 import { invalidResponse, RegistrarRelayError } from './errors';
-import { requestRegistrar, type RegistrarRequestContext } from './request';
-import type { RegistrarDomain, RegistrarSyncResult } from '../../shared/registrarSync/types';
-import { asRecord, parseJson, MAX_PAGES, appendDomains, optionalText, requiredText, providerName, providerDate } from './validation';
+import { pauseRequests, requestRegistrar, type RegistrarRequestContext } from './request';
+import type { RegistrarDomain, RegistrarDetailSelection, RegistrarSyncResult } from '../../shared/registrarSync/types';
+import { asRecord, parseJson, MAX_PAGES, appendDomains, optionalText, requiredText, providerName, providerDate, providerBoolean } from './validation';
 
 const PAGE_SIZE = 100;
+const MAX_DETAIL_READS = 40;
+const DETAIL_TIME_LIMIT = 65_000;
+const DETAIL_REQUEST_RESERVE = 15_000;
 const USER_AGENT = `Domains-Database/0.0.1.3 Squarespace Registrar Sync`;
 const INVENTORY_URL = `https://api.squarespace.com/reseller/v1/domains`;
 const resoldStatuses = [`ACTIVE`, `EXPIRED`, `CANCELLED`, `INACTIVE`];
@@ -69,9 +73,64 @@ const getAccessToken = async (
   return token;
 };
 
+const readDomainDetail = (text: string, domain: RegistrarDomain): Partial<RegistrarDomain> => {
+  const detail = asRecord(parseJson(text, `squarespace`), `squarespace`);
+  if (providerName(detail.name, `squarespace`) !== domain.name
+    || (domain.providerId && detail.domainId != null && detail.domainId !== domain.providerId)) throw invalidResponse(`squarespace`);
+  const servers = detail.nameservers;
+  if (servers != null && (!Array.isArray(servers) || servers.length > 32)) throw invalidResponse(`squarespace`);
+  const nameservers = Array.isArray(servers) ? [...new Set(servers.map(name => providerName(name, `squarespace`)))] : undefined;
+  const statuses = detail.statuses;
+  const registryStatusCodes = Array.isArray(statuses) && statuses.length <= 64
+    && statuses.every(status => typeof status === `string` && /^[a-z][a-z0-9 _-]{0,99}$/i.test(status)) ? statuses : undefined;
+  const registrantEmailVerified = providerBoolean(detail.registrantEmailVerified, `squarespace`);
+  return {
+    nameservers,
+    locked: providerBoolean(detail.locked, `squarespace`),
+    autoRenew: providerBoolean(detail.autoRenew, `squarespace`),
+    privacy: providerBoolean(detail.whoisPrivacy, `squarespace`),
+    dnssec: providerBoolean(detail.dnssecSigned, `squarespace`),
+    updatedAt: readDate(detail.updatedOn) ?? domain.updatedAt,
+    createdAt: domain.createdAt ?? readDate(detail.registeredOn),
+    expiresAt: domain.expiresAt ?? readDate(detail.expiresOn)?.slice(0, 10),
+    detailsCheckedAt: new Date().toISOString(),
+    meta: {
+      ...domain.meta,
+      ...(registryStatusCodes ? { registryStatusCodes } : {}),
+      ...(registrantEmailVerified !== undefined ? { registrantEmailVerified } : {}),
+    },
+  };
+};
+
+const enrichSquarespaceDomains = async (
+  domains: readonly RegistrarDomain[], headers: Record<string, string>, context: RegistrarRequestContext, warnings: string[],
+) => {
+  const deadline = Math.min(context.deadline, Date.now() + DETAIL_TIME_LIMIT);
+  const detailContext = { ...context, deadline };
+  let attempted = 0;
+  let failed = 0;
+  for (const domain of domains.slice(0, MAX_DETAIL_READS)) {
+    if (context.signal.aborted || Date.now() + DETAIL_REQUEST_RESERVE + 1250 >= deadline) break;
+    try {
+      await pauseRequests(1250, detailContext);
+      attempted++;
+      domain.detailsAttemptedAt = new Date().toISOString();
+      const text = await requestRegistrar(new URL(`${INVENTORY_URL}/${domain.name}`), headers, detailContext);
+      Object.assign(domain, readDomainDetail(text, domain));
+    } catch (failure) {
+      failed++;
+      const status = failure instanceof RegistrarRelayError ? failure.status : undefined;
+      if (status === 401 || status === 403 || status === 429 || status === 504 || context.signal.aborted) break;
+    }
+  }
+  if (failed) warnings.push(`${failed} Squarespace Registration Detail Read(s) Unavailable`);
+  if (attempted < domains.length) warnings.push(`${domains.length - attempted} Squarespace Domain(s) Synced With Inventory Fields Only`);
+};
+
 export const getSquarespaceDomains = async (
   credentials: Extract<RegistrarCredentials, { provider: `squarespace` }>,
   context: RegistrarRequestContext,
+  detailSelection?: RegistrarDetailSelection,
 ): Promise<RegistrarSyncResult> => {
   let pending = 0;
   let inactive = 0;
@@ -103,6 +162,7 @@ export const getSquarespaceDomains = async (
       const updatedOn = readDate(record.updatedOn);
       incoming.push({
         providerId: domainId,
+        updatedAt: updatedOn,
         createdAt: registeredOn,
         registrar: `Squarespace`,
         expiresAt: expiresOn?.slice(0, 10),
@@ -127,6 +187,7 @@ export const getSquarespaceDomains = async (
       const warnings: string[] = [];
       if (pending) warnings.push(`${pending} Pending Squarespace Registration(s) Excluded From Registered Inventory`);
       if (inactive) warnings.push(`${inactive} Cancelled Or Inactive Squarespace Reseller Record(s) Excluded From Registered Inventory`);
+      await enrichSquarespaceDomains(selectRegistrarDetails(domains, detailSelection), headers, context, warnings);
       return { domains, warnings };
     }
     if (!response.domains.length || cursors.has(next)) throw invalidResponse(`squarespace`);

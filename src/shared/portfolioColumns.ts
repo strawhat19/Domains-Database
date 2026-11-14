@@ -1,4 +1,5 @@
 import type { DomainRecord } from './types';
+import { readDomainAppraisal } from './domainAppraisal/values';
 import { normalizeWebsiteInsights } from './websiteInsights/values';
 import { DOMAIN_DIFFICULTIES, DOMAIN_PROJECT_STATUSES, normalizeDomainDifficulty, normalizeDomainProjectStatus } from './domainProject';
 
@@ -14,6 +15,10 @@ export type PortfolioColumn =
   | `forwardingUrl` | `protectionPlan` | `estimatedValue`;
 
 export type PortfolioColumnValue = string | number | boolean | string[] | undefined;
+export const afternicPortfolioEstimate = Symbol(`afternicPortfolioEstimate`);
+type PortfolioValuedDomain = DomainRecord & { [afternicPortfolioEstimate]?: number };
+
+const readAfternicPortfolioEstimate = (domain: PortfolioValuedDomain) => domain[afternicPortfolioEstimate];
 
 export interface PortfolioColumnDefinition {
   price?: boolean;
@@ -92,7 +97,8 @@ export const getRenewalEstimate = (domain: DomainRecord) => {
   if (typeof amount !== `number` || !Number.isFinite(amount) || amount < 0 || !/^[A-Z]{3}$/.test(currency)) return undefined;
   const source = typeof estimate.source === `string` ? estimate.source.trim() : ``;
   const checkedAt = typeof estimate.checkedAt === `string` && Number.isFinite(Date.parse(estimate.checkedAt)) ? estimate.checkedAt : undefined;
-  return { amount, source, currency, checkedAt };
+  const years = typeof estimate.years === `number` && Number.isInteger(estimate.years) && estimate.years > 0 ? estimate.years : undefined;
+  return { amount, source, currency, checkedAt, years };
 };
 
 export const getRenewalEstimateDisplay = (domain: DomainRecord) => {
@@ -108,10 +114,11 @@ export const getRenewalEstimateHint = (domain: DomainRecord) => {
   const estimate = getRenewalEstimate(domain);
   if (!estimate) return ``;
   const checked = estimate.checkedAt ? ` · Checked ${new Intl.DateTimeFormat(`en-US`, { dateStyle: `medium` }).format(new Date(estimate.checkedAt))}` : ``;
-  return `${estimate.source || `Registrar API`}${checked} · Before taxes and fees · Renewal term not provided`;
+  const term = estimate.years ? `${estimate.years}-Year Renewal` : `Renewal Term Unspecified`;
+  return `${estimate.source || `Registrar API`}${checked} · ${term} · Estimate`;
 };
 
-const getDomainWebsiteInsights = (domain: DomainRecord) => {
+export const getDomainWebsiteInsights = (domain: DomainRecord) => {
   if (!domain.meta?.websiteInsights) return undefined;
   try { return normalizeWebsiteInsights(domain.meta.websiteInsights, domain.name); }
   catch { return undefined; }
@@ -159,6 +166,19 @@ const readMetaValue = (domain: DomainRecord, column: keyof typeof EXTRA_HEADERS)
   return undefined;
 };
 
+const getPortfolioEstimate = (domain: DomainRecord) => {
+  const appraisal = readDomainAppraisal(domain.meta?.goValue);
+  if (appraisal) return { value: appraisal.amount, source: `GoValue`, currency: appraisal.currency };
+  const imported = readMetaValue(domain, `estimatedValue`);
+  if (imported !== undefined) return { value: imported, source: null, currency: domain.currency?.trim().toUpperCase() || `USD` };
+  const afternic = readAfternicPortfolioEstimate(domain);
+  return { value: afternic, source: afternic === undefined ? null : `Afternic`, currency: `USD` };
+};
+
+export const getPortfolioColumnCurrency = (domain: DomainRecord, column: PortfolioColumn) => column === `estimatedValue`
+  ? getPortfolioEstimate(domain).currency : domain.currency?.trim().toUpperCase() || `USD`;
+export const isAfternicPortfolioEstimate = (domain: DomainRecord) => getPortfolioEstimate(domain).source === `Afternic`;
+
 export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioColumn): PortfolioColumnValue => {
   const sync = domain.meta?.registrarSync;
   const registrarSync = sync && typeof sync === `object` && !Array.isArray(sync) ? sync : undefined;
@@ -181,8 +201,8 @@ export const getPortfolioColumnValue = (domain: DomainRecord, column: PortfolioC
     case `country`: return domain.registrant?.country;
     case `tld`: return hasPortfolioColumnValue(domain.tld) ? domain.tld : domain.name.slice(domain.name.lastIndexOf(`.`));
     case `forwardingUrl`:
-    case `protectionPlan`:
-    case `estimatedValue`: return readMetaValue(domain, column);
+    case `protectionPlan`: return readMetaValue(domain, column);
+    case `estimatedValue`: return getPortfolioEstimate(domain).value;
     default: return domain[column];
   }
 };
@@ -223,11 +243,13 @@ export const getPortfolioColumnDisplay = (domain: DomainRecord, column: Portfoli
   }
   if ((column === `renewalPrice` || column === `monthlyCost` || column === `estimatedValue`) && typeof value === `number`) {
     if (!Number.isFinite(value)) return `—`;
-    const currency = domain.currency?.trim().toUpperCase() || `USD`;
-    return new Intl.NumberFormat(`en-US`, {
+    const appraisal = column === `estimatedValue` ? getPortfolioEstimate(domain) : undefined;
+    const currency = appraisal?.currency ?? getPortfolioColumnCurrency(domain, column);
+    const price = new Intl.NumberFormat(`en-US`, {
       style: `currency`,
       currency: /^[A-Z]{3}$/.test(currency) ? currency : `USD`,
     }).format(value);
+    return appraisal?.source === `Afternic` ? `${price} · Afternic` : price;
   }
   return String(value);
 };

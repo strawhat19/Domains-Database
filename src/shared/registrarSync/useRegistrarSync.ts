@@ -12,10 +12,12 @@ import { accountStorageKey } from '../authentication/userScope';
 import { CONNECTIONS_STORAGE_KEY } from '../connections/service';
 import { subscribeAccountDataReset } from '../accountData/state';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useWebsiteRankSync } from '../websiteInsights/useWebsiteRankSync';
+import { getRegistrarDetailSelection, usesRegistrarDetailSelection } from './detailSelection';
 import type { BackgroundProgressUpdate } from '../backgroundProgress/BackgroundProgressContext';
 import { connectionFields, type ConnectionAccount, type ConnectionProvider, type ConnectionSnapshot } from '../connections/types';
 import type { AccountSyncStatuses, ConnectedSyncRegistrar, ConnectionSyncStatus, ConnectionSyncResult, ConnectionSyncStatuses } from './types';
-import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, subscribeSyncPolicy, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
+import { getSyncPolicy, saveSyncCache, clearSyncCache, isSyncCacheFresh, reserveManualSync, subscribeSyncPolicy, AUTO_SYNC_INTERVAL_MS, SYNC_POLICY_STORAGE_KEY, type RegistrarSyncPolicy } from './policy';
 
 export interface ManualSyncChoice { id: string; label: string }
 
@@ -54,13 +56,15 @@ const aggregateStatuses = (accounts: readonly ConnectionAccount[], statuses: Acc
     const checking = entries.some(status => status.state === `checking`);
     const errors = entries.filter(status => status.state === `error`);
     const connected = entries.some(status => status.state === `connected`);
+    const warnings = [...new Set(entries.flatMap(status => status.warnings ?? []))].slice(0, 60);
     result[field.id] = {
       count,
+      warnings,
       checkedAt: entries.map(status => status.checkedAt).sort().at(-1) ?? ``,
       discoveredDomains: entries.flatMap(status => status.discoveredDomains ?? []),
       state: checking ? `checking` : errors.length ? `error` : connected ? `connected` : `idle`,
       message: checking ? `Checking Connection(s)…` : errors.length ? errors.map(status => status.message).join(`\n`)
-        : connected ? formatSyncNotice({ count }) : entries.some(status => status.message === savedOnlyMessage) ? savedOnlyMessage : `Not Connected`,
+        : connected ? formatSyncNotice({ count, warnings }) : entries.some(status => status.message === savedOnlyMessage) ? savedOnlyMessage : `Not Connected`,
     };
   }
   return result;
@@ -70,6 +74,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
   const { user, loginRevision } = useAuth();
   const userId = user?.id;
   const actorKey = `${userId ?? ``}:${loginRevision}`;
+  const syncWebsiteRanks = useWebsiteRankSync(userId, actorKey, enabled, refreshDomains);
   const currentActor = useRef(actorKey);
   currentActor.current = actorKey;
   const active = useRef(false);
@@ -219,12 +224,15 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       }
       const syncAccounts = snapshot.accounts.filter(account => supportsRegistrarSync(account) && canUseConnectionProvider(account.provider, access.paid));
       const savedOnlyAccounts = snapshot.accounts.filter(account => !supportsRegistrarSync(account));
-      const accountNext = snapshotAccountStatuses(snapshot, policy.accountStatuses);
-      if (automatic && isSyncCacheFresh(policy, snapshot.updated)
-        && syncAccounts.every(account => {
-          const status = policy.accountStatuses?.[account.id];
-          return status && ![`idle`, `checking`].includes(status.state);
-        })) {
+      const accountNext = snapshotAccountStatuses(snapshot, policy.connectionsUpdated === snapshot.updated ? policy.accountStatuses : {});
+      const fresh = automatic && isSyncCacheFresh(policy, snapshot.updated);
+      const now = Date.now();
+      const needsSync = (account: ConnectionAccount) => {
+        const status = accountNext[account.id];
+        const checked = Date.parse(status?.checkedAt ?? ``);
+        return !fresh || status?.state !== `connected` || !(checked > 0 && checked <= now && now - checked < AUTO_SYNC_INTERVAL_MS);
+      };
+      if (fresh && !syncAccounts.some(needsSync)) {
         let includedCount = 0;
         for (const account of syncAccounts.filter(value => value.provider === `hostinger`)) {
           const status = accountNext[account.id];
@@ -247,7 +255,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
           accountNext[account.id] = {
             ...status,
             count: countNext,
-            message: formatSyncNotice({ count: countNext }),
+            message: formatSyncNotice({ count: countNext, warnings: status.warnings }),
             discoveredDomains: discovered.filter(domain => !includedNames.has(domain.name)),
           };
         }
@@ -269,9 +277,11 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
         setAccountStatuses(accountNext);
         const failed = syncAccounts.filter(account => accountNext[account.id]?.state === `error`).length;
         finishProgress(failed, syncAccounts.length);
+        if (access.paid && syncAccounts.some(account => accountNext[account.id]?.state === `connected`)) void syncWebsiteRanks();
         return { ...empty, count: includedCount };
       }
-      const accounts = syncAccounts.filter(account => !connectionIds || connectionIds.includes(account.id));
+      const accounts = syncAccounts.filter(account => (!connectionIds || connectionIds.includes(account.id)) && needsSync(account))
+        .sort((first, second) => Number(first.provider === `vercel`) - Number(second.provider === `vercel`));
       const total = accounts.length + 2;
       progress({ completed: 1, total });
       setSyncing(Boolean(accounts.length));
@@ -288,7 +298,10 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
         const controller = new AbortController();
         controllers.current.push(controller);
         try {
-          const result = await getRegistrarDomains(account.provider, account.values, controller.signal);
+          const detailRecords = usesRegistrarDetailSelection(account.provider) ? await api.getDomains().catch(() => undefined) : undefined;
+          if (!current()) return empty;
+          const detailSelection = detailRecords ? getRegistrarDetailSelection(detailRecords, account) : undefined;
+          const result = await getRegistrarDomains(account.provider, account.values, controller.signal, detailSelection);
           if (!current()) return empty;
           const latest = await connectionsAPI.getConnections(userId);
           if (!current()) return empty;
@@ -296,13 +309,16 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
           const annotate = (domain: typeof result.domains[number]) => ({
             ...domain, meta: { ...domain.meta, registrarConnectionId: account.id, registrarProvider: account.provider },
           });
-          const count = await api.syncRegistrarDomains(result.domains.map(annotate), userId, owner.current);
+          const configurations = account.provider === `vercel` && result.vercelConfigurations !== undefined
+            ? { connectionId: account.id, records: result.vercelConfigurations } : undefined;
+          const count = await api.syncRegistrarDomains(result.domains.map(annotate), userId, owner.current, configurations);
           if (!current()) return empty;
           await refreshDomains();
           if (!current()) return empty;
-          const warnings = result.warnings?.map(message => `${label}: ${message}`) ?? [];
+          const warnings = result.warnings?.slice(0, 60).map(message => `${label}: ${message}`.slice(0, 500)) ?? [];
           accountNext[account.id] = {
             count,
+            warnings,
             state: `connected`,
             checkedAt: new Date().toISOString(),
             discoveredDomains: result.discoveredDomains?.map(annotate),
@@ -333,6 +349,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
       setSyncError(errors.join(`\n`));
       if (accounts.length && successful) setSyncNotice(formatSyncNotice({ count, warnings }, errors.length ? `Partial Sync` : ``));
       finishProgress(errors.length, accounts.length);
+      if (access.paid && successful) void syncWebsiteRanks();
       return { count, errors, warnings };
     } catch (failure) {
       if (!current()) return empty;
@@ -347,7 +364,7 @@ export const useRegistrarSync = (refreshDomains: () => Promise<void>, enabled = 
         setSyncing(false);
       }
     }
-  }, [enabled, userId, actorKey, applyPolicy, cancelRequests, refreshDomains, reportProgress]);
+  }, [enabled, userId, actorKey, applyPolicy, cancelRequests, refreshDomains, reportProgress, syncWebsiteRanks]);
 
   const requestManualSync = useCallback(async (connectionId?: string, provider?: ConnectionProvider, allAccounts = false, syncRelated?: () => Promise<void>) => {
     if (currentActor.current !== actorKey) return;

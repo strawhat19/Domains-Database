@@ -1,8 +1,24 @@
 import { normalizeDomainName } from '../domainUtils';
-import { WEBSITE_INSIGHTS_SOURCE, type WebsiteInsights } from './types';
+import { MAX_TRANCO_HISTORY, WEBSITE_INSIGHTS_SOURCE, type TrancoRank, type WebsiteInsights } from './types';
+
+const reservedSuffixes = new Set([`local`, `localhost`, `internal`, `home`, `lan`, `test`, `invalid`, `example`, `onion`, `arpa`]);
+const reservedExamples = [`example.com`, `example.org`, `example.net`];
+
+export const getWebsiteInsightDomain = (value: unknown) => {
+  if (typeof value !== `string` || value.length > 253) return undefined;
+  try {
+    const domain = normalizeDomainName(value);
+    if (value.trim().toLowerCase() !== domain || reservedSuffixes.has(domain.split(`.`).at(-1) ?? ``)
+      || reservedExamples.some(name => domain === name || domain.endsWith(`.${name}`))) return undefined;
+    return domain;
+  } catch { return undefined; }
+};
 
 const recordFrom = (value: unknown) => value && typeof value === `object` && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
 const timestamp = (value: unknown) => typeof value === `string` && /^\d{4}-\d{2}-\d{2}T/.test(value) && Number.isFinite(Date.parse(value));
+export const isTrancoDate = (value: unknown): value is string => typeof value === `string` && /^\d{4}-\d{2}-\d{2}$/.test(value)
+  && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+const isTrancoRank = (value: unknown): value is number => typeof value === `number` && Number.isSafeInteger(value) && value >= 1 && value <= 1_000_000;
 const messagesFrom = (value: unknown): string[] => {
   if (!Array.isArray(value) || value.length > 10 || value.some(message => typeof message !== `string` || message.length > 300)) throw new Error(`Website Insights Returned An Invalid Result`);
   return value as string[];
@@ -34,11 +50,43 @@ export const normalizeWebsiteInsights = (value: unknown, expectedDomain?: string
     if (record.trancoListed) {
       const rank = record.trancoRank;
       const date = record.trancoDate;
-      if (typeof rank !== `number` || !Number.isSafeInteger(rank) || rank < 1 || rank > 1_000_000 || typeof date !== `string`
-        || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) throw new Error(`Website Insights Returned An Invalid Rank`);
+      if (!isTrancoRank(rank) || !isTrancoDate(date)) throw new Error(`Website Insights Returned An Invalid Rank`);
       result.trancoRank = rank;
       result.trancoDate = date;
     }
+    if (record.trancoHistory !== undefined) {
+      if (!Array.isArray(record.trancoHistory) || record.trancoHistory.length > MAX_TRANCO_HISTORY) throw new Error(`Website Insights Returned Invalid Rank History`);
+      const history = record.trancoHistory.map((value: unknown): TrancoRank => {
+        const entry = recordFrom(value);
+        if (!isTrancoDate(entry?.date) || (entry.rank !== null && !isTrancoRank(entry.rank))) throw new Error(`Website Insights Returned Invalid Rank History`);
+        return { date: entry.date, rank: entry.rank };
+      }).sort((first, second) => second.date.localeCompare(first.date));
+      if (history.length && (new Set(history.map(entry => entry.date)).size !== history.length
+        || history[0]?.rank !== (result.trancoRank ?? null) || (result.trancoDate && history[0]?.date !== result.trancoDate))) {
+        throw new Error(`Website Insights Returned Inconsistent Rank History`);
+      }
+      result.trancoHistory = history;
+    }
   }
   return result;
+};
+
+export const mergeWebsiteInsights = (incoming: WebsiteInsights, stored: unknown): WebsiteInsights => {
+  if (!stored) return incoming;
+  let previous: WebsiteInsights;
+  try { previous = normalizeWebsiteInsights(stored, incoming.domain); }
+  catch { return incoming; }
+  const useIncomingRank = Boolean(incoming.trancoCheckedAt && (!previous.trancoCheckedAt || Date.parse(incoming.trancoCheckedAt) >= Date.parse(previous.trancoCheckedAt)));
+  const useIncomingPerformance = Boolean(incoming.performance && (!previous.performance || Date.parse(incoming.performance.checkedAt) >= Date.parse(previous.performance.checkedAt)));
+  const rank = useIncomingRank ? incoming : previous;
+  const latest = Date.parse(incoming.checkedAt) >= Date.parse(previous.checkedAt) ? incoming : previous;
+  return {
+    ...latest,
+    trancoRank: rank.trancoRank,
+    trancoDate: rank.trancoDate,
+    trancoListed: rank.trancoListed,
+    trancoCheckedAt: rank.trancoCheckedAt,
+    trancoHistory: rank.trancoHistory,
+    performance: (useIncomingPerformance ? incoming : previous).performance,
+  };
 };

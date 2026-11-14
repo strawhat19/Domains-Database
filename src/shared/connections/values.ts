@@ -16,7 +16,7 @@ export const connectionValues = (accounts: readonly ConnectionAccount[]): Connec
 export const normalizeConnectionAccounts = (input: readonly ConnectionAccount[]): ConnectionAccount[] => {
   if (!Array.isArray(input)) throw new Error(`Enter Valid Connection Accounts`);
   const ids = new Set<string>();
-  return input.map(account => {
+  return input.map((account: ConnectionAccount) => {
     if (!account || typeof account.id !== `string` || !account.id || ids.has(account.id)
       || !Number.isSafeInteger(account.number) || account.number < 0
       || !connectionFields.some(field => field.id === account.provider)) throw new Error(`Enter Valid Connection Accounts`);

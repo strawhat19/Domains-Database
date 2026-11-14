@@ -14,6 +14,7 @@ import type { DomainSearchResult, DomainSearchResults, DomainSearchVariants, Dom
 
 const cancelled = () => new Error(`Domain Search Cancelled`);
 const nextProviderSearch = new Map<string, number>();
+class RegistrarSearchTransportError extends Error {}
 
 interface SearchConnections {
   paid: boolean;
@@ -74,7 +75,12 @@ const requestRegistrarSearch = async (path: string, body: object, signal: AbortS
   if (signal.aborted) abort();
   const timeout = setTimeout(abort, 75_000);
   try {
-    const authorization = await getFeatureAuthorization();
+    const authorization = await getFeatureAuthorization().catch(failure => {
+      if (failure instanceof TypeError || failure?.code === `auth/network-request-failed`) {
+        throw new RegistrarSearchTransportError(`Could Not Verify Your Session For Registrar Search`);
+      }
+      throw failure;
+    });
     const response = await fetch(Platform.OS === `web` ? path : absoluteSiteUrl(path), {
       method: `POST`,
       credentials: `omit`,
@@ -86,8 +92,9 @@ const requestRegistrarSearch = async (path: string, body: object, signal: AbortS
     return { result, status: response.status, ok: response.ok };
   } catch (failure) {
     if (signal.aborted) throw cancelled();
-    throw new Error(controller.signal.aborted ? `Registrar Search Timed Out`
-      : failure instanceof Error && !(failure instanceof TypeError) ? failure.message : `Could Not Reach Registrar Search`);
+    if (controller.signal.aborted) throw new RegistrarSearchTransportError(`Registrar Search Timed Out`);
+    if (failure instanceof TypeError) throw new RegistrarSearchTransportError(`Could Not Reach Registrar Search`);
+    throw failure;
   } finally {
     clearTimeout(timeout);
     signal.removeEventListener(`abort`, abort);
@@ -189,60 +196,88 @@ export const searchConnectedDomains = async (
   await Promise.all(sources.map(async ({ field, values }, providerIndex) => {
     const pace = field.id === `namecheap` ? 4000 : 1000;
     const providerKey = `${values === undefined ? `server` : userId}:${field.id}`;
+    const pending = names.flatMap((domain, index) => results[index]?.connections?.[providerIndex]?.pending ? [{ domain, index }] : []);
+    let batchSize = field.id === `godaddy` && (values === undefined || /^GODADDY_PAT=/m.test(values)) ? 25 : 1;
     let blockedError = ``;
-    for (const [index, domain] of names.entries()) {
+    for (let offset = 0; offset < pending.length;) {
       if (signal.aborted) throw cancelled();
-      if (!results[index].connections[providerIndex].pending) continue;
-      const base = { ...results[index].connections[providerIndex], pending: false };
+      const batch = pending.slice(offset, offset + batchSize);
+      const useBatch = batch.length > 1;
       let requested = false;
       let retryAfterMs = pace;
-      let result: DomainSearchResult;
+      let valuesByDomain: unknown[] = [];
+      let batchError = ``;
       try {
         if (blockedError) throw new Error(blockedError);
         const wait = (nextProviderSearch.get(providerKey) ?? 0) - Date.now();
         if (wait > 0) await pauseSearch(wait, signal);
         requested = true;
-        const response = await requestRegistrarSearch(`/api/registrars/search`, {
-          domain,
+        const input = {
           provider: field.id,
+          ...(useBatch ? { domains: batch.map(item => item.domain) } : { domain: batch[0]?.domain }),
           ...(values !== undefined ? { values } : {}),
-        }, signal);
-        const value = response.result as (DomainSearchResult & { error?: string }) | null;
+        };
+        const submit = () => requestRegistrarSearch(`/api/registrars/search`, input, signal);
+        const response = await submit().catch(async failure => {
+          if (!options?.discoveryCache || !(failure instanceof RegistrarSearchTransportError)) throw failure;
+          await pauseSearch(pace, signal);
+          return submit();
+        });
+        const body = response.result as { results?: unknown; error?: string } | null;
         if (!response.ok) {
-          const error = typeof value?.error === `string` ? value.error : `Registrar Search Is Unavailable`;
+          if (useBatch && response.status === 501) {
+            batchSize = 1;
+            nextProviderSearch.set(providerKey, Date.now() + pace);
+            continue;
+          }
+          const error = typeof body?.error === `string` ? body.error : `Registrar Search Is Unavailable`;
           if ([401, 403, 429].includes(response.status)) blockedError = error;
           throw new Error(error);
         }
-        if (!value || value.provider !== field.id || value.domain !== domain
-          || (value.available !== undefined && typeof value.available !== `boolean`)) throw new Error(`Registrar Returned Invalid Search Results`);
-        if (value.retryAfterMs !== undefined) {
-          if (!Number.isFinite(value.retryAfterMs) || value.retryAfterMs < 0 || value.retryAfterMs > 300_000) throw new Error(`Registrar Returned Invalid Search Timing`);
-          retryAfterMs = Math.max(pace, value.retryAfterMs);
-        }
-        for (const quote of [value.registration, value.renewal]) {
-          if (quote !== undefined && (!quote || typeof quote !== `object` || Array.isArray(quote)
-            || typeof quote.amount !== `number` || !Number.isFinite(quote.amount) || quote.amount < 0
-            || typeof quote.currency !== `string` || !/^(?:[A-Z]{3})?$/.test(quote.currency)
-            || (quote.years !== undefined && (!Number.isInteger(quote.years) || quote.years < 1 || quote.years > 10)))) {
-            throw new Error(`Registrar Returned Invalid Pricing`);
-          }
-        }
-        result = { ...base, available: value.available, renewal: value.renewal, registration: value.registration,
-          note: typeof value.note === `string` ? value.note.slice(0, 1200) : undefined };
+        if (useBatch && (!Array.isArray(body?.results) || body.results.length !== batch.length)) throw new Error(`Registrar Returned Invalid Search Results`);
+        valuesByDomain = useBatch ? body?.results as unknown[] : [response.result];
       } catch (failure) {
         if (signal.aborted) throw cancelled();
-        result = { ...base, error: failure instanceof Error ? failure.message : `Could Not Reach Registrar Search` };
-      } finally {
-        if (requested) nextProviderSearch.set(providerKey, Date.now() + retryAfterMs);
+        if (options?.discoveryCache && failure instanceof RegistrarSearchTransportError) blockedError = failure.message;
+        batchError = failure instanceof Error ? failure.message : `Could Not Reach Registrar Search`;
       }
-      results[index].connections[providerIndex] = result;
-      completed += 1;
-      if (options?.discoveryCache && !signal.aborted) {
-        const resultCheckedAt = Date.now();
-        checkedAt = Math.min(checkedAt ?? resultCheckedAt, resultCheckedAt);
-        storeDiscoveryQuote(cacheOwner, cacheScope, result, resultCheckedAt);
+      for (const [batchIndex, { domain, index }] of batch.entries()) {
+        const base = { ...results[index].connections[providerIndex], pending: false };
+        const value = valuesByDomain[batchIndex] as DomainSearchResult | null | undefined;
+        let result: DomainSearchResult;
+        try {
+          if (batchError) throw new Error(batchError);
+          if (!value || value.provider !== field.id || value.domain !== domain
+            || (value.available !== undefined && typeof value.available !== `boolean`)) throw new Error(`Registrar Returned Invalid Search Results`);
+          if (typeof value.error === `string`) throw new Error(value.error);
+          if (value.retryAfterMs !== undefined) {
+            if (!Number.isFinite(value.retryAfterMs) || value.retryAfterMs < 0 || value.retryAfterMs > 300_000) throw new Error(`Registrar Returned Invalid Search Timing`);
+            retryAfterMs = Math.max(retryAfterMs, value.retryAfterMs);
+          }
+          for (const quote of [value.registration, value.renewal]) {
+            if (quote !== undefined && (!quote || typeof quote !== `object` || Array.isArray(quote)
+              || typeof quote.amount !== `number` || !Number.isFinite(quote.amount) || quote.amount < 0
+              || typeof quote.currency !== `string` || !/^(?:[A-Z]{3})?$/.test(quote.currency)
+              || (quote.years !== undefined && (!Number.isInteger(quote.years) || quote.years < 1 || quote.years > 10)))) {
+              throw new Error(`Registrar Returned Invalid Pricing`);
+            }
+          }
+          result = { ...base, available: value.available, renewal: value.renewal, registration: value.registration,
+            note: typeof value.note === `string` ? value.note.slice(0, 1200) : undefined };
+        } catch (failure) {
+          result = { ...base, error: failure instanceof Error ? failure.message : `Could Not Reach Registrar Search` };
+        }
+        results[index].connections[providerIndex] = result;
+        completed += 1;
+        if (options?.discoveryCache && !signal.aborted) {
+          const resultCheckedAt = Date.now();
+          checkedAt = Math.min(checkedAt ?? resultCheckedAt, resultCheckedAt);
+          storeDiscoveryQuote(cacheOwner, cacheScope, result, resultCheckedAt);
+        }
       }
+      if (requested) nextProviderSearch.set(providerKey, Date.now() + retryAfterMs);
       if (!signal.aborted) onProgress?.(snapshotResults(), { total, completed });
+      offset += batch.length;
     }
   }));
   await checkSearchConnections(signal, connections);

@@ -1,11 +1,13 @@
 import './styles.scss';
-import { Globe2, ArrowUpRight } from 'lucide-react';
+import { useLiveAuction } from './useLiveAuction';
 import DomainAnalyticsButton from '../DomainAnalyticsButton';
-import { getAuctionRow, type AuctionRowProps } from './presentation';
+import { Globe2, ArrowUpRight, Radio, LoaderCircle } from 'lucide-react';
+import { getAuctionRow, getLiveAuctionLabels, type AuctionRowProps } from './presentation';
 
 const AuctionRow = ({ record }: AuctionRowProps) => {
   const view = getAuctionRow(record);
   const suffix = record.id;
+  const live = useLiveAuction(record.domain, record.source === `godaddy` && !record.preview);
 
   return (
     <tr id={`auction-row-${suffix}`} className={`auction-row`}>
@@ -53,7 +55,30 @@ const AuctionRow = ({ record }: AuctionRowProps) => {
             </a>
           )}
           <DomainAnalyticsButton domain={record.domain} suffix={`auction-${suffix}`} compact />
+          {live.available && <button
+            type={`button`}
+            disabled={live.busy}
+            aria-busy={live.busy}
+            id={`auction-live-check-${suffix}`}
+            className={`auction-source-link auction-live-check`}
+            onClick={() => void live.lookup()}
+          >
+            {live.busy ? <LoaderCircle id={`auction-live-spinner-${suffix}`} className={`auction-live-spinner`} size={13} aria-hidden /> : <Radio size={13} aria-hidden />}
+            {live.busy ? `Checking…` : `Check Live`}
+          </button>}
         </div>
+        {live.accounts.length > 0 && <label id={`auction-live-choice-${suffix}`} className={`auction-row-note`}>
+          {`GoDaddy Connection`}
+          <select id={`auction-live-account-${suffix}`} className={`auction-live-account`} value={``} onChange={event => void live.lookup(event.currentTarget.value)}>
+            <option value={``} disabled>{`Choose An Account`}</option>
+            {live.accounts.map(account => <option key={account.id} value={account.id}>{`Account ${account.number}`}</option>)}
+          </select>
+        </label>}
+        {live.error && <span id={`auction-live-error-${suffix}`} className={`auction-row-note auction-live-error`} role={`status`}>{live.error}</span>}
+        {live.result && <details id={`auction-live-details-${suffix}`} className={`auction-live-details`} aria-live={`polite`} open>
+          <summary id={`auction-live-summary-${suffix}`} className={`auction-row-note`}>{`Live GoDaddy Details`}</summary>
+          {getLiveAuctionLabels(live.result).map((label, index) => <span key={`${index}-${label}`} id={`auction-live-metric-${suffix}-${index}`} className={`auction-row-note`}>{label}</span>)}
+        </details>}
       </td>
     </tr>
   );

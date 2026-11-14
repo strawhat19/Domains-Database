@@ -1,7 +1,7 @@
 import { Roles } from '../../types/types';
 import { useLocalStorage } from '../config';
-import type { AfternicListing } from './types';
 import { useAuth } from '../authContext/useAuth';
+import type { AfternicListing, AfternicSnapshotPage, AfternicSyncProgress } from './types';
 import { AfternicRequestError, requestMarketplaceAfternic } from './client';
 import { useBackgroundProgressReporter } from '../backgroundProgress/BackgroundProgressContext';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from 'react';
@@ -18,7 +18,7 @@ const readSnapshot = async (signal: AbortSignal): Promise<Snapshot> => {
   let duplicateCount = 0;
   let generationId: string | null = null;
   for (let page = 0; page < maxPages; page += 1) {
-    const result = await requestMarketplaceAfternic(`snapshot`, { offset, generationId }, signal);
+    const result: AfternicSnapshotPage = await requestMarketplaceAfternic(`snapshot`, { offset, generationId }, signal);
     for (const listing of result.listings) {
       if (listings.has(listing.domain)) duplicateCount += 1;
       listings.set(listing.domain, listing);
@@ -42,7 +42,7 @@ const readLatestSnapshot = async (signal: AbortSignal) => {
 const syncPortfolio = async (signal: AbortSignal) => {
   let attemptId: string | null = null;
   for (let page = 0; page < maxPages; page += 1) {
-    const result = await requestMarketplaceAfternic(`sync`, { attemptId }, signal);
+    const result: AfternicSyncProgress = await requestMarketplaceAfternic(`sync`, { attemptId }, signal);
     if (result.done) return;
     attemptId = result.attemptId;
   }

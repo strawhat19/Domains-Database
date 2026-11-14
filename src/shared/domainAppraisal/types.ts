@@ -5,8 +5,13 @@ export interface DomainAppraisal {
   maxPrice?: number;
   listPrice?: number;
   checkedAt: string;
+  dailyUsage?: number;
+  maxDailyUsage?: number;
   wholesalePrice?: number;
   source: `GoDaddy GoValue`;
+  salesProbability?: number;
+  salesProbability500?: number;
+  salesProbabilityWholesale?: number;
 }
 
 export const appraisalFailureStatuses = [`connection-required`, `access-required`, `unsupported-tld`, `not-found`, `rate-limited`, `unavailable`] as const;

@@ -2,21 +2,27 @@ import { authAPI } from './auth';
 import { getDomainLimit } from '../shared/accountPlans';
 import { Domain } from '../shared/models/domains/Domain';
 import { normalizeDomainTags } from '../shared/domainTags';
+import { readPaidRenewal } from '../shared/registrarSync/paidRenewal';
 import { firebaseEnabled } from '../shared/firebase/config';
 import { restoreDomainPrice } from '../shared/domainPricing';
 import { createSampleDomains } from '../shared/sampleDomains';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RegistrarDomain } from '../shared/registrarSync/types';
 import type { WebsiteInsights } from '../shared/websiteInsights/types';
+import { MAX_INSIGHT_DOMAINS } from '../shared/websiteInsights/types';
 import { accountStorageKey } from '../shared/authentication/userScope';
 import { subscribeAccountDataReset } from '../shared/accountData/state';
 import { clearFirestoreStorageCache } from '../shared/firebase/storage';
-import { normalizeWebsiteInsights } from '../shared/websiteInsights/values';
+import { readDomainAppraisal } from '../shared/domainAppraisal/values';
+import { readDomainParkingMetrics } from '../shared/domainParking/values';
+import { mergeWebsiteInsights, normalizeWebsiteInsights } from '../shared/websiteInsights/values';
 import { getPlanAccess, requireStarterAccess } from '../shared/planAccess/service';
-import type { DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
+import type { JSONValue, DomainInput, DomainRecord, PortfolioSnapshot } from '../shared/types';
 import { getLocalPublicProfileRoles } from '../shared/authentication/service.local';
+import { normalizeGoDaddyLifecycleActions } from '../shared/registrarSync/godaddyActions';
 import type { PublicProfileCardMetadata, PublicProfilePortfolio } from '../shared/publicDirectory/profilePortfolio';
 import { getDomainSource, validateDomainInput, getDomainDeletionRestriction } from '../shared/domainUtils';
+import { mergeVercelConfigurations, type VercelConfigurationSnapshot } from '../shared/registrarSync/vercelConfiguration';
 import { readStorage, writeStorage, subscribeStorage, createOperationQueue } from '../shared/common/storage';
 import { useSampleData, PORTFOLIO_STORAGE_KEY, useLocalStorage, persistenceEnabled } from '../shared/config';
 import { projectPublicDomain, readPublicDomainSummariesForIds, type PublicDomainSummary } from '../shared/publicDirectory/domains';
@@ -277,9 +283,87 @@ const registrarImportCustomFields = [
   `developmentLinks`,
 ] as const;
 const registrarSourceMetadata = new Set([
-  `source`, `domainSource`, `registrarSync`, `registrarName`, `hostingProvider`, `registrarSource`, `registrarProvider`,
+  `source`, `domainSource`, `registrarSync`, `registrarName`, `hostingProvider`, `registrarSource`, `registrarProvider`, `hostingDetails`, `registrarDetails`,
   `registrarIanaId`, `registrarCheckedAt`, `externalRegistration`, `ownershipConfirmed`, `automaticallyIncluded`, `registrarConnectionId`,
+  `goValue`, `goValueUnavailable`, `goDaddyParking`, `vercelDomainConfiguration`, `csvRenewalCostProvided`,
 ]);
+
+const renewalEstimateSource = {
+  GoDaddy: `GoDaddy v2`,
+  Porkbun: `Porkbun Domain Check API`,
+  Namecheap: `Namecheap Renewal Catalog`,
+  Vercel: `Vercel Registrar Price API`,
+};
+const getRenewalEstimateSource = (registrar: RegistrarDomain[`registrar`]) => registrar === `GoDaddy` || registrar === `Porkbun` || registrar === `Namecheap` || registrar === `Vercel`
+  ? renewalEstimateSource[registrar] : undefined;
+
+const metadataObject = (value: JSONValue | undefined) => value && typeof value === `object` && !Array.isArray(value) ? value : {};
+const metadataDate = (value: JSONValue | undefined): value is string => typeof value === `string` && /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+Z)?$/.test(value) && Number.isFinite(Date.parse(value));
+const registrarDetails = (input: RegistrarDomain) => {
+  const provider = input.registrar;
+  const source = input.meta?.source;
+  const raw = provider === `GoDaddy` ? metadataObject(input.meta?.registrarDetails) : input.meta ?? {};
+  const details: Record<string, JSONValue> = {};
+  const dates = provider === `GoDaddy` ? [`deletedAt`, `renewDeadline`, `registrarCreatedAt`, `transferAwayEligibleAt`]
+    : provider === `Vercel` ? [`boughtAt`, `transferredAt`, `transferStartedAt`]
+    : source === `Hostinger Portfolio API` ? [`registeredAt`, `transferLockExpiresAt`] : [];
+  for (const field of dates) {
+    const value = raw[field];
+    if (metadataDate(value) || (field === `transferLockExpiresAt` && value === null)) details[field] = value;
+  }
+  const flags = provider === `GoDaddy` ? [`renewable`, `exposeWhois`, `holdRegistrar`, `transferProtected`, `expirationProtected`, `exposeRegistrantOrganization`]
+    : provider === `Vercel` ? [`verified`] : provider === `Namecheap` ? [`premium`, `usesProviderDns`, `usesDefaultNameservers`]
+    : provider === `Squarespace` ? [`registrantEmailVerified`]
+    : source === `Hostinger Portfolio API` ? [`privacyProtectionAllowed`, `transferLockSupported`] : [];
+  for (const field of flags) {
+    const value = raw[field];
+    if (typeof value === `boolean`) details[field] = value;
+  }
+  if (provider === `GoDaddy` || provider === `Squarespace`) {
+    const statuses = raw.registryStatusCodes;
+    if (Array.isArray(statuses) && statuses.length <= 64 && statuses.every(value => typeof value === `string` && /^[a-z][a-z0-9 _-]{0,99}$/i.test(value))) details.registryStatusCodes = statuses;
+  }
+  if (provider === `GoDaddy`) {
+    const actions = normalizeGoDaddyLifecycleActions(raw.lifecycleActions);
+    if (actions) details.lifecycleActions = actions;
+    const hostnames = raw.registeredHostnames;
+    if (Array.isArray(hostnames) && hostnames.length <= 64 && hostnames.every(host => typeof host === `string` && host.length <= 253
+      && /^[a-z0-9.-]+$/.test(host) && host.endsWith(`.${input.name}`))) details.registeredHostnames = hostnames;
+    if ([`COMPLETED`, `PENDING`, `UNABLE_TO_RETRIEVE_STATUS`].some(status => raw.icannVerification === status)) details.icannVerification = raw.icannVerification;
+    for (const field of [`domainNameVerification`, `realNameVerification`]) {
+      if ([`APPROVED`, `PENDING`, `REJECTED`, `UNABLE_TO_RETRIEVE_STATUS`].some(status => raw[field] === status)) details[field] = raw[field];
+    }
+  }
+  if (provider === `Vercel`) {
+    for (const field of [`customNameservers`, `intendedNameservers`]) {
+      const value = raw[field];
+      if (Array.isArray(value) && value.length <= 32 && value.every(server => typeof server === `string` && server.length <= 253 && /^[a-z0-9.-]+$/i.test(server))) details[field] = value;
+    }
+    if ([`auto`, `disabled`, `enabled`].some(value => raw.echMode === value)) details.echMode = raw.echMode;
+    if ([`external`, `zeit.world`, `na`].some(value => raw.serviceType === value)) details.serviceType = raw.serviceType;
+  }
+  if (source === `Hostinger Portfolio API`) {
+    if ([`domain`, `free_domain`, `domain_transfer`, `free_domain_transfer`].some(value => raw.registrationType === value)) details.registrationType = raw.registrationType;
+    if ([null, `manual_review`, `sms_code`, `contact_verification`].some(value => raw.verificationType === value)) details.verificationType = raw.verificationType;
+    const checks = metadataObject(raw.contactVerification);
+    const contactVerification: Record<string, JSONValue> = {};
+    for (const field of [`email`, `phone`, `contactName`]) {
+      const value = checks[field];
+      const { status, endsAt } = metadataObject(value);
+      if (value === null) contactVerification[field] = null;
+      else if (status === `pending` || status === `verified` || status === `suspended`) {
+        contactVerification[field] = { status, ...(endsAt === null || metadataDate(endsAt) ? { endsAt } : {}) };
+      }
+    }
+    if (raw.contactVerification === null) details.contactVerification = null;
+    else if (Object.keys(contactVerification).length) details.contactVerification = contactVerification;
+  }
+  if (provider === `Porkbun` && source === `Porkbun Registration API`) {
+    const renewal = readPaidRenewal(raw.lastPaidRenewal);
+    if (renewal) details.lastPaidRenewal = renewal;
+  }
+  return details;
+};
 const getRegistrarImportChanges = (input: DomainInput, validated: DomainInput, original: DomainRecord): Partial<DomainInput> => {
   const changes = Object.fromEntries(registrarImportCustomFields.flatMap(field => {
     const value = validated[field];
@@ -287,16 +371,20 @@ const getRegistrarImportChanges = (input: DomainInput, validated: DomainInput, o
       ? [[field, value]] : [];
   }));
   const meta = { ...original.meta };
+  const importedCost = validated.meta?.csvRenewalCostProvided === true || metadataObject(validated.meta?.registrarSync).renewalPriceKnown === true
+    || (validated.meta?.csvRenewalCostProvided === undefined && validated.renewalPrice > 0
+      && metadataObject(validated.meta?.registrarSync).renewalPriceKnown !== false);
   for (const [field, value] of Object.entries(validated.meta ?? {})) {
     if (registrarSourceMetadata.has(field) || value == null || value === ``) continue;
     const previous = meta[field];
     meta[field] = value && typeof value === `object` && !Array.isArray(value)
       && previous && typeof previous === `object` && !Array.isArray(previous) ? { ...previous, ...value } : value;
   }
-  return { ...changes, meta };
+  if (importedCost) meta.registrarSync = { ...metadataObject(meta.registrarSync), renewalPriceKnown: true };
+  return { ...changes, ...(importedCost ? { renewalPrice: validated.renewalPrice, currency: validated.currency ?? original.currency } : {}), meta };
 };
 
-type RegistrarPatch = Partial<DomainInput> & Pick<DomainInput, `name` | `registrar`> & Pick<RegistrarDomain, `renewalEstimate`>;
+type RegistrarPatch = Partial<DomainInput> & Pick<DomainInput, `name` | `registrar`> & Pick<RegistrarDomain, `renewalEstimate` | `detailsCheckedAt` | `detailsAttemptedAt`>;
 const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): RegistrarPatch => {
   if (!input || typeof input !== `object` || Array.isArray(input)) throw new Error(`Registrar Domain Must Be An Object`);
   if (typeof input.name !== `string` || typeof input.registrar !== `string`) throw new Error(`Registrar Domain Must Include A Name And Registrar`);
@@ -326,10 +414,22 @@ const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): Regist
     metadata.registrarIanaId = identifier;
   }
   if (metadata.externalRegistration === true && metadata.ownershipConfirmed !== true && !hostingerHosted) throw new Error(`Confirm External Domain Ownership Before Importing`);
-  for (const field of [`status`, `expiresAt`, `createdAt`, `providerId`] as const) {
+  const details = registrarDetails(input);
+  if (Object.keys(details).length) metadata.registrarDetails = details;
+  if (metadata.source === `Hostinger Hosting API` || metadata.source === `Hostinger Portfolio API`) {
+    const { hostingEnabled, hostingVhostType, hostingWebsiteType } = input.meta ?? {};
+    const hosting: Record<string, JSONValue> = {};
+    if (typeof hostingEnabled === `boolean`) hosting.enabled = hostingEnabled;
+    const vhostType = [`main`, `addon`, `parked`].find(value => hostingVhostType === value);
+    const websiteType = [`wordpress`, `builder`, `horizons`, `nodejs`, `other`].find(value => hostingWebsiteType === value);
+    if (vhostType) hosting.vhostType = vhostType;
+    if (websiteType) hosting.websiteType = websiteType;
+    if (Object.keys(hosting).length) metadata.hostingDetails = hosting;
+  }
+  for (const field of [`status`, `expiresAt`, `createdAt`, `updatedAt`, `providerId`, `internationalName`] as const) {
     if (input[field] !== undefined && typeof input[field] !== `string`) throw new Error(`${field} Must Be Text`);
   }
-  for (const field of [`locked`, `privacy`, `autoRenew`] as const) {
+  for (const field of [`locked`, `privacy`, `dnssec`, `autoRenew`] as const) {
     if (input[field] !== undefined && typeof input[field] !== `boolean`) throw new Error(`${field} Must Be True Or False`);
   }
   const validated = validateDomainInput({
@@ -341,27 +441,37 @@ const normalizeRegistrarDomain = (input: RegistrarDomain, owner: string): Regist
     status: input.status,
     locked: input.locked,
     privacy: input.privacy,
+    dnssec: input.dnssec,
     registrar: input.registrar,
     createdAt: input.createdAt,
+    updatedAt: input.updatedAt,
+    registrant: input.registrant,
     providerId: input.providerId,
+    nameservers: input.nameservers,
     expiresAt: input.expiresAt ?? ``,
     autoRenew: input.autoRenew ?? false,
+    internationalName: input.internationalName,
   });
   const patch: RegistrarPatch = { name: validated.name, registrar: validated.registrar, meta: validated.meta };
-  for (const field of [`status`, `expiresAt`, `createdAt`, `providerId`] as const) {
+  for (const field of [`status`, `expiresAt`, `createdAt`, `updatedAt`, `providerId`, `internationalName`] as const) {
     const value = validated[field];
     if (value) patch[field] = value;
   }
-  for (const field of [`locked`, `privacy`, `autoRenew`] as const) {
+  for (const field of [`locked`, `privacy`, `dnssec`, `autoRenew`] as const) {
     if (input[field] !== undefined) patch[field] = validated[field];
   }
+  if (validated.nameservers !== undefined) patch.nameservers = validated.nameservers;
+  if (validated.registrant) patch.registrant = validated.registrant;
+  if (metadataDate(input.detailsCheckedAt)) patch.detailsCheckedAt = input.detailsCheckedAt;
+  if (metadataDate(input.detailsAttemptedAt)) patch.detailsAttemptedAt = input.detailsAttemptedAt;
   if (input.renewalEstimate !== undefined) {
     const estimate = input.renewalEstimate;
     if (!estimate || typeof estimate !== `object` || Array.isArray(estimate)
-      || input.registrar !== `GoDaddy` || typeof estimate.amount !== `number`
+      || !getRenewalEstimateSource(input.registrar) || typeof estimate.amount !== `number`
       || !Number.isFinite(estimate.amount) || estimate.amount < 0 || typeof estimate.currency !== `string`
+      || (estimate.years !== undefined && (!Number.isInteger(estimate.years) || estimate.years < 1 || estimate.years > 100))
       || !/^[A-Z]{3}$/.test(estimate.currency)) throw new Error(`Registrar Returned An Invalid Renewal Estimate`);
-    patch.renewalEstimate = { amount: estimate.amount, currency: estimate.currency };
+    patch.renewalEstimate = { amount: estimate.amount, currency: estimate.currency, ...(estimate.years !== undefined ? { years: estimate.years } : {}) };
   }
   return patch;
 };
@@ -387,7 +497,10 @@ export const API_ROUTES = [
   `/api/website-insights`,
   `/api/domain-analytics`,
   `/api/domain-appraisal`,
+  `/api/domain-dns`,
+  `/api/domain-parking`,
   `/api/auction-inventory`,
+  `/api/auction-availability`,
   `/api/marketplace`,
   `/api/marketplace/seller`,
   `/api/marketplace/checkout`,
@@ -447,6 +560,42 @@ export const api = {
   getSharedDomainSummaries: (userId: string) => serialize(() => getPublicDomainSummaries([userId])),
   getLocalPublicProfilePortfolio: (userId: string) => serialize(() => getLocalPublicProfilePortfolio(userId)),
   getLocalPublicProfileCardMetadata: (userIds: string[]) => serialize(() => getLocalPublicProfileCardMetadata(userIds)),
+  saveDomainAppraisal: (id: string, name: string, value: unknown, expectedUserId: string): Promise<void> => serializePortfolioMutation(async () => {
+    if (!userScope || userScope !== expectedUserId) throw new Error(`Sign In To Save Domain Appraisals`);
+    await requireScopeSession(expectedUserId);
+    const appraisal = readDomainAppraisal(value);
+    const negative = value === `not-found` || value === `unsupported-tld` ? value : undefined;
+    if (!appraisal && !negative) throw new Error(`Domain Appraisal Returned An Invalid Result`);
+    const current = await readSnapshot();
+    const index = current.domains.findIndex(domain => domain.id === id && domain.name === name && domain.uid === expectedUserId && !domain.isSample);
+    if (index < 0) throw new Error(`Domain Changed — Check Its Appraisal Again`);
+    const original = current.domains[index];
+    const previous = readDomainAppraisal(original.meta?.goValue);
+    if (previous && (!appraisal || Date.parse(previous.checkedAt) >= Date.parse(appraisal.checkedAt))) return;
+    const domains = copyDomains(current.domains);
+    const meta = { ...original.meta };
+    if (appraisal) {
+      meta.goValue = JSON.parse(JSON.stringify(appraisal));
+      delete meta.goValueUnavailable;
+    } else if (negative) meta.goValueUnavailable = { status: negative, checkedAt: new Date().toISOString() };
+    domains[index] = new Domain({ ...original, meta });
+    await saveSnapshot({ ...current, domains });
+  }),
+  saveDomainParking: (id: string, name: string, value: unknown, expectedUserId: string): Promise<void> => serializePortfolioMutation(async () => {
+    if (!userScope || userScope !== expectedUserId) throw new Error(`Sign In To Save Domain Parking Metrics`);
+    await requireScopeSession(expectedUserId);
+    const parking = readDomainParkingMetrics(value, name);
+    if (!parking) throw new Error(`Domain Parking Returned An Invalid Result`);
+    const current = await readSnapshot();
+    const index = current.domains.findIndex(domain => domain.id === id && domain.name === name && domain.uid === expectedUserId && !domain.isSample);
+    if (index < 0) throw new Error(`Domain Changed — Check Its Parking Metrics Again`);
+    const original = current.domains[index];
+    const previous = readDomainParkingMetrics(original.meta?.goDaddyParking, name);
+    if (previous && ((previous.report && !parking.report) || Date.parse(previous.checkedAt) >= Date.parse(parking.checkedAt))) return;
+    const domains = copyDomains(current.domains);
+    domains[index] = new Domain({ ...original, meta: { ...original.meta, goDaddyParking: JSON.parse(JSON.stringify(parking)) } });
+    await saveSnapshot({ ...current, domains });
+  }),
   saveWebsiteInsights: (id: string, name: string, insights: WebsiteInsights, expectedUserId: string): Promise<void> => serializePortfolioMutation(async () => {
     await requireStarterAccess(expectedUserId);
     if (!userScope || expectedUserId !== userScope) throw new Error(`Sign In To Save Website Info`);
@@ -455,11 +604,35 @@ export const api = {
     const current = await readSnapshot();
     const index = current.domains.findIndex(domain => domain.id === id && domain.name === name);
     if (index < 0) throw new Error(`Domain Changed — Refresh Website Info Again`);
-    if (JSON.stringify(current.domains[index].meta?.websiteInsights) === JSON.stringify(normalized)) return;
+    const original = current.domains[index];
+    const previous = original.meta?.websiteInsights;
+    const merged = JSON.stringify(mergeWebsiteInsights(normalized, previous));
+    if (JSON.stringify(previous) === merged) return;
     const domains = copyDomains(current.domains);
-    const original = domains[index];
-    domains[index] = new Domain({ ...original, meta: { ...original.meta, websiteInsights: JSON.parse(JSON.stringify(normalized)) } });
+    domains[index] = new Domain({ ...original, meta: { ...original.meta, websiteInsights: JSON.parse(merged) } });
     await saveSnapshot({ ...current, domains });
+  }),
+  saveWebsiteRanks: (matches: readonly { id: string; name: string; insights: WebsiteInsights }[], expectedUserId: string): Promise<boolean> => serializePortfolioMutation(async () => {
+    if (!userScope || expectedUserId !== userScope) throw new Error(`Sign In To Save Website Ranks`);
+    if (matches.length > MAX_INSIGHT_DOMAINS) throw new Error(`Save Up To ${MAX_INSIGHT_DOMAINS} Website Ranks At A Time`);
+    await requireStarterAccess(expectedUserId);
+    const current = await readSnapshot();
+    const byId = new Map(matches.map(match => [match.id, match]));
+    let changed = false;
+    const domains = current.domains.map(domain => {
+      const match = byId.get(domain.id);
+      if (!match || domain.name !== match.name || domain.uid !== expectedUserId || domain.isSample || getDomainSource(domain) !== `registrar`
+        || (domain.meta?.externalRegistration === true && domain.meta?.ownershipConfirmed !== true)) return domain;
+      const incoming = normalizeWebsiteInsights(match.insights, domain.name);
+      if (incoming.trancoListed === undefined) return domain;
+      const saved = domain.meta?.websiteInsights;
+      const merged = JSON.stringify(mergeWebsiteInsights(incoming, saved));
+      if (JSON.stringify(saved) === merged) return domain;
+      changed = true;
+      return new Domain({ ...domain, meta: { ...domain.meta, websiteInsights: JSON.parse(merged) } });
+    });
+    if (changed) await saveSnapshot({ ...current, domains });
+    return changed;
   }),
   prepareExport: () => serializePortfolioMutation(async () => {
     const current = await readSnapshot();
@@ -492,6 +665,8 @@ export const api = {
       mvp: input?.mvp ?? original.mvp,
       tags: input && input.tags !== undefined ? input.tags : original.tags,
       future: input?.future ?? original.future,
+      ...(input?.renewalPrice !== undefined && metadataObject(input.meta?.registrarSync).renewalPriceKnown === true
+        ? { renewalPrice: input.renewalPrice } : {}),
       ...(input && `startingBid` in input ? { startingBid: input.startingBid } : {}),
       ...(input && `estimatedRevenue` in input ? { estimatedRevenue: input.estimatedRevenue } : {}),
       childLinks: input?.childLinks ?? original.childLinks,
@@ -513,6 +688,12 @@ export const api = {
     } : input;
     const validated = validateDomainInput({ ...original, ...changes, meta: { ...original.meta, ...changes.meta } });
     if (!userScope || validated.name !== original.name) delete validated.meta?.showOnPublicProfile;
+    if (validated.name !== original.name) {
+      delete validated.meta?.goValue;
+      delete validated.meta?.goValueUnavailable;
+      delete validated.meta?.goDaddyParking;
+      delete validated.meta?.vercelDomainConfiguration;
+    }
     assertUnique(validated.name, current.domains, id);
     const previous = original.meta?.registrarSync;
     const incoming = validated.meta?.registrarSync;
@@ -522,7 +703,7 @@ export const api = {
       ...previousSync,
       ...incomingSync,
       ...(validated.autoRenew !== original.autoRenew ? { autoRenewKnown: true } : {}),
-      ...(validated.renewalPrice !== original.renewalPrice ? { renewalPriceKnown: true } : {}),
+      ...(validated.renewalPrice !== original.renewalPrice || metadataObject(input?.meta?.registrarSync).renewalPriceKnown === true ? { renewalPriceKnown: true } : {}),
     } };
     const domain = new Domain({
       ...original,
@@ -615,7 +796,7 @@ export const api = {
     await saveSnapshot({ version: 1, domains, nextNumber });
     return inputs.length;
   }),
-  syncRegistrarDomains: (inputs: RegistrarDomain[], expectedUserId: string, owner: string): Promise<number> => serializePortfolioMutation(async () => {
+  syncRegistrarDomains: (inputs: RegistrarDomain[], expectedUserId: string, owner: string, vercel?: VercelConfigurationSnapshot): Promise<number> => serializePortfolioMutation(async () => {
     if (typeof expectedUserId !== `string` || !userScope || expectedUserId !== userScope) throw new Error(`Sign In To Sync Registrar Domains`);
     await requireScopeSession(expectedUserId);
     if (!Array.isArray(inputs) || inputs.length > 10000) throw new Error(`Sync Up To 10000 Registrar Domains At A Time`);
@@ -625,7 +806,7 @@ export const api = {
       try { return normalizeRegistrarDomain(input, domainOwner); }
       catch (error) { throw new Error(`Domain ${index + 1}: ${error instanceof Error ? error.message : `Invalid Registrar Domain`}`); }
     });
-    if (!patches.length) return 0;
+    if (!patches.length && !vercel) return 0;
     const current = await readSnapshot();
     const domains = copyDomains(current.domains);
     const indexes = new Map(domains.map((domain, index) => [domain.name, index]));
@@ -635,33 +816,72 @@ export const api = {
     for (const patch of patches) {
       const index = indexes.get(patch.name);
       const original = index !== undefined ? domains[index] : undefined;
-      const previous = original?.meta?.registrarSync;
-      const previousSync = previous && typeof previous === `object` && !Array.isArray(previous) ? previous : {};
+      const { meta, registrant, renewalEstimate, detailsCheckedAt, detailsAttemptedAt, ...domainFields } = patch;
+      const { hostingDetails, registrarDetails, ...sourceMeta } = meta ?? {};
+      const hosting: Record<string, JSONValue> = hostingDetails ? { hostingProvider: `Hostinger`, hostingDetails: { ...metadataObject(original?.meta?.hostingDetails), ...metadataObject(hostingDetails), checkedAt: syncedAt } } : {};
+      const external = sourceMeta.externalRegistration === true;
+      if (original && external && original.registrar && original.meta?.externalRegistration !== true) {
+        if (hostingDetails && index !== undefined) domains[index] = new Domain({ ...original, meta: { ...original.meta, ...hosting } });
+        syncedNames.add(patch.name);
+        continue;
+      }
       const registrar = patch.registrar || original?.registrar || ``;
-      const { meta, renewalEstimate, ...domainFields } = patch;
+      const registrarChanged = !!original?.registrar && original.registrar !== registrar;
+      const connectionChanged = !!original?.meta?.registrarConnectionId && !!sourceMeta.registrarConnectionId
+        && original.meta.registrarConnectionId !== sourceMeta.registrarConnectionId;
+      const providerIdChanged = !!original?.providerId && !!domainFields.providerId && original.providerId !== domainFields.providerId;
+      const identityChanged = registrarChanged || connectionChanged || providerIdChanged;
+      const syncedDetails = { ...(identityChanged ? {} : metadataObject(original?.meta?.registrarDetails)), ...metadataObject(registrarDetails) };
+      const previousPaidRenewal = !identityChanged ? readPaidRenewal(metadataObject(original?.meta?.registrarDetails).lastPaidRenewal) : undefined;
+      const paidRenewal = readPaidRenewal(syncedDetails.lastPaidRenewal);
+      if (previousPaidRenewal && paidRenewal && previousPaidRenewal.paidAt > paidRenewal.paidAt) syncedDetails.lastPaidRenewal = previousPaidRenewal;
+      const incomingVerification = metadataObject(registrarDetails).contactVerification;
+      if (!identityChanged && incomingVerification && typeof incomingVerification === `object` && !Array.isArray(incomingVerification)) {
+        const verifications = { ...metadataObject(metadataObject(original?.meta?.registrarDetails).contactVerification) };
+        for (const [channel, check] of Object.entries(incomingVerification)) {
+          const prior = metadataObject(verifications[channel]);
+          const next = metadataObject(check);
+          verifications[channel] = check && next.status === prior.status ? { ...prior, ...next } : check;
+        }
+        syncedDetails.contactVerification = verifications;
+      }
+      const previousSync = identityChanged ? {} : { ...metadataObject(original?.meta?.registrarSync) };
+      for (const [key, time] of [[`detailsCheckedAt`, detailsCheckedAt], [`detailsAttemptedAt`, detailsAttemptedAt]] as const) {
+        const previous = previousSync[key];
+        if (time && (!metadataDate(previous) || Date.parse(time) >= Date.parse(previous))) previousSync[key] = time;
+      }
+      if (metadataObject(registrarDetails).renewable === false
+        || patch.registrar === `Namecheap` && (syncedDetails.premium === true || patch.status?.toLowerCase() === `expired`)) delete previousSync.renewalEstimate;
+      const quoteSource = getRenewalEstimateSource(patch.registrar);
+      const previousMeta = { ...original?.meta };
+      if (!external && previousMeta.externalRegistration === true) {
+        for (const field of [`externalRegistration`, `ownershipConfirmed`, `automaticallyIncluded`, `registrarName`, `registrarSource`, `registrarCheckedAt`, `registrarIanaId`]) delete previousMeta[field];
+      }
       const domain = new Domain({
         ...(original ?? { owner: domainOwner, notes: ``, renewalPrice: 0, autoRenew: false, expiresAt: `` }),
         ...domainFields,
         registrar,
+        registrant: registrant ? { ...original?.registrant, ...registrant } : original?.registrant,
         isSample: false,
         uid: expectedUserId,
         updated: syncedAt,
         firstImportedAt: original?.firstImportedAt ?? syncedAt,
         number: original?.number ?? nextNumber,
-        meta: { ...original?.meta, ...meta, domainSource: `registrar`, registrarSync: {
+        meta: { ...previousMeta, ...sourceMeta, ...hosting, domainSource: `registrar`, registrarDetails: syncedDetails, registrarSync: {
           ...previousSync,
           source: patch.registrar,
           syncedAt,
-          ...(renewalEstimate ? { renewalEstimate: { ...renewalEstimate, checkedAt: syncedAt, source: `GoDaddy v2` } } : {}),
-          ...(patch.autoRenew !== undefined ? { autoRenewKnown: true } : original ? {} : { autoRenewKnown: false }),
-          ...(!original ? { renewalPriceKnown: false } : {}),
+          ...(renewalEstimate && quoteSource ? { renewalEstimate: { ...renewalEstimate, checkedAt: syncedAt, source: quoteSource } } : {}),
+          ...(patch.autoRenew !== undefined ? { autoRenewKnown: true } : original && !identityChanged ? {} : { autoRenewKnown: false }),
+          ...(!original || metadataObject(original.meta?.registrarSync).renewalPriceKnown === false ? { renewalPriceKnown: false } : {}),
         } },
       });
       if (index !== undefined) domains[index] = domain;
       else { indexes.set(patch.name, domains.length); domains.push(domain); nextNumber += 1; }
       syncedNames.add(patch.name);
     }
-    await saveSnapshot({ version: 1, domains, nextNumber });
+    const configurationsChanged = vercel ? mergeVercelConfigurations(domains, vercel, expectedUserId, syncedAt) : false;
+    if (patches.length || configurationsChanged) await saveSnapshot({ version: 1, domains, nextNumber });
     return syncedNames.size;
   }),
   resetSampleData: () => serializePortfolioMutation(async () => {

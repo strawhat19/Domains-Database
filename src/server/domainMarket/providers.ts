@@ -20,7 +20,7 @@ const QUOTA_TTL = 300_000;
 const recordOf = (value: unknown): Record<string, unknown> | undefined => value && typeof value === `object` && !Array.isArray(value)
   ? value as Record<string, unknown> : undefined;
 
-const baseResult = (input: DomainMarketInput) => input.provider === `ahrefs`
+const baseResult = (input: DomainMarketInput): Omit<DomainRatingResult, `status`> | Omit<SearchInterestResult, `status`> => input.provider === `ahrefs`
   ? { domain: input.domain, source: `Ahrefs` as const, checkedAt: new Date().toISOString() }
   : { domain: input.domain, keyword: input.keyword, country: input.country, range: MARKET_RANGE, source: `Google Trends via SerpApi` as const, checkedAt: new Date().toISOString(), points: [] };
 

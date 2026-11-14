@@ -5,6 +5,7 @@ import { getCsvFile } from '../../shared/csvFiles.web';
 import { useDomains } from '../../shared/domainContext/useDomains';
 import { useColumns } from '../../shared/columnContext/useColumns';
 import { usePortfolioSummaryFilters } from './usePortfolioSummaryFilters';
+import { usePortfolioAfternicEstimates } from './usePortfolioAfternicEstimates';
 import { getDomainSource, getDomainStatus, getRegistrarCounts } from '../../shared/domainUtils';
 import { parseDomainCsv, exportDomainCsv } from '../../shared/csv';
 import { sortPortfolioDomains } from '../../shared/portfolioPreferences/groups';
@@ -26,8 +27,9 @@ const downloadCsv = (text: string, filename: string) => {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-export const usePortfolio = () => {
+export const usePortfolio = (compact = false) => {
   const data = useDomains();
+  const domains = usePortfolioAfternicEstimates(data.domains, compact);
   const { loading: columnsLoading } = useColumns();
   const { customGroups, collections, loading: preferencesLoading } = usePortfolioPreferences();
   const loading = data.loading || columnsLoading || preferencesLoading;
@@ -50,7 +52,7 @@ export const usePortfolio = () => {
     setEditorOpen(false);
     setEditingDomain(null);
   }, [loading]);
-  const sortedDomains = useMemo(() => sortPortfolioDomains(data.domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [data.domains, sortField, sortDirection]);
+  const sortedDomains = useMemo(() => sortPortfolioDomains(domains, sortField ?? `name`, sortField ? sortDirection : `asc`), [domains, sortField, sortDirection]);
   const summaryFilters = usePortfolioSummaryFilters(sortedDomains, loading, { customGroups, collections });
   const registrarDomains = summaryFilters.domains;
   const filteredDomains = useMemo(() => {
@@ -90,7 +92,7 @@ export const usePortfolio = () => {
   };
   const openEditor = (domain?: DomainRecord) => {
     if (loading) return;
-    setEditingDomain(domain ?? null);
+    setEditingDomain(domain ? data.domains.find(record => record.id === domain.id) ?? domain : null);
     setEditorOpen(true);
   };
   const openSetup = () => {
@@ -185,7 +187,7 @@ export const usePortfolio = () => {
   };
   return {
     ...summaryFilters,
-    ...data, query, loading, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
+    ...data, query, domains, loading, summary, pendingId, sortField, importing, openEditor, changeSort, setQuery, localError,
     clearError, editorOpen, sortDirection, exportDomains, exporting, importFiles, handleImport, editingDomain,
     importInputRef, requestImport, downloadTemplate, filteredDomains, sortedDomains, registrarDomains,
     setupOpen, openSetup, closeSetup, setEditorOpen, changeDescription, toggleAutoRenew, toggleManualOrder, changeProjectStatus,

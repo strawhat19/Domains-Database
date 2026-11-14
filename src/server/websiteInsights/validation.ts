@@ -1,7 +1,7 @@
 import { isIP } from 'node:net';
 import { lookup } from 'node:dns/promises';
 import { WebsiteInsightsError } from './request';
-import { normalizeDomainName } from '../../shared/domainUtils';
+import { getWebsiteInsightDomain } from '../../shared/websiteInsights/values';
 
 const isPublicAddress = (address: string) => {
   if (isIP(address) === 4) {
@@ -23,13 +23,8 @@ const isPublicAddress = (address: string) => {
 };
 
 export const requirePublicDomain = async (value: unknown, signal: AbortSignal) => {
-  if (typeof value !== `string` || value.length > 253) throw new WebsiteInsightsError(400, `Enter A Public Domain Name`);
-  let domain: string;
-  try { domain = normalizeDomainName(value); }
-  catch { throw new WebsiteInsightsError(400, `Enter A Public Domain Name`); }
-  const reserved = [`local`, `localhost`, `internal`, `home`, `lan`, `test`, `invalid`, `example`, `onion`, `arpa`];
-  if (value.trim().toLowerCase() !== domain || isIP(domain) || reserved.includes(domain.split(`.`).at(-1) ?? ``)
-    || [`example.com`, `example.org`, `example.net`].some(name => domain === name || domain.endsWith(`.${name}`))) throw new WebsiteInsightsError(400, `Enter A Public Domain Name`);
+  const domain = getWebsiteInsightDomain(value);
+  if (!domain) throw new WebsiteInsightsError(400, `Enter A Public Domain Name`);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let abort: () => void = () => undefined;
   try {

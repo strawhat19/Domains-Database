@@ -1,6 +1,6 @@
 import { searchVercel } from './vercel';
-import { searchRegistrar } from './providers';
 import { RegistrarRelayError } from '../registrars/errors';
+import { searchRegistrar, searchGoDaddyBatch } from './providers';
 import { normalizeDomainName } from '../../shared/domainUtils';
 import { getRequestPlanAccess, requireRegistrarAccess } from '../featureAccess/auth';
 import { readSearchCredentials, getEnvironmentSearchProviders } from './environment';
@@ -26,6 +26,21 @@ export const handleDomainSearch = async (request: Request) => {
   try {
     checkRequest(request);
     const record = await readRequestRecord(request);
+    if (Array.isArray(record.domains)) {
+      if (record.provider !== `godaddy` || Object.keys(record).some(key => ![`domains`, `provider`, `values`].includes(key))
+        || !record.domains.length || record.domains.length > 25 || record.domains.some(value => typeof value !== `string` || value.length > 500)) {
+        throw new RegistrarRelayError(400, `Enter Between 1 And 25 GoDaddy Domains`);
+      }
+      let domains: string[];
+      try { domains = [...new Set(record.domains.map(value => normalizeDomainName(value)))]; }
+      catch { throw new RegistrarRelayError(400, `Enter Valid Domain Names Without Paths Or Logins`); }
+      const access = await requireRegistrarAccess(request, `godaddy`, !Object.prototype.hasOwnProperty.call(record, `values`));
+      const credentials = readSearchCredentials(record);
+      if (credentials.provider !== `godaddy`) throw new RegistrarRelayError(400, `Choose GoDaddy For Batch Search`);
+      const results = await searchGoDaddyBatch(credentials, domains, controller.signal);
+      if (controller.signal.aborted) throw new RegistrarRelayError(504, `Domain Search Timed Out Or Cancelled`);
+      return Response.json({ results: access.paid ? results : results.map(({ registration, renewal, ...availability }) => availability) }, { headers: responseHeaders });
+    }
     if (Object.keys(record).some(key => ![`domain`, `provider`, `values`].includes(key))) throw new RegistrarRelayError(400, `Enter Valid Search Values`);
     if (typeof record.domain !== `string` || record.domain.length > 500) throw new RegistrarRelayError(400, `Enter A Valid Domain Name`);
     let domain: string;

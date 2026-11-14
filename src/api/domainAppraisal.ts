@@ -3,21 +3,24 @@ import { absoluteSiteUrl } from '../shared/seo';
 import { useLocalStorage } from '../shared/config';
 import { firebaseEnabled } from '../shared/firebase/config';
 import { getFirebaseAuth } from '../shared/firebase/client';
-import { appraisalFailureStatuses, type DomainAppraisal, type DomainAppraisalResult } from '../shared/domainAppraisal/types';
+import { readDomainAppraisal } from '../shared/domainAppraisal/values';
+import { appraisalFailureStatuses, type DomainAppraisalResult } from '../shared/domainAppraisal/types';
 
 export type { DomainAppraisal, DomainAppraisalResult } from '../shared/domainAppraisal/types';
 
 const unavailable = (message = `Domain Appraisal Could Not Be Loaded — Try Again`): DomainAppraisalResult => ({ status: `unavailable`, message });
 const isDate = (value: unknown) => typeof value === `string` && Number.isFinite(Date.parse(value));
-const isAmount = (value: unknown) => typeof value === `number` && Number.isFinite(value) && value >= 0;
 
 const readResult = (value: unknown, ok: boolean): DomainAppraisalResult => {
   if (!value || typeof value !== `object` || !(`status` in value)) return unavailable();
   if (ok && value.status === `available` && `appraisal` in value) {
-    const appraisal = value.appraisal as Partial<DomainAppraisal> | null;
-    if (appraisal?.source === `GoDaddy GoValue` && appraisal.currency === `USD` && isDate(appraisal.checkedAt)
-      && isAmount(appraisal.amount) && [appraisal.minPrice, appraisal.maxPrice, appraisal.listPrice, appraisal.wholesalePrice].every(price => price === undefined || isAmount(price))) {
-      return { status: `available`, appraisal: appraisal as DomainAppraisal };
+    const appraisal = readDomainAppraisal(value.appraisal);
+    if (appraisal && value.appraisal && typeof value.appraisal === `object`) {
+      for (const key of [`dailyUsage`, `maxDailyUsage`] as const) {
+        const count = (value.appraisal as Record<string, unknown>)[key];
+        if (typeof count === `number` && Number.isSafeInteger(count) && count >= 0) appraisal[key] = count;
+      }
+      return { status: `available`, appraisal };
     }
   }
   const status = appraisalFailureStatuses.find(option => option === value.status);

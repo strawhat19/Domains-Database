@@ -3,6 +3,10 @@ import type { ThemePalette } from '../../shared/themeContext/theme';
 
 export const createStyles = (palette: ThemePalette, wide: boolean) => StyleSheet.create({
   list: { gap: 8 },
+  activityDaily: { maxHeight: 260 },
+  activeChoice: { borderColor: palette.accent },
+  activityDomainInput: { minHeight: 44, minWidth: 170, paddingHorizontal: 10, borderWidth: 1, borderRadius: 6, borderColor: palette.line, backgroundColor: palette.input, color: palette.ink },
+  activity: { gap: 8, paddingVertical: 10, borderTopWidth: 1, borderColor: palette.line },
   dimmed: { opacity: .6 },
   copy: { gap: 3, minWidth: 0, flexShrink: 1 },
   primaryText: { color: palette.contrast },

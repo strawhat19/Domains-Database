@@ -37,7 +37,7 @@ import { getOrderedPortfolioColumns, getPortfolioColumnCounts, getPortfolioColum
 import { X, Eye, Copy, Plus, Star, Check, Gauge, Search, Link2, Filter, EyeOff, Settings, RefreshCw, ArrowRight, TriangleAlert, FlaskConical, ChevronsDownUp, ChevronsUpDown } from 'lucide-react';
 
 const DomainPortfolio = ({ compact = false }: { compact?: boolean }) => {
-  const portfolio = usePortfolio();
+  const portfolio = usePortfolio(compact);
   const toolbar = usePortfolioToolbar();
   const portfolioRef = useRef<HTMLElement>(null);
   const mobileBoardRef = useRef<HTMLDivElement>(null);

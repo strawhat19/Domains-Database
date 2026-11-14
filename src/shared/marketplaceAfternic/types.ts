@@ -1,4 +1,26 @@
 import type { SellerListing } from '../marketplace/types';
+import type { AfternicAccountStats, AfternicActivityRange, AfternicDomainStats, AfternicSalesPage } from './activity';
+
+export interface AfternicSearchCounts {
+  '30d': number | null;
+  '90d': number | null;
+  '365d': number | null;
+}
+
+export interface AfternicListingInsights {
+  listedAt: string | null;
+  updatedAt: string | null;
+  registrar: string | null;
+  featured: boolean | null;
+  intakeViews: number | null;
+  intakeLeads: number | null;
+  landingPage: string | null;
+  leasingEnabled: boolean | null;
+  maxLeaseMonths: number | null;
+  leaseDownPaymentCents: number | null;
+  searchTotals: AfternicSearchCounts | null;
+  uniqueSearchers: AfternicSearchCounts | null;
+}
 
 export interface AfternicListing {
   domain: string;
@@ -10,6 +32,8 @@ export interface AfternicListing {
   fastTransferStatus: string | null;
   minimumOfferCents: number | null;
   estimatedValueCents: number | null;
+  retainedInsightsAt?: string;
+  insights?: AfternicListingInsights;
 }
 
 export interface AfternicPortfolioPage {
@@ -54,6 +78,9 @@ export type AfternicCredentialField = `key` | `secret`;
 
 export interface AfternicActions {
   status: { input: Record<never, never>; output: AfternicConnectionStatus };
+  stats: { input: { days: AfternicActivityRange }; output: AfternicAccountStats };
+  domainStats: { input: { days: AfternicActivityRange; domain: string }; output: AfternicDomainStats };
+  sales: { input: { days: AfternicActivityRange; offset: number; through: string | null; domain?: string }; output: AfternicSalesPage };
   configure: { input: { key: string; secret: string }; output: AfternicConnectionStatus };
   reveal: { input: { field: AfternicCredentialField }; output: { value: string } };
   check: { input: { listingId: string }; output: AfternicActionResult };

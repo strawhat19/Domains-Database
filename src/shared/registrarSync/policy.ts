@@ -71,6 +71,8 @@ const isDomain = (value: unknown): value is RegistrarDomain => {
 };
 const isStatus = (value: unknown): value is ConnectionSyncStatus => {
   if (!isRecord(value) || typeof value.message !== `string` || !isDateString(value.checkedAt)) return false;
+  if (value.warnings !== undefined && (!Array.isArray(value.warnings) || value.warnings.length > 60
+    || value.warnings.some(message => typeof message !== `string` || message.length > 500))) return false;
   if (typeof value.count !== `number` || !Number.isSafeInteger(value.count) || value.count < 0) return false;
   if (![`idle`, `checking`, `connected`, `error`].includes(value.state as string)) return false;
   return value.discoveredDomains === undefined || (Array.isArray(value.discoveredDomains)

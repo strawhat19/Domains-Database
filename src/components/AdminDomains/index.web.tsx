@@ -6,6 +6,8 @@ import { AdminStats, AdminLoading } from '../AdminWidgets';
 import type { AdminSnapshot } from '../../shared/admin/types';
 import { tableElementProps } from '../AdminUsers/tableElements';
 import { getDomainStatus, formatDate } from '../../shared/domainUtils';
+import { readDomainParkingMetrics } from '../../shared/domainParking/values';
+import { getParkingMetricsLabels } from '../../shared/domainParking/presentation';
 import { useAdminDomains, domainStatusOptions, formatAnnualPrice } from './useAdminDomains';
 
 const columns = [`No.`, `Domain`, `Owner`, `Registrar`, `Expires`, `Annual Price`, `Status`, `Auto Renew`];
@@ -60,9 +62,16 @@ const AdminDomains = ({ snapshot, loading }: { snapshot: AdminSnapshot | null; l
           {loading ? <tr {...tableElementProps(`admin-domain-loading-row`)}><td {...tableElementProps(`admin-records-state-cell`, `domains-loading`)} colSpan={columns.length}><AdminLoading id={`domains`} label={`Loading Domain Inventory`} /></td></tr> : state.domains.length ? state.domains.map(domain => {
             const status = getDomainStatus(domain);
             const account = state.accountNames.get(domain.uid);
+            const parking = domain.uid === state.ownAccountId && !domain.isSample ? readDomainParkingMetrics(domain.meta?.goDaddyParking, domain.name) : undefined;
             return <tr key={domain.id} {...tableElementProps(`admin-domain-row`, domain.id)}>
               <td {...tableElementProps(`admin-record-number`, domain.id)}><span {...tableElementProps(`admin-record-number-badge`, domain.id)}>{domain.number}</span></td>
-              <td {...tableElementProps(`admin-domain-name`, domain.id)}>{domain.name}</td>
+              <td {...tableElementProps(`admin-domain-name`, domain.id)}>
+                {domain.name}
+                {parking && <details {...tableElementProps(`admin-domain-parking`, domain.id)}>
+                  <summary {...tableElementProps(`admin-domain-parking-label`, domain.id)}>{`Parking Metrics`}</summary>
+                  {getParkingMetricsLabels(parking).map(detail => <div key={detail.id} {...tableElementProps(`admin-domain-parking-${detail.id}`, domain.id)}>{detail.label}</div>)}
+                </details>}
+              </td>
               <td {...tableElementProps(`admin-domain-owner`, domain.id)}>{domain.owner || account || domain.uid || `—`}{account && account !== domain.owner ? <span {...tableElementProps(`admin-domain-account`, domain.id)}>{`Account: ${account}`}</span> : null}</td>
               <td {...tableElementProps(`admin-domain-registrar`, domain.id)}>{domain.registrar || `Unknown Registrar`}</td>
               <td {...tableElementProps(`admin-domain-expiry`, domain.id)}>{domain.expiresAt ? <time {...tableElementProps(`admin-domain-expiry-date`, domain.id)} dateTime={domain.expiresAt}>{formatDate(domain.expiresAt)}</time> : `—`}</td>

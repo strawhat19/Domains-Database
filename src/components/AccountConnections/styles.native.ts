@@ -8,6 +8,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   rowStatus: { gap: 6, flexDirection: `row`, alignItems: `center` },
   statusText: { flex: 1, color: palette.muted, fontSize: 11, lineHeight: 18, fontFamily: `DMSans_500Medium` },
+  warningText: { color: palette.warning, fontSize: 11, lineHeight: 18, fontFamily: `DMSans_500Medium` },
   layout: { gap: 16 },
   sidebar: { gap: 16 },
   accounts: { gap: 12 },

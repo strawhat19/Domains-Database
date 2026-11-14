@@ -58,18 +58,27 @@ export const getDomainDiscovery = async (
   options?: { week?: number; refresh?: boolean; previous?: DomainDiscoveryResults | null },
 ): Promise<DomainDiscoveryResults> => {
   const candidates = new Map(getDiscoveryCandidates(options?.week ?? getDiscoveryWeek()).map(candidate => [candidate.domain, candidate] as const));
-  const previous = new Map(options?.previous?.results.map(result => [result.domain, result]) ?? []);
+  const previousResult = options?.previous;
+  const previous = new Map(previousResult?.results.map(result => [result.domain, result]) ?? []);
+  const withPrevious = (result: DomainSearchResults) => {
+    if (!previous.size || !previousResult || previousResult.connectionsUpdated !== result.connectionsUpdated) return result;
+    let usedPrevious = false;
+    const results = result.results.map(domain => ({ ...domain, connections: domain.connections.map(connection => {
+      if (!connection.pending && !connection.error && typeof connection.available === `boolean`) return connection;
+      const saved = previous.get(domain.domain)?.connections.find(option => option.provider === connection.provider);
+      if (!saved) return connection;
+      usedPrevious = true;
+      return saved;
+    }) }));
+    return { ...result, results, searchedAt: usedPrevious ? previousResult.searchedAt : result.searchedAt };
+  };
   const result = await searchConnectedDomains([...candidates.keys()], signal, expectedUserId, undefined, (progress, counts) => {
-    if (signal.aborted) return;
-    const sameConnections = options?.previous?.connectionsUpdated === progress.connectionsUpdated;
-    const merged = progress.results.map(domain => ({ ...domain, connections: domain.connections.map(connection => connection.pending
-      && sameConnections ? previous.get(domain.domain)?.connections.find(saved => saved.provider === connection.provider) ?? connection : connection) }));
-    onProgress?.(availableResults({ ...progress, results: merged, searchedAt: sameConnections && previous.size ? options?.previous?.searchedAt ?? progress.searchedAt : progress.searchedAt }, candidates), counts);
+    if (!signal.aborted) onProgress?.(availableResults(withPrevious(progress), candidates), counts);
   }, { discoveryCache: true, refresh: options?.refresh });
   const connections = result.results.flatMap(domain => domain.connections);
   if (connections.length && connections.every(connection => !!connection.error)) {
     throw new Error(connections[0].error || `Could Not Check Domain Availability`);
   }
   const incomplete = connections.some(connection => typeof connection.available !== `boolean` || Boolean(connection.error));
-  return { ...availableResults(result, candidates), incomplete };
+  return { ...availableResults(withPrevious(result), candidates), incomplete };
 };

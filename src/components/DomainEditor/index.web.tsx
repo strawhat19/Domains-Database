@@ -416,38 +416,37 @@ const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEdito
                         </div>
                       </>
                     )}
-                    {!isSynced && (
-                      <>
-                        <div id={`domain-price-field`} className={`domain-editor-field`}>
-                          <label id={`domain-price-label`} className={`domain-editor-label`} htmlFor={`domain-price-input`}>
-                            {`Annual renewal · USD`}
-                          </label>
-                          <SettingsField
-                            disabled={saving}
-                            enabled={isEditing}
-                            id={`domain-price-setting`}
-                            invalid={invalidField === `renewalPrice`}
-                            label={`Annual Renewal · USD`}
-                            value={`$${input.renewalPrice.toFixed(2)}`}
-                          >
-                            <div id={`domain-price-input-wrap`} className={`domain-editor-price-wrap`}>
-                              <span id={`domain-price-prefix`} className={`domain-editor-price-prefix`} aria-hidden={`true`}>
-                                {`$`}
-                              </span>
-                              <input
-                                min={0}
-                                required
-                                step={0.01}
-                                type={`number`}
-                                inputMode={`decimal`}
-                                value={input.renewalPrice}
-                                id={`domain-price-input`}
-                                className={`domain-editor-input domain-editor-price-input`}
-                                onChange={event => setField(`renewalPrice`, Number(event.target.value))}
-                              />
-                            </div>
-                          </SettingsField>
+                    <div id={`domain-price-field`} className={`domain-editor-field`}>
+                      <label id={`domain-price-label`} className={`domain-editor-label`} htmlFor={`domain-price-input`}>
+                        {`Saved Annual Cost · ${input.currency || `USD`}`}
+                      </label>
+                      <SettingsField
+                        disabled={saving}
+                        enabled={isEditing}
+                        id={`domain-price-setting`}
+                        invalid={invalidField === `renewalPrice`}
+                        label={`Saved Annual Cost · ${input.currency || `USD`}`}
+                        value={input.renewalPrice.toFixed(2)}
+                      >
+                        <div id={`domain-price-input-wrap`} className={`domain-editor-price-wrap`}>
+                          <span id={`domain-price-prefix`} className={`domain-editor-price-prefix`} aria-hidden={`true`}>
+                            {input.currency && input.currency !== `USD` ? input.currency : `$`}
+                          </span>
+                          <input
+                            min={0}
+                            required
+                            step={0.01}
+                            type={`number`}
+                            inputMode={`decimal`}
+                            value={input.renewalPrice}
+                            id={`domain-price-input`}
+                            className={`domain-editor-input domain-editor-price-input`}
+                            onChange={event => setField(`renewalPrice`, Number(event.target.value))}
+                          />
                         </div>
+                      </SettingsField>
+                    </div>
+                    {!isSynced && (
                         <div id={`domain-auto-renew-field`} className={`domain-editor-field domain-editor-field-full domain-editor-renew-field`}>
                           <span id={`domain-auto-renew-setting-label`} className={`domain-editor-label`}>{`Auto-Renew`}</span>
                           <BooleanSetting
@@ -462,7 +461,6 @@ const DomainEditor = ({ domain, onClose, entryTabs, active = true }: DomainEdito
                             {`Match the setting at your registrar`}
                           </span>
                         </div>
-                      </>
                     )}
                     {canSetPublicDomain(user) && (
                       <div id={`${publicProfileId}-field`} className={`domain-editor-field domain-editor-field-full`}>
