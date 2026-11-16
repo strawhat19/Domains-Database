@@ -80,6 +80,69 @@ test(`Afternic Domain Activity Checks Listing Before Returning A Bounded Daily R
   assert.deepEqual(result.days, [{ date: result.through.slice(0, 10), views: 0, leads: 2 }]);
 });
 
+test(`Afternic Sync Keeps The Active Snapshot When A Later Page Repeats A Domain`, async () => {
+  const documents = new Map();
+  const reference = {
+    id: `sync`,
+    collection: () => ({
+      doc: id => ({ id }),
+      where: (field, operator, keys) => {
+        assert.equal(field, `indexedNames`);
+        assert.equal(operator, `array-contains-any`);
+        return { limit: maximum => ({ keys, maximum }) };
+      },
+    }),
+  };
+  const row = data => ({ data: () => data, get: field => data?.[field] });
+  const database = { runTransaction: async apply => apply({
+    set: (target, value) => documents.set(target.id, value),
+    get: async target => {
+      if (!target.keys) return row(documents.get(target.id));
+      const docs = [...documents.values()].filter(value => value.indexedNames?.some(key => target.keys.includes(key))).slice(0, target.maximum).map(row);
+      return { docs, size: docs.length, empty: docs.length === 0 };
+    },
+  }) };
+  const page = (names, nextOffset, total) => ({
+    total, nextOffset, skipped: 0, searchesRejected: false,
+    listings: names.map(domain => ({ domain, estimatedValueCents: null })),
+  });
+  let pages = new Map([[0, page([`previous.com`], null, 1)]]);
+  const { readAfternicSnapshot, syncAfternicSnapshot } = loadSource(`src/server/marketplaceAfternic/snapshot.ts`, {
+    '../../shared/common/ids': { genID: (type, number) => ({ id: `${type}-${number}` }) },
+    '../billing/firebase': { getBillingDatabase: () => database },
+    '../marketplace/access': { MarketplaceError: class extends Error { constructor(status, message) { super(message); this.status = status; } } },
+    './connection': { confirmAfternicSyncBinding: async () => ({ reference, binding: `fixture`, authorization: `fixture` }) },
+    './provider': { getAfternicPortfolio: async (_context, offset) => pages.get(offset) },
+  });
+  const actor = { id: `fixture-seller` };
+  const { signal } = new AbortController();
+  const sync = id => syncAfternicSnapshot(actor, id, signal);
+  const read = () => readAfternicSnapshot(actor, { offset: 0, generationId: null });
+  const previous = await sync(null);
+  pages = new Map([
+    [0, page([`a.com`, `b.com`], 2, 6)],
+    [2, page([`c.com`, `d.com`], 4, 6)],
+    [4, page([`a.com`, `e.com`], null, 6)],
+  ]);
+  const first = await sync(null);
+  const second = await sync(first.attemptId);
+  assert.equal(second.attemptId, first.attemptId);
+  assert.equal(second.done, false);
+  await assert.rejects(sync(second.attemptId), { status: 409 });
+  const retained = await read();
+  assert.equal(retained.generationId, previous.attemptId);
+  assert.deepEqual(retained.listings.map(listing => listing.domain), [`previous.com`]);
+
+  pages.set(4, page([`e.com`, `f.com`], null, 6));
+  const retry = await sync(null);
+  assert.notEqual(retry.attemptId, first.attemptId);
+  await sync(retry.attemptId);
+  const updated = await sync(retry.attemptId);
+  assert.equal(updated.done, true);
+  assert.equal(updated.count, 6);
+  assert.equal((await read()).generationId, updated.attemptId);
+});
+
 test(`Vercel External DNS Configuration Is Separate From Confirmed Registrations`, async () => {
   const external = { name: `external.com`, verified: true, serviceType: `zeit.world`, nameservers: [`ns1.vercel-dns.com`] };
   let externalRows = [external];
@@ -409,4 +472,45 @@ test(`GoDaddy DNS Route Uses The Scoped Saved Connection And Rejects Changed Rec
     assert.match(response.headers.get(`Cache-Control`), /no-store/);
     assert.deepEqual(calls, [{ name: `fixture.test`, id: `10`, authorization: `Bearer fixture` }]);
   }
+});
+
+test(`Porkbun Reads Truncated Receipt Summaries In Invoice Order And Caps Extra Reads`, async () => {
+  const calls = [];
+  const owned = { name: `owned.test`, registrar: `Porkbun` };
+  const domainNames = Array.from({ length: 10 }, (_, index) => `elsewhere-${index}.test`);
+  const summary = (id, domains, itemCount = domains.length) => ({ id, domains, itemCount, state: `PAID`, date: `2026-10-01` });
+  const truncated = summary(2, domainNames, 11);
+  const direct = summary(1, [owned.name]);
+  const unrelated = summary(3, domainNames);
+  let invoices = [unrelated, truncated, direct];
+  let items = [...domainNames, owned.name].map(domain => ({
+    domain, years: 1, status: `SUCCESS`, discount_cents: 0, price_cents: 1108, product: `Domain Renewal`,
+  }));
+  const { enrichPorkbunPaidRenewals } = loadSource(`src/server/registrars/porkbunInvoices.ts`, { './request': {
+    requestRegistrar: async url => {
+      calls.push(url.pathname);
+      if (url.pathname.endsWith(`/invoices`)) return JSON.stringify({ status: `SUCCESS`, invoices, total: invoices.length });
+      const id = Number(url.pathname.split(`/`).at(-1));
+      const total = items.length * 1108;
+      return JSON.stringify({ status: `SUCCESS`, invoice: {
+        id, items, currency: `USD`, state: `PAID`, date: `2026-10-01`, gross_cents: total, total_cents: total, refunded_cents: 0,
+      } });
+    },
+  } });
+  const context = { provider: `porkbun`, deadline: Date.now() + 30_000, signal: new AbortController().signal };
+  const warnings = [];
+  await enrichPorkbunPaidRenewals([owned], {}, context, warnings);
+  assert.deepEqual(calls.map(url => url.split(`/`).at(-1)), [`invoices`, `2`]);
+  assert.deepEqual(owned.meta.lastPaidRenewal, { amount: 11.08, currency: `USD`, paidAt: `2026-10-01`, years: 1 });
+  assert.deepEqual(warnings, []);
+
+  items = items.filter(item => item.domain !== owned.name);
+  invoices = Array.from({ length: 21 }, (_, index) => summary(21 - index, domainNames, 11));
+  calls.length = 0;
+  const next = { name: owned.name, registrar: owned.registrar };
+  await enrichPorkbunPaidRenewals([next], {}, context, warnings);
+  assert.equal(calls.length, 21);
+  assert.equal(calls.at(-1).split(`/`).at(-1), `2`);
+  assert.equal(next.meta, undefined);
+  assert.deepEqual(warnings, [`Porkbun Paid Renewal History Unavailable Or Incomplete This Sync`]);
 });

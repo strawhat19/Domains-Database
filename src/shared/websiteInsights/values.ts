@@ -71,7 +71,7 @@ export const normalizeWebsiteInsights = (value: unknown, expectedDomain?: string
   return result;
 };
 
-export const mergeWebsiteInsights = (incoming: WebsiteInsights, stored: unknown): WebsiteInsights => {
+export const mergeWebsiteInsights = (incoming: WebsiteInsights, stored: unknown, rankOnly = false): WebsiteInsights => {
   if (!stored) return incoming;
   let previous: WebsiteInsights;
   try { previous = normalizeWebsiteInsights(stored, incoming.domain); }
@@ -80,8 +80,13 @@ export const mergeWebsiteInsights = (incoming: WebsiteInsights, stored: unknown)
   const useIncomingPerformance = Boolean(incoming.performance && (!previous.performance || Date.parse(incoming.performance.checkedAt) >= Date.parse(previous.performance.checkedAt)));
   const rank = useIncomingRank ? incoming : previous;
   const latest = Date.parse(incoming.checkedAt) >= Date.parse(previous.checkedAt) ? incoming : previous;
+  const mergeMessages = (messages: `errors` | `warnings`) => rankOnly && latest === incoming
+    ? [...previous[messages].filter(message => message.startsWith(`PageSpeed:`)), ...incoming[messages]].slice(0, 10)
+    : latest[messages];
   return {
     ...latest,
+    errors: mergeMessages(`errors`),
+    warnings: mergeMessages(`warnings`),
     trancoRank: rank.trancoRank,
     trancoDate: rank.trancoDate,
     trancoListed: rank.trancoListed,

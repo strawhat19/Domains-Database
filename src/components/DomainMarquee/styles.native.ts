@@ -8,7 +8,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   pressed: { opacity: .65 },
   viewport: { flex: 1, height: 40 },
   trackContainer: { flex: 1, height: 40 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject },
+  loadingOverlay: { ...StyleSheet.absoluteFill },
   fade: { top: 0, bottom: 1, position: `absolute` },
   track: { alignItems: `center`, flexDirection: `row` },
   cycle: { gap: 8, paddingRight: 8, alignItems: `center`, flexDirection: `row` },

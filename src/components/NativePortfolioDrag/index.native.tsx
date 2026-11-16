@@ -401,7 +401,8 @@ interface NativeDragScrollProps extends ScrollViewProps {
   onScrollPosition?: (position: number) => void;
 }
 
-export const NativeDragScroll = ({ children, horizontal = false, style, onScrollPosition, onScroll, onLayout, onContentSizeChange, ...props }: NativeDragScrollProps) => {
+export const NativeDragScroll = ({ children, horizontal: horizontalProp, style, onScrollPosition, onScroll, onLayout, onContentSizeChange, ...props }: NativeDragScrollProps) => {
+  const horizontal = horizontalProp ?? false;
   const drag = useContext(DragContext);
   const parents = useContext(DragScrollContext);
   const ref = useRef<ScrollView>(null);

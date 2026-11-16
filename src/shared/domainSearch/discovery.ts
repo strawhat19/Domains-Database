@@ -15,6 +15,7 @@ export interface DomainDiscoveryResult extends DomainSearchDomainResult {
 export interface DomainDiscoveryResults extends Omit<DomainSearchResults, `results`> {
   results: DomainDiscoveryResult[];
   incomplete?: boolean;
+  retainedAvailability?: boolean;
 }
 
 export const discoveryStatuses: { id: DomainDiscoveryStatus; label: string; description: string }[] = [
@@ -34,8 +35,9 @@ export const isValueRegistration = (price: DomainSearchPrice | undefined): boole
 };
 
 type DiscoveryCandidate = ReturnType<typeof getDiscoveryCandidates>[number];
+type DiscoveryChecks = DomainSearchResults & Pick<DomainDiscoveryResults, `retainedAvailability`>;
 
-const availableResults = (result: DomainSearchResults, candidates: Map<string, DiscoveryCandidate>): DomainDiscoveryResults => ({
+const availableResults = (result: DiscoveryChecks, candidates: Map<string, DiscoveryCandidate>): DomainDiscoveryResults => ({
   ...result,
   results: result.results.flatMap(domain => {
     const candidate = candidates.get(domain.domain);
@@ -60,7 +62,7 @@ export const getDomainDiscovery = async (
   const candidates = new Map(getDiscoveryCandidates(options?.week ?? getDiscoveryWeek()).map(candidate => [candidate.domain, candidate] as const));
   const previousResult = options?.previous;
   const previous = new Map(previousResult?.results.map(result => [result.domain, result]) ?? []);
-  const withPrevious = (result: DomainSearchResults) => {
+  const withPrevious = (result: DomainSearchResults): DiscoveryChecks => {
     if (!previous.size || !previousResult || previousResult.connectionsUpdated !== result.connectionsUpdated) return result;
     let usedPrevious = false;
     const results = result.results.map(domain => ({ ...domain, connections: domain.connections.map(connection => {
@@ -70,7 +72,7 @@ export const getDomainDiscovery = async (
       usedPrevious = true;
       return saved;
     }) }));
-    return { ...result, results, searchedAt: usedPrevious ? previousResult.searchedAt : result.searchedAt };
+    return { ...result, results, ...(usedPrevious ? { retainedAvailability: true, searchedAt: previousResult.searchedAt } : {}) };
   };
   const result = await searchConnectedDomains([...candidates.keys()], signal, expectedUserId, undefined, (progress, counts) => {
     if (!signal.aborted) onProgress?.(availableResults(withPrevious(progress), candidates), counts);

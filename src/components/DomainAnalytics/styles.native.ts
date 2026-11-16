@@ -10,7 +10,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   scroll: { minHeight: 0, flexGrow: 0, flexShrink: 1 },
   loading: { gap: 16, paddingVertical: 16 },
   inline: { gap: 8, flexDirection: `row`, alignItems: `center` },
-  backdrop: { ...StyleSheet.absoluteFillObject },
+  backdrop: { ...StyleSheet.absoluteFill },
   section: { gap: 12, paddingTop: 18, borderTopWidth: 1, borderTopColor: palette.line },
   fields: { gap: 12, flexWrap: `wrap`, flexDirection: `row` },
   field: { gap: 5, flexGrow: 1, flexBasis: `43%` },
