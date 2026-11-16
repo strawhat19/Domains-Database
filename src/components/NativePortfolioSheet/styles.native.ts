@@ -3,7 +3,7 @@ import type { ThemePalette } from '../../styles/theme/theme';
 
 export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   host: { flex: 1 },
-  backdrop: { ...StyleSheet.absoluteFillObject },
+  backdrop: { ...StyleSheet.absoluteFill },
   keyboard: { flex: 1 },
   viewport: { flex: 1, justifyContent: `flex-end` },
   sheet: { width: `100%`, overflow: `hidden`, borderWidth: 1, borderColor: palette.line, borderTopLeftRadius: 26, borderTopRightRadius: 26, backgroundColor: palette.paper },

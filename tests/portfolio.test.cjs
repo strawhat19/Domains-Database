@@ -99,6 +99,113 @@ const fixture = ({ count = 0, paid = false, expired = false, owner = false, usag
   return { records, ids, database, commit, add, snapshotPath, usagePath, revision };
 };
 
+test(`Signed-In GoDaddy Sync Saves Provider Details And Preserves Private Portfolio Values`, async () => {
+  const { database, records: [original], snapshotPath } = fixture({ count: 1, owner: true });
+  const recordPath = `users/${userId}/domains/${original.id}`;
+  const registrant = { name: `Saved Contact`, email: `saved@example.invalid`, organization: `Saved Organization` };
+  database.documents.set(recordPath, { ...original, registrant, registrar: `GoDaddy`, renewalPrice: 25, currency: `USD`, providerId: `42` });
+  const billingFirebase = loadSource(`src/server/billing/firebase.ts`, {
+    'firebase-admin/app': { getApps: () => [{ name: `domains-database-billing`, options: { projectId: `domainsdatabase-e62a3` } }] },
+    'firebase-admin/auth': { getAuth: () => ({ verifyIdToken: async (token, checkRevoked) => {
+      assert.equal(token, `fixture-owner`);
+      assert.equal(checkRevoked, true);
+      return { uid: actor.firebaseUid, firebase: { sign_in_provider: `password` } };
+    } }) },
+    'firebase-admin/firestore': { getFirestore: () => ({ ...database, doc: key => ({
+      ...database.doc(key), get: async () => ({ data: () => database.documents.get(key) }),
+    }) }) },
+  });
+  const access = loadSource(`src/server/featureAccess/auth.ts`, { '../billing/firebase': billingFirebase });
+  let expires = `2027-12-03`;
+  let failDetail = false;
+  const { getGoDaddyDomains } = loadSource(`src/server/registrars/godaddy.ts`, { './request': {
+    pauseRequests: async () => {},
+    requestRegistrar: async (url, headers) => {
+      assert.equal(url.origin, `https://api.godaddy.com`);
+      assert.equal(headers.Authorization, `Bearer fixture-godaddy`);
+      if (url.pathname === `/v1/domains`) return JSON.stringify([{ domain: original.name, expires, domainId: 42, status: `ACTIVE` }]);
+      assert.equal(url.pathname, `/v2/customers/00000000-0000-0000-0000-000000000000/domains/${original.name}`);
+      if (failDetail) throw new Error(`Fixture Detail Unavailable`);
+      return JSON.stringify({
+        domain: original.name, domainId: `42`, nameServers: [`ns1.fixture.example`],
+        renewal: { price: 17_500_000, currency: `USD`, renewable: true },
+      });
+    },
+  } });
+  const sync = loadSource(`src/server/registrars/sync.ts`, { './godaddy': { getGoDaddyDomains } });
+  const { handleRegistrarSync } = loadSource(`src/server/registrars/http.ts`, { './sync': sync, '../featureAccess/auth': access });
+  const { handlePortfolioCommit } = loadSource(`src/server/portfolio/http.ts`, { '../billing/firebase': billingFirebase });
+  const request = (route, input, authorized = true) => new Request(`https://fixture.example${route}`, {
+    method: `POST`, body: JSON.stringify(input),
+    headers: { 'content-type': `application/json`, ...(authorized ? { authorization: `Bearer fixture-owner` } : {}) },
+  });
+  const storageKey = `domains-database:portfolio:v1`;
+  let readRevision;
+  const { api } = loadSource(`src/api/index.ts`, {
+    './auth': { authAPI: { restoreSession: async () => ({ user: { ...actor, role: `Owner` } }) } },
+    './domainData': {},
+    '@react-native-async-storage/async-storage': {},
+    '../shared/firebase/config': { firebaseEnabled: true },
+    '../shared/firebase/storage': { clearFirestoreStorageCache: () => {} },
+    '../shared/authentication/service.local': {},
+    '../shared/planAccess/service': { getPlanAccess: async () => ({ user: { ...actor, role: `Owner` } }) },
+    '../shared/config': { PORTFOLIO_STORAGE_KEY: storageKey, persistenceEnabled: true, useLocalStorage: false, useSampleData: false },
+    '../shared/common/storage': {
+      createOperationQueue: () => async operation => operation(),
+      readStorage: async key => {
+        assert.equal(key, `${storageKey}:user:${userId}`);
+        const saved = database.documents.get(snapshotPath);
+        readRevision = saved.revision;
+        return JSON.stringify({ ...saved.snapshot, domains: saved.ids.map(id => database.documents.get(`users/${userId}/domains/${id}`)) });
+      },
+      writeStorage: async (key, value) => {
+        assert.equal(key, `${storageKey}:user:${userId}`);
+        const { domains, ...snapshot } = JSON.parse(value);
+        const changes = domains.map(record => ({ id: record.id, record }));
+        const response = await handlePortfolioCommit(request(`/api/portfolio/commit`, {
+          snapshot, changes, ids: changes.map(change => change.id), expectedRevision: readRevision,
+        }));
+        assert.equal(response.status, 200, JSON.stringify(await response.json()));
+      },
+    },
+  });
+  const input = { provider: `godaddy`, values: `GODADDY_PAT=fixture-godaddy\nGODADDY_CUSTOMER_ID=00000000-0000-0000-0000-000000000000` };
+  assert.equal((await handleRegistrarSync(request(`/api/registrars/sync`, input, false))).status, 401);
+  await api.setUserScope(userId);
+  const syncPortfolio = async () => {
+    const response = await handleRegistrarSync(request(`/api/registrars/sync`, input));
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(await api.syncRegistrarDomains(result.domains, userId, `Fixture Owner`), 1);
+    return result;
+  };
+  await syncPortfolio();
+  const first = database.documents.get(recordPath);
+  assert.equal(first.expiresAt, expires);
+  assert.deepEqual(first.nameservers, [`ns1.fixture.example`]);
+  const estimate = first.meta.registrarSync.renewalEstimate;
+  assert.equal(estimate.amount, 17.5);
+  assert.equal(estimate.currency, `USD`);
+
+  failDetail = true;
+  expires = `2028-12-03`;
+  const partial = await syncPortfolio();
+  assert.match(partial.warnings[0], /GoDaddy Domain Detail Read/);
+  const saved = database.documents.get(recordPath);
+  assert.equal(saved.expiresAt, expires);
+  assert.equal(saved.id, original.id);
+  assert.equal(saved.number, original.number);
+  assert.equal(saved.notes, original.notes);
+  assert.equal(saved.providerId, `42`);
+  assert.equal(saved.renewalPrice, 25);
+  assert.deepEqual(saved.registrant, registrant);
+  assert.deepEqual(saved.nameservers, first.nameservers);
+  assert.deepEqual(saved.meta.registrarSync.renewalEstimate, estimate);
+  assert.equal(saved.meta.registrarSync.detailsCheckedAt, first.meta.registrarSync.detailsCheckedAt);
+  assert.deepEqual(database.documents.get(snapshotPath).ids, [original.id]);
+  assert.equal(database.documents.get(snapshotPath).revision, 3);
+});
+
 for (const [label, count, paid, expected] of [[`Free Last Slot`, 32, false, 200], [`Free Overflow`, 33, false, 403], [`Starter Last Slot`, 332, true, 200], [`Starter Overflow`, 333, true, 403]]) test(`${label} Uses Its Authoritative Quota`, async () => {
   const current = fixture({ count, paid });
   const result = await current.commit(current.add());

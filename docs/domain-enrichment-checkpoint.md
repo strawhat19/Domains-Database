@@ -1,6 +1,6 @@
 # Domain Enrichment Checkpoint
 
-This checkpoint covers read-only registrar and aftermarket enrichment. The provider relays, portfolio merge, private details, and search UI are implemented. Checks on November 16, 2026 confirmed that GoDaddy, Hostinger, Vercel, and Afternic accepted read requests using the local server configuration and returned their expected inventory shapes. The local search relay returned HTTP 200 for all three configured registrars. Offline checks cover private snapshot retention and broader invoice matching. The signed-in sync, its saved results, and native rendering still need the checks below. Start with a single connection and a small known sample of domains.
+This checkpoint covers read-only registrar and aftermarket enrichment. The provider relays, portfolio merge, private details, and search UI are implemented. Checks on November 16, 2026 confirmed that GoDaddy, Hostinger, Vercel, and Afternic accepted read requests using the local server configuration and returned their expected inventory shapes. The local search relay returned HTTP 200 for all three configured registrars. A synthetic signed-in GoDaddy sync exercised account authorization, the registrar relay, the portfolio merge, and a private commit. Its partial refresh updated the expiry while preserving the saved annual cost, contact, nameservers, and last confirmed estimate. Live signed-in sync and native rendering still need the checks below. Start with a single connection and a small known sample of domains.
 
 ## Resume here
 
@@ -18,4 +18,4 @@ This checkpoint covers read-only registrar and aftermarket enrichment. The provi
 
 ## Local checks
 
-Run `node --test tests/portfolio.test.cjs tests/registrar-detail-sync.test.cjs` for the focused mock and persistence coverage. The workspace still has TypeScript diagnostics that predate this follow-up. Check changed paths for new diagnostics before release.
+Run `node --test tests/portfolio.test.cjs tests/registrar-detail-sync.test.cjs` for the focused mock and persistence coverage. After `npm run export:web`, run `node --test tests/server-startup.test.cjs` to check the exported handlers, including registrar sync, Afternic, DNS, parking, auctions, and website insights. Set `EXPO_WEB_EXPORT_DIR` when the export was written outside `dist`. The fresh web export passed all 14 startup checks, all 136 source tests passed, and the Expo Android bundle exported successfully. TypeScript reports 42 pre-existing diagnostics with zero in the follow-up's changed source files.
