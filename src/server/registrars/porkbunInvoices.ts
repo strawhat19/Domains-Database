@@ -6,6 +6,7 @@ import { asRecord, parseJson, providerDate, providerId, providerName, providerIn
 const PAGE_SIZE = 50;
 const PAGE_LIMIT = 2;
 const DETAIL_LIMIT = 20;
+const SUMMARY_DOMAIN_LIMIT = 10;
 const INVOICE_TIME_LIMIT = 12_000;
 const PORKBUN_ACCOUNT = `https://api.porkbun.com/api/json/v3/account`;
 
@@ -50,7 +51,9 @@ const readPaidRenewals = (value: unknown, id: string, date: string, owned: Reado
 };
 
 export const enrichPorkbunPaidRenewals = async (domains: readonly RegistrarDomain[], headers: Record<string, string>, context: RegistrarRequestContext, warnings: string[]) => {
-  if (!domains.length || context.signal.aborted || Date.now() >= context.deadline) return;
+  if (!domains.length || context.signal.aborted) return;
+  const incomplete = () => { warnings.push(`Porkbun Paid Renewal History Unavailable Or Incomplete This Sync`); };
+  if (Date.now() >= context.deadline) return incomplete();
   const deadline = Math.min(context.deadline, Date.now() + INVOICE_TIME_LIMIT);
   const owned = new Map(domains.map(domain => [domain.name, domain] as const));
   const seen = new Set<string>();
@@ -61,17 +64,23 @@ export const enrichPorkbunPaidRenewals = async (domains: readonly RegistrarDomai
     return payload;
   };
   try {
-    for (let page = 0; page < PAGE_LIMIT && details < DETAIL_LIMIT; page++) {
+    for (let page = 0; page < PAGE_LIMIT; page++) {
       const response = await read(new URL(`${PORKBUN_ACCOUNT}/invoices?start=${page * PAGE_SIZE}&limit=${PAGE_SIZE}`));
       if (!Array.isArray(response.invoices) || response.invoices.length > PAGE_SIZE) throw invalidResponse(`porkbun`);
+      const total = providerInteger(response.total, `porkbun`);
       for (const value of response.invoices) {
         const summary = asRecord(value, `porkbun`);
-        if (summary.state !== `PAID` || !Array.isArray(summary.domains) || !summary.domains.some(value => {
+        if (summary.state !== `PAID` || !Array.isArray(summary.domains)) continue;
+        const matches = summary.domains.some(value => {
           if (typeof value !== `string`) return false;
           try { return owned.has(providerName(value, `porkbun`)); } catch { return false; }
-        })) continue;
+        });
+        const mayOmitDomain = !matches && summary.domains.length === SUMMARY_DOMAIN_LIMIT
+          && providerInteger(summary.itemCount, `porkbun`) > SUMMARY_DOMAIN_LIMIT;
+        if (!matches && !mayOmitDomain) continue;
         const id = providerId(summary.id, `porkbun`);
         if (seen.has(id)) continue;
+        if (details === DETAIL_LIMIT) return incomplete();
         seen.add(id);
         details++;
         const receipt = await read(new URL(`${PORKBUN_ACCOUNT}/invoice/${id}`));
@@ -82,11 +91,13 @@ export const enrichPorkbunPaidRenewals = async (domains: readonly RegistrarDomai
           domain.meta = { ...domain.meta, lastPaidRenewal: renewal };
           owned.delete(name);
         }
-        if (!owned.size || details === DETAIL_LIMIT) return;
+        if (!owned.size) return;
       }
-      if (response.invoices.length < PAGE_SIZE || (page + 1) * PAGE_SIZE >= providerInteger(response.total, `porkbun`)) return;
+      if (page * PAGE_SIZE + response.invoices.length >= total) return;
+      if (response.invoices.length < PAGE_SIZE) return incomplete();
     }
   } catch {
-    warnings.push(`Porkbun Paid Renewal History Unavailable Or Incomplete This Sync`);
+    return incomplete();
   }
+  incomplete();
 };

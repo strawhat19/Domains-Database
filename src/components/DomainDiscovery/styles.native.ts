@@ -29,7 +29,7 @@ export const createStyles = (palette: ThemePalette) => StyleSheet.create({
   watchAction: { top: 12, right: 12, zIndex: 2, position: `absolute` },
   compactWatchAction: { top: 4, right: 6 },
   pillWatchAction: { top: 6 },
-  compareControl: { ...StyleSheet.absoluteFillObject, zIndex: 1, borderRadius: 10 },
+  compareControl: { top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, borderRadius: 10, position: `absolute` },
   comparePressed: { backgroundColor: `${palette.accent}14` },
   filterGroup: { gap: 8, flexShrink: 0, flexWrap: `nowrap`, flexDirection: `row`, alignItems: `center` },
   filterDivider: { width: 1, height: 20, marginHorizontal: 3, backgroundColor: palette.line },

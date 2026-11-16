@@ -211,6 +211,8 @@ export const useDomainDiscovery = () => {
     paused,
     accessLoading,
     eligible,
+    incomplete: result?.incomplete === true,
+    retainedAvailability: result?.retainedAvailability === true,
     filteredResults: tldFilter === `all` ? statusResults : statusResults.filter(result => result.extension === tldFilter),
     checkedAt: result?.searchedAt ?? ``,
     loading,

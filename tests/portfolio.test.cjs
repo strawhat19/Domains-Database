@@ -193,6 +193,9 @@ test(`Rank Refresh Preserves PageSpeed And Replaces An Explicitly Unlisted Rank`
   assert.equal(result.trancoListed, false);
   assert.equal(result.trancoCheckedAt, nextCheckedAt);
   assert.equal(mergeWebsiteInsights({ ...incoming, trancoListed: undefined, trancoCheckedAt: undefined }, previous).trancoRank, 50);
+  const failures = { ...previous, errors: [`PageSpeed: Source Is Unavailable`, `Tranco: Source Is Unavailable`] };
+  assert.deepEqual(mergeWebsiteInsights(incoming, failures, true).errors, [`PageSpeed: Source Is Unavailable`]);
+  assert.deepEqual(mergeWebsiteInsights(incoming, failures).errors, []);
 });
 test(`Tranco History Survives A Rank Failure And Rejects Conflicting Days`, () => {
   const checkedAt = `2026-11-14T14:00:00Z`;

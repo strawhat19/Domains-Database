@@ -626,7 +626,7 @@ export const api = {
       const incoming = normalizeWebsiteInsights(match.insights, domain.name);
       if (incoming.trancoListed === undefined) return domain;
       const saved = domain.meta?.websiteInsights;
-      const merged = JSON.stringify(mergeWebsiteInsights(incoming, saved));
+      const merged = JSON.stringify(mergeWebsiteInsights(incoming, saved, true));
       if (JSON.stringify(saved) === merged) return domain;
       changed = true;
       return new Domain({ ...domain, meta: { ...domain.meta, websiteInsights: JSON.parse(merged) } });

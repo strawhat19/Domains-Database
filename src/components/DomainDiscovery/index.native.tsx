@@ -28,7 +28,11 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
   const tldResults = state.tldFilter === `all` ? state.results : state.results.filter(result => result.extension === state.tldFilter);
   const loading = state.loading || state.accessLoading;
   const placeholderCount = sidebar ? shelf.placeholderCount : loading && !state.results.length ? 3 : 0;
-  const checkedAt = state.checkedAt ? new Date(state.checkedAt).toLocaleTimeString(`en-US`, { hour: `numeric`, minute: `2-digit` }) : ``;
+  const checkedDate = state.checkedAt ? new Date(state.checkedAt) : null;
+  const checkedToday = checkedDate?.toDateString() === new Date().toDateString();
+  const checkedAt = checkedDate?.toLocaleString(`en-US`, {
+    hour: `numeric`, minute: `2-digit`, month: checkedToday ? undefined : `short`, day: checkedToday ? undefined : `numeric`,
+  });
 
   const cardList = (
     <>
@@ -207,7 +211,7 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
           {`Connect a registrar to see available domain ideas.`}
         </Text>
       )}
-      {!loading && state.eligible && !filteredResults.length && !state.error && (
+      {!loading && state.eligible && !filteredResults.length && !state.error && (!state.incomplete || state.results.length > 0) && (
         <Text {...elementProps(`domain-discovery-empty`, suffix)} style={styles.detail}>
           {disabled ? `Domain ideas will resume after your search.` : state.results.length
             ? `No cards match these filters. Select All and All Extensions to see every available idea.`
@@ -219,9 +223,14 @@ const DomainDiscovery = ({ state, shelf, suffix, onSearch, sidebar = false, disa
           {state.error}
         </Text>
       )}
-      {!!state.results.length && (
+      {!loading && !state.error && state.incomplete && (
+        <Text {...elementProps(`domain-discovery-incomplete`, suffix)} style={styles.detail} accessibilityLiveRegion={`polite`}>
+          {`Some registrar checks could not be confirmed. Refresh to retry.`}
+        </Text>
+      )}
+      {!!state.results.length && !!checkedAt && (
         <Text {...elementProps(`domain-discovery-price-note`, suffix)} style={styles.detail}>
-          {`Checked ${checkedAt} · Availability and registration prices can change`}
+          {`${state.retainedAvailability ? `Includes earlier checks from` : `Checked`} ${checkedAt} · Availability and registration prices can change`}
         </Text>
       )}
     </View>

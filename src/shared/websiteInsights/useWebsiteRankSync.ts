@@ -61,7 +61,10 @@ export const useWebsiteRankSync = (userId: string | undefined, actorKey: string,
       if (!current()) return;
       const saved = matches.length > 0 && await api.saveWebsiteRanks(matches, userId);
       if (!current()) return;
-      for (const domain of selected.keys()) attempted.current.add(domain);
+      for (const { name } of matches) attempted.current.add(name);
+      // The batch may stop at a throttled domain without reaching the rest of the selection.
+      const firstUnconfirmed = [...selected.keys()].find(name => !attempted.current.has(name));
+      if (firstUnconfirmed) attempted.current.add(firstUnconfirmed);
       if (saved) await refreshDomains();
     } catch { /* Website rank checks are independent of registrar sync status. */ }
     finally { if (controller.current === request) controller.current = null; }
