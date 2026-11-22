@@ -32,9 +32,9 @@ const COPY_OPTIONS = [
   },
 ] as const;
 
-const PortfolioSettingsActions = ({ id, label, hidden, sections, onToggleVisibility, disabled = false, treeAvailable = true }: PortfolioSettingsActionsProps) => {
+const PortfolioSettingsActions = ({ id, label, hidden, sections, onToggleVisibility, disabled = false, treeAvailable = true, copyInitiallyOpen = false }: PortfolioSettingsActionsProps) => {
   const copyId = `${id}-copy`;
-  const state = usePortfolioRowCopy({ label, sections, disabled, treeAvailable, id: copyId });
+  const state = usePortfolioRowCopy({ label, sections, disabled, treeAvailable, id: copyId }, copyInitiallyOpen);
   const firstOptionRef = useRef<HTMLButtonElement>(null);
   const VisibilityIcon = hidden ? Eye : EyeOff;
   const CopyIcon = state.copied ? Check : Copy;
@@ -131,6 +131,7 @@ const PortfolioSettingsActions = ({ id, label, hidden, sections, onToggleVisibil
           <div id={`${id}-copy-formats`} className={`portfolio-settings-copy-formats`}>
             {COPY_OPTIONS.filter(option => treeAvailable || option.format === `list` || option.format === `json`).map(({ Icon, label: formatLabel, format, description }) => {
               const optionId = `${id}-copy-${format}`;
+              const firstOption = format === (state.count ? `list` : `json`);
               return (
                 <button
                   key={format}
@@ -138,7 +139,8 @@ const PortfolioSettingsActions = ({ id, label, hidden, sections, onToggleVisibil
                   type={`button`}
                   onClick={() => state.copyDomains(format)}
                   aria-describedby={`${optionId}-description`}
-                  ref={format === (state.count ? `list` : `json`) ? firstOptionRef : undefined}
+                  ref={firstOption ? firstOptionRef : undefined}
+                  data-autofocus={copyInitiallyOpen && firstOption || undefined}
                   disabled={state.unavailable || state.copying || !state.count && (format !== `json` || !state.allowEmptyJson)}
                   className={`portfolio-button portfolio-button-secondary portfolio-settings-copy-format`}
                 >

@@ -6,6 +6,7 @@ export interface PortfolioSettingsActionsProps {
   hidden: boolean;
   disabled?: boolean;
   treeAvailable?: boolean;
+  copyInitiallyOpen?: boolean;
   sections: PortfolioSections;
   onToggleVisibility: () => void;
 }

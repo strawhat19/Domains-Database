@@ -24,9 +24,9 @@ const getSectionDomainIds = (sections: PortfolioSections) => [...new Set([
 const hasSectionMetadata = (sections: PortfolioSections) => sections.collections.length > 0
   || sections.mainGroups.some(group => Boolean(group.customGroupId));
 
-export const usePortfolioRowCopy = ({ id, label, sections, disabled = false, treeAvailable = true, focusFallbackId }: PortfolioRowCopyProps) => {
+export const usePortfolioRowCopy = ({ id, label, sections, disabled = false, treeAvailable = true, focusFallbackId }: PortfolioRowCopyProps, initiallyOpen = false) => {
   const preferences = usePortfolioPreferences();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen && !disabled);
   const [includeHidden, setIncludeHidden] = useState(true);
   const [copyMessage, setCopyMessage] = useState(``);
   const mounted = useRef(true);

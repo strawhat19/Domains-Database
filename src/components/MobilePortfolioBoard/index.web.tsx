@@ -8,15 +8,16 @@ import { boardEntityProps, type BoardEntity, type MobilePortfolioBoardProps } fr
 import DomainDescription from '../DomainDescription/index.web';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainContextMenu from '../DomainContextMenu/index.web';
+import CollectionContextMenu from '../CollectionContextMenu/index.web';
 import PortfolioAddGroup from '../PortfolioAddGroup/index.web';
 import MobilePortfolioCard from '../MobilePortfolioCard/index.web';
 import PortfolioNameEditor from '../PortfolioNameEditor/index.web';
 import DomainGroupSettings from '../DomainGroupSettings/index.web';
 import PortfolioAddCollection from '../PortfolioAddCollection/index.web';
 import MobilePortfolioDomain from '../MobilePortfolioDomain/index.web';
-import DomainCollectionSettings from '../DomainCollectionSettings/index.web';
 import { usePortfolioExpansion } from '../PortfolioRecords/usePortfolioExpansion';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
+import { useCollectionContextMenu } from '../CollectionContextMenu/useCollectionContextMenu';
 import { PORTFOLIO_PREVIEW_LIMIT, allowDomainsInCollections } from '../../shared/config';
 import { portfolioHaptic } from '../../shared/common/haptics.web';
 import { useHorizontalScrollFade } from '../HorizontalScrollFade/useHorizontalScrollFade.web';
@@ -32,22 +33,20 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
   const expansion = usePortfolioExpansion();
   useStickyBoardHeaders(boardRef);
   const [editingGroupId, setEditingGroupId] = useState(``);
-  const [editingCollectionId, setEditingCollectionId] = useState(``);
   const [groupingIds, setGroupingIds] = useState<string[] | null>(null);
   const [error, setError] = useState(``);
   useEffect(() => {
     if (preferences.loading) {
       setGroupingIds(null);
       setEditingGroupId(``);
-      setEditingCollectionId(``);
       setError(``);
       return;
     }
     if (editingGroupId && !preferences.customGroups.some(group => group.id === editingGroupId)) setEditingGroupId(``);
-    if (editingCollectionId && !preferences.collections.some(collection => collection.id === editingCollectionId)) setEditingCollectionId(``);
-  }, [preferences.loading, preferences.customGroups, preferences.collections, editingGroupId, editingCollectionId]);
+  }, [preferences.loading, preferences.customGroups, editingGroupId]);
   const disabled = props.busy || props.loading || preferences.loading;
-  const blocked = disabled || Boolean(editingGroupId || editingCollectionId || groupingIds);
+  const collectionMenu = useCollectionContextMenu(disabled || Boolean(editingGroupId || groupingIds));
+  const blocked = disabled || Boolean(editingGroupId || groupingIds || collectionMenu.dialogOpen);
   const domainMap = useMemo(() => new Map(props.allDomains.map(domain => [domain.id, domain])), [props.allDomains]);
   const tree = useMemo(() => buildPortfolioDestinationTree(props.allDomains, preferences.customGroups, preferences.collections), [props.allDomains, preferences.customGroups, preferences.collections]);
   const contextMenu = useDomainContextMenu((action, domains, clicked, targetId) => {
@@ -68,26 +67,30 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
       : action === `assign-collection` && targetId && (targetId === `main` || allowDomainsInCollections) ? preferences.assignDomainsToCollection(ids, targetId === `main` ? null : targetId) : false;
     if (saved) props.onGrouped();
     else if (action === `assign-group` || action === `assign-collection`) setError(`Could Not Move Domain(s)`);
-  }, blocked);
-  const showActions = (source: BoardEntity, element: HTMLElement) => {
+  }, blocked || Boolean(collectionMenu.menu));
+  const showActions = (source: BoardEntity, element: HTMLElement, point?: { x: number; y: number }) => {
     if (blocked) return;
     portfolioHaptic(`tap`);
-    if (source.kind === `collection`) setEditingCollectionId(source.id);
-    else if (source.kind === `group`) setEditingGroupId(source.id);
-    else {
+    if (source.kind === `collection`) {
+      if (source.main || !preferences.collections.some(collection => collection.id === source.id)) return;
+      if (contextMenu.menu) contextMenu.close();
+      collectionMenu.openFromKeyboard(element, source.id, point);
+    } else if (source.kind === `group`) {
+      collectionMenu.close();
+      setEditingGroupId(source.id);
+    } else {
       const domain = domainMap.get(source.id);
       if (!domain) return;
+      collectionMenu.close();
       const records = props.selectedIds.has(source.id) ? props.allDomains.filter(record => props.selectedIds.has(record.id)) : [domain];
       contextMenu.openFromKeyboard(element, domain, records);
     }
   };
   const drop = useBoardMoves(props, { disabled: blocked, onError: setError });
-  const gestures = useBoardGestures({ onDrop: drop, onAction: showActions, surfaceRef: props.surfaceRef ?? boardRef, disabled: blocked || Boolean(contextMenu.menu) });
+  const gestures = useBoardGestures({ onDrop: drop, onAction: showActions, surfaceRef: props.surfaceRef ?? boardRef, disabled: blocked || Boolean(contextMenu.menu || collectionMenu.menu) });
   const editingGroup = preferences.customGroups.find(group => group.id === editingGroupId);
-  const editingCollection = preferences.collections.find(collection => collection.id === editingCollectionId);
   const boardGroups = [...props.sections.mainGroups, ...props.sections.collections.flatMap(section => section.groups)];
   const copyGroup = boardGroups.find(group => group.customGroupId === editingGroupId);
-  const copySection = props.sections.collections.find(section => section.collection.id === editingCollectionId);
   const menuGroup = contextMenu.menu ? boardGroups.find(group => (
     group.key !== `all`
     && group.key !== `custom:ungrouped`
@@ -174,13 +177,15 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
           className={`mobile-board-column-header`}
           aria-describedby={`mobile-board-keyboard-help`}
           onKeyDown={event => {
-            if (disabled || event.target !== event.currentTarget) return;
-            if (event.key === `Enter` || event.key === `ContextMenu` || event.shiftKey && event.key === `F10`) {
+            if (blocked || event.defaultPrevented || !(event.target instanceof HTMLElement)
+              || event.target.closest(`input, textarea, [contenteditable='true']`)) return;
+            const headerFocused = event.target === event.currentTarget;
+            if ((headerFocused && event.key === `Enter`) || event.key === `ContextMenu` || (event.shiftKey && event.key === `F10`)) {
               event.preventDefault();
               showActions(entity, event.currentTarget);
               return;
             }
-            if (!event.altKey || ![`ArrowLeft`, `ArrowRight`].includes(event.key)) return;
+            if (!headerFocused || !event.altKey || ![`ArrowLeft`, `ArrowRight`].includes(event.key)) return;
             event.preventDefault();
             const after = event.key === `ArrowRight`;
             const target = props.sections.collections[index + (after ? 1 : -1)];
@@ -218,13 +223,11 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
             type={`button`}
             disabled={disabled}
             id={`${scope}-settings`}
-            aria-haspopup={`dialog`}
+            aria-haspopup={`menu`}
             className={`mobile-board-icon`}
             aria-label={`Actions For ${collection.name}`}
-            onClick={() => {
-              portfolioHaptic(`tap`);
-              setEditingCollectionId(id);
-            }}
+            aria-expanded={collectionMenu.menu?.target === id}
+            onClick={event => showActions(entity, event.currentTarget)}
           >
             <Ellipsis
               size={19}
@@ -350,13 +353,6 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
               onClose={() => setEditingGroupId(``)}
             />
           )}
-          {editingCollection && (
-            <DomainCollectionSettings
-              collection={editingCollection}
-              copySection={copySection}
-              onClose={() => setEditingCollectionId(``)}
-            />
-          )}
           {groupingIds && (
             <DomainGroupPicker
               onGrouped={props.onGrouped}
@@ -374,6 +370,7 @@ const MobilePortfolioBoard = (props: MobilePortfolioBoardProps) => {
         </>,
         document.body,
       )}
+      <CollectionContextMenu state={collectionMenu} sections={props.sections.collections} idPrefix={`mobile-board`} />
     </div>
   );
 };

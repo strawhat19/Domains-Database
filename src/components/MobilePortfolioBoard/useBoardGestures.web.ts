@@ -21,7 +21,7 @@ interface GestureOptions {
   disabled: boolean;
   surfaceRef?: RefObject<HTMLDivElement | null>;
   onDrop: (source: BoardEntity, target: BoardEntity, after: boolean) => boolean;
-  onAction: (source: BoardEntity, element: HTMLElement) => void;
+  onAction: (source: BoardEntity, element: HTMLElement, point?: { x: number; y: number }) => void;
 }
 
 const readEntity = (element: HTMLElement, key: `boardSource` | `boardTarget`): BoardEntity | null => {
@@ -147,7 +147,7 @@ export const useBoardGestures = (options: GestureOptions) => {
         gesture.armTimer = window.setTimeout(() => {
           if (!gesture) return;
           gesture.armed = true;
-          if (source.kind === `collection` || handle) startDrag();
+          if (handle && source.kind !== `collection`) startDrag();
         }, 300);
         gesture.holdTimer = window.setTimeout(() => {
           if (!gesture || gesture.dragging) return;
@@ -209,12 +209,15 @@ export const useBoardGestures = (options: GestureOptions) => {
     const context = (event: MouseEvent) => {
       if (!(event.target instanceof Element) || event.target.closest(`input, textarea, [contenteditable='true']`)) return;
       const element = event.target.closest<HTMLElement>(`[data-board-source]`);
-      if (!element || latest.current.disabled) return;
+      if (!element) return;
+      if (Date.now() < suppressUntil) { event.preventDefault(); event.stopPropagation(); return; }
+      if (latest.current.disabled) return;
       event.preventDefault();
       event.stopPropagation();
       if (gesture) return;
       const source = readEntity(element, `boardSource`);
-      if (source) latest.current.onAction(source, element);
+      const point = event.clientX || event.clientY ? { x: event.clientX, y: event.clientY } : undefined;
+      if (source) latest.current.onAction(source, element, point);
     };
     const nativeDrag = (event: DragEvent) => {
       if (!(event.target instanceof Element) || !event.target.closest(`[data-board-source]`)) return;

@@ -18,6 +18,7 @@ import DomainDescription from '../DomainDescription/index.web';
 import DomainGroupPicker from '../DomainGroupPicker/index.web';
 import DomainContextMenu from '../DomainContextMenu/index.web';
 import GroupContextMenu from '../GroupContextMenu/index.web';
+import CollectionContextMenu from '../CollectionContextMenu/index.web';
 import type { CSSProperties, MouseEvent, KeyboardEvent } from 'react';
 import DomainProjectBadge from '../DomainProjectBadge/index.web';
 import PortfolioTableHead from '../PortfolioTableHead/index.web';
@@ -35,6 +36,7 @@ import { getResponsivePortfolioColumnWidths } from '../DomainPortfolio/columnLay
 import { useCollectionReorder } from '../DomainPortfolio/useCollectionReorder';
 import type { useStickyPortfolio } from '../DomainPortfolio/useStickyPortfolio';
 import { useDomainContextMenu } from '../DomainContextMenu/useDomainContextMenu';
+import { useCollectionContextMenu } from '../CollectionContextMenu/useCollectionContextMenu';
 import { buildPortfolioSections } from '../../shared/portfolioPreferences/groups';
 import { getRecentPortfolioItems } from '../../shared/portfolioPreferences/recent';
 import DomainGridCard, { DomainGridCardSkeleton } from '../DomainGridCard/index.web';
@@ -104,6 +106,7 @@ const PortfolioRecords = ({
   const preferences = usePortfolioPreferences();
   const loadingRows = useLoadingPortfolioRows(loading && !compact && preferences.view !== `grid`, recordsRef);
   const menuDisabled = busy || loading || preferences.loading;
+  const collectionMenu = useCollectionContextMenu(menuDisabled);
   const emptyPortfolio = !loading && !allDomains.length && !preferences.customGroups.length && !preferences.collections.length;
   const availableDomainIds = useMemo(() => new Set(allDomains.map(domain => domain.id)), [allDomains]);
   const destinationTree = useMemo(() => buildPortfolioDestinationTree(allDomains, preferences.customGroups, preferences.collections),
@@ -377,20 +380,39 @@ const PortfolioRecords = ({
     />
   );
   const menuFeedback = <Toast id={`${idPrefix}-context-menu-error`} message={menuError} onDismiss={() => setMenuError(``)} />;
+  const collectionContextMenu = <CollectionContextMenu idPrefix={idPrefix} state={collectionMenu} sections={collections} />;
+  const openCollectionContextMenu = (event: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (menuDisabled || event.defaultPrevented || !(target instanceof Element)
+      || target.closest(`input, textarea, select, [contenteditable='true']`)) return false;
+    const heading = target.closest<HTMLElement>(`[data-collection-context-id]`);
+    const collectionId = heading?.dataset.collectionContextId;
+    if (!heading || !collectionId || !event.currentTarget.contains(heading)) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    if (contextMenu.menu) contextMenu.close();
+    if (groupContextMenu.menu) groupContextMenu.close();
+    const point = `clientX` in event && (event.clientX || event.clientY) ? { x: event.clientX, y: event.clientY } : undefined;
+    collectionMenu.openFromKeyboard(heading, collectionId, point);
+    return true;
+  };
   const openGroupContextMenu = (event: MouseEvent<HTMLElement>, group: PortfolioGroup) => {
     const customGroup = customGroupsById.get(group.customGroupId ?? ``);
     if (!customGroup || busy || loading || preferences.loading) return;
+    collectionMenu.close();
     contextMenu.close();
     groupContextMenu.open(event, customGroup);
   };
   const openContextMenuFromKeyboard = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.defaultPrevented || !(event.key === `ContextMenu` || (event.shiftKey && event.key === `F10`))) return;
+    if (openCollectionContextMenu(event)) return;
     const pill = event.target instanceof Element ? event.target.closest<HTMLElement>(`[data-portfolio-app-domain-id]`) : null;
     const pillDomain = pill ? allDomains.find(domain => domain.id === pill.dataset.portfolioAppDomainId) : undefined;
     if (pill && pillDomain) {
       if (menuDisabled) return;
       event.preventDefault();
       event.stopPropagation();
+      collectionMenu.close();
       groupContextMenu.close();
       contextMenu.openFromKeyboard(pill, pillDomain, menuDomains(pillDomain));
       return;
@@ -402,6 +424,7 @@ const PortfolioRecords = ({
       if (busy || loading || preferences.loading) return;
       event.preventDefault();
       event.stopPropagation();
+      collectionMenu.close();
       contextMenu.close();
       groupContextMenu.openFromKeyboard(heading, customGroup);
       return;
@@ -411,6 +434,7 @@ const PortfolioRecords = ({
     if (!row || !domain) return;
     event.preventDefault();
     event.stopPropagation();
+    collectionMenu.close();
     groupContextMenu.close();
     contextMenu.openFromKeyboard(row, domain, menuDomains(domain));
   };
@@ -541,6 +565,7 @@ const PortfolioRecords = ({
               id={`${scope}-domains`}
               getDragHandlers={reorder.handlers}
               onContextMenu={(event, domain) => {
+                collectionMenu.close();
                 groupContextMenu.close();
                 contextMenu.open(event, domain, menuDomains(domain));
               }}
@@ -904,7 +929,7 @@ const PortfolioRecords = ({
           hideProjectDetails={!mobileBoard && appDomainIds.has(domain.id)}
           detailsInSettings={mobileBoard}
           selectionDescriptionId={`portfolio-selection-help`}
-          onContextMenu={event => { groupContextMenu.close(); contextMenu.open(event, domain, menuDomains(domain)); }}
+          onContextMenu={event => { collectionMenu.close(); groupContextMenu.close(); contextMenu.open(event, domain, menuDomains(domain)); }}
           onToggleAutoRenew={onToggleAutoRenew}
           onChangeDescription={onChangeDescription}
           onChangeProjectStatus={onChangeProjectStatus}
@@ -999,7 +1024,13 @@ const PortfolioRecords = ({
   );
 
   if (preferences.view === `grid` && !empty) return (
-    <div id={`${idPrefix}-grid-view`} className={`portfolio-grid-view`} aria-busy={loading} onKeyDown={openContextMenuFromKeyboard}>
+    <div
+      aria-busy={loading}
+      id={`${idPrefix}-grid-view`}
+      className={`portfolio-grid-view`}
+      onKeyDown={openContextMenuFromKeyboard}
+      onContextMenu={openCollectionContextMenu}
+    >
       {groupHelp}
       {loading ? (
         <div id={`${idPrefix}-grid-loading`} className={`portfolio-domain-grid`}>
@@ -1027,6 +1058,7 @@ const PortfolioRecords = ({
       )}
       {groupPicker}
       {groupSettings}
+      {collectionContextMenu}
       <GroupContextMenu
         {...groupContextMenu}
         branches={destinationTree.branches.filter(branch => !branch.main)}
@@ -1044,6 +1076,7 @@ const PortfolioRecords = ({
       hidden={mobileBoard && !loading && !showMainContent}
       data-compact-actions={compactDomainActions || undefined}
       onKeyDown={openContextMenuFromKeyboard}
+      onContextMenu={openCollectionContextMenu}
     >
       {groupHelp}
       <div
@@ -1098,6 +1131,7 @@ const PortfolioRecords = ({
                     hidden
                     aria-hidden={`true`}
                     key={section.collection.id}
+                    data-collection-context-id={section.collection.id}
                     data-portfolio-sticky-collection-key={section.collection.id}
                     id={`${idPrefix}-sticky-collection-${section.collection.id}-row`}
                     className={`portfolio-collection-heading-row`}
@@ -1192,7 +1226,11 @@ const PortfolioRecords = ({
               {collections.map(section => (
                 <Fragment key={section.collection.id}>
                   <tbody id={`portfolio-collection-${section.collection.id}-heading-body`} className={`portfolio-collection-heading-body`} data-portfolio-collection-key={section.collection.id}>
-                    <tr id={`portfolio-collection-${section.collection.id}-heading-row`} className={`portfolio-collection-heading-row`}>
+                    <tr
+                      data-collection-context-id={section.collection.id}
+                      className={`portfolio-collection-heading-row`}
+                      id={`portfolio-collection-${section.collection.id}-heading-row`}
+                    >
                       <th colSpan={columns.length + 4} scope={`rowgroup`} id={`portfolio-collection-${section.collection.id}-heading-cell`} className={`portfolio-collection-heading-cell`}>
                         {collectionHeading(section)}
                       </th>
@@ -1251,6 +1289,7 @@ const PortfolioRecords = ({
       />
       {groupPicker}
       {groupSettings}
+      {collectionContextMenu}
       {menuFeedback}
     </div>
   );

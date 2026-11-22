@@ -80,6 +80,7 @@ const PortfolioCollection = ({
   return (
     <div
       id={scope}
+      data-collection-context-id={collection.id}
       aria-labelledby={`${scope}-title`}
       className={`portfolio-collection${dragging ? ` portfolio-collection-dragging` : ``}`}
     >
@@ -339,7 +340,7 @@ const PortfolioCollection = ({
         </div>
       </div>
       <p id={`${scope}-interaction-help`} className={`portfolio-sr-only`}>
-        {`Drag this title bar to reorder collections, or use the up and down buttons. Drop a group or domain on the title bar to add it to this collection. The move menu offers a keyboard alternative.`}
+        {`Drag this title bar to reorder collections, or use the up and down buttons. Drop a group or domain on the title bar to add it to this collection. The move menu offers a keyboard alternative. Press Shift+F10 for collection actions.`}
       </p>
       {stars.open && typeof document !== `undefined` && createPortal(
         <PortfolioCollectionStars idPrefix={idPrefix} collection={collection} state={stars} />,

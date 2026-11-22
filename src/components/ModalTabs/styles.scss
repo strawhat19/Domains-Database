@@ -9,6 +9,11 @@
   background: var(--input);
   border: 1px solid var(--line);
 }
+
+.domain-dialog-form > .modal-tabs {
+  margin-block-end: 12px;
+}
+
 .modal-tab {
   gap: 6px;
   border: 0;

@@ -6,22 +6,24 @@ import ModalTitle from '../ModalTitle/index.web';
 import SettingsField from '../SettingsField/index.web';
 import SegmentedControl from '../SegmentedControl/index.web';
 import ProjectSelect from '../DomainEditor/ProjectSelect/index.web';
-import { useDomainCollectionSettings } from './useDomainCollectionSettings';
+import { useDomainCollectionSettings, type CollectionSettingsSection } from './useDomainCollectionSettings';
 import PortfolioSettingsActions from '../PortfolioSettingsActions/index.web';
-import { X, Lock, Check, Globe, Share2, Settings2, ArrowDownAZ, GripVertical } from 'lucide-react';
+import { X, Lock, Check, Globe, Share2, Settings2, FolderPlus, ArrowDownAZ, GripVertical } from 'lucide-react';
 import { DOMAIN_PROJECT_STATUSES, normalizeDomainProjectStatus } from '../../shared/domainProject';
 import type { CustomPortfolioCollection, PortfolioCollectionSection } from '../../shared/portfolioPreferences/types';
 
 interface DomainCollectionSettingsProps {
   onClose: () => void;
   editDescription?: boolean;
+  initialSection?: CollectionSettingsSection;
   copySection?: PortfolioCollectionSection;
   collection: CustomPortfolioCollection;
 }
 
-const DomainCollectionSettings = ({ collection, onClose, copySection, editDescription = false }: DomainCollectionSettingsProps) => {
+const DomainCollectionSettings = ({ collection, onClose, copySection, initialSection, editDescription = false }: DomainCollectionSettingsProps) => {
   const tabsId = `domain-collection-settings-sections-${collection.id}`;
-  const settings = useDomainCollectionSettings(collection, onClose);
+  const groupNameId = `domain-collection-settings-new-group-${collection.id}`;
+  const settings = useDomainCollectionSettings(collection, onClose, initialSection);
 
   return (
     <div
@@ -97,6 +99,7 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
             options={[
               { id: `general`, label: `General`, Icon: Settings2 },
               { id: `sharing`, label: `Sharing & Actions`, Icon: Share2 },
+              { id: `new-group`, label: `New Group`, Icon: FolderPlus },
             ]}
           />
           <div id={`domain-collection-settings-body`} className={`domain-dialog-body`}>
@@ -175,6 +178,7 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
                     label={collection.name}
                     hidden={settings.hidden}
                     disabled={settings.actionsDisabled}
+                    copyInitiallyOpen={Boolean(copySection) && settings.copyInitiallyOpen}
                     onToggleVisibility={settings.toggleRowVisibility}
                     id={`domain-collection-settings-row-actions-${collection.id}`}
                     sections={{ mainGroups: [], mainDomains: [], collections: copySection ? [copySection] : [] }}
@@ -225,6 +229,35 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
                 </>
               )}
             </section>
+            <section
+              tabIndex={0}
+              role={`tabpanel`}
+              id={`${tabsId}-panel-new-group`}
+              hidden={settings.activeTab !== `new-group`}
+              aria-labelledby={`${tabsId}-tab-new-group`}
+              className={`domain-collection-settings-fields domain-collection-settings-pane`}
+            >
+              <div id={`${groupNameId}-field`} className={`domain-editor-field domain-editor-field-full`}>
+                <label id={`${groupNameId}-label`} htmlFor={groupNameId} className={`domain-editor-label`}>
+                  {`New Group`}
+                </label>
+                <input
+                  type={`text`}
+                  maxLength={80}
+                  id={groupNameId}
+                  autoComplete={`off`}
+                  value={settings.groupName}
+                  ref={settings.groupNameInputRef}
+                  className={`domain-editor-input`}
+                  placeholder={`Enter a group name`}
+                  disabled={settings.actionsDisabled}
+                  data-autofocus={initialSection === `new-group` || undefined}
+                  aria-invalid={settings.invalidField === `groupName`}
+                  onChange={event => settings.setGroupName(event.target.value)}
+                  aria-describedby={settings.invalidField === `groupName` ? `domain-collection-settings-error` : undefined}
+                />
+              </div>
+            </section>
           </div>
           {settings.error && (
             <p role={`alert`} id={`domain-collection-settings-error`} className={`domain-dialog-error`}>
@@ -246,6 +279,7 @@ const DomainCollectionSettings = ({ collection, onClose, copySection, editDescri
               </button>
               <button
                 type={`submit`}
+                disabled={settings.actionsDisabled}
                 id={`domain-collection-settings-submit`}
                 className={`portfolio-button portfolio-button-primary`}
               >
